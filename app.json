@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "TurfTrack",
+    "name": "CityTurfer",
     "slug": "turftrack",
     "scheme": "turftrack",
     "version": "0.1.0",
@@ -11,7 +11,8 @@
       "bundleIdentifier": "com.turftrack.poc",
       "supportsTablet": false,
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleDisplayName": "CityTurfer"
       },
       "appleTeamId": "KD9S2F8UCY"
     },
@@ -45,15 +46,28 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "TurfTrack records your route while you walk, run or ride, including when the screen is off.",
-          "locationWhenInUsePermission": "TurfTrack shows your position and records your route.",
+          "locationAlwaysAndWhenInUsePermission": "CityTurfer records your route while you walk, run or ride \u2014 including when the screen is off \u2014 so every street you cover becomes your turf.",
+          "locationWhenInUsePermission": "CityTurfer shows where you are and records your route.",
           "isIosBackgroundLocationEnabled": true,
           "isAndroidBackgroundLocationEnabled": true,
           "isAndroidForegroundServiceEnabled": true
         }
       ],
       "./plugins/with-local-maplibre",
-      "./plugins/with-scene-lifecycle"
+      "./plugins/with-scene-lifecycle",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#0B0D12",
+          "dark": {
+            "image": "./assets/splash-icon.png",
+            "backgroundColor": "#0B0D12"
+          }
+        }
+      ]
     ],
     "runtimeVersion": {
       "policy": "fingerprint"
