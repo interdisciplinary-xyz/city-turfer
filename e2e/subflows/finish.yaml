@@ -1,0 +1,3 @@
+appId: com.turftrack.poc
+---
+- longPressOn: { id: 'record-stop' }

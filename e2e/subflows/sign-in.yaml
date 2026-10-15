@@ -1,0 +1,10 @@
+appId: com.turftrack.poc
+---
+- tapOn: { id: 'sign-in-email' }
+- eraseText: 60
+- inputText: ${EMAIL}
+- tapOn: { id: 'sign-in-password' }
+- eraseText: 60
+- inputText: ${PASSWORD}
+# Submit via the keyboard's Go key (the button sits under the keyboard).
+- pressKey: Enter
