@@ -4,7 +4,7 @@ import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ACTIVITY_TYPES, type ActivityType, type TrackPoint } from '@/shared-kernel';
+import { ACTIVITY_TYPES, type ActivityType } from '@/shared-kernel';
 import { Button, Stat } from '@/ui-kit/components';
 import { formatDistance, formatDuration, formatPaceOrSpeed, formatSpeedNow } from '@/ui-kit/format';
 import {
@@ -16,27 +16,9 @@ import {
   TYPE_LABEL,
   usePalette,
 } from '@/ui-kit/theme';
+import { trackWithGaps } from '@/ui-kit/trackGeometry';
 
 import { useRecording } from './useRecording';
-
-function segmentsGeoJSON(track: TrackPoint[]): GeoJSON.FeatureCollection {
-  const bySeg = new globalThis.Map<number, [number, number][]>();
-  for (const p of track) {
-    const line = bySeg.get(p.segment) ?? [];
-    line.push([p.lon, p.lat]);
-    bySeg.set(p.segment, line);
-  }
-  return {
-    type: 'FeatureCollection',
-    features: [...bySeg.values()]
-      .filter((l) => l.length > 1)
-      .map((coordinates) => ({
-        type: 'Feature',
-        properties: {},
-        geometry: { type: 'LineString', coordinates },
-      })),
-  };
-}
 
 const STATUS_BANNER: Record<string, { text: string; color: string }> = {
   acquiring: { text: 'Waiting for GPS…', color: '#5C6577' },
@@ -61,7 +43,7 @@ export function RecordView({ onFinished }: { onFinished: (activityId: string) =>
 
   const activeType = snapshot?.type ?? type;
   const color = TYPE_COLOR[activeType];
-  const lines = useMemo(() => segmentsGeoJSON(track), [track]);
+  const lines = useMemo(() => trackWithGaps(track), [track]);
 
   const onStart = async () => {
     setBusy(true);
@@ -123,14 +105,22 @@ export function RecordView({ onFinished }: { onFinished: (activityId: string) =>
         <UserLocation accuracy heading />
         <GeoJSONSource id='live-track' data={lines}>
           <Layer
+            id='live-track-gap'
+            type='line'
+            filter={['==', ['get', 'kind'], 'gap'] as never}
+            paint={{ 'line-color': color, 'line-width': 3, 'line-opacity': 0.6, 'line-dasharray': [1.5, 2] }}
+          />
+          <Layer
             id='live-track-glow'
             type='line'
+            filter={['==', ['get', 'kind'], 'track'] as never}
             paint={{ 'line-color': color, 'line-width': 12, 'line-opacity': 0.25, 'line-blur': 6 }}
             layout={{ 'line-cap': 'round', 'line-join': 'round' }}
           />
           <Layer
             id='live-track-line'
             type='line'
+            filter={['==', ['get', 'kind'], 'track'] as never}
             paint={{ 'line-color': color, 'line-width': 5 }}
             layout={{ 'line-cap': 'round', 'line-join': 'round' }}
           />
