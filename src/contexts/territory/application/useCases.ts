@@ -62,6 +62,19 @@ export class ReleaseTurfOfActivity {
   }
 }
 
+/**
+ * Handles ActivityTrackCorrected: the claim is rebuilt from the corrected track.
+ * Idempotent and crash-safe: release is a no-op without a claim, claim is a
+ * no-op once it exists.
+ */
+export class ReclaimTurfOfActivity {
+  constructor(private readonly d: TerritoryDeps) {}
+  async execute(e: { activityId: string; activityType: ActivityType; startedAt: number }): Promise<void> {
+    await this.d.repo.releaseClaim(e.activityId, this.d.clock.now());
+    await new ClaimTurfFromActivity(this.d).execute(e);
+  }
+}
+
 const visitsFor = (r: CellRow, types: readonly ActivityType[]) => types.reduce((s, t) => s + r[t], 0);
 const ring = (grid: CellGrid, c: CellId): [number, number][] => {
   const b = grid.boundary(c).map((p) => [p.lon, p.lat] as [number, number]);

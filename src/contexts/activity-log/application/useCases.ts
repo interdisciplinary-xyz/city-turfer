@@ -1,4 +1,11 @@
-import { type ActivityType, type Clock, trackFromPoints, type TrackPoint } from '@/shared-kernel';
+import {
+  type ActivityType,
+  type Clock,
+  segmentCount,
+  splitAtGaps,
+  trackFromPoints,
+  type TrackPoint,
+} from '@/shared-kernel';
 
 import type { ActivityDetail, ActivityListItem } from '../contract';
 import { Activity } from '../domain/Activity';
@@ -59,6 +66,31 @@ export class ImportActivity {
     await this.d.activities.save(activity, input.points);
     this.d.afterCommit();
     return true;
+  }
+}
+
+/**
+ * Data repair: tracks recorded before gaps started new segments contain straight
+ * lines across GPS outages. Re-split them; Territory rebuilds the claim on
+ * ActivityTrackCorrected. Idempotent: a repaired track has nothing left to split.
+ */
+export class SplitTrackGaps {
+  constructor(private readonly d: ActivityLogDeps) {}
+  async execute(): Promise<{ checked: number; corrected: number }> {
+    const ids = await this.d.activities.allIds();
+    let corrected = 0;
+    for (const id of ids) {
+      const points = await this.d.activities.trackOf(id);
+      const fixed = splitAtGaps(points);
+      if (segmentCount(fixed) === segmentCount(points)) continue;
+      const activity = await this.d.activities.get(id);
+      if (!activity) continue;
+      activity.correctTrack(trackFromPoints(fixed), this.d.clock.now());
+      await this.d.activities.saveCorrection(activity, fixed);
+      corrected++;
+    }
+    if (corrected > 0) this.d.afterCommit();
+    return { checked: ids.length, corrected };
   }
 }
 

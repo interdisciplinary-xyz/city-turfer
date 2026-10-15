@@ -8,6 +8,7 @@ import {
   ListActivities,
   RecordActivityFromSession,
   RenameActivity,
+  SplitTrackGaps,
 } from './application/useCases';
 
 export function createActivityLogApi(deps: ActivityLogDeps) {
@@ -19,6 +20,7 @@ export function createActivityLogApi(deps: ActivityLogDeps) {
     rename: new RenameActivity(deps),
     remove: new DeleteActivity(deps),
     trackQuery: new ActivityTrackQuery(deps),
+    splitTrackGaps: new SplitTrackGaps(deps),
   };
 }
 export type ActivityLogApi = ReturnType<typeof createActivityLogApi>;

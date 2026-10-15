@@ -113,6 +113,39 @@ export class SqliteActivityRepository implements ActivityRepository {
     }));
   }
 
+  async saveCorrection(activity: Activity, track: readonly TrackPoint[]) {
+    const s = activity.toState();
+    const events = activity.pullEvents();
+    const now = Date.now();
+    await this.db.transaction(async (tx) => {
+      await tx.run(
+        `UPDATE log_activities SET distance_m = ?, moving_s = ?, elapsed_s = ?, elev_gain_m = ?, splits = ?, bbox = ?, preview = ?
+         WHERE id = ?`,
+        [
+          s.summary.distanceM,
+          s.summary.movingS,
+          s.summary.elapsedS,
+          s.summary.elevGainM,
+          JSON.stringify(s.summary.splits),
+          s.bbox ? JSON.stringify(s.bbox) : null,
+          JSON.stringify(s.preview),
+          s.id,
+        ]
+      );
+      await tx.run('DELETE FROM log_track_points WHERE activity_id = ?', [s.id]);
+      await insertMany(
+        tx,
+        'INSERT INTO log_track_points (activity_id, seq, segment, t, lat, lon, alt, accuracy, speed)',
+        track.map((p, seq) => [s.id, seq, p.segment, p.t, p.lat, p.lon, p.alt, p.accuracy, p.speed])
+      );
+      await appendToOutbox(tx, events, now);
+    });
+  }
+
+  async allIds(): Promise<string[]> {
+    return (await this.db.all<{ id: string }>('SELECT id FROM log_activities ORDER BY started_at')).map((r) => r.id);
+  }
+
   trackOf(id: string): Promise<TrackPoint[]> {
     return this.db.all<TrackPoint>(
       'SELECT segment, t, lat, lon, alt, accuracy, speed FROM log_track_points WHERE activity_id = ? ORDER BY seq',

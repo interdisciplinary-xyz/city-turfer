@@ -3,7 +3,12 @@
  * Used by the composition root (with Expo adapters) and by integration tests
  * (with fakes). Contains no Expo imports.
  */
-import { type ActivityDeleted, type ActivityRecorded, createActivityLogApi } from '@/contexts/activity-log';
+import {
+  type ActivityDeleted,
+  type ActivityRecorded,
+  type ActivityTrackCorrected,
+  createActivityLogApi,
+} from '@/contexts/activity-log';
 import { SqliteActivityRepository } from '@/contexts/activity-log/infrastructure/SqliteActivityRepository';
 import { createRecordingApi, type SessionFinished } from '@/contexts/recording';
 import type { LiveSessionNotifier, LocationTracker, PermissionGateway } from '@/contexts/recording/application/ports';
@@ -13,6 +18,7 @@ import { H3CellGrid } from '@/contexts/territory/infrastructure/H3CellGrid';
 import { SqliteTerritoryRepository } from '@/contexts/territory/infrastructure/SqliteTerritoryRepository';
 import type { Database } from '@/platform/database';
 import { Diagnostics } from '@/platform/diagnostics';
+import { runOnce } from '@/platform/jobs';
 import { EventDispatcher } from '@/platform/outbox';
 import { type Clock, type DomainEvent, type IdGenerator, systemClock } from '@/shared-kernel';
 
@@ -62,8 +68,16 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     await recording.purgeRecorded.execute(ev.activityId);
   });
   dispatcher.on('ActivityDeleted', (e: DomainEvent) => territory.release.execute((e as ActivityDeleted).activityId));
+  dispatcher.on('ActivityTrackCorrected', (e: DomainEvent) => territory.reclaim.execute(e as ActivityTrackCorrected));
 
-  return { userId, db, dispatcher, diagnostics: new Diagnostics(db), recording, activityLog, territory };
+  const diagnostics = new Diagnostics(db);
+  /** One-off data repairs, run once per database at launch (before pending events are dispatched). */
+  async function runMaintenance(): Promise<void> {
+    const repaired = await runOnce(db, 'split-track-gaps-v1', () => activityLog.splitTrackGaps.execute());
+    if (repaired) diagnostics.log('maintenance', { job: 'split-track-gaps-v1', ...repaired });
+  }
+
+  return { userId, db, dispatcher, diagnostics, runMaintenance, recording, activityLog, territory };
 }
 
 export type Container = ReturnType<typeof wire>;

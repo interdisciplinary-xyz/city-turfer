@@ -9,6 +9,7 @@ import { AppState } from 'react-native';
 
 import { getContainer } from '@/composition-root';
 
+import { backgroundActivitySession } from './BackgroundActivitySession';
 import { LOCATION_TASK, toFix } from './ExpoLocationTracker';
 
 TaskManager.defineTask<{ locations: Location.LocationObject[] }>(LOCATION_TASK, async ({ data, error }) => {
@@ -29,8 +30,11 @@ TaskManager.defineTask<{ locations: Location.LocationObject[] }>(LOCATION_TASK, 
     const locations = data?.locations ?? [];
     const result = await container.recording.ingestFixes.execute(locations.map(toFix));
     const ts = locations.map((l) => l.timestamp);
+    // The session lives in native memory: re-acquire it if iOS relaunched us.
+    const bgSession = result.kind === 'ingested' ? await backgroundActivitySession.ensure() : null;
     container.diagnostics.log('batch', {
       appState: AppState.currentState,
+      bgSession,
       received: locations.length,
       firstFixAgoS: ts.length ? Math.round((Date.now() - Math.min(...ts)) / 1000) : null,
       maxAccuracy: Math.max(0, ...locations.map((l) => l.coords.accuracy ?? 0)),
@@ -43,5 +47,8 @@ TaskManager.defineTask<{ locations: Location.LocationObject[] }>(LOCATION_TASK, 
     }
   } catch (e) {
     if (__DEV__) console.warn('[location-task] ingest failed', e);
+    void getContainer()
+      .then((c) => c?.diagnostics.log('task-error', { code: 'ingest', message: String(e) }))
+      .catch(() => undefined);
   }
 });

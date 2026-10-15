@@ -3,11 +3,13 @@
  * background task can use it. One container (and one database) per user.
  */
 import * as Crypto from 'expo-crypto';
+import * as Location from 'expo-location';
 import { AppState } from 'react-native';
 
 import { createIdentityApi } from '@/contexts/identity';
 import { MockAuthGateway } from '@/contexts/identity/infrastructure/MockAuthGateway';
 import { SecureStoreSessionStore } from '@/contexts/identity/infrastructure/SecureStoreSessionStore';
+import { backgroundActivitySession } from '@/contexts/recording/infrastructure/BackgroundActivitySession';
 import { ExpoLocationTracker, ExpoPermissionGateway } from '@/contexts/recording/infrastructure/ExpoLocationTracker';
 import { liveSessionStore } from '@/contexts/recording/infrastructure/LiveSessionStore';
 import { openExpoDatabase } from '@/platform/expoDatabase';
@@ -51,9 +53,22 @@ export async function getContainer(): Promise<Container | null> {
     await migrate(db);
     const c = wire(uid, db, adapters);
     // appState 'background' here means iOS/Android launched us headless (e.g. to deliver locations).
-    c.diagnostics.log('launch', { appState: AppState.currentState, trackerRunning: await tracker.isRunning() });
+    const bg = await Location.getBackgroundPermissionsAsync().catch(() => null);
+    const fg = await Location.getForegroundPermissionsAsync().catch(() => null);
+    c.diagnostics.log('launch', {
+      appState: AppState.currentState,
+      trackerRunning: await tracker.isRunning(),
+      locationAlways: bg?.granted ?? null,
+      preciseLocation: fg?.ios?.accuracy ? fg.ios.accuracy === 'full' : null,
+      bgSessionAvailable: backgroundActivitySession.available,
+      lowPowerMode: backgroundActivitySession.isLowPowerMode(),
+    });
     void c.diagnostics.prune();
-    void c.dispatcher.dispatchPending(); // finish any work interrupted by a crash
+    // Repairs first, then finish any work interrupted by a crash (also delivers the repairs' events).
+    void c
+      .runMaintenance()
+      .catch((e) => c.diagnostics.log('task-error', { code: 'maintenance', message: String(e) }))
+      .finally(() => void c.dispatcher.dispatchPending());
     return c;
   })();
   current = { userId: uid, promise };
@@ -70,5 +85,5 @@ export async function resetContainer(): Promise<void> {
   if (c) await (await c.promise.catch(() => null))?.db.close();
 }
 
-export { liveSessionStore };
+export { backgroundActivitySession, liveSessionStore };
 export type { Container };

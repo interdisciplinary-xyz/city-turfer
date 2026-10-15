@@ -1,7 +1,7 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { AppState } from 'react-native';
 
-import { type Container, getContainer, identity, resetContainer } from '@/composition-root';
+import { backgroundActivitySession, type Container, getContainer, identity, resetContainer } from '@/composition-root';
 import type { User } from '@/contexts/identity';
 
 type AuthState =
@@ -39,7 +39,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => container?.dispatcher.onChange(() => setDataVersion((v) => v + 1)), [container]);
   useEffect(() => {
     if (!container) return;
-    const sub = AppState.addEventListener('change', (s) => container.diagnostics.log('app-state', { appState: s }));
+    const sub = AppState.addEventListener('change', (s) =>
+      container.diagnostics.log('app-state', {
+        appState: s,
+        bgSession: backgroundActivitySession.isActive(),
+        lowPowerMode: backgroundActivitySession.isLowPowerMode(),
+      })
+    );
     return () => sub.remove();
   }, [container]);
 

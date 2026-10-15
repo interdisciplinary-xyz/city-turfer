@@ -12,7 +12,7 @@ import {
   type Track,
 } from '@/shared-kernel';
 
-import type { ActivityDeleted, ActivityRecorded } from '../contract';
+import type { ActivityDeleted, ActivityRecorded, ActivityTrackCorrected } from '../contract';
 
 export interface ActivitySummary {
   readonly distanceM: number;
@@ -33,7 +33,7 @@ export interface ActivityState {
   readonly preview: readonly [number, number][];
 }
 
-type ActivityEvent = ActivityRecorded | ActivityDeleted;
+type ActivityEvent = ActivityRecorded | ActivityDeleted | ActivityTrackCorrected;
 
 export function defaultName(type: ActivityType, startedAt: number): string {
   const h = new Date(startedAt).getHours();
@@ -57,17 +57,13 @@ export class Activity {
     const points = pointsOf(input.track);
     if (points.length < 2) throw new DomainError('activity.track-too-short');
     if (input.endedAt < input.startedAt) throw new DomainError('activity.ends-before-start');
-    const stats = analyzeTrack(input.track, MOVING_SPEED_MPS[input.type], ELEV_HYSTERESIS_M[input.type]);
-    const preview = simplify(points, 15).map((p) => [round5(p.lon), round5(p.lat)] as [number, number]);
     const a = new Activity({
       id: input.id,
       type: input.type,
       name: defaultName(input.type, input.startedAt),
       startedAt: input.startedAt,
       endedAt: input.endedAt,
-      summary: { ...stats, elapsedS: Math.round((input.endedAt - input.startedAt) / 1000) },
-      bbox: boundingBoxOf(points),
-      preview,
+      ...derive(input.type, input.track, input.startedAt, input.endedAt),
     });
     a.events.push({
       type: 'ActivityRecorded',
@@ -98,6 +94,21 @@ export class Activity {
     this.state = { ...this.state, name: trimmed };
   }
 
+  /** Replace the track (same fixes, corrected segmentation): totals, bbox and preview are recomputed. */
+  correctTrack(track: Track, now: number) {
+    if (pointsOf(track).length < 2) throw new DomainError('activity.track-too-short');
+    const s = this.state;
+    this.state = { ...s, ...derive(s.type, track, s.startedAt, s.endedAt) };
+    this.events.push({
+      type: 'ActivityTrackCorrected',
+      v: 1,
+      at: now,
+      activityId: s.id,
+      activityType: s.type,
+      startedAt: s.startedAt,
+    });
+  }
+
   markDeleted(now: number) {
     this.events.push({ type: 'ActivityDeleted', v: 1, at: now, activityId: this.state.id });
   }
@@ -110,3 +121,13 @@ export class Activity {
 }
 
 const round5 = (n: number) => Math.round(n * 1e5) / 1e5;
+
+function derive(type: ActivityType, track: Track, startedAt: number, endedAt: number) {
+  const points = pointsOf(track);
+  const stats = analyzeTrack(track, MOVING_SPEED_MPS[type], ELEV_HYSTERESIS_M[type]);
+  return {
+    summary: { ...stats, elapsedS: Math.round((endedAt - startedAt) / 1000) },
+    bbox: boundingBoxOf(points),
+    preview: simplify(points, 15).map((p) => [round5(p.lon), round5(p.lat)] as [number, number]),
+  };
+}

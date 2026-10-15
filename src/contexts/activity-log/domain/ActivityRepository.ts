@@ -12,4 +12,7 @@ export interface ActivityRepository {
   delete(activity: Activity): Promise<void>;
   list(limit: number, beforeStartedAt?: number): Promise<ActivityListItem[]>;
   trackOf(id: string): Promise<TrackPoint[]>;
+  /** Atomic: updated totals + replaced track + pulled events → outbox. */
+  saveCorrection(activity: Activity, track: readonly TrackPoint[]): Promise<void>;
+  allIds(): Promise<string[]>;
 }

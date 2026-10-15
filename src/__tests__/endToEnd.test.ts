@@ -118,3 +118,78 @@ describe('Recording → Activity Log → Territory', () => {
     expect(f.isRunning()).toBe(true);
   });
 });
+
+describe('Data repair: split legacy tracks at recording gaps', () => {
+  /** walk-2k with a 4-minute GPS outage in the middle, stored as ONE segment (pre-fix data). */
+  function legacyTrack() {
+    const fixes = loadFixes('walk-2k.gpx');
+    const a = Math.floor(fixes.length * 0.4);
+    const b = Math.floor(fixes.length * 0.6);
+    const kept = [...fixes.slice(0, a), ...fixes.slice(b).map((x) => ({ ...x, t: x.t + 240_000 }))];
+    return kept.map((x) => ({ ...x, segment: 0, alt: x.alt, accuracy: x.accuracy, speed: x.speed }));
+  }
+
+  it('re-splits the track, recomputes totals and rebuilds turf exactly as if recorded correctly', async () => {
+    const { c, db } = await setup();
+    const points = legacyTrack();
+    await c.activityLog.importActivity.execute({ id: 'legacy', type: 'walk', points });
+    await c.dispatcher.dispatchPending();
+    const before = {
+      detail: await c.activityLog.detail.execute('legacy'),
+      claim: await c.territory.claimOf.execute('legacy'),
+    };
+
+    await c.runMaintenance();
+    await c.dispatcher.dispatchPending();
+    const after = {
+      detail: await c.activityLog.detail.execute('legacy'),
+      claim: await c.territory.claimOf.execute('legacy'),
+    };
+
+    expect(new Set(after.detail!.track.map((p) => p.segment))).toEqual(new Set([0, 1]));
+    expect(after.detail!.track).toHaveLength(points.length); // no fix lost
+    expect(after.detail!.distanceM).toBeLessThan(before.detail!.distanceM); // straight line across the gap removed
+    expect(after.detail!.elapsedS).toBe(before.detail!.elapsedS);
+    expect(after.claim!.cellCount).toBeLessThan(before.claim!.cellCount); // false turf released
+
+    // Reference: the same fixes recorded correctly (two segments) from the start.
+    const ref = await setup();
+    const split = points.map((p, i) => ({
+      ...p,
+      segment: i < Math.floor(loadFixes('walk-2k.gpx').length * 0.4) ? 0 : 1,
+    }));
+    await ref.c.activityLog.importActivity.execute({ id: 'legacy', type: 'walk', points: split });
+    await ref.c.dispatcher.dispatchPending();
+    const refClaim = await ref.c.territory.claimOf.execute('legacy');
+    expect(after.claim!.cellCount).toBe(refClaim!.cellCount);
+    expect((await c.territory.summary.execute()).cellCount).toBe((await ref.c.territory.summary.execute()).cellCount);
+    expect(Math.round(after.detail!.distanceM)).toBe(
+      Math.round((await ref.c.activityLog.detail.execute('legacy'))!.distanceM)
+    );
+
+    // Runs once per database.
+    expect(await db.first('SELECT name FROM sys_jobs')).toEqual({ name: 'split-track-gaps-v1' });
+  });
+
+  it('leaves correct tracks untouched and is idempotent', async () => {
+    const { c, f } = await setup();
+    f.advance(2 * 86_400_000);
+    const id = await recordFixture(c, loadFixes('walk-2k.gpx'), 'walk');
+    expect(await c.activityLog.splitTrackGaps.execute()).toEqual({ checked: 1, corrected: 0 });
+
+    const legacy = legacyTrack().map((p) => ({ ...p, t: p.t + 86_400_000 }));
+    await c.activityLog.importActivity.execute({ id: 'legacy', type: 'walk', points: legacy });
+    await c.dispatcher.dispatchPending();
+    expect(await c.activityLog.splitTrackGaps.execute()).toEqual({ checked: 2, corrected: 1 });
+    await c.dispatcher.dispatchPending();
+    const repaired = await c.territory.claimOf.execute('legacy');
+    const total = (await c.territory.summary.execute()).cellCount;
+    expect(await c.activityLog.splitTrackGaps.execute()).toEqual({ checked: 2, corrected: 0 });
+
+    // A redelivered correction event rebuilds the same claim and leaves the territory unchanged.
+    await c.territory.reclaim.execute({ activityId: 'legacy', activityType: 'walk', startedAt: legacy[0].t });
+    expect((await c.territory.claimOf.execute('legacy'))!.cellCount).toBe(repaired!.cellCount);
+    expect((await c.territory.summary.execute()).cellCount).toBe(total);
+    expect(await c.territory.claimOf.execute(id)).not.toBeNull();
+  });
+});

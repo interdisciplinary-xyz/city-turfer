@@ -102,6 +102,16 @@ const MIGRATIONS: { version: number; sql: string }[] = [
       CREATE INDEX idx_diagnostics_at ON sys_diagnostics(at);
     `,
   },
+  {
+    version: 3,
+    sql: `
+      CREATE TABLE sys_jobs (
+        name TEXT PRIMARY KEY,         -- one-off maintenance job, e.g. a data repair
+        done_at INTEGER NOT NULL,
+        result TEXT                    -- JSON summary
+      );
+    `,
+  },
 ];
 
 export async function migrate(db: Database): Promise<void> {

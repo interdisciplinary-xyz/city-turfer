@@ -10,6 +10,12 @@ export interface ActivityRecorded extends DomainEvent<'ActivityRecorded'> {
 export interface ActivityDeleted extends DomainEvent<'ActivityDeleted'> {
   activityId: string;
 }
+/** The stored track was corrected (e.g. split at recording gaps); consumers derived from it must rebuild. */
+export interface ActivityTrackCorrected extends DomainEvent<'ActivityTrackCorrected'> {
+  activityId: string;
+  activityType: ActivityType;
+  startedAt: number;
+}
 
 export interface ActivityListItem {
   id: string;
