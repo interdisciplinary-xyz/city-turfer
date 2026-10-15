@@ -3,6 +3,7 @@ import {
   type ActivityLogDeps,
   ActivityTrackQuery,
   DeleteActivity,
+  EstimateGapRoutes,
   GetActivityDetail,
   ImportActivity,
   ListActivities,
@@ -21,8 +22,9 @@ export function createActivityLogApi(deps: ActivityLogDeps) {
     remove: new DeleteActivity(deps),
     trackQuery: new ActivityTrackQuery(deps),
     splitTrackGaps: new SplitTrackGaps(deps),
+    estimateGapRoutes: new EstimateGapRoutes(deps),
   };
 }
 export type ActivityLogApi = ReturnType<typeof createActivityLogApi>;
-export type { ActivityLogDeps, FinishedTrackSource } from './application/useCases';
+export type { ActivityLogDeps, FinishedTrackSource, RouteEstimator } from './application/useCases';
 export type * from './contract';

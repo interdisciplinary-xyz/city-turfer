@@ -20,7 +20,7 @@ export function ActivityDetailView({
 }) {
   const p = usePalette();
   const scheme = useColorScheme();
-  const lines = useMemo(() => trackWithGaps(a.track), [a.track]);
+  const lines = useMemo(() => trackWithGaps(a.track, a.gapRoutes), [a.track, a.gapRoutes]);
   const ends = useMemo<GeoJSON.FeatureCollection>(() => {
     const f = a.track[0];
     const l = a.track[a.track.length - 1];
@@ -107,6 +107,12 @@ export function ActivityDetailView({
               unit={a.elevGainM != null ? 'm' : undefined}
             />
           </View>
+          {a.estimatedDistanceM > 0 && (
+            <Text testID='estimated-distance' style={[s.note, { color: p.muted }]}>
+              Includes {formatDistance(a.estimatedDistanceM).value} {formatDistance(a.estimatedDistanceM).unit}{' '}
+              estimated along streets where GPS was lost (dashed). Estimated parts don&apos;t claim turf.
+            </Text>
+          )}
         </Card>
         {children}
         {a.splits.length > 0 && (
@@ -136,4 +142,5 @@ const s = StyleSheet.create({
   date: { fontSize: 14, fontWeight: '600' },
   h: { fontSize: 16, fontWeight: '800', marginBottom: 8 },
   split: { flexDirection: 'row', paddingVertical: 4 },
+  note: { fontSize: 13, marginTop: 14, lineHeight: 18 },
 });

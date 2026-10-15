@@ -3,9 +3,14 @@ import type { TrackPoint } from '@/shared-kernel';
 /**
  * Map geometry for a track: one `kind: 'track'` line per Segment, plus a
  * `kind: 'gap'` connector between consecutive segments so the whole route
- * reads as one line. Gaps are drawn only — never measured or claimed.
+ * reads as one line. A gap follows its estimated street route when one is
+ * known, else a straight connector. Gaps are display only — never turf.
  */
-export function trackWithGaps(track: readonly TrackPoint[]): GeoJSON.FeatureCollection {
+export function trackWithGaps(
+  track: readonly TrackPoint[],
+  gapRoutes: readonly { afterSegment: number; coords: [number, number][] }[] = []
+): GeoJSON.FeatureCollection {
+  const routed = new globalThis.Map(gapRoutes.map((g) => [g.afterSegment, g.coords]));
   const bySeg = new globalThis.Map<number, [number, number][]>();
   for (const p of track) {
     const line = bySeg.get(p.segment) ?? [];
@@ -27,7 +32,10 @@ export function trackWithGaps(track: readonly TrackPoint[]): GeoJSON.FeatureColl
       features.push({
         type: 'Feature',
         properties: { kind: 'gap' },
-        geometry: { type: 'LineString', coordinates: [coords[coords.length - 1], next[0]] },
+        geometry: {
+          type: 'LineString',
+          coordinates: [coords[coords.length - 1], ...(routed.get(i) ?? []), next[0]],
+        },
       });
     }
   });

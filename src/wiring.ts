@@ -8,6 +8,7 @@ import {
   type ActivityRecorded,
   type ActivityTrackCorrected,
   createActivityLogApi,
+  type RouteEstimator,
 } from '@/contexts/activity-log';
 import { SqliteActivityRepository } from '@/contexts/activity-log/infrastructure/SqliteActivityRepository';
 import { createRecordingApi, type SessionFinished } from '@/contexts/recording';
@@ -27,6 +28,7 @@ export interface DeviceAdapters {
   permissions: PermissionGateway;
   notifier: LiveSessionNotifier;
   ids: IdGenerator;
+  router: RouteEstimator;
   clock?: Clock;
 }
 
@@ -48,6 +50,7 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
   const activityLog = createActivityLogApi({
     activities: new SqliteActivityRepository(db),
     finishedTracks: { trackOf: (id) => recording.finishedTrack.execute(id) },
+    router: a.router,
     clock,
     afterCommit,
   });
@@ -70,6 +73,10 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
   dispatcher.on('ActivityDeleted', (e: DomainEvent) => territory.release.execute((e as ActivityDeleted).activityId));
   dispatcher.on('ActivityTrackCorrected', (e: DomainEvent) => territory.reclaim.execute(e as ActivityTrackCorrected));
 
+  // Best effort, outside the outbox (needs the network): route new recording gaps after every dispatch run.
+  const estimateGaps = () => activityLog.estimateGapRoutes.execute().catch(() => 0);
+  dispatcher.onChange(() => void estimateGaps());
+
   const diagnostics = new Diagnostics(db);
   /** One-off data repairs, run once per database at launch (before pending events are dispatched). */
   async function runMaintenance(): Promise<void> {
@@ -77,7 +84,7 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     if (repaired) diagnostics.log('maintenance', { job: 'split-track-gaps-v1', ...repaired });
   }
 
-  return { userId, db, dispatcher, diagnostics, runMaintenance, recording, activityLog, territory };
+  return { userId, db, dispatcher, diagnostics, runMaintenance, estimateGaps, recording, activityLog, territory };
 }
 
 export type Container = ReturnType<typeof wire>;

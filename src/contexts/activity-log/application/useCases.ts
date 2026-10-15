@@ -1,6 +1,7 @@
 import {
   type ActivityType,
   type Clock,
+  type GeoPoint,
   segmentCount,
   splitAtGaps,
   trackFromPoints,
@@ -10,15 +11,29 @@ import {
 import type { ActivityDetail, ActivityListItem } from '../contract';
 import { Activity } from '../domain/Activity';
 import type { ActivityRepository } from '../domain/ActivityRepository';
+import { acceptRoute, estimatedTotals, type GapRoute, gapsOf } from '../domain/GapRoute';
 
 /** Port: the finished track of a recording session (Recording's open-host service). */
 export interface FinishedTrackSource {
   trackOf(sessionId: string): Promise<TrackPoint[] | null>;
 }
 
+/**
+ * Port: street routing between two points (e.g. OSM). Resolves null when no
+ * route exists; rejects on network/service errors (the caller retries later).
+ */
+export interface RouteEstimator {
+  route(
+    from: GeoPoint,
+    to: GeoPoint,
+    type: ActivityType
+  ): Promise<{ distanceM: number; coords: [number, number][] } | null>;
+}
+
 export interface ActivityLogDeps {
   activities: ActivityRepository;
   finishedTracks: FinishedTrackSource;
+  router: RouteEstimator;
   clock: Clock;
   afterCommit: () => void;
 }
@@ -94,6 +109,48 @@ export class SplitTrackGaps {
   }
 }
 
+/**
+ * Estimates the path across each recording gap along streets: counted in
+ * distance (marked as estimated), drawn dashed, never claimed as turf.
+ * Activities stay unchecked while the router is unreachable, so this is
+ * simply re-run later (launch, after new activities).
+ */
+export class EstimateGapRoutes {
+  private running: Promise<number> | null = null;
+  constructor(private readonly d: ActivityLogDeps) {}
+
+  execute(): Promise<number> {
+    this.running ??= this.run().finally(() => {
+      this.running = null;
+    });
+    return this.running;
+  }
+
+  private async run(): Promise<number> {
+    let done = 0;
+    for (const id of await this.d.activities.idsWithUncheckedGaps()) {
+      const type = await this.d.activities.typeOf(id);
+      if (!type) continue;
+      const routes: GapRoute[] = [];
+      for (const gap of gapsOf(trackFromPoints(await this.d.activities.trackOf(id)))) {
+        const r = await this.d.router.route(gap.from, gap.to, type); // throws when offline → retry later
+        if (r && acceptRoute(type, gap, r.distanceM)) {
+          routes.push({
+            afterSegment: gap.afterSegment,
+            distanceM: r.distanceM,
+            movingS: gap.durationS,
+            coords: r.coords,
+          });
+        }
+      }
+      await this.d.activities.saveGapRoutes(id, routes, this.d.clock.now());
+      done++;
+    }
+    if (done > 0) this.d.afterCommit();
+    return done;
+  }
+}
+
 export class ListActivities {
   constructor(private readonly d: ActivityLogDeps) {}
   execute(limit = 30, before?: number): Promise<ActivityListItem[]> {
@@ -107,14 +164,18 @@ export class GetActivityDetail {
     const a = await this.d.activities.get(id);
     if (!a) return null;
     const s = a.toState();
+    const gapRoutes = await this.d.activities.gapRoutesOf(id);
+    const estimated = estimatedTotals(gapRoutes);
     return {
       id: s.id,
       type: s.type,
       name: s.name,
       startedAt: s.startedAt,
       endedAt: s.endedAt,
-      distanceM: s.summary.distanceM,
-      movingS: s.summary.movingS,
+      distanceM: s.summary.distanceM + estimated.distanceM,
+      movingS: s.summary.movingS + estimated.movingS,
+      estimatedDistanceM: estimated.distanceM,
+      gapRoutes: gapRoutes.map((r) => ({ afterSegment: r.afterSegment, coords: [...r.coords] })),
       elapsedS: s.summary.elapsedS,
       elevGainM: s.summary.elevGainM,
       splits: [...s.summary.splits],

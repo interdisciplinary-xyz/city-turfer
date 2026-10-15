@@ -4,6 +4,23 @@ import { loadFixes } from '@/test-support/fixtures';
 import { openNodeDatabase } from '@/test-support/nodeDatabase';
 import { wire } from '@/wiring';
 
+/** Fake street router: an L-shaped route (1.3× the straight line); `offline` makes it throw. */
+const router = {
+  offline: false,
+  calls: 0,
+  async route(from: { lat: number; lon: number }, to: { lat: number; lon: number }) {
+    router.calls++;
+    if (router.offline) throw new Error('offline');
+    const corner: [number, number] = [to.lon, from.lat];
+    const dy = (to.lat - from.lat) * 111_320;
+    const dx = (to.lon - from.lon) * 111_320 * Math.cos((from.lat * Math.PI) / 180);
+    return {
+      distanceM: Math.abs(dx) + Math.abs(dy),
+      coords: [[from.lon, from.lat], corner, [to.lon, to.lat]] as [number, number][],
+    };
+  },
+};
+
 function fakes() {
   let running = false;
   let n = 0;
@@ -16,6 +33,7 @@ function fakes() {
     },
     permissions: { ensureForeground: async () => 'granted' as const, requestBackground: async () => true },
     notifier: { publish: () => undefined },
+    router,
     ids: { next: () => `id-${++n}` },
     clock: { now: () => now },
     advance: (ms: number) => void (now += ms),
@@ -120,6 +138,9 @@ describe('Recording → Activity Log → Territory', () => {
 });
 
 describe('Data repair: split legacy tracks at recording gaps', () => {
+  beforeEach(() => void (router.offline = true)); // keep gap estimation out of these totals
+  afterEach(() => void (router.offline = false));
+
   /** walk-2k with a 4-minute GPS outage in the middle, stored as ONE segment (pre-fix data). */
   function legacyTrack() {
     const fixes = loadFixes('walk-2k.gpx');
@@ -191,5 +212,68 @@ describe('Data repair: split legacy tracks at recording gaps', () => {
     expect((await c.territory.claimOf.execute('legacy'))!.cellCount).toBe(repaired!.cellCount);
     expect((await c.territory.summary.execute()).cellCount).toBe(total);
     expect(await c.territory.claimOf.execute(id)).not.toBeNull();
+  });
+});
+
+describe('Gap routes: estimated street paths across recording gaps', () => {
+  /** walk-2k recorded in two segments with a 4-minute GPS outage between them. */
+  function gappedWalk() {
+    const fixes = loadFixes('walk-2k.gpx');
+    const a = Math.floor(fixes.length * 0.4);
+    const b = Math.floor(fixes.length * 0.6);
+    return [
+      ...fixes.slice(0, a).map((x) => ({ ...x, segment: 0 })),
+      ...fixes.slice(b).map((x) => ({ ...x, t: x.t + 240_000, segment: 1 })),
+    ];
+  }
+
+  it('adds the routed distance (marked), draws the route and never claims turf for it', async () => {
+    const { c } = await setup();
+    await c.activityLog.importActivity.execute({ id: 'w', type: 'walk', points: gappedWalk() });
+    await c.dispatcher.dispatchPending();
+    await c.estimateGaps();
+    const before = (await c.territory.summary.execute()).cellCount;
+
+    const d = (await c.activityLog.detail.execute('w'))!;
+    expect(d.estimatedDistanceM).toBeGreaterThan(0);
+    expect(d.gapRoutes).toHaveLength(1);
+    expect(d.gapRoutes[0].afterSegment).toBe(0);
+    const list = await c.activityLog.list.execute();
+    expect(list[0].distanceM).toBeCloseTo(d.distanceM, 6);
+    expect(list[0].estimatedDistanceM).toBeCloseTo(d.estimatedDistanceM, 6);
+    expect((await c.territory.summary.execute()).cellCount).toBe(before); // turf untouched
+
+    // Checked once: no further router calls.
+    const calls = router.calls;
+    expect(await c.estimateGaps()).toBe(0);
+    expect(router.calls).toBe(calls);
+  });
+
+  it('retries later when the router is unreachable', async () => {
+    const { c } = await setup();
+    router.offline = true;
+    await c.activityLog.importActivity.execute({ id: 'w', type: 'walk', points: gappedWalk() });
+    await c.dispatcher.dispatchPending();
+    await c.estimateGaps();
+    expect((await c.activityLog.detail.execute('w'))!.estimatedDistanceM).toBe(0);
+
+    router.offline = false;
+    expect(await c.estimateGaps()).toBe(1);
+    expect((await c.activityLog.detail.execute('w'))!.estimatedDistanceM).toBeGreaterThan(0);
+  });
+
+  it('rejects a gap no walker could have covered (e.g. a tram ride)', async () => {
+    const { c } = await setup();
+    const walk = gappedWalk();
+    const lastA = walk.filter((p) => p.segment === 0).at(-1)!;
+    const firstB = walk.find((p) => p.segment === 1)!;
+    const shift = firstB.t - lastA.t - 10_000; // ~400 m in 10 s
+    const pts = walk.map((p) => (p.segment === 1 ? { ...p, t: p.t - shift } : p));
+    await c.activityLog.importActivity.execute({ id: 'w', type: 'walk', points: pts });
+    await c.dispatcher.dispatchPending();
+    await c.estimateGaps();
+    const d = (await c.activityLog.detail.execute('w'))!;
+    expect(d.estimatedDistanceM).toBe(0);
+    expect(d.gapRoutes).toHaveLength(0);
   });
 });

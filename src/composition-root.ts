@@ -6,6 +6,7 @@ import * as Crypto from 'expo-crypto';
 import * as Location from 'expo-location';
 import { AppState } from 'react-native';
 
+import { OsmRouteEstimator } from '@/contexts/activity-log/infrastructure/OsmRouteEstimator';
 import { createIdentityApi } from '@/contexts/identity';
 import { MockAuthGateway } from '@/contexts/identity/infrastructure/MockAuthGateway';
 import { SecureStoreSessionStore } from '@/contexts/identity/infrastructure/SecureStoreSessionStore';
@@ -39,6 +40,7 @@ const adapters = {
   permissions: new ExpoPermissionGateway(),
   notifier: liveSessionStore,
   ids: { next: () => Crypto.randomUUID() },
+  router: new OsmRouteEstimator(),
 };
 
 let current: { userId: string; promise: Promise<Container> } | null = null;
@@ -68,7 +70,7 @@ export async function getContainer(): Promise<Container | null> {
     void c
       .runMaintenance()
       .catch((e) => c.diagnostics.log('task-error', { code: 'maintenance', message: String(e) }))
-      .finally(() => void c.dispatcher.dispatchPending());
+      .finally(() => void c.dispatcher.dispatchPending().then(() => c.estimateGaps()));
     return c;
   })();
   current = { userId: uid, promise };
