@@ -3,6 +3,7 @@ import * as Location from 'expo-location';
 import type { LocationTracker, PermissionGateway, PermissionResult } from '../application/ports';
 import type { Fix } from '../domain/Fix';
 import type { TrackingProfile } from '../domain/TrackingProfile';
+import { backgroundActivitySession } from './BackgroundActivitySession';
 
 export const LOCATION_TASK = 'turftrack-location';
 
@@ -39,9 +40,12 @@ export class ExpoLocationTracker implements LocationTracker {
         killServiceOnDestroy: false,
       },
     });
+    // Must be acquired while in the foreground (the user just tapped Start).
+    await backgroundActivitySession.start();
   }
 
   async stop() {
+    await backgroundActivitySession.stop();
     if (await this.isRunning()) await Location.stopLocationUpdatesAsync(LOCATION_TASK);
   }
 

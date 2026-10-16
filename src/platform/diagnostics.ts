@@ -7,7 +7,10 @@ import type { Database } from './database';
 export class Diagnostics {
   constructor(private readonly db: Database) {}
 
-  log(kind: 'launch' | 'app-state' | 'batch' | 'task-error', data: Record<string, unknown>): void {
+  log(
+    kind: 'launch' | 'app-state' | 'batch' | 'task-error' | 'maintenance' | 'tracker',
+    data: Record<string, unknown>
+  ): void {
     void this.db
       .run('INSERT INTO sys_diagnostics (at, kind, data) VALUES (?, ?, ?)', [Date.now(), kind, JSON.stringify(data)])
       .catch(() => undefined);

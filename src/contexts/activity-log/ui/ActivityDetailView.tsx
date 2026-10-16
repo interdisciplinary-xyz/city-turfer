@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, Text, useColorScheme, View } from 'react-native
 import { Card, Stat } from '@/ui-kit/components';
 import { formatDate, formatDistance, formatDuration, formatPaceOrSpeed } from '@/ui-kit/format';
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT, TYPE_COLOR, usePalette } from '@/ui-kit/theme';
+import { trackWithGaps } from '@/ui-kit/trackGeometry';
 
 import type { ActivityDetail } from '../contract';
 
@@ -19,16 +20,7 @@ export function ActivityDetailView({
 }) {
   const p = usePalette();
   const scheme = useColorScheme();
-  const lines = useMemo<GeoJSON.FeatureCollection>(() => {
-    const segs = new globalThis.Map<number, [number, number][]>();
-    for (const pt of a.track) segs.set(pt.segment, [...(segs.get(pt.segment) ?? []), [pt.lon, pt.lat]]);
-    return {
-      type: 'FeatureCollection',
-      features: [...segs.values()]
-        .filter((c) => c.length > 1)
-        .map((coordinates) => ({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates } })),
-    };
-  }, [a.track]);
+  const lines = useMemo(() => trackWithGaps(a.track, a.gapRoutes), [a.track, a.gapRoutes]);
   const ends = useMemo<GeoJSON.FeatureCollection>(() => {
     const f = a.track[0];
     const l = a.track[a.track.length - 1];
@@ -69,9 +61,18 @@ export function ActivityDetailView({
           )}
           {mapOverlay}
           <GeoJSONSource id='activity-track' data={lines}>
+            {/* Recording gaps: dashed, for continuity only — never measured or claimed. */}
+            <Layer
+              id='activity-track-gap'
+              type='line'
+              filter={['==', ['get', 'kind'], 'gap'] as never}
+              paint={{ 'line-color': color, 'line-width': 2.5, 'line-opacity': 0.6, 'line-dasharray': [1.5, 2] }}
+              layout={{ 'line-cap': 'butt', 'line-join': 'round' }}
+            />
             <Layer
               id='activity-track-line'
               type='line'
+              filter={['==', ['get', 'kind'], 'track'] as never}
               paint={{ 'line-color': color, 'line-width': 4 }}
               layout={{ 'line-cap': 'round', 'line-join': 'round' }}
             />
@@ -106,6 +107,12 @@ export function ActivityDetailView({
               unit={a.elevGainM != null ? 'm' : undefined}
             />
           </View>
+          {a.estimatedDistanceM > 0 && (
+            <Text testID='estimated-distance' style={[s.note, { color: p.muted }]}>
+              Includes {formatDistance(a.estimatedDistanceM).value} {formatDistance(a.estimatedDistanceM).unit}{' '}
+              estimated along streets where GPS was lost (dashed). Estimated parts don&apos;t claim turf.
+            </Text>
+          )}
         </Card>
         {children}
         {a.splits.length > 0 && (
@@ -135,4 +142,5 @@ const s = StyleSheet.create({
   date: { fontSize: 14, fontWeight: '600' },
   h: { fontSize: 16, fontWeight: '800', marginBottom: 8 },
   split: { flexDirection: 'row', paddingVertical: 4 },
+  note: { fontSize: 13, marginTop: 14, lineHeight: 18 },
 });

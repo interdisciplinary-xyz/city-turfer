@@ -1,4 +1,4 @@
-import { type ActivityType, DomainError, type TrackPoint } from '@/shared-kernel';
+import { type ActivityType, DomainError, MAX_FIX_GAP_MS, type TrackPoint } from '@/shared-kernel';
 
 import type { RecordingEvent } from './events';
 import type { Fix } from './Fix';
@@ -41,8 +41,7 @@ export interface LiveSnapshot {
 }
 
 const RECENT_WINDOW_MS = 30_000;
-/** A gap longer than this (no fixes at all) starts a new segment: never draw, measure or claim across it. */
-export const MAX_FIX_GAP_MS = 45_000;
+export { MAX_FIX_GAP_MS };
 
 export type RejectReason = 'inaccurate' | 'out-of-order' | 'teleport';
 export interface IngestReport {

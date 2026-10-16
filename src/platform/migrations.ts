@@ -102,6 +102,33 @@ const MIGRATIONS: { version: number; sql: string }[] = [
       CREATE INDEX idx_diagnostics_at ON sys_diagnostics(at);
     `,
   },
+  {
+    version: 3,
+    sql: `
+      CREATE TABLE sys_jobs (
+        name TEXT PRIMARY KEY,         -- one-off maintenance job, e.g. a data repair
+        done_at INTEGER NOT NULL,
+        result TEXT                    -- JSON summary
+      );
+    `,
+  },
+  {
+    version: 4,
+    sql: `
+      ALTER TABLE log_activities ADD COLUMN estimated_m REAL NOT NULL DEFAULT 0;
+      ALTER TABLE log_activities ADD COLUMN estimated_moving_s INTEGER NOT NULL DEFAULT 0;
+      -- gaps_checked_at NULL: gap routes not estimated yet
+      ALTER TABLE log_activities ADD COLUMN gaps_checked_at INTEGER;
+      CREATE TABLE log_gap_routes (
+        activity_id TEXT NOT NULL REFERENCES log_activities(id) ON DELETE CASCADE,
+        after_segment INTEGER NOT NULL,
+        distance_m REAL NOT NULL,
+        moving_s INTEGER NOT NULL,
+        coords TEXT NOT NULL,          -- JSON [[lon,lat],...] street route across the gap (display only, never turf)
+        PRIMARY KEY (activity_id, after_segment)
+      ) WITHOUT ROWID;
+    `,
+  },
 ];
 
 export async function migrate(db: Database): Promise<void> {

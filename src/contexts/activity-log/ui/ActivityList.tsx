@@ -44,7 +44,10 @@ export function ActivityList({
               <Text style={{ color: p.muted, fontSize: 13 }}>{formatDate(item.startedAt)}</Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={[s.dist, { color: p.text }]}>{distanceText(item.distanceM)}</Text>
+              <Text style={[s.dist, { color: p.text }]}>
+                {item.estimatedDistanceM > 0 ? '≈ ' : ''}
+                {distanceText(item.distanceM)}
+              </Text>
               <Text style={{ color: p.muted, fontSize: 13 }}>
                 {formatDuration(item.movingS)} · {pace.value}
                 {pace.unit}

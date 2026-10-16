@@ -3,11 +3,13 @@ import {
   type ActivityLogDeps,
   ActivityTrackQuery,
   DeleteActivity,
+  EstimateGapRoutes,
   GetActivityDetail,
   ImportActivity,
   ListActivities,
   RecordActivityFromSession,
   RenameActivity,
+  SplitTrackGaps,
 } from './application/useCases';
 
 export function createActivityLogApi(deps: ActivityLogDeps) {
@@ -19,8 +21,10 @@ export function createActivityLogApi(deps: ActivityLogDeps) {
     rename: new RenameActivity(deps),
     remove: new DeleteActivity(deps),
     trackQuery: new ActivityTrackQuery(deps),
+    splitTrackGaps: new SplitTrackGaps(deps),
+    estimateGapRoutes: new EstimateGapRoutes(deps),
   };
 }
 export type ActivityLogApi = ReturnType<typeof createActivityLogApi>;
-export type { ActivityLogDeps, FinishedTrackSource } from './application/useCases';
+export type { ActivityLogDeps, FinishedTrackSource, RouteEstimator } from './application/useCases';
 export type * from './contract';
