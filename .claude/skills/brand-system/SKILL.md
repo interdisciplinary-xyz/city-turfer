@@ -43,7 +43,7 @@ The brand palette **is** the turf strength ramp — the app's core mechanic is t
 | `walk` / `run` / `ride` | `#2BD48B` / `#FF8A3D` / `#3DB8FF` | Activity type colours only                           |
 
 Gradient **Ramp** = `faint → glow → strong → blazing`, always running from bottom-left to top-right (movement "up" into white-hot). Never use the ramp for errors; errors use `#E5484D`/`#FF6369`.
-Tokens live in `src/ui-kit/theme.ts` (`TIER_COLOR`, `ACCENT`, `DARK`, `TYPE_COLOR`) — reference those, never hard-code hex in components.
+Tokens live in `src/constants/colors.ts` (`TIER_COLOR`, `ACCENT`, `LIGHT`, `DARK`, `TYPE_COLOR`; `usePalette()` in `src/ui-kit/theme.ts`) — reference those, never hard-code hex in components.
 
 ## Typography
 

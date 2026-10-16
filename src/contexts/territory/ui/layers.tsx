@@ -1,9 +1,9 @@
 import { GeoJSONSource, Layer } from '@maplibre/maplibre-react-native';
 import { useMemo } from 'react';
 
-import { TIER_COLOR } from '@/ui-kit/theme';
+import { TIER_COLOR } from '@/constants/colors';
+import { DETAIL_ZOOM } from '@/constants/map';
 
-import { DETAIL_ZOOM } from '../application/use-cases';
 import type { ClaimView, TurfCellView } from '../contract';
 
 const tierColor = [

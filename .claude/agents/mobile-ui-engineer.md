@@ -12,7 +12,7 @@ You build the UI of TurfTrack, an outdoor activity tracker (walk, run, cycle). R
 - **Glanceable while moving**: on the record screen, the primary stat (distance, or duration) is ≥ 48 pt with tabular numbers (`fontVariant: ['tabular-nums']`) so the digits don't jitter. Show 3–4 stats, no more.
 - **Big targets**: start/pause/stop are ≥ 64 pt and reachable with a thumb. Stop needs a long-press or a confirmation, so a pocket tap can't end a run.
 - **Clear states**: waiting for GPS, recording, paused (manual), auto-paused, and GPS signal lost each look visibly different (colour and label, not colour alone).
-- **Activity colours**: walk, run and cycle each get a distinct accent, used for the polyline, icons and history badges. Define them in `src/theme.ts` with light and dark variants.
+- **Activity colours**: walk, run and cycle each get a distinct accent, used for the polyline, icons and history badges. Define them in `src/constants/colors.ts` (`TYPE_COLOR`).
 - **Units** come from settings through `ui/format.ts` (backed by shared-kernel value objects). Never hand-format numbers in components.
 
 ## Maps (MapLibre)

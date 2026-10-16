@@ -1,4 +1,5 @@
-import { type ActivityType, DomainError, MAX_FIX_GAP_MS, type TrackPoint } from '@/shared-kernel';
+import { MAX_FIX_GAP_MS } from '@/constants/tracking';
+import { type ActivityType, DomainError, type TrackPoint } from '@/shared-kernel';
 
 import type { RecordingEvent } from './events';
 import type { Fix } from './fix';
@@ -41,7 +42,6 @@ export interface LiveSnapshot {
 }
 
 const RECENT_WINDOW_MS = 30_000;
-export { MAX_FIX_GAP_MS };
 
 export type RejectReason = 'inaccurate' | 'out-of-order' | 'teleport';
 export interface IngestReport {

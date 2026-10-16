@@ -1,11 +1,6 @@
-import {
-  ACTIVITY_TYPES,
-  type ActivityType,
-  type BoundingBox,
-  type Clock,
-  trackFromPoints,
-  type TrackPoint,
-} from '@/shared-kernel';
+import { ACTIVITY_TYPES } from '@/constants/activity';
+import { DETAIL_ZOOM } from '@/constants/map';
+import { type ActivityType, type BoundingBox, type Clock, trackFromPoints, type TrackPoint } from '@/shared-kernel';
 
 import type { ClaimView, TurfCellView, TurfSummaryView } from '../contract';
 import type { CellGrid, CellId } from '../domain/cell-grid';
@@ -81,7 +76,6 @@ const ring = (grid: CellGrid, c: CellId): [number, number][] => {
   return [...b, b[0]];
 };
 
-export const DETAIL_ZOOM = 13.5;
 const MAX_FEATURES = 5000;
 
 export class GetTurfInViewport {

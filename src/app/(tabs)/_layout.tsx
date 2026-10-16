@@ -3,7 +3,8 @@ import type { BottomTabBarButtonProps } from 'expo-router/build/react-navigation
 import { type SFSymbol, SymbolView } from 'expo-symbols';
 import { type ColorValue, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { ACCENT, usePalette } from '@/ui-kit/theme';
+import { ACCENT } from '@/constants/colors';
+import { usePalette } from '@/ui-kit/theme';
 
 /** SF Symbol on iOS; the text glyph is the fallback elsewhere (Android). */
 const icon =

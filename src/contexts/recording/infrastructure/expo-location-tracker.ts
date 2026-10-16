@@ -1,11 +1,11 @@
 import * as Location from 'expo-location';
 
+import { LOCATION_TASK } from '@/constants/location';
+
 import type { LocationTracker, PermissionGateway, PermissionResult } from '../application/ports';
 import type { Fix } from '../domain/fix';
 import type { TrackingProfile } from '../domain/tracking-profile';
 import { backgroundActivitySession } from './background-activity-session';
-
-export const LOCATION_TASK = 'turftrack-location';
 
 /** Anti-corruption layer: the only place that knows expo-location's LocationObject. */
 export function toFix(l: Location.LocationObject): Fix {

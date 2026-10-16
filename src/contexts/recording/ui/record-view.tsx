@@ -4,18 +4,13 @@ import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ACTIVITY_TYPES, type ActivityType } from '@/shared-kernel';
+import { ACTIVITY_TYPES, TYPE_GLYPH, TYPE_LABEL } from '@/constants/activity';
+import { ACCENT, TYPE_COLOR } from '@/constants/colors';
+import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from '@/constants/map';
+import { type ActivityType } from '@/shared-kernel';
 import { Button, Stat } from '@/ui-kit/components';
 import { formatDistance, formatDuration, formatPaceOrSpeed, formatSpeedNow } from '@/ui-kit/format';
-import {
-  ACCENT,
-  MAP_STYLE_DARK,
-  MAP_STYLE_LIGHT,
-  TYPE_COLOR,
-  TYPE_GLYPH,
-  TYPE_LABEL,
-  usePalette,
-} from '@/ui-kit/theme';
+import { usePalette } from '@/ui-kit/theme';
 import { trackWithGaps } from '@/ui-kit/track-geometry';
 
 import { useRecording } from './use-recording';

@@ -2,9 +2,11 @@ import { Camera, GeoJSONSource, Layer, Map } from '@maplibre/maplibre-react-nati
 import { type ReactNode, useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, useColorScheme, View } from 'react-native';
 
+import { TYPE_COLOR } from '@/constants/colors';
+import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from '@/constants/map';
 import { Card, Stat } from '@/ui-kit/components';
 import { formatDate, formatDistance, formatDuration, formatPaceOrSpeed } from '@/ui-kit/format';
-import { MAP_STYLE_DARK, MAP_STYLE_LIGHT, TYPE_COLOR, usePalette } from '@/ui-kit/theme';
+import { usePalette } from '@/ui-kit/theme';
 import { trackWithGaps } from '@/ui-kit/track-geometry';
 
 import type { ActivityDetail } from '../contract';

@@ -1,11 +1,10 @@
+import { ELEV_HYSTERESIS_M, MOVING_SPEED_MPS } from '@/constants/tracking';
 import {
   type ActivityType,
   analyzeTrack,
   type BoundingBox,
   boundingBoxOf,
   DomainError,
-  ELEV_HYSTERESIS_M,
-  MOVING_SPEED_MPS,
   pointsOf,
   simplify,
   type Split,

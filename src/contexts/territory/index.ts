@@ -21,5 +21,4 @@ export function createTerritoryApi(deps: TerritoryDeps) {
 }
 export type TerritoryApi = ReturnType<typeof createTerritoryApi>;
 export type { ActivityTrackSource, TerritoryDeps } from './application/use-cases';
-export { DETAIL_ZOOM } from './application/use-cases';
 export type * from './contract';

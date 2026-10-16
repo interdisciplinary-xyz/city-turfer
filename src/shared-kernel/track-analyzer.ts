@@ -1,4 +1,6 @@
-import { distanceM, EARTH_RADIUS_M, type GeoPoint } from './geo';
+import { EARTH_RADIUS_M } from '@/constants/geo';
+
+import { distanceM, type GeoPoint } from './geo';
 import type { Track } from './track';
 
 export interface Split {
