@@ -52,6 +52,8 @@ export default function TabsLayout() {
   const p = usePalette();
   return (
     <Tabs
+      // Open on Record (centre) although Turf is the first tab.
+      initialRouteName='index'
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: ACCENT,
