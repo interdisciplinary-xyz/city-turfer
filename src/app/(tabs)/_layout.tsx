@@ -4,6 +4,7 @@ import { type SFSymbol, SymbolView } from 'expo-symbols';
 import { type ColorValue, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ACCENT } from '@/constants/colors';
+import { MeTabButton } from '@/ui-kit/me-menu';
 import { usePalette } from '@/ui-kit/theme';
 
 /** SF Symbol on iOS; the text glyph is the fallback elsewhere (Android). */
@@ -84,7 +85,11 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name='me'
-        options={{ title: 'Me', tabBarIcon: icon('person.crop.circle', '◉'), tabBarButtonTestID: 'tab-me' }}
+        options={{
+          title: 'Me',
+          tabBarButton: ({ testID }) => <MeTabButton testID={testID} />,
+          tabBarButtonTestID: 'tab-me',
+        }}
       />
     </Tabs>
   );
