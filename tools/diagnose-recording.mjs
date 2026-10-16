@@ -137,9 +137,30 @@ for (const r of rows) {
   b.paused += d.ignoredWhilePaused ?? 0;
   for (const [k, n] of Object.entries(d.rejected ?? {})) b.rejected[k] = (b.rejected[k] ?? 0) + n;
   if (d.appState)
-    b.states.add(d.appState + (d.bgSession === true ? '+session' : d.bgSession === false ? '-session' : ''));
+    b.states.add(
+      (d.source ? `${d.source}:` : '') +
+        d.appState +
+        (d.bgSession === true ? '+session' : d.bgSession === false ? '-session' : '')
+    );
   if (d.status) b.status.add(d.status);
   if (d.result) b.other.add(d.result);
   buckets.set(key, b);
 }
 if (lastKey != null) flush(lastKey);
+
+// --- Wake-ups after silence --------------------------------------------------------
+// After each silence > 20 s: how old was the oldest fix in the first batch?
+// Old fixes (≈ the silence) = iOS kept GPS running but our app was frozen and got them late.
+// Fresh fixes (a few seconds) = location delivery itself was stopped during the silence.
+const batches = rows.filter((r) => r.kind === 'batch').map((r) => ({ at: r.at, d: JSON.parse(r.data) }));
+console.log('\nwake-ups after silence > 20 s:');
+console.log(' min   time      silence  firstFixAge  received  appState');
+for (let i = 1; i < batches.length; i++) {
+  const silence = (batches[i].at - batches[i - 1].at) / 1000;
+  if (silence <= 20) continue;
+  const d = batches[i].d;
+  const age = d.firstFixAgoS == null ? '?' : `${d.firstFixAgoS} s`;
+  console.log(
+    `${min(batches[i].at)}  ${clock(batches[i].at)}  ${String(Math.round(silence)).padStart(5)} s  ${age.padStart(11)}  ${String(d.received ?? 0).padStart(8)}  ${d.appState ?? ''}`
+  );
+}

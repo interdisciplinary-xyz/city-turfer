@@ -43,6 +43,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       container.diagnostics.log('app-state', {
         appState: s,
         bgSession: backgroundActivitySession.isActive(),
+        liveStreaming: backgroundActivitySession.isStreaming(),
         lowPowerMode: backgroundActivitySession.isLowPowerMode(),
       })
     );

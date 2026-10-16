@@ -63,6 +63,7 @@ export async function getContainer(): Promise<Container | null> {
       locationAlways: bg?.granted ?? null,
       preciseLocation: fg?.ios?.accuracy ? fg.ios.accuracy === 'full' : null,
       bgSessionAvailable: backgroundActivitySession.available,
+      liveStreaming: backgroundActivitySession.isStreaming(),
       lowPowerMode: backgroundActivitySession.isLowPowerMode(),
     });
     void c.diagnostics.prune();
