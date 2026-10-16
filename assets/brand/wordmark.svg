@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 260" width="820" height="260">
+  <!-- CityTurfer wordmark: "City" regular in Cream, "Turfer" heavy in the glow ramp. System sans (SF Pro / Roboto). -->
+  <defs>
+    <linearGradient id="ramp" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#F72FA8"/>
+      <stop offset="0.7" stop-color="#FFB02E"/>
+      <stop offset="1" stop-color="#FFF3C4"/>
+    </linearGradient>
+  </defs>
+  <text x="0" y="190" font-family="-apple-system, 'SF Pro Display', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="180" letter-spacing="-4">
+    <tspan font-weight="500" fill="#FFF3C4">City</tspan><tspan font-weight="900" fill="url(#ramp)">Turfer</tspan>
+  </text>
+</svg>
