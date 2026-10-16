@@ -8,9 +8,10 @@ import * as TaskManager from 'expo-task-manager';
 import { AppState } from 'react-native';
 
 import { getContainer } from '@/composition-root';
+import { LOCATION_TASK } from '@/constants/location';
 
 import { backgroundActivitySession } from './background-activity-session';
-import { LOCATION_TASK, toFix } from './expo-location-tracker';
+import { toFix } from './expo-location-tracker';
 
 type Source = 'task' | 'live';
 

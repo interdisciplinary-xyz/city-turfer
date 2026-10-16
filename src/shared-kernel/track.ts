@@ -1,3 +1,5 @@
+import { MAX_FIX_GAP_MS } from '@/constants/tracking';
+
 import type { GeoPoint } from './geo';
 
 /** A Fix that passed the Fix Filter and became part of the route. SI units. */
@@ -27,9 +29,6 @@ export function trackFromPoints(points: readonly TrackPoint[]): Track {
 }
 
 export const pointsOf = (track: Track): TrackPoint[] => track.segments.flat();
-
-/** A gap longer than this (no fixes at all) starts a new segment: never draw, measure or claim across it. */
-export const MAX_FIX_GAP_MS = 45_000;
 
 /**
  * Renumbers segments 0..n so that every original segment boundary is kept and

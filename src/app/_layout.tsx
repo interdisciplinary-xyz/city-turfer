@@ -3,8 +3,8 @@ import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { ACCENT, DARK } from '@/constants/colors';
 import { AppProvider, useApp } from '@/ui-kit/app-context';
-import { ACCENT, DARK } from '@/ui-kit/theme';
 
 function Gate() {
   const { auth } = useApp();

@@ -2,13 +2,14 @@ import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ACTIVITY_TYPES, TYPE_LABEL } from '@/constants/activity';
+import { ACCENT, TYPE_COLOR } from '@/constants/colors';
 import { activityStats } from '@/contexts/activity-log/ui/activity-stats';
 import { useActivities } from '@/contexts/activity-log/ui/hooks';
 import { useTurfSummary } from '@/contexts/territory/ui/hooks';
-import { ACTIVITY_TYPES } from '@/shared-kernel';
 import { Card, Stat } from '@/ui-kit/components';
 import { distanceText, formatArea, formatDistance, formatDuration } from '@/ui-kit/format';
-import { ACCENT, TYPE_COLOR, TYPE_LABEL, usePalette } from '@/ui-kit/theme';
+import { usePalette } from '@/ui-kit/theme';
 
 /** Composes Activity Log (distance, time) and Territory (turf) totals. */
 export default function StatsScreen() {

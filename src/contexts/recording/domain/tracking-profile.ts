@@ -1,4 +1,5 @@
-import { type ActivityType, ELEV_HYSTERESIS_M, MOVING_SPEED_MPS } from '@/shared-kernel';
+import { ELEV_HYSTERESIS_M, MOVING_SPEED_MPS } from '@/constants/tracking';
+import { type ActivityType } from '@/shared-kernel';
 
 /**
  * Per-type tuning. Filter thresholds must stay in sync with

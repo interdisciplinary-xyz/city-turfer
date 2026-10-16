@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { ACCENT, DARK, TIER_COLOR } from '@/constants/colors';
 import { useApp } from '@/ui-kit/app-context';
 import { Button } from '@/ui-kit/components';
-import { ACCENT, DARK, TIER_COLOR } from '@/ui-kit/theme';
 
 export default function SignIn() {
   const { signIn } = useApp();

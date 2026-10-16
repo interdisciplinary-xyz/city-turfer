@@ -1,6 +1,6 @@
-import { DomainError } from './errors';
+import { EARTH_RADIUS_M } from '@/constants/geo';
 
-export const EARTH_RADIUS_M = 6371008.8;
+import { DomainError } from './errors';
 
 export interface GeoPoint {
   readonly lat: number;

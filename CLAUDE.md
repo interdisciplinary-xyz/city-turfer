@@ -24,7 +24,8 @@ Full design and **milestones (vertical slices M1–M7)** in `docs/poc-plan.md`; 
 ```
 index.ts                             entry: imports the background task first, then expo-router/entry
 src/app/                             expo-router screens (SDK 57 convention) — thin, compose context ui/ components
-src/ui-kit/                          theme, formatting, shared components, AppContext (auth + container)
+src/constants/                       shared constants (activity types, colours, map styles, tracking thresholds); imports nothing
+src/ui-kit/                          theme hook, formatting, shared components, AppContext (auth + container)
 src/wiring.ts                        platform-independent wiring of all contexts (used by app + tests)
 src/dev/                             dev-only tools (demo history seeder)
 src/shared-kernel/                   pure VOs + TrackAnalyzer (distance, splits, elevation, simplify)

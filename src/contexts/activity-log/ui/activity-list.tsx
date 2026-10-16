@@ -1,7 +1,9 @@
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { TYPE_GLYPH } from '@/constants/activity';
+import { TYPE_COLOR } from '@/constants/colors';
 import { distanceText, formatDate, formatDuration, formatPaceOrSpeed } from '@/ui-kit/format';
-import { TYPE_COLOR, TYPE_GLYPH, usePalette } from '@/ui-kit/theme';
+import { usePalette } from '@/ui-kit/theme';
 
 import type { ActivityListItem } from '../contract';
 

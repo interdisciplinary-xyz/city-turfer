@@ -1,8 +1,9 @@
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
+import { TIER_COLOR } from '@/constants/colors';
 import { Card } from '@/ui-kit/components';
 import { formatArea } from '@/ui-kit/format';
-import { TIER_COLOR, usePalette } from '@/ui-kit/theme';
+import { usePalette } from '@/ui-kit/theme';
 
 import type { ClaimView } from '../contract';
 

@@ -3,9 +3,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ACTIVITY_TYPES, type ActivityType, type BoundingBox } from '@/shared-kernel';
+import { ACTIVITY_TYPES, TYPE_GLYPH, TYPE_LABEL } from '@/constants/activity';
+import { DARK, TYPE_COLOR } from '@/constants/colors';
+import { MAP_STYLE_DARK } from '@/constants/map';
+import { type ActivityType, type BoundingBox } from '@/shared-kernel';
 import { formatArea } from '@/ui-kit/format';
-import { DARK, MAP_STYLE_DARK, TYPE_COLOR, TYPE_GLYPH, TYPE_LABEL } from '@/ui-kit/theme';
 
 import { useTurfSummary, useTurfViewport } from './hooks';
 import { TurfLayers } from './layers';

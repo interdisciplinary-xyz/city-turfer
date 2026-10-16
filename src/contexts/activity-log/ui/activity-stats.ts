@@ -1,4 +1,5 @@
-import { ACTIVITY_TYPES, type ActivityType } from '@/shared-kernel';
+import { ACTIVITY_TYPES } from '@/constants/activity';
+import { type ActivityType } from '@/shared-kernel';
 
 import type { ActivityListItem } from '../contract';
 

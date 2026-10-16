@@ -34,6 +34,14 @@ module.exports = {
       from: { path: '^src/app/' },
       to: { path: '^src/(contexts/[^/]+/(domain|application|infrastructure)/|platform/)' },
     },
+    {
+      name: 'constants-are-leaf',
+      severity: 'error',
+      comment:
+        'src/constants holds plain shared values: it imports nothing but other constants, so any layer may use it.',
+      from: { path: '^src/constants/' },
+      to: { pathNot: '^src/constants/' },
+    },
     { name: 'no-circular', severity: 'error', from: {}, to: { circular: true } },
   ],
   options: {
