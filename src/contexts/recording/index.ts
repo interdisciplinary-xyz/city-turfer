@@ -1,5 +1,5 @@
 // Public API of the Recording context.
-import type { RecordingDeps } from './application/useCases';
+import type { RecordingDeps } from './application/use-cases';
 import {
   DiscardRecording,
   FinishedTrackQuery,
@@ -13,7 +13,7 @@ import {
   RecoverSession,
   ResumeRecording,
   StartRecording,
-} from './application/useCases';
+} from './application/use-cases';
 
 export function createRecordingApi(deps: RecordingDeps) {
   return {
@@ -32,6 +32,6 @@ export function createRecordingApi(deps: RecordingDeps) {
   };
 }
 export type RecordingApi = ReturnType<typeof createRecordingApi>;
-export type { FinishResult, RecordingDeps, RecoveryResult, StartResult } from './application/useCases';
+export type { FinishResult, RecordingDeps, RecoveryResult, StartResult } from './application/use-cases';
 export type { SessionFinished } from './domain/events';
-export type { LiveSnapshot, SessionStatus } from './domain/RecordingSession';
+export type { LiveSnapshot, SessionStatus } from './domain/recording-session';

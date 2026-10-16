@@ -1,5 +1,5 @@
 // Public API of the Identity context.
-import { GetCurrentUser, type IdentityDeps, SignIn, SignOut } from './application/useCases';
+import { GetCurrentUser, type IdentityDeps, SignIn, SignOut } from './application/use-cases';
 
 export function createIdentityApi(deps: IdentityDeps, isRecording: () => Promise<boolean>) {
   return {
@@ -9,5 +9,5 @@ export function createIdentityApi(deps: IdentityDeps, isRecording: () => Promise
   };
 }
 export type IdentityApi = ReturnType<typeof createIdentityApi>;
-export type { IdentityDeps } from './application/useCases';
-export type { User } from './domain/User';
+export type { IdentityDeps } from './application/use-cases';
+export type { User } from './domain/user';

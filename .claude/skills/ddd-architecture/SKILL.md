@@ -141,7 +141,7 @@ export class RecordingSession {
 ### Repository port (domain) and use case (application)
 
 ```ts
-// domain/RecordingSessionRepository.ts
+// domain/recording-session-repository.ts
 export interface RecordingSessionRepository {
   getActive(): Promise<RecordingSession | null>;
   /** Atomic: session state + new track points + domain events (outbox) in ONE transaction. */
@@ -176,7 +176,7 @@ Use cases return result objects instead of throwing for expected outcomes. They 
 ### Anti-corruption layer
 
 ```ts
-// recording/infrastructure/ExpoLocationTracker.ts — the only file that knows LocationObject
+// recording/infrastructure/expo-location-tracker.ts — the only file that knows LocationObject
 export const toFix = (l: Location.LocationObject): Fix =>
   Fix.of({
     lat: l.coords.latitude,

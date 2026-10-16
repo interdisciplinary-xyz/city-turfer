@@ -1,7 +1,7 @@
 import { distanceM } from '@/shared-kernel';
 
-import type { Fix } from './Fix';
-import type { TrackingProfile } from './TrackingProfile';
+import type { Fix } from './fix';
+import type { TrackingProfile } from './tracking-profile';
 
 export interface Tail {
   readonly lat: number;

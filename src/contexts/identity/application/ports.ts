@@ -1,4 +1,4 @@
-import type { Email, User, UserId } from '../domain/User';
+import type { Email, User, UserId } from '../domain/user';
 
 export type SignInOutcome = { kind: 'signed-in'; user: User } | { kind: 'invalid-credentials' };
 

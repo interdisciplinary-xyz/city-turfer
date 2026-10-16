@@ -10,13 +10,13 @@ import {
   createActivityLogApi,
   type RouteEstimator,
 } from '@/contexts/activity-log';
-import { SqliteActivityRepository } from '@/contexts/activity-log/infrastructure/SqliteActivityRepository';
+import { SqliteActivityRepository } from '@/contexts/activity-log/infrastructure/sqlite-activity-repository';
 import { createRecordingApi, type SessionFinished } from '@/contexts/recording';
 import type { LiveSessionNotifier, LocationTracker, PermissionGateway } from '@/contexts/recording/application/ports';
-import { SqliteRecordingSessionRepository } from '@/contexts/recording/infrastructure/SqliteRecordingSessionRepository';
+import { SqliteRecordingSessionRepository } from '@/contexts/recording/infrastructure/sqlite-recording-session-repository';
 import { createTerritoryApi } from '@/contexts/territory';
-import { H3CellGrid } from '@/contexts/territory/infrastructure/H3CellGrid';
-import { SqliteTerritoryRepository } from '@/contexts/territory/infrastructure/SqliteTerritoryRepository';
+import { H3CellGrid } from '@/contexts/territory/infrastructure/h3-cell-grid';
+import { SqliteTerritoryRepository } from '@/contexts/territory/infrastructure/sqlite-territory-repository';
 import type { Database } from '@/platform/database';
 import { Diagnostics } from '@/platform/diagnostics';
 import { runOnce } from '@/platform/jobs';

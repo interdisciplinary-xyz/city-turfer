@@ -1,8 +1,8 @@
 import { type ActivityType, type Clock, DomainError, type IdGenerator, type TrackPoint } from '@/shared-kernel';
 
-import type { Fix } from '../domain/Fix';
-import { type IngestReport, type LiveSnapshot, RecordingSession } from '../domain/RecordingSession';
-import type { RecordingSessionRepository } from '../domain/RecordingSessionRepository';
+import type { Fix } from '../domain/fix';
+import { type IngestReport, type LiveSnapshot, RecordingSession } from '../domain/recording-session';
+import type { RecordingSessionRepository } from '../domain/recording-session-repository';
 import type { LiveSessionNotifier, LocationTracker, PermissionGateway } from './ports';
 
 export interface RecordingDeps {

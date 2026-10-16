@@ -4,9 +4,9 @@ import { appendToOutbox } from '@/platform/outbox';
 import type { TrackPoint } from '@/shared-kernel';
 
 import type { ActivityDistanceEstimated, ActivityListItem } from '../contract';
-import { Activity, type ActivityState } from '../domain/Activity';
-import type { ActivityRepository } from '../domain/ActivityRepository';
-import { estimatedTotals, type GapRoute } from '../domain/GapRoute';
+import { Activity, type ActivityState } from '../domain/activity';
+import type { ActivityRepository } from '../domain/activity-repository';
+import { estimatedTotals, type GapRoute } from '../domain/gap-route';
 
 type Row = {
   id: string;

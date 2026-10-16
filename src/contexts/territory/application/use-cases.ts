@@ -8,10 +8,10 @@ import {
 } from '@/shared-kernel';
 
 import type { ClaimView, TurfCellView, TurfSummaryView } from '../contract';
-import type { CellGrid, CellId } from '../domain/CellGrid';
-import { Claim } from '../domain/Claim';
-import { strengthOf, tierOf } from '../domain/Strength';
-import type { CellRow, TerritoryRepository } from '../domain/TerritoryRepository';
+import type { CellGrid, CellId } from '../domain/cell-grid';
+import { Claim } from '../domain/claim';
+import { strengthOf, tierOf } from '../domain/strength';
+import type { CellRow, TerritoryRepository } from '../domain/territory-repository';
 
 /** Port: Activity Log's open-host track query. */
 export interface ActivityTrackSource {

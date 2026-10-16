@@ -1,8 +1,8 @@
 import { distanceM, DomainError } from '@/shared-kernel';
 import { loadFixes } from '@/test-support/fixtures';
 
-import type { Fix } from '../Fix';
-import { RecordingSession } from '../RecordingSession';
+import type { Fix } from '../fix';
+import { RecordingSession } from '../recording-session';
 
 const T0 = Date.parse('2026-01-01T07:00:00Z');
 const fix = (i: number, metresNorth: number, extra: Partial<Fix> = {}): Fix => ({

@@ -2,9 +2,9 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from '
 
 import { liveSessionStore } from '@/composition-root';
 import type { ActivityType, TrackPoint } from '@/shared-kernel';
-import { useContainer } from '@/ui-kit/AppContext';
+import { useContainer } from '@/ui-kit/app-context';
 
-import type { LiveSnapshot } from '../domain/RecordingSession';
+import type { LiveSnapshot } from '../domain/recording-session';
 
 const subscribe = (l: () => void) => liveSessionStore.subscribe(l);
 const getSnapshot = () => liveSessionStore.get();

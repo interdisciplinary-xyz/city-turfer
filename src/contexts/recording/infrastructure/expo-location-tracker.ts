@@ -1,9 +1,9 @@
 import * as Location from 'expo-location';
 
 import type { LocationTracker, PermissionGateway, PermissionResult } from '../application/ports';
-import type { Fix } from '../domain/Fix';
-import type { TrackingProfile } from '../domain/TrackingProfile';
-import { backgroundActivitySession } from './BackgroundActivitySession';
+import type { Fix } from '../domain/fix';
+import type { TrackingProfile } from '../domain/tracking-profile';
+import { backgroundActivitySession } from './background-activity-session';
 
 export const LOCATION_TASK = 'turftrack-location';
 

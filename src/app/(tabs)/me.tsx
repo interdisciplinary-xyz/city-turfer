@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { seedDemoHistory } from '@/dev/demoHistory';
-import { useApp, useContainer } from '@/ui-kit/AppContext';
+import { seedDemoHistory } from '@/dev/demo-history';
+import { useApp, useContainer } from '@/ui-kit/app-context';
 import { Button, Card } from '@/ui-kit/components';
 import { TYPE_COLOR, usePalette } from '@/ui-kit/theme';
 

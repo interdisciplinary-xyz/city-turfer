@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { useApp } from '@/ui-kit/AppContext';
+import { useApp } from '@/ui-kit/app-context';
 import { Button } from '@/ui-kit/components';
 import { ACCENT, DARK, TIER_COLOR } from '@/ui-kit/theme';
 

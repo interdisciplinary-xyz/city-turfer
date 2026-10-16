@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { TIER_COLOR } from '@/ui-kit/theme';
 
-import { DETAIL_ZOOM } from '../application/useCases';
+import { DETAIL_ZOOM } from '../application/use-cases';
 import type { ClaimView, TurfCellView } from '../contract';
 
 const tierColor = [

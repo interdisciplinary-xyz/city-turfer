@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { useActivities } from '@/contexts/activity-log/ui/hooks';
-import { type TrackLine, TurfMapView } from '@/contexts/territory/ui/TurfMapView';
+import { type TrackLine, TurfMapView } from '@/contexts/territory/ui/turf-map-view';
 
 /** Composes Activity Log (tracks) and Territory (turf) on one map. */
 export default function TurfScreen() {

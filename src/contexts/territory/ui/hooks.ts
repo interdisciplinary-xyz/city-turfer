@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { ACTIVITY_TYPES, type ActivityType, type BoundingBox } from '@/shared-kernel';
-import { useApp, useContainer } from '@/ui-kit/AppContext';
+import { useApp, useContainer } from '@/ui-kit/app-context';
 
 import type { ClaimView, TurfCellView, TurfSummaryView } from '../contract';
 

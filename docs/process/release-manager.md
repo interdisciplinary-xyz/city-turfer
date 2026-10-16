@@ -1,6 +1,6 @@
 # Branching, release & changelog policy
 
-Adapted from empatalk's `docs/process/RELEASE_MANAGER.md`. Repository: `interdisciplinary-xyz/city-turfer`.
+Adapted from empatalk's `docs/process/release-manager.md`. Repository: `interdisciplinary-xyz/city-turfer`.
 
 ## Flow
 

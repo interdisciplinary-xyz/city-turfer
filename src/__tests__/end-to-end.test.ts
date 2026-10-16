@@ -1,7 +1,7 @@
-import type { Fix } from '@/contexts/recording/domain/Fix';
+import type { Fix } from '@/contexts/recording/domain/fix';
 import { migrate } from '@/platform/migrations';
 import { loadFixes } from '@/test-support/fixtures';
-import { openNodeDatabase } from '@/test-support/nodeDatabase';
+import { openNodeDatabase } from '@/test-support/node-database';
 import { wire } from '@/wiring';
 
 /** Fake street router: an L-shaped route (1.3× the straight line); `offline` makes it throw. */

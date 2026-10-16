@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 
 import type { SessionStore } from '../application/ports';
-import { type UserId, userId } from '../domain/User';
+import { type UserId, userId } from '../domain/user';
 
 const KEY = 'turftrack.session.uid';
 // AFTER_FIRST_UNLOCK: the background task must read this while the phone is locked.

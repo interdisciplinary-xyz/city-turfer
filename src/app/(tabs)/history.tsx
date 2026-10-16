@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ActivityList } from '@/contexts/activity-log/ui/ActivityList';
+import { ActivityList } from '@/contexts/activity-log/ui/activity-list';
 import { useActivities } from '@/contexts/activity-log/ui/hooks';
 import { usePalette } from '@/ui-kit/theme';
 

@@ -9,9 +9,9 @@ import {
 } from '@/shared-kernel';
 
 import type { ActivityDetail, ActivityListItem } from '../contract';
-import { Activity } from '../domain/Activity';
-import type { ActivityRepository } from '../domain/ActivityRepository';
-import { acceptRoute, estimatedTotals, type GapRoute, gapsOf } from '../domain/GapRoute';
+import { Activity } from '../domain/activity';
+import type { ActivityRepository } from '../domain/activity-repository';
+import { acceptRoute, estimatedTotals, type GapRoute, gapsOf } from '../domain/gap-route';
 
 /** Port: the finished track of a recording session (Recording's open-host service). */
 export interface FinishedTrackSource {

@@ -5,7 +5,7 @@ import { ScrollView, StyleSheet, Text, useColorScheme, View } from 'react-native
 import { Card, Stat } from '@/ui-kit/components';
 import { formatDate, formatDistance, formatDuration, formatPaceOrSpeed } from '@/ui-kit/format';
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT, TYPE_COLOR, usePalette } from '@/ui-kit/theme';
-import { trackWithGaps } from '@/ui-kit/trackGeometry';
+import { trackWithGaps } from '@/ui-kit/track-geometry';
 
 import type { ActivityDetail } from '../contract';
 

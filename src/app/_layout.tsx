@@ -3,7 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { AppProvider, useApp } from '@/ui-kit/AppContext';
+import { AppProvider, useApp } from '@/ui-kit/app-context';
 import { ACCENT, DARK } from '@/ui-kit/theme';
 
 function Gate() {

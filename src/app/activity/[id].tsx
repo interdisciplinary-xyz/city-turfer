@@ -1,11 +1,11 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Alert, Text, View } from 'react-native';
 
-import { ActivityDetailView } from '@/contexts/activity-log/ui/ActivityDetailView';
+import { ActivityDetailView } from '@/contexts/activity-log/ui/activity-detail-view';
 import { useActivity } from '@/contexts/activity-log/ui/hooks';
 import { useClaim } from '@/contexts/territory/ui/hooks';
 import { ClaimLayers } from '@/contexts/territory/ui/layers';
-import { TurfGainedCard } from '@/contexts/territory/ui/TurfGainedCard';
+import { TurfGainedCard } from '@/contexts/territory/ui/turf-gained-card';
 import { Button } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
 

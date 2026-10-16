@@ -16,9 +16,9 @@ import {
   TYPE_LABEL,
   usePalette,
 } from '@/ui-kit/theme';
-import { trackWithGaps } from '@/ui-kit/trackGeometry';
+import { trackWithGaps } from '@/ui-kit/track-geometry';
 
-import { useRecording } from './useRecording';
+import { useRecording } from './use-recording';
 
 const STATUS_BANNER: Record<string, { text: string; color: string }> = {
   acquiring: { text: 'Waiting for GPS…', color: '#5C6577' },
