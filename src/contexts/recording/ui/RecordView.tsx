@@ -138,7 +138,7 @@ export function RecordView({ onFinished }: { onFinished: (activityId: string) =>
         </Pressable>
       )}
 
-      <View style={[s.panel, { backgroundColor: p.card, paddingBottom: 16 }]}>
+      <View style={[s.panel, { backgroundColor: p.card, paddingBottom: 40 }]}>
         {banner && (
           <View style={[s.banner, { backgroundColor: banner.color }]}>
             <Text style={s.bannerText}>{banner.text}</Text>

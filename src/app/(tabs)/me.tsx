@@ -1,14 +1,12 @@
 import * as Location from 'expo-location';
 import * as Updates from 'expo-updates';
 import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useTurfSummary } from '@/contexts/territory/ui/hooks';
 import { seedDemoHistory } from '@/dev/demoHistory';
 import { useApp, useContainer } from '@/ui-kit/AppContext';
-import { Button, Card, Stat } from '@/ui-kit/components';
-import { formatArea } from '@/ui-kit/format';
+import { Button, Card } from '@/ui-kit/components';
 import { TYPE_COLOR, usePalette } from '@/ui-kit/theme';
 
 export default function MeScreen() {
@@ -16,7 +14,6 @@ export default function MeScreen() {
   const insets = useSafeAreaInsets();
   const { auth, signOut } = useApp();
   const c = useContainer();
-  const summary = useTurfSummary();
   const [seeding, setSeeding] = useState<string | null>(null);
   const [checking, setChecking] = useState<string | null>(null);
   const user = auth.status === 'signed-in' ? auth.user : null;
@@ -43,20 +40,6 @@ export default function MeScreen() {
     >
       <Text style={[s.h1, { color: p.text }]}>{user?.displayName ?? 'Me'}</Text>
       <Text style={{ color: p.muted }}>{user?.email}</Text>
-      <Card>
-        <View style={{ flexDirection: 'row' }}>
-          <Stat label='Turf' value={summary ? formatArea(summary.areaKm2) : '—'} />
-          <Stat label='Cells' value={summary ? String(summary.cellCount) : '—'} />
-          <Stat label='Strong' value={summary ? String(summary.strongCells) : '—'} />
-        </View>
-        {summary && (
-          <View style={{ flexDirection: 'row', marginTop: 12 }}>
-            <Stat label='Walk cells' value={String(summary.byType.walk)} />
-            <Stat label='Run cells' value={String(summary.byType.run)} />
-            <Stat label='Ride cells' value={String(summary.byType.cycle)} />
-          </View>
-        )}
-      </Card>
       <Card style={{ gap: 10 }}>
         <Text style={[s.h2, { color: p.text }]}>Demo data</Text>
         <Text style={{ color: p.muted }}>
