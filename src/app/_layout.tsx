@@ -28,6 +28,10 @@ function Gate() {
           options={{ headerShown: true, title: 'Activity', headerBackTitle: 'Back' }}
         />
         <Stack.Screen name='profile' options={{ headerShown: true, title: 'Profile', headerBackTitle: 'Back' }} />
+        <Stack.Screen
+          name='achievements'
+          options={{ headerShown: true, title: 'Achievements', headerBackTitle: 'Back' }}
+        />
         <Stack.Screen name='account' options={{ headerShown: true, title: 'Account', headerBackTitle: 'Back' }} />
         <Stack.Screen name='info' options={{ headerShown: true, title: 'Info', headerBackTitle: 'Back' }} />
       </Stack.Protected>

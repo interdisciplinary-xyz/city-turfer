@@ -1,6 +1,9 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { useMemo } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ACCENT } from '@/constants/colors';
+import { evaluateAchievements } from '@/contexts/achievements';
 import { useActivities } from '@/contexts/activity-log/ui/hooks';
 import { useTurfSummary } from '@/contexts/territory/ui/hooks';
 import { useApp } from '@/ui-kit/app-context';
@@ -17,6 +20,16 @@ export default function ProfileScreen() {
   const totalM = (activities ?? []).reduce((m, a) => m + a.distanceM, 0);
   const total = formatDistance(totalM);
   const area = summary ? formatArea(summary.areaKm2).split(' ') : ['—'];
+  const achievements = useMemo(
+    () =>
+      evaluateAchievements({
+        activities: activities ?? [],
+        turfCells: summary?.cellCount ?? 0,
+        strongCells: summary?.strongCells ?? 0,
+      }),
+    [activities, summary]
+  );
+  const unlocked = achievements.filter((a) => a.unlocked).length;
   const name = user?.displayName ?? 'You';
 
   return (
@@ -37,6 +50,14 @@ export default function ProfileScreen() {
           <Stat label='Turf' value={area[0]} unit={area[1]} />
         </View>
       </Card>
+      <Pressable testID='profile-achievements' onPress={() => router.push('/achievements')}>
+        <Card style={s.link}>
+          <Text style={[s.linkText, { color: p.text }]}>Achievements</Text>
+          <Text style={{ color: ACCENT, fontWeight: '700' }}>
+            {unlocked} / {achievements.length} ›
+          </Text>
+        </Card>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -54,4 +75,6 @@ const s = StyleSheet.create({
   },
   initial: { color: '#FFFFFF', fontSize: 38, fontWeight: '900' },
   name: { fontSize: 26, fontWeight: '900' },
+  link: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  linkText: { fontSize: 17, fontWeight: '800' },
 });

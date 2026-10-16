@@ -1,4 +1,4 @@
-# The Me tab opens a menu: Profile, Account, Info.
+# The Me tab opens a menu: Profile, Achievements, Account, Info.
 appId: com.turftrack.poc
 tags: [me]
 ---
@@ -6,6 +6,10 @@ tags: [me]
 - tapOn: { id: 'tab-me' }
 - tapOn: { id: 'me-menu-profile' }
 - assertVisible: { id: 'profile-name' }
+- tapOn: { id: 'profile-achievements' }
+- assertVisible: { id: 'achievements-count' }
+- assertVisible: { id: 'achievement-first-steps' }
+- tapOn: 'Back'
 - tapOn: 'Back'
 - tapOn: { id: 'tab-me' }
 - tapOn: { id: 'me-menu-info' }
