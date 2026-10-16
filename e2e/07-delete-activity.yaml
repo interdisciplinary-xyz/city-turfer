@@ -1,0 +1,15 @@
+# Deleting an activity asks for confirmation and removes it from History.
+appId: com.turftrack.poc
+tags: [history]
+---
+- runFlow: subflows/launch.yaml
+- tapOn: { id: 'tab-history' }
+- copyTextFrom: { id: 'history-item-0' }
+- tapOn: { id: 'history-item-0' }
+- extendedWaitUntil: { visible: { id: 'delete-activity' }, timeout: 15000 }
+- scrollUntilVisible: { element: { id: 'delete-activity' } }
+- tapOn: { id: 'delete-activity' }
+- assertVisible: 'Delete activity?'
+- tapOn: 'Delete'
+- extendedWaitUntil: { visible: 'History', timeout: 10000 }
+- assertNotVisible: { text: '${maestro.copiedText}' }
