@@ -9,8 +9,8 @@ import { AppState } from 'react-native';
 
 import { getContainer } from '@/composition-root';
 
-import { backgroundActivitySession } from './BackgroundActivitySession';
-import { LOCATION_TASK, toFix } from './ExpoLocationTracker';
+import { backgroundActivitySession } from './background-activity-session';
+import { LOCATION_TASK, toFix } from './expo-location-tracker';
 
 type Source = 'task' | 'live';
 

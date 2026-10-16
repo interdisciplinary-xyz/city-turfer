@@ -1,7 +1,7 @@
 import type { ActivityType, BoundingBox } from '@/shared-kernel';
 
-import type { CellId } from './CellGrid';
-import type { Claim } from './Claim';
+import type { CellId } from './cell-grid';
+import type { Claim } from './claim';
 
 export interface CellRow {
   cell: CellId;

@@ -6,14 +6,14 @@ import * as Crypto from 'expo-crypto';
 import * as Location from 'expo-location';
 import { AppState } from 'react-native';
 
-import { OsmRouteEstimator } from '@/contexts/activity-log/infrastructure/OsmRouteEstimator';
+import { OsmRouteEstimator } from '@/contexts/activity-log/infrastructure/osm-route-estimator';
 import { createIdentityApi } from '@/contexts/identity';
-import { MockAuthGateway } from '@/contexts/identity/infrastructure/MockAuthGateway';
-import { SecureStoreSessionStore } from '@/contexts/identity/infrastructure/SecureStoreSessionStore';
-import { backgroundActivitySession } from '@/contexts/recording/infrastructure/BackgroundActivitySession';
-import { ExpoLocationTracker, ExpoPermissionGateway } from '@/contexts/recording/infrastructure/ExpoLocationTracker';
-import { liveSessionStore } from '@/contexts/recording/infrastructure/LiveSessionStore';
-import { openExpoDatabase } from '@/platform/expoDatabase';
+import { MockAuthGateway } from '@/contexts/identity/infrastructure/mock-auth-gateway';
+import { SecureStoreSessionStore } from '@/contexts/identity/infrastructure/secure-store-session-store';
+import { backgroundActivitySession } from '@/contexts/recording/infrastructure/background-activity-session';
+import { ExpoLocationTracker, ExpoPermissionGateway } from '@/contexts/recording/infrastructure/expo-location-tracker';
+import { liveSessionStore } from '@/contexts/recording/infrastructure/live-session-store';
+import { openExpoDatabase } from '@/platform/expo-database';
 import { migrate } from '@/platform/migrations';
 
 import { type Container, wire } from './wiring';

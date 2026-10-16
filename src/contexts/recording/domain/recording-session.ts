@@ -1,9 +1,9 @@
 import { type ActivityType, DomainError, MAX_FIX_GAP_MS, type TrackPoint } from '@/shared-kernel';
 
 import type { RecordingEvent } from './events';
-import type { Fix } from './Fix';
-import { judgeFix, type Tail } from './FixFilter';
-import { type TrackingProfile, trackingProfileFor } from './TrackingProfile';
+import type { Fix } from './fix';
+import { judgeFix, type Tail } from './fix-filter';
+import { type TrackingProfile, trackingProfileFor } from './tracking-profile';
 
 export type SessionStatus = 'recording' | 'paused' | 'autoPaused' | 'finished' | 'discarded';
 export const ACTIVE_STATUSES: readonly SessionStatus[] = ['recording', 'paused', 'autoPaused'];

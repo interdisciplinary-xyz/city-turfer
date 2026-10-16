@@ -3,8 +3,8 @@ import type { Database } from '@/platform/database';
 import { appendToOutbox } from '@/platform/outbox';
 import type { TrackPoint } from '@/shared-kernel';
 
-import { RecordingSession, type RecordingSessionState } from '../domain/RecordingSession';
-import type { RecordingSessionRepository } from '../domain/RecordingSessionRepository';
+import { RecordingSession, type RecordingSessionState } from '../domain/recording-session';
+import type { RecordingSessionRepository } from '../domain/recording-session-repository';
 
 type PointRow = {
   segment: number;

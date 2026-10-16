@@ -1,5 +1,5 @@
 import type { LiveSessionNotifier } from '../application/ports';
-import type { LiveSnapshot } from '../domain/RecordingSession';
+import type { LiveSnapshot } from '../domain/recording-session';
 
 type Listener = (s: LiveSnapshot | null) => void;
 

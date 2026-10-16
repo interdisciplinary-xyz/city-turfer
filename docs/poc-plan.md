@@ -95,7 +95,7 @@ expo-task-mgr ─────▶ │  RECORDING  │ ───(outbox)───�
 - **Use cases**: `SignIn`, `SignOut` (refused while a Recording Session is active), `GetCurrentUser`.
 - **Session**: the signed-in uid is stored in `expo-secure-store`, so the app opens signed in after a restart, and the headless background task can open the right database.
 - **Data isolation**: one SQLite file per user (`turftrack-<uid>.db`). With a single mock user this looks redundant, but it's what makes swapping in real accounts later a one-adapter change.
-- **Replaceability**: the mock credentials live only in `identity/infrastructure/MockAuthGateway.ts`. Nothing outside it knows they exist. A real provider (Firebase, Supabase, Auth0…) later means a new adapter plus a line in the composition root.
+- **Replaceability**: the mock credentials live only in `identity/infrastructure/mock-auth-gateway.ts`. Nothing outside it knows they exist. A real provider (Firebase, Supabase, Auth0…) later means a new adapter plus a line in the composition root.
 - **Not for production**: the mock gateway is selected only when `EXPO_PUBLIC_AUTH_MODE=mock` (the default for the PoC). A store or production build must fail at startup if it's still in mock mode.
 
 ### 4.1 Recording context
@@ -168,7 +168,7 @@ composition root ─▶ everything (wiring only)
 
 ```
 app/                                   expo-router screens (thin)
-  _layout.tsx                          1st import: recording/infrastructure/backgroundTask
+  _layout.tsx                          1st import: recording/infrastructure/background-task
   (auth)/sign-in.tsx
   (tabs)/index.tsx                     Record
   (tabs)/turf.tsx                      Turf Map  ← main screen

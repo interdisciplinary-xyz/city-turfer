@@ -3,7 +3,7 @@ name: gps-tracking
 description: How TurfTrack records GPS routes reliably with expo-location + expo-task-manager — background task wiring, permission flow (foreground → background, iOS/Android differences), per-activity accuracy settings, Android foreground service, point filtering (accuracy, speed spikes, jitter), auto-pause, crash/kill recovery and battery. Use for any work in src/tracking/, anything involving location permissions, "tracking stops when screen is off", missing points, GPS jumps, drift while standing still, or battery drain.
 ---
 
-> **DDD mapping** (see `docs/poc-plan.md`): filter → `recording/domain/FixFilter.ts`; auto-pause → `recording/domain/AutoPausePolicy.ts`; profiles → `recording/domain/TrackingProfile.ts`; session lifecycle → `RecordingSession` aggregate + `recording/application/` use cases; `expo-location` calls → `recording/infrastructure/ExpoLocationTracker.ts` (ACL); task → `recording/infrastructure/backgroundTask.ts` calling `IngestFixes`. Paths below written as `src/tracking/…` refer to these.
+> **DDD mapping** (see `docs/poc-plan.md`): filter → `recording/domain/fix-filter.ts`; auto-pause → `recording/domain/AutoPausePolicy.ts`; profiles → `recording/domain/tracking-profile.ts`; session lifecycle → `RecordingSession` aggregate + `recording/application/` use cases; `expo-location` calls → `recording/infrastructure/expo-location-tracker.ts` (ACL); task → `recording/infrastructure/background-task.ts` calling `IngestFixes`. Paths below written as `src/tracking/…` refer to these.
 
 # GPS tracking
 

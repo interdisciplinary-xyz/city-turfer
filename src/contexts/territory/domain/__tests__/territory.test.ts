@@ -1,8 +1,8 @@
 import { trackFromPoints, type TrackPoint } from '@/shared-kernel';
 
-import { H3CellGrid } from '../../infrastructure/H3CellGrid';
-import { Claim } from '../Claim';
-import { strengthOf, tierOf } from '../Strength';
+import { H3CellGrid } from '../../infrastructure/h3-cell-grid';
+import { Claim } from '../claim';
+import { strengthOf, tierOf } from '../strength';
 
 const grid = new H3CellGrid();
 const pt = (lat: number, lon: number, t: number, segment = 0): TrackPoint => ({

@@ -10,7 +10,7 @@ import {
   RecordActivityFromSession,
   RenameActivity,
   SplitTrackGaps,
-} from './application/useCases';
+} from './application/use-cases';
 
 export function createActivityLogApi(deps: ActivityLogDeps) {
   return {
@@ -26,5 +26,5 @@ export function createActivityLogApi(deps: ActivityLogDeps) {
   };
 }
 export type ActivityLogApi = ReturnType<typeof createActivityLogApi>;
-export type { ActivityLogDeps, FinishedTrackSource, RouteEstimator } from './application/useCases';
+export type { ActivityLogDeps, FinishedTrackSource, RouteEstimator } from './application/use-cases';
 export type * from './contract';

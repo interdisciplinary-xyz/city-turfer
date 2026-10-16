@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { Fix } from '@/contexts/recording/domain/Fix';
+import type { Fix } from '@/contexts/recording/domain/fix';
 
 /** Minimal GPX reader for test fixtures in tools/fixtures/. */
 export function loadFixes(name: string): Fix[] {

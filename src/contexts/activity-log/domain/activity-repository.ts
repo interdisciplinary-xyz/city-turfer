@@ -1,8 +1,8 @@
 import type { TrackPoint } from '@/shared-kernel';
 
 import type { ActivityListItem } from '../contract';
-import type { Activity } from './Activity';
-import type { GapRoute } from './GapRoute';
+import type { Activity } from './activity';
+import type { GapRoute } from './gap-route';
 
 export interface ActivityRepository {
   exists(id: string): Promise<boolean>;

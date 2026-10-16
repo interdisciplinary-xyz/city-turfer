@@ -7,7 +7,7 @@ import {
   ReclaimTurfOfActivity,
   ReleaseTurfOfActivity,
   type TerritoryDeps,
-} from './application/useCases';
+} from './application/use-cases';
 
 export function createTerritoryApi(deps: TerritoryDeps) {
   return {
@@ -20,6 +20,6 @@ export function createTerritoryApi(deps: TerritoryDeps) {
   };
 }
 export type TerritoryApi = ReturnType<typeof createTerritoryApi>;
-export type { ActivityTrackSource, TerritoryDeps } from './application/useCases';
-export { DETAIL_ZOOM } from './application/useCases';
+export type { ActivityTrackSource, TerritoryDeps } from './application/use-cases';
+export { DETAIL_ZOOM } from './application/use-cases';
 export type * from './contract';

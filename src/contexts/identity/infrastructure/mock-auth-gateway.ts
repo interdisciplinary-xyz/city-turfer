@@ -1,5 +1,5 @@
 import type { AuthGateway, SignInOutcome } from '../application/ports';
-import { type Email, type User, type UserId, userId } from '../domain/User';
+import { type Email, type User, type UserId, userId } from '../domain/user';
 
 /**
  * PoC-only authentication (docs/poc-plan.md §4.0, §9). Exactly one account.

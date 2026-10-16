@@ -1,5 +1,5 @@
-import type { LiveSnapshot } from '../domain/RecordingSession';
-import type { TrackingProfile } from '../domain/TrackingProfile';
+import type { LiveSnapshot } from '../domain/recording-session';
+import type { TrackingProfile } from '../domain/tracking-profile';
 
 export interface LocationTracker {
   start(profile: TrackingProfile): Promise<void>;

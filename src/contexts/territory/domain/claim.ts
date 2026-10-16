@@ -1,7 +1,7 @@
 import { type ActivityType, distanceM, DomainError, interpolate, type Track } from '@/shared-kernel';
 
 import type { TurfClaimed } from '../contract';
-import type { CellGrid, CellId } from './CellGrid';
+import type { CellGrid, CellId } from './cell-grid';
 
 export interface ClaimState {
   readonly activityId: string;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { useApp, useContainer } from '@/ui-kit/AppContext';
+import { useApp, useContainer } from '@/ui-kit/app-context';
 
 import type { ActivityDetail, ActivityListItem } from '../contract';
 

@@ -1,6 +1,6 @@
 import type { ActivityType, GeoPoint } from '@/shared-kernel';
 
-import type { RouteEstimator } from '../application/useCases';
+import type { RouteEstimator } from '../application/use-cases';
 
 /**
  * FOSSGIS OpenStreetMap routing (OSRM). Receives only the two endpoints of a

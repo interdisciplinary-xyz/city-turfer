@@ -1,6 +1,6 @@
 import type { TrackPoint } from '@/shared-kernel';
 
-import type { RecordingSession } from './RecordingSession';
+import type { RecordingSession } from './recording-session';
 
 export interface RecordingSessionRepository {
   /** The single Recording/Paused/AutoPaused session, if any. */
