@@ -10,12 +10,14 @@ import { AppState } from 'react-native';
 import { OsmRouteEstimator } from '@/contexts/activity-log/infrastructure/osm-route-estimator';
 import { SecureStoreGapEstimationSetting } from '@/contexts/activity-log/infrastructure/secure-store-gap-estimation-setting';
 import { createIdentityApi } from '@/contexts/identity';
+import { CachedSessionStore } from '@/contexts/identity/infrastructure/cached-session-store';
 import { MockAuthGateway } from '@/contexts/identity/infrastructure/mock-auth-gateway';
 import { SecureStoreSessionStore } from '@/contexts/identity/infrastructure/secure-store-session-store';
 import { backgroundActivitySession } from '@/contexts/recording/infrastructure/background-activity-session';
 import { ExpoLocationTracker, ExpoPermissionGateway } from '@/contexts/recording/infrastructure/expo-location-tracker';
 import { liveSessionStore } from '@/contexts/recording/infrastructure/live-session-store';
 import { openExpoDatabase } from '@/platform/expo-database';
+import { runWhenForeground } from '@/platform/foreground';
 import { migrate } from '@/platform/migrations';
 
 import { type Container, wire } from './wiring';
@@ -28,12 +30,18 @@ if (AUTH_MODE === 'mock' && APP_ENV === 'production') {
   throw new Error('Mock authentication must not ship in a production build (docs/poc-plan.md §4.0).');
 }
 
-const sessionStore = new SecureStoreSessionStore();
+// One instance for sign-in, sign-out and getContainer(): it caches the signed-in uid in memory.
+const sessionStore = new CachedSessionStore(new SecureStoreSessionStore());
 const tracker = new ExpoLocationTracker();
 
-export const identity = createIdentityApi({ auth: new MockAuthGateway(), sessions: sessionStore }, () =>
-  tracker.isRunning()
-);
+export const identity = createIdentityApi({ auth: new MockAuthGateway(), sessions: sessionStore }, isRecording);
+
+/** Sign-out gate: the domain's active Recording Session, not whether the OS tracker happens to run. */
+async function isRecording(): Promise<boolean> {
+  const c = await getContainer().catch(() => null);
+  if (!c) return tracker.isRunning();
+  return c.hasActiveSession().catch(() => true); // unknown: don't sign out from under a recording
+}
 
 // --- Per-user container ----------------------------------------------------------
 
@@ -51,13 +59,23 @@ const adapters = {
   },
 };
 
-let current: { userId: string; promise: Promise<Container>; stop?: () => void } | null = null;
+let current: {
+  userId: string;
+  promise: Promise<Container>;
+  cancelMaintenance: () => void;
+  stop?: () => void;
+} | null = null;
 
-/** The signed-in user's container, or null when nobody is signed in. */
+/**
+ * The signed-in user's container, or null when nobody is signed in. Rejects
+ * when the signed-in user can't be determined (keychain read error): that is
+ * NOT "nobody is signed in", callers must not stop a recording because of it.
+ */
 export async function getContainer(): Promise<Container | null> {
-  const uid = await sessionStore.read().catch(() => null);
+  const uid = await sessionStore.read();
   if (!uid) return null;
   if (current?.userId === uid) return current.promise;
+  let cancelMaintenance: () => void = () => undefined; // set once the container is wired
   const promise = (async () => {
     const db = await openExpoDatabase(`turftrack-${uid}.db`);
     await migrate(db);
@@ -75,14 +93,11 @@ export async function getContainer(): Promise<Container | null> {
       lowPowerMode: backgroundActivitySession.isLowPowerMode(),
     });
     void c.diagnostics.prune();
-    // Repairs first, then finish any work interrupted by a crash (also delivers the repairs' events).
-    void c
-      .runMaintenance()
-      .catch((e) => c.diagnostics.log('task-error', { code: 'maintenance', message: String(e) }))
-      .finally(() => void c.dispatcher.dispatchPending().then(() => c.estimateGaps()));
+    // Not on headless launches (OS delivering locations): only once the user has the app open.
+    cancelMaintenance = runWhenForeground(AppState, () => void c.runLaunchMaintenance().catch(() => undefined));
     return c;
   })();
-  const entry: NonNullable<typeof current> = { userId: uid, promise };
+  const entry: NonNullable<typeof current> = { userId: uid, promise, cancelMaintenance: () => cancelMaintenance() };
   current = entry;
   void promise.then(
     (c) => {
@@ -103,6 +118,7 @@ export async function getContainer(): Promise<Container | null> {
 export async function resetContainer(): Promise<void> {
   const c = current;
   current = null;
+  c?.cancelMaintenance();
   c?.stop?.();
   if (c) await (await c.promise.catch(() => null))?.db.close();
 }

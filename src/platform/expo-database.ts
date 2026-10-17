@@ -17,14 +17,19 @@ class ExpoDatabase implements Database {
     };
   }
 
+  // One native connection: while a transaction is open, ANY statement on it runs
+  // inside that transaction. So reads queue behind the mutex too — otherwise a
+  // read could see another caller's uncommitted (maybe later rolled back) writes.
+  // Inside `transaction(work)` use the `tx` executor, which bypasses the mutex
+  // (calling `db.*` from inside `work` would wait for the transaction itself).
   run(sql: string, params?: readonly SqlParam[]) {
     return this.mutex.lock(() => this.executor().run(sql, params));
   }
   all<T>(sql: string, params?: readonly SqlParam[]) {
-    return this.executor().all<T>(sql, params);
+    return this.mutex.lock(() => this.executor().all<T>(sql, params));
   }
   first<T>(sql: string, params?: readonly SqlParam[]) {
-    return this.executor().first<T>(sql, params);
+    return this.mutex.lock(() => this.executor().first<T>(sql, params));
   }
   exec(sql: string) {
     return this.mutex.lock(() => this.db.execAsync(sql));
@@ -39,7 +44,7 @@ class ExpoDatabase implements Database {
     });
   }
   close() {
-    return this.db.closeAsync();
+    return this.mutex.lock(() => this.db.closeAsync()); // never close under an open transaction
   }
 }
 

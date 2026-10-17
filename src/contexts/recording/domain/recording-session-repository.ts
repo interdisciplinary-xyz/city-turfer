@@ -6,8 +6,13 @@ export interface RecordingSessionRepository {
   /** The single Recording/Paused/AutoPaused session, if any. */
   getActive(): Promise<RecordingSession | null>;
   get(id: string): Promise<RecordingSession | null>;
-  /** Atomic: session state + new track points + pulled domain events (outbox), one transaction. */
+  /**
+   * Atomic: session state + new track points + pulled domain events (outbox), one transaction.
+   * Saving a discarded session deletes its track points in that same transaction.
+   */
   save(session: RecordingSession, newPoints: readonly TrackPoint[]): Promise<void>;
   pointsOf(sessionId: string): Promise<TrackPoint[]>;
   purgePoints(sessionId: string): Promise<void>;
+  /** Data repair for rows written before closed sessions dropped their position (tail); returns rows changed. */
+  scrubClosedSessions(): Promise<number>;
 }
