@@ -127,7 +127,7 @@ and hooks.
 | `(tabs)/turf`              | Turf map: tracks, glowing turf, walk/run/ride filter             |
 | `(tabs)/record`            | Record (raised centre tab): type picker, live map and stats      |
 | `(tabs)/stats`             | This week, 8-week chart, turf totals, all-time per type          |
-| `(tabs)/me`                | Opens the Me menu: Profile, Achievements, Account, Info          |
+| `(tabs)/me`                | Opens the Me drawer: Profile, Account, Info                      |
 | `history`                  | Activity history (from Dashboard and Stats)                      |
 | `activity/[id]`            | Activity detail: map, stats, splits, turf gained, delete         |
 | `profile` · `achievements` | Profile with totals; achievements with progress                  |
