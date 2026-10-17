@@ -1,0 +1,167 @@
+{
+  "description": "Turf strength = 1 - exp(-visits/k); tiers: faint <0.33 <= glowing <0.66 <= strong <0.9 <= blazing; strong = strong|blazing (>= 0.66). Pins src/contexts/territory/domain/strength.ts and tools/lib/turf.mjs.",
+  "defaultK": 3,
+  "strengthVectors": [
+    {
+      "visits": 1,
+      "k": 3,
+      "strength": 0.283469,
+      "tier": "faint",
+      "strong": false
+    },
+    {
+      "visits": 2,
+      "k": 3,
+      "strength": 0.486583,
+      "tier": "glowing",
+      "strong": false
+    },
+    {
+      "visits": 3,
+      "k": 3,
+      "strength": 0.632121,
+      "tier": "glowing",
+      "strong": false
+    },
+    {
+      "visits": 4,
+      "k": 3,
+      "strength": 0.736403,
+      "tier": "strong",
+      "strong": true
+    },
+    {
+      "visits": 5,
+      "k": 3,
+      "strength": 0.811124,
+      "tier": "strong",
+      "strong": true
+    },
+    {
+      "visits": 6,
+      "k": 3,
+      "strength": 0.864665,
+      "tier": "strong",
+      "strong": true
+    },
+    {
+      "visits": 7,
+      "k": 3,
+      "strength": 0.903028,
+      "tier": "blazing",
+      "strong": true
+    },
+    {
+      "visits": 8,
+      "k": 3,
+      "strength": 0.930517,
+      "tier": "blazing",
+      "strong": true
+    },
+    {
+      "visits": 10,
+      "k": 3,
+      "strength": 0.964326,
+      "tier": "blazing",
+      "strong": true
+    },
+    {
+      "visits": 20,
+      "k": 3,
+      "strength": 0.998727,
+      "tier": "blazing",
+      "strong": true
+    },
+    {
+      "visits": 1,
+      "k": 1,
+      "strength": 0.632121,
+      "tier": "glowing",
+      "strong": false
+    },
+    {
+      "visits": 2,
+      "k": 1,
+      "strength": 0.864665,
+      "tier": "strong",
+      "strong": true
+    },
+    {
+      "visits": 3,
+      "k": 1,
+      "strength": 0.950213,
+      "tier": "blazing",
+      "strong": true
+    },
+    {
+      "visits": 5,
+      "k": 1,
+      "strength": 0.993262,
+      "tier": "blazing",
+      "strong": true
+    },
+    {
+      "visits": 1,
+      "k": 10,
+      "strength": 0.095163,
+      "tier": "faint",
+      "strong": false
+    },
+    {
+      "visits": 10,
+      "k": 10,
+      "strength": 0.632121,
+      "tier": "glowing",
+      "strong": false
+    },
+    {
+      "visits": 7,
+      "k": 2.5,
+      "strength": 0.93919,
+      "tier": "blazing",
+      "strong": true
+    }
+  ],
+  "tierBoundaryVectors": [
+    {
+      "strength": 0,
+      "tier": "faint",
+      "strong": false
+    },
+    {
+      "strength": 0.329999999,
+      "tier": "faint",
+      "strong": false
+    },
+    {
+      "strength": 0.33,
+      "tier": "glowing",
+      "strong": false
+    },
+    {
+      "strength": 0.6599999990000001,
+      "tier": "glowing",
+      "strong": false
+    },
+    {
+      "strength": 0.66,
+      "tier": "strong",
+      "strong": true
+    },
+    {
+      "strength": 0.899999999,
+      "tier": "strong",
+      "strong": true
+    },
+    {
+      "strength": 0.9,
+      "tier": "blazing",
+      "strong": true
+    },
+    {
+      "strength": 1,
+      "tier": "blazing",
+      "strong": true
+    }
+  ]
+}
