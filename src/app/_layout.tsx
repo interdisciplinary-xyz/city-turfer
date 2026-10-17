@@ -27,6 +27,7 @@ function Gate() {
           name='activity/[id]'
           options={{ headerShown: true, title: 'Activity', headerBackTitle: 'Back' }}
         />
+        <Stack.Screen name='history' options={{ headerShown: true, title: 'History', headerBackTitle: 'Back' }} />
         <Stack.Screen name='profile' options={{ headerShown: true, title: 'Profile', headerBackTitle: 'Back' }} />
         <Stack.Screen
           name='achievements'
