@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { ACCENT, DARK, TIER_COLOR } from '@/constants/colors';
@@ -11,6 +11,7 @@ export default function SignIn() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const passwordRef = useRef<TextInput>(null);
 
   const submit = async () => {
     setBusy(true);
@@ -40,10 +41,13 @@ export default function SignIn() {
           spellCheck={false}
           textContentType='username'
           returnKeyType='next'
+          submitBehavior='submit'
+          onSubmitEditing={() => passwordRef.current?.focus()}
           value={email}
           onChangeText={setEmail}
         />
         <TextInput
+          ref={passwordRef}
           testID='sign-in-password'
           style={s.input}
           placeholder='Password'
