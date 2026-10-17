@@ -4,8 +4,10 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ACCENT } from '@/constants/colors';
-import { evaluateAchievements, summarizeAchievements } from '@/contexts/achievements';
+import { evaluateAchievements, type OnboardingStepId, summarizeAchievements } from '@/contexts/achievements';
 import { AchievementsCard } from '@/contexts/achievements/ui/achievements-card';
+import { OnboardingCard } from '@/contexts/achievements/ui/onboarding-card';
+import { useOnboarding } from '@/contexts/achievements/ui/use-onboarding';
 import { activityStats } from '@/contexts/activity-log/ui/activity-stats';
 import { useActivities } from '@/contexts/activity-log/ui/hooks';
 import { RecentActivities } from '@/contexts/activity-log/ui/recent-activities';
@@ -16,6 +18,14 @@ import { useApp } from '@/ui-kit/app-context';
 import { Button, Card, Stat } from '@/ui-kit/components';
 import { formatArea, formatDistance, formatDuration } from '@/ui-kit/format';
 import { usePalette } from '@/ui-kit/theme';
+
+const ONBOARDING_ROUTE: Record<OnboardingStepId, '/record' | '/turf' | '/achievements'> = {
+  'first-walk': '/record',
+  'see-turf': '/turf',
+  'try-all-three': '/record',
+  'come-back': '/record',
+  'unlock-three': '/achievements',
+};
 
 /** Start tab: composes Identity, Activity Log, Territory, Achievements and Recording. */
 export default function DashboardScreen() {
@@ -40,6 +50,19 @@ export default function DashboardScreen() {
       ),
     [activities, summary]
   );
+  const onboardingFacts = useMemo(
+    () =>
+      activities && summary
+        ? {
+            activities,
+            turfCells: summary.cellCount,
+            strongCells: summary.strongCells,
+            achievementsUnlocked: achievements.unlocked,
+          }
+        : null,
+    [activities, summary, achievements]
+  );
+  const onboarding = useOnboarding(auth.status === 'signed-in' ? auth.user.id : null, onboardingFacts);
   const distance = formatDistance(week.distanceM);
   const empty = activities !== null && activities.length === 0;
 
@@ -61,6 +84,13 @@ export default function DashboardScreen() {
               : ' '}
         </Text>
       </View>
+      {onboarding.progress && (
+        <OnboardingCard
+          progress={onboarding.progress}
+          onOpenStep={(id) => router.navigate(ONBOARDING_ROUTE[id])}
+          onHide={onboarding.hide}
+        />
+      )}
       {empty && !live && (
         <Button
           testID='dashboard-start'
