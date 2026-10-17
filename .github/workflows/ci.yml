@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    branches: [main, 'release/**']
+    branches: [main, 'release/**', 'scope/**']
     paths-ignore: ['**/*.md', 'docs/**', 'LICENSE']
   push:
     branches: [main]
@@ -17,17 +17,17 @@ concurrency:
 jobs:
   commitlint:
     name: commit naming
-    if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'scope/') && github.event.pull_request.draft == false
+    if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
       - uses: wagoid/commitlint-github-action@v6
-        with: { commitDepth: 1 }
+        # No commitDepth: lint every commit in the PR range (base..head), not just the last one.
 
   quality:
     name: lint + format + types + arch + unit
-    if: ${{ !startsWith(github.head_ref, 'scope/') && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
