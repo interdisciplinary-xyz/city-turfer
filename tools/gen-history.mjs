@@ -23,8 +23,9 @@
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { mulberry32, toGpx } from './lib/geo.mjs';
+
 import { generateTrack } from './lib/generate.mjs';
+import { mulberry32, toGpx } from './lib/geo.mjs';
 
 const args = Object.fromEntries(
   process.argv.slice(2).reduce((acc, a, i, arr) => (a.startsWith('--') ? [...acc, [a.slice(2), arr[i + 1]]] : acc), [])

@@ -1,1 +1,5 @@
+# Secret-file guard FIRST: a leak is not fixable by a later lint pass, and lint-staged rewrites
+# files, so anything that must block a commit outright runs before it. See tools/check-secret-files.mjs.
+node tools/check-secret-files.mjs || exit 1
+
 npx lint-staged

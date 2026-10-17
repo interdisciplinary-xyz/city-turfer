@@ -24,7 +24,8 @@ feat/<domain>  ─PR→  scope/vX.Y.Z  ─PR→  release/vX.Y.Z  ─PR→  main 
   - Validation: Local: `npm run ci:quality`; recording changes also a simulator replay
 - `scope/vX.Y.Z`
   - Purpose: Integration branch for the milestone version; target of all feature branches.
-  - Validation: Local + `npm run test:e2e`
+  - Validation: CI on every PR into `scope/**` (quality + commit naming), plus local
+    `npm run test:e2e`
 - `release/vX.Y.Z`
   - Purpose: Stabilisation: cloud CI, e2e, real-device field test, OTA to testers.
   - Validation: CI (`.github/workflows/ci.yml`)
@@ -75,4 +76,19 @@ hidden). Don't edit it by hand.
 
 - `pre-commit`: lint-staged (ESLint --fix, then Prettier).
 - `commit-msg`: commitlint.
-- `pre-push`: `npm run test:types && npm run test:arch` (CI runs the rest).
+- `pre-push`: `npm run test:types && npm run test:arch && npm run test:unit` (~15 s; CI also runs
+  Prettier and ESLint).
+
+## CI
+
+`.github/workflows/ci.yml` runs on every non-draft pull request into `main`, `release/**` and
+`scope/**` (feature to scope, scope to release, release to main), plus pushes to `main`:
+
+- `quality` (`npm run ci:quality`: Prettier, ESLint over `src`, `index.ts` and `tools`, tsc,
+  dependency rules, Jest, Node tool tests). It takes under a minute.
+- `commitlint` lints every commit in the PR range, not only the last one.
+
+Cost control is kept by: skipping draft PRs, skipping docs-only changes (`paths-ignore`), cancelling
+superseded runs (`concurrency`), and keeping the heavy checks (Maestro E2E, device field test) out
+of CI. The earlier rule that skipped PRs from `scope/*` heads is gone: the quality job is cheap and
+scope to release is the last gate before stabilisation.

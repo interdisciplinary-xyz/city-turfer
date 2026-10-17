@@ -2,6 +2,7 @@ import type { Fix } from '@/contexts/recording/domain/fix';
 import { migrate } from '@/platform/migrations';
 import { loadFixes } from '@/test-support/fixtures';
 import { openNodeDatabase } from '@/test-support/node-database';
+import { oracleStats } from '@/test-support/oracle';
 import { wire } from '@/wiring';
 
 /** Fake street router: an L-shaped route (1.3× the straight line); `offline` makes it throw. */
@@ -30,6 +31,7 @@ function fakes() {
       start: async () => void (running = true),
       stop: async () => void (running = false),
       isRunning: async () => running,
+      reacquire: async () => null,
     },
     permissions: { ensureForeground: async () => 'granted' as const, requestBackground: async () => true },
     notifier: { publish: () => undefined },
@@ -66,8 +68,9 @@ describe('Recording → Activity Log → Territory', () => {
 
     const detail = await c.activityLog.detail.execute(id);
     expect(detail).not.toBeNull();
-    expect(Math.abs(detail!.distanceM - 5240) / 5240).toBeLessThan(0.03);
-    expect(detail!.splits.length).toBe(5);
+    const oracle = oracleStats('run-5k-outliers-pause.gpx');
+    expect(Math.abs(detail!.distanceM - oracle.distanceM) / oracle.distanceM).toBeLessThan(0.03);
+    expect(detail!.splits.length).toBe(oracle.splits.length);
 
     const claim = await c.territory.claimOf.execute(id);
     expect(claim!.cellCount).toBeGreaterThan(50);
@@ -189,7 +192,9 @@ describe('Data repair: split legacy tracks at recording gaps', () => {
     );
 
     // Runs once per database.
-    expect(await db.first('SELECT name FROM sys_jobs')).toEqual({ name: 'split-track-gaps-v1' });
+    expect(await db.all("SELECT name FROM sys_jobs WHERE name LIKE 'split-track-gaps%'")).toEqual([
+      { name: 'split-track-gaps-v1' },
+    ]);
   });
 
   it('leaves correct tracks untouched and is idempotent', async () => {

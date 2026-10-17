@@ -13,12 +13,15 @@
 //   --out FILE      output HTML (default turf-preview.html in the current dir)
 //
 // The grid here is a local square grid (dependency-free). The app uses H3 hexagons, so cell
-// counts differ, but the strength formula is the reference:
+// counts differ, but the strength formula is the reference (tools/lib/turf.mjs, pinned by
+// tools/fixtures/turf-vectors.json; the in-page script below inlines the same formula):
 //   strength = 1 − exp(−visits / k)   (one visit per activity per cell; permanent, no decay)
 
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+
 import { EARTH_RADIUS_M, haversine, parseGpx } from './lib/geo.mjs';
+import { isStrong, strengthOf } from './lib/turf.mjs';
 
 const argv = process.argv.slice(2);
 const dir = argv.find((a, i) => !a.startsWith('--') && !argv[i - 1]?.startsWith('--'));
@@ -167,8 +170,8 @@ render();
 </script></body></html>`;
 
 writeFileSync(outFile, html);
-const strengths = [...cells.values()].map((c) => 1 - Math.exp(-c.visits.length / k));
-const strong = strengths.filter((s) => s >= 0.66).length;
+const strengths = [...cells.values()].map((c) => strengthOf(c.visits.length, k));
+const strong = strengths.filter(isStrong).length;
 console.log(
   `${activities.length} activities → ${cells.size} cells (${((cells.size * cellM * cellM) / 1e6).toFixed(2)} km² of turf), ${strong} strong`
 );

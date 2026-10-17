@@ -298,6 +298,15 @@ The `EventDispatcher` delivers them after commit and on app start. Handlers are 
 (aggregate id = upstream id, `INSERT OR IGNORE`). The chain
 `SessionFinished → ActivityRecorded → TurfClaimed` therefore survives the process dying at any step.
 
+Delivery is strict FIFO. A failing event blocks the queue while it is retried with exponential
+backoff (5 s base). It moves to the dead letters (`dead_lettered_at`) at once for a `DomainError` or
+an unreadable payload, and otherwise after 5 attempts. A `task-error` diagnostics entry records the
+event type and error code only, never coordinates. Delivery then continues with later events,
+including later events of the same aggregate. Handlers tolerate a missing predecessor. Retention:
+delivered events are pruned after 30 days and dead letters after 90. Closed Recording Sessions keep
+no position (`tail`), and a discarded session's track points are deleted in the same transaction as
+the status change.
+
 ## 5. Architecture
 
 ### Layers and dependency rule

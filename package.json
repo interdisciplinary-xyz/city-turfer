@@ -68,12 +68,15 @@
     "standard:fix": "npm run standard:lint:fix && npm run standard:format:fix",
     "standard:format": "prettier --check --ignore-path .gitignore --ignore-path .prettierignore .",
     "standard:format:fix": "prettier --write --ignore-path .gitignore --ignore-path .prettierignore .",
-    "standard:lint": "eslint src",
-    "standard:lint:fix": "eslint src --fix",
+    "standard:lint": "eslint src index.ts tools",
+    "standard:lint:fix": "eslint src index.ts tools --fix",
     "test:types": "tsc --noEmit",
-    "test:unit": "jest",
+    "test:unit": "jest && npm run test:tools",
+    "test:tools": "node --test tools/__tests__/*.test.mjs",
+    "test:cov": "jest --coverage",
     "test:arch": "depcruise src --config .dependency-cruiser.cjs",
     "test:e2e": "e2e/run.sh",
+    "check:secret-files": "node tools/check-secret-files.mjs",
     "audit:docs": "node tools/docs-audit.mjs",
     "ci:quality": "npm run standard && npm run test:types && npm run test:arch && npm run test:unit"
   },
@@ -94,6 +97,12 @@
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1"
     },
+    "collectCoverageFrom": [
+      "src/**/*.{ts,tsx}",
+      "!src/**/__tests__/**",
+      "!src/test-support/**",
+      "!**/*.d.ts"
+    ],
     "testPathIgnorePatterns": [
       "/node_modules/",
       "/tools/"
