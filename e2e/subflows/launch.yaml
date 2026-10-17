@@ -10,7 +10,7 @@ appId: com.turftrack.poc
     when: { true: '${!DEV_URL}' }
     commands:
       - launchApp: { stopApp: false }
-- extendedWaitUntil: { visible: 'Sign in|Start .*|Continue', timeout: 60000 }
+- extendedWaitUntil: { visible: 'Sign in|Start .*|Continue|Hello, .*', timeout: 60000 }
 - runFlow:
     when: { visible: 'Continue' }
     commands: [{ tapOn: 'Continue' }]
