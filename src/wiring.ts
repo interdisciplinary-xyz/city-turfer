@@ -93,7 +93,32 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     await pruneOutbox(db, clock.now());
   }
 
-  return { userId, db, dispatcher, diagnostics, runMaintenance, estimateGaps, recording, activityLog, territory };
+  /**
+   * Launch housekeeping, foreground launches only (see composition root): repairs first, then finish
+   * any work interrupted by a crash (also delivers the repairs' events), then route recording gaps.
+   */
+  async function runLaunchMaintenance(): Promise<void> {
+    await runMaintenance().catch((e) => diagnostics.log('task-error', { code: 'maintenance', message: String(e) }));
+    await dispatcher.dispatchPending();
+    await estimateGaps();
+  }
+
+  /** Is a Recording Session active (recording, paused or auto-paused)? Gates sign-out. */
+  const hasActiveSession = async () => (await recording.liveSnapshot.execute()) != null;
+
+  return {
+    userId,
+    db,
+    dispatcher,
+    diagnostics,
+    runMaintenance,
+    runLaunchMaintenance,
+    estimateGaps,
+    hasActiveSession,
+    recording,
+    activityLog,
+    territory,
+  };
 }
 
 export type Container = ReturnType<typeof wire>;
