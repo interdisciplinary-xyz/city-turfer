@@ -200,7 +200,8 @@ npm start                     # later: Metro for the installed build
 ```
 
 Sign in with `admin@cityturfer.com` / `admin1234`. To see turf straight away, use **Me → Info → Seed
-demo history** (90 days of activities around your location).
+demo history** (90 days of activities around your location). In a release build the demo tools are
+hidden: long-press the version text on Info five times to show them.
 
 Local quirks: watchman is disabled in the Jest and Metro config (broken Homebrew install), and
 `.npmrc` uses `legacy-peer-deps`.

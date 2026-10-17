@@ -19,8 +19,9 @@ Three layers, and each one catches things the others can't.
 - Repositories and the outbox: test against a real SQLite. Jest uses
   `src/test-support/node-database.ts`, a thin `Database` adapter over `better-sqlite3` (dev
   dependency), so the SQL actually runs. Don't mock the queries themselves.
-- When a test needs Expo native modules, mock them (there is no `jest.setup.ts` yet; current tests
-  stay below the infrastructure layer), for example:
+- When a test needs Expo native modules, mock them in that test file (there is no `jest.setup.ts`;
+  see `src/contexts/recording/infrastructure/__tests__/to-fix.test.ts` and
+  `src/platform/__tests__/expo-database.test.ts`), for example:
   ```ts
   jest.mock('expo-location', () => ({
     Accuracy: { BestForNavigation: 6, High: 4 },

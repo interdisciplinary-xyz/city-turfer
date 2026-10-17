@@ -53,7 +53,6 @@ const PLANNED_PATHS = new Set([
   'docs/spikes.md', // poc-plan.md M2: MapLibre spike decision record
   'docs/poc-report.md', // poc-plan.md M6: the PoC report
   'docs/roadmap.md', // add-feature skill: created after the PoC milestones
-  'tools/fixtures/turf-vectors.json', // CLAUDE.md hard rule; added by chore/ci-quality-gates (in review)
 ]);
 
 /** Index sections in reading order: folder → [heading, what lives here]. */
@@ -318,7 +317,8 @@ function checkPathsAndLinks(file, text, historical) {
       const p = candidatePath(m[1]);
       if (!p) continue;
       if (PLANNED_PATHS.has(p)) {
-        add('info', file, n, 'planned-path', `\`${m[1]}\` is planned, not written yet`);
+        if (pathExists(p)) add('warn', file, n, 'planned-path', `\`${m[1]}\` exists now: drop it from PLANNED_PATHS`);
+        else add('info', file, n, 'planned-path', `\`${m[1]}\` is planned, not written yet`);
       } else if (!pathExists(p) && !isGitIgnored(p)) {
         add(deadSeverity, file, n, 'dead-path', `\`${m[1]}\` does not exist`);
       }
@@ -347,8 +347,9 @@ function checkProbes(file, text) {
       continue;
     }
     const actual = String(PROBES[name]());
-    if (value.trim() !== actual)
+    if (value.trim() !== actual) {
       add('error', file, line, 'probe-drift', `probe:${name} says ${value}, code says ${actual}`);
+    }
   }
 }
 

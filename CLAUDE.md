@@ -48,8 +48,8 @@ src/contexts/activity-log/           Activity aggregate, history, detail, demo i
   domain/ application/ infrastructure/ ui/ index.ts contract.ts
 src/contexts/territory/              CORE: Claim aggregate, turf strength, Territory projection, Turf Map
   domain/ application/ infrastructure/ ui/ index.ts contract.ts
-src/contexts/achievements/           pure evaluation of achievements over activity and turf facts
-  domain/ ui/ index.ts
+src/contexts/achievements/           pure evaluation of achievements and the onboarding checklist
+  domain/ infrastructure/ ui/ index.ts                  (infrastructure: onboarding dismissal flag)
 src/platform/                        SQLite, migrations, outbox + EventDispatcher, one-off jobs, diagnostics (no coordinates)
 src/composition-root.ts              lazy, React-free wiring (used by UI and headless task)
 modules/background-session/          native iOS module (CLBackgroundActivitySession + liveUpdates)

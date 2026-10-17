@@ -103,7 +103,7 @@ Bounded contexts: <!-- probe:contexts -->5<!-- /probe -->
   (<!-- probe:achievements -->12<!-- /probe -->)
 - `e2e-flows`: `flowsOrder` entries in `e2e/config.yaml` (<!-- probe:e2e-flows -->10<!-- /probe -->)
 - `migrations`: `version:` entries in `src/platform/migrations.ts`
-  (<!-- probe:migrations -->4<!-- /probe -->)
+  (<!-- probe:migrations -->5<!-- /probe -->)
 - `docs`: markdown files under `docs/` (<!-- probe:docs -->6<!-- /probe -->)
 
 **If a number is not probed, don't write it.** Write the derivation instead ("one per file in
@@ -136,7 +136,8 @@ What it checks, in `docs/**`, `README.md`, `CLAUDE.md` and `.claude/**/*.md` (no
 - **probe-drift**: a probe whose value no longer matches the code
 - **filename / placement**: kebab-case, nothing loose in `docs/` root
 - **review-debt**: commits touching `scope:` since `verified:`
-- **planned-path** (info): a path a plan names on purpose before it exists (`PLANNED_PATHS`)
+- **planned-path** (info): a path a plan names on purpose before it exists (`PLANNED_PATHS`); a
+  warning once the file exists, so the entry gets dropped
 
 The script emits **signals, never verdicts**. Deciding whether a doc is fixed, demoted, archived or
 deleted is the `/audit-docs` command's job, and the default for a rotten doc is _demote or delete_,
