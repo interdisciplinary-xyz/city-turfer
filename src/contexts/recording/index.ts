@@ -15,6 +15,8 @@ import {
   StartRecording,
 } from './application/use-cases';
 
+export { SerialCommandExecutor } from './application/command-executor';
+
 export function createRecordingApi(deps: RecordingDeps) {
   return {
     prepare: new PrepareRecording(deps),

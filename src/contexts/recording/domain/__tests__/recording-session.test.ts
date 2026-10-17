@@ -107,4 +107,21 @@ describe('RecordingSession', () => {
     expect(Math.abs(s.snapshot(0).distanceM - 5240) / 5240).toBeLessThan(0.03);
     expect(d).toBeCloseTo(s.snapshot(0).distanceM, 0);
   });
+
+  describe('assertMayReplace (persistence guard)', () => {
+    it.each(['finished', 'discarded'] as const)('refuses to replace a %s session', (persisted) => {
+      const stale = RecordingSession.start('s1', 'run', T0);
+      expect(() => stale.assertMayReplace(persisted)).toThrow(DomainError);
+      expect(() => stale.assertMayReplace(persisted)).toThrow(
+        expect.objectContaining({ code: 'session.already-ended' })
+      );
+    });
+
+    it.each(['recording', 'paused', 'autoPaused'] as const)('may replace a %s session', (persisted) => {
+      const s = RecordingSession.start('s1', 'run', T0);
+      s.ingest([fix(0, 0), fix(1, 5)]);
+      s.finish(T0 + 5000);
+      expect(() => s.assertMayReplace(persisted)).not.toThrow();
+    });
+  });
 });

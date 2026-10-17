@@ -49,6 +49,10 @@ export class ExpoLocationTracker implements LocationTracker {
     if (await this.isRunning()) await Location.stopLocationUpdatesAsync(LOCATION_TASK);
   }
 
+  async reacquire() {
+    return backgroundActivitySession.available ? backgroundActivitySession.ensure() : null;
+  }
+
   async isRunning() {
     try {
       return await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK);

@@ -8,6 +8,8 @@ import { type TrackingProfile, trackingProfileFor } from './tracking-profile';
 
 export type SessionStatus = 'recording' | 'paused' | 'autoPaused' | 'finished' | 'discarded';
 export const ACTIVE_STATUSES: readonly SessionStatus[] = ['recording', 'paused', 'autoPaused'];
+/** A session that has ended stays ended: it is never recorded into or revived again. */
+export const TERMINAL_STATUSES: readonly SessionStatus[] = ['finished', 'discarded'];
 
 export interface RecordingSessionState {
   readonly id: string;
@@ -103,6 +105,17 @@ export class RecordingSession {
   }
   toState(): RecordingSessionState {
     return this.state;
+  }
+
+  /**
+   * Persistence guard: this copy may replace the stored session only while the
+   * stored one has not ended. A stale copy (loaded before a Finish/Discard
+   * committed) would otherwise turn a finished session back into a recording one.
+   */
+  assertMayReplace(persisted: SessionStatus): void {
+    if (TERMINAL_STATUSES.includes(persisted)) {
+      throw new DomainError('session.already-ended', `${persisted} -> ${this.state.status}`);
+    }
   }
 
   pause(now: number): void {
