@@ -11,7 +11,8 @@ import {
 import type { ActivityDetail, ActivityListItem } from '../contract';
 import { Activity } from '../domain/activity';
 import type { ActivityRepository } from '../domain/activity-repository';
-import { acceptRoute, estimatedTotals, type GapRoute, gapsOf } from '../domain/gap-route';
+import { estimatedTotals, type GapRoute } from '../domain/gap-route';
+import { OFFLINE_RETRY_MS, RouterBudget } from './router-budget';
 
 /** Port: the finished track of a recording session (Recording's open-host service). */
 export interface FinishedTrackSource {
@@ -20,7 +21,9 @@ export interface FinishedTrackSource {
 
 /**
  * Port: street routing between two points (e.g. OSM). Resolves null when no
- * route exists; rejects on network/service errors (the caller retries later).
+ * route exists. Rejects with RouterRateLimited (stop asking for a while),
+ * RouterUnreachable (offline: stop this run) or any other error (this gap failed;
+ * the activity is retried later with backoff).
  */
 export interface RouteEstimator {
   route(
@@ -30,10 +33,42 @@ export interface RouteEstimator {
   ): Promise<{ distanceM: number; coords: [number, number][] } | null>;
 }
 
+/** The router asked us to slow down (HTTP 429). */
+export class RouterRateLimited extends Error {
+  constructor(readonly retryAfterMs: number | null) {
+    super('router rate limited');
+    this.name = 'RouterRateLimited';
+  }
+}
+
+/** The router could not be reached at all (device offline, DNS…). */
+export class RouterUnreachable extends Error {
+  constructor(message = 'router unreachable') {
+    super(message);
+    this.name = 'RouterUnreachable';
+  }
+}
+
+/** Port: the user's "Estimate GPS gaps along streets" setting (on unless turned off). */
+export interface GapEstimationSetting {
+  isEnabled(): Promise<boolean>;
+  setEnabled(enabled: boolean): Promise<void>;
+}
+
+/** When the router may be used: only with the setting on and while the app is in the foreground. */
+export interface GapRoutingEnvironment {
+  setting: GapEstimationSetting;
+  /** False on headless (background) launches: no network requests then. */
+  isForeground(): boolean;
+  /** Request pacing; tests pass a fake that does not really sleep. */
+  wait(ms: number): Promise<void>;
+}
+
 export interface ActivityLogDeps {
   activities: ActivityRepository;
   finishedTracks: FinishedTrackSource;
   router: RouteEstimator;
+  gapRouting: GapRoutingEnvironment;
   clock: Clock;
   afterCommit: () => void;
 }
@@ -43,6 +78,8 @@ export interface SessionFinishedPayload {
   activityType: ActivityType;
   startedAt: number;
   endedAt: number;
+  /** Segments begun by a manual Resume (absent/null: unknown, recorded by an older build). */
+  resumedSegments?: readonly number[] | null;
 }
 
 /** Handles SessionFinished. Idempotent: activity id = session id. */
@@ -59,6 +96,7 @@ export class RecordActivityFromSession {
       endedAt: e.endedAt,
       track: trackFromPoints(points),
       now: this.d.clock.now(),
+      resumedSegments: e.resumedSegments ?? null,
     });
     await this.d.activities.save(activity, points);
     this.d.afterCommit();
@@ -110,14 +148,22 @@ export class SplitTrackGaps {
 }
 
 /**
- * Estimates the path across each recording gap along streets: counted in
- * distance (marked as estimated), drawn dashed, never claimed as turf.
- * Activities stay unchecked while the router is unreachable, so this is
- * simply re-run later (launch, after new activities).
+ * Estimates the path across each GPS gap along streets: counted in distance
+ * (marked as estimated), drawn dashed, never claimed as turf. Manual pauses and
+ * gaps near the activity's start or end are never sent. Runs only with the
+ * setting on and the app in the foreground, paced by a RouterBudget; activities
+ * stay unchecked while the router is unavailable, so this is simply re-run later
+ * (launch, foreground, after new activities).
  */
 export class EstimateGapRoutes {
   private running: Promise<number> | null = null;
-  constructor(private readonly d: ActivityLogDeps) {}
+  private readonly budget: RouterBudget;
+  constructor(private readonly d: ActivityLogDeps) {
+    this.budget = new RouterBudget(
+      () => d.clock.now(),
+      (ms) => d.gapRouting.wait(ms)
+    );
+  }
 
   execute(): Promise<number> {
     this.running ??= this.run().finally(() => {
@@ -126,28 +172,82 @@ export class EstimateGapRoutes {
     return this.running;
   }
 
+  private async allowed(): Promise<boolean> {
+    return this.d.gapRouting.isForeground() && (await this.d.gapRouting.setting.isEnabled());
+  }
+
   private async run(): Promise<number> {
+    if (!(await this.allowed()) || !this.budget.beginRun()) return 0;
     let done = 0;
-    for (const id of await this.d.activities.idsWithUncheckedGaps()) {
-      const type = await this.d.activities.typeOf(id);
-      if (!type) continue;
+    activities: for (const id of await this.d.activities.idsWithUncheckedGaps()) {
+      if (this.budget.isBackingOff(id)) continue;
+      const activity = await this.d.activities.get(id);
+      if (!activity) continue;
+      const type = activity.toState().type;
       const routes: GapRoute[] = [];
-      for (const gap of gapsOf(trackFromPoints(await this.d.activities.trackOf(id)))) {
-        const r = await this.d.router.route(gap.from, gap.to, type); // throws when offline → retry later
-        if (r && acceptRoute(type, gap, r.distanceM)) {
-          routes.push({
-            afterSegment: gap.afterSegment,
-            distanceM: r.distanceM,
-            movingS: gap.durationS,
-            coords: r.coords,
-          });
+      for (const gap of activity.gapsToRoute(trackFromPoints(await this.d.activities.trackOf(id)))) {
+        if (!this.budget.hasRequestLeft()) break activities;
+        await this.budget.acquire();
+        if (!(await this.allowed())) break activities; // turned off or backgrounded while waiting
+        let r: Awaited<ReturnType<RouteEstimator['route']>>;
+        try {
+          r = await this.d.router.route(gap.from, gap.to, type);
+        } catch (e) {
+          if (e instanceof RouterRateLimited) this.budget.rateLimited(e.retryAfterMs);
+          else if (e instanceof RouterUnreachable) this.budget.pauseFor(OFFLINE_RETRY_MS);
+          else {
+            this.budget.failed(id); // only this activity waits; the others still get their turn
+            continue activities;
+          }
+          break activities;
         }
+        const route = r && activity.gapRoute(gap, r);
+        if (route) routes.push(route);
       }
+      this.budget.succeeded(id);
       await this.d.activities.saveGapRoutes(id, routes, this.d.clock.now());
       done++;
     }
     if (done > 0) this.d.afterCommit();
     return done;
+  }
+}
+
+/**
+ * Data repair: routes estimated before moving time was capped credited the whole
+ * gap (a pause included) as moving time. Local only, no router requests.
+ */
+export class CapEstimatedMovingTime {
+  constructor(private readonly d: ActivityLogDeps) {}
+  async execute(): Promise<{ checked: number; capped: number }> {
+    const ids = await this.d.activities.allIds();
+    let capped = 0;
+    for (const id of ids) {
+      const routes = await this.d.activities.gapRoutesOf(id);
+      if (routes.length === 0) continue;
+      const activity = await this.d.activities.get(id);
+      if (!activity) continue;
+      const next = routes.map((r) => activity.capGapRoute(r));
+      if (next.every((r, i) => r === routes[i])) continue;
+      await this.d.activities.saveGapRoutes(id, next, this.d.clock.now());
+      capped++;
+    }
+    if (capped > 0) this.d.afterCommit();
+    return { checked: ids.length, capped };
+  }
+}
+
+export class GetGapEstimationSetting {
+  constructor(private readonly d: Pick<ActivityLogDeps, 'gapRouting'>) {}
+  execute(): Promise<boolean> {
+    return this.d.gapRouting.setting.isEnabled();
+  }
+}
+
+export class SetGapEstimationSetting {
+  constructor(private readonly d: Pick<ActivityLogDeps, 'gapRouting'>) {}
+  execute(enabled: boolean): Promise<void> {
+    return this.d.gapRouting.setting.setEnabled(enabled);
   }
 }
 

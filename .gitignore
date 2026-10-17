@@ -75,3 +75,6 @@ GoogleService-Info.plist
 service-account*.json
 .env.*
 !.env.example
+
+# Claude Code agent worktrees (isolated copies of this repo)
+.claude/worktrees/

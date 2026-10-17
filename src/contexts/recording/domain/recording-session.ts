@@ -18,6 +18,11 @@ export interface RecordingSessionState {
   readonly startedAt: number;
   readonly endedAt: number | null;
   readonly segment: number;
+  /**
+   * Segments that begin with a manual Resume (every other segment after the first begins after a
+   * GPS gap). Absent in state persisted by builds before this was tracked: reason unknown.
+   */
+  readonly resumedSegments?: readonly number[];
   readonly nextSeq: number;
   readonly tail: Tail | null; // last accepted point in the current segment
   readonly lastSeenT: number | null; // last fix timestamp seen (accepted or jitter)
@@ -65,6 +70,9 @@ export interface IngestReport {
  * totals only — accepted Track Points are returned from `ingest` and appended
  * to the point log by the repository in the same transaction.
  */
+/** A closed session keeps no position (location is personal data): every field that holds one. */
+const NO_POSITION = { tail: null, recent: [], lastSeen: null, pauseAnchor: null } as const;
+
 export class RecordingSession {
   private events: RecordingEvent[] = [];
   private constructor(private state: RecordingSessionState) {}
@@ -77,6 +85,7 @@ export class RecordingSession {
       startedAt: now,
       endedAt: null,
       segment: 0,
+      resumedSegments: [],
       nextSeq: 0,
       tail: null,
       lastSeenT: null,
@@ -137,10 +146,13 @@ export class RecordingSession {
     if (this.state.status !== 'paused') throw new DomainError('session.not-paused');
     this.endPause(now);
     // A manual resume starts a new segment: never measure or draw across the pause.
+    const segment = this.state.segment + 1;
+    const resumedSegments = this.state.resumedSegments && [...this.state.resumedSegments, segment];
     this.state = {
       ...this.state,
       status: 'recording',
-      segment: this.state.segment + 1,
+      segment,
+      resumedSegments,
       tail: null,
       pauseAnchor: null,
       recent: [],
@@ -263,7 +275,7 @@ export class RecordingSession {
     if (this.state.pointCount < 2) throw new DomainError('session.too-short');
     if (this.state.pausedSince != null) this.endPause(now);
     // A closed session keeps no position: the track lives in the point log (then the activity log).
-    this.state = { ...this.state, status: 'finished', endedAt: now, tail: null, recent: [] };
+    this.state = { ...this.state, status: 'finished', endedAt: now, ...NO_POSITION };
     this.record({
       type: 'SessionFinished',
       v: 1,
@@ -272,12 +284,13 @@ export class RecordingSession {
       activityType: this.state.type,
       startedAt: this.state.startedAt,
       endedAt: now,
+      resumedSegments: this.state.resumedSegments ? [...this.state.resumedSegments] : null,
     });
   }
 
   discard(now: number): void {
     this.assertActive();
-    this.state = { ...this.state, status: 'discarded', endedAt: now, tail: null, recent: [] };
+    this.state = { ...this.state, status: 'discarded', endedAt: now, ...NO_POSITION };
     this.record({ type: 'SessionDiscarded', v: 1, at: now, sessionId: this.id });
   }
 

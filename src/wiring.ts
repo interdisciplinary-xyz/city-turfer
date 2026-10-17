@@ -8,6 +8,7 @@ import {
   type ActivityRecorded,
   type ActivityTrackCorrected,
   createActivityLogApi,
+  type GapRoutingEnvironment,
   type RouteEstimator,
 } from '@/contexts/activity-log';
 import { SqliteActivityRepository } from '@/contexts/activity-log/infrastructure/sqlite-activity-repository';
@@ -29,8 +30,17 @@ export interface DeviceAdapters {
   notifier: LiveSessionNotifier;
   ids: IdGenerator;
   router: RouteEstimator;
+  /** Setting, foreground check and pacing for the street router. Omitted: street estimation is off. */
+  gapRouting?: GapRoutingEnvironment;
   clock?: Clock;
 }
+
+/** No setting given (e.g. tests that don't exercise gaps): never call the router. */
+const GAP_ROUTING_OFF: GapRoutingEnvironment = {
+  setting: { isEnabled: async () => false, setEnabled: async () => undefined },
+  isForeground: () => false,
+  wait: async () => undefined,
+};
 
 export function wire(userId: string, db: Database, a: DeviceAdapters) {
   const clock = a.clock ?? systemClock;
@@ -58,6 +68,7 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     activities: new SqliteActivityRepository(db),
     finishedTracks: { trackOf: (id) => recording.finishedTrack.execute(id) },
     router: a.router,
+    gapRouting: a.gapRouting ?? GAP_ROUTING_OFF,
     clock,
     afterCommit,
   });
@@ -88,8 +99,10 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
   async function runMaintenance(): Promise<void> {
     const repaired = await runOnce(db, 'split-track-gaps-v1', () => activityLog.splitTrackGaps.execute());
     if (repaired) diagnostics.log('maintenance', { job: 'split-track-gaps-v1', ...repaired });
-    const scrubbed = await runOnce(db, 'scrub-closed-sessions-v1', () => recording.scrubClosedSessions.execute());
-    if (scrubbed) diagnostics.log('maintenance', { job: 'scrub-closed-sessions-v1', ...scrubbed });
+    const capped = await runOnce(db, 'cap-gap-moving-time-v1', () => activityLog.capEstimatedMovingTime.execute());
+    if (capped) diagnostics.log('maintenance', { job: 'cap-gap-moving-time-v1', ...capped });
+    const scrubbed = await runOnce(db, 'scrub-closed-sessions-v2', () => recording.scrubClosedSessions.execute());
+    if (scrubbed) diagnostics.log('maintenance', { job: 'scrub-closed-sessions-v2', ...scrubbed });
     await pruneOutbox(db, clock.now());
   }
 
