@@ -1,3 +1,4 @@
+import { RouterUnreachable } from '@/contexts/activity-log';
 import type { Fix } from '@/contexts/recording/domain/fix';
 import { migrate } from '@/platform/migrations';
 import { loadFixes } from '@/test-support/fixtures';
@@ -10,7 +11,7 @@ const router = {
   calls: 0,
   async route(from: { lat: number; lon: number }, to: { lat: number; lon: number }) {
     router.calls++;
-    if (router.offline) throw new Error('offline');
+    if (router.offline) throw new RouterUnreachable('offline');
     const corner: [number, number] = [to.lon, from.lat];
     const dy = (to.lat - from.lat) * 111_320;
     const dx = (to.lon - from.lon) * 111_320 * Math.cos((from.lat * Math.PI) / 180);
@@ -34,12 +35,20 @@ function fakes() {
     permissions: { ensureForeground: async () => 'granted' as const, requestBackground: async () => true },
     notifier: { publish: () => undefined },
     router,
+    gapRouting: {
+      setting: { isEnabled: async () => true, setEnabled: async () => undefined },
+      isForeground: () => true,
+      wait: async (ms: number) => void (now += ms),
+    },
     ids: { next: () => `id-${++n}` },
     clock: { now: () => now },
     advance: (ms: number) => void (now += ms),
     isRunning: () => running,
   };
 }
+
+const runMaintenanceJobs = (db: Awaited<ReturnType<typeof setup>>['db']) =>
+  db.all<{ name: string; done_at: number }>('SELECT name, done_at FROM sys_jobs ORDER BY name');
 
 async function setup() {
   const db = openNodeDatabase();
@@ -189,7 +198,10 @@ describe('Data repair: split legacy tracks at recording gaps', () => {
     );
 
     // Runs once per database.
-    expect(await db.first('SELECT name FROM sys_jobs')).toEqual({ name: 'split-track-gaps-v1' });
+    expect(await db.first("SELECT name FROM sys_jobs WHERE name = 'split-track-gaps-v1'")).toBeTruthy();
+    const ran = await runMaintenanceJobs(db);
+    await c.runMaintenance();
+    expect(await runMaintenanceJobs(db)).toEqual(ran);
   });
 
   it('leaves correct tracks untouched and is idempotent', async () => {
@@ -216,9 +228,12 @@ describe('Data repair: split legacy tracks at recording gaps', () => {
 });
 
 describe('Gap routes: estimated street paths across recording gaps', () => {
-  /** walk-2k recorded in two segments with a 4-minute GPS outage between them. */
-  function gappedWalk() {
-    const fixes = loadFixes('walk-2k.gpx');
+  /**
+   * cycle-20k with a 4-minute GPS outage between 40 % and 60 % of the ride, both ends
+   * kilometres away from the start and finish (gaps near those are never routed).
+   */
+  function gappedRide() {
+    const fixes = loadFixes('cycle-20k.gpx');
     const a = Math.floor(fixes.length * 0.4);
     const b = Math.floor(fixes.length * 0.6);
     return [
@@ -229,7 +244,7 @@ describe('Gap routes: estimated street paths across recording gaps', () => {
 
   it('adds the routed distance (marked), draws the route and never claims turf for it', async () => {
     const { c } = await setup();
-    await c.activityLog.importActivity.execute({ id: 'w', type: 'walk', points: gappedWalk() });
+    await c.activityLog.importActivity.execute({ id: 'w', type: 'cycle', points: gappedRide() });
     await c.dispatcher.dispatchPending();
     await c.estimateGaps();
     const before = (await c.territory.summary.execute()).cellCount;
@@ -250,30 +265,86 @@ describe('Gap routes: estimated street paths across recording gaps', () => {
   });
 
   it('retries later when the router is unreachable', async () => {
-    const { c } = await setup();
+    const { c, f } = await setup();
     router.offline = true;
-    await c.activityLog.importActivity.execute({ id: 'w', type: 'walk', points: gappedWalk() });
+    await c.activityLog.importActivity.execute({ id: 'w', type: 'cycle', points: gappedRide() });
     await c.dispatcher.dispatchPending();
     await c.estimateGaps();
     expect((await c.activityLog.detail.execute('w'))!.estimatedDistanceM).toBe(0);
 
     router.offline = false;
+    expect(await c.estimateGaps()).toBe(0); // offline pause still running: no request
+    f.advance(60_000);
     expect(await c.estimateGaps()).toBe(1);
     expect((await c.activityLog.detail.execute('w'))!.estimatedDistanceM).toBeGreaterThan(0);
   });
 
-  it('rejects a gap no walker could have covered (e.g. a tram ride)', async () => {
+  it('rejects a gap no rider could have covered (e.g. a train ride)', async () => {
     const { c } = await setup();
-    const walk = gappedWalk();
-    const lastA = walk.filter((p) => p.segment === 0).at(-1)!;
-    const firstB = walk.find((p) => p.segment === 1)!;
-    const shift = firstB.t - lastA.t - 10_000; // ~400 m in 10 s
-    const pts = walk.map((p) => (p.segment === 1 ? { ...p, t: p.t - shift } : p));
-    await c.activityLog.importActivity.execute({ id: 'w', type: 'walk', points: pts });
+    const ride = gappedRide();
+    const lastA = ride.filter((p) => p.segment === 0).at(-1)!;
+    const firstB = ride.find((p) => p.segment === 1)!;
+    const shift = firstB.t - lastA.t - 10_000; // kilometres in 10 s
+    const pts = ride.map((p) => (p.segment === 1 ? { ...p, t: p.t - shift } : p));
+    await c.activityLog.importActivity.execute({ id: 'w', type: 'cycle', points: pts });
     await c.dispatcher.dispatchPending();
     await c.estimateGaps();
     const d = (await c.activityLog.detail.execute('w'))!;
     expect(d.estimatedDistanceM).toBe(0);
     expect(d.gapRoutes).toHaveLength(0);
+  });
+
+  /** Records cycle-20k live, breaking it between 40 % and 60 %: by a manual pause or by a GPS outage. */
+  async function recordBrokenRide(c: ReturnType<typeof wire>, f: ReturnType<typeof fakes>, by: 'pause' | 'outage') {
+    const fixes = loadFixes('cycle-20k.gpx');
+    const a = Math.floor(fixes.length * 0.4);
+    const b = Math.floor(fixes.length * 0.6);
+    const breakMs = 600_000;
+    await c.recording.start.execute('cycle');
+    for (let i = 0; i < a; i += 25) await c.recording.ingestFixes.execute(fixes.slice(i, Math.min(a, i + 25)));
+    f.advance(fixes[a - 1].t - fixes[0].t);
+    if (by === 'pause') await c.recording.pause.execute();
+    f.advance(fixes[b].t - fixes[a - 1].t + breakMs);
+    if (by === 'pause') await c.recording.resume.execute();
+    const rest = fixes.slice(b).map((x) => ({ ...x, t: x.t + breakMs }));
+    for (let i = 0; i < rest.length; i += 25) await c.recording.ingestFixes.execute(rest.slice(i, i + 25));
+    f.advance(rest.at(-1)!.t - fixes[b].t - breakMs);
+    const res = await c.recording.finish.execute();
+    await c.dispatcher.dispatchPending();
+    return (res as { sessionId: string }).sessionId;
+  }
+
+  it('never routes a manual pause: no request, no estimated distance, paused time not moving', async () => {
+    const { c, f } = await setup();
+    const calls = router.calls;
+    const id = await recordBrokenRide(c, f, 'pause');
+    await c.estimateGaps();
+    const d = (await c.activityLog.detail.execute(id))!;
+    expect(new Set(d.track.map((p) => p.segment)).size).toBe(2);
+    expect(router.calls).toBe(calls);
+    expect(d.estimatedDistanceM).toBe(0);
+    expect(d.gapRoutes).toHaveLength(0);
+    expect(d.movingS).toBeLessThan(d.elapsedS - 600);
+  });
+
+  it('routes a GPS outage and credits moving time at the ride’s own average speed', async () => {
+    const { c, f, db } = await setup();
+    const calls = router.calls;
+    const id = await recordBrokenRide(c, f, 'outage');
+    await c.estimateGaps();
+    const d = (await c.activityLog.detail.execute(id))!;
+    expect(router.calls).toBe(calls + 1);
+    expect(d.gapRoutes).toHaveLength(1);
+    const row = (await db.first<{
+      distance_m: number;
+      moving_s: number;
+      estimated_m: number;
+      estimated_moving_s: number;
+    }>('SELECT distance_m, moving_s, estimated_m, estimated_moving_s FROM log_activities WHERE id = ?', [id]))!;
+    const avgSpeed = row.distance_m / row.moving_s;
+    expect(row.estimated_m).toBeGreaterThan(0);
+    expect(row.estimated_moving_s).toBe(Math.round(row.estimated_m / avgSpeed));
+    const gapS = (d.track.find((p) => p.segment === 1)!.t - d.track.filter((p) => p.segment === 0).at(-1)!.t) / 1000;
+    expect(row.estimated_moving_s).toBeLessThan(gapS); // not the whole gap: standing still is not moving
   });
 });

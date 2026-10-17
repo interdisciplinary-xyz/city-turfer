@@ -2,11 +2,13 @@
  * Wires every context to its adapters. Lazy and React-free so the headless
  * background task can use it. One container (and one database) per user.
  */
+import Constants from 'expo-constants';
 import * as Crypto from 'expo-crypto';
 import * as Location from 'expo-location';
 import { AppState } from 'react-native';
 
 import { OsmRouteEstimator } from '@/contexts/activity-log/infrastructure/osm-route-estimator';
+import { SecureStoreGapEstimationSetting } from '@/contexts/activity-log/infrastructure/secure-store-gap-estimation-setting';
 import { createIdentityApi } from '@/contexts/identity';
 import { MockAuthGateway } from '@/contexts/identity/infrastructure/mock-auth-gateway';
 import { SecureStoreSessionStore } from '@/contexts/identity/infrastructure/secure-store-session-store';
@@ -40,10 +42,16 @@ const adapters = {
   permissions: new ExpoPermissionGateway(),
   notifier: liveSessionStore,
   ids: { next: () => Crypto.randomUUID() },
-  router: new OsmRouteEstimator(),
+  router: new OsmRouteEstimator({ appVersion: Constants.expoConfig?.version ?? 'dev' }),
+  gapRouting: {
+    setting: new SecureStoreGapEstimationSetting(),
+    // Street estimates only while the user has the app open: never on a headless launch.
+    isForeground: () => AppState.currentState === 'active',
+    wait: (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
+  },
 };
 
-let current: { userId: string; promise: Promise<Container> } | null = null;
+let current: { userId: string; promise: Promise<Container>; stop?: () => void } | null = null;
 
 /** The signed-in user's container, or null when nobody is signed in. */
 export async function getContainer(): Promise<Container | null> {
@@ -74,7 +82,17 @@ export async function getContainer(): Promise<Container | null> {
       .finally(() => void c.dispatcher.dispatchPending().then(() => c.estimateGaps()));
     return c;
   })();
-  current = { userId: uid, promise };
+  const entry: NonNullable<typeof current> = { userId: uid, promise };
+  current = entry;
+  void promise.then(
+    (c) => {
+      // Gaps recorded while headless (or offline) are estimated once the user opens the app.
+      const sub = AppState.addEventListener('change', (s) => s === 'active' && void c.estimateGaps());
+      if (current === entry) entry.stop = () => sub.remove();
+      else sub.remove();
+    },
+    () => undefined
+  );
   promise.catch(() => {
     if (current?.promise === promise) current = null;
   });
@@ -85,6 +103,7 @@ export async function getContainer(): Promise<Container | null> {
 export async function resetContainer(): Promise<void> {
   const c = current;
   current = null;
+  c?.stop?.();
   if (c) await (await c.promise.catch(() => null))?.db.close();
 }
 

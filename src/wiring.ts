@@ -8,6 +8,7 @@ import {
   type ActivityRecorded,
   type ActivityTrackCorrected,
   createActivityLogApi,
+  type GapRoutingEnvironment,
   type RouteEstimator,
 } from '@/contexts/activity-log';
 import { SqliteActivityRepository } from '@/contexts/activity-log/infrastructure/sqlite-activity-repository';
@@ -29,6 +30,8 @@ export interface DeviceAdapters {
   notifier: LiveSessionNotifier;
   ids: IdGenerator;
   router: RouteEstimator;
+  /** Setting, foreground check and pacing for the street router. */
+  gapRouting: GapRoutingEnvironment;
   clock?: Clock;
 }
 
@@ -51,6 +54,7 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     activities: new SqliteActivityRepository(db),
     finishedTracks: { trackOf: (id) => recording.finishedTrack.execute(id) },
     router: a.router,
+    gapRouting: a.gapRouting,
     clock,
     afterCommit,
   });
@@ -82,6 +86,8 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
   async function runMaintenance(): Promise<void> {
     const repaired = await runOnce(db, 'split-track-gaps-v1', () => activityLog.splitTrackGaps.execute());
     if (repaired) diagnostics.log('maintenance', { job: 'split-track-gaps-v1', ...repaired });
+    const capped = await runOnce(db, 'cap-gap-moving-time-v1', () => activityLog.capEstimatedMovingTime.execute());
+    if (capped) diagnostics.log('maintenance', { job: 'cap-gap-moving-time-v1', ...capped });
   }
 
   return { userId, db, dispatcher, diagnostics, runMaintenance, estimateGaps, recording, activityLog, territory };

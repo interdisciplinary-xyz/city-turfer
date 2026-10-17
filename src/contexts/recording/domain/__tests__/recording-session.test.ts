@@ -107,4 +107,44 @@ describe('RecordingSession', () => {
     expect(Math.abs(s.snapshot(0).distanceM - 5240) / 5240).toBeLessThan(0.03);
     expect(d).toBeCloseTo(s.snapshot(0).distanceM, 0);
   });
+
+  describe('why each segment starts (Resume vs GPS gap)', () => {
+    const finishedEvent = (s: RecordingSession) => {
+      const e = s.pullEvents().find((x) => x.type === 'SessionFinished');
+      return e as Extract<ReturnType<RecordingSession['pullEvents']>[number], { type: 'SessionFinished' }>;
+    };
+
+    it('records segments begun by a manual Resume and publishes them on SessionFinished', () => {
+      const s = RecordingSession.start('s1', 'run', T0);
+      s.ingest([fix(0, 0), fix(1, 5), fix(2, 10)]);
+      s.pause(T0 + 2500);
+      s.resume(T0 + 600_000); // segment 1: manual Resume
+      s.ingest([fix(600, 400), fix(601, 405), fix(602, 410)]);
+      s.ingest([fix(700, 600), fix(701, 605)]); // 98 s without fixes: segment 2 starts after a GPS gap
+      expect(s.toState().segment).toBe(2);
+      expect(s.toState().resumedSegments).toEqual([1]);
+      s.finish(T0 + 702_000);
+      expect(finishedEvent(s).resumedSegments).toEqual([1]);
+    });
+
+    it('publishes an empty list when every break was a GPS gap', () => {
+      const s = RecordingSession.start('s1', 'run', T0);
+      s.ingest([fix(0, 0), fix(1, 5), fix(100, 300), fix(101, 305)]);
+      expect(s.toState().segment).toBe(1);
+      s.finish(T0 + 102_000);
+      expect(finishedEvent(s).resumedSegments).toEqual([]);
+    });
+
+    it('publishes null for a session persisted by an older build (reason unknown)', () => {
+      const s = RecordingSession.start('s1', 'run', T0);
+      s.ingest([fix(0, 0), fix(1, 5)]);
+      const { resumedSegments: _drop, ...legacy } = s.toState();
+      const old = RecordingSession.rehydrate(legacy);
+      old.pause(T0 + 2000);
+      old.resume(T0 + 3000);
+      expect(old.toState().resumedSegments).toBeUndefined(); // stays unknown, never half-known
+      old.finish(T0 + 4000);
+      expect(finishedEvent(old).resumedSegments).toBeNull();
+    });
+  });
 });
