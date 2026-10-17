@@ -16,7 +16,7 @@ your turf, and how strong each part is. Stats, history and achievements build on
 [PoC plan](./docs/poc-plan.md) for how the product grows from it.
 
 > [!NOTE] Status: **v0.1.0 released** (iOS proof of concept), **v0.2.0 in progress**. Single demo
-> account (`admin@turftrack.com` / `admin1234`); all data stays on the device.
+> account (`admin@cityturfer.com` / `admin1234`); all data stays on the device.
 
 ---
 
@@ -200,7 +200,7 @@ npx expo run:ios              # build and install a development build
 npm start                     # later: Metro for the installed build
 ```
 
-Sign in with `admin@turftrack.com` / `admin1234`. To see turf straight away, use **Me → Info → Seed
+Sign in with `admin@cityturfer.com` / `admin1234`. To see turf straight away, use **Me → Info → Seed
 demo history** (90 days of activities around your location).
 
 Local quirks: watchman is disabled in the Jest and Metro config (broken Homebrew install), and

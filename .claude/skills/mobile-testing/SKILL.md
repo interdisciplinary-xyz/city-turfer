@@ -97,7 +97,7 @@ unverified on-device.
 ## 3. E2E (Maestro, before a release)
 
 Flows live in `e2e/`. Core flows: `sign-in.yaml` (wrong password shows `sign-in-error`;
-`admin@turftrack.com` / `admin1234` reaches the tabs), `record-walk.yaml`, `record-ride.yaml`,
+`admin@cityturfer.com` / `admin1234` reaches the tabs), `record-walk.yaml`, `record-ride.yaml`,
 `record-run.yaml` (permission dialogs → pick Run → start → wait → pause → resume → stop → save → it
 appears in History), `history-detail.yaml`, `export-gpx.yaml`, `delete-activity.yaml`,
 `turf-map.yaml` (import fixture history → open the Turf tab → assert `turf-summary-area` is visible

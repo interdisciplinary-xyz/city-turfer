@@ -87,7 +87,7 @@ Install `npm i -D dependency-cruiser` and add the rules from the `ddd-architectu
 
 - No Firebase or any other auth SDK in the PoC (decision in `docs/poc-plan.md` §9).
 - Implement `MockAuthGateway` in `src/contexts/identity/infrastructure/`. It accepts only
-  `admin@turftrack.com` / `admin1234` (case-insensitive email, trimmed) and returns
+  `admin@cityturfer.com` / `admin1234` (case-insensitive email, trimmed) and returns
   `UserId("admin")`. Everything else returns `AuthError('invalid-credentials')`. The credentials
   appear in this one file and its test, nowhere else.
 - Select it in the composition root when `EXPO_PUBLIC_AUTH_MODE` is `mock` (the default). If a
