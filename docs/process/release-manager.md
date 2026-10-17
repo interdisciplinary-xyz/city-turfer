@@ -1,3 +1,13 @@
+---
+status: canonical
+verified: 2026-10-17
+owner: founder
+scope: [.github/workflows, .husky, .versionrc.json, commitlint.config.mjs, tools/release]
+summary:
+  Branch flow feat → scope → release → main, PR titles, Conventional Commits, changelog, OTA vs
+  native
+---
+
 # Branching, release & changelog policy
 
 Adapted from empatalk's `docs/process/release-manager.md`. Repository:

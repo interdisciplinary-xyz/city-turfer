@@ -14,10 +14,13 @@ Three layers, and each one catches things the others can't.
 
 ## 1. Unit (Jest, fast, every change)
 
-- `src/metrics/**` and `src/tracking/filter.ts`: pure functions, tested directly against fixtures.
-- `src/db/**`: test against a real SQLite. In Jest, mock `expo-sqlite` with a thin adapter over
-  `better-sqlite3` (dev dependency) so the SQL actually runs. Don't mock the queries themselves.
-- `jest.setup.ts` mocks:
+- `src/shared-kernel/**` (metrics) and `src/contexts/recording/domain/fix-filter.ts`: pure
+  functions, tested directly against fixtures.
+- Repositories and the outbox: test against a real SQLite. Jest uses
+  `src/test-support/node-database.ts`, a thin `Database` adapter over `better-sqlite3` (dev
+  dependency), so the SQL actually runs. Don't mock the queries themselves.
+- When a test needs Expo native modules, mock them (there is no `jest.setup.ts` yet; current tests
+  stay below the infrastructure layer), for example:
   ```ts
   jest.mock('expo-location', () => ({
     Accuracy: { BestForNavigation: 6, High: 4 },
@@ -79,7 +82,7 @@ tools/sim-location.sh ios --clear
 iOS Simulator also has built-in presets under Features → Location → City Run / City Bicycle Ride /
 Freeway Drive.
 
-**Background check script** (do this for any change to `src/tracking/`):
+**Background check script** (do this for any change to `src/contexts/recording/`):
 
 1. Grant location "Always" (or "Allow all the time").
 2. Start recording, then start the replay.
@@ -96,12 +99,13 @@ unverified on-device.
 
 ## 3. E2E (Maestro, before a release)
 
-Flows live in `e2e/`. Core flows: `sign-in.yaml` (wrong password shows `sign-in-error`;
-`admin@cityturfer.com` / `admin1234` reaches the tabs), `record-walk.yaml`, `record-ride.yaml`,
-`record-run.yaml` (permission dialogs → pick Run → start → wait → pause → resume → stop → save → it
-appears in History), `history-detail.yaml`, `export-gpx.yaml`, `delete-activity.yaml`,
-`turf-map.yaml` (import fixture history → open the Turf tab → assert `turf-summary-area` is visible
-→ toggle type filters). Use `testID` props on every interactive element. Maestro selects by `id:`.
+Flows live in `e2e/`, run in the order of `flowsOrder` in `e2e/config.yaml` by `e2e/run.sh`:
+`01-auth` (wrong password shows `sign-in-error`; `admin@cityturfer.com` / `admin1234` reaches the
+tabs), `02-record-run` (pause, resume, hold to finish → an activity with turf gained),
+`03-background-recording`, `04-too-short`, `05-history-detail`, `06-turf-map`, `07-delete-activity`,
+`09-me-menu`, `10-dashboard`, and `08-sign-out` last. Shared steps live in `e2e/subflows/`
+(`travel-*.yaml` are generated from GPX by `tools/e2e/gpx-to-travel.mjs`). Use `testID` props on
+every interactive element. Maestro selects by `id:`.
 
 Example:
 

@@ -1,3 +1,13 @@
+---
+status: historical
+verified: 2026-10-15
+owner: founder
+scope: [src/contexts, src/shared-kernel, src/platform]
+summary:
+  The PoC plan as written (draft v5, 2026-10-15) — ubiquitous language (§2) and context map (§3) are
+  still the vocabulary; folder layout and milestones are the original plan, not current code
+---
+
 # TurfTrack — Proof of Concept Plan (Domain-Driven Design)
 
 Status: draft v5 · 2026-10-15 · v5: mock sign-in instead of Firebase · v4: vertical-slice milestones
