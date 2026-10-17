@@ -1,0 +1,25 @@
+# Record a run: live distance grows, pause/resume, hold-to-finish → activity with turf gained.
+appId: com.turftrack.poc
+tags: [recording]
+---
+- runFlow: subflows/launch.yaml
+- tapOn: { id: 'tab-record' }
+- tapOn: { id: 'activity-type-run' }
+- assertVisible: 'Start run'
+- tapOn: { id: 'record-start' }
+- runFlow: subflows/allow-location.yaml
+- extendedWaitUntil: { visible: { id: 'stat-distance' }, timeout: 15000 }
+- runFlow: subflows/travel-run.yaml
+- assertVisible: { text: 'Distance [1-9].*' }
+- tapOn: { id: 'record-pause' }
+- assertVisible: 'Paused'
+- assertVisible: { id: 'record-resume' }
+- tapOn: { id: 'record-resume' }
+- assertVisible: { id: 'record-pause' }
+- runFlow: subflows/finish.yaml
+- extendedWaitUntil: { visible: { id: 'turf-gained' }, timeout: 30000 }
+- assertVisible: { text: '.*run' }
+- assertVisible: { text: "\\+.* new turf" }
+- assertVisible: { text: '[1-9][0-9]* new cells.*' }
+- takeScreenshot: 02-activity-detail
+- tapOn: 'Back'

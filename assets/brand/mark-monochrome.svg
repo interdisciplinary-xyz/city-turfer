@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Android themed-icon silhouette: single colour, no glow, inside the 66% safe zone. -->
+  <g transform="translate(512 512) scale(0.66) translate(-512 -512)" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="512,182 798,347 798,677 512,842 226,677 226,347" stroke-width="40"/>
+    <path d="M250 724 C 380 724, 392 560, 512 512 C 632 464, 640 312, 778 300" stroke-width="72"/>
+    <circle cx="778" cy="300" r="40" fill="#FFFFFF" stroke="none"/>
+  </g>
+</svg>

@@ -1,0 +1,14 @@
+# Finishing with < 2 points is refused and offers Discard; discarding returns to the start state.
+appId: com.turftrack.poc
+tags: [recording]
+---
+- runFlow: subflows/launch.yaml
+- tapOn: { id: 'tab-record' }
+- tapOn: { id: 'activity-type-cycle' }
+- assertVisible: 'Start ride'
+- tapOn: { id: 'record-start' }
+- runFlow: subflows/allow-location.yaml
+- runFlow: subflows/finish.yaml
+- extendedWaitUntil: { visible: 'Too short to save', timeout: 10000 }
+- tapOn: 'Discard'
+- extendedWaitUntil: { visible: { id: 'record-start' }, timeout: 10000 }

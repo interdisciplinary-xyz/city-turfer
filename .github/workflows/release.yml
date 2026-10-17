@@ -1,0 +1,32 @@
+name: Release
+
+# Tags main and writes CHANGELOG.md after CI is green on main. Never run by hand.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.event.workflow_run.conclusion == 'success' && !contains(github.event.workflow_run.head_commit.message, 'chore(release):')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: npm }
+      - run: npm ci --ignore-scripts
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Pin-at-cut: the scope/vX.Y.Z branch pinned package.json to X.Y.Z.
+          PINNED="$(node -p "require('./package.json').version")"
+          if git rev-parse "v$PINNED" >/dev/null 2>&1; then npx commit-and-tag-version
+          else npx commit-and-tag-version --release-as "$PINNED"; fi
+          git push --follow-tags origin HEAD:main

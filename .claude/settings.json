@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(npx jest:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run:*)",
+      "Bash(npx expo install:*)",
+      "Bash(npx expo start:*)",
+      "Bash(npx expo run:*)",
+      "Bash(npx expo prebuild:*)",
+      "Bash(node tools/:*)",
+      "Bash(tools/sim-location.sh:*)",
+      "Bash(xcrun simctl:*)",
+      "Bash(adb devices:*)",
+      "Bash(adb emu geo:*)",
+      "Bash(adb shell input:*)",
+      "Bash(maestro test:*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/format-ts.sh" }]
+      }
+    ]
+  }
+}

@@ -27,6 +27,6 @@ npm run test:e2e                   # Maestro suite on the booted iOS Simulator
 ## Docs
 
 - Architecture & plan: [`docs/poc-plan.md`](docs/poc-plan.md) (Domain-Driven Design: Identity, Recording, Activity Log, Territory)
-- Branching, releases, changelog: [`docs/process/RELEASE_MANAGER.md`](docs/process/RELEASE_MANAGER.md)
+- Branching, releases, changelog: [`docs/process/release-manager.md`](docs/process/release-manager.md)
 - Brand: [`.claude/skills/brand-system/SKILL.md`](.claude/skills/brand-system/SKILL.md)
 - Working with Claude Code in this repo: [`CLAUDE.md`](CLAUDE.md)
