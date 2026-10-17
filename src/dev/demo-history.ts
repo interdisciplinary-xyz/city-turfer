@@ -5,11 +5,11 @@
  * Port of tools/lib/generate.mjs + tools/gen-history.mjs.
  */
 import type { Container } from '@/composition-root';
+import { EARTH_RADIUS_M } from '@/constants/geo';
 import type { ActivityType, GeoPoint, TrackPoint } from '@/shared-kernel';
 
-const R = 6371008.8;
 function destination(p: GeoPoint, bearingDeg: number, distM: number): GeoPoint {
-  const d = distM / R,
+  const d = distM / EARTH_RADIUS_M,
     br = (bearingDeg * Math.PI) / 180,
     la1 = (p.lat * Math.PI) / 180,
     lo1 = (p.lon * Math.PI) / 180;
@@ -120,4 +120,24 @@ export async function seedDemoHistory(
   }
   await c.dispatcher.dispatchPending();
   return plan.length;
+}
+
+const DEMO_PREFIX = 'demo-';
+
+/**
+ * Delete every demo activity through the normal delete use case, so the turf
+ * it claimed is released. Returns the number removed.
+ */
+export async function removeDemoHistory(c: Container): Promise<number> {
+  const ids: string[] = [];
+  let before: number | undefined;
+  for (;;) {
+    const page = await c.activityLog.list.execute(200, before);
+    if (page.length === 0) break;
+    for (const a of page) if (a.id.startsWith(DEMO_PREFIX)) ids.push(a.id);
+    before = page[page.length - 1].startedAt;
+  }
+  for (const id of ids) await c.activityLog.remove.execute(id);
+  await c.dispatcher.dispatchPending();
+  return ids.length;
 }

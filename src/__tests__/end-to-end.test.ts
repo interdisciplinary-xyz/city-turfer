@@ -31,6 +31,7 @@ function fakes() {
       start: async () => void (running = true),
       stop: async () => void (running = false),
       isRunning: async () => running,
+      reacquire: async () => null,
     },
     permissions: { ensureForeground: async () => 'granted' as const, requestBackground: async () => true },
     notifier: { publish: () => undefined },
@@ -191,7 +192,9 @@ describe('Data repair: split legacy tracks at recording gaps', () => {
     );
 
     // Runs once per database.
-    expect(await db.first('SELECT name FROM sys_jobs')).toEqual({ name: 'split-track-gaps-v1' });
+    expect(await db.all("SELECT name FROM sys_jobs WHERE name LIKE 'split-track-gaps%'")).toEqual([
+      { name: 'split-track-gaps-v1' },
+    ]);
   });
 
   it('leaves correct tracks untouched and is idempotent', async () => {
