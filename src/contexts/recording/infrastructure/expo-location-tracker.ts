@@ -1,4 +1,5 @@
 import * as Location from 'expo-location';
+import { Platform } from 'react-native';
 
 import { LOCATION_TASK } from '@/constants/location';
 
@@ -9,14 +10,35 @@ import { backgroundActivitySession } from './background-activity-session';
 
 /** Anti-corruption layer: the only place that knows expo-location's LocationObject. */
 export function toFix(l: Location.LocationObject): Fix {
+  return toFixOn(l, Platform.OS);
+}
+
+/**
+ * `toFix` for an explicit platform (testable; `toFix` stays unary so `locations.map(toFix)`
+ * cannot pass the array index as a platform).
+ *
+ * Android: expo-location copies `Location.getSpeed()` / `getAltitude()` without checking
+ * `hasSpeed()` / `hasAltitude()`, and those getters return 0.0 when the value is unknown. A
+ * reported 0 is therefore indistinguishable from "no data"; read as a real 0 m/s it holds
+ * auto-pause shut whenever the chip has no Doppler speed. Map both to null: the Fix Filter then
+ * uses the speed implied by positions, which is ~0 when really standing still, so a genuine 0
+ * loses nothing. The cost is that a true altitude of exactly 0 m is dropped, which elevation
+ * maths tolerates (null altitudes are skipped).
+ * iOS reports unknown speed as -1 (handled by `>= 0`) and unknown altitude via verticalAccuracy,
+ * so a 0 there is a real reading and is kept.
+ */
+export function toFixOn(l: Location.LocationObject, os: typeof Platform.OS): Fix {
   const c = l.coords;
+  const unknownZero = os === 'android';
+  const speed = c.speed != null && c.speed >= 0 && !(unknownZero && c.speed === 0) ? c.speed : null;
+  const alt = c.altitude != null && !(unknownZero && c.altitude === 0) ? c.altitude : null;
   return {
     lat: c.latitude,
     lon: c.longitude,
     t: l.timestamp,
     accuracy: c.accuracy ?? null,
-    alt: c.altitude ?? null,
-    speed: c.speed != null && c.speed >= 0 ? c.speed : null,
+    alt,
+    speed,
   };
 }
 
