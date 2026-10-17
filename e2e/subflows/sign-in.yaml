@@ -10,3 +10,7 @@ appId: com.turftrack.poc
 - inputText: ${PASSWORD}
 # Submit via the keyboard's Go key (the button sits under the keyboard).
 - pressKey: Enter
+# iOS may offer to save the password after a successful sign-in; dismiss it.
+- runFlow:
+    when: { visible: 'Not Now' }
+    commands: [{ tapOn: 'Not Now' }]
