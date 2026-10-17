@@ -88,6 +88,15 @@ describe('RecordingSession', () => {
     expect(r.jitter).toBe(1);
   });
 
+  it.each(['finish', 'discard'] as const)('keeps no position once closed (%s)', (close) => {
+    const s = RecordingSession.start('s1', 'run', T0);
+    s.ingest([0, 1, 2].map((i) => fix(i, i * 5)));
+    expect(s.toState().tail).not.toBeNull();
+    s[close](T0 + 3000);
+    expect(s.toState()).toMatchObject({ tail: null, recent: [], distanceM: expect.any(Number), pointCount: 3 });
+    expect(JSON.stringify(s.toState())).not.toMatch(/"lat"|"lon"/);
+  });
+
   it('refuses to finish with fewer than 2 points and makes finished terminal', () => {
     const s = RecordingSession.start('s1', 'walk', T0);
     expect(() => s.finish(T0 + 1000)).toThrow(DomainError);

@@ -47,6 +47,8 @@ export class SqliteRecordingSessionRepository implements RecordingSessionReposit
         'INSERT INTO rec_track_points (session_id, seq, segment, t, lat, lon, alt, accuracy, speed)',
         newPoints.map((p, i) => [s.id, firstSeq + i, p.segment, p.t, p.lat, p.lon, p.alt, p.accuracy, p.speed])
       );
+      // A discarded session's track is deleted with the state change, never left behind on a crash.
+      if (s.status === 'discarded') await tx.run('DELETE FROM rec_track_points WHERE session_id = ?', [s.id]);
       await appendToOutbox(tx, events, now);
     });
   }
@@ -60,5 +62,27 @@ export class SqliteRecordingSessionRepository implements RecordingSessionReposit
 
   async purgePoints(sessionId: string) {
     await this.db.run('DELETE FROM rec_track_points WHERE session_id = ?', [sessionId]);
+  }
+
+  async scrubClosedSessions() {
+    return this.db.transaction(async (tx) => {
+      const rows = await tx.all<{ id: string; state: string }>(
+        "SELECT id, state FROM rec_sessions WHERE status IN ('finished','discarded')"
+      );
+      let scrubbed = 0;
+      for (const r of rows) {
+        const state = JSON.parse(r.state) as RecordingSessionState;
+        if (state.tail == null && !state.recent?.length) continue;
+        await tx.run('UPDATE rec_sessions SET state = ? WHERE id = ?', [
+          JSON.stringify({ ...state, tail: null, recent: [] }),
+          r.id,
+        ]);
+        scrubbed++;
+      }
+      await tx.run(
+        "DELETE FROM rec_track_points WHERE session_id IN (SELECT id FROM rec_sessions WHERE status = 'discarded')"
+      );
+      return scrubbed;
+    });
   }
 }

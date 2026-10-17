@@ -198,7 +198,8 @@ export class RecordingSession {
     this.assertActive();
     if (this.state.pointCount < 2) throw new DomainError('session.too-short');
     if (this.state.pausedSince != null) this.endPause(now);
-    this.state = { ...this.state, status: 'finished', endedAt: now };
+    // A closed session keeps no position: the track lives in the point log (then the activity log).
+    this.state = { ...this.state, status: 'finished', endedAt: now, tail: null, recent: [] };
     this.record({
       type: 'SessionFinished',
       v: 1,
@@ -212,7 +213,7 @@ export class RecordingSession {
 
   discard(now: number): void {
     this.assertActive();
-    this.state = { ...this.state, status: 'discarded', endedAt: now };
+    this.state = { ...this.state, status: 'discarded', endedAt: now, tail: null, recent: [] };
     this.record({ type: 'SessionDiscarded', v: 1, at: now, sessionId: this.id });
   }
 
