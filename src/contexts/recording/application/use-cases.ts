@@ -170,8 +170,7 @@ export class DiscardRecording {
     const session = await this.d.sessions.getActive();
     if (session) {
       session.discard(this.d.clock.now());
-      await this.d.sessions.save(session, []);
-      await this.d.sessions.purgePoints(session.id);
+      await this.d.sessions.save(session, []); // also deletes its track points, same transaction
     }
     await this.d.tracker.stop();
     this.d.notifier.publish(null);

@@ -20,7 +20,7 @@ import { SqliteTerritoryRepository } from '@/contexts/territory/infrastructure/s
 import type { Database } from '@/platform/database';
 import { Diagnostics } from '@/platform/diagnostics';
 import { runOnce } from '@/platform/jobs';
-import { EventDispatcher } from '@/platform/outbox';
+import { EventDispatcher, pruneOutbox } from '@/platform/outbox';
 import { type Clock, type DomainEvent, type IdGenerator, systemClock } from '@/shared-kernel';
 
 export interface DeviceAdapters {
@@ -33,9 +33,14 @@ export interface DeviceAdapters {
 }
 
 export function wire(userId: string, db: Database, a: DeviceAdapters) {
-  const dispatcher = new EventDispatcher(db);
-  const afterCommit = () => void dispatcher.dispatchPending();
   const clock = a.clock ?? systemClock;
+  const diagnostics = new Diagnostics(db);
+  const dispatcher = new EventDispatcher(db, {
+    now: () => clock.now(),
+    // No payload or error message: they may carry coordinates.
+    onDeadLetter: (d) => diagnostics.log('task-error', { code: 'outbox.dead-letter', ...d }),
+  });
+  const afterCommit = () => void dispatcher.dispatchPending();
 
   const recording = createRecordingApi({
     sessions: new SqliteRecordingSessionRepository(db),
@@ -79,11 +84,13 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
   const estimateGaps = () => activityLog.estimateGapRoutes.execute().catch(() => 0);
   dispatcher.onChange(() => void estimateGaps());
 
-  const diagnostics = new Diagnostics(db);
-  /** One-off data repairs, run once per database at launch (before pending events are dispatched). */
+  /** Launch maintenance (before pending events are dispatched): one-off data repairs, then retention. */
   async function runMaintenance(): Promise<void> {
     const repaired = await runOnce(db, 'split-track-gaps-v1', () => activityLog.splitTrackGaps.execute());
     if (repaired) diagnostics.log('maintenance', { job: 'split-track-gaps-v1', ...repaired });
+    const scrubbed = await runOnce(db, 'scrub-closed-sessions-v1', () => recording.scrubClosedSessions.execute());
+    if (scrubbed) diagnostics.log('maintenance', { job: 'scrub-closed-sessions-v1', ...scrubbed });
+    await pruneOutbox(db, clock.now());
   }
 
   return { userId, db, dispatcher, diagnostics, runMaintenance, estimateGaps, recording, activityLog, territory };

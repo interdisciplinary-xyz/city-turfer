@@ -129,14 +129,27 @@ const MIGRATIONS: { version: number; sql: string }[] = [
       ) WITHOUT ROWID;
     `,
   },
+  {
+    version: 5,
+    sql: `
+      -- Outbox retries and dead letters: a permanently failing event no longer blocks later ones.
+      ALTER TABLE sys_outbox ADD COLUMN attempts INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE sys_outbox ADD COLUMN last_error TEXT;
+      -- next_attempt_at NULL: deliver now; otherwise retry not before this time (backoff)
+      ALTER TABLE sys_outbox ADD COLUMN next_attempt_at INTEGER;
+      -- dead_lettered_at NOT NULL: given up on, skipped by the dispatcher, pruned after 90 days
+      ALTER TABLE sys_outbox ADD COLUMN dead_lettered_at INTEGER;
+    `,
+  },
 ];
 
-export async function migrate(db: Database): Promise<void> {
+/** `upTo` stops at a schema version (tests seeding an older database). */
+export async function migrate(db: Database, upTo = Infinity): Promise<void> {
   await db.exec('CREATE TABLE IF NOT EXISTS sys_schema_version (version INTEGER NOT NULL)');
   const row = await db.first<{ version: number }>('SELECT MAX(version) AS version FROM sys_schema_version');
   const current = row?.version ?? 0;
   for (const m of MIGRATIONS) {
-    if (m.version <= current) continue;
+    if (m.version <= current || m.version > upTo) continue;
     await db.transaction(async (tx) => {
       for (const stmt of splitStatements(m.sql)) await tx.run(stmt);
       await tx.run('INSERT INTO sys_schema_version (version) VALUES (?)', [m.version]);
