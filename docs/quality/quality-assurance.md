@@ -15,19 +15,19 @@ The single local gate, also run by CI on every PR into `scope/**`, `release/**` 
 npm run ci:quality   # standard (format + lint) + types + arch + unit (jest + node tool tests) + e2e:audit
 ```
 
-| Check         | Command                            | Pass bar                                                                 |
-| ------------- | ---------------------------------- | ------------------------------------------------------------------------ |
-| Format        | `npm run standard:format`          | Prettier clean                                                           |
-| Lint          | `npm run standard:lint`            | 0 errors (src, index.ts, tools)                                          |
-| Types         | `npm run test:types`               | `tsc --noEmit` 0 errors (strict)                                         |
-| Architecture  | `npm run test:arch`                | dependency-cruiser: 0 violations (layers and context boundaries)         |
-| Unit          | `npm run test:unit`                | all green. Baseline: **81 Jest tests in 7 suites**, plus node tool tests |
-| E2E audit     | `npm run e2e:audit`                | 0 errors: flows, `config.yaml`, CP table and `testID`s agree             |
-| E2E (manual)  | `npm run test:e2e`                 | all **10 Maestro flows** green on the iOS Simulator (needs a dev build)  |
-| Release smoke | [`smoke-test.md`](./smoke-test.md) | every box ticked on a physical iPhone                                    |
+| Check         | Command                            | Pass bar                                                                        |
+| ------------- | ---------------------------------- | ------------------------------------------------------------------------------- |
+| Format        | `npm run standard:format`          | Prettier clean                                                                  |
+| Lint          | `npm run standard:lint`            | 0 errors (src, index.ts, tools)                                                 |
+| Types         | `npm run test:types`               | `tsc --noEmit` 0 errors (strict)                                                |
+| Architecture  | `npm run test:arch`                | dependency-cruiser: 0 violations (layers and context boundaries)                |
+| Unit          | `npm run test:unit`                | all green. Baseline: **81 Jest tests in 7 suites**, plus **10 node tool tests** |
+| E2E audit     | `npm run e2e:audit`                | 0 errors: flows, `config.yaml`, CP table and `testID`s agree                    |
+| E2E (manual)  | `npm run test:e2e`                 | all **10 Maestro flows** green on the iOS Simulator (needs a dev build)         |
+| Release smoke | [`smoke-test.md`](./smoke-test.md) | every box ticked on a physical iPhone                                           |
 
 Baselines measured on 2026-10-17 (Apple Silicon laptop, warm cache): `npm run ci:quality` takes
-about 10 seconds. The Maestro suite takes several minutes because the demo-history seed step waits
+about 8-10 seconds. The Maestro suite takes several minutes because the demo-history seed step waits
 up to 240 seconds; record the real figure of your run in the release PR.
 
 Baselines are floors, not contracts: the count may only go up. A drop means tests were deleted and
