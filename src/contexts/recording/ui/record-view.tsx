@@ -1,11 +1,11 @@
 import { Camera, GeoJSONSource, Layer, Map, UserLocation } from '@maplibre/maplibre-react-native';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useColorScheme } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ACTIVITY_TYPES, TYPE_GLYPH, TYPE_LABEL } from '@/constants/activity';
-import { ACCENT, TYPE_COLOR } from '@/constants/colors';
+import { ON_TIER, ON_TYPE_COLOR, TIER_COLOR, TYPE_COLOR } from '@/constants/colors';
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from '@/constants/map';
 import { type ActivityType } from '@/shared-kernel';
 import { Button, Stat } from '@/ui-kit/components';
@@ -15,10 +15,13 @@ import { trackWithGaps } from '@/ui-kit/track-geometry';
 
 import { useRecording } from './use-recording';
 
-const STATUS_BANNER: Record<string, { text: string; color: string }> = {
-  acquiring: { text: 'Waiting for GPS…', color: '#5C6577' },
-  paused: { text: 'Paused', color: '#FFB02E' },
-  autoPaused: { text: 'Auto-paused — start moving to resume', color: '#7B2FF7' },
+/** How long the Stop button must be held before the recording finishes. */
+const HOLD_MS = 900;
+
+const STATUS_BANNER: Record<string, { text: string; color: string; textColor: string }> = {
+  acquiring: { text: 'Waiting for GPS…', color: '#5C6577', textColor: '#FFFFFF' },
+  paused: { text: 'Paused', color: TIER_COLOR.strong, textColor: ON_TIER.strong },
+  autoPaused: { text: 'Auto-paused — start moving to resume', color: TIER_COLOR.faint, textColor: ON_TIER.faint },
 };
 
 export function RecordView({ onFinished }: { onFinished: (activityId: string) => void }) {
@@ -29,7 +32,6 @@ export function RecordView({ onFinished }: { onFinished: (activityId: string) =>
   const [type, setType] = useState<ActivityType>('walk');
   const [busy, setBusy] = useState(false);
   const [following, setFollowing] = useState(true);
-  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [holding, setHolding] = useState(false);
 
   useEffect(() => {
@@ -71,6 +73,12 @@ export function RecordView({ onFinished }: { onFinished: (activityId: string) =>
       setBusy(false);
     }
   };
+
+  const confirmFinish = () =>
+    Alert.alert('Finish recording?', 'Your route will be saved and its streets added to your turf.', [
+      { text: 'Keep recording', style: 'cancel' },
+      { text: 'Finish', style: 'destructive', onPress: () => void doFinish() },
+    ]);
 
   const status = !snapshot
     ? null
@@ -125,6 +133,7 @@ export function RecordView({ onFinished }: { onFinished: (activityId: string) =>
       {!following && (
         <Pressable
           testID='recenter'
+          accessibilityRole='button'
           accessibilityLabel='Recenter on my location'
           onPress={() => setFollowing(true)}
           style={[s.recenter, { top: insets.top + 12, backgroundColor: p.card }]}
@@ -136,7 +145,7 @@ export function RecordView({ onFinished }: { onFinished: (activityId: string) =>
       <View style={[s.panel, { backgroundColor: p.card, paddingBottom: 40 }]}>
         {banner && (
           <View style={[s.banner, { backgroundColor: banner.color }]}>
-            <Text style={s.bannerText}>{banner.text}</Text>
+            <Text style={[s.bannerText, { color: banner.textColor }]}>{banner.text}</Text>
           </View>
         )}
 
@@ -154,6 +163,7 @@ export function RecordView({ onFinished }: { onFinished: (activityId: string) =>
                   testID='record-resume'
                   label='Resume'
                   color={color}
+                  textColor={ON_TYPE_COLOR[activeType]}
                   onPress={() => void resume()}
                   style={s.flex}
                   busy={busy}
@@ -172,17 +182,18 @@ export function RecordView({ onFinished }: { onFinished: (activityId: string) =>
               <Pressable
                 testID='record-stop'
                 accessibilityRole='button'
-                accessibilityLabel='Hold to finish'
-                onPressIn={() => {
-                  setHolding(true);
-                  holdTimer.current = setTimeout(() => {
-                    setHolding(false);
-                    void doFinish();
-                  }, 900);
+                accessibilityLabel='Finish recording'
+                accessibilityHint='Press and hold to finish. With a screen reader, double-tap to choose.'
+                accessibilityActions={[{ name: 'activate', label: 'Finish recording' }]}
+                onAccessibilityAction={(e) => {
+                  if (e.nativeEvent.actionName === 'activate') confirmFinish();
                 }}
-                onPressOut={() => {
+                delayLongPress={HOLD_MS}
+                onPressIn={() => setHolding(true)}
+                onPressOut={() => setHolding(false)}
+                onLongPress={() => {
                   setHolding(false);
-                  if (holdTimer.current) clearTimeout(holdTimer.current);
+                  void doFinish();
                 }}
                 style={[s.stop, { backgroundColor: holding ? '#B3261E' : p.danger }]}
               >
@@ -217,6 +228,7 @@ export function RecordView({ onFinished }: { onFinished: (activityId: string) =>
               testID='record-start'
               label={`Start ${TYPE_LABEL[type].toLowerCase()}`}
               color={TYPE_COLOR[type]}
+              textColor={ON_TYPE_COLOR[type]}
               onPress={onStart}
               busy={busy}
             />
@@ -249,7 +261,7 @@ const s = StyleSheet.create({
   stop: { flex: 1, minHeight: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   stopText: { color: '#fff', fontWeight: '800', fontSize: 17 },
   banner: { borderRadius: 10, paddingVertical: 6, paddingHorizontal: 10, alignSelf: 'center' },
-  bannerText: { color: '#fff', fontWeight: '700' },
+  bannerText: { fontWeight: '700' },
   typeChip: { flex: 1, alignItems: 'center', paddingVertical: 12, borderRadius: 14, borderWidth: 2, gap: 4 },
   typeGlyph: { fontSize: 26 },
   hint: { textAlign: 'center', fontSize: 13 },
@@ -265,5 +277,3 @@ const s = StyleSheet.create({
     elevation: 4,
   },
 });
-
-export { ACCENT };
