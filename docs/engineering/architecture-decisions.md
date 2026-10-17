@@ -103,6 +103,14 @@ plausible distance; keeping it out of Territory keeps turf honest ("you were the
 (best effort, after each dispatch run in `src/wiring.ts`). Fine for the PoC; production needs its
 own router. Implausible routes (too fast for the type, more than 4× the straight line) are dropped.
 
+**Update (2026-10-17, #33).** Privacy and fair use tightened: estimation is a user setting (**Me →
+Info → Estimate GPS gaps along streets**; unset means on, off sends nothing,
+`secure-store-gap-estimation-setting.ts`); endpoints are rounded to 4 decimals (~10 m); a break
+after a manual Resume is never routed, nor a gap ending within 200 m of the activity's first or last
+point (often home); requests are rate-limited per the FOSSGIS usage policy (one per second, 20 per
+run, back off on 429 or offline; `application/router-budget.ts`) and identify the app in
+`User-Agent`.
+
 ---
 
 ## Why OTA updates through EAS with a runtime fingerprint (2026-10-15)
@@ -187,15 +195,22 @@ viewport queries. Changing the resolution later means re-claiming every activity
 **Decision:** An aggregate change and its domain events are written in one SQLite transaction
 (`appendToOutbox` into `sys_outbox`, `src/platform/outbox.ts`). The `EventDispatcher` delivers them
 after commit and on every app start to idempotent handlers: `SessionFinished` → Activity Log,
-`ActivityRecorded` / `ActivityDeleted` / `ActivityTrackCorrected` → Territory (`src/wiring.ts`). A
-failing handler leaves its event pending for the next run.
+`ActivityRecorded` / `ActivityDeleted` / `ActivityTrackCorrected` → Territory (`src/wiring.ts`).
+
+**Update (2026-10-17, #30): retries and dead letters.** Delivery is strict FIFO. A failing event
+blocks the queue while it is retried with exponential backoff (5 s base); it is dead-lettered
+(`dead_lettered_at`) at once for a `DomainError` or an unreadable payload, otherwise after 5
+attempts, and delivery continues past it. A dead letter logs a `task-error` diagnostic with the
+event type and error code only, never the payload. Delivered events are pruned after 30 days, dead
+letters after 90 (`pruneOutbox`, migration 5).
 
 **Rationale:** The headless background task can be killed between any two steps. With the outbox, a
 crash can't leave a finished session without its activity, or an activity without its turf: the
 chain resumes on the next launch. The end-to-end test covers a crash between steps.
 
 **Trade-off:** Eventual consistency inside one device (the UI can briefly show "Saving your
-activity…"), and every handler must stay idempotent (claim id = activity id).
+activity…"), and every handler must stay idempotent (claim id = activity id) and tolerate a missing
+predecessor, because a dead-lettered event no longer stops the ones after it.
 
 ---
 
@@ -252,8 +267,10 @@ open App Store question).
 ## Why GPX import is a dev tool and GPX export a stretch goal (2026-10-15)
 
 **Status:** Accepted, amended in practice: seeding happens in the app through the demo history
-seeder (**Me → Info → Seed demo history**, `src/dev/demo-history.ts` via `ImportActivity`), and GPX
-files are read only by tests (`src/test-support/fixtures.ts`). GPX export is not built.
+seeder (`src/dev/demo-history.ts` via `ImportActivity`), and GPX files are read only by tests
+(`src/test-support/fixtures.ts`). GPX export is not built. Since #27 (2026-10-17) the seeder sits
+under **Me → Info → Developer tools**, shown in dev builds or after five long-presses on the version
+text, next to **Remove demo data**.
 
 **Decision:** Importing tracks exists to seed test history. Exporting GPX to other apps is M7
 stretch.
