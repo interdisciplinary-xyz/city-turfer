@@ -74,9 +74,11 @@ export class SqliteRecordingSessionRepository implements RecordingSessionReposit
       let scrubbed = 0;
       for (const r of rows) {
         const state = JSON.parse(r.state) as RecordingSessionState;
-        if (state.tail == null && !state.recent?.length) continue;
+        if (state.tail == null && !state.recent?.length && state.lastSeen == null && state.pauseAnchor == null) {
+          continue;
+        }
         await tx.run('UPDATE rec_sessions SET state = ? WHERE id = ?', [
-          JSON.stringify({ ...state, tail: null, recent: [] }),
+          JSON.stringify({ ...state, tail: null, recent: [], lastSeen: null, pauseAnchor: null }),
           r.id,
         ]);
         scrubbed++;
