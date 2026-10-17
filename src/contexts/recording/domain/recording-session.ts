@@ -65,6 +65,9 @@ export interface IngestReport {
  * totals only — accepted Track Points are returned from `ingest` and appended
  * to the point log by the repository in the same transaction.
  */
+/** A closed session keeps no position (location is personal data): every field that holds one. */
+const NO_POSITION = { tail: null, recent: [], lastSeen: null, pauseAnchor: null } as const;
+
 export class RecordingSession {
   private events: RecordingEvent[] = [];
   private constructor(private state: RecordingSessionState) {}
@@ -263,7 +266,7 @@ export class RecordingSession {
     if (this.state.pointCount < 2) throw new DomainError('session.too-short');
     if (this.state.pausedSince != null) this.endPause(now);
     // A closed session keeps no position: the track lives in the point log (then the activity log).
-    this.state = { ...this.state, status: 'finished', endedAt: now, tail: null, recent: [] };
+    this.state = { ...this.state, status: 'finished', endedAt: now, ...NO_POSITION };
     this.record({
       type: 'SessionFinished',
       v: 1,
@@ -277,7 +280,7 @@ export class RecordingSession {
 
   discard(now: number): void {
     this.assertActive();
-    this.state = { ...this.state, status: 'discarded', endedAt: now, tail: null, recent: [] };
+    this.state = { ...this.state, status: 'discarded', endedAt: now, ...NO_POSITION };
     this.record({ type: 'SessionDiscarded', v: 1, at: now, sessionId: this.id });
   }
 

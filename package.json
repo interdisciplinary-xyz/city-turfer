@@ -105,11 +105,15 @@
     ],
     "testPathIgnorePatterns": [
       "/node_modules/",
-      "/tools/"
+      "/tools/",
+      "/.claude/worktrees/"
     ],
     "globals": {
       "__DEV__": true
-    }
+    },
+    "modulePathIgnorePatterns": [
+      "/.claude/worktrees/"
+    ]
   },
   "engines": {
     "node": ">=22.13"
