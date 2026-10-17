@@ -179,7 +179,7 @@ expo-task-mgr ─────▶ │  RECORDING  │ ───(outbox)───�
 - **Port `AuthGateway`**: `signIn(email, password)`, `signOut()`, `currentUser()`,
   `onAuthStateChanged(listener)`. In the PoC it is implemented by **`MockAuthGateway`**, which
   accepts exactly one account:
-  - email `admin@turftrack.com`, password `admin1234` → `UserId("admin")`, display name "Admin".
+  - email `admin@cityturfer.com`, password `admin1234` → `UserId("admin")`, display name "Admin".
   - Anything else → `AuthError('invalid-credentials')`. There is no sign-up, password reset or
     social login in the PoC.
 - **Use cases**: `SignIn`, `SignOut` (refused while a Recording Session is active),
@@ -407,8 +407,8 @@ Build:
    layers), `platform/`, composition root. dependency-cruiser rules, proven by a deliberate
    violation.
 3. Platform: SQLite opened **per user** (`turftrack-<uid>.db`), migrations, outbox, EventDispatcher.
-4. **Identity context** (§4.0): the `AuthGateway` port with `MockAuthGateway` (`admin@turftrack.com`
-   / `admin1234`). Session persisted, so the app opens signed in.
+4. **Identity context** (§4.0): the `AuthGateway` port with `MockAuthGateway`
+   (`admin@cityturfer.com` / `admin1234`). Session persisted, so the app opens signed in.
 5. Screens: sign in (email + password, a clear error for wrong credentials) → an empty "home" with
    tabs (Record, Turf, History) as placeholders → sign out.
 
@@ -626,6 +626,8 @@ alongside M3's UI work; real-use data collection starts as soon as M2 ships.
   one adapter. Data stays on the device, one database per user.
 - **2026-10-15**: **Milestones are vertical slices**: scaffold + auth → walk → turf → run and cycle
   → history → field validation.
+- **2026-10-17**: The mock account's email is now `admin@cityturfer.com` (password unchanged), to
+  match the CityTurfer name. The user ID stays `admin`, so existing data and sessions carry over.
 
 ## 10. Open questions
 
