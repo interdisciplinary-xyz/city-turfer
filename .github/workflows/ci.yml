@@ -34,4 +34,5 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version-file: .nvmrc, cache: npm }
       - run: npm ci
+      - run: npm run check:secret-files -- --tracked
       - run: npm run ci:quality
