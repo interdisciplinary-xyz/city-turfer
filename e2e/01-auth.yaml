@@ -9,7 +9,7 @@ tags: [auth]
     when: { visible: { id: 'tab-me' } }
     commands:
       - tapOn: { id: 'tab-me' }
-      - scrollUntilVisible: { element: { id: 'sign-out' } }
+      - tapOn: { id: 'me-menu-account' }
       - tapOn: { id: 'sign-out' }
 - extendedWaitUntil: { visible: { id: 'sign-in-submit' }, timeout: 10000 }
 - assertVisible: 'Surf your city. Own your streets.'

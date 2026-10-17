@@ -4,6 +4,7 @@ import { type SFSymbol, SymbolView } from 'expo-symbols';
 import { type ColorValue, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ACCENT } from '@/constants/colors';
+import { MeTabButton } from '@/ui-kit/me-menu';
 import { usePalette } from '@/ui-kit/theme';
 
 /** SF Symbol on iOS; the text glyph is the fallback elsewhere (Android). */
@@ -52,6 +53,8 @@ export default function TabsLayout() {
   const p = usePalette();
   return (
     <Tabs
+      // Open on Record (centre) although Turf is the first tab.
+      initialRouteName='index'
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: ACCENT,
@@ -65,6 +68,14 @@ export default function TabsLayout() {
         options={{ title: 'Turf', tabBarIcon: icon('hexagon', '⬢'), tabBarButtonTestID: 'tab-turf' }}
       />
       <Tabs.Screen
+        name='stats'
+        options={{ title: 'Stats', tabBarIcon: icon('chart.bar', '▤'), tabBarButtonTestID: 'tab-stats' }}
+      />
+      <Tabs.Screen
+        name='index'
+        options={{ title: 'Record', tabBarButton: RecordTabButton, tabBarButtonTestID: 'tab-record' }}
+      />
+      <Tabs.Screen
         name='history'
         options={{
           title: 'History',
@@ -73,16 +84,12 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name='index'
-        options={{ title: 'Record', tabBarButton: RecordTabButton, tabBarButtonTestID: 'tab-record' }}
-      />
-      <Tabs.Screen
-        name='stats'
-        options={{ title: 'Stats', tabBarIcon: icon('chart.bar', '▤'), tabBarButtonTestID: 'tab-stats' }}
-      />
-      <Tabs.Screen
         name='me'
-        options={{ title: 'Me', tabBarIcon: icon('person.crop.circle', '◉'), tabBarButtonTestID: 'tab-me' }}
+        options={{
+          title: 'Me',
+          tabBarButton: ({ testID }) => <MeTabButton testID={testID} />,
+          tabBarButtonTestID: 'tab-me',
+        }}
       />
     </Tabs>
   );

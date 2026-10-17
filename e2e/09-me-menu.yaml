@@ -1,0 +1,13 @@
+# The Me tab opens a menu: Profile, Account, Info.
+appId: com.turftrack.poc
+tags: [me]
+---
+- runFlow: subflows/launch.yaml
+- tapOn: { id: 'tab-me' }
+- tapOn: { id: 'me-menu-profile' }
+- assertVisible: { id: 'profile-name' }
+- tapOn: 'Back'
+- tapOn: { id: 'tab-me' }
+- tapOn: { id: 'me-menu-info' }
+- assertVisible: { id: 'app-version' }
+- tapOn: 'Back'
