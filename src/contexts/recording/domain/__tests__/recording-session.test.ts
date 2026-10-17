@@ -1,5 +1,6 @@
 import { distanceM, DomainError } from '@/shared-kernel';
 import { loadFixes } from '@/test-support/fixtures';
+import { oracleStats } from '@/test-support/oracle';
 
 import type { Fix } from '../fix';
 import { RecordingSession } from '../recording-session';
@@ -99,12 +100,12 @@ describe('RecordingSession', () => {
   });
 
   it('matches the reference oracle on the run fixture with outliers and a pause (±3%)', () => {
-    // node tools/route-stats.mjs tools/fixtures/run-5k-outliers-pause.gpx → 5.24 km
+    const oracle = oracleStats('run-5k-outliers-pause.gpx').distanceM; // node tools/route-stats.mjs --json
     const s = RecordingSession.start('s1', 'run', T0);
     const accepted = s.ingest(loadFixes('run-5k-outliers-pause.gpx'));
     let d = 0;
     for (let i = 1; i < accepted.length; i++) d += distanceM(accepted[i - 1], accepted[i]);
-    expect(Math.abs(s.snapshot(0).distanceM - 5240) / 5240).toBeLessThan(0.03);
+    expect(Math.abs(s.snapshot(0).distanceM - oracle) / oracle).toBeLessThan(0.03);
     expect(d).toBeCloseTo(s.snapshot(0).distanceM, 0);
   });
 });

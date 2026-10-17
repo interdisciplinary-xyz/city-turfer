@@ -2,6 +2,7 @@ import type { Fix } from '@/contexts/recording/domain/fix';
 import { migrate } from '@/platform/migrations';
 import { loadFixes } from '@/test-support/fixtures';
 import { openNodeDatabase } from '@/test-support/node-database';
+import { oracleStats } from '@/test-support/oracle';
 import { wire } from '@/wiring';
 
 /** Fake street router: an L-shaped route (1.3× the straight line); `offline` makes it throw. */
@@ -66,8 +67,9 @@ describe('Recording → Activity Log → Territory', () => {
 
     const detail = await c.activityLog.detail.execute(id);
     expect(detail).not.toBeNull();
-    expect(Math.abs(detail!.distanceM - 5240) / 5240).toBeLessThan(0.03);
-    expect(detail!.splits.length).toBe(5);
+    const oracle = oracleStats('run-5k-outliers-pause.gpx');
+    expect(Math.abs(detail!.distanceM - oracle.distanceM) / oracle.distanceM).toBeLessThan(0.03);
+    expect(detail!.splits.length).toBe(oracle.splits.length);
 
     const claim = await c.territory.claimOf.execute(id);
     expect(claim!.cellCount).toBeGreaterThan(50);
