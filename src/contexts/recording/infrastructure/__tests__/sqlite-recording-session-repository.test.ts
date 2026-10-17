@@ -43,9 +43,9 @@ describe('SqliteRecordingSessionRepository: an ended session is never revived', 
     expect(err).toBeInstanceOf(DomainError);
     expect((err as DomainError).code).toBe('session.already-ended');
 
-    // Rolled back: still ended, no extra points, no extra events.
+    // Rolled back: still ended, no extra points (a discard already deleted its own), no extra events.
     expect(await t.status()).toBe(end === 'finish' ? 'finished' : 'discarded');
-    expect(await t.points()).toBe(3);
+    expect(await t.points()).toBe(end === 'finish' ? 3 : 0);
     expect(await t.outbox()).toEqual(['SessionStarted', end === 'finish' ? 'SessionFinished' : 'SessionDiscarded']);
     expect(await t.repo.getActive()).toBeNull();
   });

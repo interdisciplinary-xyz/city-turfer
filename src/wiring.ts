@@ -88,8 +88,8 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
   async function runMaintenance(): Promise<void> {
     const repaired = await runOnce(db, 'split-track-gaps-v1', () => activityLog.splitTrackGaps.execute());
     if (repaired) diagnostics.log('maintenance', { job: 'split-track-gaps-v1', ...repaired });
-    const scrubbed = await runOnce(db, 'scrub-closed-sessions-v1', () => recording.scrubClosedSessions.execute());
-    if (scrubbed) diagnostics.log('maintenance', { job: 'scrub-closed-sessions-v1', ...scrubbed });
+    const scrubbed = await runOnce(db, 'scrub-closed-sessions-v2', () => recording.scrubClosedSessions.execute());
+    if (scrubbed) diagnostics.log('maintenance', { job: 'scrub-closed-sessions-v2', ...scrubbed });
     await pruneOutbox(db, clock.now());
   }
 
