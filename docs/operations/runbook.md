@@ -55,7 +55,12 @@ node tools/diagnose-recording.mjs ~/ct-phone/turftrack-admin.db --session <id>
 The timeline (no coordinates) shows, minute by minute: location batches with their app state and
 source, fixes received / accepted / rejected, worst accuracy, app-state changes, launches and task
 errors. Each `launch` row records `locationAlways`, `preciseLocation`, `bgSessionAvailable`,
-`liveStreaming` and `lowPowerMode` (`src/composition-root.ts`).
+`liveStreaming` and `lowPowerMode` (`src/composition-root.ts`); each `batch` row its `source`
+(`task` = expo-location, `live` = native stream) and `bgSession` (whether the background session was
+kept alive). `task-error` codes from the batch handler
+(`recording/infrastructure/location-batch-handler.ts`): `session-read-<source>` (signed-in user
+unreadable, batch skipped, recording kept running), `container-timeout-<source>`,
+`ingest-timeout-<source>`, `ingest-<source>`.
 
 Reproduce on the simulator without a phone:
 
@@ -75,8 +80,8 @@ tools/sim-location.sh ios --clear
 - Batches arrive but fixes are rejected: GPS accuracy worse than the profile's limit
   (`src/contexts/recording/domain/tracking-profile.ts`), typical near tall buildings. Working as
   intended.
-- Already-recorded gaps: nothing to repair. Gaps over 45 s are separate segments, and their street
-  estimates count distance but never turf.
+- Already-recorded gaps: nothing to repair. Gaps over 45 s are separate segments; when **Estimate
+  GPS gaps along streets** is on (Me → Info), their street estimates count distance but never turf.
 - Done: `rm -rf ~/ct-phone`.
 
 ---
@@ -88,9 +93,13 @@ the activity is missing from History, or its turf never appears.
 
 Finishing writes the session and a `SessionFinished` event to `sys_outbox` in one transaction; the
 `EventDispatcher` (`src/platform/outbox.ts`) then hands it to Activity Log, whose `ActivityRecorded`
-event goes to Territory. A handler that throws leaves its event pending, and the dispatcher stops at
-the **first** pending event, so everything after it waits too. Failures are only `console.warn`ed in
-dev builds; they are not in `sys_diagnostics`.
+event goes to Territory. Delivery is strict FIFO: a failing event blocks the queue while it is
+retried with exponential backoff (5 s, 10 s, 20 s, 40 s). After 5 attempts — or at once for a
+`DomainError` or an unreadable payload — it is dead-lettered (`dead_lettered_at`) and delivery
+continues with later events. Each dead letter logs a `task-error` diagnostic with code
+`outbox.dead-letter`, the event type, attempts and error code (never the payload). Pending events
+are also retried when the app is opened in the foreground (`runLaunchMaintenance`, not on headless
+launches).
 
 **Triage**
 
@@ -98,25 +107,34 @@ dev builds; they are not in `sys_diagnostics`.
 # Simulator: the database lives in the app's data container
 DB="$(xcrun simctl get_app_container booted com.turftrack.poc data)/Documents/SQLite/turftrack-admin.db"
 # iPhone (ask first): tools/device-diagnose.sh <udid>, then DB=~/ct-phone/turftrack-admin.db
-sqlite3 "$DB" "SELECT id, type, datetime(created_at/1000,'unixepoch','localtime') FROM sys_outbox
+sqlite3 "$DB" "SELECT id, type, attempts, datetime(next_attempt_at/1000,'unixepoch','localtime'),
+               datetime(dead_lettered_at/1000,'unixepoch','localtime') FROM sys_outbox
                WHERE processed_at IS NULL ORDER BY id;"
 sqlite3 "$DB" "SELECT datetime(at/1000,'unixepoch','localtime'), kind, data FROM sys_diagnostics
                WHERE kind IN ('task-error','maintenance') ORDER BY at DESC LIMIT 20;"
 ```
 
-Event payloads hold ids, activity types and timestamps, no coordinates.
+Event payloads hold ids, activity types and timestamps, no coordinates. `sys_outbox.last_error`
+holds the error message for local debugging; it may contain anything, so read it on the Mac and
+don't paste it into an issue. The database copy itself must never enter the repo: `*.db` is
+gitignored and `tools/check-secret-files.mjs` blocks it in the pre-commit hook and in CI.
 
 **Fix**
 
-1. Relaunch the app: the dispatcher retries every pending event on start (`getContainer()` in
-   `src/composition-root.ts`). Most stuck saves are a launch that was killed mid-chain.
-2. If the same event stays pending, its handler fails every time. Run the app from Metro
-   (`npm start`) to see the `[outbox] handler failed for <type>` warning, then reproduce it in Jest
-   (`src/__tests__/end-to-end.test.ts` drives the full chain on real SQL).
-3. **Don't mark outbox rows processed by hand.** That skips the activity or its turf for good. Fix
-   the handler and ship it (OTA if JS-only); the pending event is delivered on the next launch.
-4. `fix/outbox-and-retention` (#30, in review) changes outbox handling; re-check this section after
-   it merges.
+1. **Pending, `next_attempt_at` in the future:** backing off. Open the app in the foreground and
+   wait; most stuck saves are a launch that was killed mid-chain.
+2. **Pending and failing every time:** run the app from Metro (`npm start`) to see the
+   `[outbox] handler failed for <type>` warning, and reproduce it in Jest
+   (`src/__tests__/end-to-end.test.ts` and `src/__tests__/outbox-and-retention.test.ts` drive the
+   chain on real SQL). Fix the handler and ship it (OTA if JS-only).
+3. **Dead-lettered:** the event is skipped for good, so the activity or its turf stays missing.
+   There is no in-app way to requeue it yet. After the handler fix is shipped, requeue on the
+   simulator with
+   `sqlite3 "$DB" "UPDATE sys_outbox SET dead_lettered_at = NULL, attempts = 0, next_attempt_at = NULL WHERE id = <id>;"`
+   and relaunch (handlers are idempotent). On the phone that needs a one-off job (`runOnce` in
+   `src/wiring.ts`), shipped as an update.
+4. **Don't mark outbox rows processed by hand**, and don't delete them: that skips the activity or
+   its turf without a trace. Dead letters are pruned after 90 days, delivered events after 30.
 
 ---
 
@@ -237,9 +255,9 @@ ls -t e2e-results | head -1                          # newest run: junit report 
 - **Wrong build:** with Metro running, flows open the dev client through `DEV_URL`; to test the
   installed release build instead, stop Metro or run `DEV_URL= e2e/run.sh`.
 - **Save Password sheet:** iOS offers to save the password after a successful sign-in, and the next
-  step can't see the app under it. `chore/ci-quality-gates` (#28, in review) adds a
-  `when: { visible: 'Not Now' }` tap to `e2e/subflows/sign-in.yaml` (commit `52e6a2f`). Until it
-  merges, cherry-pick that commit onto your local branch before running the suite.
+  step can't see the app under it. `e2e/subflows/sign-in.yaml` taps **Not Now** when it is visible
+  (since #28). If a flow still stops there, check the sheet's button text on that iOS version and
+  update the `when: { visible: 'Not Now' }` step.
 
 ---
 
