@@ -50,7 +50,6 @@ your turf, and how strong each part is. Stats, history and achievements build on
 | [OpenFreeMap][openfreemap]             |                      | [EAS Update][eas-update]                 |
 | [H3][h3]                               |                      |                                          |
 | [expo-sqlite][expo-sqlite]             |                      |                                          |
-| [zustand][zustand]                     |                      |                                          |
 
 [expo-sdk-57]: https://docs.expo.dev/
 [jest]: https://jestjs.io/
@@ -70,7 +69,6 @@ your turf, and how strong each part is. Stats, history and achievements build on
 [eas-update]: https://docs.expo.dev/eas-update/introduction/
 [h3]: https://h3geo.org/
 [expo-sqlite]: https://docs.expo.dev/versions/latest/sdk/sqlite/
-[zustand]: https://zustand.docs.pmnd.rs/
 
 Runtime: **Node 22.15.1** (`.nvmrc`), Xcode 26.4+ for iOS. Development builds only (Expo Go can't do
 background location). JS changes ship over the air on EAS channel `production`; native changes need
@@ -94,7 +92,7 @@ no context reaches into another's layers. Full design: [PoC plan](./docs/poc-pla
 | --------------------------- | ------------------------------------------------------------------------------ |
 | `src/contexts/identity`     | `AuthGateway` port; mock sign-in for the PoC; one SQLite DB per user           |
 | `src/contexts/recording`    | **Core.** Recording Session, Fix Filter, auto-pause, background task, recovery |
-| `src/contexts/activity-log` | Activities, history, detail, splits, GPX import, street-routed gap estimates   |
+| `src/contexts/activity-log` | Activities, history, detail, splits, demo import, street-routed gap estimates  |
 | `src/contexts/territory`    | **Core.** Claims, turf cells (H3 res 11), strength, Turf map                   |
 | `src/contexts/achievements` | Pure evaluation of achievements over activity and turf facts                   |
 
@@ -104,7 +102,7 @@ Shared code outside the contexts:
 | ---------------------- | -------------------------------------------------------------------------------- |
 | `src/shared-kernel`    | Pure value objects and maths in SI units (distance, splits, elevation, simplify) |
 | `src/constants`        | Shared constants (activity types, colours, map styles); imports nothing          |
-| `src/platform`         | SQLite, migrations, outbox, event dispatcher, logger                             |
+| `src/platform`         | SQLite, migrations, outbox and event dispatcher, one-off jobs, diagnostics       |
 | `src/ui-kit`           | Theme hook, formatting, shared components, app context, Me menu                  |
 | `src/composition-root` | Lazy, React-free wiring used by the UI and the headless background task          |
 | `modules/`             | Native module `background-session` (iOS `CLBackgroundActivitySession`)           |
@@ -151,6 +149,7 @@ Everyday commands from `package.json`; `npm run` is authoritative.
 | `test:e2e`                  | Maestro suite on the booted iOS Simulator (`e2e/run.sh`)            |
 | `standard` / `standard:fix` | Prettier + ESLint, check or apply                                   |
 | `ci:quality`                | Full local gate: `standard`, `test:types`, `test:arch`, `test:unit` |
+| `audit:docs`                | Docs audit: dead paths, broken links, frontmatter, probes           |
 | `release`                   | `commit-and-tag-version` (run by CI on `main`, never by hand)       |
 
 > [!NOTE] **Tests passing doesn't prove background tracking works.** It needs a development build on
@@ -201,7 +200,8 @@ npm start                     # later: Metro for the installed build
 ```
 
 Sign in with `admin@cityturfer.com` / `admin1234`. To see turf straight away, use **Me → Info → Seed
-demo history** (90 days of activities around your location).
+demo history** (90 days of activities around your location). In a release build the demo tools are
+hidden: long-press the version text on Info five times to show them.
 
 Local quirks: watchman is disabled in the Jest and Metro config (broken Homebrew install), and
 `.npmrc` uses `legacy-peer-deps`.
@@ -244,6 +244,8 @@ OTA updates reach only builds with the same runtime fingerprint. Changing native
 | Document                                                  | For                                           |
 | --------------------------------------------------------- | --------------------------------------------- |
 | [PoC plan](./docs/poc-plan.md)                            | Product, ubiquitous language, DDD, milestones |
+| [Docs index](./docs/INDEX.md)                             | Every doc with its status (generated)         |
+| [Docs conventions](./docs/process/docs-conventions.md)    | Frontmatter, folders, filenames, the audit    |
 | [Release manager](./docs/process/release-manager.md)      | Branch policy, versioning, CI                 |
 | [Session logs](./docs/sessions/)                          | What was built and verified, per version      |
 | [CLAUDE.md](./CLAUDE.md)                                  | Hard rules and commands for Claude Code       |

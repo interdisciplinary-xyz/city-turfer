@@ -4,17 +4,18 @@ description:
   How TurfTrack records GPS routes reliably with expo-location + expo-task-manager — background task
   wiring, permission flow (foreground → background, iOS/Android differences), per-activity accuracy
   settings, Android foreground service, point filtering (accuracy, speed spikes, jitter),
-  auto-pause, crash/kill recovery and battery. Use for any work in src/tracking/, anything involving
-  location permissions, "tracking stops when screen is off", missing points, GPS jumps, drift while
-  standing still, or battery drain.
+  auto-pause, crash/kill recovery and battery. Use for any work in src/contexts/recording/, anything
+  involving location permissions, "tracking stops when screen is off", missing points, GPS jumps,
+  drift while standing still, or battery drain.
 ---
 
-> **DDD mapping** (see `docs/poc-plan.md`): filter → `recording/domain/fix-filter.ts`; auto-pause →
-> `recording/domain/AutoPausePolicy.ts`; profiles → `recording/domain/tracking-profile.ts`; session
-> lifecycle → `RecordingSession` aggregate + `recording/application/` use cases; `expo-location`
-> calls → `recording/infrastructure/expo-location-tracker.ts` (ACL); task →
-> `recording/infrastructure/background-task.ts` calling `IngestFixes`. Paths below written as
-> `src/tracking/…` refer to these.
+> **Where the code lives** (see `docs/poc-plan.md`), all under `src/contexts/recording/`: filter →
+> `recording/domain/fix-filter.ts`; auto-pause and session lifecycle → the `RecordingSession`
+> aggregate in `recording/domain/recording-session.ts` + `recording/application/use-cases.ts`;
+> profiles → `recording/domain/tracking-profile.ts`; `expo-location` calls →
+> `recording/infrastructure/expo-location-tracker.ts` (ACL); iOS native session →
+> `recording/infrastructure/background-activity-session.ts` over `modules/background-session`; task
+> → `recording/infrastructure/background-task.ts` calling `IngestFixes`.
 
 # GPS tracking
 
@@ -24,25 +25,25 @@ the app being backgrounded, and the JS context being killed.** Design every chan
 ## Architecture
 
 ```
-expo-location ──(batches)──▶ TaskManager task (src/tracking/task.ts, top-level)
-                                 │  filter (src/tracking/filter.ts, pure)
+expo-location ──(batches)──▶ TaskManager task (infrastructure/background-task.ts, top-level)
+                                 │  IngestFixes → Fix Filter (domain/fix-filter.ts, pure)
                                  ▼
-                           SQLite points table  ◀── source of truth
+                           SQLite rec_track_points  ◀── source of truth
                                  │
-              UI (zustand store) polls/subscribes ── live map + stats
+              UI (LiveSessionStore) subscribes ── live map + stats
 ```
 
 - `TaskManager.defineTask(LOCATION_TASK, handler)` must be **evaluated at module top level, at app
-  start**. Import `src/tracking/task.ts` as the first import in `app/_layout.tsx`. If it's defined
-  inside a component or effect, Android headless restarts and iOS relaunches deliver locations to a
-  task that doesn't exist.
+  start**. `src/contexts/recording/infrastructure/background-task.ts` is the first import of the
+  root `index.ts` entry. If it's defined inside a component or effect, Android headless restarts and
+  iOS relaunches deliver locations to a task that doesn't exist.
 - The handler receives `{ data: { locations }, error }`, usually several locations at once. It must:
-  1. read the active session (id, type, paused flag) **from SQLite** — not from zustand, because in
-     a headless relaunch the store is empty;
+  1. read the active session (id, type, paused flag) **from SQLite** — not from in-memory state,
+     because in a headless relaunch it is empty;
   2. run each location through the filter;
   3. insert accepted points in **one transaction**;
-  4. never throw (wrap the handler in try/catch, and record errors in a `tracking_log` table in dev
-     builds).
+  4. never throw (wrap the handler in try/catch); record counts and timings, never coordinates, in
+     `sys_diagnostics` (`src/platform/diagnostics.ts`).
 - The UI reads the latest points from the DB, or through a lightweight event emitter the task also
   notifies when the app is foregrounded. The UI does not own the data.
 
@@ -66,8 +67,8 @@ await Location.startLocationUpdatesAsync(LOCATION_TASK, {
 });
 ```
 
-Per-type defaults for `src/tracking/profiles.ts`. Keep the filter thresholds in sync with
-`tools/lib/geo.mjs` `PROFILES`, so the oracle and the app agree:
+Per-type defaults in `src/contexts/recording/domain/tracking-profile.ts`. Keep the filter thresholds
+in sync with `tools/lib/geo.mjs` `PROFILES`, so the oracle and the app agree:
 
 | type  | distanceIntervalM | timeIntervalMs | maxAccuracyM | maxSpeed m/s | minStep m | autoPause below m/s for s |
 | ----- | ----------------- | -------------- | ------------ | ------------ | --------- | ------------------------- |
@@ -99,7 +100,7 @@ paused time from moving time.
 Never block starting a recording on background permission alone. Record with foreground permission
 and warn that tracking may stop when the screen is off.
 
-## Filtering (src/tracking/filter.ts — pure, unit-tested)
+## Filtering (recording/domain/fix-filter.ts — pure, unit-tested)
 
 For each incoming fix, in order:
 
@@ -135,7 +136,7 @@ position delta otherwise.
 
 ## Verifying a tracking change
 
-Unit tests cover the filter. They do **not** cover the task wiring. After any change to `task.ts`,
-`session.ts` or the permission flow, run a dev build and replay a fixture (`mobile-testing` skill):
-start recording, background the app, wait at least 60 s, foreground it, and check that the route has
-no gap.
+Unit tests cover the filter. They do **not** cover the task wiring. After any change to
+`background-task.ts`, `recording-session.ts` or the permission flow, run a dev build and replay a
+fixture (`mobile-testing` skill): start recording, background the app, wait at least 60 s,
+foreground it, and check that the route has no gap.

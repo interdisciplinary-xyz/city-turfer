@@ -9,7 +9,7 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
 
 - **Framework**: Expo (latest SDK), TypeScript strict, **development builds** (Expo Go cannot do
   background location)
-- **Navigation**: expo-router (file-based, `app/`)
+- **Navigation**: expo-router (file-based, `src/app/`)
 - **Auth**: **Mock** for the PoC: `MockAuthGateway` behind the `AuthGateway` port, single account
   `admin@cityturfer.com` / `admin1234`, session in `expo-secure-store`; one SQLite DB per user. No
   Firebase.
@@ -18,9 +18,13 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
   the Turf Map
 - **Spatial index**: `h3-js` (Turf Cells = H3 res 11), behind the Territory `CellGrid` port
 - **Storage**: `expo-sqlite`, local-first; no backend in v1
-- **State**: `zustand` for live-session UI state; SQLite is the source of truth
-- **Export**: GPX 1.1 via `expo-file-system` + `expo-sharing`
-- **Tests**: Jest (`jest-expo`) + React Native Testing Library; Maestro for E2E
+- **State**: SQLite is the source of truth; live-session UI state is an in-memory `LiveSessionStore`
+  (`src/contexts/recording/infrastructure/live-session-store.ts`, read via `useSyncExternalStore`).
+  No zustand.
+- **Export**: GPX 1.1 export is planned (M7 stretch), not built; `expo-file-system` and
+  `expo-sharing` are not installed yet
+- **Tests**: Jest (`babel-preset-expo`, node environment, real SQL through `better-sqlite3` in
+  `src/test-support/node-database.ts`); Maestro for E2E
 
 ## Architecture — Domain-Driven Design (hard requirement)
 
@@ -36,24 +40,28 @@ src/ui-kit/                          theme hook, formatting, shared components, 
 src/wiring.ts                        platform-independent wiring of all contexts (used by app + tests)
 src/dev/                             dev-only tools (demo history seeder)
 src/shared-kernel/                   pure VOs + TrackAnalyzer (distance, splits, elevation, simplify)
-src/contexts/identity/               AuthGateway port + MockAuthGateway (PoC), CurrentUser
-  domain/ application/ infrastructure/ ui/ index.ts
+src/contexts/identity/               AuthGateway port + MockAuthGateway (PoC), User
+  domain/ application/ infrastructure/ index.ts          (no ui/ layer)
 src/contexts/recording/              CORE: RecordingSession aggregate, FixFilter, AutoPausePolicy, background task
   domain/ application/ infrastructure/ ui/ index.ts
-src/contexts/activity-log/           Activity aggregate, history, detail, GPX import, (GPX export)
-  domain/ application/ infrastructure/ ui/ index.ts
-src/contexts/territory/              CORE: Claim aggregate, TurfStrengthPolicy, Territory projection, Turf Map
-  domain/ application/ infrastructure/ ui/ index.ts
-src/platform/                        SQLite, migrations, outbox, EventDispatcher, logger
+src/contexts/activity-log/           Activity aggregate, history, detail, demo import, street-routed gap estimates
+  domain/ application/ infrastructure/ ui/ index.ts contract.ts
+src/contexts/territory/              CORE: Claim aggregate, turf strength, Territory projection, Turf Map
+  domain/ application/ infrastructure/ ui/ index.ts contract.ts
+src/contexts/achievements/           pure evaluation of achievements and the onboarding checklist
+  domain/ infrastructure/ ui/ index.ts                  (infrastructure: onboarding dismissal flag)
+src/platform/                        SQLite, migrations, outbox + EventDispatcher, one-off jobs, diagnostics (no coordinates)
 src/composition-root.ts              lazy, React-free wiring (used by UI and headless task)
-tools/                               dev tools (GPX generator, stats oracle, simulator GPS playback)
+modules/background-session/          native iOS module (CLBackgroundActivitySession + liveUpdates)
+plugins/                             config plugins (local MapLibre SPM, scene lifecycle)
+tools/                               dev tools (GPX generator, stats oracle, simulator GPS playback, docs audit)
 ```
 
 ## Hard rules
 
 - Dependency rule: `domain/` and `shared-kernel/` import nothing from react, react-native, expo-*,
-  zustand or infrastructure. Contexts talk only via each other's `index.ts` and published events.
-  Enforced by dependency-cruiser in `npm test`.
+  h3-js, MapLibre or infrastructure. Contexts talk only via each other's `index.ts` and published
+  events. Enforced by dependency-cruiser in `npm test`.
 - `TaskManager.defineTask` lives at module top level in
   `src/contexts/recording/infrastructure/background-task.ts`, imported first by the root `index.ts`
   entry. It is a driving adapter: translate Fixes via the ACL and call the `IngestFixes` use case.
@@ -104,3 +112,12 @@ node tools/turf-preview.mjs tools/fixtures/history --out /tmp/turf.html   # turf
   `add-feature`, `gps-tracking`, `route-metrics`, `route-storage`, `mobile-testing`.
 - Agents (`.claude/agents/`): `rn-architect`, `location-engineer`, `mobile-ui-engineer`,
   `mobile-test-engineer`, `mobile-reviewer`, `brand-designer`.
+- Commands (`.claude/commands/`): `audit-docs` (`/audit-docs`).
+
+## Docs
+
+- Every doc in `docs/` carries frontmatter (`status`, `verified`, `owner`, `scope`, `summary`);
+  rules in `docs/process/docs-conventions.md`. All files are kebab-case.
+- `npm run audit:docs` reports dead paths, broken links, frontmatter gaps and probe drift;
+  `npm run audit:docs -- --write-index` regenerates `docs/INDEX.md`. Never hand-write a count that a
+  probe can derive.

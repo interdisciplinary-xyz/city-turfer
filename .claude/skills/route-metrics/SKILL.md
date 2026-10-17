@@ -4,20 +4,22 @@ description:
   Formulas and conventions for TurfTrack activity statistics — haversine distance, elapsed vs moving
   time, pace (min/km) vs speed (km/h) per activity type, km splits, elevation gain with smoothing
   and hysteresis, calories (MET), and route simplification (Douglas–Peucker) for map rendering. Use
-  when writing or changing anything in src/metrics/, when stats look wrong ("distance too long",
-  "pace jumps", "elevation gain is huge"), or when adding a new stat.
+  when writing or changing anything in src/shared-kernel/ (track-analyzer, geo, track), when stats
+  look wrong ("distance too long", "pace jumps", "elevation gain is huge"), or when adding a new
+  stat.
 ---
 
-> **DDD mapping** (see `docs/poc-plan.md`): these functions live in `src/shared-kernel/`
-> (`TrackAnalyzer` + value objects `Distance`, `Duration`, `Pace`, `Speed`); formatting lives in
-> each context's `ui/`. Paths below written as `src/metrics/…` refer to these.
+> **Where the code lives** (see `docs/poc-plan.md`): the maths is in `src/shared-kernel/` —
+> `analyzeTrack`, `elevationGain` and `simplify` in `src/shared-kernel/track-analyzer.ts`, haversine
+> `distanceM` in `src/shared-kernel/geo.ts`, segments and `splitAtGaps` in
+> `src/shared-kernel/track.ts`. Display formatting is in `src/ui-kit/format.ts`.
 
 # Route metrics
 
-All of `src/metrics/` is **pure TypeScript with no React or Expo imports**, uses SI units (m, s,
-m/s), and has unit tests. The reference implementation is `tools/lib/geo.mjs` and
-`tools/route-stats.mjs`. The app's output must match it within tolerance on the fixtures in
-`tools/fixtures/`.
+All of the metrics code in `src/shared-kernel/` is **pure TypeScript with no React or Expo
+imports**, uses SI units (m, s, m/s), and has unit tests. The reference implementation is
+`tools/lib/geo.mjs` and `tools/route-stats.mjs`. The app's output must match it within tolerance on
+the fixtures in `tools/fixtures/`.
 
 ## Definitions
 
@@ -62,7 +64,7 @@ an epsilon of ~3 m (computed in local metres via an equirectangular projection a
 centroid) for the detail map, and ~15 m for history-list thumbnails. **Never simplify the stored
 data.** Simplify only at render time, and memoise the result.
 
-## Formatting (src/metrics/format.ts)
+## Formatting (src/ui-kit/format.ts)
 
 - Distance: `< 1 km` → `850 m`; otherwise `5.24 km` (2 decimals under 100 km).
 - Duration: `m:ss` under an hour, `h:mm:ss` from one hour up.
@@ -74,7 +76,7 @@ data.** Simplify only at render time, and memoise the result.
 ```bash
 node tools/gen-route.mjs --type run --km 5 --outliers 4 --pause 90 --format json > /tmp/run.json  # has truth.*
 node tools/route-stats.mjs tools/fixtures/run-5k-outliers-pause.gpx --json                         # oracle
-npx jest src/metrics
+npx jest src/shared-kernel src/contexts/activity-log
 ```
 
 Each metric function needs tests for: an empty input, a single point, two identical points, a

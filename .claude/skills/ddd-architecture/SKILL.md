@@ -24,9 +24,10 @@ DDD is a **hard requirement** for this project. The design lives in `docs/poc-pl
   use case per file)
 - **talks to Expo, SQLite, the filesystem or the OS**: the context's `infrastructure/` (an adapter
   implementing a port)
-- **is cross-cutting plumbing (db connection, migrations, outbox, dispatcher, logger)**:
+- **is cross-cutting plumbing (db connection, migrations, outbox, dispatcher, jobs, diagnostics)**:
   `src/platform/`
-- **renders or holds UI state**: the context's `ui/` (hooks, components) and `app/` (thin screens)
+- **renders or holds UI state**: the context's `ui/` (hooks, components) and `src/app/` (thin
+  screens)
 - **wires implementations to ports**: `src/composition-root.ts` only
 
 If a rule shows up as an `if` in a use case, a repository or a component, move it into the domain.
@@ -76,10 +77,11 @@ module.exports = {
 };
 ```
 
-Exceptions: `app/_layout.tsx` may import the background task module, and `src/composition-root.ts`
-may import anything. Add these as explicit `pathNot` entries. Don't relax the rules any further. In
-M0, add a deliberately violating fixture file, check that `depcruise` fails on it, then delete it,
-so the rules are known to work.
+Exceptions: the root `index.ts` imports the background task module (it sits outside `src/`, so
+depcruise doesn't cruise it), and `src/composition-root.ts` / `src/wiring.ts` may import anything
+(no rule has them as a `from`). The live rules are `.dependency-cruiser.cjs`. Don't relax the rules
+any further. In M0, add a deliberately violating fixture file, check that `depcruise` fails on it,
+then delete it, so the rules are known to work.
 
 ## Patterns
 
@@ -237,8 +239,8 @@ export async function getContainer(): Promise<Container> {
 }
 ```
 
-Use no DI library: plain functions, constructed lazily. The background task and `app/_layout.tsx`
-both call `getContainer()`.
+Use no DI library: plain functions, constructed lazily. The background task and the UI's
+`AppProvider` (`src/ui-kit/app-context.tsx`) both call `getContainer()`.
 
 ### Context public API (`index.ts`)
 
