@@ -89,6 +89,15 @@ describe('RecordingSession', () => {
     expect(r.jitter).toBe(1);
   });
 
+  it.each(['finish', 'discard'] as const)('keeps no position once closed (%s)', (close) => {
+    const s = RecordingSession.start('s1', 'run', T0);
+    s.ingest([0, 1, 2].map((i) => fix(i, i * 5)));
+    expect(s.toState().tail).not.toBeNull();
+    s[close](T0 + 3000);
+    expect(s.toState()).toMatchObject({ tail: null, recent: [], distanceM: expect.any(Number), pointCount: 3 });
+    expect(JSON.stringify(s.toState())).not.toMatch(/"lat"|"lon"/);
+  });
+
   it('refuses to finish with fewer than 2 points and makes finished terminal', () => {
     const s = RecordingSession.start('s1', 'walk', T0);
     expect(() => s.finish(T0 + 1000)).toThrow(DomainError);
@@ -107,5 +116,22 @@ describe('RecordingSession', () => {
     for (let i = 1; i < accepted.length; i++) d += distanceM(accepted[i - 1], accepted[i]);
     expect(Math.abs(s.snapshot(0).distanceM - oracle) / oracle).toBeLessThan(0.03);
     expect(d).toBeCloseTo(s.snapshot(0).distanceM, 0);
+  });
+
+  describe('assertMayReplace (persistence guard)', () => {
+    it.each(['finished', 'discarded'] as const)('refuses to replace a %s session', (persisted) => {
+      const stale = RecordingSession.start('s1', 'run', T0);
+      expect(() => stale.assertMayReplace(persisted)).toThrow(DomainError);
+      expect(() => stale.assertMayReplace(persisted)).toThrow(
+        expect.objectContaining({ code: 'session.already-ended' })
+      );
+    });
+
+    it.each(['recording', 'paused', 'autoPaused'] as const)('may replace a %s session', (persisted) => {
+      const s = RecordingSession.start('s1', 'run', T0);
+      s.ingest([fix(0, 0), fix(1, 5)]);
+      s.finish(T0 + 5000);
+      expect(() => s.assertMayReplace(persisted)).not.toThrow();
+    });
   });
 });

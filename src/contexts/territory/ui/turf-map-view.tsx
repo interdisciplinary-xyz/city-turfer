@@ -132,6 +132,7 @@ export function TurfMapView({ tracks }: { tracks: TrackLine[] }) {
                 key={t}
                 testID={`turf-filter-${t}`}
                 accessibilityRole='checkbox'
+                accessibilityLabel={`${TYPE_LABEL[t]} turf`}
                 accessibilityState={{ checked: on }}
                 onPress={() => toggle(t)}
                 style={[
@@ -150,7 +151,9 @@ export function TurfMapView({ tracks }: { tracks: TrackLine[] }) {
           })}
           {allBounds && (
             <Pressable
+              testID='turf-filter-all'
               onPress={fitAll}
+              accessibilityRole='button'
               accessibilityLabel='Show all turf'
               style={[s.chip, { borderColor: DARK.border }]}
             >

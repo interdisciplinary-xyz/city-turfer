@@ -6,3 +6,10 @@ export {
   evaluateAchievements,
 } from './domain/achievements';
 export { type AchievementsSummary, summarizeAchievements } from './domain/achievements-summary';
+export {
+  evaluateOnboarding,
+  type OnboardingFacts,
+  type OnboardingProgress,
+  type OnboardingStep,
+  type OnboardingStepId,
+} from './domain/onboarding';
