@@ -74,6 +74,7 @@
     "test:unit": "jest",
     "test:arch": "depcruise src --config .dependency-cruiser.cjs",
     "test:e2e": "e2e/run.sh",
+    "audit:docs": "node tools/docs-audit.mjs",
     "ci:quality": "npm run standard && npm run test:types && npm run test:arch && npm run test:unit"
   },
   "private": true,
