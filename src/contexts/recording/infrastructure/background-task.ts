@@ -40,6 +40,7 @@ async function ingest(source: Source, locations: Location.LocationObject[]): Pro
     const ts = locations.map((l) => l.timestamp);
     // The session lives in native memory: re-acquire it if iOS relaunched us.
     const bgSession = result.kind === 'ingested' ? await backgroundActivitySession.ensure() : null;
+    // audit-logs-allow: `l.coords.accuracy` is a horizontal accuracy in metres (a number), not a position
     container.diagnostics.log('batch', {
       source,
       appState: AppState.currentState,

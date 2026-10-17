@@ -76,7 +76,8 @@
     "test:cov": "jest --coverage",
     "test:arch": "depcruise src --config .dependency-cruiser.cjs",
     "test:e2e": "e2e/run.sh",
-    "ci:quality": "npm run standard && npm run test:types && npm run test:arch && npm run test:unit"
+    "audit:logs": "node tools/audit-logs.mjs",
+    "ci:quality": "npm run standard && npm run test:types && npm run test:arch && npm run test:unit && npm run audit:logs"
   },
   "private": true,
   "jest": {
