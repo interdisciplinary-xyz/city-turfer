@@ -5,6 +5,7 @@
 //   node tools/e2e/gpx-to-travel.mjs tools/fixtures/run-5k-outliers-pause.gpx --metres 900 --speed 3.5 > e2e/subflows/travel-run.yaml
 
 import { readFileSync } from 'node:fs';
+
 import { haversine, parseGpx } from '../lib/geo.mjs';
 
 const argv = process.argv.slice(2);
