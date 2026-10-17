@@ -52,6 +52,8 @@ export default function TabsLayout() {
   const p = usePalette();
   return (
     <Tabs
+      // Open on Record (centre) although Turf is the first tab.
+      initialRouteName='index'
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: ACCENT,
@@ -65,20 +67,20 @@ export default function TabsLayout() {
         options={{ title: 'Turf', tabBarIcon: icon('hexagon', '⬢'), tabBarButtonTestID: 'tab-turf' }}
       />
       <Tabs.Screen
-        name='history'
-        options={{
-          title: 'History',
-          tabBarIcon: icon('clock.arrow.circlepath', '☰'),
-          tabBarButtonTestID: 'tab-history',
-        }}
+        name='stats'
+        options={{ title: 'Stats', tabBarIcon: icon('chart.bar', '▤'), tabBarButtonTestID: 'tab-stats' }}
       />
       <Tabs.Screen
         name='index'
         options={{ title: 'Record', tabBarButton: RecordTabButton, tabBarButtonTestID: 'tab-record' }}
       />
       <Tabs.Screen
-        name='stats'
-        options={{ title: 'Stats', tabBarIcon: icon('chart.bar', '▤'), tabBarButtonTestID: 'tab-stats' }}
+        name='history'
+        options={{
+          title: 'History',
+          tabBarIcon: icon('clock.arrow.circlepath', '☰'),
+          tabBarButtonTestID: 'tab-history',
+        }}
       />
       <Tabs.Screen
         name='me'
