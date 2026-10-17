@@ -1,9 +1,10 @@
 import * as Location from 'expo-location';
 import * as Updates from 'expo-updates';
 import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
-import { TYPE_COLOR } from '@/constants/colors';
+import { ACCENT, TYPE_COLOR } from '@/constants/colors';
+import { useGapEstimationSetting } from '@/contexts/activity-log/ui/hooks';
 import { seedDemoHistory } from '@/dev/demo-history';
 import { useContainer } from '@/ui-kit/app-context';
 import { Button, Card } from '@/ui-kit/components';
@@ -14,6 +15,7 @@ export default function InfoScreen() {
   const c = useContainer();
   const [seeding, setSeeding] = useState<string | null>(null);
   const [checking, setChecking] = useState<string | null>(null);
+  const [estimateGaps, setEstimateGaps] = useGapEstimationSetting();
 
   const seed = async () => {
     try {
@@ -72,6 +74,22 @@ export default function InfoScreen() {
           Activities and turf are stored only on this phone. When GPS drops out, just the two ends of the gap are sent
           to the OpenStreetMap router to estimate the street route — never your whole track.
         </Text>
+        <View style={s.row}>
+          <Text style={[s.label, { color: p.text }]}>Estimate GPS gaps along streets</Text>
+          <Switch
+            testID='estimate-gaps-switch'
+            accessibilityLabel='Estimate GPS gaps along streets'
+            value={estimateGaps ?? false}
+            disabled={estimateGaps == null}
+            onValueChange={(on) =>
+              setEstimateGaps(on).catch((e) => Alert.alert('Could not save', String((e as Error).message ?? e)))
+            }
+            trackColor={{ true: ACCENT, false: p.border }}
+          />
+        </View>
+        <Text style={{ color: p.muted, fontSize: 13 }}>
+          Off: no requests leave the phone; gaps stay as dashed straight lines.
+        </Text>
       </Card>
       <Card style={{ gap: 10 }}>
         <Text style={[s.h2, { color: p.text }]}>Demo data</Text>
@@ -93,4 +111,8 @@ export default function InfoScreen() {
   );
 }
 
-const s = StyleSheet.create({ h2: { fontSize: 17, fontWeight: '800' } });
+const s = StyleSheet.create({
+  h2: { fontSize: 17, fontWeight: '800' },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  label: { flex: 1, fontSize: 15, fontWeight: '600' },
+});
