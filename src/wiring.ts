@@ -11,7 +11,7 @@ import {
   type RouteEstimator,
 } from '@/contexts/activity-log';
 import { SqliteActivityRepository } from '@/contexts/activity-log/infrastructure/sqlite-activity-repository';
-import { createRecordingApi, type SessionFinished } from '@/contexts/recording';
+import { createRecordingApi, SerialCommandExecutor, type SessionFinished } from '@/contexts/recording';
 import type { LiveSessionNotifier, LocationTracker, PermissionGateway } from '@/contexts/recording/application/ports';
 import { SqliteRecordingSessionRepository } from '@/contexts/recording/infrastructure/sqlite-recording-session-repository';
 import { createTerritoryApi } from '@/contexts/territory';
@@ -45,6 +45,8 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     clock,
     ids: a.ids,
     afterCommit,
+    // The UI and the background location task share this container, hence this queue.
+    commands: new SerialCommandExecutor(),
   });
 
   const activityLog = createActivityLogApi({

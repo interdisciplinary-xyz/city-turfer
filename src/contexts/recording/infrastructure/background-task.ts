@@ -14,12 +14,26 @@ import { backgroundActivitySession } from './background-activity-session';
 import { toFix } from './expo-location-tracker';
 
 type Source = 'task' | 'live';
+type Container = NonNullable<Awaited<ReturnType<typeof getContainer>>>;
+type IngestResult = Awaited<ReturnType<Container['recording']['ingestFixes']['execute']>>;
 
-/** Both streams feed one queue: concurrent ingests would overwrite each other's session state. */
-let queue: Promise<void> = Promise.resolve();
-function enqueue(source: Source, locations: Location.LocationObject[]) {
-  queue = queue.then(() => ingest(source, locations));
-  return queue;
+/**
+ * Both streams hand their batches to the container's Recording command queue
+ * (shared with the UI's Start/Pause/Finish/...), which serializes the ingests.
+ * This chain only keeps the hand-off in delivery order: looking up the
+ * container is async, and a batch submitted out of order would see its fixes
+ * dropped by the Fix Filter as out-of-order. It never waits for an ingest.
+ */
+let handoff: Promise<unknown> = Promise.resolve();
+function enqueue(source: Source, locations: Location.LocationObject[]): Promise<void> {
+  const submitted = handoff.then(async () => {
+    const container = await getContainer();
+    if (!container) return null;
+    // Duplicates across the two streams are dropped by the Fix Filter (out-of-order).
+    return { container, result: container.recording.ingestFixes.execute(locations.map(toFix)) };
+  });
+  handoff = submitted.catch(() => undefined);
+  return ingest(source, locations, submitted);
 }
 
 async function stopAll() {
@@ -27,23 +41,26 @@ async function stopAll() {
   await Location.stopLocationUpdatesAsync(LOCATION_TASK).catch(() => undefined);
 }
 
-async function ingest(source: Source, locations: Location.LocationObject[]): Promise<void> {
+async function ingest(
+  source: Source,
+  locations: Location.LocationObject[],
+  submitted: Promise<{ container: Container; result: Promise<IngestResult> } | null>
+): Promise<void> {
   try {
-    const container = await getContainer();
-    if (!container) {
+    const handedOff = await submitted;
+    if (!handedOff) {
       // Nobody signed in: an orphaned tracker must not keep draining the battery.
       await stopAll();
       return;
     }
-    // Duplicates across the two streams are dropped by the Fix Filter (out-of-order).
-    const result = await container.recording.ingestFixes.execute(locations.map(toFix));
+    const { container } = handedOff;
+    // No active session: IngestFixes already stopped the orphaned tracker, inside the queue.
+    const result = await handedOff.result;
     const ts = locations.map((l) => l.timestamp);
-    // The session lives in native memory: re-acquire it if iOS relaunched us.
-    const bgSession = result.kind === 'ingested' ? await backgroundActivitySession.ensure() : null;
     container.diagnostics.log('batch', {
       source,
       appState: AppState.currentState,
-      bgSession,
+      bgSession: result.kind === 'ingested' ? result.keptAlive : null,
       received: locations.length,
       firstFixAgoS: ts.length ? Math.round((Date.now() - Math.min(...ts)) / 1000) : null,
       maxAccuracy: Math.max(0, ...locations.map((l) => l.coords.accuracy ?? 0)),
@@ -51,7 +68,6 @@ async function ingest(source: Source, locations: Location.LocationObject[]): Pro
         ? { accepted: result.accepted, status: result.status, ...result.report }
         : { result: result.kind }),
     });
-    if (result.kind === 'no-active-session') await stopAll();
   } catch (e) {
     if (__DEV__) console.warn('[location-task] ingest failed', e);
     void getContainer()

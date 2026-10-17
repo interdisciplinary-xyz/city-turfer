@@ -3,7 +3,7 @@ import type { Database } from '@/platform/database';
 import { appendToOutbox } from '@/platform/outbox';
 import type { TrackPoint } from '@/shared-kernel';
 
-import { RecordingSession, type RecordingSessionState } from '../domain/recording-session';
+import { RecordingSession, type RecordingSessionState, type SessionStatus } from '../domain/recording-session';
 import type { RecordingSessionRepository } from '../domain/recording-session-repository';
 
 type PointRow = {
@@ -36,6 +36,8 @@ export class SqliteRecordingSessionRepository implements RecordingSessionReposit
     const events = session.pullEvents();
     const now = Date.now();
     await this.db.transaction(async (tx) => {
+      const stored = await tx.first<{ status: SessionStatus }>('SELECT status FROM rec_sessions WHERE id = ?', [s.id]);
+      if (stored) session.assertMayReplace(stored.status); // throws: rolls back, nothing is written
       await tx.run(
         `INSERT INTO rec_sessions (id, type, status, state, started_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)
          ON CONFLICT(id) DO UPDATE SET status = excluded.status, state = excluded.state, updated_at = excluded.updated_at`,

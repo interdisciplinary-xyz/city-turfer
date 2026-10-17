@@ -31,6 +31,7 @@ function fakes() {
       start: async () => void (running = true),
       stop: async () => void (running = false),
       isRunning: async () => running,
+      reacquire: async () => null,
     },
     permissions: { ensureForeground: async () => 'granted' as const, requestBackground: async () => true },
     notifier: { publish: () => undefined },
