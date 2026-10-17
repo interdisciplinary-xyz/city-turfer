@@ -16,6 +16,7 @@ function fakes() {
       start: async () => void (running = true),
       stop: async () => void (running = false),
       isRunning: async () => running,
+      reacquire: async () => null,
     },
     permissions: { ensureForeground: async () => 'granted' as const, requestBackground: async () => true },
     notifier: { publish: () => undefined },
@@ -153,7 +154,7 @@ describe('Retention of recording data', () => {
       await db.first<{ data: string }>(
         "SELECT data FROM sys_diagnostics WHERE kind = 'maintenance' AND data LIKE '%scrub%'"
       )
-    ).toMatchObject({ data: JSON.stringify({ job: 'scrub-closed-sessions-v1', scrubbed: 2 }) });
+    ).toMatchObject({ data: JSON.stringify({ job: 'scrub-closed-sessions-v2', scrubbed: 2 }) });
   });
 
   it('prunes delivered outbox events at launch after 30 days', async () => {
