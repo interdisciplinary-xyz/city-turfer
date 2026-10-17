@@ -38,8 +38,10 @@ There are <!-- probe:contexts -->5<!-- /probe --> bounded contexts, one director
   (`contract.ts`).
 - **territory** (core): the `Claim` aggregate, turf strength, the `ter_cells` projection, the Turf
   Map. Publishes `TurfClaimed`, `TurfReleased` (`contract.ts`).
-- **achievements** (supporting): pure `evaluateAchievements` / `summarizeAchievements` over facts
-  the UI passes in. Layers: `domain/ ui/`, no persistence.
+- **achievements** (supporting): pure `evaluateAchievements` / `summarizeAchievements` and the
+  onboarding checklist (`evaluateOnboarding`) over facts the UI passes in. Layers:
+  `domain/ infrastructure/ ui/`; the only stored state is the per-user "Getting started hidden" flag
+  in `expo-secure-store` (`infrastructure/onboarding-dismissal.ts`).
 
 ```
             SessionFinished                ActivityRecorded · ActivityDeleted

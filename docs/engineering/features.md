@@ -29,7 +29,7 @@ Me drawer, and the screens pushed from them. Format adapted from empatalk's `FEA
 > | SQLite schema         | `src/platform/migrations.ts`                               |
 
 Today: <!-- probe:achievements -->12<!-- /probe --> achievements,
-<!-- probe:e2e-flows -->10<!-- /probe --> Maestro flows, <!-- probe:migrations -->4<!-- /probe -->
+<!-- probe:e2e-flows -->10<!-- /probe --> Maestro flows, <!-- probe:migrations -->5<!-- /probe -->
 
 migrations.
 
@@ -42,6 +42,8 @@ opens on Dashboard after sign-in.
 
 - Greeting with the user's name; turf area and "+ this week" under it.
 - Live-session banner when a recording is running (taps through to Record).
+- **Getting started** checklist (`achievements/ui/onboarding-card.tsx`): five steps from first walk
+  to three achievements, each opening the place where it gets done; can be hidden per user.
 - "Start recording" button when there are no activities yet.
 - This week: distance, moving time, activity count.
 - Recent activities with "See all" → History.
@@ -93,7 +95,10 @@ and **Info**. (The `(tabs)/me` route only backs the tab and renders Profile.)
 - **Account** (`src/app/account.tsx`): email, sign-in method ("Demo account"), sign out (blocked
   with an alert while a recording is in progress).
 - **Info** (`src/app/info.tsx`): app version and OTA update id/channel, "Check for updates", a data
-  note, **Seed demo history** (90 days around the current location, `src/dev/demo-history.ts`).
+  note, the **Estimate GPS gaps along streets** switch (off: nothing leaves the phone), and
+  **Developer tools** — **Seed demo history** (90 days around the current location,
+  `src/dev/demo-history.ts`) and **Remove demo data**. Developer tools show in dev builds, or in a
+  release build after five long-presses on the version text.
 - **Sign in** (`src/app/sign-in.tsx`): the mock account; a wrong password shows `sign-in-error`.
 
 ## 3. Behind the screens
@@ -101,8 +106,12 @@ and **Info**. (The `(tabs)/me` route only backs the tab and renders Profile.)
 - **Turf**: claims cells along each recorded segment (H3 res 11), strength from visits only,
   permanent; deleting an activity is the only way turf shrinks.
 - **Gap estimates**: street route for recording gaps from the OSM router; distance only, no turf.
-- **Data repair job**: `split-track-gaps-v1` re-splits tracks recorded before gap splitting, and
-  Territory reclaims from the corrected track.
+  Opt-out in Info; never for a manual pause or a gap within 200 m of the start or end; endpoints
+  rounded to ~10 m; rate-limited (`activity-log/application/router-budget.ts`).
+- **One-off jobs** at foreground launch (`src/wiring.ts`): `split-track-gaps-v1` re-splits tracks
+  recorded before gap splitting (Territory reclaims from the corrected track),
+  `cap-gap-moving-time-v1`, and `scrub-closed-sessions-v2` (closed sessions keep no position).
+- **Outbox**: retries with backoff, dead letters, retention (`src/platform/outbox.ts`).
 - **Diagnostics**: `sys_diagnostics` timeline without coordinates, read by
   `tools/device-diagnose.sh` and `tools/diagnose-recording.mjs`.
 - **OTA**: `expo-updates` checks on load; channel `production`.
