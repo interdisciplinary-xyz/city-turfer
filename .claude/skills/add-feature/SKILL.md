@@ -37,7 +37,7 @@ feature that touches more than three files, show the plan to the user before wri
 - `contexts/territory/{domain,application,infrastructure}`
   - Agent: `location-engineer`
   - Skill it follows: ddd-architecture, turf-territory
-- `app/`, `contexts/*/ui/`, maps (incl. Turf Map), styling
+- `src/app/`, `contexts/*/ui/`, maps (incl. Turf Map), styling
   - Agent: `mobile-ui-engineer`
   - Skill it follows: turf-territory (for the Turf Map)
 - **tests, fixtures, simulator runs, Maestro**

@@ -1,3 +1,13 @@
+---
+status: historical
+verified: 2026-10-15
+owner: founder
+scope: [src/contexts, src/shared-kernel, src/platform]
+summary:
+  The PoC plan as written (draft v5, 2026-10-15) — ubiquitous language (§2) and context map (§3) are
+  still the vocabulary; folder layout and milestones are the original plan, not current code
+---
+
 # TurfTrack — Proof of Concept Plan (Domain-Driven Design)
 
 Status: draft v5 · 2026-10-15 · v5: mock sign-in instead of Firebase · v4: vertical-slice milestones
@@ -619,24 +629,8 @@ alongside M3's UI work; real-use data collection starts as soon as M2 ships.
 
 ## 9. Decisions log
 
-- **2026-10-15**: Platforms: **iOS and Android**, both first-class. Field tests (Q1, Q4) need one
-  physical device per platform; for Q4 the Android should be mid-range (e.g. Samsung Galaxy
-  A-series), not a flagship.
-- **2026-10-15**: **Turf is permanent.** Claimed cells never fade or get lost. Strength depends only
-  on the number of visits.
-- **2026-10-15**: **The Turf Map is always dark.** Other screens follow the system theme.
-- **2026-10-15**: Single user, on-device, in the PoC. Turf is a corridor + glow (closed loops don't
-  claim area).
-- **2026-10-15**: Maps: MapLibre + OpenFreeMap (keyless), replacing react-native-maps.
-- **2026-10-15**: GPX **import** is in the PoC as a dev tool, for seeding test history. GPX
-  **export** (sharing activities with other apps) stays a stretch goal (M7).
-- **2026-10-15**: **Auth: mock sign-in** for the PoC, with a single account `admin@turftrack.com` /
-  `admin1234`. No Firebase. The `AuthGateway` port stays, so a real provider can be added later as
-  one adapter. Data stays on the device, one database per user.
-- **2026-10-15**: **Milestones are vertical slices**: scaffold + auth → walk → turf → run and cycle
-  → history → field validation.
-- **2026-10-17**: The mock account's email is now `admin@cityturfer.com` (password unchanged), to
-  match the CityTurfer name. The user ID stays `admin`, so existing data and sessions carry over.
+Moved to [Architecture decisions](./engineering/architecture-decisions.md) (one entry per decision,
+with status and trade-off; MapLibre has a full record in `docs/decisions/`).
 
 ## 10. Open questions
 

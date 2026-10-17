@@ -3,17 +3,19 @@ name: route-storage
 description:
   TurfTrack's local-first persistence with expo-sqlite — schema for activities and track points,
   migrations, repository functions, write patterns from the background task, query performance for
-  long routes, deletion, and GPX 1.1 import/export via expo-file-system + expo-sharing. Use when
-  touching src/db/ or src/export/, adding a column, changing what's stored per point, implementing
-  history, delete, export or import, or debugging "my activity disappeared".
+  long routes, deletion, and GPX 1.1 export (planned, not built). Use when touching src/platform/
+  (database, migrations, outbox) or a context's sqlite-*-repository.ts, adding a column, changing
+  what's stored per point, implementing history, delete, export or import, or debugging "my activity
+  disappeared".
 ---
 
 > **DDD mapping** (see `docs/poc-plan.md` §5): tables are owned per context — Recording:
 > `rec_sessions`, `rec_track_points`; Activity Log: `log_activities`, `log_track_points`; platform:
 > `sys_schema_version`, `sys_outbox`. Repositories implement domain ports in each context's
-> `infrastructure/`; connection/migrations/outbox in `src/platform/`. The single-table schema below
-> is the column reference — split it per that ownership. GPX export →
-> `activity-log/infrastructure/GpxExporter.ts`.
+> `infrastructure/` (`sqlite-*-repository.ts`); connection, migrations and outbox are in
+> `src/platform/`. **The live schema is `src/platform/migrations.ts`**; the single-table schema
+> below is the original v1 column reference, not what ships. GPX export is not built yet; it belongs
+> in Activity Log's `infrastructure/`.
 
 # Route storage
 
@@ -70,19 +72,19 @@ CREATE TABLE points (
 - Store **accepted** points only. Rejected fixes go nowhere, except a `tracking_log` table in dev
   builds.
 
-## Migrations (src/db/migrate.ts)
+## Migrations (src/platform/migrations.ts)
 
-An ordered array of `{ version, up(db) }`. Each runs in a transaction, and `schema_version` is
-bumped in the same transaction. Migrations run in `app/_layout.tsx` before any screen queries, and
-also lazily in the background task (it can run before the UI ever mounts). **Never edit a shipped
-migration.** Add a new one.
+An ordered, append-only array of `{ version, sql }`. Each runs in a transaction, and
+`sys_schema_version` is bumped in the same transaction. `migrate(db)` runs in `getContainer()`
+(`src/composition-root.ts`) before anything queries the database, so the UI and the headless
+background task both get a migrated database. **Never edit a shipped migration.** Add a new one.
 
-## Repositories (src/db/activities.ts, src/db/points.ts)
+## Repositories (`src/contexts/*/infrastructure/sqlite-*-repository.ts`)
 
 Typed functions only; screens never write SQL. Minimum set: `createActivity(type)`,
 `getActiveActivity()`, `appendPoints(activityId, points[])`, `setStatus(id, status)`,
-`bumpSegment(id)`, `finishActivity(id)` (recomputes summary with `src/metrics` and writes bbox +
-preview), `listActivities({ limit, before })` (keyset pagination on `started_at`),
+`bumpSegment(id)`, `finishActivity(id)` (recomputes summary with `src/shared-kernel` and writes
+bbox + preview), `listActivities({ limit, before })` (keyset pagination on `started_at`),
 `getActivity(id)`, `getPoints(id)`, `renameActivity`, `deleteActivity(id)`.
 
 - `listActivities` must never select from `points`: the list reads only summary columns and
@@ -91,7 +93,7 @@ preview), `listActivities({ limit, before })` (keyset pagination on `started_at`
 - Discard (a user cancels a recording) → `status = 'discarded'`, with a hard delete on next launch.
   Finished activities are deleted only by explicit user action, with confirmation.
 
-## GPX export (src/export/gpx.ts)
+## GPX export (planned, not built)
 
 GPX 1.1 with `<metadata><time>`, `<trk><name>`, `<type>` (`walking|running|cycling`, the
 Strava-compatible names), and one `<trkseg>` per `segment`. Each point carries `lat`/`lon` (7
