@@ -1,5 +1,5 @@
 import { MAX_FIX_GAP_MS } from '@/constants/tracking';
-import { type ActivityType, DomainError, type TrackPoint } from '@/shared-kernel';
+import { type ActivityType, distanceM, DomainError, type TrackPoint } from '@/shared-kernel';
 
 import type { RecordingEvent } from './events';
 import type { Fix } from './fix';
@@ -19,6 +19,11 @@ export interface RecordingSessionState {
   readonly nextSeq: number;
   readonly tail: Tail | null; // last accepted point in the current segment
   readonly lastSeenT: number | null; // last fix timestamp seen (accepted or jitter)
+  // Last fix seen (accepted or jitter), with position. Absent in states saved before v0.2.0.
+  readonly lastSeen?: Tail | null;
+  // While auto-paused: the reference the resume speed is measured from. It follows accepted
+  // (non-jitter) fixes so a long stop does not dilute the implied speed of the first steps.
+  readonly pauseAnchor?: Tail | null;
   readonly slowSince: number | null; // auto-pause timer
   readonly pausedSince: number | null;
   readonly pausedMs: number;
@@ -73,6 +78,8 @@ export class RecordingSession {
       nextSeq: 0,
       tail: null,
       lastSeenT: null,
+      lastSeen: null,
+      pauseAnchor: null,
       slowSince: null,
       pausedSince: null,
       pausedMs: 0,
@@ -109,7 +116,7 @@ export class RecordingSession {
     this.assertActive();
     if (this.state.status === 'paused') throw new DomainError('session.already-paused');
     const pausedSince = this.state.pausedSince ?? now; // auto-paused → keep original start
-    this.state = { ...this.state, status: 'paused', pausedSince, slowSince: null };
+    this.state = { ...this.state, status: 'paused', pausedSince, slowSince: null, pauseAnchor: null };
     this.record({ type: 'SessionPaused', v: 1, at: now, sessionId: this.id, auto: false });
   }
 
@@ -117,7 +124,14 @@ export class RecordingSession {
     if (this.state.status !== 'paused') throw new DomainError('session.not-paused');
     this.endPause(now);
     // A manual resume starts a new segment: never measure or draw across the pause.
-    this.state = { ...this.state, status: 'recording', segment: this.state.segment + 1, tail: null, recent: [] };
+    this.state = {
+      ...this.state,
+      status: 'recording',
+      segment: this.state.segment + 1,
+      tail: null,
+      pauseAnchor: null,
+      recent: [],
+    };
     this.record({
       type: 'SessionResumed',
       v: 1,
@@ -148,29 +162,65 @@ export class RecordingSession {
         continue;
       }
       // Fixes stopped arriving for a while (OS suspended us, tunnel, ...): start a new
-      // segment rather than drawing a straight line through buildings.
-      const tail = this.state.tail;
-      if (tail && fix.t - tail.t > MAX_FIX_GAP_MS) {
-        this.state = { ...this.state, segment: this.state.segment + 1, tail: null, recent: [], slowSince: null };
+      // segment rather than drawing a straight line through buildings. Measured from the
+      // last fix *seen*, not the tail: while auto-paused the tail stays at the stop point
+      // although jitter fixes keep arriving, and a long stop is not an outage.
+      const lastSeenT = this.state.lastSeenT;
+      if (this.state.tail && lastSeenT != null && fix.t - lastSeenT > MAX_FIX_GAP_MS) {
+        this.state = {
+          ...this.state,
+          segment: this.state.segment + 1,
+          tail: null,
+          pauseAnchor: null,
+          recent: [],
+          slowSince: null,
+        };
         gapSplits++;
       }
-      const verdict = judgeFix(fix, this.state.tail, this.state.lastSeenT, profile);
+      const wasAutoPaused = st === 'autoPaused';
+      const reference = wasAutoPaused ? (this.state.pauseAnchor ?? this.state.tail) : this.state.tail;
+      const verdict = judgeFix(fix, reference, lastSeenT, profile, this.state.lastSeen ?? null);
       if (verdict.kind === 'reject') {
         rejected[verdict.reason]++;
         continue;
       }
 
-      this.state = { ...this.state, lastSeenT: fix.t };
+      const seen = { lat: fix.lat, lon: fix.lon, t: fix.t };
+      this.state = {
+        ...this.state,
+        lastSeenT: fix.t,
+        lastSeen: seen,
+        pauseAnchor: wasAutoPaused && verdict.kind === 'accept' ? seen : (this.state.pauseAnchor ?? null),
+      };
       this.applyAutoPause(fix.t, verdict.speedMps, profile);
-      if (verdict.kind === 'jitter') {
+      if (this.state.status !== 'recording') {
+        if (verdict.kind === 'jitter') jitter++;
+        continue;
+      }
+      const s = this.state;
+      let step: { m: number; dtS: number; moving: boolean };
+      if (wasAutoPaused) {
+        // This fix just ended an auto-pause and is always recorded (even a jitter verdict
+        // with fresh Doppler speed), so the next fix is not measured from a stale tail.
+        // The verdict was measured from the pause anchor; the track continues from the last
+        // recorded point, so measure from there (drawn line == counted distance). Moving
+        // time covers only the interval since the previous fix, never the stop itself.
+        step = {
+          m: s.tail ? distanceM(s.tail, fix) : 0,
+          dtS: lastSeenT != null ? (fix.t - lastSeenT) / 1000 : 0,
+          moving: s.tail != null,
+        };
+      } else if (verdict.kind === 'accept') {
+        step = {
+          m: verdict.distanceM,
+          dtS: verdict.dtS,
+          moving: verdict.dtS > 0 && verdict.speedMps >= profile.movingSpeedMps,
+        };
+      } else {
         jitter++;
         continue;
       }
-      if (this.state.status !== 'recording') continue;
-
-      const s = this.state;
-      const moving = verdict.dtS > 0 && verdict.speedMps >= profile.movingSpeedMps;
-      const distanceM = s.distanceM + verdict.distanceM;
+      const distanceTotal = s.distanceM + step.m;
       const point: TrackPoint = {
         lat: fix.lat,
         lon: fix.lon,
@@ -183,12 +233,13 @@ export class RecordingSession {
       accepted.push(point);
       this.state = {
         ...s,
-        tail: { lat: fix.lat, lon: fix.lon, t: fix.t },
+        tail: seen,
+        pauseAnchor: null,
         nextSeq: s.nextSeq + 1,
         pointCount: s.pointCount + 1,
-        distanceM,
-        movingS: s.movingS + (moving ? verdict.dtS : 0),
-        recent: [...s.recent.filter((r) => fix.t - r.t <= RECENT_WINDOW_MS), { t: fix.t, d: distanceM }],
+        distanceM: distanceTotal,
+        movingS: s.movingS + (step.moving ? step.dtS : 0),
+        recent: [...s.recent.filter((r) => fix.t - r.t <= RECENT_WINDOW_MS), { t: fix.t, d: distanceTotal }],
       };
     }
     return { points: accepted, received: fixes.length, rejected, jitter, ignoredWhilePaused, gapSplits };
@@ -253,14 +304,14 @@ export class RecordingSession {
       const slowSince = s.slowSince ?? t;
       this.state = { ...s, slowSince };
       if (s.status === 'recording' && t - slowSince >= profile.autoPauseAfterS * 1000) {
-        this.state = { ...this.state, status: 'autoPaused', pausedSince: t, recent: [] };
+        this.state = { ...this.state, status: 'autoPaused', pausedSince: t, pauseAnchor: null, recent: [] };
         this.record({ type: 'SessionPaused', v: 1, at: t, sessionId: s.id, auto: true });
       }
     } else {
       this.state = { ...s, slowSince: null };
       if (s.status === 'autoPaused') {
         this.endPause(t);
-        this.state = { ...this.state, status: 'recording' };
+        this.state = { ...this.state, status: 'recording', pauseAnchor: null };
         this.record({ type: 'SessionResumed', v: 1, at: t, sessionId: s.id, auto: true, segment: s.segment });
       }
     }
