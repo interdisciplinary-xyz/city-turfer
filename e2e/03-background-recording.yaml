@@ -1,0 +1,19 @@
+# The app keeps recording while backgrounded (screen-off scenario).
+appId: com.turftrack.poc
+tags: [recording, background]
+---
+- runFlow: subflows/launch.yaml
+- tapOn: { id: 'tab-record' }
+- tapOn: { id: 'activity-type-walk' }
+- tapOn: { id: 'record-start' }
+- runFlow: subflows/allow-location.yaml
+- extendedWaitUntil: { visible: { id: 'stat-distance' }, timeout: 15000 }
+- pressKey: home
+# Move ~200 m at walking speed while the app is in the background.
+- runFlow: subflows/travel-walk-bg.yaml
+- launchApp: { stopApp: false }
+- extendedWaitUntil: { visible: { id: 'stat-distance' }, timeout: 15000 }
+- assertVisible: { text: 'Distance [1-9][0-9]{1,} m.*' }
+- runFlow: subflows/finish.yaml
+- extendedWaitUntil: { visible: { id: 'turf-gained' }, timeout: 30000 }
+- tapOn: 'Back'

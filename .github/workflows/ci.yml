@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main, 'release/**']
+    paths-ignore: ['**/*.md', 'docs/**', 'LICENSE']
+  push:
+    branches: [main]
+    paths-ignore: ['**/*.md', 'docs/**', 'LICENSE']
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  commitlint:
+    name: commit naming
+    if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'scope/') && github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: wagoid/commitlint-github-action@v6
+        with: { commitDepth: 1 }
+
+  quality:
+    name: lint + format + types + arch + unit
+    if: ${{ !startsWith(github.head_ref, 'scope/') && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: npm }
+      - run: npm ci
+      - run: npm run ci:quality

@@ -1,0 +1,15 @@
+# Maestro suite: regression lock for the PoC features verified on 2026-10-15.
+# Run with: e2e/run.sh   (boots simulator, grants location, runs flows in order)
+flows:
+  - '*.yaml'
+executionOrder:
+  continueOnFailure: false
+  flowsOrder:
+    - 01-auth
+    - 02-record-run
+    - 03-background-recording
+    - 04-too-short
+    - 05-history-detail
+    - 06-turf-map
+    - 07-delete-activity
+    - 08-sign-out

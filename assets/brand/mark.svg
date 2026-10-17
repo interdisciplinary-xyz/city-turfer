@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- CityTurfer mark: a claimed turf cell (hexagon) with a street riding through it like a wave.
+       Colours = turf strength ramp: faint #7B2FF7 → glowing #F72FA8 → strong #FFB02E → blazing #FFF3C4. -->
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="75%">
+      <stop offset="0" stop-color="#1B2030"/>
+      <stop offset="1" stop-color="#0B0D12"/>
+    </radialGradient>
+    <linearGradient id="ramp" x1="0.08" y1="0.92" x2="0.92" y2="0.08">
+      <stop offset="0" stop-color="#7B2FF7"/>
+      <stop offset="0.45" stop-color="#F72FA8"/>
+      <stop offset="0.8" stop-color="#FFB02E"/>
+      <stop offset="1" stop-color="#FFF3C4"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="22" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softglow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="40"/>
+    </filter>
+    <clipPath id="hexclip">
+      <polygon points="512,182 798,347 798,677 512,842 226,677 226,347"/>
+    </clipPath>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <!-- faint city grid inside the cell -->
+  <g clip-path="url(#hexclip)" stroke="#2A3145" stroke-width="10" opacity="0.9">
+    <path d="M226 430 H798 M226 594 H798 M400 182 V842 M624 182 V842"/>
+  </g>
+  <!-- the claimed cell -->
+  <polygon points="512,182 798,347 798,677 512,842 226,677 226,347" fill="#F72FA8" fill-opacity="0.10"
+           stroke="#F72FA8" stroke-opacity="0.75" stroke-width="30" stroke-linejoin="round" filter="url(#glow)"/>
+  <!-- the street-wave: halo + core -->
+  <path d="M250 724 C 380 724, 392 560, 512 512 C 632 464, 640 312, 778 300"
+        fill="none" stroke="url(#ramp)" stroke-width="120" stroke-linecap="round" opacity="0.45" filter="url(#softglow)"/>
+  <path d="M250 724 C 380 724, 392 560, 512 512 C 632 464, 640 312, 778 300"
+        fill="none" stroke="url(#ramp)" stroke-width="64" stroke-linecap="round" filter="url(#glow)"/>
+  <!-- you are here: white-hot point at the crest -->
+  <circle cx="778" cy="300" r="44" fill="#FFF3C4" filter="url(#glow)"/>
+  <circle cx="778" cy="300" r="22" fill="#FFFFFF"/>
+</svg>

@@ -1,0 +1,16 @@
+# Launch the app. With DEV_URL (dev build) open it through the dev-client link so
+# the JS comes from Metro; otherwise launch the installed (release) app.
+appId: com.turftrack.poc
+---
+- runFlow:
+    when: { true: '${DEV_URL}' }
+    commands:
+      - openLink: ${DEV_URL}
+- runFlow:
+    when: { true: '${!DEV_URL}' }
+    commands:
+      - launchApp: { stopApp: false }
+- extendedWaitUntil: { visible: 'Sign in|Start .*|Continue', timeout: 60000 }
+- runFlow:
+    when: { visible: 'Continue' }
+    commands: [{ tapOn: 'Continue' }]
