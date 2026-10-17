@@ -1,23 +1,33 @@
 ---
 name: ddd-architecture
-description: TurfTrack's Domain-Driven Design rules and code patterns — bounded contexts (Identity, Recording, Activity Log, Territory, Shared Kernel), layers (domain/application/infrastructure/ui), dependency rule enforced by dependency-cruiser, aggregate/value-object/domain-event/repository/use-case templates, transactional outbox, composition root usable from the headless background task, and the ubiquitous language. Use before writing or reviewing any code in src/, when deciding where code belongs, adding an aggregate, use case, port, adapter, event or context, or when a dependency-cruiser rule fails.
+description:
+  TurfTrack's Domain-Driven Design rules and code patterns — bounded contexts (Identity, Recording,
+  Activity Log, Territory, Shared Kernel), layers (domain/application/infrastructure/ui), dependency
+  rule enforced by dependency-cruiser, aggregate/value-object/domain-event/repository/use-case
+  templates, transactional outbox, composition root usable from the headless background task, and
+  the ubiquitous language. Use before writing or reviewing any code in src/, when deciding where
+  code belongs, adding an aggregate, use case, port, adapter, event or context, or when a
+  dependency-cruiser rule fails.
 ---
 
 # DDD architecture for TurfTrack
 
-DDD is a **hard requirement** for this project. The design lives in `docs/poc-plan.md`, sections 2–5. This skill covers how to apply it in code.
+DDD is a **hard requirement** for this project. The design lives in `docs/poc-plan.md`, sections
+2–5. This skill covers how to apply it in code.
 
 ## Where does this code go?
 
-| If the code…                                                                                                  | It belongs in                                                        |
-| ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| is a business rule or invariant ("can't resume a finished session", "drop fixes faster than 8 m/s for a run") | the context's `domain/`, **inside the aggregate** or a domain policy |
-| is pure maths on tracks or measures used by both contexts                                                     | `src/shared-kernel/`                                                 |
-| orchestrates: load aggregate → call method → save → publish                                                   | the context's `application/` (one use case per file)                 |
-| talks to Expo, SQLite, the filesystem or the OS                                                               | the context's `infrastructure/` (an adapter implementing a port)     |
-| is cross-cutting plumbing (db connection, migrations, outbox, dispatcher, logger)                             | `src/platform/`                                                      |
-| renders or holds UI state                                                                                     | the context's `ui/` (hooks, components) and `app/` (thin screens)    |
-| wires implementations to ports                                                                                | `src/composition-root.ts` only                                       |
+- **is a business rule or invariant ("can't resume a finished session", "drop fixes faster than 8
+  m/s for a run")**: the context's `domain/`, **inside the aggregate** or a domain policy
+- **is pure maths on tracks or measures used by both contexts**: `src/shared-kernel/`
+- **orchestrates: load aggregate → call method → save → publish**: the context's `application/` (one
+  use case per file)
+- **talks to Expo, SQLite, the filesystem or the OS**: the context's `infrastructure/` (an adapter
+  implementing a port)
+- **is cross-cutting plumbing (db connection, migrations, outbox, dispatcher, logger)**:
+  `src/platform/`
+- **renders or holds UI state**: the context's `ui/` (hooks, components) and `app/` (thin screens)
+- **wires implementations to ports**: `src/composition-root.ts` only
 
 If a rule shows up as an `if` in a use case, a repository or a component, move it into the domain.
 
@@ -49,7 +59,10 @@ module.exports = {
       name: 'contexts-only-via-public-api',
       severity: 'error',
       from: { path: ctx },
-      to: { path: '^src/contexts/([^/]+)/(domain|application|infrastructure|ui)/', pathNot: '^src/contexts/$1/' },
+      to: {
+        path: '^src/contexts/([^/]+)/(domain|application|infrastructure|ui)/',
+        pathNot: '^src/contexts/$1/',
+      },
     },
     {
       name: 'screens-use-ui-layer',
@@ -63,7 +76,10 @@ module.exports = {
 };
 ```
 
-Exceptions: `app/_layout.tsx` may import the background task module, and `src/composition-root.ts` may import anything. Add these as explicit `pathNot` entries. Don't relax the rules any further. In M0, add a deliberately violating fixture file, check that `depcruise` fails on it, then delete it, so the rules are known to work.
+Exceptions: `app/_layout.tsx` may import the background task module, and `src/composition-root.ts`
+may import anything. Add these as explicit `pathNot` entries. Don't relax the rules any further. In
+M0, add a deliberately violating fixture file, check that `depcruise` fails on it, then delete it,
+so the rules are known to work.
 
 ## Patterns
 
@@ -73,7 +89,8 @@ Exceptions: `app/_layout.tsx` may import the background task module, and `src/co
 export class Distance {
   private constructor(readonly metres: number) {}
   static of(metres: number): Distance {
-    if (!Number.isFinite(metres) || metres < 0) throw new DomainError('distance.invalid', `${metres}`);
+    if (!Number.isFinite(metres) || metres < 0)
+      throw new DomainError('distance.invalid', `${metres}`);
     return new Distance(metres);
   }
   plus(o: Distance) {
@@ -109,8 +126,18 @@ export class RecordingSession {
 
   resume(now: Instant): void {
     if (this.state.status !== 'paused') throw new DomainError('session.not-paused');
-    this.state = { ...this.state, status: 'recording', segment: this.state.segment + 1, tail: null };
-    this.record({ type: 'SessionResumed', sessionId: this.state.id, segment: this.state.segment, at: now });
+    this.state = {
+      ...this.state,
+      status: 'recording',
+      segment: this.state.segment + 1,
+      tail: null,
+    };
+    this.record({
+      type: 'SessionResumed',
+      sessionId: this.state.id,
+      segment: this.state.segment,
+      at: now,
+    });
   }
 
   ingest(fixes: readonly Fix[]): TrackPoint[] {
@@ -135,7 +162,8 @@ export class RecordingSession {
 ```
 
 - Use no setters. Expose behaviour named in the ubiquitous language.
-- Use the `DomainError(code, detail?)` type for rule violations. The UI maps `code` to user-facing copy.
+- Use the `DomainError(code, detail?)` type for rule violations. The UI maps `code` to user-facing
+  copy.
 - Aggregates reference other aggregates by id only.
 
 ### Repository port (domain) and use case (application)
@@ -164,14 +192,19 @@ export class IngestFixes {
 }
 ```
 
-Use cases return result objects instead of throwing for expected outcomes. They throw only for programming errors. A use case never contains an `if` that encodes a business rule.
+Use cases return result objects instead of throwing for expected outcomes. They throw only for
+programming errors. A use case never contains an `if` that encodes a business rule.
 
 ### Outbox and events
 
-- `platform/outbox.ts`: `append(tx, events)` writes to the `sys_outbox` table inside the repository's transaction.
-- `platform/EventDispatcher.ts`: `dispatchPending()` reads unprocessed rows, calls the registered handlers, and marks each row processed. It runs after each commit and on app start.
-- Handlers are **idempotent**. For example, `RecordActivityFromSession` uses activity id = session id with `INSERT OR IGNORE`.
-- Event payloads are the published language: plain JSON, versioned (`{ type, v: 1, … }`), and never containing entity objects.
+- `platform/outbox.ts`: `append(tx, events)` writes to the `sys_outbox` table inside the
+  repository's transaction.
+- `platform/EventDispatcher.ts`: `dispatchPending()` reads unprocessed rows, calls the registered
+  handlers, and marks each row processed. It runs after each commit and on app start.
+- Handlers are **idempotent**. For example, `RecordActivityFromSession` uses activity id = session
+  id with `INSERT OR IGNORE`.
+- Event payloads are the published language: plain JSON, versioned (`{ type, v: 1, … }`), and never
+  containing entity objects.
 
 ### Anti-corruption layer
 
@@ -204,19 +237,28 @@ export async function getContainer(): Promise<Container> {
 }
 ```
 
-Use no DI library: plain functions, constructed lazily. The background task and `app/_layout.tsx` both call `getContainer()`.
+Use no DI library: plain functions, constructed lazily. The background task and `app/_layout.tsx`
+both call `getContainer()`.
 
 ### Context public API (`index.ts`)
 
-Export only: the application API factory and its types, published event types, and (for `ui/`) hooks. Never export domain classes or repositories.
+Export only: the application API factory and its types, published event types, and (for `ui/`)
+hooks. Never export domain classes or repositories.
 
 ## Testing per layer
 
-- **Domain**: plain Jest with no mocks. Every invariant in `docs/poc-plan.md` §4 has a test. Use `FakeClock`.
-- **Application**: in-memory repositories (`InMemoryRecordingSessionRepository`) and `FakeLocationTracker` under `application/__tests__/fakes/`.
-- **Infrastructure**: real SQL through the better-sqlite3 adapter. Test that atomic save rolls back everything if the outbox insert fails.
+- **Domain**: plain Jest with no mocks. Every invariant in `docs/poc-plan.md` §4 has a test. Use
+  `FakeClock`.
+- **Application**: in-memory repositories (`InMemoryRecordingSessionRepository`) and
+  `FakeLocationTracker` under `application/__tests__/fakes/`.
+- **Infrastructure**: real SQL through the better-sqlite3 adapter. Test that atomic save rolls back
+  everything if the outbox insert fails.
 - **Architecture**: `depcruise` runs as part of `npm test`.
 
 ## Smells to reject in review
 
-An anemic aggregate (only getters, with the rules living in use cases) · a use case that calls another use case · domain code importing `expo-*` · `ui/` calling repositories · one context reading another context's tables · events carrying entity instances · a "service" class that is really a bag of functions with no domain concept · terms that aren't in the ubiquitous language (e.g. `workout`, `gpsPoint`).
+An anemic aggregate (only getters, with the rules living in use cases) · a use case that calls
+another use case · domain code importing `expo-*` · `ui/` calling repositories · one context reading
+another context's tables · events carrying entity instances · a "service" class that is really a bag
+of functions with no domain concept · terms that aren't in the ubiquitous language (e.g. `workout`,
+`gpsPoint`).

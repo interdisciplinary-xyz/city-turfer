@@ -1,11 +1,18 @@
 ---
 name: turf-territory
-description: TurfTrack's main feature — turning recorded tracks into "turf" — the Territory bounded context (Claim aggregate, Turf Cells on an H3 grid, permanent turf with visit-based Strength, Territory projection, rebuild/release), and the Turf Map rendering on MapLibre (heatmap glow, strength-coloured cells, overlapping blurred tracks, zoom level-of-detail). Use for anything in src/contexts/territory/, the Turf Map screen, "turf gained" on activities, tuning turf parameters, or turf performance with large histories.
+description:
+  TurfTrack's main feature — turning recorded tracks into "turf" — the Territory bounded context
+  (Claim aggregate, Turf Cells on an H3 grid, permanent turf with visit-based Strength, Territory
+  projection, rebuild/release), and the Turf Map rendering on MapLibre (heatmap glow,
+  strength-coloured cells, overlapping blurred tracks, zoom level-of-detail). Use for anything in
+  src/contexts/territory/, the Turf Map screen, "turf gained" on activities, tuning turf parameters,
+  or turf performance with large histories.
 ---
 
 # Turf & Territory
 
-Design source: `docs/poc-plan.md` §2 (the vocabulary), §4.3 (the model) and §5 (map layers). Reference implementation of the formula and look: `tools/turf-preview.mjs`.
+Design source: `docs/poc-plan.md` §2 (the vocabulary), §4.3 (the model) and §5 (map layers).
+Reference implementation of the formula and look: `tools/turf-preview.mjs`.
 
 ## Model in one picture
 
@@ -40,11 +47,13 @@ static fromTrack(a: ClaimSource, track: Track, grid: CellGrid): Claim {
 
 - Use the activity's **filtered** Track Points. Never use raw Fixes.
 - `claimedAt` is the activity's start time. An imported old activity counts as old turf.
-- A `Set` enforces "a cell counts at most once per activity", so running laps of the same block doesn't multiply its strength.
+- A `Set` enforces "a cell counts at most once per activity", so running laps of the same block
+  doesn't multiply its strength.
 
 ## Strength (domain policy, must match the tool exactly)
 
-**Turf is permanent** (product decision, `docs/poc-plan.md` §9): cells never fade or get lost. Strength depends only on the visit count.
+**Turf is permanent** (product decision, `docs/poc-plan.md` §9): cells never fade or get lost.
+Strength depends only on the visit count.
 
 ```ts
 export const DEFAULT_TURF = { saturationK: 3 } as const;
@@ -56,10 +65,14 @@ strength(visits: number, p = DEFAULT_TURF): Strength {
 tier(s): s < 0.33 'faint' | < 0.66 'glowing' | < 0.9 'strong' | else 'blazing'
 ```
 
-- Projection update: applying a Claim increments `visits` (and the type's count) for each cell and sets `last_at = max(last_at, claimedAt)`. Order doesn't matter. Releasing a Claim decrements, and deletes the cell when it reaches 0.
+- Projection update: applying a Claim increments `visits` (and the type's count) for each cell and
+  sets `last_at = max(last_at, claimedAt)`. Order doesn't matter. Releasing a Claim decrements, and
+  deletes the cell when it reaches 0.
 - Strength is computed on read, so changing `saturationK` needs no migration.
-- Test vectors live in `tools/fixtures/turf-vectors.json` (visits → strength, tier). Generate them from the reference formula and assert both the tool and the app against them.
-- Don't reintroduce time decay without a product decision. "Recent activity" belongs in the summary (new turf this week or month), not in Strength.
+- Test vectors live in `tools/fixtures/turf-vectors.json` (visits → strength, tier). Generate them
+  from the reference formula and assert both the tool and the app against them.
+- Don't reintroduce time decay without a product decision. "Recent activity" belongs in the summary
+  (new turf this week or month), not in Strength.
 
 ## CellGrid port and H3
 
@@ -75,39 +88,68 @@ export interface CellGrid {
 }
 ```
 
-- `H3CellGrid` (infrastructure) uses h3-js: `latLngToCell(lat, lng, 11)`, `cellToBoundary`, `cellToParent`, `polygonToCells`, `cellArea(c, 'm2')`. Resolution 11 claims; resolution 7 is the parent for viewport indexing (`ter_cells.parent_r7`); resolution 9 is the aggregation level when zoomed out.
-- The domain never imports h3-js. Tests use `SquareCellGrid` (pure TS, the same as `tools/turf-preview.mjs`).
+- `H3CellGrid` (infrastructure) uses h3-js: `latLngToCell(lat, lng, 11)`, `cellToBoundary`,
+  `cellToParent`, `polygonToCells`, `cellArea(c, 'm2')`. Resolution 11 claims; resolution 7 is the
+  parent for viewport indexing (`ter_cells.parent_r7`); resolution 9 is the aggregation level when
+  zoomed out.
+- The domain never imports h3-js. Tests use `SquareCellGrid` (pure TS, the same as
+  `tools/turf-preview.mjs`).
 
 ## Viewport query (application + infrastructure)
 
 `GetTurfInViewport({ bbox, zoom, now, types })`:
 
 1. Expand the bbox by 10%.
-2. `SELECT … FROM ter_cells WHERE lat BETWEEN … AND lon BETWEEN …` on the centroid index `idx_ter_cells_lat_lon` (filtering by type via the `walk/run/cycle` count columns). (Simpler than the parent_r7 index originally planned; revisit if viewport queries exceed budget.)
+2. `SELECT … FROM ter_cells WHERE lat BETWEEN … AND lon BETWEEN …` on the centroid index
+   `idx_ter_cells_lat_lon` (filtering by type via the `walk/run/cycle` count columns). (Simpler than
+   the parent_r7 index originally planned; revisit if viewport queries exceed budget.)
 3. Compute strength from `visits`.
-4. At zoom < 14: group by the resolution-9 parent, taking max strength. At zoom ≥ 14: return resolution-11 cells.
-5. Return GeoJSON-ready DTOs: `{ id, strength, tier, centroid, boundary? }` (boundary only at zoom ≥ 13).
+4. At zoom < 14: group by the resolution-9 parent, taking max strength. At zoom ≥ 14: return
+   resolution-11 cells.
+5. Return GeoJSON-ready DTOs: `{ id, strength, tier, centroid, boundary? }` (boundary only at zoom ≥
+   13).
 
-Budget: ≤ 5,000 features per response and < 150 ms on a mid-range Android. Debounce viewport changes by 250 ms, and cache by `(parent set, zoom bucket, types)`, and invalidate on `TurfClaimed` / `TurfReleased`.
+Budget: ≤ 5,000 features per response and < 150 ms on a mid-range Android. Debounce viewport changes
+by 250 ms, and cache by `(parent set, zoom bucket, types)`, and invalidate on `TurfClaimed` /
+`TurfReleased`.
 
 ## Turf Map rendering (ui, MapLibre)
 
 Use `@maplibre/maplibre-react-native` with an OpenFreeMap dark style. Layers, bottom to top:
 
-| Layer id     | Type    | Source                                      | Key style                                                                                                                                                               |
-| ------------ | ------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `turf-heat`  | heatmap | cell centroids                              | `heatmap-weight: ['get','strength']`, radius 12→30 px across zoom 8→13, ramp transparent → violet → magenta → amber → white. maxzoom 13.5                               |
-| `turf-glow`  | fill    | cell polygons                               | colour by tier, `fill-opacity: 0.25 + 0.5*strength`. Render a second blurred line layer of the same polygons (`line-blur: 6`, `line-width: 8`) for the halo. minzoom 13 |
-| `turf-cells` | fill    | cell polygons                               | crisp, `fill-opacity: 0.15 + 0.55*strength`. minzoom 13                                                                                                                 |
-| `tracks`     | line    | simplified tracks (Douglas–Peucker ε ≈ 5 m) | `line-color` by type, `line-opacity: 0.18`, `line-blur: 1`, width 1.5→3. Overlaps brighten naturally                                                                    |
+- `turf-heat`
+  - Type: heatmap
+  - Source: cell centroids
+  - Key style: `heatmap-weight: ['get','strength']`, radius 12→30 px across zoom 8→13, ramp
+    transparent → violet → magenta → amber → white. maxzoom 13.5
+- `turf-glow`
+  - Type: fill
+  - Source: cell polygons
+  - Key style: colour by tier, `fill-opacity: 0.25 + 0.5*strength`. Render a second blurred line
+    layer of the same polygons (`line-blur: 6`, `line-width: 8`) for the halo. minzoom 13
+- `turf-cells`
+  - Type: fill
+  - Source: cell polygons
+  - Key style: crisp, `fill-opacity: 0.15 + 0.55*strength`. minzoom 13
+- `tracks`
+  - Type: line
+  - Source: simplified tracks (Douglas–Peucker ε ≈ 5 m)
+  - Key style: `line-color` by type, `line-opacity: 0.18`, `line-blur: 1`, width 1.5→3. Overlaps
+    brighten naturally
 
-Colours: walk `#5be7a9`, run `#ff8a3d`, cycle `#4cc2ff`. Tier ramp: faint `#7b2ff7`, glowing `#f72fa8`, strong `#ffb02e`, blazing `#fff3c4`. The Turf Map is always dark, so the glow reads properly.
+Colours: walk `#5be7a9`, run `#ff8a3d`, cycle `#4cc2ff`. Tier ramp: faint `#7b2ff7`, glowing
+`#f72fa8`, strong `#ffb02e`, blazing `#fff3c4`. The Turf Map is always dark, so the glow reads
+properly.
 
-Keep sources as `ShapeSource` with stable ids, and update their `shape` rather than remounting layers. Tracks for the whole history load once (simplified, cached per activity), then get filtered by type with a layer `filter` expression, not by rebuilding data.
+Keep sources as `ShapeSource` with stable ids, and update their `shape` rather than remounting
+layers. Tracks for the whole history load once (simplified, cached per activity), then get filtered
+by type with a layer `filter` expression, not by rebuilding data.
 
 ## "Turf gained" UX
 
-After Finish, and on the activity detail: `GetClaimForActivity` → "+0.12 km² new turf · 340 cells reinforced", plus a mini-map of only that claim's cells (new cells highlighted). Use plain, exact numbers. Don't invent gamified scores that aren't in the model.
+After Finish, and on the activity detail: `GetClaimForActivity` → "+0.12 km² new turf · 340 cells
+reinforced", plus a mini-map of only that claim's cells (new cells highlighted). Use plain, exact
+numbers. Don't invent gamified scores that aren't in the model.
 
 ## Tuning workflow
 
@@ -116,8 +158,13 @@ node tools/gen-history.mjs --days 120 --out tools/fixtures/history
 node tools/turf-preview.mjs tools/fixtures/history --out /tmp/turf.html && open /tmp/turf.html   # sliders: date (watch turf grow), k
 ```
 
-If you change `saturationK`, change `TurfParameters` in the domain, `tools/turf-preview.mjs` and `turf-vectors.json` together.
+If you change `saturationK`, change `TurfParameters` in the domain, `tools/turf-preview.mjs` and
+`turf-vectors.json` together.
 
 ## Tests that must exist
 
-Claim: no skipped cells on a fast cycle fixture · a cell counted once per activity · no bridging across a segment gap · empty track rejected. Strength matches the vectors · a cell never disappears except when every Claim containing it is released. The projection is identical after (a) an in-order import, (b) a reverse-order import, (c) a delete followed by rebuild. Claiming a 2-hour ride takes < 300 ms. A viewport query over a seeded year stays under the budget.
+Claim: no skipped cells on a fast cycle fixture · a cell counted once per activity · no bridging
+across a segment gap · empty track rejected. Strength matches the vectors · a cell never disappears
+except when every Claim containing it is released. The projection is identical after (a) an in-order
+import, (b) a reverse-order import, (c) a delete followed by rebuild. Claiming a 2-hour ride takes <
+300 ms. A viewport query over a seeded year stays under the budget.

@@ -4,5 +4,14 @@
   "tabWidth": 2,
   "singleQuote": true,
   "jsxSingleQuote": true,
-  "printWidth": 120
+  "printWidth": 120,
+  "overrides": [
+    {
+      "files": "*.md",
+      "options": {
+        "proseWrap": "always",
+        "printWidth": 100
+      }
+    }
+  ]
 }
