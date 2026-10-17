@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useApp, useContainer } from '@/ui-kit/app-context';
 
@@ -26,4 +26,25 @@ export function useActivity(id: string) {
     remove: () => c.activityLog.remove.execute(id),
     rename: (name: string) => c.activityLog.rename.execute(id, name),
   };
+}
+
+/** "Estimate GPS gaps along streets": null while loading. Turning it on estimates pending gaps right away. */
+export function useGapEstimationSetting(): [boolean | null, (enabled: boolean) => Promise<void>] {
+  const c = useContainer();
+  const [enabled, set] = useState<boolean | null>(null);
+  useEffect(() => {
+    c.activityLog.gapEstimationEnabled
+      .execute()
+      .then(set)
+      .catch(() => set(false));
+  }, [c]);
+  const update = useCallback(
+    async (on: boolean) => {
+      await c.activityLog.setGapEstimationEnabled.execute(on);
+      set(on);
+      if (on) void c.estimateGaps();
+    },
+    [c]
+  );
+  return [enabled, update];
 }
