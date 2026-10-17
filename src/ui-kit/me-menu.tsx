@@ -10,6 +10,7 @@ import { usePalette } from './theme';
 
 const ITEMS: { label: string; href: Href; symbol: SFSymbol; glyph: string; testID: string }[] = [
   { label: 'Profile', href: '/profile', symbol: 'person.crop.circle', glyph: '◉', testID: 'me-menu-profile' },
+  { label: 'Achievements', href: '/achievements', symbol: 'trophy', glyph: '★', testID: 'me-menu-achievements' },
   { label: 'Account', href: '/account', symbol: 'key', glyph: '⚿', testID: 'me-menu-account' },
   { label: 'Info', href: '/info', symbol: 'info.circle', glyph: 'ⓘ', testID: 'me-menu-info' },
 ];
