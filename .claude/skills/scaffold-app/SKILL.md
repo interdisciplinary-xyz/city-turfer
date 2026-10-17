@@ -76,8 +76,8 @@ Create the DDD layout from `docs/poc-plan.md` §5 and `CLAUDE.md`, following the
 skill: `src/shared-kernel/`,
 `src/contexts/{identity,recording,activity-log,territory}/{domain,application,infrastructure,ui}/`
 with `index.ts` public APIs, `src/platform/` (db, migrations, outbox, EventDispatcher),
-`src/composition-root.ts`, and `app/` screens (`_layout.tsx` imports
-`@/contexts/recording/infrastructure/background-task` first). Stubs only — typed signatures, no
+`src/composition-root.ts`, and `src/app/` screens (the root `index.ts` entry imports
+`./src/contexts/recording/infrastructure/background-task` first). Stubs only — typed signatures, no
 feature logic.
 
 Install `npm i -D dependency-cruiser` and add the rules from the `ddd-architecture` skill; wire

@@ -25,22 +25,46 @@ type Row = {
   estimated_moving_s: number;
 };
 
-const toState = (r: Row): ActivityState => ({
-  id: r.id,
-  type: r.type,
-  name: r.name,
-  startedAt: r.started_at,
-  endedAt: r.ended_at,
-  summary: {
-    distanceM: r.distance_m,
-    movingS: r.moving_s,
-    elapsedS: r.elapsed_s,
-    elevGainM: r.elev_gain_m,
-    splits: JSON.parse(r.splits),
-  },
-  bbox: r.bbox ? JSON.parse(r.bbox) : null,
-  preview: r.preview ? JSON.parse(r.preview) : [],
-});
+/**
+ * The `splits` column holds a JSON array of splits (older rows), or
+ * `{ splits, resumedSegments }` since Resume vs GPS gap is tracked. Kept in this
+ * existing column so no schema migration is needed; a later migration may move
+ * `resumedSegments` into its own column.
+ */
+type StoredSplits = ActivityState['summary']['splits'] | SplitsWithBreaks;
+interface SplitsWithBreaks {
+  splits: ActivityState['summary']['splits'];
+  resumedSegments: readonly number[] | null;
+}
+
+function readSplits(json: string): SplitsWithBreaks {
+  const v = JSON.parse(json) as StoredSplits;
+  return Array.isArray(v) ? { splits: v, resumedSegments: null } : (v as SplitsWithBreaks);
+}
+
+const writeSplits = (s: ActivityState): string =>
+  JSON.stringify({ splits: s.summary.splits, resumedSegments: s.resumedSegments } satisfies SplitsWithBreaks);
+
+function toState(r: Row): ActivityState {
+  const stored = readSplits(r.splits);
+  return {
+    id: r.id,
+    type: r.type,
+    name: r.name,
+    startedAt: r.started_at,
+    endedAt: r.ended_at,
+    summary: {
+      distanceM: r.distance_m,
+      movingS: r.moving_s,
+      elapsedS: r.elapsed_s,
+      elevGainM: r.elev_gain_m,
+      splits: stored.splits,
+    },
+    bbox: r.bbox ? JSON.parse(r.bbox) : null,
+    preview: r.preview ? JSON.parse(r.preview) : [],
+    resumedSegments: stored.resumedSegments ?? null,
+  };
+}
 
 export class SqliteActivityRepository implements ActivityRepository {
   constructor(private readonly db: Database) {}
@@ -73,7 +97,7 @@ export class SqliteActivityRepository implements ActivityRepository {
           s.summary.movingS,
           s.summary.elapsedS,
           s.summary.elevGainM,
-          JSON.stringify(s.summary.splits),
+          writeSplits(s),
           s.bbox ? JSON.stringify(s.bbox) : null,
           JSON.stringify(s.preview),
           now,
@@ -130,7 +154,7 @@ export class SqliteActivityRepository implements ActivityRepository {
           s.summary.movingS,
           s.summary.elapsedS,
           s.summary.elevGainM,
-          JSON.stringify(s.summary.splits),
+          writeSplits(s),
           s.bbox ? JSON.stringify(s.bbox) : null,
           JSON.stringify(s.preview),
           s.id,
