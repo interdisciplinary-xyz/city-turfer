@@ -55,3 +55,4 @@ tools/fixtures/history/
 
 # Test artifacts
 e2e-results/
+coverage/

@@ -6,7 +6,8 @@
 //   node tools/route-stats.mjs tools/fixtures/run-5k.gpx [--type run] [--json]
 
 import { readFileSync } from 'node:fs';
-import { PROFILES, haversine, parseGpx } from './lib/geo.mjs';
+
+import { haversine, parseGpx, PROFILES } from './lib/geo.mjs';
 
 const argv = process.argv.slice(2);
 const file = argv.find((a) => !a.startsWith('--') && argv[argv.indexOf(a) - 1] !== '--type');
