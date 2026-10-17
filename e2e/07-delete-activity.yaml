@@ -3,7 +3,8 @@ appId: com.turftrack.poc
 tags: [history]
 ---
 - runFlow: subflows/launch.yaml
-- tapOn: { id: 'tab-history' }
+- tapOn: { id: 'tab-dashboard' }
+- tapOn: { id: 'dashboard-see-all-activities' }
 - copyTextFrom: { id: 'history-item-0' }
 - tapOn: { id: 'history-item-0' }
 - extendedWaitUntil: { visible: { id: 'delete-activity' }, timeout: 15000 }
@@ -13,3 +14,4 @@ tags: [history]
 - tapOn: 'Delete'
 - extendedWaitUntil: { visible: 'History', timeout: 10000 }
 - assertNotVisible: { text: '${maestro.copiedText}' }
+- tapOn: 'Back'

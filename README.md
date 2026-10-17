@@ -121,17 +121,18 @@ relies on React state.
 expo-router, file-based under `src/app/`. Screens are thin: they compose context `ui/` components
 and hooks.
 
-| Route                      | Screen                                                      |
-| -------------------------- | ----------------------------------------------------------- |
-| `(tabs)/turf`              | Turf map: tracks, glowing turf, walk/run/ride filter        |
-| `(tabs)/stats`             | This week, 8-week chart, turf totals, all-time per type     |
-| `(tabs)/index`             | Record (raised centre tab): type picker, live map and stats |
-| `(tabs)/history`           | Activity history                                            |
-| `(tabs)/me`                | Opens the Me menu: Profile, Achievements, Account, Info     |
-| `activity/[id]`            | Activity detail: map, stats, splits, turf gained, delete    |
-| `profile` · `achievements` | Profile with totals; achievements with progress             |
-| `account` · `info`         | Sign out; app version, updates, data note, demo data        |
-| `sign-in`                  | Mock sign-in                                                |
+| Route                      | Screen                                                           |
+| -------------------------- | ---------------------------------------------------------------- |
+| `(tabs)/index`             | Dashboard (start tab): greeting, this week, recent, achievements |
+| `(tabs)/turf`              | Turf map: tracks, glowing turf, walk/run/ride filter             |
+| `(tabs)/record`            | Record (raised centre tab): type picker, live map and stats      |
+| `(tabs)/stats`             | This week, 8-week chart, turf totals, all-time per type          |
+| `(tabs)/me`                | Opens the Me menu: Profile, Achievements, Account, Info          |
+| `history`                  | Activity history (from Dashboard and Stats)                      |
+| `activity/[id]`            | Activity detail: map, stats, splits, turf gained, delete         |
+| `profile` · `achievements` | Profile with totals; achievements with progress                  |
+| `account` · `info`         | Sign out; app version, updates, data note, demo data             |
+| `sign-in`                  | Mock sign-in                                                     |
 
 ---
 

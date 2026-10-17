@@ -5,3 +5,4 @@ export {
   type AchievementInput,
   evaluateAchievements,
 } from './domain/achievements';
+export { type AchievementsSummary, summarizeAchievements } from './domain/achievements-summary';
