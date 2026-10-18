@@ -2,13 +2,16 @@
 import {
   type ActivityLogDeps,
   ActivityTrackQuery,
+  CapEstimatedMovingTime,
   DeleteActivity,
   EstimateGapRoutes,
   GetActivityDetail,
+  GetGapEstimationSetting,
   ImportActivity,
   ListActivities,
   RecordActivityFromSession,
   RenameActivity,
+  SetGapEstimationSetting,
   SplitTrackGaps,
 } from './application/use-cases';
 
@@ -23,8 +26,18 @@ export function createActivityLogApi(deps: ActivityLogDeps) {
     trackQuery: new ActivityTrackQuery(deps),
     splitTrackGaps: new SplitTrackGaps(deps),
     estimateGapRoutes: new EstimateGapRoutes(deps),
+    capEstimatedMovingTime: new CapEstimatedMovingTime(deps),
+    gapEstimationEnabled: new GetGapEstimationSetting(deps),
+    setGapEstimationEnabled: new SetGapEstimationSetting(deps),
   };
 }
 export type ActivityLogApi = ReturnType<typeof createActivityLogApi>;
-export type { ActivityLogDeps, FinishedTrackSource, RouteEstimator } from './application/use-cases';
+export type {
+  ActivityLogDeps,
+  FinishedTrackSource,
+  GapEstimationSetting,
+  GapRoutingEnvironment,
+  RouteEstimator,
+} from './application/use-cases';
+export { RouterRateLimited, RouterUnreachable } from './application/use-cases';
 export type * from './contract';

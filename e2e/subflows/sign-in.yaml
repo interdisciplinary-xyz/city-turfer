@@ -3,8 +3,14 @@ appId: com.turftrack.poc
 - tapOn: { id: 'sign-in-email' }
 - eraseText: 60
 - inputText: ${EMAIL}
-- tapOn: { id: 'sign-in-password' }
+# The keyboard's Next key moves focus to the password field. Tapping it instead is flaky: the form
+# shifts up while the keyboard opens, so the tap can land on the email field.
+- pressKey: Enter
 - eraseText: 60
 - inputText: ${PASSWORD}
 # Submit via the keyboard's Go key (the button sits under the keyboard).
 - pressKey: Enter
+# iOS may offer to save the password after a successful sign-in; dismiss it.
+- runFlow:
+    when: { visible: 'Not Now' }
+    commands: [{ tapOn: 'Not Now' }]

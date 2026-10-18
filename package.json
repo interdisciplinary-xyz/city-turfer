@@ -1,6 +1,6 @@
 {
   "name": "city-turfer",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "main": "index.ts",
   "dependencies": {
     "@maplibre/maplibre-react-native": "^11.5.0",
@@ -68,13 +68,19 @@
     "standard:fix": "npm run standard:lint:fix && npm run standard:format:fix",
     "standard:format": "prettier --check --ignore-path .gitignore --ignore-path .prettierignore .",
     "standard:format:fix": "prettier --write --ignore-path .gitignore --ignore-path .prettierignore .",
-    "standard:lint": "eslint src",
-    "standard:lint:fix": "eslint src --fix",
+    "standard:lint": "eslint src index.ts tools",
+    "standard:lint:fix": "eslint src index.ts tools --fix",
     "test:types": "tsc --noEmit",
-    "test:unit": "jest",
+    "test:unit": "jest && npm run test:tools",
+    "test:tools": "node --test tools/__tests__/*.test.mjs",
+    "test:cov": "jest --coverage",
     "test:arch": "depcruise src --config .dependency-cruiser.cjs",
     "test:e2e": "e2e/run.sh",
-    "ci:quality": "npm run standard && npm run test:types && npm run test:arch && npm run test:unit"
+    "e2e:audit": "node tools/e2e/audit.mjs",
+    "audit:logs": "node tools/audit-logs.mjs",
+    "check:secret-files": "node tools/check-secret-files.mjs",
+    "audit:docs": "node tools/docs-audit.mjs",
+    "ci:quality": "npm run standard && npm run test:types && npm run test:arch && npm run test:unit && npm run audit:logs && npm run e2e:audit"
   },
   "private": true,
   "jest": {
@@ -93,13 +99,23 @@
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1"
     },
+    "collectCoverageFrom": [
+      "src/**/*.{ts,tsx}",
+      "!src/**/__tests__/**",
+      "!src/test-support/**",
+      "!**/*.d.ts"
+    ],
     "testPathIgnorePatterns": [
       "/node_modules/",
-      "/tools/"
+      "/tools/",
+      "/.claude/worktrees/"
     ],
     "globals": {
       "__DEV__": true
-    }
+    },
+    "modulePathIgnorePatterns": [
+      "/.claude/worktrees/"
+    ]
   },
   "engines": {
     "node": ">=22.13"

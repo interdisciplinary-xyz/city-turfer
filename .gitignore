@@ -1,7 +1,7 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
 # dependencies
-node_modules/
+node_modules
 
 # Expo
 .expo/
@@ -55,3 +55,26 @@ tools/fixtures/history/
 
 # Test artifacts
 e2e-results/
+coverage/
+
+# Personal location data and secrets (enforced by tools/check-secret-files.mjs)
+*.db
+*.db3
+*.sqlite*
+*-wal
+*-shm
+*.logarchive
+*.gpx
+!tools/fixtures/*.gpx
+*.cer
+*.pfx
+*.keystore
+credentials.json
+google-services*.json
+GoogleService-Info.plist
+service-account*.json
+.env.*
+!.env.example
+
+# Claude Code agent worktrees (isolated copies of this repo)
+.claude/worktrees/

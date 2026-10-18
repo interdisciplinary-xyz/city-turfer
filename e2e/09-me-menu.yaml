@@ -1,0 +1,27 @@
+# The Me tab slides in a drawer: header (→ Profile), Profile, Account, Info; tap outside closes it.
+appId: com.turftrack.poc
+tags: [me]
+---
+- runFlow: subflows/launch.yaml
+- tapOn: { id: 'tab-me' }
+- assertVisible: { id: 'me-drawer' }
+- assertVisible: { id: 'me-menu-profile' }
+- assertVisible: { id: 'me-menu-account' }
+- assertVisible: { id: 'me-menu-info' }
+- assertNotVisible: { id: 'me-menu-achievements' }
+- takeScreenshot: 09-me-drawer
+# Tap outside (left edge) closes the drawer.
+- tapOn: { point: '8%,50%' }
+- extendedWaitUntil: { notVisible: { id: 'me-drawer' }, timeout: 5000 }
+- tapOn: { id: 'tab-me' }
+- tapOn: { id: 'me-drawer-header' }
+- assertVisible: { id: 'profile-name' }
+- tapOn: { id: 'profile-achievements' }
+- assertVisible: { id: 'achievements-count' }
+- assertVisible: { id: 'achievement-first-steps' }
+- tapOn: 'Back'
+- tapOn: 'Back'
+- tapOn: { id: 'tab-me' }
+- tapOn: { id: 'me-menu-info' }
+- assertVisible: { id: 'app-version' }
+- tapOn: 'Back'

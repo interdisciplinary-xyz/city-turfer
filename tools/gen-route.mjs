@@ -18,8 +18,8 @@
 //   --seed N                PRNG seed (default 42)
 //   --format gpx|json       output format (default gpx; json includes ground-truth stats)
 
-import { toGpx } from './lib/geo.mjs';
 import { generateTrack } from './lib/generate.mjs';
+import { toGpx } from './lib/geo.mjs';
 
 const args = Object.fromEntries(
   process.argv.slice(2).reduce((acc, a, i, arr) => (a.startsWith('--') ? [...acc, [a.slice(2), arr[i + 1]]] : acc), [])

@@ -1,5 +1,6 @@
 import { distanceM, DomainError } from '@/shared-kernel';
 import { loadFixes } from '@/test-support/fixtures';
+import { oracleStats } from '@/test-support/oracle';
 
 import type { Fix } from '../fix';
 import { RecordingSession } from '../recording-session';
@@ -88,6 +89,15 @@ describe('RecordingSession', () => {
     expect(r.jitter).toBe(1);
   });
 
+  it.each(['finish', 'discard'] as const)('keeps no position once closed (%s)', (close) => {
+    const s = RecordingSession.start('s1', 'run', T0);
+    s.ingest([0, 1, 2].map((i) => fix(i, i * 5)));
+    expect(s.toState().tail).not.toBeNull();
+    s[close](T0 + 3000);
+    expect(s.toState()).toMatchObject({ tail: null, recent: [], distanceM: expect.any(Number), pointCount: 3 });
+    expect(JSON.stringify(s.toState())).not.toMatch(/"lat"|"lon"/);
+  });
+
   it('refuses to finish with fewer than 2 points and makes finished terminal', () => {
     const s = RecordingSession.start('s1', 'walk', T0);
     expect(() => s.finish(T0 + 1000)).toThrow(DomainError);
@@ -99,12 +109,69 @@ describe('RecordingSession', () => {
   });
 
   it('matches the reference oracle on the run fixture with outliers and a pause (±3%)', () => {
-    // node tools/route-stats.mjs tools/fixtures/run-5k-outliers-pause.gpx → 5.24 km
+    const oracle = oracleStats('run-5k-outliers-pause.gpx').distanceM; // node tools/route-stats.mjs --json
     const s = RecordingSession.start('s1', 'run', T0);
     const accepted = s.ingest(loadFixes('run-5k-outliers-pause.gpx'));
     let d = 0;
     for (let i = 1; i < accepted.length; i++) d += distanceM(accepted[i - 1], accepted[i]);
-    expect(Math.abs(s.snapshot(0).distanceM - 5240) / 5240).toBeLessThan(0.03);
+    expect(Math.abs(s.snapshot(0).distanceM - oracle) / oracle).toBeLessThan(0.03);
     expect(d).toBeCloseTo(s.snapshot(0).distanceM, 0);
+  });
+
+  describe('why each segment starts (Resume vs GPS gap)', () => {
+    const finishedEvent = (s: RecordingSession) => {
+      const e = s.pullEvents().find((x) => x.type === 'SessionFinished');
+      return e as Extract<ReturnType<RecordingSession['pullEvents']>[number], { type: 'SessionFinished' }>;
+    };
+
+    it('records segments begun by a manual Resume and publishes them on SessionFinished', () => {
+      const s = RecordingSession.start('s1', 'run', T0);
+      s.ingest([fix(0, 0), fix(1, 5), fix(2, 10)]);
+      s.pause(T0 + 2500);
+      s.resume(T0 + 600_000); // segment 1: manual Resume
+      s.ingest([fix(600, 400), fix(601, 405), fix(602, 410)]);
+      s.ingest([fix(700, 600), fix(701, 605)]); // 98 s without fixes: segment 2 starts after a GPS gap
+      expect(s.toState().segment).toBe(2);
+      expect(s.toState().resumedSegments).toEqual([1]);
+      s.finish(T0 + 702_000);
+      expect(finishedEvent(s).resumedSegments).toEqual([1]);
+    });
+
+    it('publishes an empty list when every break was a GPS gap', () => {
+      const s = RecordingSession.start('s1', 'run', T0);
+      s.ingest([fix(0, 0), fix(1, 5), fix(100, 300), fix(101, 305)]);
+      expect(s.toState().segment).toBe(1);
+      s.finish(T0 + 102_000);
+      expect(finishedEvent(s).resumedSegments).toEqual([]);
+    });
+
+    it('publishes null for a session persisted by an older build (reason unknown)', () => {
+      const s = RecordingSession.start('s1', 'run', T0);
+      s.ingest([fix(0, 0), fix(1, 5)]);
+      const { resumedSegments: _drop, ...legacy } = s.toState();
+      const old = RecordingSession.rehydrate(legacy);
+      old.pause(T0 + 2000);
+      old.resume(T0 + 3000);
+      expect(old.toState().resumedSegments).toBeUndefined(); // stays unknown, never half-known
+      old.finish(T0 + 4000);
+      expect(finishedEvent(old).resumedSegments).toBeNull();
+    });
+  });
+
+  describe('assertMayReplace (persistence guard)', () => {
+    it.each(['finished', 'discarded'] as const)('refuses to replace a %s session', (persisted) => {
+      const stale = RecordingSession.start('s1', 'run', T0);
+      expect(() => stale.assertMayReplace(persisted)).toThrow(DomainError);
+      expect(() => stale.assertMayReplace(persisted)).toThrow(
+        expect.objectContaining({ code: 'session.already-ended' })
+      );
+    });
+
+    it.each(['recording', 'paused', 'autoPaused'] as const)('may replace a %s session', (persisted) => {
+      const s = RecordingSession.start('s1', 'run', T0);
+      s.ingest([fix(0, 0), fix(1, 5)]);
+      s.finish(T0 + 5000);
+      expect(() => s.assertMayReplace(persisted)).not.toThrow();
+    });
   });
 });

@@ -1,4 +1,5 @@
 // Public API of the Recording context.
+import { ScrubClosedSessions } from './application/scrub-closed-sessions';
 import type { RecordingDeps } from './application/use-cases';
 import {
   DiscardRecording,
@@ -15,6 +16,8 @@ import {
   StartRecording,
 } from './application/use-cases';
 
+export { SerialCommandExecutor } from './application/command-executor';
+
 export function createRecordingApi(deps: RecordingDeps) {
   return {
     prepare: new PrepareRecording(deps),
@@ -29,6 +32,7 @@ export function createRecordingApi(deps: RecordingDeps) {
     liveTrack: new GetLiveTrack(deps),
     finishedTrack: new FinishedTrackQuery(deps),
     purgeRecorded: new PurgeRecordedSession(deps),
+    scrubClosedSessions: new ScrubClosedSessions(deps),
   };
 }
 export type RecordingApi = ReturnType<typeof createRecordingApi>;

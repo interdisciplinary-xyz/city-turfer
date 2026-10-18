@@ -15,9 +15,11 @@ export function openNodeDatabase(): Database {
       (raw.prepare(sql).get(...(params as SqlParam[])) as T) ?? null,
   };
   return {
-    ...exec,
+    // Same locking as the app's expo-sqlite adapter: reads and writes queue behind open transactions.
     run: (sql, params) => mutex.lock(() => exec.run(sql, params)),
-    exec: async (sql) => void raw.exec(sql),
+    all: (sql, params) => mutex.lock(() => exec.all(sql, params)),
+    first: (sql, params) => mutex.lock(() => exec.first(sql, params)),
+    exec: (sql) => mutex.lock(async () => void raw.exec(sql)),
     transaction: (work) =>
       mutex.lock(async () => {
         raw.exec('BEGIN');

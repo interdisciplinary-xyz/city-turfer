@@ -12,6 +12,7 @@ import {
 } from '@/shared-kernel';
 
 import type { ActivityDeleted, ActivityRecorded, ActivityTrackCorrected } from '../contract';
+import { acceptRoute, estimatedMovingS, type Gap, type GapRoute, routableGaps } from './gap-route';
 
 export interface ActivitySummary {
   readonly distanceM: number;
@@ -30,6 +31,8 @@ export interface ActivityState {
   readonly summary: ActivitySummary;
   readonly bbox: BoundingBox | null;
   readonly preview: readonly [number, number][];
+  /** Segment numbers that began with a manual Resume; null when unknown (older or imported activity). */
+  readonly resumedSegments: readonly number[] | null;
 }
 
 type ActivityEvent = ActivityRecorded | ActivityDeleted | ActivityTrackCorrected;
@@ -52,6 +55,7 @@ export class Activity {
     endedAt: number;
     track: Track;
     now: number;
+    resumedSegments?: readonly number[] | null;
   }): Activity {
     const points = pointsOf(input.track);
     if (points.length < 2) throw new DomainError('activity.track-too-short');
@@ -63,6 +67,7 @@ export class Activity {
       startedAt: input.startedAt,
       endedAt: input.endedAt,
       ...derive(input.type, input.track, input.startedAt, input.endedAt),
+      resumedSegments: input.resumedSegments ? [...input.resumedSegments] : null,
     });
     a.events.push({
       type: 'ActivityRecorded',
@@ -97,7 +102,8 @@ export class Activity {
   correctTrack(track: Track, now: number) {
     if (pointsOf(track).length < 2) throw new DomainError('activity.track-too-short');
     const s = this.state;
-    this.state = { ...s, ...derive(s.type, track, s.startedAt, s.endedAt) };
+    // Segments are renumbered by a correction, so which ones began with a Resume is no longer known.
+    this.state = { ...s, ...derive(s.type, track, s.startedAt, s.endedAt), resumedSegments: null };
     this.events.push({
       type: 'ActivityTrackCorrected',
       v: 1,
@@ -108,6 +114,28 @@ export class Activity {
     });
   }
 
+  /** Breaks of this activity's track worth estimating along streets (GPS gaps, not pauses; not near home). */
+  gapsToRoute(track: Track): Gap[] {
+    return routableGaps(track, this.state.resumedSegments);
+  }
+
+  /** A routed path across one of its gaps, or null when nobody doing this activity could have taken it. */
+  gapRoute(gap: Gap, route: { distanceM: number; coords: readonly [number, number][] }): GapRoute | null {
+    if (!acceptRoute(this.state.type, gap, route.distanceM)) return null;
+    return {
+      afterSegment: gap.afterSegment,
+      distanceM: route.distanceM,
+      movingS: estimatedMovingS(gap.durationS, route.distanceM, this.avgMovingSpeedMps()),
+      coords: route.coords.map(([lon, lat]) => [lon, lat] as [number, number]),
+    };
+  }
+
+  /** Data repair for routes estimated before moving time was capped: `movingS` then held the whole gap duration. */
+  capGapRoute(route: GapRoute): GapRoute {
+    const movingS = estimatedMovingS(route.movingS, route.distanceM, this.avgMovingSpeedMps());
+    return movingS === route.movingS ? route : { ...route, movingS };
+  }
+
   markDeleted(now: number) {
     this.events.push({ type: 'ActivityDeleted', v: 1, at: now, activityId: this.state.id });
   }
@@ -116,6 +144,11 @@ export class Activity {
     const e = this.events;
     this.events = [];
     return e;
+  }
+
+  private avgMovingSpeedMps(): number {
+    const { distanceM, movingS } = this.state.summary;
+    return movingS > 0 ? distanceM / movingS : 0;
   }
 }
 

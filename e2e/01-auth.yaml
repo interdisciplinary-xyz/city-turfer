@@ -9,15 +9,15 @@ tags: [auth]
     when: { visible: { id: 'tab-me' } }
     commands:
       - tapOn: { id: 'tab-me' }
-      - scrollUntilVisible: { element: { id: 'sign-out' } }
+      - tapOn: { id: 'me-menu-account' }
       - tapOn: { id: 'sign-out' }
 - extendedWaitUntil: { visible: { id: 'sign-in-submit' }, timeout: 10000 }
 - assertVisible: 'Surf your city. Own your streets.'
-- runFlow: { file: subflows/sign-in.yaml, env: { EMAIL: 'admin@turftrack.com', PASSWORD: 'wrong-password' } }
+- runFlow: { file: subflows/sign-in.yaml, env: { EMAIL: 'admin@cityturfer.com', PASSWORD: 'wrong-password' } }
 - assertVisible: { id: 'sign-in-error' }
-- runFlow: { file: subflows/sign-in.yaml, env: { EMAIL: 'admin@turftrack.com', PASSWORD: 'admin1234' } }
-- extendedWaitUntil: { visible: { id: 'record-start' }, timeout: 20000 }
+- runFlow: { file: subflows/sign-in.yaml, env: { EMAIL: 'admin@cityturfer.com', PASSWORD: 'admin1234' } }
+- extendedWaitUntil: { visible: { id: 'dashboard-greeting' }, timeout: 20000 }
 # Session persists across an app restart
 - stopApp
 - runFlow: subflows/launch.yaml
-- extendedWaitUntil: { visible: { id: 'record-start' }, timeout: 20000 }
+- extendedWaitUntil: { visible: { id: 'dashboard-greeting' }, timeout: 20000 }

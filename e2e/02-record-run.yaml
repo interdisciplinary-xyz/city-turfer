@@ -10,6 +10,11 @@ tags: [recording]
 - runFlow: subflows/allow-location.yaml
 - extendedWaitUntil: { visible: { id: 'stat-distance' }, timeout: 15000 }
 - runFlow: subflows/travel-run.yaml
+# From the Dashboard, the live banner leads back to the recording.
+- tapOn: { id: 'tab-dashboard' }
+- assertVisible: { id: 'live-session-banner' }
+- tapOn: { id: 'live-session-banner' }
+- assertVisible: { id: 'record-pause' }
 - assertVisible: { text: 'Distance [1-9].*' }
 - tapOn: { id: 'record-pause' }
 - assertVisible: 'Paused'

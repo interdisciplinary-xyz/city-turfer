@@ -2,7 +2,7 @@
 // The *path* depends only on `seed`; GPS noise uses `noiseSeed`, so the same
 // route can be replayed many times with different noise (overlapping tracks).
 
-import { PROFILES, destination, gaussian, mulberry32 } from './geo.mjs';
+import { destination, gaussian, mulberry32, PROFILES } from './geo.mjs';
 
 export function generateTrack({
   type = 'run',
