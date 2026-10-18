@@ -18,8 +18,9 @@ Scope: `$ARGUMENTS` if given (a path, a folder or a topic), otherwise `docs/`, `
 1. **Signals.** Run `pnpm run audit:docs` (one file: `pnpm run audit:docs -- --doc <path>`). It
    reports falsifiable signals only: frontmatter, dead-path, broken-link, probe-drift, filename,
    placement, review-debt, planned-path, index.
-2. **Sanity-check the tool before trusting it.** Hand-verify two probes (`ls src/contexts`, count
-   `flowsOrder` in `e2e/config.yaml`). A wrong probe makes every dependent finding noise.
+2. **Sanity-check the tool before trusting it.** Hand-verify two probes
+   (`ls apps/mobile/src/contexts`, count `flowsOrder` in `apps/mobile/e2e/config.yaml`). A wrong
+   probe makes every dependent finding noise.
 3. **Triage records out first.** Session logs (`docs/sessions/`) and anything in docs/archive (once
    it exists) are point-in-time records: being out of date is their job. Make sure they are
    `historical` and leave their bodies alone.

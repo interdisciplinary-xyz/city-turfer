@@ -51,8 +51,8 @@ city-turfer/
 
 - **One version, one tag, one CHANGELOG.** The root `package.json` carries the version; the release
   bump also writes `apps/mobile/app.json`.
-- **Parity fixtures move with mobile** (turf vectors, the `geo.mjs` oracle), next to the `src/` they
-  pin.
+- **Parity fixtures move with mobile** (turf vectors, the `geo.mjs` oracle), next to the app code
+  they pin.
 - **Brand tokens move to `packages/brand`**; mobile imports them. Domain code still never imports
   them.
 
@@ -101,9 +101,12 @@ city-turfer/
 
 ## Risks
 
-- **Runtime fingerprint changes in PR 2:** OTA stops reaching the installed build until the device
-  gets the new Release build. Reinstall over the app, don't delete it (runbook).
-- **pnpm with native modules:** MapLibre local SPM (`plugins/with-local-maplibre`), the local
-  `modules/background-session` module and autolinking need a fresh dev build to prove.
+- **Runtime fingerprint changes from PR 1 on** (hoisted autolinking paths and `package.json` scripts
+  in PR 1; the move in PR 2): OTA stops reaching the installed build until the device gets the new
+  Release build after PR 2. Publish no OTA in between. Reinstall over the app, don't delete it
+  (runbook).
+- **pnpm with native modules:** MapLibre local SPM (`apps/mobile/plugins/with-local-maplibre`), the
+  local `apps/mobile/modules/background-session` module and autolinking need a fresh dev build to
+  prove.
 - **Background tracking:** must be re-checked on a device after PR 2; tests passing is not enough.
 - **Rollback:** each PR reverts on its own on `scope/v0.3.0`.

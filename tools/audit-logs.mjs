@@ -134,7 +134,7 @@ export function auditTree(srcDir) {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-  const findings = auditTree(join(root, 'src'));
+  const findings = auditTree(join(root, 'apps/mobile/src'));
   if (findings.length) {
     console.error(`audit:logs failed (${findings.length}):`);
     for (const f of findings) console.error(`  - ${f.file}:${f.line} [${f.rule}] ${f.message}`);

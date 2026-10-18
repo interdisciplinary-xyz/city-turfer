@@ -8,7 +8,7 @@
  *   --tracked   every TRACKED file (CI)
  *
  * BLOCK (exit 1): SQLite databases and journals (a user's SQLite DB holds their whole location
- * history), log archives, GPX traces outside tools/fixtures/, Maestro results (e2e-results/),
+ * history), log archives, GPX traces outside apps/mobile/tools/fixtures/, Maestro results (e2e-results/),
  * signing material and store credentials, .env files other than .env.example.
  * WARN (exit 0): .DS_Store.
  *
@@ -19,15 +19,15 @@ import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/** Synthetic routes committed on purpose (tools/gen-route.mjs output). */
-const GPX_ALLOWED = /^tools\/fixtures\/[^/]+\.gpx$/i;
+/** Synthetic routes committed on purpose (apps/mobile/tools/gen-route.mjs output). */
+const GPX_ALLOWED = /^apps\/mobile\/tools\/fixtures\/[^/]+\.gpx$/i;
 
 export const BLOCK_RULES = [
   { re: /\.(db|db3|sqlite|sqlite3)$/i, what: 'SQLite database (personal location data)' },
   { re: /\.sqlite[^/]*$/i, what: 'SQLite file (personal location data)' },
   { re: /-(wal|shm)$/i, what: 'SQLite journal (personal location data)' },
   { re: /\.logarchive(\/|$)/i, what: 'device log archive (personal location data)' },
-  { re: /\.gpx$/i, what: 'GPX trace outside tools/fixtures/ (personal location data)', allow: GPX_ALLOWED },
+  { re: /\.gpx$/i, what: 'GPX trace outside apps/mobile/tools/fixtures/ (personal location data)', allow: GPX_ALLOWED },
   { re: /(^|\/)e2e-results\//, what: 'Maestro result (screenshots may show real locations)' },
   { re: /\.(p8|p12|pfx|cer|mobileprovision|keystore|jks|pem|key)$/i, what: 'signing material' },
   { re: /(^|\/)(credentials\.json|service-account[^/]*\.json)$/i, what: 'store or service credentials' },

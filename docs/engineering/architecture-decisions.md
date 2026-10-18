@@ -4,11 +4,11 @@ verified: 2026-10-17
 owner: founder
 scope:
   [
-    .dependency-cruiser.cjs,
-    src/platform,
-    src/contexts,
-    modules/background-session,
-    app.json,
+    apps/mobile/.dependency-cruiser.cjs,
+    apps/mobile/src/platform,
+    apps/mobile/src/contexts,
+    apps/mobile/modules/background-session,
+    apps/mobile/app.json,
     docs/process/release-manager.md,
   ]
 summary:
@@ -34,7 +34,7 @@ The dated entries from the PoC plan's decisions log (`docs/poc-plan.md` §9) liv
 
 **Decision:** The single mock account's email is `admin@cityturfer.com` (was `admin@turftrack.com`);
 the password stays `admin1234` and the user ID stays `admin`
-(`src/contexts/identity/infrastructure/mock-auth-gateway.ts`).
+(`apps/mobile/src/contexts/identity/infrastructure/mock-auth-gateway.ts`).
 
 **Rationale:** Match the CityTurfer name in the sign-in screen and Maestro flows.
 
@@ -48,12 +48,13 @@ existing activities and the stored session carry over.
 **Status:** Accepted, verified on a real iPhone (65 min locked-screen walk, 4.07 km; session log
 v0.1.0, day 2).
 
-**Decision:** iOS recording runs through a local Expo module, `modules/background-session`: a
-`CLBackgroundActivitySession` plus a `CLLocationUpdate.liveUpdates(.fitness)` stream (iOS 17+),
-restarted after relaunch and buffering fixes until JS listens. The JS side is
-`src/contexts/recording/infrastructure/background-activity-session.ts`. expo-location's background
-task stays on as a second stream ("safety net", `background-task.ts`); both feed one serialized
-ingest queue and the Fix Filter drops duplicates.
+**Decision:** iOS recording runs through a local Expo module,
+`apps/mobile/modules/background-session`: a `CLBackgroundActivitySession` plus a
+`CLLocationUpdate.liveUpdates(.fitness)` stream (iOS 17+), restarted after relaunch and buffering
+fixes until JS listens. The JS side is
+`apps/mobile/src/contexts/recording/infrastructure/background-activity-session.ts`. expo-location's
+background task stays on as a second stream ("safety net", `background-task.ts`); both feed one
+serialized ingest queue and the Fix Filter drops duplicates.
 
 **Rationale:** On device, iOS suspended the app about 50 s after each screen lock while locationd
 still held its assertion: expo-location's `CLLocationManager` subscription does not keep a
@@ -90,18 +91,19 @@ covered) is an open product decision.
 
 **Decision:** A recording gap (GPS outage, now a new Segment when > 45 s) is estimated along streets
 by the public FOSSGIS OSRM router (`routing.openstreetmap.de`, foot or bike profile;
-`src/contexts/activity-log/infrastructure/osm-route-estimator.ts`). Only the gap's two endpoints are
-sent, never a whole track. Estimates are stored in `log_gap_routes`, drawn dashed, counted in
-distance with a "≈", and **never claim turf**: a `GapRoute` is "display + distance only"
-(`src/contexts/activity-log/domain/gap-route.ts`); Territory claims cells from the recorded Segments
-only.
+`apps/mobile/src/contexts/activity-log/infrastructure/osm-route-estimator.ts`). Only the gap's two
+endpoints are sent, never a whole track. Estimates are stored in `log_gap_routes`, drawn dashed,
+counted in distance with a "≈", and **never claim turf**: a `GapRoute` is "display + distance only"
+(`apps/mobile/src/contexts/activity-log/domain/gap-route.ts`); Territory claims cells from the
+recorded Segments only.
 
 **Rationale:** A straight line across a gap draws fake streets and fake turf. Street routing gives a
 plausible distance; keeping it out of Territory keeps turf honest ("you were there").
 
 **Trade-off:** Two coordinates per gap leave the device to a third-party server, outside the outbox
-(best effort, after each dispatch run in `src/wiring.ts`). Fine for the PoC; production needs its
-own router. Implausible routes (too fast for the type, more than 4× the straight line) are dropped.
+(best effort, after each dispatch run in `apps/mobile/src/wiring.ts`). Fine for the PoC; production
+needs its own router. Implausible routes (too fast for the type, more than 4× the straight line) are
+dropped.
 
 **Update (2026-10-17, #33).** Privacy and fair use tightened: estimation is a user setting (**Me →
 Info → Estimate GPS gaps along streets**; unset means on, off sends nothing,
@@ -155,9 +157,9 @@ back down into the next scope.
 **Status:** Accepted. No backend in v1.
 
 **Decision:** `expo-sqlite` is the source of truth. Each user gets their own database file, opened
-and migrated in `getContainer()` (`src/composition-root.ts`). Tables are prefixed by owning context:
-`rec_` Recording, `log_` Activity Log, `ter_` Territory, `sys_` platform
-(`src/platform/migrations.ts`, append-only).
+and migrated in `getContainer()` (`apps/mobile/src/composition-root.ts`). Tables are prefixed by
+owning context: `rec_` Recording, `log_` Activity Log, `ter_` Territory, `sys_` platform
+(`apps/mobile/src/platform/migrations.ts`, append-only).
 
 **Rationale:** Recording must survive a killed JS context, so every accepted fix is on disk within
 one batch; a network round trip would be a reliability risk, and location data is personal data that
@@ -174,9 +176,9 @@ design, not a swap.
 **Status:** Accepted.
 
 **Decision:** Turf Cells are H3 res 11 hexagons (~50 m across), with res 9 for zoomed-out
-aggregation (`src/contexts/territory/infrastructure/h3-cell-grid.ts`), behind Territory's `CellGrid`
-port so the domain never sees h3-js. h3-js is loaded through a Hermes-safe loader
-(`territory/infrastructure/h3.ts`).
+aggregation (`apps/mobile/src/contexts/territory/infrastructure/h3-cell-grid.ts`), behind
+Territory's `CellGrid` port so the domain never sees h3-js. h3-js is loaded through a Hermes-safe
+loader (`territory/infrastructure/h3.ts`).
 
 **Rationale:** ~50 m is street-sized: a walk down a street claims a corridor of cells, and a
 neighbour street is a different cell. Hexagons have uniform neighbours, so corridors look even. The
@@ -193,9 +195,10 @@ viewport queries. Changing the resolution later means re-claiming every activity
 **Status:** Accepted.
 
 **Decision:** An aggregate change and its domain events are written in one SQLite transaction
-(`appendToOutbox` into `sys_outbox`, `src/platform/outbox.ts`). The `EventDispatcher` delivers them
-after commit and on every app start to idempotent handlers: `SessionFinished` → Activity Log,
-`ActivityRecorded` / `ActivityDeleted` / `ActivityTrackCorrected` → Territory (`src/wiring.ts`).
+(`appendToOutbox` into `sys_outbox`, `apps/mobile/src/platform/outbox.ts`). The `EventDispatcher`
+delivers them after commit and on every app start to idempotent handlers: `SessionFinished` →
+Activity Log, `ActivityRecorded` / `ActivityDeleted` / `ActivityTrackCorrected` → Territory
+(`apps/mobile/src/wiring.ts`).
 
 **Update (2026-10-17, #30): retries and dead letters.** Delivery is strict FIFO. A failing event
 blocks the queue while it is retried with exponential backoff (5 s base); it is dead-lettered
@@ -218,12 +221,12 @@ predecessor, because a dead-lettered event no longer stops the ones after it.
 
 **Status:** Accepted, a hard requirement (`CLAUDE.md`).
 
-**Decision:** Code is split into bounded contexts under `src/contexts/*` (identity, recording,
-activity-log, territory, achievements) with `domain/`, `application/`, `infrastructure/` and `ui/`
-layers and a public `index.ts` (plus `contract.ts` for published language). `pnpm run test:arch`
-(`.dependency-cruiser.cjs`) fails the build when domain code imports React, Expo, h3-js, MapLibre or
-infrastructure, when a context reaches into another's layers, when a screen bypasses a context's
-`ui/`, or on any cycle.
+**Decision:** Code is split into bounded contexts under `apps/mobile/src/contexts/*` (identity,
+recording, activity-log, territory, achievements) with `domain/`, `application/`, `infrastructure/`
+and `ui/` layers and a public `index.ts` (plus `contract.ts` for published language).
+`pnpm run test:arch` (`.dependency-cruiser.cjs`) fails the build when domain code imports React,
+Expo, h3-js, MapLibre or infrastructure, when a context reaches into another's layers, when a screen
+bypasses a context's `ui/`, or on any cycle.
 
 **Rationale:** The PoC had to prove (Q5) that DDD works with Expo's background-task model: the
 background task runs the same use cases as the UI because the domain doesn't depend on either.
@@ -254,7 +257,8 @@ background recording work?) gets answered first, not last.
 
 **Decision:** `MockAuthGateway` behind the `AuthGateway` port, one account, session in
 `expo-secure-store`. No Firebase. Data stays on the device, one database per user. The app refuses
-to start with mock auth when `EXPO_PUBLIC_APP_ENV` is `production` (`src/composition-root.ts`).
+to start with mock auth when `EXPO_PUBLIC_APP_ENV` is `production`
+(`apps/mobile/src/composition-root.ts`).
 
 **Rationale:** Auth is a generic subdomain; the PoC is about recording and turf. The port means a
 real provider later is one adapter.
@@ -267,10 +271,10 @@ open App Store question).
 ## Why GPX import is a dev tool and GPX export a stretch goal (2026-10-15)
 
 **Status:** Accepted, amended in practice: seeding happens in the app through the demo history
-seeder (`src/dev/demo-history.ts` via `ImportActivity`), and GPX files are read only by tests
-(`src/test-support/fixtures.ts`). GPX export is not built. Since #27 (2026-10-17) the seeder sits
-under **Me → Info → Developer tools**, shown in dev builds or after five long-presses on the version
-text, next to **Remove demo data**.
+seeder (`apps/mobile/src/dev/demo-history.ts` via `ImportActivity`), and GPX files are read only by
+tests (`apps/mobile/src/test-support/fixtures.ts`). GPX export is not built. Since #27 (2026-10-17)
+the seeder sits under **Me → Info → Developer tools**, shown in dev builds or after five
+long-presses on the version text, next to **Remove demo data**.
 
 **Decision:** Importing tracks exists to seed test history. Exporting GPX to other apps is M7
 stretch.
@@ -294,7 +298,7 @@ tracks, thousands of cells. react-native-maps renders each polygon as a native o
 heatmap or blur. No Google Maps key.
 
 **Trade-off:** Xcode's SPM download of MapLibre hangs on the dev Mac, hence
-`tools/fetch-maplibre-ios.sh` and `plugins/with-local-maplibre.js`.
+`apps/mobile/tools/fetch-maplibre-ios.sh` and `apps/mobile/plugins/with-local-maplibre.js`.
 
 ---
 
@@ -304,7 +308,7 @@ heatmap or blur. No Google Maps key.
 
 **Decision:** One user per device, data on the device. Turf is a corridor of cells along the
 recorded track plus a glow; closed loops don't claim the area inside (cells come from points along
-each Segment, `src/contexts/territory/domain/claim.ts`).
+each Segment, `apps/mobile/src/contexts/territory/domain/claim.ts`).
 
 **Rationale:** "Every street you cover" is the product promise; filling a loop would claim streets
 you never walked.
@@ -318,7 +322,7 @@ you never walked.
 **Status:** Accepted.
 
 **Decision:** The Turf Map always uses the dark style (`MAP_STYLE_DARK`,
-`src/contexts/territory/ui/turf-map-view.tsx`). Other screens follow the system theme.
+`apps/mobile/src/contexts/territory/ui/turf-map-view.tsx`). Other screens follow the system theme.
 
 **Rationale:** The glow — the reason to open the map — only reads on a dark basemap.
 
@@ -331,8 +335,9 @@ you never walked.
 **Status:** Accepted.
 
 **Decision:** Claimed cells never fade or get lost. Strength depends only on the number of visits:
-`strength = 1 − exp(−visits / 3)` (`src/contexts/territory/domain/strength.ts`, identical in
-`tools/turf-preview.mjs`). Deleting an activity is the only way turf shrinks.
+`strength = 1 − exp(−visits / 3)` (`apps/mobile/src/contexts/territory/domain/strength.ts`,
+identical in `apps/mobile/tools/turf-preview.mjs`). Deleting an activity is the only way turf
+shrinks.
 
 **Rationale:** Turf is a record of where you've been, not a chore to maintain. "Recent activity"
 belongs in summaries (new turf this week), not in Strength.

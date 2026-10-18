@@ -68,7 +68,7 @@ test('diagnostics.log allow-list works', () => {
   );
 });
 
-test('the real src/ tree is clean', () => {
+test('the real apps/mobile/src/ tree is clean', () => {
   const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-  assert.deepEqual(auditTree(join(root, 'src')), []);
+  assert.deepEqual(auditTree(join(root, 'apps/mobile/src')), []);
 });

@@ -1,21 +1,66 @@
 {
   "header": "# Changelog\n\nAll notable changes to this project will be documented in this file.\n",
-  "packageFiles": [{ "filename": "package.json", "type": "json" }],
+  "packageFiles": [
+    {
+      "filename": "package.json",
+      "type": "json"
+    }
+  ],
   "bumpFiles": [
-    { "filename": "package.json", "type": "json" },
-    { "filename": "app.json", "updater": "tools/release/app-json-version-updater.cjs" }
+    {
+      "filename": "package.json",
+      "type": "json"
+    },
+    {
+      "filename": "apps/mobile/package.json",
+      "type": "json"
+    },
+    {
+      "filename": "apps/mobile/app.json",
+      "updater": "tools/release/app-json-version-updater.cjs"
+    }
   ],
   "types": [
-    { "type": "feat", "section": "Features" },
-    { "type": "fix", "section": "Bug Fixes" },
-    { "type": "perf", "section": "Performance" },
-    { "type": "refactor", "section": "Refactoring" },
-    { "type": "docs", "section": "Documentation" },
-    { "type": "test", "section": "Tests" },
-    { "type": "ci", "section": "CI/CD" },
-    { "type": "chore", "hidden": true },
-    { "type": "style", "hidden": true },
-    { "type": "build", "hidden": true }
+    {
+      "type": "feat",
+      "section": "Features"
+    },
+    {
+      "type": "fix",
+      "section": "Bug Fixes"
+    },
+    {
+      "type": "perf",
+      "section": "Performance"
+    },
+    {
+      "type": "refactor",
+      "section": "Refactoring"
+    },
+    {
+      "type": "docs",
+      "section": "Documentation"
+    },
+    {
+      "type": "test",
+      "section": "Tests"
+    },
+    {
+      "type": "ci",
+      "section": "CI/CD"
+    },
+    {
+      "type": "chore",
+      "hidden": true
+    },
+    {
+      "type": "style",
+      "hidden": true
+    },
+    {
+      "type": "build",
+      "hidden": true
+    }
   ],
   "commitUrlFormat": "{{host}}/{{owner}}/{{repository}}/commit/{{hash}}",
   "compareUrlFormat": "{{host}}/{{owner}}/{{repository}}/compare/{{previousTag}}...{{currentTag}}"

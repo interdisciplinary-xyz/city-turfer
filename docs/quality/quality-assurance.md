@@ -43,7 +43,8 @@ needs an explanation in the PR.
 - **Privacy:** location data is personal data. No raw coordinates in logs or analytics in production
   builds. Never commit GPX traces, SQLite files or e2e result folders.
 - **Shared-kernel maths is pure and SI.** Expected numbers in metric tests come from
-  `node tools/route-stats.mjs <gpx> --json` or fixture `truth`, never from the code under test.
+  `node apps/mobile/tools/route-stats.mjs <gpx> --json` or fixture `truth`, never from the code
+  under test.
 - **No dead or commented-out code**; no commented-out Maestro steps (the E2E audit enforces it).
 - **Aggregate changes and domain events are saved in one SQLite transaction**; event handlers are
   idempotent.
@@ -56,8 +57,8 @@ needs an explanation in the PR.
 - **Tool tests (`node --test tools/__tests__`)**: plain Node `.mjs` tools and parity with the shared
   turf vectors.
 - **E2E (Maestro)**: user-facing flows. Critical paths and gaps in [`e2e.md`](./e2e.md).
-- **Regression discipline:** a bug report gets a fixture (`tools/gen-route.mjs`) and a failing test
-  first, then the fix.
+- **Regression discipline:** a bug report gets a fixture (`apps/mobile/tools/gen-route.mjs`) and a
+  failing test first, then the fix.
 - **Never claim background tracking works from unit tests.** It needs a dev build on a simulator
   with simulated movement, and finally a real device.
 
@@ -70,8 +71,8 @@ Copy into the `scope/vX.Y.Z` to `release/vX.Y.Z` PR description.
 - [ ] `pnpm run test:e2e`: 10/10 flows green on the iOS Simulator; report path noted
       (`e2e-results/<timestamp>`, kept local and never committed)
 - [ ] `pnpm run e2e:audit` clean; any new user-facing flow has a CP row in `e2e.md`
-- [ ] Recording changes: simulator replay done (`tools/sim-location.sh` with a `gen-route.mjs`
-      fixture), point counts before and after backgrounding noted
+- [ ] Recording changes: simulator replay done (`apps/mobile/tools/sim-location.sh` with a
+      `gen-route.mjs` fixture), point counts before and after backgrounding noted
 - [ ] **Real-device field test** on a physical iPhone: [`smoke-test.md`](./smoke-test.md) sections
       2, 3 and 6 are mandatory (screen-off walk, kill mid-run, sign-out refused while recording)
 - [ ] Native fingerprint check: if `app.json` plugins, permissions, native modules, icon or splash

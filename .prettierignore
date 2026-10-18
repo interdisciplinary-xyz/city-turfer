@@ -9,8 +9,8 @@ vendor
 
 # Auto-generated — don't churn on reformat
 CHANGELOG.md
-tools/fixtures/
-e2e/subflows/travel-*.yaml
+apps/mobile/tools/fixtures/
+apps/mobile/e2e/subflows/travel-*.yaml
 
 # pnpm lockfile
 pnpm-lock.yaml

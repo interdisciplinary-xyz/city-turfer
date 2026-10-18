@@ -4,22 +4,24 @@ description:
   Formulas and conventions for TurfTrack activity statistics — haversine distance, elapsed vs moving
   time, pace (min/km) vs speed (km/h) per activity type, km splits, elevation gain with smoothing
   and hysteresis, calories (MET), and route simplification (Douglas–Peucker) for map rendering. Use
-  when writing or changing anything in src/shared-kernel/ (track-analyzer, geo, track), when stats
-  look wrong ("distance too long", "pace jumps", "elevation gain is huge"), or when adding a new
-  stat.
+  when writing or changing anything in apps/mobile/src/shared-kernel/ (track-analyzer, geo, track),
+  when stats look wrong ("distance too long", "pace jumps", "elevation gain is huge"), or when
+  adding a new stat.
 ---
 
-> **Where the code lives** (see `docs/poc-plan.md`): the maths is in `src/shared-kernel/` —
-> `analyzeTrack`, `elevationGain` and `simplify` in `src/shared-kernel/track-analyzer.ts`, haversine
-> `distanceM` in `src/shared-kernel/geo.ts`, segments and `splitAtGaps` in
-> `src/shared-kernel/track.ts`. Display formatting is in `src/ui-kit/format.ts`.
+> **Where the code lives** (see `docs/poc-plan.md`): the maths is in
+> `apps/mobile/src/shared-kernel/` — `analyzeTrack`, `elevationGain` and `simplify` in
+> `apps/mobile/src/shared-kernel/track-analyzer.ts`, haversine `distanceM` in
+> `apps/mobile/src/shared-kernel/geo.ts`, segments and `splitAtGaps` in
+> `apps/mobile/src/shared-kernel/track.ts`. Display formatting is in
+> `apps/mobile/src/ui-kit/format.ts`.
 
 # Route metrics
 
-All of the metrics code in `src/shared-kernel/` is **pure TypeScript with no React or Expo
-imports**, uses SI units (m, s, m/s), and has unit tests. The reference implementation is
-`tools/lib/geo.mjs` and `tools/route-stats.mjs`. The app's output must match it within tolerance on
-the fixtures in `tools/fixtures/`.
+All of the metrics code in `apps/mobile/src/shared-kernel/` is **pure TypeScript with no React or
+Expo imports**, uses SI units (m, s, m/s), and has unit tests. The reference implementation is
+`apps/mobile/tools/lib/geo.mjs` and `apps/mobile/tools/route-stats.mjs`. The app's output must match
+it within tolerance on the fixtures in `apps/mobile/tools/fixtures/`.
 
 ## Definitions
 
@@ -42,8 +44,9 @@ the fixtures in `tools/fixtures/`.
 ## Elevation (the tricky one)
 
 Raw GPS altitude error is ±10–20 m and drifts slowly. Summing raw deltas overstates gain by 2–5×.
-You can see it in the fixtures: `node tools/gen-route.mjs --type run --km 5 --format json` reports a
-true gain of ~63 m, while `route-stats.mjs` on the same GPX reads ~200 m.
+You can see it in the fixtures:
+`node apps/mobile/tools/gen-route.mjs --type run --km 5 --format json` reports a true gain of ~63 m,
+while `route-stats.mjs` on the same GPX reads ~200 m.
 
 In order of preference:
 
@@ -64,7 +67,7 @@ an epsilon of ~3 m (computed in local metres via an equirectangular projection a
 centroid) for the detail map, and ~15 m for history-list thumbnails. **Never simplify the stored
 data.** Simplify only at render time, and memoise the result.
 
-## Formatting (src/ui-kit/format.ts)
+## Formatting (apps/mobile/src/ui-kit/format.ts)
 
 - Distance: `< 1 km` → `850 m`; otherwise `5.24 km` (2 decimals under 100 km).
 - Duration: `m:ss` under an hour, `h:mm:ss` from one hour up.
@@ -74,9 +77,9 @@ data.** Simplify only at render time, and memoise the result.
 ## Testing checklist for a metrics change
 
 ```bash
-node tools/gen-route.mjs --type run --km 5 --outliers 4 --pause 90 --format json > /tmp/run.json  # has truth.*
-node tools/route-stats.mjs tools/fixtures/run-5k-outliers-pause.gpx --json                         # oracle
-pnpm exec jest src/shared-kernel src/contexts/activity-log
+node apps/mobile/tools/gen-route.mjs --type run --km 5 --outliers 4 --pause 90 --format json > /tmp/run.json  # has truth.*
+node apps/mobile/tools/route-stats.mjs apps/mobile/tools/fixtures/run-5k-outliers-pause.gpx --json                         # oracle
+pnpm -C apps/mobile exec jest apps/mobile/src/shared-kernel apps/mobile/src/contexts/activity-log
 ```
 
 Each metric function needs tests for: an empty input, a single point, two identical points, a

@@ -12,7 +12,15 @@ import tseslint from 'typescript-eslint';
 
 export default [
   {
-    ignores: ['ios/**', 'android/**', '.expo/**', 'vendor/**', 'node_modules/**', 'coverage/**', 'dist/**'],
+    ignores: [
+      '**/ios/**',
+      '**/android/**',
+      '**/.expo/**',
+      '**/vendor/**',
+      '**/node_modules/**',
+      '**/coverage/**',
+      '**/dist/**',
+    ],
   },
   js.configs.recommended,
   eslintConfigPrettier, // before our rules on purpose: it disables `curly`, which we re-enable below
@@ -47,7 +55,7 @@ export default [
   },
   {
     // Tests, config files and dev tools (CLI scripts print to stdout)
-    files: ['**/__tests__/**', 'src/test-support/**', '*.config.*', '*.cjs', 'plugins/**', 'tools/**'],
+    files: ['**/__tests__/**', '**/src/test-support/**', '**/*.config.*', '**/*.cjs', '**/plugins/**', '**/tools/**'],
     rules: { '@typescript-eslint/no-require-imports': 'off', 'no-console': 'off' },
   },
 ];

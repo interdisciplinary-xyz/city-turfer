@@ -119,8 +119,11 @@ function walk(dir, acc = []) {
   return acc;
 }
 
-/** Pure audit over a repo root. Returns { errors, summary }. */
-export function audit(root) {
+/**
+ * Pure audit over the app root (e2e/, src/). `docsRoot` holds docs/quality/e2e.md: the repo root in
+ * the monorepo, the app root in test fixtures. Returns { errors, summary }.
+ */
+export function audit(root, docsRoot = root) {
   const errors = [];
   const e2eDir = join(root, 'e2e');
   const flows = listFlows(e2eDir);
@@ -159,7 +162,7 @@ export function audit(root) {
     }
   }
 
-  const mdPath = join(root, 'docs/quality/e2e.md');
+  const mdPath = join(docsRoot, 'docs/quality/e2e.md');
   let cps = [];
   if (!existsSync(mdPath)) errors.push('docs/quality/e2e.md is missing');
   else {
@@ -176,8 +179,8 @@ export function audit(root) {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-  const { errors, summary } = audit(root);
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..'); // apps/mobile
+  const { errors, summary } = audit(root, resolve(root, '../..'));
   if (errors.length) {
     console.error(`e2e audit failed (${errors.length}):`);
     for (const e of errors) console.error(`  - ${e}`);

@@ -5,9 +5,9 @@ description:
   Activity Log, Territory, Shared Kernel), layers (domain/application/infrastructure/ui), dependency
   rule enforced by dependency-cruiser, aggregate/value-object/domain-event/repository/use-case
   templates, transactional outbox, composition root usable from the headless background task, and
-  the ubiquitous language. Use before writing or reviewing any code in src/, when deciding where
-  code belongs, adding an aggregate, use case, port, adapter, event or context, or when a
-  dependency-cruiser rule fails.
+  the ubiquitous language. Use before writing or reviewing any code in apps/mobile/src/, when
+  deciding where code belongs, adding an aggregate, use case, port, adapter, event or context, or
+  when a dependency-cruiser rule fails.
 ---
 
 # DDD architecture for TurfTrack
@@ -19,16 +19,16 @@ DDD is a **hard requirement** for this project. The design lives in `docs/poc-pl
 
 - **is a business rule or invariant ("can't resume a finished session", "drop fixes faster than 8
   m/s for a run")**: the context's `domain/`, **inside the aggregate** or a domain policy
-- **is pure maths on tracks or measures used by both contexts**: `src/shared-kernel/`
+- **is pure maths on tracks or measures used by both contexts**: `apps/mobile/src/shared-kernel/`
 - **orchestrates: load aggregate → call method → save → publish**: the context's `application/` (one
   use case per file)
 - **talks to Expo, SQLite, the filesystem or the OS**: the context's `infrastructure/` (an adapter
   implementing a port)
 - **is cross-cutting plumbing (db connection, migrations, outbox, dispatcher, jobs, diagnostics)**:
-  `src/platform/`
-- **renders or holds UI state**: the context's `ui/` (hooks, components) and `src/app/` (thin
-  screens)
-- **wires implementations to ports**: `src/composition-root.ts` only
+  `apps/mobile/src/platform/`
+- **renders or holds UI state**: the context's `ui/` (hooks, components) and `apps/mobile/src/app/`
+  (thin screens)
+- **wires implementations to ports**: `apps/mobile/src/composition-root.ts` only
 
 If a rule shows up as an `if` in a use case, a repository or a component, move it into the domain.
 
@@ -37,15 +37,15 @@ If a rule shows up as an `if` in a use case, a repository or a component, move i
 `.dependency-cruiser.cjs`:
 
 ```js
-const ctx = '^src/contexts/([^/]+)/';
+const ctx = '^apps/mobile/src/contexts/([^/]+)/';
 module.exports = {
   forbidden: [
     {
       name: 'domain-is-pure',
       severity: 'error',
-      from: { path: '^src/(shared-kernel|contexts/[^/]+/domain)/' },
+      from: { path: '^apps/mobile/src/(shared-kernel|contexts/[^/]+/domain)/' },
       to: {
-        path: '^(node_modules/(react|react-native|expo[^/]*|zustand|h3-js|@maplibre|expo-secure-store)|src/(platform|composition-root)|src/contexts/[^/]+/(application|infrastructure|ui))',
+        path: '^(node_modules/(react|react-native|expo[^/]*|zustand|h3-js|@maplibre|expo-secure-store)|apps/mobile/src/(platform|composition-root)|apps/mobile/src/contexts/[^/]+/(application|infrastructure|ui))',
       },
     },
     {
@@ -53,7 +53,7 @@ module.exports = {
       severity: 'error',
       from: { path: ctx + 'application/' },
       to: {
-        path: '^(node_modules/(react|react-native|expo[^/]*)|src/contexts/[^/]+/(infrastructure|ui)|src/composition-root)',
+        path: '^(node_modules/(react|react-native|expo[^/]*)|apps/mobile/src/contexts/[^/]+/(infrastructure|ui)|apps/mobile/src/composition-root)',
       },
     },
     {
@@ -61,15 +61,17 @@ module.exports = {
       severity: 'error',
       from: { path: ctx },
       to: {
-        path: '^src/contexts/([^/]+)/(domain|application|infrastructure|ui)/',
-        pathNot: '^src/contexts/$1/',
+        path: '^apps/mobile/src/contexts/([^/]+)/(domain|application|infrastructure|ui)/',
+        pathNot: '^apps/mobile/src/contexts/$1/',
       },
     },
     {
       name: 'screens-use-ui-layer',
       severity: 'error',
       from: { path: '^app/' },
-      to: { path: '^src/(contexts/[^/]+/(domain|application|infrastructure)|platform)/' },
+      to: {
+        path: '^apps/mobile/src/(contexts/[^/]+/(domain|application|infrastructure)|platform)/',
+      },
     },
     { name: 'no-circular', severity: 'error', from: {}, to: { circular: true } },
   ],
@@ -77,11 +79,11 @@ module.exports = {
 };
 ```
 
-Exceptions: the root `index.ts` imports the background task module (it sits outside `src/`, so
-depcruise doesn't cruise it), and `src/composition-root.ts` / `src/wiring.ts` may import anything
-(no rule has them as a `from`). The live rules are `.dependency-cruiser.cjs`. Don't relax the rules
-any further. In M0, add a deliberately violating fixture file, check that `depcruise` fails on it,
-then delete it, so the rules are known to work.
+Exceptions: the root `index.ts` imports the background task module (it sits outside
+`apps/mobile/src/`, so depcruise doesn't cruise it), and `apps/mobile/src/composition-root.ts` /
+`apps/mobile/src/wiring.ts` may import anything (no rule has them as a `from`). The live rules are
+`.dependency-cruiser.cjs`. Don't relax the rules any further. In M0, add a deliberately violating
+fixture file, check that `depcruise` fails on it, then delete it, so the rules are known to work.
 
 ## Patterns
 
@@ -240,7 +242,7 @@ export async function getContainer(): Promise<Container> {
 ```
 
 Use no DI library: plain functions, constructed lazily. The background task and the UI's
-`AppProvider` (`src/ui-kit/app-context.tsx`) both call `getContainer()`.
+`AppProvider` (`apps/mobile/src/ui-kit/app-context.tsx`) both call `getContainer()`.
 
 ### Context public API (`index.ts`)
 

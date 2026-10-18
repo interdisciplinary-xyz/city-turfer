@@ -5,14 +5,14 @@ description:
   (Claim aggregate, Turf Cells on an H3 grid, permanent turf with visit-based Strength, Territory
   projection, rebuild/release), and the Turf Map rendering on MapLibre (heatmap glow,
   strength-coloured cells, overlapping blurred tracks, zoom level-of-detail). Use for anything in
-  src/contexts/territory/, the Turf Map screen, "turf gained" on activities, tuning turf parameters,
-  or turf performance with large histories.
+  apps/mobile/src/contexts/territory/, the Turf Map screen, "turf gained" on activities, tuning turf
+  parameters, or turf performance with large histories.
 ---
 
 # Turf & Territory
 
 Design source: `docs/poc-plan.md` §2 (the vocabulary), §4.3 (the model) and §5 (map layers).
-Reference implementation of the formula and look: `tools/turf-preview.mjs`.
+Reference implementation of the formula and look: `apps/mobile/tools/turf-preview.mjs`.
 
 ## Model in one picture
 
@@ -69,8 +69,8 @@ tier(s): s < 0.33 'faint' | < 0.66 'glowing' | < 0.9 'strong' | else 'blazing'
   sets `last_at = max(last_at, claimedAt)`. Order doesn't matter. Releasing a Claim decrements, and
   deletes the cell when it reaches 0.
 - Strength is computed on read, so changing `saturationK` needs no migration.
-- Test vectors live in `tools/fixtures/turf-vectors.json` (visits → strength, tier). Generate them
-  from the reference formula and assert both the tool and the app against them.
+- Test vectors live in `apps/mobile/tools/fixtures/turf-vectors.json` (visits → strength, tier).
+  Generate them from the reference formula and assert both the tool and the app against them.
 - Don't reintroduce time decay without a product decision. "Recent activity" belongs in the summary
   (new turf this week or month), not in Strength.
 
@@ -93,7 +93,7 @@ export interface CellGrid {
   parent for viewport indexing (`ter_cells.parent_r7`); resolution 9 is the aggregation level when
   zoomed out.
 - The domain never imports h3-js. Tests use `SquareCellGrid` (pure TS, the same as
-  `tools/turf-preview.mjs`).
+  `apps/mobile/tools/turf-preview.mjs`).
 
 ## Viewport query (application + infrastructure)
 
@@ -154,12 +154,12 @@ numbers. Don't invent gamified scores that aren't in the model.
 ## Tuning workflow
 
 ```bash
-node tools/gen-history.mjs --days 120 --out tools/fixtures/history
-node tools/turf-preview.mjs tools/fixtures/history --out /tmp/turf.html && open /tmp/turf.html   # sliders: date (watch turf grow), k
+node apps/mobile/tools/gen-history.mjs --days 120 --out apps/mobile/tools/fixtures/history
+node apps/mobile/tools/turf-preview.mjs apps/mobile/tools/fixtures/history --out /tmp/turf.html && open /tmp/turf.html   # sliders: date (watch turf grow), k
 ```
 
-If you change `saturationK`, change `TurfParameters` in the domain, `tools/turf-preview.mjs` and
-`turf-vectors.json` together.
+If you change `saturationK`, change `TurfParameters` in the domain,
+`apps/mobile/tools/turf-preview.mjs` and `turf-vectors.json` together.
 
 ## Tests that must exist
 

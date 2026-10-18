@@ -10,7 +10,7 @@ The only observability is on-device, in the user's own SQLite database.
 Adapted from the idea behind empatalk's `docs/operations/OBSERVABILITY.md` (a fixed tag taxonomy
 that keeps dashboards trustworthy), applied to privacy instead of dashboards.
 
-## 1. Field diagnostics (`src/platform/diagnostics.ts`)
+## 1. Field diagnostics (`apps/mobile/src/platform/diagnostics.ts`)
 
 `Diagnostics.log(kind, data)` writes one row to `sys_diagnostics` (`at`, `kind`, `data` as JSON) in
 the signed-in user's database (`turftrack-<uid>.db`). It exists to answer "why do points go
@@ -33,8 +33,8 @@ states, durations and metres.
 
 `Diagnostics.prune()` deletes rows older than **14 days**, called once per container creation at
 launch. Rows never leave the device on their own. Reading them off a phone is a manual, consented
-step (`tools/device-diagnose.sh`, `tools/diagnose-recording.mjs`); ask the owner before copying app
-data off their device.
+step (`apps/mobile/tools/device-diagnose.sh`, `apps/mobile/tools/diagnose-recording.mjs`); ask the
+owner before copying app data off their device.
 
 ### Risks to keep in mind
 
@@ -46,13 +46,13 @@ data off their device.
 
 - `console.*` is allowed only behind `if (__DEV__)` (stripped from production behaviour). Today
   there are three such guarded `console.warn` calls (background task, outbox).
-- `tools/` is not part of the shipped app and may print; the audit only covers `src/`.
+- `tools/` is not part of the shipped app and may print; the audit only covers `apps/mobile/src/`.
 
 ## 3. Enforcement: `pnpm run audit:logs`
 
 `tools/audit-logs.mjs` runs in `ci:quality` and fails on:
 
-1. any `console.*` in `src/` not guarded by `__DEV__`;
+1. any `console.*` in `apps/mobile/src/` not guarded by `__DEV__`;
 2. any `diagnostics.log(...)` payload that names `lat`, `lon`, `latitude`, `longitude`, `coords` or
    `coordinate(s)` (identifiers are split on camelCase and underscores, so `firstLat` and
    `start_latitude` are caught, `latency` and `colon` are not).
