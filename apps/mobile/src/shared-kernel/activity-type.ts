@@ -5,7 +5,9 @@ import { DomainError } from './errors';
 export type ActivityType = ActivityTypeName;
 
 export function activityTypeOf(value: string): ActivityType {
-  if ((ACTIVITY_TYPES as readonly string[]).includes(value)) return value as ActivityType;
+  if ((ACTIVITY_TYPES as readonly string[]).includes(value)) {
+    return value as ActivityType;
+  }
   throw new DomainError('activity-type.unknown', value);
 }
 

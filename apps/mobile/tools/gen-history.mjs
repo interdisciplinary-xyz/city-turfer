@@ -58,7 +58,11 @@ const weights = favourites.map((_, i) => 1 / (i + 1));
 const totalW = weights.reduce((s, w) => s + w, 0);
 const pickFavourite = () => {
   let r = rand() * totalW;
-  for (let i = 0; i < favourites.length; i++) if ((r -= weights[i]) <= 0) return favourites[i];
+  for (let i = 0; i < favourites.length; i++) {
+    if ((r -= weights[i]) <= 0) {
+      return favourites[i];
+    }
+  }
   return favourites[0];
 };
 
@@ -68,7 +72,9 @@ let explorations = 0;
 
 for (let d = days - 1; d >= 0; d--) {
   const day = end - d * 86400000;
-  if (rand() > perWeek / 7) continue;
+  if (rand() > perWeek / 7) {
+    continue;
+  }
   const isNew = rand() < explore;
   const route = isNew ? { ...makeRoute(Math.floor(rand() * 3)), id: `explore-${explorations++}` } : pickFavourite();
   const startTime = day + (6 + Math.floor(rand() * 13)) * 3600000 + Math.floor(rand() * 60) * 60000;

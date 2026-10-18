@@ -43,11 +43,15 @@ export function gapsOf(track: Track, resumedSegments: readonly number[] | null =
   const gaps: Gap[] = [];
   track.segments.forEach((seg, i) => {
     const next = track.segments[i + 1];
-    if (!next || seg.length === 0 || next.length === 0) return;
+    if (!next || seg.length === 0 || next.length === 0) {
+      return;
+    }
     const a = seg[seg.length - 1];
     const b = next[0];
     const straightM = distanceM(a, b);
-    if (straightM < MIN_GAP_M) return;
+    if (straightM < MIN_GAP_M) {
+      return;
+    }
     const cause: BreakCause =
       resumedSegments == null
         ? 'unknown'
@@ -69,7 +73,9 @@ export function routableGaps(track: Track, resumedSegments: readonly number[] | 
     .reverse()
     .find((s) => s.length > 0)
     ?.at(-1);
-  if (!first || !last) return [];
+  if (!first || !last) {
+    return [];
+  }
   const isPrivate = (p: GeoPoint) =>
     distanceM(p, first) < PRIVATE_ENDPOINT_RADIUS_M || distanceM(p, last) < PRIVATE_ENDPOINT_RADIUS_M;
   return gapsOf(track, resumedSegments).filter((g) => g.cause !== 'resume' && !isPrivate(g.from) && !isPrivate(g.to));
@@ -77,7 +83,9 @@ export function routableGaps(track: Track, resumedSegments: readonly number[] | 
 
 /** Accept a routed distance for a gap only if a person of this activity type could have covered it in that time. */
 export function acceptRoute(type: ActivityType, gap: Gap, routeM: number): boolean {
-  if (!(routeM > 0) || routeM > gap.straightM * MAX_DETOUR) return false;
+  if (!(routeM > 0) || routeM > gap.straightM * MAX_DETOUR) {
+    return false;
+  }
   return gap.durationS > 0 && routeM / gap.durationS <= MAX_GAP_SPEED_MPS[type];
 }
 
@@ -88,7 +96,9 @@ export function acceptRoute(type: ActivityType, gap: Gap, routeM: number): boole
  */
 export function estimatedMovingS(gapDurationS: number, routeM: number, avgMovingSpeedMps: number): number {
   const duration = Math.max(0, gapDurationS);
-  if (!(avgMovingSpeedMps > 0) || !Number.isFinite(avgMovingSpeedMps)) return duration;
+  if (!(avgMovingSpeedMps > 0) || !Number.isFinite(avgMovingSpeedMps)) {
+    return duration;
+  }
   return Math.min(duration, routeM / avgMovingSpeedMps);
 }
 

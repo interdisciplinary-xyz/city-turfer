@@ -54,12 +54,20 @@ export class OsmRouteEstimator implements RouteEstimator {
           headers: this.headers,
         });
       } catch (e) {
-        if (ctrl.signal.aborted) throw new Error('router timeout', { cause: e }); // slow service: this gap failed
+        if (ctrl.signal.aborted) {
+          throw new Error('router timeout', { cause: e });
+        } // slow service: this gap failed
         throw new RouterUnreachable(String((e as Error)?.message ?? e)); // no connection at all
       }
-      if (res.status === 400) return null; // e.g. no route / point not routable
-      if (res.status === 429) throw new RouterRateLimited(this.retryAfterMs(res.headers.get('Retry-After')));
-      if (!res.ok) throw new Error(`router ${res.status}`);
+      if (res.status === 400) {
+        return null;
+      } // e.g. no route / point not routable
+      if (res.status === 429) {
+        throw new RouterRateLimited(this.retryAfterMs(res.headers.get('Retry-After')));
+      }
+      if (!res.ok) {
+        throw new Error(`router ${res.status}`);
+      }
       const body = (await res.json()) as {
         code: string;
         routes?: { distance: number; geometry: { coordinates: [number, number][] } }[];
@@ -73,9 +81,13 @@ export class OsmRouteEstimator implements RouteEstimator {
 
   /** Retry-After is either delay-seconds or an HTTP date. */
   private retryAfterMs(header: string | null): number | null {
-    if (!header) return null;
+    if (!header) {
+      return null;
+    }
     const s = Number(header);
-    if (Number.isFinite(s)) return Math.max(0, s * 1000);
+    if (Number.isFinite(s)) {
+      return Math.max(0, s * 1000);
+    }
     const at = Date.parse(header);
     return Number.isNaN(at) ? null : Math.max(0, at - this.now());
   }

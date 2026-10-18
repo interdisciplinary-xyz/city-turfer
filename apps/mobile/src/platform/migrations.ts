@@ -149,9 +149,13 @@ export async function migrate(db: Database, upTo = Infinity): Promise<void> {
   const row = await db.first<{ version: number }>('SELECT MAX(version) AS version FROM sys_schema_version');
   const current = row?.version ?? 0;
   for (const m of MIGRATIONS) {
-    if (m.version <= current || m.version > upTo) continue;
+    if (m.version <= current || m.version > upTo) {
+      continue;
+    }
     await db.transaction(async (tx) => {
-      for (const stmt of splitStatements(m.sql)) await tx.run(stmt);
+      for (const stmt of splitStatements(m.sql)) {
+        await tx.run(stmt);
+      }
       await tx.run('INSERT INTO sys_schema_version (version) VALUES (?)', [m.version]);
     });
   }

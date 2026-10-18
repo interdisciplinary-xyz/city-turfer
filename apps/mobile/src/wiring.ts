@@ -98,11 +98,17 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
   /** Launch maintenance (before pending events are dispatched): one-off data repairs, then retention. */
   async function runMaintenance(): Promise<void> {
     const repaired = await runOnce(db, 'split-track-gaps-v1', () => activityLog.splitTrackGaps.execute());
-    if (repaired) diagnostics.log('maintenance', { job: 'split-track-gaps-v1', ...repaired });
+    if (repaired) {
+      diagnostics.log('maintenance', { job: 'split-track-gaps-v1', ...repaired });
+    }
     const capped = await runOnce(db, 'cap-gap-moving-time-v1', () => activityLog.capEstimatedMovingTime.execute());
-    if (capped) diagnostics.log('maintenance', { job: 'cap-gap-moving-time-v1', ...capped });
+    if (capped) {
+      diagnostics.log('maintenance', { job: 'cap-gap-moving-time-v1', ...capped });
+    }
     const scrubbed = await runOnce(db, 'scrub-closed-sessions-v2', () => recording.scrubClosedSessions.execute());
-    if (scrubbed) diagnostics.log('maintenance', { job: 'scrub-closed-sessions-v2', ...scrubbed });
+    if (scrubbed) {
+      diagnostics.log('maintenance', { job: 'scrub-closed-sessions-v2', ...scrubbed });
+    }
     await pruneOutbox(db, clock.now());
   }
 

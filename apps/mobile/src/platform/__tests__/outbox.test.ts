@@ -57,7 +57,9 @@ describe('EventDispatcher', () => {
   it('dead-letters a DomainError at once and continues with later events', async () => {
     const t = await setup();
     t.dispatcher.on('ActivityRecorded', async (e) => {
-      if (idOf(e) === 'skewed') throw new DomainError('claim.in-future', '52.1,21.0');
+      if (idOf(e) === 'skewed') {
+        throw new DomainError('claim.in-future', '52.1,21.0');
+      }
       t.delivered.push(idOf(e));
     });
     await t.append(ev('ActivityRecorded', 'skewed'), ev('ActivityRecorded', 'next'));
@@ -93,7 +95,9 @@ describe('EventDispatcher', () => {
     const t = await setup();
     let failures = 2;
     t.dispatcher.on('A', async (e) => {
-      if (idOf(e) === 'flaky' && failures-- > 0) throw new Error('SQLITE_BUSY');
+      if (idOf(e) === 'flaky' && failures-- > 0) {
+        throw new Error('SQLITE_BUSY');
+      }
       t.delivered.push(idOf(e));
     });
     await t.append(ev('A', 'flaky'), ev('A', 'later'));
@@ -126,7 +130,9 @@ describe('EventDispatcher', () => {
   it('dead-letters after N failed attempts and then delivers the rest', async () => {
     const t = await setup({ maxAttempts: 3 });
     t.dispatcher.on('A', async (e) => {
-      if (idOf(e) === 'broken') throw new TypeError('x is undefined');
+      if (idOf(e) === 'broken') {
+        throw new TypeError('x is undefined');
+      }
       t.delivered.push(idOf(e));
     });
     await t.append(ev('A', 'broken'), ev('A', 'after'));
@@ -166,7 +172,9 @@ describe('EventDispatcher', () => {
       },
     });
     d.on('A', async (e) => {
-      if (idOf(e) === 'bad') throw new DomainError('x');
+      if (idOf(e) === 'bad') {
+        throw new DomainError('x');
+      }
       delivered.push('ok');
     });
     await db.transaction((tx) => appendToOutbox(tx, [ev('A', 'bad'), ev('A', 'good')], 0));

@@ -11,11 +11,15 @@ function flakyStore(initial: UserId | null) {
     failWrites: false,
     read: async () => {
       s.reads++;
-      if (s.failReads) throw new Error('errSecInteractionNotAllowed');
+      if (s.failReads) {
+        throw new Error('errSecInteractionNotAllowed');
+      }
       return id;
     },
     write: async (v: UserId) => {
-      if (s.failWrites) throw new Error('keychain busy');
+      if (s.failWrites) {
+        throw new Error('keychain busy');
+      }
       id = v;
     },
     clear: async () => void (id = null),

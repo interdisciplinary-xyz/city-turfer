@@ -48,10 +48,14 @@ export class SqliteTerritoryRepository implements TerritoryRepository {
     areas: Map<CellId, number>
   ) {
     const { activityId, type, claimedAt, cells } = claim.state;
-    if (!TYPE_COLUMNS.includes(type)) throw new Error(`unknown type ${type}`);
+    if (!TYPE_COLUMNS.includes(type)) {
+      throw new Error(`unknown type ${type}`);
+    }
     const events = claim.pullEvents();
     let newArea = 0;
-    for (const c of newCells) newArea += areas.get(c) ?? 0;
+    for (const c of newCells) {
+      newArea += areas.get(c) ?? 0;
+    }
     await this.db.transaction(async (tx) => {
       await tx.run(
         'INSERT INTO ter_claims (activity_id, type, claimed_at, cell_count, new_cell_count, new_area_m2) VALUES (?, ?, ?, ?, ?, ?)',
@@ -86,7 +90,9 @@ export class SqliteTerritoryRepository implements TerritoryRepository {
     const claim = await this.db.first<{ type: ActivityType }>('SELECT type FROM ter_claims WHERE activity_id = ?', [
       activityId,
     ]);
-    if (!claim || !TYPE_COLUMNS.includes(claim.type)) return false;
+    if (!claim || !TYPE_COLUMNS.includes(claim.type)) {
+      return false;
+    }
     const event: TurfReleased = { type: 'TurfReleased', v: 1, at: now, activityId };
     await this.db.transaction(async (tx) => {
       await tx.run(
@@ -126,7 +132,9 @@ export class SqliteTerritoryRepository implements TerritoryRepository {
       'SELECT cell_count, new_cell_count, new_area_m2 FROM ter_claims WHERE activity_id = ?',
       [activityId]
     );
-    if (!c) return null;
+    if (!c) {
+      return null;
+    }
     const cells = await this.db.all<{ cell: string; is_new: number }>(
       'SELECT cell, is_new FROM ter_claim_cells WHERE activity_id = ?',
       [activityId]

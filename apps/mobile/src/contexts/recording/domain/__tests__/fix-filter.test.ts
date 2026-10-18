@@ -292,9 +292,15 @@ describe('judgeFix (Fix Filter)', () => {
     );
     const { speedMps, distanceM, dtS, ...exact } = c.expect;
     expect(v).toMatchObject(exact);
-    if (speedMps != null) expect((v as { speedMps: number }).speedMps).toBeCloseTo(speedMps, 2);
-    if (distanceM != null) expect((v as { distanceM: number }).distanceM).toBeCloseTo(distanceM, 1);
-    if (dtS != null) expect((v as { dtS: number }).dtS).toBeCloseTo(dtS, 3);
+    if (speedMps != null) {
+      expect((v as { speedMps: number }).speedMps).toBeCloseTo(speedMps, 2);
+    }
+    if (distanceM != null) {
+      expect((v as { distanceM: number }).distanceM).toBeCloseTo(distanceM, 1);
+    }
+    if (dtS != null) {
+      expect((v as { dtS: number }).dtS).toBeCloseTo(dtS, 3);
+    }
   });
 
   it('profiles match the reference oracle (tools/lib/geo.mjs PROFILES)', () => {

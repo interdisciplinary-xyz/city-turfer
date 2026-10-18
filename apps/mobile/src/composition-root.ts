@@ -39,7 +39,9 @@ export const identity = createIdentityApi({ auth: new MockAuthGateway(), session
 /** Sign-out gate: the domain's active Recording Session, not whether the OS tracker happens to run. */
 async function isRecording(): Promise<boolean> {
   const c = await getContainer().catch(() => null);
-  if (!c) return tracker.isRunning();
+  if (!c) {
+    return tracker.isRunning();
+  }
   return c.hasActiveSession().catch(() => true); // unknown: don't sign out from under a recording
 }
 
@@ -73,8 +75,12 @@ let current: {
  */
 export async function getContainer(): Promise<Container | null> {
   const uid = await sessionStore.read();
-  if (!uid) return null;
-  if (current?.userId === uid) return current.promise;
+  if (!uid) {
+    return null;
+  }
+  if (current?.userId === uid) {
+    return current.promise;
+  }
   let cancelMaintenance: () => void = () => undefined; // set once the container is wired
   const promise = (async () => {
     const db = await openExpoDatabase(`turftrack-${uid}.db`);
@@ -103,13 +109,18 @@ export async function getContainer(): Promise<Container | null> {
     (c) => {
       // Gaps recorded while headless (or offline) are estimated once the user opens the app.
       const sub = AppState.addEventListener('change', (s) => s === 'active' && void c.estimateGaps());
-      if (current === entry) entry.stop = () => sub.remove();
-      else sub.remove();
+      if (current === entry) {
+        entry.stop = () => sub.remove();
+      } else {
+        sub.remove();
+      }
     },
     () => undefined
   );
   promise.catch(() => {
-    if (current?.promise === promise) current = null;
+    if (current?.promise === promise) {
+      current = null;
+    }
   });
   return promise;
 }
@@ -120,7 +131,9 @@ export async function resetContainer(): Promise<void> {
   current = null;
   c?.cancelMaintenance();
   c?.stop?.();
-  if (c) await (await c.promise.catch(() => null))?.db.close();
+  if (c) {
+    await (await c.promise.catch(() => null))?.db.close();
+  }
 }
 
 export { backgroundActivitySession, liveSessionStore };

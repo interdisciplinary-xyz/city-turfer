@@ -17,7 +17,9 @@ export function runWhenForeground(appState: AppStateLike, job: () => void): () =
   }
   let done = false;
   const sub = appState.addEventListener('change', (state) => {
-    if (done || state !== 'active') return;
+    if (done || state !== 'active') {
+      return;
+    }
     done = true;
     sub.remove();
     job();

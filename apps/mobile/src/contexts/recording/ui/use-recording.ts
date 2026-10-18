@@ -24,7 +24,9 @@ export function useRecording() {
 
   // 1 Hz clock for the running timer.
   useEffect(() => {
-    if (!snapshot) return;
+    if (!snapshot) {
+      return;
+    }
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, [snapshot]);
@@ -32,7 +34,9 @@ export function useRecording() {
   // Refresh the live track when new points arrive (throttled).
   const pointCount = snapshot?.pointCount ?? 0;
   useEffect(() => {
-    if (!snapshot) return setTrack([]);
+    if (!snapshot) {
+      return setTrack([]);
+    }
     const wait = Math.max(0, 2000 - (Date.now() - lastFetch.current));
     const id = setTimeout(() => {
       lastFetch.current = Date.now();

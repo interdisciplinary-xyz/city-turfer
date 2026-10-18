@@ -1,5 +1,5 @@
 import { type Href, router } from 'expo-router';
-import { type SFSymbol, SymbolView } from 'expo-symbols';
+import { SymbolView } from 'expo-symbols';
 import * as Updates from 'expo-updates';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -18,16 +18,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ACCENT, ON_ACCENT } from '@/constants/colors';
 
 import { useApp } from './app-context';
+import { CLOSE_DRAG_PX, DURATION_MS, ITEMS } from './me-menu.constants';
 import { usePalette } from './theme';
-
-const ITEMS: { label: string; href: Href; symbol: SFSymbol; glyph: string; testID: string }[] = [
-  { label: 'Profile', href: '/profile', symbol: 'person.crop.circle', glyph: '◉', testID: 'me-menu-profile' },
-  { label: 'Account', href: '/account', symbol: 'key', glyph: '⚿', testID: 'me-menu-account' },
-  { label: 'Info', href: '/info', symbol: 'info.circle', glyph: 'ⓘ', testID: 'me-menu-info' },
-];
-
-const DURATION_MS = 220;
-const CLOSE_DRAG_PX = 80;
 
 /** The "Me" tab: slides in a drawer from the right instead of opening a screen. */
 export function MeTabButton({ testID }: { testID?: string }) {
@@ -95,8 +87,11 @@ function MeDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
       onMoveShouldSetPanResponder: (_, g) => g.dx > 8 && Math.abs(g.dx) > Math.abs(g.dy),
       onPanResponderMove: (_, g) => drag.setValue(Math.max(0, g.dx)),
       onPanResponderRelease: (_, g) => {
-        if (g.dx > CLOSE_DRAG_PX || g.vx > 0.5) onClose();
-        else Animated.spring(drag, { toValue: 0, useNativeDriver: true }).start();
+        if (g.dx > CLOSE_DRAG_PX || g.vx > 0.5) {
+          onClose();
+        } else {
+          Animated.spring(drag, { toValue: 0, useNativeDriver: true }).start();
+        }
       },
     })
   ).current;

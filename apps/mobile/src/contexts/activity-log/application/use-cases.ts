@@ -86,9 +86,13 @@ export interface SessionFinishedPayload {
 export class RecordActivityFromSession {
   constructor(private readonly d: ActivityLogDeps) {}
   async execute(e: SessionFinishedPayload): Promise<void> {
-    if (await this.d.activities.exists(e.sessionId)) return;
+    if (await this.d.activities.exists(e.sessionId)) {
+      return;
+    }
     const points = await this.d.finishedTracks.trackOf(e.sessionId);
-    if (!points || points.length < 2) return; // nothing to record
+    if (!points || points.length < 2) {
+      return;
+    } // nothing to record
     const activity = Activity.record({
       id: e.sessionId,
       type: e.activityType,
@@ -107,7 +111,9 @@ export class RecordActivityFromSession {
 export class ImportActivity {
   constructor(private readonly d: ActivityLogDeps) {}
   async execute(input: { id: string; type: ActivityType; points: TrackPoint[] }): Promise<boolean> {
-    if (input.points.length < 2 || (await this.d.activities.exists(input.id))) return false;
+    if (input.points.length < 2 || (await this.d.activities.exists(input.id))) {
+      return false;
+    }
     const activity = Activity.record({
       id: input.id,
       type: input.type,
@@ -135,14 +141,20 @@ export class SplitTrackGaps {
     for (const id of ids) {
       const points = await this.d.activities.trackOf(id);
       const fixed = splitAtGaps(points);
-      if (segmentCount(fixed) === segmentCount(points)) continue;
+      if (segmentCount(fixed) === segmentCount(points)) {
+        continue;
+      }
       const activity = await this.d.activities.get(id);
-      if (!activity) continue;
+      if (!activity) {
+        continue;
+      }
       activity.correctTrack(trackFromPoints(fixed), this.d.clock.now());
       await this.d.activities.saveCorrection(activity, fixed);
       corrected++;
     }
-    if (corrected > 0) this.d.afterCommit();
+    if (corrected > 0) {
+      this.d.afterCommit();
+    }
     return { checked: ids.length, corrected };
   }
 }
@@ -177,38 +189,54 @@ export class EstimateGapRoutes {
   }
 
   private async run(): Promise<number> {
-    if (!(await this.allowed()) || !this.budget.beginRun()) return 0;
+    if (!(await this.allowed()) || !this.budget.beginRun()) {
+      return 0;
+    }
     let done = 0;
     activities: for (const id of await this.d.activities.idsWithUncheckedGaps()) {
-      if (this.budget.isBackingOff(id)) continue;
+      if (this.budget.isBackingOff(id)) {
+        continue;
+      }
       const activity = await this.d.activities.get(id);
-      if (!activity) continue;
+      if (!activity) {
+        continue;
+      }
       const type = activity.toState().type;
       const routes: GapRoute[] = [];
       for (const gap of activity.gapsToRoute(trackFromPoints(await this.d.activities.trackOf(id)))) {
-        if (!this.budget.hasRequestLeft()) break activities;
+        if (!this.budget.hasRequestLeft()) {
+          break activities;
+        }
         await this.budget.acquire();
-        if (!(await this.allowed())) break activities; // turned off or backgrounded while waiting
+        if (!(await this.allowed())) {
+          break activities;
+        } // turned off or backgrounded while waiting
         let r: Awaited<ReturnType<RouteEstimator['route']>>;
         try {
           r = await this.d.router.route(gap.from, gap.to, type);
         } catch (e) {
-          if (e instanceof RouterRateLimited) this.budget.rateLimited(e.retryAfterMs);
-          else if (e instanceof RouterUnreachable) this.budget.pauseFor(OFFLINE_RETRY_MS);
-          else {
+          if (e instanceof RouterRateLimited) {
+            this.budget.rateLimited(e.retryAfterMs);
+          } else if (e instanceof RouterUnreachable) {
+            this.budget.pauseFor(OFFLINE_RETRY_MS);
+          } else {
             this.budget.failed(id); // only this activity waits; the others still get their turn
             continue activities;
           }
           break activities;
         }
         const route = r && activity.gapRoute(gap, r);
-        if (route) routes.push(route);
+        if (route) {
+          routes.push(route);
+        }
       }
       this.budget.succeeded(id);
       await this.d.activities.saveGapRoutes(id, routes, this.d.clock.now());
       done++;
     }
-    if (done > 0) this.d.afterCommit();
+    if (done > 0) {
+      this.d.afterCommit();
+    }
     return done;
   }
 }
@@ -224,15 +252,23 @@ export class CapEstimatedMovingTime {
     let capped = 0;
     for (const id of ids) {
       const routes = await this.d.activities.gapRoutesOf(id);
-      if (routes.length === 0) continue;
+      if (routes.length === 0) {
+        continue;
+      }
       const activity = await this.d.activities.get(id);
-      if (!activity) continue;
+      if (!activity) {
+        continue;
+      }
       const next = routes.map((r) => activity.capGapRoute(r));
-      if (next.every((r, i) => r === routes[i])) continue;
+      if (next.every((r, i) => r === routes[i])) {
+        continue;
+      }
       await this.d.activities.saveGapRoutes(id, next, this.d.clock.now());
       capped++;
     }
-    if (capped > 0) this.d.afterCommit();
+    if (capped > 0) {
+      this.d.afterCommit();
+    }
     return { checked: ids.length, capped };
   }
 }
@@ -262,7 +298,9 @@ export class GetActivityDetail {
   constructor(private readonly d: ActivityLogDeps) {}
   async execute(id: string): Promise<ActivityDetail | null> {
     const a = await this.d.activities.get(id);
-    if (!a) return null;
+    if (!a) {
+      return null;
+    }
     const s = a.toState();
     const gapRoutes = await this.d.activities.gapRoutesOf(id);
     const estimated = estimatedTotals(gapRoutes);
@@ -290,7 +328,9 @@ export class RenameActivity {
   constructor(private readonly d: ActivityLogDeps) {}
   async execute(id: string, name: string): Promise<void> {
     const a = await this.d.activities.get(id);
-    if (!a) return;
+    if (!a) {
+      return;
+    }
     a.rename(name);
     await this.d.activities.save(a);
   }
@@ -300,7 +340,9 @@ export class DeleteActivity {
   constructor(private readonly d: ActivityLogDeps) {}
   async execute(id: string): Promise<void> {
     const a = await this.d.activities.get(id);
-    if (!a) return;
+    if (!a) {
+      return;
+    }
     a.markDeleted(this.d.clock.now());
     await this.d.activities.delete(a);
     this.d.afterCommit();

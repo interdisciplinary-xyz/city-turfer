@@ -60,16 +60,23 @@ export function createLocationBatchHandler<L>(deps: BatchHandlerDeps<L>) {
   const deferred: Record<string, unknown>[] = [];
 
   function note(container: BatchContainer | null, data: Record<string, unknown>) {
-    if (container) container.diagnostics.log('task-error', data);
-    else if (deferred.length < MAX_DEFERRED) deferred.push({ ...data, at: Date.now() });
+    if (container) {
+      container.diagnostics.log('task-error', data);
+    } else if (deferred.length < MAX_DEFERRED) {
+      deferred.push({ ...data, at: Date.now() });
+    }
   }
 
   function handOff(locations: readonly L[]): Promise<Handoff> {
     let expired = false;
     const acquire = async (): Promise<Handoff> => {
       const container = await deps.getContainer();
-      if (expired) return { kind: 'expired' }; // too late: submitting now could reorder batches
-      if (!container) return { kind: 'no-user' };
+      if (expired) {
+        return { kind: 'expired' };
+      } // too late: submitting now could reorder batches
+      if (!container) {
+        return { kind: 'no-user' };
+      }
       // Duplicates across the two streams are dropped by the Fix Filter (out-of-order).
       return {
         kind: 'submitted',
@@ -96,16 +103,24 @@ export function createLocationBatchHandler<L>(deps: BatchHandlerDeps<L>) {
         note(null, { code, message: String(e), skippedFixes: locations.length });
         return;
       }
-      if (h.kind === 'no-user') return void (await deps.stopTracking());
-      if (h.kind === 'expired') return;
+      if (h.kind === 'no-user') {
+        return void (await deps.stopTracking());
+      }
+      if (h.kind === 'expired') {
+        return;
+      }
       container = h.container;
-      for (const d of deferred.splice(0)) container.diagnostics.log('task-error', d);
+      for (const d of deferred.splice(0)) {
+        container.diagnostics.log('task-error', d);
+      }
 
       let result: IngestResult;
       try {
         result = await withTimeout(h.result, deps.timeoutMs);
       } catch (e) {
-        if (!(e instanceof Timeout)) throw e;
+        if (!(e instanceof Timeout)) {
+          throw e;
+        }
         // The command keeps its place in the queue; we just stop waiting for it.
         deps.warn('[location-task] ingest timed out', e);
         note(container, { code: `ingest-timeout-${source}`, message: String(e), fixes: locations.length });

@@ -18,7 +18,9 @@ export default function SignIn() {
     setError(null);
     const r = await signIn(email, password).catch(() => 'invalid' as const);
     setBusy(false);
-    if (r === 'invalid') setError('Wrong email or password.');
+    if (r === 'invalid') {
+      setError('Wrong email or password.');
+    }
   };
 
   return (

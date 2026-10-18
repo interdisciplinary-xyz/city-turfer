@@ -93,7 +93,9 @@ export class EventDispatcher {
     this.running = (async () => {
       do {
         this.rerun = false;
-        if ((await this.drain()) > 0) this.changeListeners.forEach((l) => l());
+        if ((await this.drain()) > 0) {
+          this.changeListeners.forEach((l) => l());
+        }
       } while (this.rerun);
     })().finally(() => {
       this.running = null;
@@ -108,8 +110,12 @@ export class EventDispatcher {
         `SELECT id, type, payload, attempts, next_attempt_at FROM sys_outbox
          WHERE processed_at IS NULL AND dead_lettered_at IS NULL ORDER BY id LIMIT 1`
       );
-      if (!row) return processed;
-      if (row.next_attempt_at != null && row.next_attempt_at > this.now()) return processed; // backing off
+      if (!row) {
+        return processed;
+      }
+      if (row.next_attempt_at != null && row.next_attempt_at > this.now()) {
+        return processed;
+      } // backing off
 
       const attempts = row.attempts + 1;
       let event: DomainEvent;
@@ -121,9 +127,13 @@ export class EventDispatcher {
         continue;
       }
       try {
-        for (const h of this.handlers.get(event.type) ?? []) await h(event);
+        for (const h of this.handlers.get(event.type) ?? []) {
+          await h(event);
+        }
       } catch (e) {
-        if (__DEV__) console.warn(`[outbox] handler failed for ${event.type}`, e);
+        if (__DEV__) {
+          console.warn(`[outbox] handler failed for ${event.type}`, e);
+        }
         if (e instanceof DomainError || attempts >= this.maxAttempts) {
           await this.deadLetter(row, attempts, e);
           processed++;

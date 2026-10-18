@@ -18,7 +18,9 @@ export function generateTrack({
   startTime = Date.parse('2026-01-01T07:00:00Z'),
 }) {
   const profile = PROFILES[type];
-  if (!profile) throw new Error(`Unknown type ${type}. Use walk, run or cycle.`);
+  if (!profile) {
+    throw new Error(`Unknown type ${type}. Use walk, run or cycle.`);
+  }
   const rand = mulberry32(seed);
   const targetM = km * 1000;
 
@@ -36,7 +38,9 @@ export function generateTrack({
 
     if (pauseS > 0 && !paused && travelled >= targetM / 2) {
       paused = true;
-      for (let s = interval; s <= pauseS; s += interval) truth.push({ ...pos, ele, t: t + s * 1000 });
+      for (let s = interval; s <= pauseS; s += interval) {
+        truth.push({ ...pos, ele, t: t + s * 1000 });
+      }
       t += pauseS * 1000;
     }
 
@@ -77,7 +81,9 @@ export function generateTrack({
 
   const elapsedS = (truth.at(-1).t - truth[0].t) / 1000;
   let elevGainM = 0;
-  for (let i = 1; i < truth.length; i++) elevGainM += Math.max(0, truth[i].ele - truth[i - 1].ele);
+  for (let i = 1; i < truth.length; i++) {
+    elevGainM += Math.max(0, truth[i].ele - truth[i - 1].ele);
+  }
   return {
     truth: { distanceM: Math.round(travelled), elapsedS, movingS: elapsedS - pauseS, elevGainM: Math.round(elevGainM) },
     truePath: truth,

@@ -28,7 +28,9 @@ const DEV_IF = /\bif\s*\((?:[^()]|\([^()]*\))*?(?<!!\s*)\b__DEV__\b(?:[^()]|\([^
 function allowance(lines, i) {
   for (const j of [i, i - 1]) {
     const m = lines[j]?.match(ALLOW);
-    if (m) return m[1].trim() || 'empty';
+    if (m) {
+      return m[1].trim() || 'empty';
+    }
   }
   return null;
 }
@@ -47,7 +49,9 @@ export function auditSource(text) {
     let line = raw;
     if (inBlockComment) {
       const end = line.indexOf('*/');
-      if (end < 0) return;
+      if (end < 0) {
+        return;
+      }
       line = line.slice(end + 2);
       inBlockComment = false;
     }
@@ -77,8 +81,11 @@ export function auditSource(text) {
       }
     }
     for (let k = 0; k < src.length; k++) {
-      if (src[k] === '{') stack.push(DEV_IF.test(src.slice(0, k)) && /\)\s*$/.test(src.slice(0, k)));
-      else if (src[k] === '}') stack.pop();
+      if (src[k] === '{') {
+        stack.push(DEV_IF.test(src.slice(0, k)) && /\)\s*$/.test(src.slice(0, k)));
+      } else if (src[k] === '}') {
+        stack.pop();
+      }
     }
   });
 
@@ -90,8 +97,11 @@ export function auditSource(text) {
     let depth = 1;
     let k = callRe.lastIndex;
     while (k < flat.length && depth > 0) {
-      if (flat[k] === '(') depth++;
-      else if (flat[k] === ')') depth--;
+      if (flat[k] === '(') {
+        depth++;
+      } else if (flat[k] === ')') {
+        depth--;
+      }
       k++;
     }
     const args = flat.slice(callRe.lastIndex, k - 1);
@@ -118,8 +128,12 @@ function walk(dir, acc = []) {
   for (const f of readdirSync(dir)) {
     const p = join(dir, f);
     if (statSync(p).isDirectory()) {
-      if (f !== '__tests__' && f !== 'test-support') walk(p, acc);
-    } else if (/\.(ts|tsx)$/.test(f) && !f.endsWith('.d.ts') && !/\.test\.tsx?$/.test(f)) acc.push(p);
+      if (f !== '__tests__' && f !== 'test-support') {
+        walk(p, acc);
+      }
+    } else if (/\.(ts|tsx)$/.test(f) && !f.endsWith('.d.ts') && !/\.test\.tsx?$/.test(f)) {
+      acc.push(p);
+    }
   }
   return acc;
 }
@@ -127,7 +141,9 @@ function walk(dir, acc = []) {
 export function auditTree(srcDir) {
   const out = [];
   for (const file of walk(srcDir)) {
-    for (const f of auditSource(readFileSync(file, 'utf8'))) out.push({ file: relative(dirname(srcDir), file), ...f });
+    for (const f of auditSource(readFileSync(file, 'utf8'))) {
+      out.push({ file: relative(dirname(srcDir), file), ...f });
+    }
   }
   return out;
 }
@@ -137,7 +153,9 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const findings = auditTree(join(root, 'apps/mobile/src'));
   if (findings.length) {
     console.error(`audit:logs failed (${findings.length}):`);
-    for (const f of findings) console.error(`  - ${f.file}:${f.line} [${f.rule}] ${f.message}`);
+    for (const f of findings) {
+      console.error(`  - ${f.file}:${f.line} [${f.rule}] ${f.message}`);
+    }
     process.exit(1);
   }
   console.log('audit:logs ok');

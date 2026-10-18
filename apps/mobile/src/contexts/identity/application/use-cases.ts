@@ -15,11 +15,15 @@ export class SignIn {
     try {
       parsed = parseEmail(rawEmail);
     } catch (e) {
-      if (e instanceof DomainError) return { kind: 'invalid-email' };
+      if (e instanceof DomainError) {
+        return { kind: 'invalid-email' };
+      }
       throw e;
     }
     const outcome = await this.d.auth.signIn(parsed, password);
-    if (outcome.kind === 'signed-in') await this.d.sessions.write(outcome.user.id);
+    if (outcome.kind === 'signed-in') {
+      await this.d.sessions.write(outcome.user.id);
+    }
     return outcome;
   }
 }
@@ -40,7 +44,9 @@ export class SignOut {
     private readonly isRecording: () => Promise<boolean>
   ) {}
   async execute(): Promise<SignOutResult> {
-    if (await this.isRecording()) return { kind: 'recording-in-progress' };
+    if (await this.isRecording()) {
+      return { kind: 'recording-in-progress' };
+    }
     await this.d.sessions.clear();
     return { kind: 'signed-out' };
   }

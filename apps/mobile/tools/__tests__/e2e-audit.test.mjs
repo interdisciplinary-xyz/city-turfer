@@ -24,7 +24,9 @@ function fixture({ flows, order, md, src = "<B testID='a-button' />" }) {
   mkdirSync(join(root, 'src'), { recursive: true });
   mkdirSync(join(root, 'docs/quality'), { recursive: true });
   writeFileSync(join(root, 'e2e/config.yaml'), CONFIG(order ?? Object.keys(flows)));
-  for (const [name, text] of Object.entries(flows)) writeFileSync(join(root, `e2e/${name}.yaml`), text);
+  for (const [name, text] of Object.entries(flows)) {
+    writeFileSync(join(root, `e2e/${name}.yaml`), text);
+  }
   writeFileSync(join(root, 'e2e/.hidden.yaml'), 'ignored');
   writeFileSync(join(root, 'src/a.tsx'), src);
   writeFileSync(join(root, 'docs/quality/e2e.md'), md ?? '| CP-1 | thing | `01-a` | covered |\n');

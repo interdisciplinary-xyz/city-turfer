@@ -12,7 +12,9 @@ const router = {
   calls: 0,
   async route(from: { lat: number; lon: number }, to: { lat: number; lon: number }) {
     router.calls++;
-    if (router.offline) throw new RouterUnreachable('offline');
+    if (router.offline) {
+      throw new RouterUnreachable('offline');
+    }
     const corner: [number, number] = [to.lon, from.lat];
     const dy = (to.lat - from.lat) * 111_320;
     const dx = (to.lon - from.lon) * 111_320 * Math.cos((from.lat * Math.PI) / 180);
@@ -62,7 +64,9 @@ async function setup() {
 async function recordFixture(c: ReturnType<typeof wire>, fixes: Fix[], type: 'walk' | 'run' | 'cycle' = 'run') {
   const started = await c.recording.start.execute(type);
   expect(started.kind).toBe('started');
-  for (let i = 0; i < fixes.length; i += 25) await c.recording.ingestFixes.execute(fixes.slice(i, i + 25));
+  for (let i = 0; i < fixes.length; i += 25) {
+    await c.recording.ingestFixes.execute(fixes.slice(i, i + 25));
+  }
   const finished = await c.recording.finish.execute();
   expect(finished.kind).toBe('finished');
   await c.dispatcher.dispatchPending();
@@ -304,13 +308,21 @@ describe('Gap routes: estimated street paths across recording gaps', () => {
     const b = Math.floor(fixes.length * 0.6);
     const breakMs = 600_000;
     await c.recording.start.execute('cycle');
-    for (let i = 0; i < a; i += 25) await c.recording.ingestFixes.execute(fixes.slice(i, Math.min(a, i + 25)));
+    for (let i = 0; i < a; i += 25) {
+      await c.recording.ingestFixes.execute(fixes.slice(i, Math.min(a, i + 25)));
+    }
     f.advance(fixes[a - 1].t - fixes[0].t);
-    if (by === 'pause') await c.recording.pause.execute();
+    if (by === 'pause') {
+      await c.recording.pause.execute();
+    }
     f.advance(fixes[b].t - fixes[a - 1].t + breakMs);
-    if (by === 'pause') await c.recording.resume.execute();
+    if (by === 'pause') {
+      await c.recording.resume.execute();
+    }
     const rest = fixes.slice(b).map((x) => ({ ...x, t: x.t + breakMs }));
-    for (let i = 0; i < rest.length; i += 25) await c.recording.ingestFixes.execute(rest.slice(i, i + 25));
+    for (let i = 0; i < rest.length; i += 25) {
+      await c.recording.ingestFixes.execute(rest.slice(i, i + 25));
+    }
     f.advance(rest.at(-1)!.t - fixes[b].t - breakMs);
     const res = await c.recording.finish.execute();
     await c.dispatcher.dispatchPending();

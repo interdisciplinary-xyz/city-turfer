@@ -115,13 +115,20 @@ function listFiles(dir) {
   const out = [];
   const walk = (d) => {
     for (const name of readdirSync(join(ROOT, d))) {
-      if (name === 'node_modules' || name === '.git') continue;
+      if (name === 'node_modules' || name === '.git') {
+        continue;
+      }
       const p = join(d, name);
-      if (isDir(p)) walk(p);
-      else out.push(p);
+      if (isDir(p)) {
+        walk(p);
+      } else {
+        out.push(p);
+      }
     }
   };
-  if (isDir(dir)) walk(dir);
+  if (isDir(dir)) {
+    walk(dir);
+  }
   return out.sort();
 }
 
@@ -144,18 +151,27 @@ function scannedFiles() {
  * indented continuation lines Prettier writes when it wraps a long value.
  */
 export function parseFrontmatter(text) {
-  if (!text.startsWith('---\n')) return null;
+  if (!text.startsWith('---\n')) {
+    return null;
+  }
   const end = text.indexOf('\n---', 4);
-  if (end < 0) return null;
+  if (end < 0) {
+    return null;
+  }
   const data = {};
   const lines = [];
   for (const line of text.slice(4, end).split('\n')) {
-    if (/^\s+\S/.test(line) && lines.length) lines[lines.length - 1] += ` ${line.trim()}`;
-    else lines.push(line);
+    if (/^\s+\S/.test(line) && lines.length) {
+      lines[lines.length - 1] += ` ${line.trim()}`;
+    } else {
+      lines.push(line);
+    }
   }
   for (const line of lines) {
     const m = line.match(/^([\w-]+):\s*(.*?)(\s+#.*)?$/);
-    if (!m) continue;
+    if (!m) {
+      continue;
+    }
     const [, key, raw] = m;
     if (raw.startsWith('[') && raw.endsWith(']')) {
       data[key] = raw
@@ -163,7 +179,9 @@ export function parseFrontmatter(text) {
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean);
-    } else data[key] = raw.replace(/^['"]|['"]$/g, '');
+    } else {
+      data[key] = raw.replace(/^['"]|['"]$/g, '');
+    }
   }
   return data;
 }
@@ -177,7 +195,9 @@ function proseLines(text) {
       fence = !fence;
       return;
     }
-    if (!fence) out.push([i + 1, line]);
+    if (!fence) {
+      out.push([i + 1, line]);
+    }
   });
   return out;
 }
@@ -197,7 +217,9 @@ function anchorsOf(file) {
   const anchors = new Set();
   for (const [, line] of proseLines(readFileSync(join(ROOT, file), 'utf8'))) {
     const m = line.match(/^#{1,6}\s+(.*?)\s*#*$/);
-    if (!m) continue;
+    if (!m) {
+      continue;
+    }
     const base = slug(m[1].replace(/`/g, ''));
     const n = seen.get(base) ?? 0;
     seen.set(base, n + 1);
@@ -238,25 +260,39 @@ function isGitIgnored(p) {
 
 /** Turn an inline-code token into a repo path to check, or null if it isn't one. */
 export function candidatePath(token) {
-  if (/\s|<|>|\$|^https?:|@/.test(token)) return null;
+  if (/\s|<|>|\$|^https?:|@/.test(token)) {
+    return null;
+  }
   let p = token.replace(/[…]+$/, '').replace(/(#L\d+|:\d+(-\d+)?)$/, '');
   const glob = p.search(/[*{?[]/);
-  if (glob >= 0) p = p.slice(0, glob);
-  if (!p.includes('/')) return null;
+  if (glob >= 0) {
+    p = p.slice(0, glob);
+  }
+  if (!p.includes('/')) {
+    return null;
+  }
   const first = p.split('/')[0];
-  if ([...PATH_PREFIXES, ...STALE_PREFIXES].some((pre) => p.startsWith(pre))) return p;
-  if (CONTEXTS.includes(first)) return `apps/mobile/src/contexts/${p}`; // context-relative, e.g. recording/domain/x.ts
+  if ([...PATH_PREFIXES, ...STALE_PREFIXES].some((pre) => p.startsWith(pre))) {
+    return p;
+  }
+  if (CONTEXTS.includes(first)) {
+    return `apps/mobile/src/contexts/${p}`;
+  } // context-relative, e.g. recording/domain/x.ts
   return null;
 }
 
 function checkFrontmatter(file, text, fm) {
-  if (!file.startsWith('docs/')) return;
+  if (!file.startsWith('docs/')) {
+    return;
+  }
   if (!fm) {
     add('error', file, 1, 'frontmatter', 'missing frontmatter (status, verified, owner, scope, summary)');
     return;
   }
   for (const key of REQUIRED_KEYS) {
-    if (fm[key] === undefined || fm[key] === '') add('error', file, 1, 'frontmatter', `missing \`${key}:\``);
+    if (fm[key] === undefined || fm[key] === '') {
+      add('error', file, 1, 'frontmatter', `missing \`${key}:\``);
+    }
   }
   if (fm.status && !(fm.status in STATUSES)) {
     add('error', file, 1, 'frontmatter', `status \`${fm.status}\` is not one of ${Object.keys(STATUSES).join(' | ')}`);
@@ -265,13 +301,17 @@ function checkFrontmatter(file, text, fm) {
     const d = new Date(`${fm.verified}T00:00:00Z`);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fm.verified) || Number.isNaN(d.getTime())) {
       add('error', file, 1, 'frontmatter', `verified \`${fm.verified}\` is not a YYYY-MM-DD date`);
-    } else if (d.getTime() > Date.now()) add('error', file, 1, 'frontmatter', 'verified date is in the future');
+    } else if (d.getTime() > Date.now()) {
+      add('error', file, 1, 'frontmatter', 'verified date is in the future');
+    }
   }
   if (fm.scope !== undefined && !Array.isArray(fm.scope)) {
     add('error', file, 1, 'frontmatter', 'scope must be a list: `scope: [path, path]`');
   } else if (Array.isArray(fm.scope)) {
     for (const p of fm.scope) {
-      if (!pathExists(p.replace(/[*{].*$/, ''))) add('warn', file, 1, 'scope', `scope path \`${p}\` does not exist`);
+      if (!pathExists(p.replace(/[*{].*$/, ''))) {
+        add('warn', file, 1, 'scope', `scope path \`${p}\` does not exist`);
+      }
     }
   }
   if (fm.status === 'superseded' && !/\.md|\]\(/.test(fm.summary ?? '')) {
@@ -280,7 +320,9 @@ function checkFrontmatter(file, text, fm) {
 }
 
 function checkPlacement(file) {
-  if (!file.startsWith('docs/')) return;
+  if (!file.startsWith('docs/')) {
+    return;
+  }
   const name = basename(file);
   if (!CONVENTIONAL_NAMES.has(name) && !/^[a-z0-9]+([.-][a-z0-9]+)*\.md$/.test(name)) {
     add('warn', file, 1, 'filename', 'not kebab-case (CityTurfer uses kebab-case for every file)');
@@ -291,7 +333,9 @@ function checkPlacement(file) {
 }
 
 function checkReviewDebt(file, fm) {
-  if (!fm?.verified || !Array.isArray(fm.scope) || fm.scope.length === 0) return;
+  if (!fm?.verified || !Array.isArray(fm.scope) || fm.scope.length === 0) {
+    return;
+  }
   try {
     const out = execFileSync(
       'git',
@@ -318,10 +362,15 @@ function checkPathsAndLinks(file, text, historical) {
   for (const [n, line] of proseLines(text)) {
     for (const m of line.matchAll(/`([^`\n]+)`/g)) {
       const p = candidatePath(m[1]);
-      if (!p) continue;
+      if (!p) {
+        continue;
+      }
       if (PLANNED_PATHS.has(p)) {
-        if (pathExists(p)) add('warn', file, n, 'planned-path', `\`${m[1]}\` exists now: drop it from PLANNED_PATHS`);
-        else add('info', file, n, 'planned-path', `\`${m[1]}\` is planned, not written yet`);
+        if (pathExists(p)) {
+          add('warn', file, n, 'planned-path', `\`${m[1]}\` exists now: drop it from PLANNED_PATHS`);
+        } else {
+          add('info', file, n, 'planned-path', `\`${m[1]}\` is planned, not written yet`);
+        }
       } else if (!pathExists(p) && !isGitIgnored(p)) {
         add(deadSeverity, file, n, 'dead-path', `\`${m[1]}\` does not exist`);
       }
@@ -329,7 +378,9 @@ function checkPathsAndLinks(file, text, historical) {
     const links = [...line.matchAll(/\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g), ...line.matchAll(/^\[[^\]]+\]:\s+(\S+)/g)];
     for (const m of links) {
       const target = m[1];
-      if (/^(https?:|mailto:|tel:)/.test(target)) continue;
+      if (/^(https?:|mailto:|tel:)/.test(target)) {
+        continue;
+      }
       const [pathPart, anchor] = target.split('#');
       const resolved = pathPart ? relative(ROOT, resolve(ROOT, dirname(file), decodeURI(pathPart))) : file;
       if (pathPart && !existsSync(join(ROOT, resolved))) {
@@ -386,7 +437,9 @@ function buildIndexBody() {
   const groups = new Map();
   for (const f of docs) {
     const [folder] = sectionOf(f);
-    if (!groups.has(folder)) groups.set(folder, []);
+    if (!groups.has(folder)) {
+      groups.set(folder, []);
+    }
     groups.get(folder).push(f);
   }
   const order = [...SECTIONS.map(([folder]) => folder), ...[...groups.keys()].sort()];
@@ -399,7 +452,9 @@ function buildIndexBody() {
   ];
   for (const folder of [...new Set(order)]) {
     const files = groups.get(folder);
-    if (!files) continue;
+    if (!files) {
+      continue;
+    }
     const [, heading, about] = SECTIONS.find(([f]) => f === folder) ?? [folder, folder, ''];
     lines.push('', `## ${heading}`, '', `\`${folder}/\`${about ? ` — ${about}.` : ''}`, '');
     for (const f of files) {
@@ -452,8 +507,14 @@ async function main() {
   const files = scannedFiles();
   const touched = [];
   if (flag('--fix-probes')) {
-    for (const f of files) if (fixProbes(f, read(f))) touched.push(f);
-    for (const f of touched) writeFileSync(join(ROOT, f), await format(f, read(f)));
+    for (const f of files) {
+      if (fixProbes(f, read(f))) {
+        touched.push(f);
+      }
+    }
+    for (const f of touched) {
+      writeFileSync(join(ROOT, f), await format(f, read(f)));
+    }
   }
   if (flag('--write-index')) {
     writeFileSync(join(ROOT, INDEX), await renderIndex());
@@ -473,16 +534,22 @@ async function main() {
     add('warn', INDEX, 1, 'index', 'out of date: run `pnpm run audit:docs -- --write-index`');
   }
 
-  for (const f of touched) console.log(`wrote ${f}`);
+  for (const f of touched) {
+    console.log(`wrote ${f}`);
+  }
   const order = { error: 0, warn: 1, info: 2 };
   findings.sort((a, b) => order[a.severity] - order[b.severity] || a.file.localeCompare(b.file) || a.line - b.line);
   const label = { error: 'ERROR', warn: 'WARN ', info: 'info ' };
-  for (const x of findings) console.log(`${label[x.severity]} ${x.file}:${x.line}  [${x.kind}] ${x.message}`);
+  for (const x of findings) {
+    console.log(`${label[x.severity]} ${x.file}:${x.line}  [${x.kind}] ${x.message}`);
+  }
   const count = (s) => findings.filter((x) => x.severity === s).length;
   console.log(
     `\n${files.length} files scanned · ${count('error')} errors · ${count('warn')} warnings · ${count('info')} info`
   );
-  if (flag('--strict') && count('error') > 0) process.exit(1);
+  if (flag('--strict') && count('error') > 0) {
+    process.exit(1);
+  }
 }
 
 await main();

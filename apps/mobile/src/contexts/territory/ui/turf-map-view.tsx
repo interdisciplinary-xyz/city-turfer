@@ -11,12 +11,9 @@ import { formatArea } from '@/ui-kit/format';
 
 import { useTurfSummary, useTurfViewport } from './hooks';
 import { TurfLayers } from './layers';
+import type { TrackLine } from './turf-map-view.constants';
 
-export interface TrackLine {
-  id: string;
-  type: ActivityType;
-  coordinates: [number, number][];
-}
+export type { TrackLine };
 
 /** The main feature: all tracks overlapping + glowing, permanent turf. Always dark. */
 export function TurfMapView({ tracks }: { tracks: TrackLine[] }) {

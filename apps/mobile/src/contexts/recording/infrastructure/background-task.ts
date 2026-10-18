@@ -37,14 +37,18 @@ const handleBatch = createLocationBatchHandler<Location.LocationObject>({
   },
   timeoutMs: INGEST_TIMEOUT_MS,
   warn: (message, e) => {
-    if (__DEV__) console.warn(message, e);
+    if (__DEV__) {
+      console.warn(message, e);
+    }
   },
 });
 
 // Stream 1 (safety net): expo-location's background task (CLLocationManager + significant-change wake-ups).
 TaskManager.defineTask<{ locations: Location.LocationObject[] }>(LOCATION_TASK, async ({ data, error }) => {
   if (error) {
-    if (__DEV__) console.warn('[location-task]', error.message);
+    if (__DEV__) {
+      console.warn('[location-task]', error.message);
+    }
     void getContainer()
       .then((c) => c?.diagnostics.log('task-error', { code: error.code, message: error.message }))
       .catch(() => undefined);

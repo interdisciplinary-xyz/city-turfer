@@ -8,8 +8,12 @@ export interface GeoPoint {
 }
 
 export function geoPoint(lat: number, lon: number): GeoPoint {
-  if (!Number.isFinite(lat) || lat < -90 || lat > 90) throw new DomainError('geo.invalid-latitude', String(lat));
-  if (!Number.isFinite(lon) || lon < -180 || lon > 180) throw new DomainError('geo.invalid-longitude', String(lon));
+  if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
+    throw new DomainError('geo.invalid-latitude', String(lat));
+  }
+  if (!Number.isFinite(lon) || lon < -180 || lon > 180) {
+    throw new DomainError('geo.invalid-longitude', String(lon));
+  }
   return { lat, lon };
 }
 
@@ -36,10 +40,18 @@ export function boundingBoxOf(points: Iterable<GeoPoint>): BoundingBox | null {
     e = -Infinity,
     n = -Infinity;
   for (const p of points) {
-    if (p.lon < w) w = p.lon;
-    if (p.lon > e) e = p.lon;
-    if (p.lat < s) s = p.lat;
-    if (p.lat > n) n = p.lat;
+    if (p.lon < w) {
+      w = p.lon;
+    }
+    if (p.lon > e) {
+      e = p.lon;
+    }
+    if (p.lat < s) {
+      s = p.lat;
+    }
+    if (p.lat > n) {
+      n = p.lat;
+    }
   }
   return Number.isFinite(w) ? [w, s, e, n] : null;
 }

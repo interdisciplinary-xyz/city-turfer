@@ -25,7 +25,9 @@ export function useTurfViewport(
   const [cells, set] = useState<TurfCellView[]>([]);
   const key = view ? `${view.bbox.map((n) => n.toFixed(4)).join(',')}@${view.zoom.toFixed(1)}` : '';
   useEffect(() => {
-    if (!view) return;
+    if (!view) {
+      return;
+    }
     let live = true;
     const id = setTimeout(() => {
       c.territory.viewport.execute(view.bbox, view.zoom, types).then((r) => live && set(r));

@@ -172,13 +172,17 @@ describe('EstimateGapRoutes', () => {
     await t.estimate.execute();
     expect(t.calls).toHaveLength(3);
     const gaps = t.calls.slice(1).map((c, i) => c.at - t.calls[i].at);
-    for (const g of gaps) expect(g).toBeGreaterThanOrEqual(MIN_REQUEST_INTERVAL_MS);
+    for (const g of gaps) {
+      expect(g).toBeGreaterThanOrEqual(MIN_REQUEST_INTERVAL_MS);
+    }
   });
 
   it('keeps going after one activity fails and backs that activity off', async () => {
     let failFor = 'a';
     const t = setup(async (from, to, type) => {
-      if (failFor === 'a' && from.lat < 52.25) throw new Error('router 500');
+      if (failFor === 'a' && from.lat < 52.25) {
+        throw new Error('router 500');
+      }
       return straightish(from, to, type);
     });
     await t.importRun('a', 1, 0);
@@ -204,7 +208,9 @@ describe('EstimateGapRoutes', () => {
   it('stops the whole run on HTTP 429 and honours Retry-After', async () => {
     let limited = true;
     const t = setup(async (from, to, type) => {
-      if (limited) throw new RouterRateLimited(120_000);
+      if (limited) {
+        throw new RouterRateLimited(120_000);
+      }
       return straightish(from, to, type);
     });
     await t.importRun('a');
@@ -222,7 +228,9 @@ describe('EstimateGapRoutes', () => {
   it('stops the run when offline and tries again later without penalising the activity', async () => {
     let offline = true;
     const t = setup(async (from, to, type) => {
-      if (offline) throw new RouterUnreachable();
+      if (offline) {
+        throw new RouterUnreachable();
+      }
       return straightish(from, to, type);
     });
     await t.importRun('a');
@@ -236,7 +244,9 @@ describe('EstimateGapRoutes', () => {
 
   it(`caps a run at ${MAX_REQUESTS_PER_RUN} requests, then cools down`, async () => {
     const t = setup();
-    for (let i = 0; i < MAX_REQUESTS_PER_RUN + 5; i++) await t.importRun(`a${i}`, 1, i * 10_000);
+    for (let i = 0; i < MAX_REQUESTS_PER_RUN + 5; i++) {
+      await t.importRun(`a${i}`, 1, i * 10_000);
+    }
     expect(await t.estimate.execute()).toBe(MAX_REQUESTS_PER_RUN);
     expect(t.calls).toHaveLength(MAX_REQUESTS_PER_RUN);
     expect(await t.estimate.execute()).toBe(0); // cooling down

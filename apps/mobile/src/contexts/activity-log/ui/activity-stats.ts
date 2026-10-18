@@ -42,7 +42,9 @@ export function activityStats(items: readonly ActivityListItem[], now: number, w
     add(byType[a.type], a);
     const ws = weekStartOf(a.startedAt);
     const bar = weeks.find((w) => w.weekStart === ws);
-    if (bar) add(bar, a);
+    if (bar) {
+      add(bar, a);
+    }
   }
   return { thisWeek: weeks[weeks.length - 1], weeks, byType, allTime };
 }

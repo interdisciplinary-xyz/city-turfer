@@ -30,7 +30,9 @@ export const backgroundActivitySession = {
   isLowPowerMode: (): boolean | null => (native ? native.isLowPowerMode() : null),
   /** Fixes from CLLocationUpdate.liveUpdates; no-op without the native stream. */
   addLocationListener(listener: (locations: LocationObject[]) => void): EventSubscription | null {
-    if (!native?.isStreaming) return null; // older binary: module without the stream
+    if (!native?.isStreaming) {
+      return null;
+    } // older binary: module without the stream
     return native.addListener('onLocations', (e) => listener(e.locations ?? []));
   },
 };

@@ -19,7 +19,9 @@ module.exports = function withSceneLifecycle(config) {
   });
 
   return withAppDelegate(config, (cfg) => {
-    if (cfg.modResults.language !== 'swift') throw new Error('with-scene-lifecycle expects a Swift AppDelegate');
+    if (cfg.modResults.language !== 'swift') {
+      throw new Error('with-scene-lifecycle expects a Swift AppDelegate');
+    }
     let src = cfg.modResults.contents;
     src = src.replace(
       /class AppDelegate: ExpoAppDelegate \{/,

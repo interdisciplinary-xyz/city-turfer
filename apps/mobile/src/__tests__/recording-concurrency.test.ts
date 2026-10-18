@@ -33,7 +33,9 @@ function slowable(db: Database) {
     transaction: async (work) => {
       const ms = delayNextTxMs;
       delayNextTxMs = 0;
-      if (ms) await new Promise((r) => setTimeout(r, ms));
+      if (ms) {
+        await new Promise((r) => setTimeout(r, ms));
+      }
       return db.transaction(work);
     },
   };
@@ -74,7 +76,9 @@ describe('Recording commands are serialized per container', () => {
   it('a deferred ingest overlapping Finish cannot revive the session; the activity is recorded', async () => {
     const t = await setup();
     const started = await t.c.recording.start.execute('run');
-    if (started.kind !== 'started') throw new Error(started.kind);
+    if (started.kind !== 'started') {
+      throw new Error(started.kind);
+    }
     const id = started.snapshot.sessionId;
     await t.c.recording.ingestFixes.execute(fixes(0, 10));
     t.advance(20_000);
@@ -104,7 +108,9 @@ describe('Recording commands are serialized per container', () => {
   it('a late ingest after Finish finds no active session and stops the orphaned tracker', async () => {
     const t = await setup();
     const started = await t.c.recording.start.execute('run');
-    if (started.kind !== 'started') throw new Error(started.kind);
+    if (started.kind !== 'started') {
+      throw new Error(started.kind);
+    }
     await t.c.recording.ingestFixes.execute(fixes(0, 10));
 
     const finish = t.c.recording.finish.execute();
@@ -119,7 +125,9 @@ describe('Recording commands are serialized per container', () => {
   it('a deferred ingest overlapping Pause leaves the session paused', async () => {
     const t = await setup();
     const started = await t.c.recording.start.execute('run');
-    if (started.kind !== 'started') throw new Error(started.kind);
+    if (started.kind !== 'started') {
+      throw new Error(started.kind);
+    }
     await t.c.recording.ingestFixes.execute(fixes(0, 5));
 
     t.delayNextTransaction(30);
@@ -136,7 +144,9 @@ describe('Recording commands are serialized per container', () => {
   it('a deferred ingest overlapping Discard leaves the session discarded with no points', async () => {
     const t = await setup();
     const started = await t.c.recording.start.execute('run');
-    if (started.kind !== 'started') throw new Error(started.kind);
+    if (started.kind !== 'started') {
+      throw new Error(started.kind);
+    }
     const id = started.snapshot.sessionId;
     await t.c.recording.ingestFixes.execute(fixes(0, 5));
 

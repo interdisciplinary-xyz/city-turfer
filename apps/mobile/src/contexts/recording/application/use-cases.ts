@@ -37,18 +37,26 @@ export class StartRecording {
   constructor(private readonly d: RecordingDeps) {}
   async execute(type: ActivityType): Promise<StartResult> {
     const active = await this.d.sessions.getActive();
-    if (active) return { kind: 'already-active', snapshot: active.snapshot(this.d.clock.now()) };
+    if (active) {
+      return { kind: 'already-active', snapshot: active.snapshot(this.d.clock.now()) };
+    }
 
     // System dialogs stay outside the command queue: they can be open for a long time.
     const permission = await this.d.permissions.ensureForeground();
-    if (permission === 'denied') return { kind: 'permission-denied' };
-    if (permission === 'services-off') return { kind: 'location-services-off' };
+    if (permission === 'denied') {
+      return { kind: 'permission-denied' };
+    }
+    if (permission === 'services-off') {
+      return { kind: 'location-services-off' };
+    }
     await this.d.permissions.requestBackground();
 
     return this.d.commands.run(async (): Promise<StartResult> => {
       const now = this.d.clock.now();
       const raced = await this.d.sessions.getActive(); // e.g. a double tap on Start
-      if (raced) return { kind: 'already-active', snapshot: raced.snapshot(now) };
+      if (raced) {
+        return { kind: 'already-active', snapshot: raced.snapshot(now) };
+      }
       const session = RecordingSession.start(this.d.ids.next(), type, now);
       await this.d.sessions.save(session, []);
       try {
@@ -72,7 +80,9 @@ export class PauseRecording {
   }
   private async run(): Promise<LiveSnapshot | null> {
     const session = await this.d.sessions.getActive();
-    if (!session) return null;
+    if (!session) {
+      return null;
+    }
     session.pause(this.d.clock.now());
     await this.d.sessions.save(session, []);
     const snap = session.snapshot(this.d.clock.now());
@@ -88,10 +98,14 @@ export class ResumeRecording {
   }
   private async run(): Promise<LiveSnapshot | null> {
     const session = await this.d.sessions.getActive();
-    if (!session) return null;
+    if (!session) {
+      return null;
+    }
     session.resume(this.d.clock.now());
     await this.d.sessions.save(session, []);
-    if (!(await this.d.tracker.isRunning())) await this.d.tracker.start(session.profile);
+    if (!(await this.d.tracker.isRunning())) {
+      await this.d.tracker.start(session.profile);
+    }
     const snap = session.snapshot(this.d.clock.now());
     this.d.notifier.publish(snap);
     return snap;
@@ -146,11 +160,15 @@ export class FinishRecording {
   }
   private async run(): Promise<FinishResult> {
     const session = await this.d.sessions.getActive();
-    if (!session) return { kind: 'no-active-session' };
+    if (!session) {
+      return { kind: 'no-active-session' };
+    }
     try {
       session.finish(this.d.clock.now());
     } catch (e) {
-      if (e instanceof DomainError && e.code === 'session.too-short') return { kind: 'too-short' };
+      if (e instanceof DomainError && e.code === 'session.too-short') {
+        return { kind: 'too-short' };
+      }
       throw e;
     }
     await this.d.sessions.save(session, []);
@@ -235,7 +253,9 @@ export class FinishedTrackQuery {
   constructor(private readonly d: Pick<RecordingDeps, 'sessions'>) {}
   async execute(sessionId: string): Promise<TrackPoint[] | null> {
     const session = await this.d.sessions.get(sessionId);
-    if (!session || session.status !== 'finished') return null;
+    if (!session || session.status !== 'finished') {
+      return null;
+    }
     return this.d.sessions.pointsOf(sessionId);
   }
 }

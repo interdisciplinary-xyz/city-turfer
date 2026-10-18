@@ -1,11 +1,10 @@
 import { Camera, GeoJSONSource, Layer, Map, UserLocation } from '@maplibre/maplibre-react-native';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useColorScheme } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ACTIVITY_TYPES, TYPE_GLYPH, TYPE_LABEL } from '@/constants/activity';
-import { ON_TIER, ON_TYPE_COLOR, TIER_COLOR, TYPE_COLOR } from '@/constants/colors';
+import { ON_TYPE_COLOR, TYPE_COLOR } from '@/constants/colors';
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from '@/constants/map';
 import { type ActivityType } from '@/shared-kernel';
 import { Button, Stat } from '@/ui-kit/components';
@@ -13,16 +12,8 @@ import { formatDistance, formatDuration, formatPaceOrSpeed, formatSpeedNow } fro
 import { usePalette } from '@/ui-kit/theme';
 import { trackWithGaps } from '@/ui-kit/track-geometry';
 
+import { HOLD_MS, STATUS_BANNER } from './record-view.constants';
 import { useRecording } from './use-recording';
-
-/** How long the Stop button must be held before the recording finishes. */
-const HOLD_MS = 900;
-
-const STATUS_BANNER: Record<string, { text: string; color: string; textColor: string }> = {
-  acquiring: { text: 'Waiting for GPS…', color: '#5C6577', textColor: '#FFFFFF' },
-  paused: { text: 'Paused', color: TIER_COLOR.strong, textColor: ON_TIER.strong },
-  autoPaused: { text: 'Auto-paused — start moving to resume', color: TIER_COLOR.faint, textColor: ON_TIER.faint },
-};
 
 export function RecordView({ onFinished }: { onFinished: (activityId: string) => void }) {
   const p = usePalette();
@@ -49,7 +40,9 @@ export function RecordView({ onFinished }: { onFinished: (activityId: string) =>
       if (r.kind === 'permission-denied') {
         Alert.alert('Location needed', 'Allow location access in Settings so CityTurfer can record your route.');
       }
-      if (r.kind === 'location-services-off') Alert.alert('Location is off', 'Turn on Location Services to record.');
+      if (r.kind === 'location-services-off') {
+        Alert.alert('Location is off', 'Turn on Location Services to record.');
+      }
       setFollowing(true);
     } catch (e) {
       Alert.alert('Could not start', String((e as Error).message ?? e));
@@ -62,8 +55,9 @@ export function RecordView({ onFinished }: { onFinished: (activityId: string) =>
     setBusy(true);
     try {
       const r = await finish();
-      if (r.kind === 'finished') onFinished(r.sessionId);
-      else if (r.kind === 'too-short') {
+      if (r.kind === 'finished') {
+        onFinished(r.sessionId);
+      } else if (r.kind === 'too-short') {
         Alert.alert('Too short to save', 'Move a little further, or discard this recording.', [
           { text: 'Keep recording', style: 'cancel' },
           { text: 'Discard', style: 'destructive', onPress: () => void discard() },
@@ -186,7 +180,9 @@ export function RecordView({ onFinished }: { onFinished: (activityId: string) =>
                 accessibilityHint='Press and hold to finish. With a screen reader, double-tap to choose.'
                 accessibilityActions={[{ name: 'activate', label: 'Finish recording' }]}
                 onAccessibilityAction={(e) => {
-                  if (e.nativeEvent.actionName === 'activate') confirmFinish();
+                  if (e.nativeEvent.actionName === 'activate') {
+                    confirmFinish();
+                  }
                 }}
                 delayLongPress={HOLD_MS}
                 onPressIn={() => setHolding(true)}

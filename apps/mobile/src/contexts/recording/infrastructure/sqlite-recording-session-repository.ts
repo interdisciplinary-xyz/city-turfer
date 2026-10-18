@@ -37,7 +37,9 @@ export class SqliteRecordingSessionRepository implements RecordingSessionReposit
     const now = Date.now();
     await this.db.transaction(async (tx) => {
       const stored = await tx.first<{ status: SessionStatus }>('SELECT status FROM rec_sessions WHERE id = ?', [s.id]);
-      if (stored) session.assertMayReplace(stored.status); // throws: rolls back, nothing is written
+      if (stored) {
+        session.assertMayReplace(stored.status);
+      } // throws: rolls back, nothing is written
       await tx.run(
         `INSERT INTO rec_sessions (id, type, status, state, started_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)
          ON CONFLICT(id) DO UPDATE SET status = excluded.status, state = excluded.state, updated_at = excluded.updated_at`,
@@ -50,7 +52,9 @@ export class SqliteRecordingSessionRepository implements RecordingSessionReposit
         newPoints.map((p, i) => [s.id, firstSeq + i, p.segment, p.t, p.lat, p.lon, p.alt, p.accuracy, p.speed])
       );
       // A discarded session's track is deleted with the state change, never left behind on a crash.
-      if (s.status === 'discarded') await tx.run('DELETE FROM rec_track_points WHERE session_id = ?', [s.id]);
+      if (s.status === 'discarded') {
+        await tx.run('DELETE FROM rec_track_points WHERE session_id = ?', [s.id]);
+      }
       await appendToOutbox(tx, events, now);
     });
   }

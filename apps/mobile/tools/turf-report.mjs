@@ -57,4 +57,6 @@ console.log(`activities without a claim: ${unclaimed}; claims without an activit
 const pending = db.prepare('SELECT type, COUNT(*) AS n FROM sys_outbox WHERE processed_at IS NULL GROUP BY type').all();
 console.log(`pending events: ${pending.length ? pending.map((p) => `${p.type}×${p.n}`).join(', ') : 'none'}`);
 const jobs = cols.has('estimated_m') ? db.prepare('SELECT name, result FROM sys_jobs').all() : [];
-for (const j of jobs) console.log(`job ${j.name}: ${j.result}`);
+for (const j of jobs) {
+  console.log(`job ${j.name}: ${j.result}`);
+}

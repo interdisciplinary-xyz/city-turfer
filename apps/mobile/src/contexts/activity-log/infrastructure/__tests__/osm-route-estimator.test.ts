@@ -44,7 +44,9 @@ describe('OsmRouteEstimator', () => {
       'https://routing.openstreetmap.de/routed-bike/route/v1/driving/21.0122,52.2297;21.0085,52.2352?overview=full&geometries=geojson',
     ]);
     // Nothing more precise than 4 decimals ever leaves the phone.
-    for (const c of calls) expect(c.url).not.toMatch(/\d\.\d{5}/);
+    for (const c of calls) {
+      expect(c.url).not.toMatch(/\d\.\d{5}/);
+    }
   });
 
   it('identifies the app as the FOSSGIS usage policy asks, without personal data', async () => {

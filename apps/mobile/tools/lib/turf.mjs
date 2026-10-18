@@ -7,9 +7,15 @@ export const TIER_BOUNDS = { glowing: 0.33, strong: 0.66, blazing: 0.9 };
 export const strengthOf = (visits, k = TURF_SATURATION_K) => 1 - Math.exp(-visits / k);
 
 export function tierOf(strength) {
-  if (strength < TIER_BOUNDS.glowing) return 'faint';
-  if (strength < TIER_BOUNDS.strong) return 'glowing';
-  if (strength < TIER_BOUNDS.blazing) return 'strong';
+  if (strength < TIER_BOUNDS.glowing) {
+    return 'faint';
+  }
+  if (strength < TIER_BOUNDS.strong) {
+    return 'glowing';
+  }
+  if (strength < TIER_BOUNDS.blazing) {
+    return 'strong';
+  }
   return 'blazing';
 }
 
