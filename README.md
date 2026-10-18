@@ -162,7 +162,7 @@ Everyday commands from the root `package.json` (they run the app's scripts throu
 | `test`                      | `arch` + Jest + tool tests                                           |
 | `test:e2e`                  | Maestro suite on the booted iOS Simulator (`apps/mobile/e2e/run.sh`) |
 | `build`                     | Web static export (`apps/web/out`)                                   |
-| `web:dev`                   | Landing page dev server                                              |
+| `web:dev`                   | Landing page at `https://cityturfer.local` (portless + `next dev`)   |
 | `standard` / `standard:fix` | Prettier + ESLint, check or apply                                    |
 | `ci:quality`                | Full local gate: `standard`, `test:types`, `test:arch`, `test:unit`  |
 | `audit:docs`                | Docs audit: dead paths, broken links, frontmatter, probes            |

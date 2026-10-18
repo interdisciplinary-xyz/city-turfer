@@ -103,7 +103,7 @@ pnpm ios | pnpm android          # build and install a dev build (expo run:*)
 pnpm run typecheck               # tsc in every workspace (turbo)
 pnpm test                        # dependency rules (depcruise) + Jest + tool tests (turbo)
 pnpm run build                   # web static export (apps/web/out) via turbo
-pnpm run web:dev                 # landing page dev server (next dev)
+pnpm run web:dev                 # landing page at https://cityturfer.local (portless + next dev)
 pnpm -C apps/mobile exec expo install <pkg>                     # add a native dependency to the app
 # Local quirks: watchman is disabled (broken Homebrew install) in jest + metro config; pnpm with
 #   node-linker=hoisted (.npmrc). iOS needs Xcode 26.4+ (Expo SDK 57). Xcode's SPM hangs downloading
