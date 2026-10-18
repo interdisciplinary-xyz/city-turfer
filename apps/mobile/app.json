@@ -68,6 +68,14 @@
             "backgroundColor": "#0B0D12"
           }
         }
+      ],
+      [
+        "@kingstinct/react-native-healthkit",
+        {
+          "NSHealthShareUsageDescription": "CityTurfer imports your walks, runs, hikes and rides with their routes, so they count towards your turf.",
+          "NSHealthUpdateUsageDescription": "CityTurfer saves the walks, runs and rides you record to Apple Health as workouts with their routes.",
+          "background": false
+        }
       ]
     ],
     "runtimeVersion": {
