@@ -1,6 +1,6 @@
 {
   "name": "city-turfer",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "main": "index.ts",
   "dependencies": {
     "@maplibre/maplibre-react-native": "^11.5.0",
