@@ -3,19 +3,19 @@ name: route-storage
 description:
   TurfTrack's local-first persistence with expo-sqlite — schema for activities and track points,
   migrations, repository functions, write patterns from the background task, query performance for
-  long routes, deletion, and GPX 1.1 export (planned, not built). Use when touching src/platform/
-  (database, migrations, outbox) or a context's sqlite-*-repository.ts, adding a column, changing
-  what's stored per point, implementing history, delete, export or import, or debugging "my activity
-  disappeared".
+  long routes, deletion, and GPX 1.1 export (planned, not built). Use when touching
+  apps/mobile/src/platform/ (database, migrations, outbox) or a context's sqlite-*-repository.ts,
+  adding a column, changing what's stored per point, implementing history, delete, export or import,
+  or debugging "my activity disappeared".
 ---
 
 > **DDD mapping** (see `docs/poc-plan.md` §5): tables are owned per context — Recording:
 > `rec_sessions`, `rec_track_points`; Activity Log: `log_activities`, `log_track_points`; platform:
 > `sys_schema_version`, `sys_outbox`. Repositories implement domain ports in each context's
 > `infrastructure/` (`sqlite-*-repository.ts`); connection, migrations and outbox are in
-> `src/platform/`. **The live schema is `src/platform/migrations.ts`**; the single-table schema
-> below is the original v1 column reference, not what ships. GPX export is not built yet; it belongs
-> in Activity Log's `infrastructure/`.
+> `apps/mobile/src/platform/`. **The live schema is `apps/mobile/src/platform/migrations.ts`**; the
+> single-table schema below is the original v1 column reference, not what ships. GPX export is not
+> built yet; it belongs in Activity Log's `infrastructure/`.
 
 # Route storage
 
@@ -72,19 +72,20 @@ CREATE TABLE points (
 - Store **accepted** points only. Rejected fixes go nowhere, except a `tracking_log` table in dev
   builds.
 
-## Migrations (src/platform/migrations.ts)
+## Migrations (apps/mobile/src/platform/migrations.ts)
 
 An ordered, append-only array of `{ version, sql }`. Each runs in a transaction, and
 `sys_schema_version` is bumped in the same transaction. `migrate(db)` runs in `getContainer()`
-(`src/composition-root.ts`) before anything queries the database, so the UI and the headless
-background task both get a migrated database. **Never edit a shipped migration.** Add a new one.
+(`apps/mobile/src/composition-root.ts`) before anything queries the database, so the UI and the
+headless background task both get a migrated database. **Never edit a shipped migration.** Add a new
+one.
 
-## Repositories (`src/contexts/*/infrastructure/sqlite-*-repository.ts`)
+## Repositories (`apps/mobile/src/contexts/*/infrastructure/sqlite-*-repository.ts`)
 
 Typed functions only; screens never write SQL. Minimum set: `createActivity(type)`,
 `getActiveActivity()`, `appendPoints(activityId, points[])`, `setStatus(id, status)`,
-`bumpSegment(id)`, `finishActivity(id)` (recomputes summary with `src/shared-kernel` and writes
-bbox + preview), `listActivities({ limit, before })` (keyset pagination on `started_at`),
+`bumpSegment(id)`, `finishActivity(id)` (recomputes summary with `apps/mobile/src/shared-kernel` and
+writes bbox + preview), `listActivities({ limit, before })` (keyset pagination on `started_at`),
 `getActivity(id)`, `getPoints(id)`, `renameActivity`, `deleteActivity(id)`.
 
 - `listActivities` must never select from `points`: the list reads only summary columns and
@@ -102,7 +103,7 @@ decimals), `<ele>` and `<time>` in ISO 8601 UTC. Escape XML in the name. Write i
 `Sharing.shareAsync(uri, { mimeType: 'application/gpx+xml', UTI: 'com.topografix.gpx' })`.
 
 Round-trip test: export a fixture-backed activity, parse it with `parseGpx` from
-`tools/lib/geo.mjs`, and assert the point count and distance match.
+`apps/mobile/tools/lib/geo.mjs`, and assert the point count and distance match.
 
 ## Privacy
 

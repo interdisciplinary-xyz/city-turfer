@@ -3,11 +3,11 @@
 // Conventions: docs/process/docs-conventions.md. Plain Node, no dependencies
 // beyond Prettier (used only to format the generated index).
 //
-//   npm run audit:docs                       signals for every doc
-//   npm run audit:docs -- --doc <path>       one file only
-//   npm run audit:docs -- --fix-probes       rewrite every probe from code
-//   npm run audit:docs -- --write-index      regenerate docs/INDEX.md from frontmatter
-//   npm run audit:docs -- --strict           exit 1 on any error (for CI, later)
+//   pnpm run audit:docs                       signals for every doc
+//   pnpm run audit:docs -- --doc <path>       one file only
+//   pnpm run audit:docs -- --fix-probes       rewrite every probe from code
+//   pnpm run audit:docs -- --write-index      regenerate docs/INDEX.md from frontmatter
+//   pnpm run audit:docs -- --strict           exit 1 on any error (for CI, later)
 //
 // Signals, never verdicts: deciding whether a doc is fixed, demoted or deleted is
 // the /audit-docs command's job.
@@ -78,18 +78,21 @@ const read = (p) => readFileSync(join(ROOT, p), 'utf8');
 const countMatches = (text, re) => (text.match(re) ?? []).length;
 
 export const PROBES = {
-  /** Bounded contexts: one directory per context in src/contexts/. */
-  contexts: () => readdirSync(join(ROOT, 'src/contexts')).filter((d) => isDir(join('src/contexts', d))).length,
+  /** Bounded contexts: one directory per context in apps/mobile/src/contexts/. */
+  contexts: () =>
+    readdirSync(join(ROOT, 'apps/mobile/src/contexts')).filter((d) => isDir(join('apps/mobile/src/contexts', d)))
+      .length,
   /** Achievements: one `id: '…'` per definition in the achievements list. */
-  achievements: () => countMatches(read('src/contexts/achievements/domain/achievements.ts'), /^\s+id: '[a-z0-9-]+',/gm),
-  /** Maestro flows run by the suite: entries of flowsOrder in e2e/config.yaml. */
+  achievements: () =>
+    countMatches(read('apps/mobile/src/contexts/achievements/domain/achievements.ts'), /^\s+id: '[a-z0-9-]+',/gm),
+  /** Maestro flows run by the suite: entries of flowsOrder in apps/mobile/e2e/config.yaml. */
   'e2e-flows': () => {
-    const text = read('e2e/config.yaml');
+    const text = read('apps/mobile/e2e/config.yaml');
     const block = text.slice(text.indexOf('flowsOrder:'));
     return countMatches(block, /^\s+- [\w-]+/gm);
   },
-  /** SQLite migrations: `version: n` entries in src/platform/migrations.ts. */
-  migrations: () => countMatches(read('src/platform/migrations.ts'), /^\s+version: \d+,/gm),
+  /** SQLite migrations: `version: n` entries in apps/mobile/src/platform/migrations.ts. */
+  migrations: () => countMatches(read('apps/mobile/src/platform/migrations.ts'), /^\s+version: \d+,/gm),
   /** Tracked docs under docs/. */
   docs: () => listFiles('docs').filter((f) => f.endsWith('.md')).length,
 };
@@ -112,13 +115,20 @@ function listFiles(dir) {
   const out = [];
   const walk = (d) => {
     for (const name of readdirSync(join(ROOT, d))) {
-      if (name === 'node_modules' || name === '.git') continue;
+      if (name === 'node_modules' || name === '.git') {
+        continue;
+      }
       const p = join(d, name);
-      if (isDir(p)) walk(p);
-      else out.push(p);
+      if (isDir(p)) {
+        walk(p);
+      } else {
+        out.push(p);
+      }
     }
   };
-  if (isDir(dir)) walk(dir);
+  if (isDir(dir)) {
+    walk(dir);
+  }
   return out.sort();
 }
 
@@ -141,18 +151,27 @@ function scannedFiles() {
  * indented continuation lines Prettier writes when it wraps a long value.
  */
 export function parseFrontmatter(text) {
-  if (!text.startsWith('---\n')) return null;
+  if (!text.startsWith('---\n')) {
+    return null;
+  }
   const end = text.indexOf('\n---', 4);
-  if (end < 0) return null;
+  if (end < 0) {
+    return null;
+  }
   const data = {};
   const lines = [];
   for (const line of text.slice(4, end).split('\n')) {
-    if (/^\s+\S/.test(line) && lines.length) lines[lines.length - 1] += ` ${line.trim()}`;
-    else lines.push(line);
+    if (/^\s+\S/.test(line) && lines.length) {
+      lines[lines.length - 1] += ` ${line.trim()}`;
+    } else {
+      lines.push(line);
+    }
   }
   for (const line of lines) {
     const m = line.match(/^([\w-]+):\s*(.*?)(\s+#.*)?$/);
-    if (!m) continue;
+    if (!m) {
+      continue;
+    }
     const [, key, raw] = m;
     if (raw.startsWith('[') && raw.endsWith(']')) {
       data[key] = raw
@@ -160,7 +179,9 @@ export function parseFrontmatter(text) {
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean);
-    } else data[key] = raw.replace(/^['"]|['"]$/g, '');
+    } else {
+      data[key] = raw.replace(/^['"]|['"]$/g, '');
+    }
   }
   return data;
 }
@@ -174,7 +195,9 @@ function proseLines(text) {
       fence = !fence;
       return;
     }
-    if (!fence) out.push([i + 1, line]);
+    if (!fence) {
+      out.push([i + 1, line]);
+    }
   });
   return out;
 }
@@ -194,7 +217,9 @@ function anchorsOf(file) {
   const anchors = new Set();
   for (const [, line] of proseLines(readFileSync(join(ROOT, file), 'utf8'))) {
     const m = line.match(/^#{1,6}\s+(.*?)\s*#*$/);
-    if (!m) continue;
+    if (!m) {
+      continue;
+    }
     const base = slug(m[1].replace(/`/g, ''));
     const n = seen.get(base) ?? 0;
     seen.set(base, n + 1);
@@ -210,9 +235,9 @@ function anchorsOf(file) {
 const findings = [];
 const add = (severity, file, line, kind, message) => findings.push({ severity, file, line, kind, message });
 
-const PATH_PREFIXES = ['src/', 'tools/', 'docs/', 'e2e/', 'modules/', 'plugins/', 'assets/', '.claude/', '.github/'];
-const STALE_PREFIXES = ['app/', 'scripts/']; // checked too: common stale roots in this repo's history
-const CONTEXTS = isDir('src/contexts') ? readdirSync(join(ROOT, 'src/contexts')) : [];
+const PATH_PREFIXES = ['apps/', 'packages/', 'tools/', 'docs/', '.claude/', '.github/'];
+const STALE_PREFIXES = ['src/', 'e2e/', 'modules/', 'plugins/', 'assets/', 'app/', 'scripts/']; // pre-monorepo roots (now under apps/mobile/) and older stale roots
+const CONTEXTS = isDir('apps/mobile/src/contexts') ? readdirSync(join(ROOT, 'apps/mobile/src/contexts')) : [];
 const EXTENSIONS = ['', '.ts', '.tsx', '.js', '.mjs', '.cjs', '.md', '.json'];
 
 function pathExists(p) {
@@ -235,25 +260,39 @@ function isGitIgnored(p) {
 
 /** Turn an inline-code token into a repo path to check, or null if it isn't one. */
 export function candidatePath(token) {
-  if (/\s|<|>|\$|^https?:|@/.test(token)) return null;
+  if (/\s|<|>|\$|^https?:|@/.test(token)) {
+    return null;
+  }
   let p = token.replace(/[…]+$/, '').replace(/(#L\d+|:\d+(-\d+)?)$/, '');
   const glob = p.search(/[*{?[]/);
-  if (glob >= 0) p = p.slice(0, glob);
-  if (!p.includes('/')) return null;
+  if (glob >= 0) {
+    p = p.slice(0, glob);
+  }
+  if (!p.includes('/')) {
+    return null;
+  }
   const first = p.split('/')[0];
-  if ([...PATH_PREFIXES, ...STALE_PREFIXES].some((pre) => p.startsWith(pre))) return p;
-  if (CONTEXTS.includes(first)) return `src/contexts/${p}`; // context-relative, e.g. recording/domain/x.ts
+  if ([...PATH_PREFIXES, ...STALE_PREFIXES].some((pre) => p.startsWith(pre))) {
+    return p;
+  }
+  if (CONTEXTS.includes(first)) {
+    return `apps/mobile/src/contexts/${p}`;
+  } // context-relative, e.g. recording/domain/x.ts
   return null;
 }
 
 function checkFrontmatter(file, text, fm) {
-  if (!file.startsWith('docs/')) return;
+  if (!file.startsWith('docs/')) {
+    return;
+  }
   if (!fm) {
     add('error', file, 1, 'frontmatter', 'missing frontmatter (status, verified, owner, scope, summary)');
     return;
   }
   for (const key of REQUIRED_KEYS) {
-    if (fm[key] === undefined || fm[key] === '') add('error', file, 1, 'frontmatter', `missing \`${key}:\``);
+    if (fm[key] === undefined || fm[key] === '') {
+      add('error', file, 1, 'frontmatter', `missing \`${key}:\``);
+    }
   }
   if (fm.status && !(fm.status in STATUSES)) {
     add('error', file, 1, 'frontmatter', `status \`${fm.status}\` is not one of ${Object.keys(STATUSES).join(' | ')}`);
@@ -262,13 +301,17 @@ function checkFrontmatter(file, text, fm) {
     const d = new Date(`${fm.verified}T00:00:00Z`);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fm.verified) || Number.isNaN(d.getTime())) {
       add('error', file, 1, 'frontmatter', `verified \`${fm.verified}\` is not a YYYY-MM-DD date`);
-    } else if (d.getTime() > Date.now()) add('error', file, 1, 'frontmatter', 'verified date is in the future');
+    } else if (d.getTime() > Date.now()) {
+      add('error', file, 1, 'frontmatter', 'verified date is in the future');
+    }
   }
   if (fm.scope !== undefined && !Array.isArray(fm.scope)) {
     add('error', file, 1, 'frontmatter', 'scope must be a list: `scope: [path, path]`');
   } else if (Array.isArray(fm.scope)) {
     for (const p of fm.scope) {
-      if (!pathExists(p.replace(/[*{].*$/, ''))) add('warn', file, 1, 'scope', `scope path \`${p}\` does not exist`);
+      if (!pathExists(p.replace(/[*{].*$/, ''))) {
+        add('warn', file, 1, 'scope', `scope path \`${p}\` does not exist`);
+      }
     }
   }
   if (fm.status === 'superseded' && !/\.md|\]\(/.test(fm.summary ?? '')) {
@@ -277,7 +320,9 @@ function checkFrontmatter(file, text, fm) {
 }
 
 function checkPlacement(file) {
-  if (!file.startsWith('docs/')) return;
+  if (!file.startsWith('docs/')) {
+    return;
+  }
   const name = basename(file);
   if (!CONVENTIONAL_NAMES.has(name) && !/^[a-z0-9]+([.-][a-z0-9]+)*\.md$/.test(name)) {
     add('warn', file, 1, 'filename', 'not kebab-case (CityTurfer uses kebab-case for every file)');
@@ -288,7 +333,9 @@ function checkPlacement(file) {
 }
 
 function checkReviewDebt(file, fm) {
-  if (!fm?.verified || !Array.isArray(fm.scope) || fm.scope.length === 0) return;
+  if (!fm?.verified || !Array.isArray(fm.scope) || fm.scope.length === 0) {
+    return;
+  }
   try {
     const out = execFileSync(
       'git',
@@ -315,10 +362,15 @@ function checkPathsAndLinks(file, text, historical) {
   for (const [n, line] of proseLines(text)) {
     for (const m of line.matchAll(/`([^`\n]+)`/g)) {
       const p = candidatePath(m[1]);
-      if (!p) continue;
+      if (!p) {
+        continue;
+      }
       if (PLANNED_PATHS.has(p)) {
-        if (pathExists(p)) add('warn', file, n, 'planned-path', `\`${m[1]}\` exists now: drop it from PLANNED_PATHS`);
-        else add('info', file, n, 'planned-path', `\`${m[1]}\` is planned, not written yet`);
+        if (pathExists(p)) {
+          add('warn', file, n, 'planned-path', `\`${m[1]}\` exists now: drop it from PLANNED_PATHS`);
+        } else {
+          add('info', file, n, 'planned-path', `\`${m[1]}\` is planned, not written yet`);
+        }
       } else if (!pathExists(p) && !isGitIgnored(p)) {
         add(deadSeverity, file, n, 'dead-path', `\`${m[1]}\` does not exist`);
       }
@@ -326,7 +378,9 @@ function checkPathsAndLinks(file, text, historical) {
     const links = [...line.matchAll(/\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g), ...line.matchAll(/^\[[^\]]+\]:\s+(\S+)/g)];
     for (const m of links) {
       const target = m[1];
-      if (/^(https?:|mailto:|tel:)/.test(target)) continue;
+      if (/^(https?:|mailto:|tel:)/.test(target)) {
+        continue;
+      }
       const [pathPart, anchor] = target.split('#');
       const resolved = pathPart ? relative(ROOT, resolve(ROOT, dirname(file), decodeURI(pathPart))) : file;
       if (pathPart && !existsSync(join(ROOT, resolved))) {
@@ -383,12 +437,14 @@ function buildIndexBody() {
   const groups = new Map();
   for (const f of docs) {
     const [folder] = sectionOf(f);
-    if (!groups.has(folder)) groups.set(folder, []);
+    if (!groups.has(folder)) {
+      groups.set(folder, []);
+    }
     groups.get(folder).push(f);
   }
   const order = [...SECTIONS.map(([folder]) => folder), ...[...groups.keys()].sort()];
   const lines = [
-    '_Generated by `npm run audit:docs -- --write-index`. Do not hand-edit: change the doc’s frontmatter and re-run._',
+    '_Generated by `pnpm run audit:docs -- --write-index`. Do not hand-edit: change the doc’s frontmatter and re-run._',
     '',
     `Status: ${Object.entries(STATUSES)
       .map(([s, icon]) => `${icon} ${s}`)
@@ -396,7 +452,9 @@ function buildIndexBody() {
   ];
   for (const folder of [...new Set(order)]) {
     const files = groups.get(folder);
-    if (!files) continue;
+    if (!files) {
+      continue;
+    }
     const [, heading, about] = SECTIONS.find(([f]) => f === folder) ?? [folder, folder, ''];
     lines.push('', `## ${heading}`, '', `\`${folder}/\`${about ? ` — ${about}.` : ''}`, '');
     for (const f of files) {
@@ -449,8 +507,14 @@ async function main() {
   const files = scannedFiles();
   const touched = [];
   if (flag('--fix-probes')) {
-    for (const f of files) if (fixProbes(f, read(f))) touched.push(f);
-    for (const f of touched) writeFileSync(join(ROOT, f), await format(f, read(f)));
+    for (const f of files) {
+      if (fixProbes(f, read(f))) {
+        touched.push(f);
+      }
+    }
+    for (const f of touched) {
+      writeFileSync(join(ROOT, f), await format(f, read(f)));
+    }
   }
   if (flag('--write-index')) {
     writeFileSync(join(ROOT, INDEX), await renderIndex());
@@ -467,19 +531,25 @@ async function main() {
     checkProbes(f, text);
   }
   if (!docFilter && (!existsSync(join(ROOT, INDEX)) || read(INDEX) !== (await renderIndex()))) {
-    add('warn', INDEX, 1, 'index', 'out of date: run `npm run audit:docs -- --write-index`');
+    add('warn', INDEX, 1, 'index', 'out of date: run `pnpm run audit:docs -- --write-index`');
   }
 
-  for (const f of touched) console.log(`wrote ${f}`);
+  for (const f of touched) {
+    console.log(`wrote ${f}`);
+  }
   const order = { error: 0, warn: 1, info: 2 };
   findings.sort((a, b) => order[a.severity] - order[b.severity] || a.file.localeCompare(b.file) || a.line - b.line);
   const label = { error: 'ERROR', warn: 'WARN ', info: 'info ' };
-  for (const x of findings) console.log(`${label[x.severity]} ${x.file}:${x.line}  [${x.kind}] ${x.message}`);
+  for (const x of findings) {
+    console.log(`${label[x.severity]} ${x.file}:${x.line}  [${x.kind}] ${x.message}`);
+  }
   const count = (s) => findings.filter((x) => x.severity === s).length;
   console.log(
     `\n${files.length} files scanned · ${count('error')} errors · ${count('warn')} warnings · ${count('info')} info`
   );
-  if (flag('--strict') && count('error') > 0) process.exit(1);
+  if (flag('--strict') && count('error') > 0) {
+    process.exit(1);
+  }
 }
 
 await main();

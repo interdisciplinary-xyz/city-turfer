@@ -1,6 +1,6 @@
 ---
 description:
-  Audit the docs for rot — run npm run audit:docs, verify the load-bearing claims against code,
+  Audit the docs for rot — run pnpm run audit:docs, verify the load-bearing claims against code,
   report findings and propose fixes (fix, demote, archive or delete)
 allowed-tools: Bash, Read, Edit, Write, Grep, Glob
 ---
@@ -15,11 +15,12 @@ Scope: `$ARGUMENTS` if given (a path, a folder or a topic), otherwise `docs/`, `
 
 ## Steps
 
-1. **Signals.** Run `npm run audit:docs` (one file: `npm run audit:docs -- --doc <path>`). It
+1. **Signals.** Run `pnpm run audit:docs` (one file: `pnpm run audit:docs -- --doc <path>`). It
    reports falsifiable signals only: frontmatter, dead-path, broken-link, probe-drift, filename,
    placement, review-debt, planned-path, index.
-2. **Sanity-check the tool before trusting it.** Hand-verify two probes (`ls src/contexts`, count
-   `flowsOrder` in `e2e/config.yaml`). A wrong probe makes every dependent finding noise.
+2. **Sanity-check the tool before trusting it.** Hand-verify two probes
+   (`ls apps/mobile/src/contexts`, count `flowsOrder` in `apps/mobile/e2e/config.yaml`). A wrong
+   probe makes every dependent finding noise.
 3. **Triage records out first.** Session logs (`docs/sessions/`) and anything in docs/archive (once
    it exists) are point-in-time records: being out of date is their job. Make sure they are
    `historical` and leave their bodies alone.
@@ -31,9 +32,9 @@ Scope: `$ARGUMENTS` if given (a path, a folder or a topic), otherwise `docs/`, `
 6. **Propose a verdict, cheapest rung first:** delete > demote (`stale` / `historical`) > shrink >
    fix. Propose _fix_ only when you are re-verifying the claims now, and only then set `verified:`
    to today.
-7. **Regenerate.** `npm run audit:docs -- --fix-probes`, then `npm run audit:docs -- --write-index`,
-   then `npx prettier --write` on the changed files. A number corrected by hand instead of turned
-   into a probe will rot again.
+7. **Regenerate.** `pnpm run audit:docs -- --fix-probes`, then
+   `pnpm run audit:docs -- --write-index`, then `pnpm exec prettier --write` on the changed files. A
+   number corrected by hand instead of turned into a probe will rot again.
 
 ## Report
 

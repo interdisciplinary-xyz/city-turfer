@@ -1,0 +1,20 @@
+{
+  "name": "@cityturfer/brand",
+  "version": "0.3.0",
+  "private": true,
+  "description": "CityTurfer brand: colour tokens (the turf strength ramp), name and copy, logo SVGs. Plain TS + SVG, no React.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./svg/*": "./svg/*"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src"
+  },
+  "devDependencies": {
+    "@cityturfer/config": "workspace:*",
+    "@interdisciplinary/eslint-config": "workspace:*",
+    "eslint": "^9.39.5",
+    "typescript": "~6.0.3"
+  }
+}

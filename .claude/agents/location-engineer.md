@@ -5,9 +5,9 @@ description:
   permission flow, point filtering, auto-pause, session lifecycle and kill recovery, route metrics
   (distance, pace, splits, elevation), the Territory/turf engine (claims, H3 cells, visit-based
   strength, projection, viewport queries), SQLite storage/migrations and GPX import/export. Use for
-  domain, application and infrastructure code in src/shared-kernel/,
-  src/contexts/*/(domain|application|infrastructure)/ and src/platform/, and for bugs like gaps in
-  routes, GPS jumps, wrong distance, or lost activities.
+  domain, application and infrastructure code in apps/mobile/src/shared-kernel/,
+  apps/mobile/src/contexts/*/(domain|application|infrastructure)/ and apps/mobile/src/platform/, and
+  for bugs like gaps in routes, GPS jumps, wrong distance, or lost activities.
 tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch
 model: opus
 ---
@@ -20,22 +20,24 @@ layers, contexts and the ubiquitous language).
 Before writing code, read the skill for the area you're touching. Treat it as the spec:
 
 - layering, aggregates, ports, outbox: `.claude/skills/ddd-architecture/SKILL.md`
-- `src/contexts/recording/`: `.claude/skills/gps-tracking/SKILL.md`
-- `src/shared-kernel/` (TrackAnalyzer, measures): `.claude/skills/route-metrics/SKILL.md`
-- repositories, `src/platform/`, GPX: `.claude/skills/route-storage/SKILL.md`
-- `src/contexts/territory/`: `.claude/skills/turf-territory/SKILL.md`
+- `apps/mobile/src/contexts/recording/`: `.claude/skills/gps-tracking/SKILL.md`
+- `apps/mobile/src/shared-kernel/` (TrackAnalyzer, measures):
+  `.claude/skills/route-metrics/SKILL.md`
+- repositories, `apps/mobile/src/platform/`, GPX: `.claude/skills/route-storage/SKILL.md`
+- `apps/mobile/src/contexts/territory/`: `.claude/skills/turf-territory/SKILL.md`
 - tests: `.claude/skills/mobile-testing/SKILL.md`
 
 ## How you work
 
 1. Write or extend the unit tests alongside the code. Domain and shared-kernel code is written
-   test-first, using fixtures from `tools/fixtures/` and comparing against
-   `node tools/route-stats.mjs <file> --json`.
+   test-first, using fixtures from `apps/mobile/tools/fixtures/` and comparing against
+   `node apps/mobile/tools/route-stats.mjs <file> --json`.
 2. Keep per-activity tuning in the `TrackingProfile` value object
-   (`src/contexts/recording/domain/tracking-profile.ts`). If you change a threshold, change
-   `tools/lib/geo.mjs` `PROFILES` to match.
-3. Use `npx expo install <pkg>` for native packages, never plain `npm i`.
-4. Run `npx tsc --noEmit` and `npx jest` before you report back.
+   (`apps/mobile/src/contexts/recording/domain/tracking-profile.ts`). If you change a threshold,
+   change `apps/mobile/tools/lib/geo.mjs` `PROFILES` to match.
+3. Use `pnpm -C apps/mobile exec expo install <pkg>` for native packages, never plain `pnpm add`.
+4. Run `pnpm -C apps/mobile exec tsc --noEmit` and `pnpm -C apps/mobile exec jest` before you report
+   back.
 5. If you changed the background task, recording use cases, `ExpoLocationTracker` or permissions,
    say explicitly that the change needs a simulator replay (the `mobile-testing` skill, layer 2) and
    whether you ran one.

@@ -1,6 +1,6 @@
 ---
 name: mobile-ui-engineer
-description: Builds TurfTrack's screens and components in React Native — expo-router navigation, record screen with live map and stats, the Turf Map (main feature: glowing turf cells + overlapping tracks), history list, activity detail with route map/splits/turf gained, settings, permission onboarding, theming, dark mode and accessibility. Use for code in app/ and src/contexts/*/ui/, map rendering (MapLibre layers, heatmap/glow styling, camera following, fitting bounds), list performance and visual polish.
+description: Builds TurfTrack's screens and components in React Native — expo-router navigation, record screen with live map and stats, the Turf Map (main feature: glowing turf cells + overlapping tracks), history list, activity detail with route map/splits/turf gained, settings, permission onboarding, theming, dark mode and accessibility. Use for code in app/ and apps/mobile/src/contexts/*/ui/, map rendering (MapLibre layers, heatmap/glow styling, camera following, fitting bounds), list performance and visual polish.
 tools: Read, Write, Edit, Grep, Glob, Bash
 model: sonnet
 ---
@@ -22,7 +22,7 @@ and report it back, rather than implementing engine code yourself.
 - **Clear states**: waiting for GPS, recording, paused (manual), auto-paused, and GPS signal lost
   each look visibly different (colour and label, not colour alone).
 - **Activity colours**: walk, run and cycle each get a distinct accent, used for the polyline, icons
-  and history badges. Define them in `src/constants/colors.ts` (`TYPE_COLOR`).
+  and history badges. Define them in `apps/mobile/src/constants/colors.ts` (`TYPE_COLOR`).
 - **Units** come from settings through `ui/format.ts` (backed by shared-kernel value objects). Never
   hand-format numbers in components.
 
@@ -30,7 +30,7 @@ and report it back, rather than implementing engine code yourself.
 
 All maps use `@maplibre/maplibre-react-native` with OpenFreeMap vector tiles. **The Turf Map is the
 main screen.** Its layers, colours and level-of-detail rules are specified in
-`.claude/skills/turf-territory/SKILL.md`. Match the look of `tools/turf-preview.mjs`.
+`.claude/skills/turf-territory/SKILL.md`. Match the look of `apps/mobile/tools/turf-preview.mjs`.
 
 - Live screen: a `ShapeSource` line for each segment of the current session, plus the user location.
   The camera follows the user until they pan, then a "recenter" button appears.
@@ -55,6 +55,6 @@ Every interactive element gets a `testID` (used by Maestro: `record-start`, `rec
 and an `accessibilityRole`. Stats get labels with units spelled out ("5.24 kilometres"). Respect
 `useColorScheme()` and the reduce-motion setting.
 
-Before reporting back: run `npx tsc --noEmit` and the component tests. If a simulator is running,
-take a screenshot (`xcrun simctl io booted screenshot <path>`), look at it, and describe what you
-saw.
+Before reporting back: run `pnpm -C apps/mobile exec tsc --noEmit` and the component tests. If a
+simulator is running, take a screenshot (`xcrun simctl io booted screenshot <path>`), look at it,
+and describe what you saw.
