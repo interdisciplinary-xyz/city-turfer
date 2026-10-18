@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import createNextIntlPlugin from 'next-intl/plugin';
 
 // Static showcase: no server code, no cookies, no third-party scripts. `next build` writes out/.
 // The export applies to production builds only: in development the dev server (server.mjs) renders
@@ -13,4 +14,7 @@ const config: NextConfig = {
   allowedDevOrigins: ['cityturfer.local', '*.cityturfer.local'],
 };
 
-export default config;
+// next-intl: messages per locale (src/i18n/request.ts); routing in src/i18n/routing.ts.
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
+
+export default withNextIntl(config);

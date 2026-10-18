@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "title": "CityTurfer — Surfuj po mieście. Ulice są Twoje.",
+    "description": "Chodź, biegaj albo jeździj na rowerze — każda ulica, którą pokonasz, staje się Twoim turfem. Wracaj i patrz, jak świeci coraz jaśniej."
+  },
+  "hero": {
+    "skip": "Przejdź do treści",
+    "taglineLead": "Surfuj po mieście.",
+    "taglineRamp": "Ulice są Twoje.",
+    "lede": "Chodź, biegaj albo jeździj na rowerze — każda ulica, którą pokonasz, staje się Twoim turfem. Wracaj i patrz, jak świeci coraz jaśniej.",
+    "comingSoon": "Wkrótce na iPhone’a"
+  },
+  "screens": {
+    "turfMap": {
+      "title": "Mapa turfu",
+      "body": "Wszystkie spacery, biegi i przejażdżki na jednej ciemnej mapie — świecą najmocniej tam, gdzie bywasz najczęściej.",
+      "alt": "Mapa turfu: świecące trasy w Warszawie, 3,02 km² turfu, 1530 komórek i filtry spacer, bieg, rower."
+    },
+    "dashboard": {
+      "title": "Twój tydzień w skrócie",
+      "body": "Dystans, czas, ostatnie aktywności i najbliższe osiągnięcie w zasięgu ręki.",
+      "alt": "Pulpit: dystans, czas i liczba aktywności w tym tygodniu, ostatnie aktywności i najbliższe osiągnięcie."
+    }
+  },
+  "language": {
+    "label": "Język",
+    "en": "English",
+    "pl": "Polski"
+  }
+}

@@ -21,7 +21,8 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
   (`turbo.json`, `pnpm-workspace.yaml`): workspaces apps/* and packages/*; design in
   `docs/decisions/monorepo-turborepo-2026-10-18.md`
 - **Web**: Next.js 16 (App Router, `output: 'export'`) in `apps/web`, hosted on Vercel; static
-  showcase only: no forms, cookies or third-party scripts
+  showcase only (one hero section): no forms, cookies or third-party scripts. Languages via
+  `next-intl` (`/en`, `/pl`; copy in `apps/web/messages/*.json`, no CMS)
 - **Storage**: `expo-sqlite`, local-first; no backend in v1
 - **State**: SQLite is the source of truth; live-session UI state is an in-memory `LiveSessionStore`
   (`apps/mobile/src/contexts/recording/infrastructure/live-session-store.ts`, read via

@@ -1,4 +1,23 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "ignoreCommand": "npx turbo-ignore @cityturfer/web --fallback=HEAD^1"
+  "ignoreCommand": "npx turbo-ignore @cityturfer/web --fallback=HEAD^1",
+  "redirects": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "header",
+          "key": "accept-language",
+          "value": "(?:pl).*"
+        }
+      ],
+      "destination": "/pl",
+      "permanent": false
+    },
+    {
+      "source": "/",
+      "destination": "/en",
+      "permanent": false
+    }
+  ]
 }

@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "title": "CityTurfer — Surf your city. Own your streets.",
+    "description": "Walk, run or ride — every street you cover becomes your turf. Come back and watch it glow."
+  },
+  "hero": {
+    "skip": "Skip to content",
+    "taglineLead": "Surf your city.",
+    "taglineRamp": "Own your streets.",
+    "lede": "Walk, run or ride — every street you cover becomes your turf. Come back and watch it glow.",
+    "comingSoon": "Coming soon to iPhone"
+  },
+  "screens": {
+    "turfMap": {
+      "title": "The Turf Map",
+      "body": "Every walk, run and ride on one dark map, glowing where you go most.",
+      "alt": "The Turf Map: glowing routes across Warsaw, with 3.02 km² of turf, 1530 cells and filters for walk, run and ride."
+    },
+    "dashboard": {
+      "title": "Your week at a glance",
+      "body": "Distance, time, recent activities and the next achievement within reach.",
+      "alt": "The Dashboard: this week's distance, time and activities, recent activities and the next achievement."
+    }
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "pl": "Polski"
+  }
+}

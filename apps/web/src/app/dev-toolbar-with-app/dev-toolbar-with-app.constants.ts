@@ -1,11 +1,15 @@
 import type { DevToolbarLink } from '@interdisciplinary/dev-toolbar/react';
+import type { ReactNode } from 'react';
 
 /** Namespace for the toolbar's localStorage / sessionStorage keys. */
 export const DEV_TOOLBAR_STORAGE_PREFIX = 'cityturfer';
 
-/** The landing page is English only for now. */
-export const DEV_TOOLBAR_LOCALE = 'en';
-export const DEV_TOOLBAR_LOCALES = ['en'] as const;
+export type DevToolbarWithAppProps = {
+  /** The page's language (`[locale]` segment). */
+  locale: string;
+  /** The landing page's language switcher, rendered by the server layout and slotted in. */
+  languageSwitcher?: ReactNode;
+};
 
 /** Quick links in the toolbar's action row (opened in a new tab). */
 export const DEV_TOOLBAR_LINKS: readonly DevToolbarLink[] = [

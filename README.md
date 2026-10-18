@@ -84,7 +84,7 @@ The repo is a pnpm + Turborepo monorepo
 | Path                      | What                                                                                                                   |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `apps/mobile/`            | The Expo app (`@cityturfer/mobile`): app code, native module, plugins, Maestro, mobile dev tools                       |
-| `apps/web/`               | Landing page (`@cityturfer/web`): Next.js static export on Vercel                                                      |
+| `apps/web/`               | Landing page (`@cityturfer/web`): Next.js static export on Vercel, English + Polish (`next-intl`)                      |
 | `packages/brand/`         | `@cityturfer/brand`: colour tokens, name and copy, logo SVGs                                                           |
 | `packages/config/`        | `@cityturfer/config`: Prettier and tsconfig bases                                                                      |
 | `packages/eslint-config/` | `@interdisciplinary/eslint-config`: ESLint presets and local rules, shared with empatalk                               |
