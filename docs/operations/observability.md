@@ -48,7 +48,7 @@ data off their device.
   there are three such guarded `console.warn` calls (background task, outbox).
 - `tools/` is not part of the shipped app and may print; the audit only covers `src/`.
 
-## 3. Enforcement: `npm run audit:logs`
+## 3. Enforcement: `pnpm run audit:logs`
 
 `tools/audit-logs.mjs` runs in `ci:quality` and fails on:
 

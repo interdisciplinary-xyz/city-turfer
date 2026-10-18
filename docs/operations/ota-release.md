@@ -20,7 +20,7 @@ received, #4 bad update).
   `requestHeaders.expo-channel-name: production`; `checkAutomatically: ON_LOAD`,
   `fallbackToCacheTimeout: 0`.
 - EAS channel `production` serves branch `production`
-  (`npx eas-cli@latest channel:view production`).
+  (`pnpm dlx eas-cli@latest channel:view production`).
 - On launch the app checks for an update and downloads it in the background; it applies on the
   **next** cold start. **Me → Info → Check for updates** fetches and reloads at once
   (`src/app/info.tsx`).
@@ -32,25 +32,25 @@ received, #4 bad update).
 
 - **OTA:** changes only in `src/` (TypeScript, screens, domain), JS-only dependencies, assets
   bundled by Metro.
-- **Reinstall** (`npx expo run:ios --configuration Release --device <udid>`, runbook #7): anything
-  that changes the fingerprint. Say so in the PR's "Risk & rollback".
+- **Reinstall** (`pnpm exec expo run:ios --configuration Release --device <udid>`, runbook #7):
+  anything that changes the fingerprint. Say so in the PR's "Risk & rollback".
 
 To check, compare the fingerprint of the checkout you'll publish from with the runtime of the latest
 update the phone already runs:
 
 ```bash
-npx expo-updates fingerprint:generate --platform ios
-npx eas-cli@latest channel:view production       # "Runtime Version" of the latest group
+pnpm exec expo-updates fingerprint:generate --platform ios
+pnpm dlx eas-cli@latest channel:view production       # "Runtime Version" of the latest group
 ```
 
 ## Publish
 
-1. On the branch being shipped, the gate is green: `npm run ci:quality` (and the simulator replay
+1. On the branch being shipped, the gate is green: `pnpm run ci:quality` (and the simulator replay
    for recording changes).
 2. Publish (iOS only today; Android has no build yet):
 
    ```bash
-   npx eas-cli@latest update --channel production --environment production --platform ios \
+   pnpm dlx eas-cli@latest update --channel production --environment production --platform ios \
      --message "<what changed>" --non-interactive
    ```
 
@@ -69,5 +69,5 @@ npx eas-cli@latest channel:view production       # "Runtime Version" of the late
 
 ## Undo
 
-`npx eas-cli@latest update:rollback <GROUP_ID>` republishes the previous group (runbook #4). A phone
-that crashes before it can check for updates needs a reinstall.
+`pnpm dlx eas-cli@latest update:rollback <GROUP_ID>` republishes the previous group (runbook #4). A
+phone that crashes before it can check for updates needs a reinstall.

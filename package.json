@@ -50,6 +50,7 @@
     "jest-expo": "^57.0.6",
     "lint-staged": "^15.5.2",
     "prettier": "^3.9.10",
+    "turbo": "^2.11.9",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.71.2"
   },
@@ -59,19 +60,19 @@
     "android": "expo run:android",
     "typecheck": "tsc --noEmit",
     "arch": "depcruise src --config .dependency-cruiser.cjs",
-    "test": "npm run arch && jest",
+    "test": "pnpm run arch && jest",
     "jest": "jest",
     "prepare": "husky",
     "commitlint": "commitlint --edit",
     "release": "commit-and-tag-version",
-    "standard": "npm run standard:format && npm run standard:lint",
-    "standard:fix": "npm run standard:lint:fix && npm run standard:format:fix",
+    "standard": "pnpm run standard:format && pnpm run standard:lint",
+    "standard:fix": "pnpm run standard:lint:fix && pnpm run standard:format:fix",
     "standard:format": "prettier --check --ignore-path .gitignore --ignore-path .prettierignore .",
     "standard:format:fix": "prettier --write --ignore-path .gitignore --ignore-path .prettierignore .",
     "standard:lint": "eslint src index.ts tools",
     "standard:lint:fix": "eslint src index.ts tools --fix",
     "test:types": "tsc --noEmit",
-    "test:unit": "jest && npm run test:tools",
+    "test:unit": "jest && pnpm run test:tools",
     "test:tools": "node --test tools/__tests__/*.test.mjs",
     "test:cov": "jest --coverage",
     "test:arch": "depcruise src --config .dependency-cruiser.cjs",
@@ -80,7 +81,7 @@
     "audit:logs": "node tools/audit-logs.mjs",
     "check:secret-files": "node tools/check-secret-files.mjs",
     "audit:docs": "node tools/docs-audit.mjs",
-    "ci:quality": "npm run standard && npm run test:types && npm run test:arch && npm run test:unit && npm run audit:logs && npm run e2e:audit"
+    "ci:quality": "pnpm run standard && turbo run typecheck arch test:unit && pnpm run audit:logs && pnpm run e2e:audit"
   },
   "private": true,
   "jest": {
@@ -119,5 +120,15 @@
   },
   "engines": {
     "node": ">=22.13"
+  },
+  "packageManager": "pnpm@10.22.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "unrs-resolver"
+    ],
+    "ignoredBuiltDependencies": [
+      "@parcel/watcher"
+    ]
   }
 }

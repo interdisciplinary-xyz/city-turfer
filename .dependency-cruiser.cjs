@@ -1,4 +1,4 @@
-// DDD dependency rules (see .claude/skills/ddd-architecture/SKILL.md). Runs in `npm test`.
+// DDD dependency rules (see .claude/skills/ddd-architecture/SKILL.md). Runs in `pnpm test`.
 const ctx = '^src/contexts/([^/]+)/';
 const notTests = '(__tests__|test-support)/';
 module.exports = {

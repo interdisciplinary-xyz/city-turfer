@@ -1,14 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx tsc:*)",
-      "Bash(npx jest:*)",
-      "Bash(npm test:*)",
-      "Bash(npm run:*)",
-      "Bash(npx expo install:*)",
-      "Bash(npx expo start:*)",
-      "Bash(npx expo run:*)",
-      "Bash(npx expo prebuild:*)",
+      "Bash(pnpm exec tsc:*)",
+      "Bash(pnpm exec jest:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm run:*)",
+      "Bash(pnpm exec expo install:*)",
+      "Bash(pnpm exec expo start:*)",
+      "Bash(pnpm exec expo run:*)",
+      "Bash(pnpm exec expo prebuild:*)",
       "Bash(node tools/:*)",
       "Bash(tools/sim-location.sh:*)",
       "Bash(xcrun simctl:*)",

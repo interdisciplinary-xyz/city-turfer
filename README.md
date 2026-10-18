@@ -81,9 +81,10 @@ a new build.
 Domain-Driven Design is a hard requirement. Each bounded context under `src/contexts/*` has
 `domain/`, `application/`, `infrastructure/` and `ui/` layers and a public `index.ts`. Contexts talk
 only through each other's `index.ts` and published domain events. Aggregate changes and their events
-are saved in one SQLite transaction (outbox), and event handlers are idempotent. `npm run test:arch`
-(dependency-cruiser) enforces the rules: domain code imports no React, Expo or infrastructure, and
-no context reaches into another's layers. Full design: [PoC plan](./docs/poc-plan.md); rules:
+are saved in one SQLite transaction (outbox), and event handlers are idempotent.
+`pnpm run test:arch` (dependency-cruiser) enforces the rules: domain code imports no React, Expo or
+infrastructure, and no context reaches into another's layers. Full design:
+[PoC plan](./docs/poc-plan.md); rules:
 [`ddd-architecture` skill](./.claude/skills/ddd-architecture/SKILL.md).
 
 ### Bounded contexts
@@ -136,7 +137,7 @@ and hooks.
 
 ### Scripts
 
-Everyday commands from `package.json`; `npm run` is authoritative.
+Everyday commands from `package.json`; `pnpm run` is authoritative.
 
 | Name                        | Description                                                         |
 | --------------------------- | ------------------------------------------------------------------- |
@@ -189,14 +190,16 @@ No `.env` is needed for local development. Two public variables select the build
 
 ## Quick start
 
-Prerequisites: Node 22.15.1 (`nvm use`), Xcode 26.4+, an iOS Simulator or an iPhone.
+Prerequisites: Node 22.15.1 (`nvm use`), pnpm (`corepack enable` picks the pinned version), Xcode
+26.4+, an iOS Simulator or an iPhone.
 
 ```sh
 nvm use
-npm ci
+corepack enable               # once: pnpm at the version in package.json "packageManager"
+pnpm install --frozen-lockfile
 tools/fetch-maplibre-ios.sh   # once: Xcode's SPM download of MapLibre hangs on some machines
-npx expo run:ios              # build and install a development build
-npm start                     # later: Metro for the installed build
+pnpm exec expo run:ios        # build and install a development build
+pnpm start                    # later: Metro for the installed build
 ```
 
 Sign in with `admin@cityturfer.com` / `admin1234`. To see turf straight away, use **Me → Info → Seed
@@ -204,15 +207,15 @@ demo history** (90 days of activities around your location). In a release build 
 hidden: long-press the version text on Info five times to show them.
 
 Local quirks: watchman is disabled in the Jest and Metro config (broken Homebrew install), and
-`.npmrc` uses `legacy-peer-deps`.
+`.npmrc` sets pnpm to a flat (`node-linker=hoisted`) `node_modules` with lenient peer dependencies.
 
 ---
 
 ## Testing
 
 ```sh
-npm run ci:quality   # Prettier, ESLint, tsc, dependency rules, Jest
-npm run test:e2e     # Maestro flows in e2e/ on the booted iOS Simulator
+pnpm run ci:quality   # Prettier, ESLint, tsc, dependency rules, Jest
+pnpm run test:e2e     # Maestro flows in e2e/ on the booted iOS Simulator
 ```
 
 Unit tests cover domain invariants, metrics against the oracle (±3 %), the full context chain
@@ -230,7 +233,7 @@ Release workflow tags `vX.Y.Z` and writes `CHANGELOG.md`. Full policy:
 [Release manager](./docs/process/release-manager.md).
 
 ```sh
-npx eas-cli@latest update --channel production --environment production --platform ios \
+pnpm dlx eas-cli@latest update --channel production --environment production --platform ios \
   --message "<what changed>" --non-interactive
 ```
 

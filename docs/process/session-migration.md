@@ -48,12 +48,12 @@ Before ending a session or switching machine, terminal, developer or agent:
    - decisions and why (big ones also go into `docs/engineering/architecture-decisions.md`)
    - problems found, fixed or not
    - environment gotchas (Node from `.nvmrc`, Xcode 26.4+, vendored MapLibre, watchman disabled,
-     `legacy-peer-deps`)
+     pnpm with `node-linker=hoisted`)
    - device state: installed build, its runtime fingerprint, the latest OTA id, the signing expiry
      date
    - **exact next steps**, ordered, with commands
 4. Move open items into `NOTEBOOK.md` under the version they belong to; tick what shipped.
-5. Record which gates ran and their result (`npm run ci:quality`, `npm run test:e2e`, simulator
+5. Record which gates ran and their result (`pnpm run ci:quality`, `pnpm run test:e2e`, simulator
    replay, device) or "not run".
 6. Leave committing uncommitted work to the founder: the log says _what_ is uncommitted; it doesn't
    commit it.
@@ -71,9 +71,9 @@ When starting, onboarding or resuming:
    ```bash
    git branch --show-current && git status --short
    gh pr list --repo interdisciplinary-xyz/city-turfer
-   nvm use && npm ci
-   npm run ci:quality
-   npm run audit:docs
+   nvm use && pnpm install --frozen-lockfile
+   pnpm run ci:quality
+   pnpm run audit:docs
    ```
 
 4. Summarise the current state, risks, blockers and next steps.

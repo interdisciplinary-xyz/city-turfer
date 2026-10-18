@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `npm run audit:logs`: static privacy audit of src/ (CLAUDE.md: no raw coordinates in logs or
+ * `pnpm run audit:logs`: static privacy audit of src/ (CLAUDE.md: no raw coordinates in logs or
  * analytics in production builds). Mirrors the idea of empatalk's `audit:sentry-tags`.
  *
  * Fails on:

@@ -19,7 +19,7 @@ here — that's `add-feature`.
 The repo root already contains `CLAUDE.md`, `.claude/` and `tools/`. Create the app in place:
 
 ```bash
-npx create-expo-app@latest . --template default   # if it refuses a non-empty dir: create in a temp dir, then move files in (keep CLAUDE.md, .claude/, tools/)
+pnpm dlx create-expo-app@latest . --template default   # if it refuses a non-empty dir: create in a temp dir, then move files in (keep CLAUDE.md, .claude/, tools/)
 git init   # if not already a repo
 ```
 
@@ -27,14 +27,14 @@ Remove the template's demo screens/components once the new skeleton (step 4) is 
 
 ## 2. Install the stack
 
-Always use `npx expo install` for anything native so versions match the SDK:
+Always use `pnpm exec expo install` for anything native so versions match the SDK:
 
 ```bash
-npx expo install expo-location expo-task-manager expo-sqlite expo-file-system expo-sharing \
+pnpm exec expo install expo-location expo-task-manager expo-sqlite expo-file-system expo-sharing \
   expo-dev-client expo-keep-awake expo-haptics expo-sensors @maplibre/maplibre-react-native
-npx expo install expo-secure-store
-npm i zustand h3-js
-npm i -D jest-expo jest @testing-library/react-native @types/jest
+pnpm exec expo install expo-secure-store
+pnpm add zustand h3-js
+pnpm add -D jest-expo jest @testing-library/react-native @types/jest
 ```
 
 ## 3. app.config.ts
@@ -80,7 +80,7 @@ with `index.ts` public APIs, `src/platform/` (db, migrations, outbox, EventDispa
 `./src/contexts/recording/infrastructure/background-task` first). Stubs only — typed signatures, no
 feature logic.
 
-Install `npm i -D dependency-cruiser` and add the rules from the `ddd-architecture` skill; wire
+Install `pnpm add -D dependency-cruiser` and add the rules from the `ddd-architecture` skill; wire
 `"test": "depcruise src --config .dependency-cruiser.cjs && jest"`.
 
 ## 4b. Mock sign-in (M1)
@@ -111,8 +111,8 @@ Install `npm i -D dependency-cruiser` and add the rules from the `ddd-architectu
 ## 6. Verify
 
 ```bash
-npx tsc --noEmit && npx jest --passWithNoTests
-npx expo run:ios      # or run:android — first native build takes several minutes
+pnpm exec tsc --noEmit && pnpm exec jest --passWithNoTests
+pnpm exec expo run:ios      # or run:android — first native build takes several minutes
 ```
 
 Report which platform you actually launched, and say so plainly if you could not run a native build

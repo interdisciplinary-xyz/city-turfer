@@ -8,7 +8,7 @@ Scope: `scope/v0.2.0` → `release/v0.2.0` (#18). Area prefixes are the commit s
 - [x] IDENTITY: mock account `admin@cityturfer.com`; keyboard Next moves to password (#25)
 - [x] RELEASE: pin `app.json` to 0.2.0 (f04bcf3)
 
-- [ ] DOCS: docs conventions, frontmatter, generated index, `npm run audit:docs` (#38)
+- [ ] DOCS: docs conventions, frontmatter, generated index, `pnpm run audit:docs` (#38)
 - [ ] DOCS: architecture decisions + MapLibre decision record (#39)
 - [ ] DOCS: domain architecture and feature inventory (#40)
 - [ ] DOCS: runbook and OTA release procedure (#41)
@@ -20,7 +20,7 @@ Scope: `scope/v0.2.0` → `release/v0.2.0` (#18). Area prefixes are the commit s
 - [ ] ACTIVITY-LOG: gap-route semantics (#33, in review)
 - [ ] APP-SHELL: gate the demo seeder (#27, in review)
 - [ ] TOOLING: CI quality gates, secret guard, log audit (#28, #36, #37)
-- [ ] E2E: audit the Maestro suite (#35); run the full suite (`npm run test:e2e`) on scope before
+- [ ] E2E: audit the Maestro suite (#35); run the full suite (`pnpm run test:e2e`) on scope before
       scope → release
 - [ ] RELEASE: native reinstall on the iPhone before **2026-10-23** (free Apple ID signing expires;
       runbook #7)
@@ -53,7 +53,7 @@ Scope: `scope/v0.2.0` → `release/v0.2.0` (#18). Area prefixes are the commit s
 - [ ] ACHIEVEMENTS: unlock celebration, unlock dates, more tiers
 - [ ] TERRITORY: performance test with a year of history (Q4 budget)
 - [ ] DOCS: PoC report (M6) with evidence per question
-- [ ] DOCS: move `docs/poc-plan.md` into a folder; add `npm run audit:docs -- --strict` to
+- [ ] DOCS: move `docs/poc-plan.md` into a folder; add `pnpm run audit:docs -- --strict` to
       `ci:quality`
 - [ ] RELEASE: App Store — organisation vs individual developer account, final bundle id, no login
       vs Sign in with Apple

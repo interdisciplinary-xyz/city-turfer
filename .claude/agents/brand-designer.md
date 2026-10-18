@@ -23,8 +23,8 @@ How you work:
 3. **Assets**: edit SVG sources in `assets/brand/`, then run `node tools/brand/render-assets.mjs`
    and look at every PNG you produced (Read the image). Remember icons/splash are native → they ship
    only with a reinstall; say so in your report.
-4. **Verify**: `npx tsc --noEmit`, `npm test`; if a simulator is booted, screenshot the changed
-   screens (`xcrun simctl io booted screenshot <path>`) and look at them.
+4. **Verify**: `pnpm exec tsc --noEmit`, `pnpm test`; if a simulator is booted, screenshot the
+   changed screens (`xcrun simctl io booted screenshot <path>`) and look at them.
 
 Report: what changed (files), screenshots you checked, anything that needs a native reinstall vs.
 what can go out as an OTA update.

@@ -34,8 +34,8 @@ Before writing code, read the skill for the area you're touching. Treat it as th
 2. Keep per-activity tuning in the `TrackingProfile` value object
    (`src/contexts/recording/domain/tracking-profile.ts`). If you change a threshold, change
    `tools/lib/geo.mjs` `PROFILES` to match.
-3. Use `npx expo install <pkg>` for native packages, never plain `npm i`.
-4. Run `npx tsc --noEmit` and `npx jest` before you report back.
+3. Use `pnpm exec expo install <pkg>` for native packages, never plain `pnpm add`.
+4. Run `pnpm exec tsc --noEmit` and `pnpm exec jest` before you report back.
 5. If you changed the background task, recording use cases, `ExpoLocationTracker` or permissions,
    say explicitly that the change needs a simulator replay (the `mobile-testing` skill, layer 2) and
    whether you ran one.

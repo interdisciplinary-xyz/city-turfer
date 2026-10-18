@@ -319,7 +319,7 @@ composition root ─▶ everything (wiring only)
 
 `domain/` and `shared-kernel/` import nothing from react, react-native, expo-*, zustand, **h3-js**,
 **maplibre** or any infrastructure. Contexts reach each other only through `index.ts` and published
-events. Enforced by dependency-cruiser in `npm test` (see the `ddd-architecture` skill).
+events. Enforced by dependency-cruiser in `pnpm test` (see the `ddd-architecture` skill).
 
 ### Folder layout
 

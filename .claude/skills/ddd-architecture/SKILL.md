@@ -255,7 +255,7 @@ hooks. Never export domain classes or repositories.
   `FakeLocationTracker` under `application/__tests__/fakes/`.
 - **Infrastructure**: real SQL through the better-sqlite3 adapter. Test that atomic save rolls back
   everything if the outbox insert fails.
-- **Architecture**: `depcruise` runs as part of `npm test`.
+- **Architecture**: `depcruise` runs as part of `pnpm test`.
 
 ## Smells to reject in review
 

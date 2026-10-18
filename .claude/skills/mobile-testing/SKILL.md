@@ -74,7 +74,7 @@ Distance should land within ±3% of truth.
 ## 2. Simulated movement on a dev build (any tracking change)
 
 ```bash
-npx expo run:ios                                        # or run:android
+pnpm exec expo run:ios                                        # or run:android
 tools/sim-location.sh ios tools/fixtures/run-5k-outliers-pause.gpx 3   # 3 m/s
 tools/sim-location.sh android tools/fixtures/walk-2k.gpx 1             # 1 s per point
 tools/sim-location.sh ios --clear

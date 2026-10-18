@@ -8,7 +8,9 @@ dist
 vendor
 
 # Auto-generated — don't churn on reformat
-package-lock.json
 CHANGELOG.md
 tools/fixtures/
 e2e/subflows/travel-*.yaml
+
+# pnpm lockfile
+pnpm-lock.yaml

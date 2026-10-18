@@ -220,7 +220,7 @@ predecessor, because a dead-lettered event no longer stops the ones after it.
 
 **Decision:** Code is split into bounded contexts under `src/contexts/*` (identity, recording,
 activity-log, territory, achievements) with `domain/`, `application/`, `infrastructure/` and `ui/`
-layers and a public `index.ts` (plus `contract.ts` for published language). `npm run test:arch`
+layers and a public `index.ts` (plus `contract.ts` for published language). `pnpm run test:arch`
 (`.dependency-cruiser.cjs`) fails the build when domain code imports React, Expo, h3-js, MapLibre or
 infrastructure, when a context reaches into another's layers, when a screen bypasses a context's
 `ui/`, or on any cycle.

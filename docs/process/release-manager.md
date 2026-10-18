@@ -21,11 +21,11 @@ feat/<domain>  ─PR→  scope/vX.Y.Z  ─PR→  release/vX.Y.Z  ─PR→  main 
 
 - `feat/<domain>`, `fix/<slug>`, `chore/<slug>`, `test/<slug>`
   - Purpose: One domain / change. **Cut from and PR into the current `scope/vX.Y.Z`.**
-  - Validation: Local: `npm run ci:quality`; recording changes also a simulator replay
+  - Validation: Local: `pnpm run ci:quality`; recording changes also a simulator replay
 - `scope/vX.Y.Z`
   - Purpose: Integration branch for the milestone version; target of all feature branches.
   - Validation: CI on every PR into `scope/**` (quality + commit naming), plus local
-    `npm run test:e2e`
+    `pnpm run test:e2e`
 - `release/vX.Y.Z`
   - Purpose: Stabilisation: cloud CI, e2e, real-device field test, OTA to testers.
   - Validation: CI (`.github/workflows/ci.yml`)
@@ -66,17 +66,17 @@ hidden). Don't edit it by hand.
 ## Mobile specifics
 
 - **OTA vs native:** JS-only changes ship as EAS Updates on channel `production`
-  (`npx eas-cli update --channel production --environment production`). Anything that changes the
-  runtime fingerprint (native modules, `app.json` plugins/permissions, icons, splash) needs a
+  (`pnpm dlx eas-cli update --channel production --environment production`). Anything that changes
+  the runtime fingerprint (native modules, `app.json` plugins/permissions, icons, splash) needs a
   rebuild + reinstall — say so in the PR's "Risk & rollback".
 - A release PR lists the runtime fingerprint it ships
-  (`npx expo-updates fingerprint:generate --platform ios`).
+  (`pnpm exec expo-updates fingerprint:generate --platform ios`).
 
 ## Hooks
 
 - `pre-commit`: lint-staged (ESLint --fix, then Prettier).
 - `commit-msg`: commitlint.
-- `pre-push`: `npm run test:types && npm run test:arch && npm run test:unit` (~15 s; CI also runs
+- `pre-push`: `pnpm run test:types && pnpm run test:arch && pnpm run test:unit` (~15 s; CI also runs
   Prettier and ESLint).
 
 ## CI
@@ -84,7 +84,7 @@ hidden). Don't edit it by hand.
 `.github/workflows/ci.yml` runs on every non-draft pull request into `main`, `release/**` and
 `scope/**` (feature to scope, scope to release, release to main), plus pushes to `main`:
 
-- `quality` (`npm run ci:quality`: Prettier, ESLint over `src`, `index.ts` and `tools`, tsc,
+- `quality` (`pnpm run ci:quality`: Prettier, ESLint over `src`, `index.ts` and `tools`, tsc,
   dependency rules, Jest, Node tool tests). It takes under a minute.
 - `commitlint` lints every commit in the PR range, not only the last one.
 

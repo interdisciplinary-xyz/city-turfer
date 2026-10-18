@@ -11,7 +11,7 @@ summary:
 
 Canonical for: the frontmatter contract, where a doc lives, filenames, probes and the audit loop.
 Adapted from empatalk's docs conventions (`process/DOCS_CONVENTIONS.md` in that repo). Enforcement:
-`npm run audit:docs` (`tools/docs-audit.mjs`). Judgment layer: the `/audit-docs` command
+`pnpm run audit:docs` (`tools/docs-audit.mjs`). Judgment layer: the `/audit-docs` command
 (`.claude/commands/audit-docs.md`).
 
 ## The problem this solves
@@ -95,7 +95,7 @@ Any count that comes from the codebase goes in a probe:
 Bounded contexts: <!-- probe:contexts -->5<!-- /probe -->
 ```
 
-`npm run audit:docs` flags drift; `-- --fix-probes` rewrites every probe from code. The registry is
+`pnpm run audit:docs` flags drift; `-- --fix-probes` rewrites every probe from code. The registry is
 `PROBES` in `tools/docs-audit.mjs`; add one there rather than typing a number into prose. Today:
 
 - `contexts`: directories in `src/contexts/` (<!-- probe:contexts -->5<!-- /probe -->)
@@ -112,17 +112,17 @@ Bounded contexts: <!-- probe:contexts -->5<!-- /probe -->
 ## 5. The generated index
 
 `docs/INDEX.md` is the complete inventory, generated from frontmatter by
-`npm run audit:docs -- --write-index`. Don't hand-edit it: change the doc's `status:`/`summary:` and
-re-run. The audit warns when the index is out of date.
+`pnpm run audit:docs -- --write-index`. Don't hand-edit it: change the doc's `status:`/`summary:`
+and re-run. The audit warns when the index is out of date.
 
 ## 6. The loop
 
 ```bash
-npm run audit:docs                       # signals: what looks wrong and where
-npm run audit:docs -- --doc <path>       # one file
-npm run audit:docs -- --fix-probes       # rewrite derived numbers from code
-npm run audit:docs -- --write-index      # regenerate docs/INDEX.md
-npm run audit:docs -- --strict           # exit 1 on any error (for CI)
+pnpm run audit:docs                       # signals: what looks wrong and where
+pnpm run audit:docs -- --doc <path>       # one file
+pnpm run audit:docs -- --fix-probes       # rewrite derived numbers from code
+pnpm run audit:docs -- --write-index      # regenerate docs/INDEX.md
+pnpm run audit:docs -- --strict           # exit 1 on any error (for CI)
 ```
 
 What it checks, in `docs/**`, `README.md`, `CLAUDE.md` and `.claude/**/*.md` (not `CHANGELOG.md`):
@@ -141,7 +141,7 @@ What it checks, in `docs/**`, `README.md`, `CLAUDE.md` and `.claude/**/*.md` (no
 
 The script emits **signals, never verdicts**. Deciding whether a doc is fixed, demoted, archived or
 deleted is the `/audit-docs` command's job, and the default for a rotten doc is _demote or delete_,
-not _rewrite_. `audit:docs` is not part of `npm run ci:quality` yet; adding `--strict` to CI is a
+not _rewrite_. `audit:docs` is not part of `pnpm run ci:quality` yet; adding `--strict` to CI is a
 follow-up once the docs are clean.
 
 ## 7. Rules that are easy to get wrong

@@ -18,7 +18,7 @@ summary:
 
 # Domain architecture
 
-Canonical for: the context map, the layers, what `npm run test:arch` enforces, and the rules for
+Canonical for: the context map, the layers, what `pnpm run test:arch` enforces, and the rules for
 changing any of it. Adapted from empatalk's `DOMAIN_ARCHITECTURE.md`. The code patterns (aggregate,
 value object, use case, repository templates) live in the `ddd-architecture` skill; the ubiquitous
 language is `docs/poc-plan.md` §2. Where this doc and the code disagree, the code wins.
@@ -82,7 +82,7 @@ from `application`/`domain`; `wiring` and `composition-root` may import anything
 
 ## 3. What dependency-cruiser enforces
 
-`npm run test:arch` (also inside `npm test` and `npm run ci:quality`) runs depcruise over `src/`
+`pnpm run test:arch` (also inside `pnpm test` and `pnpm run ci:quality`) runs depcruise over `src/`
 with `.dependency-cruiser.cjs`. Every rule is severity `error`; test folders (`__tests__/`,
 `test-support/`) are exempt from the first three.
 
