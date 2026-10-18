@@ -24,6 +24,36 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   language (§2) and context map (§3) are still the vocabulary; folder layout and milestones are the
   original plan, not current code
 
+## How the system is built
+
+`docs/engineering/` — Architecture, decisions, feature inventory.
+
+- ✅ [`engineering/architecture-decisions.md`](engineering/architecture-decisions.md): Why
+  CityTurfer is built the way it is — one entry per decision, newest first, with status and
+  trade-off
+- ✅ [`engineering/domain-architecture.md`](engineering/domain-architecture.md): The bounded
+  contexts, how they talk, the layer rules dependency-cruiser enforces, and how to change them
+- ✅ [`engineering/features.md`](engineering/features.md): Inventory of every shipped feature by tab
+  and screen, where it lives, and the claims that aren't true yet
+
+## Running it
+
+`docs/operations/` — Runbook, OTA releases, device diagnostics.
+
+- ❔ [`operations/observability.md`](operations/observability.md): _no frontmatter_
+- ✅ [`operations/ota-release.md`](operations/ota-release.md): How to ship a JS-only change over the
+  air on EAS channel production, check it landed, and when a reinstall is needed instead
+- ✅ [`operations/runbook.md`](operations/runbook.md): Paste-and-run checklists for the incidents
+  CityTurfer actually has — recording, outbox, OTA, builds, e2e, signing
+
+## Testing and QA
+
+`docs/quality/` — Test inventory and QA policy.
+
+- ❔ [`quality/e2e.md`](quality/e2e.md): _no frontmatter_
+- ❔ [`quality/quality-assurance.md`](quality/quality-assurance.md): _no frontmatter_
+- ❔ [`quality/smoke-test.md`](quality/smoke-test.md): _no frontmatter_
+
 ## How we work
 
 `docs/process/` — Release policy, docs conventions, session migration.
@@ -32,6 +62,8 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   freshness — frontmatter, folders, filenames, probes and the audit
 - ✅ [`process/release-manager.md`](process/release-manager.md): Branch flow feat → scope → release
   → main, PR titles, Conventional Commits, changelog, OTA vs native
+- ✅ [`process/session-migration.md`](process/session-migration.md): How to hand a session off and
+  pick it up again without losing context — the version session log is the source of truth
 
 ## Session logs
 
@@ -42,5 +74,18 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ❗ [`sessions/v0.2.0.md`](sessions/v0.2.0.md): Session log v0.2.0 through the Me menu and
   achievements; predates the Dashboard, Me drawer and login rename (PRs 23–25) and still says
   app.json is unpinned (pinned in f04bcf3)
+- ✅ [`sessions/v0.3.0.md`](sessions/v0.3.0.md): Session log v0.3.0 — v0.2.0 released, scope/v0.3.0
+  opened, monorepo (Turborepo) designed
+
+## Decision records
+
+`docs/decisions/` — Full write-ups of single decisions.
+
+- ✅
+  [`decisions/maplibre-over-react-native-maps-2026-10-15.md`](decisions/maplibre-over-react-native-maps-2026-10-15.md):
+  Decision record — MapLibre + OpenFreeMap for every map instead of react-native-maps
+- ✅ [`decisions/monorepo-turborepo-2026-10-18.md`](decisions/monorepo-turborepo-2026-10-18.md):
+  v0.3.0 moves the repo to a pnpm + Turborepo monorepo — apps/mobile (Expo), apps/web (Next.js
+  landing page), packages/brand and packages/config — in three PRs
 
 <!-- docs-index:end -->
