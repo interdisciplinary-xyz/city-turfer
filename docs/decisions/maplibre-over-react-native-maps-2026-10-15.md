@@ -4,10 +4,10 @@ verified: 2026-10-17
 owner: founder
 scope:
   [
-    src/contexts/territory/ui,
-    src/constants/map.ts,
-    plugins/with-local-maplibre.js,
-    tools/fetch-maplibre-ios.sh,
+    apps/mobile/src/contexts/territory/ui,
+    apps/mobile/src/constants/map.ts,
+    apps/mobile/plugins/with-local-maplibre.js,
+    apps/mobile/tools/fetch-maplibre-ios.sh,
   ]
 summary: Decision record — MapLibre + OpenFreeMap for every map instead of react-native-maps
 ---
@@ -37,10 +37,10 @@ API key.
 
 - The PoC must prove the Turf Map works and feels rewarding (Q3) and stays fast as history grows
   (Q4: ~200 activities, ~50k cells in a year).
-- The planned layers (`docs/poc-plan.md` §5, built in `src/contexts/territory/ui/layers.tsx`): a
-  heatmap of cell centroids weighted by Strength at low zoom, a blurred glow fill plus a crisp cell
-  fill coloured by Strength tier at high zoom, and every track as a thin, blurred, translucent line
-  so overlaps get brighter.
+- The planned layers (`docs/poc-plan.md` §5, built in
+  `apps/mobile/src/contexts/territory/ui/layers.tsx`): a heatmap of cell centroids weighted by
+  Strength at low zoom, a blurred glow fill plus a crisp cell fill coloured by Strength tier at high
+  zoom, and every track as a thin, blurred, translucent line so overlaps get brighter.
 - v1 of the plan used react-native-maps; v2 (when Turf became the main feature) switched.
 
 ## 2. Options
@@ -59,17 +59,18 @@ API key.
 
 ## 3. Decision
 
-Option **B**. Styles are `MAP_STYLE_LIGHT` and `MAP_STYLE_DARK` in `src/constants/map.ts`
-(OpenFreeMap `liberty` and `dark`); the Turf Map always uses the dark one
-(`src/contexts/territory/ui/turf-map-view.tsx`).
+Option **B**. Styles are `MAP_STYLE_LIGHT` and `MAP_STYLE_DARK` in
+`apps/mobile/src/constants/map.ts` (OpenFreeMap `liberty` and `dark`); the Turf Map always uses the
+dark one (`apps/mobile/src/contexts/territory/ui/turf-map-view.tsx`).
 
 ## 4. Consequences
 
 - **iOS build:** Xcode's Swift Package Manager hangs downloading the MapLibre binary on the dev Mac.
-  `tools/fetch-maplibre-ios.sh` vendors it into `vendor/maplibre-spm` once, and the config plugin
-  `plugins/with-local-maplibre.js` points SPM at that folder (no change when it's absent).
+  `apps/mobile/tools/fetch-maplibre-ios.sh` vendors it into `apps/mobile/vendor/maplibre-spm` once,
+  and the config plugin `apps/mobile/plugins/with-local-maplibre.js` points SPM at that folder (no
+  change when it's absent).
 - **Following the user:** the record map uses MapLibre's `onTrackUserLocationChange` (fixed in
   v0.1.0, session log).
 - **Not yet verified:** the planned M2 spike on both platforms was never written up as a separate
   record, and MapLibre has not run on Android. The Q4 performance budget is still unmeasured.
-- The reference look is `tools/turf-preview.mjs`, an HTML preview of the same layers.
+- The reference look is `apps/mobile/tools/turf-preview.mjs`, an HTML preview of the same layers.

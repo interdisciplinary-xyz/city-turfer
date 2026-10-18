@@ -71,7 +71,7 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 
 - 🕰️ [`sessions/v0.1.0.md`](sessions/v0.1.0.md): Session log v0.1.0 (2026-10-15 → 16) — from empty
   folder to the iOS PoC, background tracking fix
-- ❗ [`sessions/v0.2.0.md`](sessions/v0.2.0.md): Session log v0.2.0 through the Me menu and
+- 🕰️ [`sessions/v0.2.0.md`](sessions/v0.2.0.md): Session log v0.2.0 through the Me menu and
   achievements; predates the Dashboard, Me drawer and login rename (PRs 23–25) and still says
   app.json is unpinned (pinned in f04bcf3)
 

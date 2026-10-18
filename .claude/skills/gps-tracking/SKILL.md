@@ -4,18 +4,19 @@ description:
   How TurfTrack records GPS routes reliably with expo-location + expo-task-manager — background task
   wiring, permission flow (foreground → background, iOS/Android differences), per-activity accuracy
   settings, Android foreground service, point filtering (accuracy, speed spikes, jitter),
-  auto-pause, crash/kill recovery and battery. Use for any work in src/contexts/recording/, anything
-  involving location permissions, "tracking stops when screen is off", missing points, GPS jumps,
-  drift while standing still, or battery drain.
+  auto-pause, crash/kill recovery and battery. Use for any work in
+  apps/mobile/src/contexts/recording/, anything involving location permissions, "tracking stops when
+  screen is off", missing points, GPS jumps, drift while standing still, or battery drain.
 ---
 
-> **Where the code lives** (see `docs/poc-plan.md`), all under `src/contexts/recording/`: filter →
-> `recording/domain/fix-filter.ts`; auto-pause and session lifecycle → the `RecordingSession`
-> aggregate in `recording/domain/recording-session.ts` + `recording/application/use-cases.ts`;
-> profiles → `recording/domain/tracking-profile.ts`; `expo-location` calls →
-> `recording/infrastructure/expo-location-tracker.ts` (ACL); iOS native session →
-> `recording/infrastructure/background-activity-session.ts` over `modules/background-session`; task
-> → `recording/infrastructure/background-task.ts` calling `IngestFixes`.
+> **Where the code lives** (see `docs/poc-plan.md`), all under
+> `apps/mobile/src/contexts/recording/`: filter → `recording/domain/fix-filter.ts`; auto-pause and
+> session lifecycle → the `RecordingSession` aggregate in `recording/domain/recording-session.ts` +
+> `recording/application/use-cases.ts`; profiles → `recording/domain/tracking-profile.ts`;
+> `expo-location` calls → `recording/infrastructure/expo-location-tracker.ts` (ACL); iOS native
+> session → `recording/infrastructure/background-activity-session.ts` over
+> `apps/mobile/modules/background-session`; task → `recording/infrastructure/background-task.ts`
+> calling `IngestFixes`.
 
 # GPS tracking
 
@@ -34,16 +35,16 @@ expo-location ──(batches)──▶ TaskManager task (infrastructure/backgrou
 ```
 
 - `TaskManager.defineTask(LOCATION_TASK, handler)` must be **evaluated at module top level, at app
-  start**. `src/contexts/recording/infrastructure/background-task.ts` is the first import of the
-  root `index.ts` entry. If it's defined inside a component or effect, Android headless restarts and
-  iOS relaunches deliver locations to a task that doesn't exist.
+  start**. `apps/mobile/src/contexts/recording/infrastructure/background-task.ts` is the first
+  import of the root `index.ts` entry. If it's defined inside a component or effect, Android
+  headless restarts and iOS relaunches deliver locations to a task that doesn't exist.
 - The handler receives `{ data: { locations }, error }`, usually several locations at once. It must:
   1. read the active session (id, type, paused flag) **from SQLite** — not from in-memory state,
      because in a headless relaunch it is empty;
   2. run each location through the filter;
   3. insert accepted points in **one transaction**;
   4. never throw (wrap the handler in try/catch); record counts and timings, never coordinates, in
-     `sys_diagnostics` (`src/platform/diagnostics.ts`).
+     `sys_diagnostics` (`apps/mobile/src/platform/diagnostics.ts`).
 - The UI reads the latest points from the DB, or through a lightweight event emitter the task also
   notifies when the app is foregrounded. The UI does not own the data.
 
@@ -67,8 +68,9 @@ await Location.startLocationUpdatesAsync(LOCATION_TASK, {
 });
 ```
 
-Per-type defaults in `src/contexts/recording/domain/tracking-profile.ts`. Keep the filter thresholds
-in sync with `tools/lib/geo.mjs` `PROFILES`, so the oracle and the app agree:
+Per-type defaults in `apps/mobile/src/contexts/recording/domain/tracking-profile.ts`. Keep the
+filter thresholds in sync with `apps/mobile/tools/lib/geo.mjs` `PROFILES`, so the oracle and the app
+agree:
 
 | type  | distanceIntervalM | timeIntervalMs | maxAccuracyM | maxSpeed m/s | minStep m | autoPause below m/s for s |
 | ----- | ----------------- | -------------- | ------------ | ------------ | --------- | ------------------------- |

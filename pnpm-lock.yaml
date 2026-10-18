@@ -7,6 +7,60 @@ settings:
 importers:
 
   .:
+    devDependencies:
+      '@commitlint/cli':
+        specifier: ^19.8.1
+        version: 19.8.1(@types/node@26.6.5)(typescript@6.0.3)
+      '@commitlint/config-conventional':
+        specifier: ^19.8.1
+        version: 19.8.1
+      '@eslint/js':
+        specifier: ^9.39.5
+        version: 9.39.5
+      commit-and-tag-version:
+        specifier: ^12.7.3
+        version: 12.7.3
+      eslint:
+        specifier: ^9.39.5
+        version: 9.39.5(jiti@2.6.1)
+      eslint-config-prettier:
+        specifier: ^10.1.8
+        version: 10.1.8(eslint@9.39.5(jiti@2.6.1))
+      eslint-plugin-react:
+        specifier: ^7.37.5
+        version: 7.37.5(eslint@9.39.5(jiti@2.6.1))
+      eslint-plugin-react-hooks:
+        specifier: ^5.2.0
+        version: 5.2.0(eslint@9.39.5(jiti@2.6.1))
+      eslint-plugin-react-native-a11y:
+        specifier: ^3.5.1
+        version: 3.5.1(eslint@9.39.5(jiti@2.6.1))
+      eslint-plugin-simple-import-sort:
+        specifier: ^12.1.1
+        version: 12.1.1(eslint@9.39.5(jiti@2.6.1))
+      eslint-plugin-unused-imports:
+        specifier: ^4.4.1
+        version: 4.4.1(@typescript-eslint/eslint-plugin@8.71.2(@typescript-eslint/parser@8.71.2(eslint@9.39.5(jiti@2.6.1))(typescript@6.0.3))(eslint@9.39.5(jiti@2.6.1))(typescript@6.0.3))(eslint@9.39.5(jiti@2.6.1))
+      globals:
+        specifier: ^16.5.0
+        version: 16.5.0
+      husky:
+        specifier: ^9.1.7
+        version: 9.1.7
+      lint-staged:
+        specifier: ^15.5.2
+        version: 15.5.2
+      prettier:
+        specifier: ^3.9.10
+        version: 3.9.10
+      turbo:
+        specifier: ^2.11.9
+        version: 2.11.9
+      typescript-eslint:
+        specifier: ^8.71.2
+        version: 8.71.2(eslint@9.39.5(jiti@2.6.1))(typescript@6.0.3)
+
+  apps/mobile:
     dependencies:
       '@maplibre/maplibre-react-native':
         specifier: ^11.5.0
@@ -72,15 +126,6 @@ importers:
         specifier: ~4.26.0
         version: 4.26.2(react-native@0.86.3(@react-native/jest-preset@0.87.1(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3))(react@19.2.3)
     devDependencies:
-      '@commitlint/cli':
-        specifier: ^19.8.1
-        version: 19.8.1(@types/node@26.6.5)(typescript@6.0.3)
-      '@commitlint/config-conventional':
-        specifier: ^19.8.1
-        version: 19.8.1
-      '@eslint/js':
-        specifier: ^9.39.5
-        version: 9.39.5
       '@react-native/jest-preset':
         specifier: ^0.87.1
         version: 0.87.1(@babel/core@7.29.7)(react@19.2.3)
@@ -99,60 +144,18 @@ importers:
       better-sqlite3:
         specifier: ^13.0.3
         version: 13.0.3
-      commit-and-tag-version:
-        specifier: ^12.7.3
-        version: 12.7.3
       dependency-cruiser:
         specifier: ^18.6.0
         version: 18.6.0
-      eslint:
-        specifier: ^9.39.5
-        version: 9.39.5(jiti@2.6.1)
-      eslint-config-prettier:
-        specifier: ^10.1.8
-        version: 10.1.8(eslint@9.39.5(jiti@2.6.1))
-      eslint-plugin-react:
-        specifier: ^7.37.5
-        version: 7.37.5(eslint@9.39.5(jiti@2.6.1))
-      eslint-plugin-react-hooks:
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@9.39.5(jiti@2.6.1))
-      eslint-plugin-react-native-a11y:
-        specifier: ^3.5.1
-        version: 3.5.1(eslint@9.39.5(jiti@2.6.1))
-      eslint-plugin-simple-import-sort:
-        specifier: ^12.1.1
-        version: 12.1.1(eslint@9.39.5(jiti@2.6.1))
-      eslint-plugin-unused-imports:
-        specifier: ^4.4.1
-        version: 4.4.1(@typescript-eslint/eslint-plugin@8.71.2(@typescript-eslint/parser@8.71.2(eslint@9.39.5(jiti@2.6.1))(typescript@6.0.3))(eslint@9.39.5(jiti@2.6.1))(typescript@6.0.3))(eslint@9.39.5(jiti@2.6.1))
-      globals:
-        specifier: ^16.5.0
-        version: 16.5.0
-      husky:
-        specifier: ^9.1.7
-        version: 9.1.7
       jest:
         specifier: ^30.5.2
         version: 30.5.2(@types/node@26.6.5)
       jest-expo:
         specifier: ^57.0.6
         version: 57.0.6(@babel/core@7.29.7)(@react-native/jest-preset@0.87.1(@babel/core@7.29.7)(react@19.2.3))(expo@57.0.29)(jest@30.5.2(@types/node@26.6.5))(react-native@0.86.3(@react-native/jest-preset@0.87.1(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3))(react@19.2.3)
-      lint-staged:
-        specifier: ^15.5.2
-        version: 15.5.2
-      prettier:
-        specifier: ^3.9.10
-        version: 3.9.10
-      turbo:
-        specifier: ^2.11.9
-        version: 2.11.9
       typescript:
         specifier: ~6.0.3
         version: 6.0.3
-      typescript-eslint:
-        specifier: ^8.71.2
-        version: 8.71.2(eslint@9.39.5(jiti@2.6.1))(typescript@6.0.3)
 
 packages:
 

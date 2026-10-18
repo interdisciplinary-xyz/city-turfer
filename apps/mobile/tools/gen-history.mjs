@@ -23,6 +23,7 @@
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { generateTrack } from './lib/generate.mjs';
 import { mulberry32, toGpx } from './lib/geo.mjs';
@@ -38,7 +39,7 @@ const explore = Number(args.explore ?? 0.15);
 const [lat, lon] = (args.home ?? '52.2133,20.9990').split(',').map(Number);
 const interval = Number(args.interval ?? 2);
 const rand = mulberry32(Number(args.seed ?? 7));
-const out = args.out ?? 'tools/fixtures/history';
+const out = args.out ?? fileURLToPath(new URL('fixtures/history', import.meta.url));
 
 const TYPES = [
   { type: 'walk', km: [1.5, 4] },

@@ -95,6 +95,6 @@ test('critical path mapping: unknown flow fails, unit-only is allowed', () => {
 test('real repository passes the audit', async () => {
   const { resolve, dirname } = await import('node:path');
   const { fileURLToPath } = await import('node:url');
-  const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-  assert.deepEqual(audit(root).errors, []);
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..'); // apps/mobile
+  assert.deepEqual(audit(root, resolve(root, '../..')).errors, []);
 });

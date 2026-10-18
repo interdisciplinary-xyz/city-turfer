@@ -2,7 +2,7 @@
 status: historical
 verified: 2026-10-15
 owner: founder
-scope: [src/contexts, src/shared-kernel, src/platform]
+scope: [apps/mobile/src/contexts, apps/mobile/src/shared-kernel, apps/mobile/src/platform]
 summary:
   The PoC plan as written (draft v5, 2026-10-15) — ubiquitous language (§2) and context map (§3) are
   still the vocabulary; folder layout and milestones are the original plan, not current code
@@ -33,16 +33,16 @@ built so sync and other users' turf can be added later.
     with zero points lost.
 - **Q2**
   - Question: Are the stats correct?
-  - Pass criterion: Simulator replay of `tools/fixtures/*`: distance within ±3% of
+  - Pass criterion: Simulator replay of `apps/mobile/tools/fixtures/*`: distance within ±3% of
     `truth.distanceM`, moving time within ±5 s of the oracle. On a device: N laps of a 400 m
     athletics track within ±5%.
 - **Q3**
   - Question: **Does the turf map work, and does it feel rewarding?**
-  - Pass criterion: With 120 days of seeded history (`tools/gen-history.mjs`) plus at least 2 weeks
-    of real use, the Turf Map shows tracks overlapping and brightening. Strength values match the
-    reference formula exactly (shared test vectors). Claimed cells never disappear (deleting an
-    activity is the only way turf shrinks). One tester can point out their most-covered street and
-    the edge of their turf, without explanation.
+  - Pass criterion: With 120 days of seeded history (`apps/mobile/tools/gen-history.mjs`) plus at
+    least 2 weeks of real use, the Turf Map shows tracks overlapping and brightening. Strength
+    values match the reference formula exactly (shared test vectors). Claimed cells never disappear
+    (deleting an activity is the only way turf shrinks). One tester can point out their most-covered
+    street and the edge of their turf, without explanation.
 - **Q4**
   - Question: **Does the turf map stay fast as history grows?**
   - Pass criterion: With a seeded year (~200 activities, ~50k cells) on a mid-range Android phone:
@@ -263,14 +263,14 @@ claimedAt (= the activity's startedAt, _not_ the import time), and `cells: Reado
 the last 7 and 30 days, most-visited cell).
 
 **Domain policy `TurfStrengthPolicy`** is the reference formula, identical to
-`tools/turf-preview.mjs`:
+`apps/mobile/tools/turf-preview.mjs`:
 
 ```
 strength = 1 − exp(−visits / k)        k = 3: 1 visit → 0.28 · 3 → 0.63 · 7 → 0.90 · 10 → 0.96
 ```
 
-Shared test vectors (in `tools/fixtures/turf-vectors.json`, generated in M3) pin the tool and the
-app to the same numbers.
+Shared test vectors (in `apps/mobile/tools/fixtures/turf-vectors.json`, generated in M3) pin the
+tool and the app to the same numbers.
 
 **Port `CellGrid`**: `cellOf(GeoPoint)`, `boundary(CellId)`, `parent(CellId, res)`,
 `cellsCovering(BoundingBox, res)`, `areaM2(CellId)`. It's implemented by `H3CellGrid`
@@ -289,7 +289,7 @@ the number of rendered features under ~5k.
 `GeoPoint`, `BoundingBox`, `Distance`, `Duration`, `Pace`, `Speed`, `ActivityType`, `Segment`,
 `Track`, `TrackAnalyzer` (distance per segment, moving time, splits, elevation, Douglas–Peucker
 simplification), `DomainEvent`, `DomainError`, `Instant`, `Id`. Its numbers match
-`tools/lib/geo.mjs`.
+`apps/mobile/tools/lib/geo.mjs`.
 
 ### 4.5 Events and the outbox
 
@@ -331,7 +331,7 @@ app/                                   expo-router screens (thin)
   (tabs)/turf.tsx                      Turf Map  ← main screen
   (tabs)/history.tsx                   History
   activity/[id].tsx                    Activity detail (+ turf gained)
-src/
+apps/mobile/src/
   shared-kernel/
   contexts/
     identity/      domain/ application/ infrastructure/ ui/ index.ts
@@ -364,7 +364,7 @@ risks table.
 5. A type filter (walk, run, cycle), and a summary card: total turf in km², strong cells, and new
    turf this week and month.
 
-The reference look is `tools/turf-preview.mjs` (run it to see it).
+The reference look is `apps/mobile/tools/turf-preview.mjs` (run it to see it).
 
 ### Persistence (one SQLite DB per user, tables owned per context)
 

@@ -3,7 +3,6 @@
   "tasks": {
     "typecheck": { "outputs": [] },
     "arch": { "outputs": [] },
-    "test:unit": { "outputs": [] },
-    "standard:lint": { "outputs": [] }
+    "test:unit": { "outputs": [] }
   }
 }

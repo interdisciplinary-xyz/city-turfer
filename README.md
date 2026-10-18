@@ -3,7 +3,7 @@
 [![CI](https://github.com/interdisciplinary-xyz/city-turfer/actions/workflows/ci.yml/badge.svg)](https://github.com/interdisciplinary-xyz/city-turfer/actions/workflows/ci.yml)
 
 <p align="center">
-  <img src="assets/brand/mark.svg" alt="CityTurfer" width="160">
+  <img src="apps/mobile/assets/brand/mark.svg" alt="CityTurfer" width="160">
 </p>
 
 **Surf your city. Own your streets.** A mobile app that records walks, runs and rides on a real map
@@ -78,10 +78,19 @@ a new build.
 
 ## Architecture
 
-Domain-Driven Design is a hard requirement. Each bounded context under `src/contexts/*` has
-`domain/`, `application/`, `infrastructure/` and `ui/` layers and a public `index.ts`. Contexts talk
-only through each other's `index.ts` and published domain events. Aggregate changes and their events
-are saved in one SQLite transaction (outbox), and event handlers are idempotent.
+The repo is a pnpm + Turborepo monorepo
+([decision](./docs/decisions/monorepo-turborepo-2026-10-18.md)):
+
+| Path           | What                                                                                             |
+| -------------- | ------------------------------------------------------------------------------------------------ |
+| `apps/mobile/` | The Expo app (`@cityturfer/mobile`): app code, native module, plugins, Maestro, mobile dev tools |
+| `tools/`       | Repo-wide tools: docs audit, log audit, secret-file guard, release helpers                       |
+| `docs/`        | Documentation, indexed in `docs/INDEX.md`                                                        |
+
+Domain-Driven Design is a hard requirement. Each bounded context under `apps/mobile/src/contexts/*`
+has `domain/`, `application/`, `infrastructure/` and `ui/` layers and a public `index.ts`. Contexts
+talk only through each other's `index.ts` and published domain events. Aggregate changes and their
+events are saved in one SQLite transaction (outbox), and event handlers are idempotent.
 `pnpm run test:arch` (dependency-cruiser) enforces the rules: domain code imports no React, Expo or
 infrastructure, and no context reaches into another's layers. Full design:
 [PoC plan](./docs/poc-plan.md); rules:
@@ -89,36 +98,36 @@ infrastructure, and no context reaches into another's layers. Full design:
 
 ### Bounded contexts
 
-| Context                     | Purpose                                                                        |
-| --------------------------- | ------------------------------------------------------------------------------ |
-| `src/contexts/identity`     | `AuthGateway` port; mock sign-in for the PoC; one SQLite DB per user           |
-| `src/contexts/recording`    | **Core.** Recording Session, Fix Filter, auto-pause, background task, recovery |
-| `src/contexts/activity-log` | Activities, history, detail, splits, demo import, street-routed gap estimates  |
-| `src/contexts/territory`    | **Core.** Claims, turf cells (H3 res 11), strength, Turf map                   |
-| `src/contexts/achievements` | Pure evaluation of achievements over activity and turf facts                   |
+| Context                                 | Purpose                                                                        |
+| --------------------------------------- | ------------------------------------------------------------------------------ |
+| `apps/mobile/src/contexts/identity`     | `AuthGateway` port; mock sign-in for the PoC; one SQLite DB per user           |
+| `apps/mobile/src/contexts/recording`    | **Core.** Recording Session, Fix Filter, auto-pause, background task, recovery |
+| `apps/mobile/src/contexts/activity-log` | Activities, history, detail, splits, demo import, street-routed gap estimates  |
+| `apps/mobile/src/contexts/territory`    | **Core.** Claims, turf cells (H3 res 11), strength, Turf map                   |
+| `apps/mobile/src/contexts/achievements` | Pure evaluation of achievements over activity and turf facts                   |
 
 Shared code outside the contexts:
 
-| Path                   | Purpose                                                                          |
-| ---------------------- | -------------------------------------------------------------------------------- |
-| `src/shared-kernel`    | Pure value objects and maths in SI units (distance, splits, elevation, simplify) |
-| `src/constants`        | Shared constants (activity types, colours, map styles); imports nothing          |
-| `src/platform`         | SQLite, migrations, outbox and event dispatcher, one-off jobs, diagnostics       |
-| `src/ui-kit`           | Theme hook, formatting, shared components, app context, Me menu                  |
-| `src/composition-root` | Lazy, React-free wiring used by the UI and the headless background task          |
-| `modules/`             | Native module `background-session` (iOS `CLBackgroundActivitySession`)           |
+| Path                               | Purpose                                                                          |
+| ---------------------------------- | -------------------------------------------------------------------------------- |
+| `apps/mobile/src/shared-kernel`    | Pure value objects and maths in SI units (distance, splits, elevation, simplify) |
+| `apps/mobile/src/constants`        | Shared constants (activity types, colours, map styles); imports nothing          |
+| `apps/mobile/src/platform`         | SQLite, migrations, outbox and event dispatcher, one-off jobs, diagnostics       |
+| `apps/mobile/src/ui-kit`           | Theme hook, formatting, shared components, app context, Me menu                  |
+| `apps/mobile/src/composition-root` | Lazy, React-free wiring used by the UI and the headless background task          |
+| `apps/mobile/modules/`             | Native module `background-session` (iOS `CLBackgroundActivitySession`)           |
 
 The background location task is defined at module top level in
-`src/contexts/recording/infrastructure/background-task.ts` and imported first by `index.ts`. It
-translates fixes through the anti-corruption layer and calls the `IngestFixes` use case; it never
-relies on React state.
+`apps/mobile/src/contexts/recording/infrastructure/background-task.ts` and imported first by
+`index.ts`. It translates fixes through the anti-corruption layer and calls the `IngestFixes` use
+case; it never relies on React state.
 
 ---
 
 ### Screens
 
-expo-router, file-based under `src/app/`. Screens are thin: they compose context `ui/` components
-and hooks.
+expo-router, file-based under `apps/mobile/src/app/`. Screens are thin: they compose context `ui/`
+components and hooks.
 
 | Route                      | Screen                                                           |
 | -------------------------- | ---------------------------------------------------------------- |
@@ -137,41 +146,42 @@ and hooks.
 
 ### Scripts
 
-Everyday commands from `package.json`; `pnpm run` is authoritative.
+Everyday commands from the root `package.json` (they run the app's scripts through Turborepo or
+`pnpm --filter`); `pnpm run` is authoritative.
 
-| Name                        | Description                                                         |
-| --------------------------- | ------------------------------------------------------------------- |
-| `start`                     | Metro for an installed development build                            |
-| `ios` / `android`           | Build and install a development build                               |
-| `test:types` / `typecheck`  | `tsc --noEmit`                                                      |
-| `test:arch` / `arch`        | DDD dependency rules (dependency-cruiser)                           |
-| `test:unit` / `jest`        | Jest                                                                |
-| `test`                      | `arch` + Jest                                                       |
-| `test:e2e`                  | Maestro suite on the booted iOS Simulator (`e2e/run.sh`)            |
-| `standard` / `standard:fix` | Prettier + ESLint, check or apply                                   |
-| `ci:quality`                | Full local gate: `standard`, `test:types`, `test:arch`, `test:unit` |
-| `audit:docs`                | Docs audit: dead paths, broken links, frontmatter, probes           |
-| `release`                   | `commit-and-tag-version` (run by CI on `main`, never by hand)       |
+| Name                        | Description                                                          |
+| --------------------------- | -------------------------------------------------------------------- |
+| `start`                     | Metro for an installed development build                             |
+| `ios` / `android`           | Build and install a development build                                |
+| `test:types` / `typecheck`  | `tsc --noEmit` in every workspace                                    |
+| `test:arch`                 | DDD dependency rules (dependency-cruiser)                            |
+| `test:unit`                 | Jest + node tool tests                                               |
+| `test`                      | `arch` + Jest + tool tests                                           |
+| `test:e2e`                  | Maestro suite on the booted iOS Simulator (`apps/mobile/e2e/run.sh`) |
+| `standard` / `standard:fix` | Prettier + ESLint, check or apply                                    |
+| `ci:quality`                | Full local gate: `standard`, `test:types`, `test:arch`, `test:unit`  |
+| `audit:docs`                | Docs audit: dead paths, broken links, frontmatter, probes            |
+| `release`                   | `commit-and-tag-version` (run by CI on `main`, never by hand)        |
 
 > [!NOTE] **Tests passing doesn't prove background tracking works.** It needs a development build on
-> a device, or a simulator with replayed movement (`tools/sim-location.sh`). See the
+> a device, or a simulator with replayed movement (`apps/mobile/tools/sim-location.sh`). See the
 > [`mobile-testing` skill](./.claude/skills/mobile-testing/SKILL.md).
 
 ---
 
 ### Dev tools
 
-| Command                                                                   | Purpose                           |
-| ------------------------------------------------------------------------- | --------------------------------- |
-| `node tools/gen-route.mjs --type run --km 5 > tools/fixtures/run-5k.gpx`  | Synthetic GPS route               |
-| `node tools/route-stats.mjs tools/fixtures/run-5k.gpx`                    | Reference stats (the oracle)      |
-| `tools/sim-location.sh ios tools/fixtures/run-5k.gpx`                     | Replay a route into the simulator |
-| `node tools/gen-history.mjs --days 120 --out tools/fixtures/history`      | Months of overlapping activities  |
-| `node tools/turf-preview.mjs tools/fixtures/history --out /tmp/turf.html` | Turf look and parameter tuning    |
-| `tools/device-diagnose.sh`                                                | Recording timeline from a phone   |
-| `node tools/turf-report.mjs <db>`                                         | Per-activity turf counts          |
-| `tools/fetch-maplibre-ios.sh`                                             | Vendor MapLibre for iOS (once)    |
-| `node tools/brand/render-assets.mjs`                                      | Icon and splash PNGs from SVG     |
+| Command                                                                                           | Purpose                           |
+| ------------------------------------------------------------------------------------------------- | --------------------------------- |
+| `node apps/mobile/tools/gen-route.mjs --type run --km 5 > apps/mobile/tools/fixtures/run-5k.gpx`  | Synthetic GPS route               |
+| `node apps/mobile/tools/route-stats.mjs apps/mobile/tools/fixtures/run-5k.gpx`                    | Reference stats (the oracle)      |
+| `apps/mobile/tools/sim-location.sh ios apps/mobile/tools/fixtures/run-5k.gpx`                     | Replay a route into the simulator |
+| `node apps/mobile/tools/gen-history.mjs --days 120 --out apps/mobile/tools/fixtures/history`      | Months of overlapping activities  |
+| `node apps/mobile/tools/turf-preview.mjs apps/mobile/tools/fixtures/history --out /tmp/turf.html` | Turf look and parameter tuning    |
+| `apps/mobile/tools/device-diagnose.sh`                                                            | Recording timeline from a phone   |
+| `node apps/mobile/tools/turf-report.mjs <db>`                                                     | Per-activity turf counts          |
+| `apps/mobile/tools/fetch-maplibre-ios.sh`                                                         | Vendor MapLibre for iOS (once)    |
+| `node apps/mobile/tools/brand/render-assets.mjs`                                                  | Icon and splash PNGs from SVG     |
 
 The diagnostics tools never print coordinates: location data is personal data.
 
@@ -180,7 +190,7 @@ The diagnostics tools never print coordinates: location data is personal data.
 ### Environment
 
 No `.env` is needed for local development. Two public variables select the build mode
-(`src/composition-root.ts`):
+(`apps/mobile/src/composition-root.ts`):
 
 - `EXPO_PUBLIC_AUTH_MODE`: default `mock` (the demo account)
 - `EXPO_PUBLIC_APP_ENV`: default `poc`; the app refuses to start with mock auth when this is
@@ -197,8 +207,8 @@ Prerequisites: Node 22.15.1 (`nvm use`), pnpm (`corepack enable` picks the pinne
 nvm use
 corepack enable               # once: pnpm at the version in package.json "packageManager"
 pnpm install --frozen-lockfile
-tools/fetch-maplibre-ios.sh   # once: Xcode's SPM download of MapLibre hangs on some machines
-pnpm exec expo run:ios        # build and install a development build
+apps/mobile/tools/fetch-maplibre-ios.sh   # once: Xcode's SPM download of MapLibre hangs on some machines
+pnpm -C apps/mobile exec expo run:ios        # build and install a development build
 pnpm start                    # later: Metro for the installed build
 ```
 
@@ -215,7 +225,7 @@ Local quirks: watchman is disabled in the Jest and Metro config (broken Homebrew
 
 ```sh
 pnpm run ci:quality   # Prettier, ESLint, tsc, dependency rules, Jest
-pnpm run test:e2e     # Maestro flows in e2e/ on the booted iOS Simulator
+pnpm run test:e2e     # Maestro flows in apps/mobile/e2e/ on the booted iOS Simulator
 ```
 
 Unit tests cover domain invariants, metrics against the oracle (±3 %), the full context chain
@@ -233,7 +243,7 @@ Release workflow tags `vX.Y.Z` and writes `CHANGELOG.md`. Full policy:
 [Release manager](./docs/process/release-manager.md).
 
 ```sh
-pnpm dlx eas-cli@latest update --channel production --environment production --platform ios \
+pnpm -C apps/mobile dlx eas-cli@latest update --channel production --environment production --platform ios \
   --message "<what changed>" --non-interactive
 ```
 

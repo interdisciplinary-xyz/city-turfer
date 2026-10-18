@@ -22,7 +22,7 @@ test('blocks personal location data', () => {
     'diag.logarchive/Info.plist',
     'walk.gpx',
     'docs/morning-run.gpx',
-    'tools/fixtures/history/2026-01-01.gpx',
+    'apps/mobile/tools/fixtures/history/2026-01-01.gpx',
     'e2e-results/20261015/report.xml',
   ]) {
     assert.equal(classify(p)?.level, 'block', p);
@@ -50,12 +50,12 @@ test('blocks signing material and credentials', () => {
 
 test('allows fixtures, examples and ordinary files', () => {
   for (const p of [
-    'tools/fixtures/run-5k.gpx',
+    'apps/mobile/tools/fixtures/run-5k.gpx',
     '.env.example',
-    'src/platform/database.ts',
-    'src/contexts/recording/db-adapter.ts',
+    'apps/mobile/src/platform/database.ts',
+    'apps/mobile/src/contexts/recording/db-adapter.ts',
     'docs/quality/e2e.md',
-    'e2e/01-auth.yaml',
+    'apps/mobile/e2e/01-auth.yaml',
     'package.json',
   ]) {
     assert.equal(classify(p), null, p);
@@ -91,8 +91,8 @@ function repo() {
 
 test('CLI: staged secret exits 1, clean exits 0, .DS_Store warns', () => {
   const { dir, run } = repo();
-  mkdirSync(join(dir, 'tools/fixtures'), { recursive: true });
-  writeFileSync(join(dir, 'tools/fixtures/ok.gpx'), '<gpx/>');
+  mkdirSync(join(dir, 'apps/mobile/tools/fixtures'), { recursive: true });
+  writeFileSync(join(dir, 'apps/mobile/tools/fixtures/ok.gpx'), '<gpx/>');
   writeFileSync(join(dir, '.DS_Store'), '');
   run('add', '-f', '.');
   let r = spawnSync('node', [SCRIPT], { cwd: dir, encoding: 'utf8' });

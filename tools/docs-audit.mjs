@@ -78,18 +78,21 @@ const read = (p) => readFileSync(join(ROOT, p), 'utf8');
 const countMatches = (text, re) => (text.match(re) ?? []).length;
 
 export const PROBES = {
-  /** Bounded contexts: one directory per context in src/contexts/. */
-  contexts: () => readdirSync(join(ROOT, 'src/contexts')).filter((d) => isDir(join('src/contexts', d))).length,
+  /** Bounded contexts: one directory per context in apps/mobile/src/contexts/. */
+  contexts: () =>
+    readdirSync(join(ROOT, 'apps/mobile/src/contexts')).filter((d) => isDir(join('apps/mobile/src/contexts', d)))
+      .length,
   /** Achievements: one `id: '…'` per definition in the achievements list. */
-  achievements: () => countMatches(read('src/contexts/achievements/domain/achievements.ts'), /^\s+id: '[a-z0-9-]+',/gm),
-  /** Maestro flows run by the suite: entries of flowsOrder in e2e/config.yaml. */
+  achievements: () =>
+    countMatches(read('apps/mobile/src/contexts/achievements/domain/achievements.ts'), /^\s+id: '[a-z0-9-]+',/gm),
+  /** Maestro flows run by the suite: entries of flowsOrder in apps/mobile/e2e/config.yaml. */
   'e2e-flows': () => {
-    const text = read('e2e/config.yaml');
+    const text = read('apps/mobile/e2e/config.yaml');
     const block = text.slice(text.indexOf('flowsOrder:'));
     return countMatches(block, /^\s+- [\w-]+/gm);
   },
-  /** SQLite migrations: `version: n` entries in src/platform/migrations.ts. */
-  migrations: () => countMatches(read('src/platform/migrations.ts'), /^\s+version: \d+,/gm),
+  /** SQLite migrations: `version: n` entries in apps/mobile/src/platform/migrations.ts. */
+  migrations: () => countMatches(read('apps/mobile/src/platform/migrations.ts'), /^\s+version: \d+,/gm),
   /** Tracked docs under docs/. */
   docs: () => listFiles('docs').filter((f) => f.endsWith('.md')).length,
 };
@@ -210,9 +213,9 @@ function anchorsOf(file) {
 const findings = [];
 const add = (severity, file, line, kind, message) => findings.push({ severity, file, line, kind, message });
 
-const PATH_PREFIXES = ['src/', 'tools/', 'docs/', 'e2e/', 'modules/', 'plugins/', 'assets/', '.claude/', '.github/'];
-const STALE_PREFIXES = ['app/', 'scripts/']; // checked too: common stale roots in this repo's history
-const CONTEXTS = isDir('src/contexts') ? readdirSync(join(ROOT, 'src/contexts')) : [];
+const PATH_PREFIXES = ['apps/', 'packages/', 'tools/', 'docs/', '.claude/', '.github/'];
+const STALE_PREFIXES = ['src/', 'e2e/', 'modules/', 'plugins/', 'assets/', 'app/', 'scripts/']; // pre-monorepo roots (now under apps/mobile/) and older stale roots
+const CONTEXTS = isDir('apps/mobile/src/contexts') ? readdirSync(join(ROOT, 'apps/mobile/src/contexts')) : [];
 const EXTENSIONS = ['', '.ts', '.tsx', '.js', '.mjs', '.cjs', '.md', '.json'];
 
 function pathExists(p) {
@@ -242,7 +245,7 @@ export function candidatePath(token) {
   if (!p.includes('/')) return null;
   const first = p.split('/')[0];
   if ([...PATH_PREFIXES, ...STALE_PREFIXES].some((pre) => p.startsWith(pre))) return p;
-  if (CONTEXTS.includes(first)) return `src/contexts/${p}`; // context-relative, e.g. recording/domain/x.ts
+  if (CONTEXTS.includes(first)) return `apps/mobile/src/contexts/${p}`; // context-relative, e.g. recording/domain/x.ts
   return null;
 }
 

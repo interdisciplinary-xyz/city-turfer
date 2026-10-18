@@ -3,9 +3,9 @@ name: brand-system
 description:
   CityTurfer brand rules and assets — name usage, tagline and voice, colour tokens (the turf
   strength ramp), typography, logo/app-icon construction, splash, store copy, and how to regenerate
-  icon PNGs from SVG with tools/brand/render-assets.mjs. Use whenever writing user-facing copy,
-  designing or restyling a screen, touching app icons/splash/app name, preparing App Store / Play
-  listings or marketing material, or when someone asks "is this on-brand?".
+  icon PNGs from SVG with apps/mobile/tools/brand/render-assets.mjs. Use whenever writing
+  user-facing copy, designing or restyling a screen, touching app icons/splash/app name, preparing
+  App Store / Play listings or marketing material, or when someone asks "is this on-brand?".
 ---
 
 # CityTurfer brand system
@@ -54,8 +54,9 @@ The brand palette **is** the turf strength ramp — the app's core mechanic is t
 
 Gradient **Ramp** = `faint → glow → strong → blazing`, always running from bottom-left to top-right
 (movement "up" into white-hot). Never use the ramp for errors; errors use `#E5484D`/`#FF6369`.
-Tokens live in `src/constants/colors.ts` (`TIER_COLOR`, `ACCENT`, `LIGHT`, `DARK`, `TYPE_COLOR`;
-`usePalette()` in `src/ui-kit/theme.ts`) — reference those, never hard-code hex in components.
+Tokens live in `apps/mobile/src/constants/colors.ts` (`TIER_COLOR`, `ACCENT`, `LIGHT`, `DARK`,
+`TYPE_COLOR`; `usePalette()` in `apps/mobile/src/ui-kit/theme.ts`) — reference those, never
+hard-code hex in components.
 
 ## Typography
 
@@ -67,11 +68,11 @@ System fonts (SF Pro on iOS, Roboto on Android) — no custom font download in t
 
 ## Logo
 
-- **Mark** (`assets/brand/mark.svg`): a claimed turf cell (hexagon, `glow` outline) with a street
-  riding through it like a wave, coloured with the Ramp and ending in a white-hot "you are here"
-  point at the crest. Faint city grid inside the cell.
-- **Wordmark** (`assets/brand/wordmark.svg`): "City" weight 500 in `blazing` + "Turfer" weight 900
-  in the Ramp. On light backgrounds use `night` for "City".
+- **Mark** (`apps/mobile/assets/brand/mark.svg`): a claimed turf cell (hexagon, `glow` outline) with
+  a street riding through it like a wave, coloured with the Ramp and ending in a white-hot "you are
+  here" point at the crest. Faint city grid inside the cell.
+- **Wordmark** (`apps/mobile/assets/brand/wordmark.svg`): "City" weight 500 in `blazing` + "Turfer"
+  weight 900 in the Ramp. On light backgrounds use `night` for "City".
 - Clear space ≥ ½ hexagon side around the mark. Don't recolour the hexagon, rotate the mark, put it
   on busy photos, or add drop shadows.
 - Android themed icon: `mark-monochrome.svg` (single colour, no glow). Adaptive foreground:
@@ -80,13 +81,14 @@ System fonts (SF Pro on iOS, Roboto on Android) — no custom font download in t
 ## Assets pipeline
 
 ```bash
-node tools/brand/render-assets.mjs           # SVG → PNG into assets/brand/out/ (headless Chrome + sips)
-node tools/brand/render-assets.mjs --check   # list targets
+node apps/mobile/tools/brand/render-assets.mjs           # SVG → PNG into apps/mobile/assets/brand/out/ (headless Chrome + sips)
+node apps/mobile/tools/brand/render-assets.mjs --check   # list targets
 ```
 
 Icons and splash are **native**: they change the runtime fingerprint, so OTA updates stop matching
-installed builds. Apply them only together with a native reinstall: copy `assets/brand/out/*` into
-`assets/`, set `expo.name`, rebuild, reinstall, then publish OTA updates for the new runtime.
+installed builds. Apply them only together with a native reinstall: copy
+`apps/mobile/assets/brand/out/*` into `apps/mobile/assets/`, set `expo.name`, rebuild, reinstall,
+then publish OTA updates for the new runtime.
 
 ## Store copy (draft)
 

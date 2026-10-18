@@ -66,11 +66,11 @@ hidden). Don't edit it by hand.
 ## Mobile specifics
 
 - **OTA vs native:** JS-only changes ship as EAS Updates on channel `production`
-  (`pnpm dlx eas-cli update --channel production --environment production`). Anything that changes
-  the runtime fingerprint (native modules, `app.json` plugins/permissions, icons, splash) needs a
-  rebuild + reinstall — say so in the PR's "Risk & rollback".
+  (`pnpm -C apps/mobile dlx eas-cli update --channel production --environment production`). Anything
+  that changes the runtime fingerprint (native modules, `app.json` apps/mobile/plugins/permissions,
+  icons, splash) needs a rebuild + reinstall — say so in the PR's "Risk & rollback".
 - A release PR lists the runtime fingerprint it ships
-  (`pnpm exec expo-updates fingerprint:generate --platform ios`).
+  (`pnpm -C apps/mobile exec expo-updates fingerprint:generate --platform ios`).
 
 ## Hooks
 
