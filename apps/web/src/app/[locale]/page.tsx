@@ -50,29 +50,6 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
               <p className='lede' data-anim='copy'>
                 {t('hero.lede')}
               </p>
-              <div className='download' data-anim='copy'>
-                <div className='store-buttons'>
-                  {ANDROID_APK_URL ? (
-                    <a className='store-btn store-btn-android' href={ANDROID_APK_URL} download>
-                      {t('download.cta')}
-                    </a>
-                  ) : (
-                    <span className='store-btn store-btn-off' role='link' aria-disabled='true'>
-                      {t('download.cta')}
-                      <span className='store-soon'>{t('download.soon')}</span>
-                    </span>
-                  )}
-                  <span className='store-btn store-btn-off' role='link' aria-disabled='true'>
-                    {t('download.appStore')}
-                    <span className='store-soon'>{t('download.soon')}</span>
-                  </span>
-                </div>
-                {ANDROID_APK_URL ? (
-                  <p className='download-note'>
-                    {t('download.note')}. {t('download.help')}
-                  </p>
-                ) : null}
-              </div>
             </div>
             <div className='screens' data-anim-group='screens'>
               <figure className='screen' data-anim='phone'>
@@ -105,6 +82,29 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
                   {t('screens.dashboard.body')}
                 </figcaption>
               </figure>
+            </div>
+            <div className='download' data-anim='copy'>
+              <div className='store-buttons'>
+                {ANDROID_APK_URL ? (
+                  <a className='store-btn store-btn-android' href={ANDROID_APK_URL} download>
+                    {t('download.cta')}
+                  </a>
+                ) : (
+                  <span className='store-btn store-btn-off' role='link' aria-disabled='true'>
+                    {t('download.cta')}
+                    <span className='store-soon'>{t('download.soon')}</span>
+                  </span>
+                )}
+                <span className='store-btn store-btn-off' role='link' aria-disabled='true'>
+                  {t('download.appStore')}
+                  <span className='store-soon'>{t('download.soon')}</span>
+                </span>
+              </div>
+              {ANDROID_APK_URL ? (
+                <p className='download-note'>
+                  {t('download.note')}. {t('download.help')}
+                </p>
+              ) : null}
             </div>
           </HeroMotion>
         </div>

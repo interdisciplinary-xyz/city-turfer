@@ -125,17 +125,37 @@ img {
   text-align: center;
 }
 
+/* Phones: text, buttons, then the screenshots. Desktop: text + phones in one row, buttons under both. */
+.hero-copy {
+  order: 1;
+}
+
+.hero-grid > .download {
+  order: 2;
+}
+
+.screens {
+  order: 3;
+}
+
 @media (min-width: 960px) {
   .hero {
-    /* bottom = the language bar's height + margin, so the content centres on the whole screen */
-    padding: 24px 0 92px;
+    padding: 24px 0 40px;
   }
   .hero-grid {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
-    gap: 48px;
+    gap: 40px 48px;
+  }
+  /* Phones shrink on short screens so text, phones and the buttons row fit in one view. */
+  .screens .screen {
+    max-width: min(280px, calc((100svh - 400px) * 0.4));
   }
   .hero-copy {
     text-align: left;
+  }
+  .hero-grid > .download {
+    order: 4;
+    grid-column: 1 / -1;
   }
   .hero-copy .mark,
   .hero-copy .wordmark,
@@ -222,6 +242,7 @@ h1 {
   flex-direction: column;
   align-items: center;
   gap: 12px;
+  text-align: center;
 }
 
 .store-buttons {
@@ -278,20 +299,10 @@ h1 {
 
 .download-note {
   margin: 0;
-  max-width: 30rem;
+  max-width: 44rem;
   color: var(--muted);
   font-size: 0.85rem;
   line-height: 1.5;
-}
-
-@media (min-width: 960px) {
-  .download {
-    align-items: flex-start;
-  }
-
-  .store-buttons {
-    justify-content: flex-start;
-  }
 }
 
 /* ---------- Waitlist ---------- */
