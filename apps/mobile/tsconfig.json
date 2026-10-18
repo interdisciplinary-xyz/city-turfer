@@ -1,8 +1,6 @@
 {
-  "extends": "expo/tsconfig.base",
+  "extends": ["expo/tsconfig.base", "@cityturfer/config/tsconfig/base.json"],
   "compilerOptions": {
-    "strict": true,
-    "noUncheckedIndexedAccess": false,
     "paths": {
       "@/*": ["./src/*"]
     },

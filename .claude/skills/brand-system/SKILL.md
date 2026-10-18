@@ -54,9 +54,10 @@ The brand palette **is** the turf strength ramp — the app's core mechanic is t
 
 Gradient **Ramp** = `faint → glow → strong → blazing`, always running from bottom-left to top-right
 (movement "up" into white-hot). Never use the ramp for errors; errors use `#E5484D`/`#FF6369`.
-Tokens live in `apps/mobile/src/constants/colors.ts` (`TIER_COLOR`, `ACCENT`, `LIGHT`, `DARK`,
-`TYPE_COLOR`; `usePalette()` in `apps/mobile/src/ui-kit/theme.ts`) — reference those, never
-hard-code hex in components.
+Tokens live in `packages/brand/src/colors.ts` (`@cityturfer/brand`, re-exported by
+`apps/mobile/src/constants/colors.ts`: `TIER_COLOR`, `ACCENT`, `LIGHT`, `DARK`, `TYPE_COLOR`;
+`usePalette()` in `apps/mobile/src/ui-kit/theme.ts`) — reference those, never hard-code hex in
+components.
 
 ## Typography
 
@@ -68,15 +69,15 @@ System fonts (SF Pro on iOS, Roboto on Android) — no custom font download in t
 
 ## Logo
 
-- **Mark** (`apps/mobile/assets/brand/mark.svg`): a claimed turf cell (hexagon, `glow` outline) with
-  a street riding through it like a wave, coloured with the Ramp and ending in a white-hot "you are
+- **Mark** (`packages/brand/svg/mark.svg`): a claimed turf cell (hexagon, `glow` outline) with a
+  street riding through it like a wave, coloured with the Ramp and ending in a white-hot "you are
   here" point at the crest. Faint city grid inside the cell.
-- **Wordmark** (`apps/mobile/assets/brand/wordmark.svg`): "City" weight 500 in `blazing` + "Turfer"
-  weight 900 in the Ramp. On light backgrounds use `night` for "City".
+- **Wordmark** (`packages/brand/svg/wordmark.svg`): "City" weight 500 in `blazing` + "Turfer" weight
+  900 in the Ramp. On light backgrounds use `night` for "City".
 - Clear space ≥ ½ hexagon side around the mark. Don't recolour the hexagon, rotate the mark, put it
   on busy photos, or add drop shadows.
-- Android themed icon: `mark-monochrome.svg` (single colour, no glow). Adaptive foreground:
-  `mark-foreground.svg` (art inside the 66% safe zone).
+- Android themed icon: `packages/brand/svg/mark-monochrome.svg` (single colour, no glow). Adaptive
+  foreground: `mark-foreground.svg` (art inside the 66% safe zone).
 
 ## Assets pipeline
 

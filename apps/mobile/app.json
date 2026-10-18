@@ -4,6 +4,7 @@
     "slug": "turftrack",
     "scheme": "turftrack",
     "version": "0.3.0",
+    "platforms": ["ios", "android"],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -46,7 +47,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "CityTurfer records your route while you walk, run or ride — including when the screen is off — so every street you cover becomes your turf.",
+          "locationAlwaysAndWhenInUsePermission": "CityTurfer records your route while you walk, run or ride \u2014 including when the screen is off \u2014 so every street you cover becomes your turf.",
           "locationWhenInUsePermission": "CityTurfer shows where you are and records your route.",
           "isIosBackgroundLocationEnabled": true,
           "isAndroidBackgroundLocationEnabled": true,

@@ -14,9 +14,11 @@
     "test:tools": "node --test tools/__tests__/*.test.mjs",
     "test:cov": "jest --coverage",
     "test:e2e": "e2e/run.sh",
-    "e2e:audit": "node tools/e2e/audit.mjs"
+    "e2e:audit": "node tools/e2e/audit.mjs",
+    "lint": "eslint src index.ts tools"
   },
   "dependencies": {
+    "@cityturfer/brand": "workspace:*",
     "@maplibre/maplibre-react-native": "^11.5.0",
     "expo": "~57.0.29",
     "expo-constants": "~57.0.22",
@@ -40,6 +42,7 @@
     "react-native-screens": "~4.26.0"
   },
   "devDependencies": {
+    "@cityturfer/config": "workspace:*",
     "@react-native/jest-preset": "^0.87.1",
     "@types/better-sqlite3": "^9.6.0",
     "@types/jest": "^30.0.0",
@@ -47,6 +50,7 @@
     "babel-preset-expo": "^57.0.15",
     "better-sqlite3": "^13.0.3",
     "dependency-cruiser": "^18.6.0",
+    "eslint": "^9.39.5",
     "jest": "^30.5.2",
     "jest-expo": "^57.0.6",
     "typescript": "~6.0.3"

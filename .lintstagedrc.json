@@ -1,6 +1,6 @@
 {
-  "apps/*/src/**/*.{js,jsx,ts,tsx}": [
-    "eslint --fix --no-error-on-unmatched-pattern",
+  "{apps,packages}/*/src/**/*.{js,jsx,ts,tsx}": [
+    "eslint --flag v10_config_lookup_from_file --fix --no-error-on-unmatched-pattern",
     "prettier --write --ignore-path .gitignore --ignore-path .prettierignore"
   ],
   "**/*.{md,json,yml,yaml,mjs,cjs}": ["prettier --write --ignore-path .gitignore --ignore-path .prettierignore"]
