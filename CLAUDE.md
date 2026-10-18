@@ -64,7 +64,8 @@ apps/mobile/                         the Expo app (package @cityturfer/mobile); 
   tools/                             mobile dev tools (GPX generator, stats oracle, simulator GPS playback, turf preview)
 apps/web/                            Next.js landing page (@cityturfer/web): static export (out/), hosted on Vercel
 packages/brand/                      @cityturfer/brand: colour tokens (turf strength ramp), name + copy, logo SVGs; plain TS
-packages/config/                     @cityturfer/config: Prettier, tsconfig bases, ESLint presets (base, react-native, next)
+packages/config/                     @cityturfer/config: Prettier and tsconfig bases
+packages/eslint-config/              @interdisciplinary/eslint-config (shared with empatalk): presets base, react, package + local-rules
 tools/                               repo-wide tools (docs audit, log audit, secret-file guard, release)
 docs/  .github/  .husky/  .claude/   at the repo root
 ```
@@ -87,6 +88,9 @@ docs/  .github/  .husky/  .claude/   at the repo root
   `apps/mobile/tools/fixtures/turf-vectors.json`.
 - Brand colours and copy come from `@cityturfer/brand` (`apps/mobile/src/constants/colors.ts`
   re-exports them); never hard-code brand hex in either app.
+- Lint (`@interdisciplinary/eslint-config`): types and SCREAMING_SNAKE constants live in a colocated
+  `<file>.constants.ts`, not in `.tsx` components (Expo Router screens in `apps/mobile/src/app/` are
+  exempt: every file there becomes a route); `curly: all`; one import per module.
 - Activity types are exactly `walk | run | cycle`; per-type tuning lives in the `TrackingProfile`
   value object (Recording domain).
 - Location data is personal data: no analytics on coordinates, no logging raw coordinates in

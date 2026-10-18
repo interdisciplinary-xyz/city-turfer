@@ -17,9 +17,13 @@ export class CachedSessionStore implements SessionStore {
   constructor(private readonly inner: SessionStore) {}
 
   async read(): Promise<UserId | null> {
-    if (this.cached !== undefined) return this.cached;
+    if (this.cached !== undefined) {
+      return this.cached;
+    }
     const id = await this.inner.read();
-    if (id) this.cached = id;
+    if (id) {
+      this.cached = id;
+    }
     return id;
   }
 

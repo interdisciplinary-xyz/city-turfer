@@ -8,7 +8,9 @@ import type { LiveSnapshot } from '../domain/recording-session';
 
 /** Shown outside the Record tab while a Recording Session is active (pass `useLiveSession()`). */
 export function LiveSessionBanner({ live, onPress }: { live: LiveSnapshot | null; onPress: () => void }) {
-  if (!live) return null;
+  if (!live) {
+    return null;
+  }
   const state = live.status === 'recording' ? 'Recording' : 'Paused';
   return (
     <Pressable

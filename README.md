@@ -81,14 +81,15 @@ a new build.
 The repo is a pnpm + Turborepo monorepo
 ([decision](./docs/decisions/monorepo-turborepo-2026-10-18.md)):
 
-| Path               | What                                                                                             |
-| ------------------ | ------------------------------------------------------------------------------------------------ |
-| `apps/mobile/`     | The Expo app (`@cityturfer/mobile`): app code, native module, plugins, Maestro, mobile dev tools |
-| `apps/web/`        | Landing page (`@cityturfer/web`): Next.js static export on Vercel                                |
-| `packages/brand/`  | `@cityturfer/brand`: colour tokens, name and copy, logo SVGs                                     |
-| `packages/config/` | `@cityturfer/config`: Prettier, tsconfig and ESLint presets                                      |
-| `tools/`           | Repo-wide tools: docs audit, log audit, secret-file guard, release helpers                       |
-| `docs/`            | Documentation, indexed in `docs/INDEX.md`                                                        |
+| Path                      | What                                                                                             |
+| ------------------------- | ------------------------------------------------------------------------------------------------ |
+| `apps/mobile/`            | The Expo app (`@cityturfer/mobile`): app code, native module, plugins, Maestro, mobile dev tools |
+| `apps/web/`               | Landing page (`@cityturfer/web`): Next.js static export on Vercel                                |
+| `packages/brand/`         | `@cityturfer/brand`: colour tokens, name and copy, logo SVGs                                     |
+| `packages/config/`        | `@cityturfer/config`: Prettier and tsconfig bases                                                |
+| `packages/eslint-config/` | `@interdisciplinary/eslint-config`: ESLint presets and local rules, shared with empatalk         |
+| `tools/`                  | Repo-wide tools: docs audit, log audit, secret-file guard, release helpers                       |
+| `docs/`                   | Documentation, indexed in `docs/INDEX.md`                                                        |
 
 Domain-Driven Design is a hard requirement. Each bounded context under `apps/mobile/src/contexts/*`
 has `domain/`, `application/`, `infrastructure/` and `ui/` layers and a public `index.ts`. Contexts

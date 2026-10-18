@@ -6,7 +6,9 @@ export async function insertMany(
   sqlPrefix: string, // e.g. 'INSERT OR IGNORE INTO t (a, b)'
   rows: readonly (readonly SqlParam[])[]
 ): Promise<void> {
-  if (rows.length === 0) return;
+  if (rows.length === 0) {
+    return;
+  }
   const width = rows[0].length;
   const perChunk = Math.max(1, Math.floor(900 / width));
   const tuple = `(${new Array(width).fill('?').join(', ')})`;

@@ -10,8 +10,12 @@ export interface AchievementsSummary {
 export function summarizeAchievements(list: readonly Achievement[]): AchievementsSummary {
   let closest: Achievement | null = null;
   for (const a of list) {
-    if (a.unlocked) continue;
-    if (!closest || a.current / a.target > closest.current / closest.target) closest = a;
+    if (a.unlocked) {
+      continue;
+    }
+    if (!closest || a.current / a.target > closest.current / closest.target) {
+      closest = a;
+    }
   }
   return { unlocked: list.filter((a) => a.unlocked).length, total: list.length, closest };
 }

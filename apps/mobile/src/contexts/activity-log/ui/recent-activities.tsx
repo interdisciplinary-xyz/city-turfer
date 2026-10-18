@@ -4,7 +4,7 @@ import { ACCENT } from '@/constants/colors';
 import { usePalette } from '@/ui-kit/theme';
 
 import type { ActivityListItem } from '../contract';
-import { EMPTY_HISTORY_TEXT } from './activity-list';
+import { EMPTY_HISTORY_TEXT } from './activity-list.constants';
 import { ActivityRow } from './activity-row';
 
 /** The latest few activities with a "See all" link to History (plain map: lives inside a ScrollView). */

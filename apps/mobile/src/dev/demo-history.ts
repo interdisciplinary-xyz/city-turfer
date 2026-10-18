@@ -97,14 +97,20 @@ export async function seedDemoHistory(
   const total = weights.reduce((a, b) => a + b, 0);
   const pick = () => {
     let r = rand() * total;
-    for (let i = 0; i < favourites.length; i++) if ((r -= weights[i]) <= 0) return favourites[i];
+    for (let i = 0; i < favourites.length; i++) {
+      if ((r -= weights[i]) <= 0) {
+        return favourites[i];
+      }
+    }
     return favourites[0];
   };
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const plan: { r: ReturnType<typeof route>; start: number; noise: number }[] = [];
   for (let d = days; d >= 1; d--) {
-    if (rand() > 4 / 7) continue;
+    if (rand() > 4 / 7) {
+      continue;
+    }
     const r = rand() < 0.15 ? route(Math.floor(rand() * 3)) : pick();
     plan.push({
       r,
@@ -133,11 +139,19 @@ export async function removeDemoHistory(c: Container): Promise<number> {
   let before: number | undefined;
   for (;;) {
     const page = await c.activityLog.list.execute(200, before);
-    if (page.length === 0) break;
-    for (const a of page) if (a.id.startsWith(DEMO_PREFIX)) ids.push(a.id);
+    if (page.length === 0) {
+      break;
+    }
+    for (const a of page) {
+      if (a.id.startsWith(DEMO_PREFIX)) {
+        ids.push(a.id);
+      }
+    }
     before = page[page.length - 1].startedAt;
   }
-  for (const id of ids) await c.activityLog.remove.execute(id);
+  for (const id of ids) {
+    await c.activityLog.remove.execute(id);
+  }
   await c.dispatcher.dispatchPending();
   return ids.length;
 }

@@ -70,7 +70,9 @@ describe('background batches: headless container resilience', () => {
     await t.c.recording.start.execute('run');
     let fail = true;
     const { handle, stopTracking } = handlerFor(async () => {
-      if (fail) throw new Error('errSecInteractionNotAllowed');
+      if (fail) {
+        throw new Error('errSecInteractionNotAllowed');
+      }
       return t.c;
     });
 
@@ -185,7 +187,9 @@ describe('launch maintenance', () => {
     await t.c.recording.start.execute('run');
     await t.c.recording.ingestFixes.execute(fixes(0, 10));
     const finished = await t.c.recording.finish.execute();
-    if (finished.kind !== 'finished') throw new Error(finished.kind);
+    if (finished.kind !== 'finished') {
+      throw new Error(finished.kind);
+    }
     await t.c.runLaunchMaintenance();
     expect(await t.db.first('SELECT 1 AS x FROM sys_outbox WHERE processed_at IS NULL')).toBeNull();
     expect(await t.c.activityLog.detail.execute(finished.sessionId)).not.toBeNull();

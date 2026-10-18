@@ -27,14 +27,18 @@ export class RouterBudget {
 
   /** False while paused (rate limited, offline, cooling down); otherwise opens a new run. */
   beginRun(): boolean {
-    if (this.now() < this.pausedUntil) return false;
+    if (this.now() < this.pausedUntil) {
+      return false;
+    }
     this.requestsThisRun = 0;
     return true;
   }
 
   /** Whether another request fits into this run. Exhausting the run starts the cooldown. */
   hasRequestLeft(): boolean {
-    if (this.requestsThisRun < MAX_REQUESTS_PER_RUN) return true;
+    if (this.requestsThisRun < MAX_REQUESTS_PER_RUN) {
+      return true;
+    }
     this.pauseFor(RUN_COOLDOWN_MS);
     return false;
   }
@@ -43,7 +47,9 @@ export class RouterBudget {
   async acquire(): Promise<void> {
     if (this.lastRequestAt != null) {
       const ms = this.lastRequestAt + MIN_REQUEST_INTERVAL_MS - this.now();
-      if (ms > 0) await this.wait(ms);
+      if (ms > 0) {
+        await this.wait(ms);
+      }
     }
     this.lastRequestAt = this.now();
     this.requestsThisRun++;

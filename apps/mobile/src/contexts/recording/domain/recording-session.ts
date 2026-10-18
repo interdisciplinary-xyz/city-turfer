@@ -136,14 +136,18 @@ export class RecordingSession {
 
   pause(now: number): void {
     this.assertActive();
-    if (this.state.status === 'paused') throw new DomainError('session.already-paused');
+    if (this.state.status === 'paused') {
+      throw new DomainError('session.already-paused');
+    }
     const pausedSince = this.state.pausedSince ?? now; // auto-paused → keep original start
     this.state = { ...this.state, status: 'paused', pausedSince, slowSince: null, pauseAnchor: null };
     this.record({ type: 'SessionPaused', v: 1, at: now, sessionId: this.id, auto: false });
   }
 
   resume(now: number): void {
-    if (this.state.status !== 'paused') throw new DomainError('session.not-paused');
+    if (this.state.status !== 'paused') {
+      throw new DomainError('session.not-paused');
+    }
     this.endPause(now);
     // A manual resume starts a new segment: never measure or draw across the pause.
     const segment = this.state.segment + 1;
@@ -219,7 +223,9 @@ export class RecordingSession {
       };
       this.applyAutoPause(fix.t, verdict.speedMps, profile);
       if (this.state.status !== 'recording') {
-        if (verdict.kind === 'jitter') jitter++;
+        if (verdict.kind === 'jitter') {
+          jitter++;
+        }
         continue;
       }
       const s = this.state;
@@ -272,8 +278,12 @@ export class RecordingSession {
 
   finish(now: number): void {
     this.assertActive();
-    if (this.state.pointCount < 2) throw new DomainError('session.too-short');
-    if (this.state.pausedSince != null) this.endPause(now);
+    if (this.state.pointCount < 2) {
+      throw new DomainError('session.too-short');
+    }
+    if (this.state.pausedSince != null) {
+      this.endPause(now);
+    }
     // A closed session keeps no position: the track lives in the point log (then the activity log).
     this.state = { ...this.state, status: 'finished', endedAt: now, ...NO_POSITION };
     this.record({
@@ -346,12 +356,16 @@ export class RecordingSession {
 
   private endPause(now: number) {
     const s = this.state;
-    if (s.pausedSince == null) return;
+    if (s.pausedSince == null) {
+      return;
+    }
     this.state = { ...s, pausedMs: s.pausedMs + Math.max(0, now - s.pausedSince), pausedSince: null };
   }
 
   private assertActive() {
-    if (!this.isActive) throw new DomainError('session.not-active', this.state.status);
+    if (!this.isActive) {
+      throw new DomainError('session.not-active', this.state.status);
+    }
   }
 
   private record(e: RecordingEvent) {

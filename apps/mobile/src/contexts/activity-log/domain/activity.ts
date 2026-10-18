@@ -58,8 +58,12 @@ export class Activity {
     resumedSegments?: readonly number[] | null;
   }): Activity {
     const points = pointsOf(input.track);
-    if (points.length < 2) throw new DomainError('activity.track-too-short');
-    if (input.endedAt < input.startedAt) throw new DomainError('activity.ends-before-start');
+    if (points.length < 2) {
+      throw new DomainError('activity.track-too-short');
+    }
+    if (input.endedAt < input.startedAt) {
+      throw new DomainError('activity.ends-before-start');
+    }
     const a = new Activity({
       id: input.id,
       type: input.type,
@@ -94,13 +98,17 @@ export class Activity {
 
   rename(name: string) {
     const trimmed = name.trim();
-    if (!trimmed || trimmed.length > 80) throw new DomainError('activity.invalid-name');
+    if (!trimmed || trimmed.length > 80) {
+      throw new DomainError('activity.invalid-name');
+    }
     this.state = { ...this.state, name: trimmed };
   }
 
   /** Replace the track (same fixes, corrected segmentation): totals, bbox and preview are recomputed. */
   correctTrack(track: Track, now: number) {
-    if (pointsOf(track).length < 2) throw new DomainError('activity.track-too-short');
+    if (pointsOf(track).length < 2) {
+      throw new DomainError('activity.track-too-short');
+    }
     const s = this.state;
     // Segments are renumbered by a correction, so which ones began with a Resume is no longer known.
     this.state = { ...s, ...derive(s.type, track, s.startedAt, s.endedAt), resumedSegments: null };
@@ -121,7 +129,9 @@ export class Activity {
 
   /** A routed path across one of its gaps, or null when nobody doing this activity could have taken it. */
   gapRoute(gap: Gap, route: { distanceM: number; coords: readonly [number, number][] }): GapRoute | null {
-    if (!acceptRoute(this.state.type, gap, route.distanceM)) return null;
+    if (!acceptRoute(this.state.type, gap, route.distanceM)) {
+      return null;
+    }
     return {
       afterSegment: gap.afterSegment,
       distanceM: route.distanceM,

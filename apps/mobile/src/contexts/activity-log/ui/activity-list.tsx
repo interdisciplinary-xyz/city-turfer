@@ -3,9 +3,8 @@ import { FlatList, Text } from 'react-native';
 import { usePalette } from '@/ui-kit/theme';
 
 import type { ActivityListItem } from '../contract';
+import { EMPTY_HISTORY_TEXT } from './activity-list.constants';
 import { ActivityRow } from './activity-row';
-
-export const EMPTY_HISTORY_TEXT = 'No activities yet. Record your first walk!';
 
 export function ActivityList({
   items,

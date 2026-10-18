@@ -9,14 +9,18 @@ export function useOnboarding(uid: string | null, facts: OnboardingFacts | null)
   useEffect(() => {
     let live = true;
     setDismissed(null);
-    if (uid) void onboardingDismissal.isDismissed(uid).then((d) => live && setDismissed(d));
+    if (uid) {
+      void onboardingDismissal.isDismissed(uid).then((d) => live && setDismissed(d));
+    }
     return () => {
       live = false;
     };
   }, [uid]);
   const hide = useCallback(() => {
     setDismissed(true);
-    if (uid) void onboardingDismissal.dismiss(uid);
+    if (uid) {
+      void onboardingDismissal.dismiss(uid);
+    }
   }, [uid]);
   const progress = useMemo<OnboardingProgress | null>(() => (facts ? evaluateOnboarding(facts) : null), [facts]);
   return { progress: dismissed === false && progress && !progress.complete ? progress : null, hide };

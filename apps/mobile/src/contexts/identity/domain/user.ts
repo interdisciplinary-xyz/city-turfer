@@ -2,7 +2,9 @@ import { DomainError } from '@/shared-kernel';
 
 export type UserId = string & { readonly __brand: 'UserId' };
 export const userId = (raw: string): UserId => {
-  if (!/^[a-z0-9_-]{1,64}$/i.test(raw)) throw new DomainError('user-id.invalid', raw);
+  if (!/^[a-z0-9_-]{1,64}$/i.test(raw)) {
+    throw new DomainError('user-id.invalid', raw);
+  }
   return raw as UserId;
 };
 
@@ -11,7 +13,9 @@ export interface Email {
 }
 export function email(raw: string): Email {
   const value = raw.trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) throw new DomainError('email.invalid');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+    throw new DomainError('email.invalid');
+  }
   return { value };
 }
 

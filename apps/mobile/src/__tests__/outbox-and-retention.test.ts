@@ -40,7 +40,9 @@ async function setup() {
 
 async function recordFixture(c: ReturnType<typeof wire>, fixes: Fix[], type: 'walk' | 'run' | 'cycle' = 'run') {
   expect((await c.recording.start.execute(type)).kind).toBe('started');
-  for (let i = 0; i < fixes.length; i += 25) await c.recording.ingestFixes.execute(fixes.slice(i, i + 25));
+  for (let i = 0; i < fixes.length; i += 25) {
+    await c.recording.ingestFixes.execute(fixes.slice(i, i + 25));
+  }
   const finished = await c.recording.finish.execute();
   expect(finished.kind).toBe('finished');
   await c.dispatcher.dispatchPending();

@@ -61,7 +61,9 @@ for (const p of points) {
   const s = segments.get(p.segment) ?? { n: 0, first: p.t, last: p.t, acc: [] };
   s.n++;
   s.last = p.t;
-  if (p.accuracy != null) s.acc.push(p.accuracy);
+  if (p.accuracy != null) {
+    s.acc.push(p.accuracy);
+  }
   segments.set(p.segment, s);
 }
 for (const [seg, s] of segments) {
@@ -72,7 +74,9 @@ for (const [seg, s] of segments) {
 const gaps = [];
 for (let i = 1; i < points.length; i++) {
   const dt = points[i].t - points[i - 1].t;
-  if (dt > 20_000) gaps.push(`  min ${min(points[i - 1].t)}: ${(dt / 1000).toFixed(0)} s without accepted points`);
+  if (dt > 20_000) {
+    gaps.push(`  min ${min(points[i - 1].t)}: ${(dt / 1000).toFixed(0)} s without accepted points`);
+  }
 }
 console.log(gaps.length ? `gaps > 20 s:\n${gaps.join('\n')}` : 'no gaps > 20 s');
 
@@ -85,7 +89,9 @@ console.log(' min   time      event');
 const buckets = new Map();
 const flush = (key) => {
   const b = buckets.get(key);
-  if (!b) return;
+  if (!b) {
+    return;
+  }
   const rej = Object.entries(b.rejected)
     .filter(([, n]) => n)
     .map(([k, n]) => `${k}:${n}`)
@@ -105,14 +111,18 @@ let lastKey = null;
 for (const r of rows) {
   const d = JSON.parse(r.data);
   if (r.kind !== 'batch') {
-    if (lastKey != null) flush(lastKey);
+    if (lastKey != null) {
+      flush(lastKey);
+    }
     lastKey = null;
     const detail = r.kind === 'task-error' ? `${d.code} ${d.message}` : JSON.stringify(d);
     console.log(`${min(r.at)}  ${clock(r.at)}  ** ${r.kind} ${detail}`);
     continue;
   }
   const key = Math.floor(r.at / 60000);
-  if (lastKey != null && key !== lastKey) flush(lastKey);
+  if (lastKey != null && key !== lastKey) {
+    flush(lastKey);
+  }
   lastKey = key;
   const b = buckets.get(key) ?? {
     at: r.at,
@@ -135,7 +145,9 @@ for (const r of rows) {
   b.jitter += d.jitter ?? 0;
   b.gapSplits += d.gapSplits ?? 0;
   b.paused += d.ignoredWhilePaused ?? 0;
-  for (const [k, n] of Object.entries(d.rejected ?? {})) b.rejected[k] = (b.rejected[k] ?? 0) + n;
+  for (const [k, n] of Object.entries(d.rejected ?? {})) {
+    b.rejected[k] = (b.rejected[k] ?? 0) + n;
+  }
   if (d.appState) {
     b.states.add(
       (d.source ? `${d.source}:` : '') +
@@ -143,11 +155,17 @@ for (const r of rows) {
         (d.bgSession === true ? '+session' : d.bgSession === false ? '-session' : '')
     );
   }
-  if (d.status) b.status.add(d.status);
-  if (d.result) b.other.add(d.result);
+  if (d.status) {
+    b.status.add(d.status);
+  }
+  if (d.result) {
+    b.other.add(d.result);
+  }
   buckets.set(key, b);
 }
-if (lastKey != null) flush(lastKey);
+if (lastKey != null) {
+  flush(lastKey);
+}
 
 // --- Wake-ups after silence --------------------------------------------------------
 // After each silence > 20 s: how old was the oldest fix in the first batch?
@@ -158,7 +176,9 @@ console.log('\nwake-ups after silence > 20 s:');
 console.log(' min   time      silence  firstFixAge  received  appState');
 for (let i = 1; i < batches.length; i++) {
   const silence = (batches[i].at - batches[i - 1].at) / 1000;
-  if (silence <= 20) continue;
+  if (silence <= 20) {
+    continue;
+  }
   const d = batches[i].d;
   const age = d.firstFixAgoS == null ? '?' : `${d.firstFixAgoS} s`;
   console.log(

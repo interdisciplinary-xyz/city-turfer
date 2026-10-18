@@ -9,7 +9,9 @@ export class SecureStoreGapEstimationSetting implements GapEstimationSetting {
   private cached: boolean | null = null;
 
   async isEnabled(): Promise<boolean> {
-    if (this.cached != null) return this.cached;
+    if (this.cached != null) {
+      return this.cached;
+    }
     let raw: string | null;
     try {
       raw = await SecureStore.getItemAsync(KEY);

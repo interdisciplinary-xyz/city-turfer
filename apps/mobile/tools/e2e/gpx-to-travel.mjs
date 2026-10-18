@@ -33,5 +33,7 @@ console.log('appId: com.turftrack.poc');
 console.log('---');
 console.log('- travel:');
 console.log('    points:');
-for (const p of out) console.log(`      - "${p.lat.toFixed(6)}, ${p.lon.toFixed(6)}"`);
+for (const p of out) {
+  console.log(`      - "${p.lat.toFixed(6)}, ${p.lon.toFixed(6)}"`);
+}
 console.log(`    speed: ${speed}`);

@@ -24,7 +24,9 @@ export class Claim {
     grid: CellGrid,
     now: number
   ): Claim {
-    if (src.startedAt > now + 60_000) throw new DomainError('claim.in-future');
+    if (src.startedAt > now + 60_000) {
+      throw new DomainError('claim.in-future');
+    }
     const cells = new Set<CellId>();
     const step = grid.cellWidthM / 2;
     for (const seg of track.segments) {
@@ -32,19 +34,27 @@ export class Claim {
       for (let i = 0; i < seg.length; i++) {
         cells.add(grid.cellOf(seg[i]));
         const next = seg[i + 1];
-        if (!next) break;
+        if (!next) {
+          break;
+        }
         const n = Math.ceil(distanceM(seg[i], next) / step);
-        for (let s = 1; s < n; s++) cells.add(grid.cellOf(interpolate(seg[i], next, s / n)));
+        for (let s = 1; s < n; s++) {
+          cells.add(grid.cellOf(interpolate(seg[i], next, s / n)));
+        }
       }
     }
-    if (cells.size === 0) throw new DomainError('claim.empty');
+    if (cells.size === 0) {
+      throw new DomainError('claim.empty');
+    }
     return new Claim({ activityId: src.activityId, type: src.type, claimedAt: src.startedAt, cells });
   }
 
   /** Record the outcome once the projection told us which cells were new. */
   claimed(newCells: ReadonlySet<CellId>, grid: CellGrid, now: number): void {
     let area = 0;
-    for (const c of newCells) area += grid.areaM2(c);
+    for (const c of newCells) {
+      area += grid.areaM2(c);
+    }
     this.events.push({
       type: 'TurfClaimed',
       v: 1,

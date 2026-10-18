@@ -25,9 +25,13 @@ export interface TerritoryDeps {
 export class ClaimTurfFromActivity {
   constructor(private readonly d: TerritoryDeps) {}
   async execute(e: { activityId: string; activityType: ActivityType; startedAt: number }): Promise<void> {
-    if (await this.d.repo.claimExists(e.activityId)) return;
+    if (await this.d.repo.claimExists(e.activityId)) {
+      return;
+    }
     const points = await this.d.tracks.trackOf(e.activityId);
-    if (points.length === 0) return;
+    if (points.length === 0) {
+      return;
+    }
     const now = this.d.clock.now();
     const claim = Claim.fromTrack(
       { activityId: e.activityId, type: e.activityType, startedAt: e.startedAt },
@@ -53,7 +57,9 @@ export class ClaimTurfFromActivity {
 export class ReleaseTurfOfActivity {
   constructor(private readonly d: TerritoryDeps) {}
   async execute(activityId: string): Promise<void> {
-    if (await this.d.repo.releaseClaim(activityId, this.d.clock.now())) this.d.afterCommit();
+    if (await this.d.repo.releaseClaim(activityId, this.d.clock.now())) {
+      this.d.afterCommit();
+    }
   }
 }
 
@@ -135,10 +141,20 @@ export class GetTurfSummary {
       const a = this.d.grid.areaM2(r.cell);
       const visits = r.walk + r.run + r.cycle;
       area += a;
-      if (now - r.firstAt <= 7 * 86_400_000) week += a;
-      if (now - r.firstAt <= 30 * 86_400_000) month += a;
-      if (isStrong(strengthOf(visits))) strong++;
-      for (const t of ACTIVITY_TYPES) if (r[t] > 0) byType[t]++;
+      if (now - r.firstAt <= 7 * 86_400_000) {
+        week += a;
+      }
+      if (now - r.firstAt <= 30 * 86_400_000) {
+        month += a;
+      }
+      if (isStrong(strengthOf(visits))) {
+        strong++;
+      }
+      for (const t of ACTIVITY_TYPES) {
+        if (r[t] > 0) {
+          byType[t]++;
+        }
+      }
     }
     return {
       cellCount: rows.length,
@@ -155,7 +171,9 @@ export class GetClaimForActivity {
   constructor(private readonly d: TerritoryDeps) {}
   async execute(activityId: string): Promise<ClaimView | null> {
     const c = await this.d.repo.claimOf(activityId);
-    if (!c) return null;
+    if (!c) {
+      return null;
+    }
     return {
       activityId,
       cellCount: c.cellCount,

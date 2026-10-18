@@ -42,16 +42,26 @@ export function judgeFix(
   profile: TrackingProfile,
   lastSeen: Tail | null = null
 ): FixVerdict {
-  if (fix.accuracy != null && fix.accuracy > profile.maxAccuracyM) return { kind: 'reject', reason: 'inaccurate' };
-  if (lastSeenT != null && fix.t <= lastSeenT) return { kind: 'reject', reason: 'out-of-order' };
-  if (!reference) return { kind: 'accept', distanceM: 0, dtS: 0, speedMps: segmentStartSpeed(fix, lastSeen, profile) };
+  if (fix.accuracy != null && fix.accuracy > profile.maxAccuracyM) {
+    return { kind: 'reject', reason: 'inaccurate' };
+  }
+  if (lastSeenT != null && fix.t <= lastSeenT) {
+    return { kind: 'reject', reason: 'out-of-order' };
+  }
+  if (!reference) {
+    return { kind: 'accept', distanceM: 0, dtS: 0, speedMps: segmentStartSpeed(fix, lastSeen, profile) };
+  }
 
   const d = distanceM(reference, fix);
   const dt = (fix.t - reference.t) / 1000;
   const implied = dt > 0 ? d / dt : Infinity;
-  if (implied > profile.maxSpeedMps) return { kind: 'reject', reason: 'teleport' };
+  if (implied > profile.maxSpeedMps) {
+    return { kind: 'reject', reason: 'teleport' };
+  }
   const doppler = freshDoppler(fix, lastSeenT != null ? (fix.t - lastSeenT) / 1000 : dt);
-  if (d < profile.minStepM && dt < JITTER_MAX_DT_S) return { kind: 'jitter', speedMps: doppler ?? 0 };
+  if (d < profile.minStepM && dt < JITTER_MAX_DT_S) {
+    return { kind: 'jitter', speedMps: doppler ?? 0 };
+  }
   return { kind: 'accept', distanceM: d, dtS: dt, speedMps: doppler ?? implied };
 }
 
@@ -60,7 +70,9 @@ const freshDoppler = (fix: Fix, sinceLastFixS: number): number | null =>
 
 /** First fix of a segment: no distance, but a speed so auto-pause can still resume without Doppler. */
 function segmentStartSpeed(fix: Fix, lastSeen: Tail | null, profile: TrackingProfile): number {
-  if (!lastSeen || fix.t <= lastSeen.t) return fix.speed ?? 0;
+  if (!lastSeen || fix.t <= lastSeen.t) {
+    return fix.speed ?? 0;
+  }
   const dt = (fix.t - lastSeen.t) / 1000;
   const d = distanceM(lastSeen, fix);
   return freshDoppler(fix, dt) ?? (d < profile.minStepM ? 0 : d / dt);

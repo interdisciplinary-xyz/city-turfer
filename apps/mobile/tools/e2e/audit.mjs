@@ -28,12 +28,17 @@ export function listFlows(e2eDir) {
 export function parseFlowsOrder(configText) {
   const lines = configText.split('\n');
   const start = lines.findIndex((l) => /^\s*flowsOrder:\s*$/.test(l));
-  if (start < 0) return [];
+  if (start < 0) {
+    return [];
+  }
   const out = [];
   for (const l of lines.slice(start + 1)) {
     const m = l.match(/^\s*-\s*([^\s#]+)/);
-    if (m) out.push(m[1].replace(/\.yaml$/, ''));
-    else if (l.trim() && !l.trim().startsWith('#')) break;
+    if (m) {
+      out.push(m[1].replace(/\.yaml$/, ''));
+    } else if (l.trim() && !l.trim().startsWith('#')) {
+      break;
+    }
   }
   return out;
 }
@@ -63,8 +68,12 @@ export function flowTestIds(flowText) {
   const ids = new Set();
   // Negative assertions (assertNotVisible / notVisible) may legitimately name an id that is absent.
   for (const line of flowText.split('\n')) {
-    if (/assertNotVisible|notVisible/.test(line)) continue;
-    for (const m of line.matchAll(/\bid:\s*['"]([^'"]+)['"]/g)) ids.add(m[1]);
+    if (/assertNotVisible|notVisible/.test(line)) {
+      continue;
+    }
+    for (const m of line.matchAll(/\bid:\s*['"]([^'"]+)['"]/g)) {
+      ids.add(m[1]);
+    }
   }
   return [...ids];
 }
@@ -72,7 +81,9 @@ export function flowTestIds(flowText) {
 /** Subflow files referenced via runFlow (string or `file:` form). */
 export function referencedSubflows(flowText) {
   const out = new Set();
-  for (const m of flowText.matchAll(/(subflows\/[\w.-]+\.yaml)/g)) out.add(m[1]);
+  for (const m of flowText.matchAll(/(subflows\/[\w.-]+\.yaml)/g)) {
+    out.add(m[1]);
+  }
   return [...out];
 }
 
@@ -87,10 +98,14 @@ export function collectSourceTestIds(srcText) {
         .map((p) => p.replace(/[.*+?^$()|[\]\\{}]/g, '\\$&'))
         .join('.+');
       patterns.push(new RegExp(`^${re}$`));
-    } else literals.add(raw);
+    } else {
+      literals.add(raw);
+    }
   };
   const re = /(?:testID|tabBarButtonTestID)\s*[=:]\s*(?:\{\s*)?(['"`])([^'"`]+)\1/g;
-  for (const m of srcText.matchAll(re)) add(m[2]);
+  for (const m of srcText.matchAll(re)) {
+    add(m[2]);
+  }
   return { literals, patterns };
 }
 
@@ -103,7 +118,9 @@ export function parseCriticalPaths(md) {
   const paths = [];
   for (const line of md.split('\n')) {
     const m = line.match(/^\|\s*(CP-\d+)\s*\|/);
-    if (!m) continue;
+    if (!m) {
+      continue;
+    }
     const flows = [...line.matchAll(/`(\d{2}-[a-z0-9-]+)`/g)].map((x) => x[1]);
     paths.push({ id: m[1], flows, unitOnly: /unit-only/i.test(line) });
   }
@@ -113,8 +130,11 @@ export function parseCriticalPaths(md) {
 function walk(dir, acc = []) {
   for (const f of readdirSync(dir)) {
     const p = join(dir, f);
-    if (statSync(p).isDirectory()) walk(p, acc);
-    else if (/\.(tsx?|jsx?)$/.test(f) && !p.includes('__tests__')) acc.push(p);
+    if (statSync(p).isDirectory()) {
+      walk(p, acc);
+    } else if (/\.(tsx?|jsx?)$/.test(f) && !p.includes('__tests__')) {
+      acc.push(p);
+    }
   }
   return acc;
 }
@@ -129,14 +149,22 @@ export function audit(root, docsRoot = root) {
   const flows = listFlows(e2eDir);
   const order = parseFlowsOrder(readFileSync(join(e2eDir, 'config.yaml'), 'utf8'));
 
-  for (const f of flows) if (!order.includes(f)) errors.push(`flow ${f}.yaml is not in config.yaml flowsOrder`);
+  for (const f of flows) {
+    if (!order.includes(f)) {
+      errors.push(`flow ${f}.yaml is not in config.yaml flowsOrder`);
+    }
+  }
   for (const f of order) {
-    if (!flows.includes(f)) errors.push(`config.yaml flowsOrder lists ${f} but e2e/${f}.yaml does not exist`);
+    if (!flows.includes(f)) {
+      errors.push(`config.yaml flowsOrder lists ${f} but e2e/${f}.yaml does not exist`);
+    }
   }
   if (order.length && order[order.length - 1] !== LAST_FLOW) {
     errors.push(`${LAST_FLOW} must be last in flowsOrder (it signs out)`);
   }
-  if (new Set(order).size !== order.length) errors.push('flowsOrder contains duplicates');
+  if (new Set(order).size !== order.length) {
+    errors.push('flowsOrder contains duplicates');
+  }
 
   const srcFiles = existsSync(join(root, 'src')) ? walk(join(root, 'src')) : [];
   const ids = collectSourceTestIds(srcFiles.map((f) => readFileSync(f, 'utf8')).join('\n'));
@@ -144,35 +172,52 @@ export function audit(root, docsRoot = root) {
   for (const f of flows) {
     const text = readFileSync(join(e2eDir, `${f}.yaml`), 'utf8');
     const tags = parseTags(text);
-    if (!tags || tags.length === 0) errors.push(`${f}: missing tags`);
-    else {
+    if (!tags || tags.length === 0) {
+      errors.push(`${f}: missing tags`);
+    } else {
       for (const t of tags) {
-        if (!ALLOWED_TAGS.includes(t)) errors.push(`${f}: tag "${t}" not in allowed set (${ALLOWED_TAGS.join(', ')})`);
+        if (!ALLOWED_TAGS.includes(t)) {
+          errors.push(`${f}: tag "${t}" not in allowed set (${ALLOWED_TAGS.join(', ')})`);
+        }
       }
     }
-    for (const c of commentedOutSteps(text)) errors.push(`${f}: commented-out step (${c})`);
+    for (const c of commentedOutSteps(text)) {
+      errors.push(`${f}: commented-out step (${c})`);
+    }
     const texts = [text];
     for (const sf of referencedSubflows(text)) {
       const p = join(e2eDir, sf);
-      if (existsSync(p)) texts.push(readFileSync(p, 'utf8'));
-      else errors.push(`${f}: runs missing subflow ${sf}`);
+      if (existsSync(p)) {
+        texts.push(readFileSync(p, 'utf8'));
+      } else {
+        errors.push(`${f}: runs missing subflow ${sf}`);
+      }
     }
     for (const id of new Set(texts.flatMap(flowTestIds))) {
-      if (!sourceHasTestId(ids, id)) errors.push(`${f}: testID "${id}" not found in src`);
+      if (!sourceHasTestId(ids, id)) {
+        errors.push(`${f}: testID "${id}" not found in src`);
+      }
     }
   }
 
   const mdPath = join(docsRoot, 'docs/quality/e2e.md');
   let cps = [];
-  if (!existsSync(mdPath)) errors.push('docs/quality/e2e.md is missing');
-  else {
+  if (!existsSync(mdPath)) {
+    errors.push('docs/quality/e2e.md is missing');
+  } else {
     cps = parseCriticalPaths(readFileSync(mdPath, 'utf8'));
-    if (cps.length === 0) errors.push('docs/quality/e2e.md has no CP-n rows');
+    if (cps.length === 0) {
+      errors.push('docs/quality/e2e.md has no CP-n rows');
+    }
     for (const cp of cps) {
       if (cp.flows.length === 0 && !cp.unitOnly) {
         errors.push(`${cp.id}: maps to no flow (declare "unit-only" if intentional)`);
       }
-      for (const f of cp.flows) if (!flows.includes(f)) errors.push(`${cp.id}: flow ${f} does not exist`);
+      for (const f of cp.flows) {
+        if (!flows.includes(f)) {
+          errors.push(`${cp.id}: flow ${f} does not exist`);
+        }
+      }
     }
   }
   return { errors, summary: { flows: flows.length, order: order.length, criticalPaths: cps.length } };
@@ -183,7 +228,9 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const { errors, summary } = audit(root, resolve(root, '../..'));
   if (errors.length) {
     console.error(`e2e audit failed (${errors.length}):`);
-    for (const e of errors) console.error(`  - ${e}`);
+    for (const e of errors) {
+      console.error(`  - ${e}`);
+    }
     process.exit(1);
   }
   console.log(`e2e audit ok: ${summary.flows} flows, ${summary.criticalPaths} critical paths`);

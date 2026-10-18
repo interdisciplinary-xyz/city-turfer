@@ -1,6 +1,5 @@
 // Public API of the Recording context.
 import { ScrubClosedSessions } from './application/scrub-closed-sessions';
-import type { RecordingDeps } from './application/use-cases';
 import {
   DiscardRecording,
   FinishedTrackQuery,
@@ -11,6 +10,7 @@ import {
   PauseRecording,
   PrepareRecording,
   PurgeRecordedSession,
+  type RecordingDeps,
   RecoverSession,
   ResumeRecording,
   StartRecording,

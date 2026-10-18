@@ -34,13 +34,19 @@ export function analyzeTrack(track: Track, movingSpeed: number, elevHysteresisM 
       const p = seg[i];
       first = first == null ? p.t : Math.min(first, p.t);
       last = last == null ? p.t : Math.max(last, p.t);
-      if (i === 0) continue;
+      if (i === 0) {
+        continue;
+      }
       const prev = seg[i - 1];
       const d = distanceM(prev, p);
       const dt = (p.t - prev.t) / 1000;
-      if (dt <= 0) continue;
+      if (dt <= 0) {
+        continue;
+      }
       distance += d;
-      if (d / dt >= movingSpeed) moving += dt;
+      if (d / dt >= movingSpeed) {
+        moving += dt;
+      }
       while (distance >= nextSplit) {
         splits.push({ km: nextSplit / 1000, seconds: Math.round(moving - movingAtLastSplit) });
         movingAtLastSplit = moving;
@@ -64,7 +70,9 @@ export function elevationGain(track: Track, hysteresisM: number): number | null 
   let any = false;
   for (const seg of track.segments) {
     const eles = seg.map((p) => p.alt).filter((a): a is number => a != null);
-    if (eles.length < 5) continue;
+    if (eles.length < 5) {
+      continue;
+    }
     any = true;
     const smooth = eles.map((_, i) => {
       const w = eles.slice(Math.max(0, i - 2), i + 3);
@@ -75,7 +83,9 @@ export function elevationGain(track: Track, hysteresisM: number): number | null 
       if (e - ref >= hysteresisM) {
         gain += e - ref;
         ref = e;
-      } else if (ref - e >= hysteresisM) ref = e;
+      } else if (ref - e >= hysteresisM) {
+        ref = e;
+      }
     }
   }
   return any ? Math.round(gain) : null;
@@ -83,7 +93,9 @@ export function elevationGain(track: Track, hysteresisM: number): number | null 
 
 /** Douglas–Peucker in local metres. For rendering only — never simplify stored data. */
 export function simplify<T extends GeoPoint>(points: readonly T[], epsilonM: number): T[] {
-  if (points.length < 3) return [...points];
+  if (points.length < 3) {
+    return [...points];
+  }
   const lat0 = (points[0].lat * Math.PI) / 180;
   const k = (Math.PI / 180) * EARTH_RADIUS_M;
   const xy = points.map((p) => [p.lon * k * Math.cos(lat0), p.lat * k] as const);

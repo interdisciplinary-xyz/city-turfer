@@ -39,7 +39,9 @@ export function splitAtGaps(points: readonly TrackPoint[], maxGapMs = MAX_FIX_GA
   let seg = -1;
   let prev: TrackPoint | null = null;
   for (const p of pointsOf(trackFromPoints(points))) {
-    if (!prev || p.segment !== prev.segment || p.t - prev.t > maxGapMs) seg++;
+    if (!prev || p.segment !== prev.segment || p.t - prev.t > maxGapMs) {
+      seg++;
+    }
     out.push({ ...p, segment: seg });
     prev = p;
   }

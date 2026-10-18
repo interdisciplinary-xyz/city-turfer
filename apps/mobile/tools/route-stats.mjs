@@ -28,7 +28,9 @@ if (points.length < 2) {
 
 // 1. Raw distance (no filtering) — shows how much noise inflates the total.
 let rawDistance = 0;
-for (let i = 1; i < points.length; i++) rawDistance += haversine(points[i - 1], points[i]);
+for (let i = 1; i < points.length; i++) {
+  rawDistance += haversine(points[i - 1], points[i]);
+}
 
 // 2. Outlier rejection: drop a point if reaching it implies speed > profile.maxSpeed.
 const kept = [points[0]];
@@ -48,7 +50,9 @@ for (let i = 1; i < points.length; i++) {
   }
   // Jitter filter: ignore fixes closer than minStep to the last kept point,
   // unless enough time passed that we need the timestamp (pause detection).
-  if (d < profile.minStep && (dt == null || dt < 10)) continue;
+  if (d < profile.minStep && (dt == null || dt < 10)) {
+    continue;
+  }
   kept.push(p);
 }
 
@@ -63,8 +67,12 @@ for (let i = 1; i < kept.length; i++) {
   const dt = kept[i].t != null && kept[i - 1].t != null ? (kept[i].t - kept[i - 1].t) / 1000 : 0;
   const isMoving = dt > 0 && d / dt >= profile.movingSpeed;
   // Stationary jitter does not count toward distance either.
-  if (isMoving || dt === 0) distance += d;
-  if (isMoving) moving += dt;
+  if (isMoving || dt === 0) {
+    distance += d;
+  }
+  if (isMoving) {
+    moving += dt;
+  }
   if (distance >= nextSplit && kept[i].t != null) {
     splits.push({ km: nextSplit / 1000, seconds: (kept[i].t - splitStartT) / 1000 });
     splitStartT = kept[i].t;
@@ -126,5 +134,7 @@ if (asJson) {
   console.log(`elapsed    ${fmtDur(elapsed)}   moving ${fmtDur(moving)}`);
   console.log(type === 'cycle' ? `speed      ${speedKmh?.toFixed(1)} km/h` : `pace       ${fmtPace(pace)}`);
   console.log(`elevation  +${Math.round(gain)} m / -${Math.round(loss)} m`);
-  if (splits.length) console.log(`splits     ${splits.map((s) => `${s.km}km ${fmtPace(s.seconds)}`).join(', ')}`);
+  if (splits.length) {
+    console.log(`splits     ${splits.map((s) => `${s.km}km ${fmtPace(s.seconds)}`).join(', ')}`);
+  }
 }

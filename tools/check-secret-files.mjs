@@ -42,9 +42,15 @@ export const WARN_RULES = [{ re: /(^|\/)\.DS_Store$/, what: 'macOS folder metada
 export function classify(path) {
   const p = path.replace(/\\/g, '/');
   for (const r of BLOCK_RULES) {
-    if (r.re.test(p) && !(r.allow && r.allow.test(p))) return { level: 'block', what: r.what };
+    if (r.re.test(p) && !(r.allow && r.allow.test(p))) {
+      return { level: 'block', what: r.what };
+    }
   }
-  for (const r of WARN_RULES) if (r.re.test(p)) return { level: 'warn', what: r.what };
+  for (const r of WARN_RULES) {
+    if (r.re.test(p)) {
+      return { level: 'warn', what: r.what };
+    }
+  }
   return null;
 }
 
@@ -53,8 +59,11 @@ export function check(paths) {
   const warned = [];
   for (const path of paths) {
     const c = classify(path);
-    if (c?.level === 'block') blocked.push({ path, what: c.what });
-    else if (c?.level === 'warn') warned.push({ path, what: c.what });
+    if (c?.level === 'block') {
+      blocked.push({ path, what: c.what });
+    } else if (c?.level === 'warn') {
+      warned.push({ path, what: c.what });
+    }
   }
   return { blocked, warned };
 }
@@ -77,16 +86,22 @@ function main() {
     ? git(['ls-files', '-z'])
     : git(['diff', '--cached', '--name-only', '--diff-filter=ACMR', '-z']);
   const { blocked, warned } = check(paths);
-  for (const w of warned) console.warn(`warning: ${w.path} (${w.what}) should not be committed`);
+  for (const w of warned) {
+    console.warn(`warning: ${w.path} (${w.what}) should not be committed`);
+  }
   if (blocked.length) {
     console.error(
       `Refusing to ${tracked ? 'pass' : 'commit'}: ${blocked.length} file(s) look like secrets or personal data:`
     );
-    for (const b of blocked) console.error(`  - ${b.path}  [${b.what}]`);
+    for (const b of blocked) {
+      console.error(`  - ${b.path}  [${b.what}]`);
+    }
     console.error('Unstage with `git restore --staged <file>` (or `git rm --cached <file>` if tracked).');
     process.exit(1);
   }
   console.log(`secret-file guard ok (${paths.length} ${tracked ? 'tracked' : 'staged'} file(s) checked)`);
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main();
+}

@@ -46,7 +46,9 @@ const LABEL = { walk: 'walk', run: 'run', cycle: 'ride' } as const;
 
 export class ExpoLocationTracker implements LocationTracker {
   async start(profile: TrackingProfile) {
-    if (await this.isRunning()) await Location.stopLocationUpdatesAsync(LOCATION_TASK);
+    if (await this.isRunning()) {
+      await Location.stopLocationUpdatesAsync(LOCATION_TASK);
+    }
     await Location.startLocationUpdatesAsync(LOCATION_TASK, {
       accuracy: Location.Accuracy.BestForNavigation,
       timeInterval: profile.timeIntervalMs,
@@ -68,7 +70,9 @@ export class ExpoLocationTracker implements LocationTracker {
 
   async stop() {
     await backgroundActivitySession.stop();
-    if (await this.isRunning()) await Location.stopLocationUpdatesAsync(LOCATION_TASK);
+    if (await this.isRunning()) {
+      await Location.stopLocationUpdatesAsync(LOCATION_TASK);
+    }
   }
 
   async reacquire() {
@@ -86,9 +90,13 @@ export class ExpoLocationTracker implements LocationTracker {
 
 export class ExpoPermissionGateway implements PermissionGateway {
   async ensureForeground(): Promise<PermissionResult> {
-    if (!(await Location.hasServicesEnabledAsync())) return 'services-off';
+    if (!(await Location.hasServicesEnabledAsync())) {
+      return 'services-off';
+    }
     const current = await Location.getForegroundPermissionsAsync();
-    if (current.granted) return 'granted';
+    if (current.granted) {
+      return 'granted';
+    }
     const asked = await Location.requestForegroundPermissionsAsync();
     return asked.granted ? 'granted' : 'denied';
   }
@@ -96,10 +104,14 @@ export class ExpoPermissionGateway implements PermissionGateway {
   async requestBackground(): Promise<boolean> {
     try {
       const current = await Location.getBackgroundPermissionsAsync();
-      if (current.granted || !current.canAskAgain) return current.granted;
+      if (current.granted || !current.canAskAgain) {
+        return current.granted;
+      }
       // Android uses a foreground service (no background permission needed and
       // the request would bounce the user to Settings). Ask on iOS only.
-      if (process.env.EXPO_OS === 'android') return false;
+      if (process.env.EXPO_OS === 'android') {
+        return false;
+      }
       return (await Location.requestBackgroundPermissionsAsync()).granted;
     } catch {
       return false;

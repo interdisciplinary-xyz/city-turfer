@@ -71,7 +71,9 @@ for (const a of activities) {
     const p = a.points[i];
     claimed.add(cellOf(p));
     const q = a.points[i + 1];
-    if (!q) break;
+    if (!q) {
+      break;
+    }
     const steps = Math.ceil(haversine(p, q) / (cellM / 2));
     for (let s = 1; s < steps; s++) {
       claimed.add(cellOf({ lat: p.lat + ((q.lat - p.lat) * s) / steps, lon: p.lon + ((q.lon - p.lon) * s) / steps }));

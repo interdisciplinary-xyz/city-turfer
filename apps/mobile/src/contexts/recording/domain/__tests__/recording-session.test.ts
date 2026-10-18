@@ -113,7 +113,9 @@ describe('RecordingSession', () => {
     const s = RecordingSession.start('s1', 'run', T0);
     const accepted = s.ingest(loadFixes('run-5k-outliers-pause.gpx'));
     let d = 0;
-    for (let i = 1; i < accepted.length; i++) d += distanceM(accepted[i - 1], accepted[i]);
+    for (let i = 1; i < accepted.length; i++) {
+      d += distanceM(accepted[i - 1], accepted[i]);
+    }
     expect(Math.abs(s.snapshot(0).distanceM - oracle) / oracle).toBeLessThan(0.03);
     expect(d).toBeCloseTo(s.snapshot(0).distanceM, 0);
   });

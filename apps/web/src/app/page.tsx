@@ -3,12 +3,7 @@ import mark from '@cityturfer/brand/svg/mark.svg';
 import wordmark from '@cityturfer/brand/svg/wordmark.svg';
 import Image from 'next/image';
 
-const TIERS = [
-  { label: 'Faint', color: TIER_COLOR.faint, text: ON_TIER.faint },
-  { label: 'Glowing', color: TIER_COLOR.glowing, text: ON_TIER.glowing },
-  { label: 'Strong', color: TIER_COLOR.strong, text: ON_TIER.strong },
-  { label: 'Blazing', color: TIER_COLOR.blazing, text: ON_TIER.blazing },
-];
+import { TIERS } from './page.constants';
 
 export default function Home() {
   const year = new Date().getFullYear();

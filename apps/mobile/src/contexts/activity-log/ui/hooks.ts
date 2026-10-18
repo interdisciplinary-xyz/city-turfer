@@ -42,7 +42,9 @@ export function useGapEstimationSetting(): [boolean | null, (enabled: boolean) =
     async (on: boolean) => {
       await c.activityLog.setGapEstimationEnabled.execute(on);
       set(on);
-      if (on) void c.estimateGaps();
+      if (on) {
+        void c.estimateGaps();
+      }
     },
     [c]
   );
