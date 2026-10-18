@@ -25,7 +25,7 @@ language is `docs/poc-plan.md` §2. Where this doc and the code disagree, the co
 
 ## 1. Context map
 
-There are <!-- probe:contexts -->5<!-- /probe --> bounded contexts, one directory each in
+There are <!-- probe:contexts -->6<!-- /probe --> bounded contexts, one directory each in
 `apps/mobile/src/contexts/`:
 
 - **identity** (generic): `AuthGateway` port, `MockAuthGateway`, session in `expo-secure-store`.
@@ -38,6 +38,10 @@ There are <!-- probe:contexts -->5<!-- /probe --> bounded contexts, one director
   (`contract.ts`).
 - **territory** (core): the `Claim` aggregate, turf strength, the `ter_cells` projection, the Turf
   Map. Publishes `TurfClaimed`, `TurfReleased` (`contract.ts`).
+- **health-sync** (supporting): Apple Health import and export, an anti-corruption layer ("workout"
+  never leaves it). `HealthStore` port (HealthKit adapter on iOS), links and anchor in `hs_links` /
+  `hs_state`. Imports through Activity Log's `importActivity`; exports on `ActivityRecorded` with
+  origin `recording`. Design: `docs/decisions/apple-health-2026-10-18.md`.
 - **achievements** (supporting): pure `evaluateAchievements` / `summarizeAchievements` over facts
   the UI passes in. Layers: `domain/ ui/`, no persistence.
 
@@ -46,6 +50,7 @@ There are <!-- probe:contexts -->5<!-- /probe --> bounded contexts, one director
 Recording ──────────────────▶ Activity Log ──── ActivityTrackCorrected ────▶ Territory
           ◀── FinishedTrackQuery ──────    ◀── ActivityTrackQuery ─────────
               (Activity Log pulls the track)    (Territory pulls the track)
+Health Sync ── importActivity ──▶ Activity Log ── ActivityRecorded (origin recording) ──▶ Health Sync
 Identity: selects the user's database at sign-in; other contexts see only a user id.
 Achievements: no events; screens pass it Activity Log and Territory facts.
 ```
@@ -54,7 +59,7 @@ Achievements: no events; screens pass it Activity Log and Territory facts.
 `apps/mobile/src/wiring.ts`: it subscribes each context's use cases to the other contexts' events on
 the `EventDispatcher`, and injects the track queries as ports (`tracks: { trackOf: … }`). Screens
 are where contexts meet in the UI: the Dashboard composes Identity, Activity Log, Territory,
-Achievements and Recording through their `ui/` hooks.
+Achievements and Recording through their `ui/` hooks; the Info screen adds Health Sync's card.
 
 Events travel through the transactional outbox (`apps/mobile/src/platform/outbox.ts`): an aggregate
 change and its events commit in one SQLite transaction, and handlers are idempotent. Why: the outbox

@@ -92,19 +92,19 @@ those names mean something to GitHub.
 Any count that comes from the codebase goes in a probe:
 
 ```md
-Bounded contexts: <!-- probe:contexts -->5<!-- /probe -->
+Bounded contexts: <!-- probe:contexts -->6<!-- /probe -->
 ```
 
 `pnpm run audit:docs` flags drift; `-- --fix-probes` rewrites every probe from code. The registry is
 `PROBES` in `tools/docs-audit.mjs`; add one there rather than typing a number into prose. Today:
 
-- `contexts`: directories in `apps/mobile/src/contexts/` (<!-- probe:contexts -->5<!-- /probe -->)
+- `contexts`: directories in `apps/mobile/src/contexts/` (<!-- probe:contexts -->6<!-- /probe -->)
 - `achievements`: `id:` entries in `apps/mobile/src/contexts/achievements/domain/achievements.ts`
   (<!-- probe:achievements -->12<!-- /probe -->)
 - `e2e-flows`: `flowsOrder` entries in `apps/mobile/e2e/config.yaml`
-  (<!-- probe:e2e-flows -->10<!-- /probe -->)
+  (<!-- probe:e2e-flows -->11<!-- /probe -->)
 - `migrations`: `version:` entries in `apps/mobile/src/platform/migrations.ts`
-  (<!-- probe:migrations -->5<!-- /probe -->)
+  (<!-- probe:migrations -->6<!-- /probe -->)
 - `docs`: markdown files under `docs/` (<!-- probe:docs -->6<!-- /probe -->)
 
 **If a number is not probed, don't write it.** Write the derivation instead ("one per file in

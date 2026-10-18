@@ -99,7 +99,8 @@ calories · sharing and privacy zones · GPX export (stretch goal).
   - Meaning: Wall-clock time vs. time actually moving.
   - Not: duration
 - **Activity**
-  - Meaning: A finished, saved Recording Session.
+  - Meaning: A finished, saved Recording Session, or a track imported from elsewhere (demo history,
+    an Apple Health workout).
   - Not: run, session
 - **Activity Summary**
   - Meaning: Distance, times, pace or speed, elevation and splits.

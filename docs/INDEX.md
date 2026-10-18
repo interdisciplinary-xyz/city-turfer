@@ -40,6 +40,8 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 
 `docs/operations/` — Runbook, OTA releases, device diagnostics.
 
+- ✅ [`operations/apple-health.md`](operations/apple-health.md): Install the Apple Health build on
+  the iPhone and check import and export with real data
 - ❔ [`operations/observability.md`](operations/observability.md): _no frontmatter_
 - ✅ [`operations/ota-release.md`](operations/ota-release.md): How to ship a JS-only change over the
   air on EAS channel production, check it landed, and when a reinstall is needed instead
@@ -83,6 +85,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 
 `docs/decisions/` — Full write-ups of single decisions.
 
+- ✅ [`decisions/apple-health-2026-10-18.md`](decisions/apple-health-2026-10-18.md): v0.4.0
+  integrates Apple Health — a Health Sync context imports walks, hikes, runs and rides with routes
+  (full history) as Activities that claim turf, and saves recordings to Health with routes
 - ✅
   [`decisions/maplibre-over-react-native-maps-2026-10-15.md`](decisions/maplibre-over-react-native-maps-2026-10-15.md):
   Decision record — MapLibre + OpenFreeMap for every map instead of react-native-maps

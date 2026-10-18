@@ -16,6 +16,10 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
 - **GPS**: `expo-location` + `expo-task-manager` (background updates, Android foreground service)
 - **Maps**: `@maplibre/maplibre-react-native` + OpenFreeMap vector tiles (keyless); dark style on
   the Turf Map
+- **Apple Health**: `@kingstinct/react-native-healthkit` (Nitro) behind the Health Sync
+  `HealthStore` port; iOS only (`apps/mobile/react-native.config.js` keeps it out of Android).
+  Import of walks, hikes, runs, rides with routes; export of recordings. Design:
+  `docs/decisions/apple-health-2026-10-18.md`
 - **Spatial index**: `h3-js` (Turf Cells = H3 res 11), behind the Territory `CellGrid` port
 - **Repo tooling**: pnpm (`node-linker=hoisted`, version pinned in `packageManager`) + Turborepo
   (`turbo.json`, `pnpm-workspace.yaml`): workspaces apps/* and packages/*; design in
@@ -54,6 +58,8 @@ apps/mobile/                         the Expo app (package @cityturfer/mobile); 
   src/contexts/activity-log/         Activity aggregate, history, detail, demo import, street-routed gap estimates
     domain/ application/ infrastructure/ ui/ index.ts contract.ts
   src/contexts/territory/            CORE: Claim aggregate, turf strength, Territory projection, Turf Map
+    domain/ application/ infrastructure/ ui/ index.ts contract.ts
+  src/contexts/health-sync/          Apple Health import/export (ACL: "workout" stays here), links + anchor
     domain/ application/ infrastructure/ ui/ index.ts contract.ts
   src/contexts/achievements/         pure evaluation of achievements and the onboarding checklist
     domain/ infrastructure/ ui/ index.ts                  (infrastructure: onboarding dismissal flag)
@@ -96,7 +102,8 @@ docs/  .github/  .husky/  .claude/   at the repo root
 - Activity types are exactly `walk | run | cycle`; per-type tuning lives in the `TrackingProfile`
   value object (Recording domain).
 - Location data is personal data: no analytics on coordinates, no logging raw coordinates in
-  production builds.
+  production builds. Apple Health data likewise: never logged, sent or analysed; HealthKit only in
+  the foreground.
 - Never claim background tracking works because tests pass. It needs a dev build on a device or
   simulator with simulated movement (see the `mobile-testing` skill).
 
@@ -135,9 +142,9 @@ node apps/mobile/tools/turf-preview.mjs apps/mobile/tools/fixtures/history --out
 ## Claude Code setup
 
 - Skills (`.claude/skills/`): `brand-system`, `ddd-architecture`, `turf-territory`, `scaffold-app`,
-  `add-feature`, `gps-tracking`, `route-metrics`, `route-storage`, `mobile-testing`.
+  `add-feature`, `gps-tracking`, `route-metrics`, `route-storage`, `mobile-testing`, `apple-health`.
 - Agents (`.claude/agents/`): `rn-architect`, `location-engineer`, `mobile-ui-engineer`,
-  `mobile-test-engineer`, `mobile-reviewer`, `brand-designer`.
+  `mobile-test-engineer`, `mobile-reviewer`, `brand-designer`, `health-engineer` (Apple Health).
 - Commands (`.claude/commands/`): `audit-docs` (`/audit-docs`).
 
 ## Docs
