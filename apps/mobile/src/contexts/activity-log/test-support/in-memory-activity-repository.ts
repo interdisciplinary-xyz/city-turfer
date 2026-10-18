@@ -38,6 +38,13 @@ export class InMemoryActivityRepository implements ActivityRepository {
     this.rows.delete(activity.id);
     this.events.push(...activity.pullEvents());
   }
+  async overlapping(type: ActivityListItem['type'], startedAt: number, endedAt: number) {
+    return [...this.rows.values()]
+      .map((r) => r.state)
+      .filter((s) => s.type === type && s.startedAt < endedAt && s.endedAt > startedAt)
+      .map((s) => ({ id: s.id, startedAt: s.startedAt, endedAt: s.endedAt }));
+  }
+
   async list(limit: number): Promise<ActivityListItem[]> {
     return [...this.rows.values()].slice(0, limit).map((r) => {
       const est = estimatedTotals(r.routes);

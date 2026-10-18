@@ -4,6 +4,12 @@ import type { ActivityListItem } from '../contract';
 import type { Activity } from './activity';
 import type { GapRoute } from './gap-route';
 
+export interface ActivityTimeRange {
+  id: string;
+  startedAt: number;
+  endedAt: number;
+}
+
 export interface ActivityRepository {
   exists(id: string): Promise<boolean>;
   get(id: string): Promise<Activity | null>;
@@ -19,6 +25,8 @@ export interface ActivityRepository {
   /** Activities whose recording gaps have not been routed yet, oldest first. */
   idsWithUncheckedGaps(): Promise<string[]>;
   typeOf(id: string): Promise<ActivityListItem['type'] | null>;
+  /** Activities of this type whose time range intersects [startedAt, endedAt]. */
+  overlapping(type: ActivityListItem['type'], startedAt: number, endedAt: number): Promise<ActivityTimeRange[]>;
   /** Atomic: replace gap routes, set estimated totals, mark checked, ActivityDistanceEstimated → outbox. */
   saveGapRoutes(id: string, routes: readonly GapRoute[], now: number): Promise<void>;
   gapRoutesOf(id: string): Promise<GapRoute[]>;
