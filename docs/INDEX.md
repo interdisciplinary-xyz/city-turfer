@@ -40,6 +40,8 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 
 `docs/operations/` — Runbook, OTA releases, device diagnostics.
 
+- ✅ [`operations/android-release.md`](operations/android-release.md): Build the Android APK on EAS,
+  publish it to the website download link, test it on an emulator
 - ❔ [`operations/observability.md`](operations/observability.md): _no frontmatter_
 - ✅ [`operations/ota-release.md`](operations/ota-release.md): How to ship a JS-only change over the
   air on EAS channel production, check it landed, and when a reinstall is needed instead
