@@ -13,7 +13,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 const ROOT = resolve(new URL('../..', import.meta.url).pathname);
-const BRAND = join(ROOT, 'assets/brand');
+const BRAND = join(ROOT, '../../packages/brand/svg'); // @cityturfer/brand SVG sources
 // Staged here; copy into assets/ only together with a native reinstall
 // (icons are part of the runtime fingerprint, so OTA updates stop matching).
 const OUT = join(ROOT, 'assets/brand/out');

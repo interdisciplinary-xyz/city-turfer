@@ -3,7 +3,7 @@
 [![CI](https://github.com/interdisciplinary-xyz/city-turfer/actions/workflows/ci.yml/badge.svg)](https://github.com/interdisciplinary-xyz/city-turfer/actions/workflows/ci.yml)
 
 <p align="center">
-  <img src="apps/mobile/assets/brand/mark.svg" alt="CityTurfer" width="160">
+  <img src="packages/brand/svg/mark.svg" alt="CityTurfer" width="160">
 </p>
 
 **Surf your city. Own your streets.** A mobile app that records walks, runs and rides on a real map
@@ -81,11 +81,14 @@ a new build.
 The repo is a pnpm + Turborepo monorepo
 ([decision](./docs/decisions/monorepo-turborepo-2026-10-18.md)):
 
-| Path           | What                                                                                             |
-| -------------- | ------------------------------------------------------------------------------------------------ |
-| `apps/mobile/` | The Expo app (`@cityturfer/mobile`): app code, native module, plugins, Maestro, mobile dev tools |
-| `tools/`       | Repo-wide tools: docs audit, log audit, secret-file guard, release helpers                       |
-| `docs/`        | Documentation, indexed in `docs/INDEX.md`                                                        |
+| Path               | What                                                                                             |
+| ------------------ | ------------------------------------------------------------------------------------------------ |
+| `apps/mobile/`     | The Expo app (`@cityturfer/mobile`): app code, native module, plugins, Maestro, mobile dev tools |
+| `apps/web/`        | Landing page (`@cityturfer/web`): Next.js static export on Vercel                                |
+| `packages/brand/`  | `@cityturfer/brand`: colour tokens, name and copy, logo SVGs                                     |
+| `packages/config/` | `@cityturfer/config`: Prettier, tsconfig and ESLint presets                                      |
+| `tools/`           | Repo-wide tools: docs audit, log audit, secret-file guard, release helpers                       |
+| `docs/`            | Documentation, indexed in `docs/INDEX.md`                                                        |
 
 Domain-Driven Design is a hard requirement. Each bounded context under `apps/mobile/src/contexts/*`
 has `domain/`, `application/`, `infrastructure/` and `ui/` layers and a public `index.ts`. Contexts
@@ -158,6 +161,8 @@ Everyday commands from the root `package.json` (they run the app's scripts throu
 | `test:unit`                 | Jest + node tool tests                                               |
 | `test`                      | `arch` + Jest + tool tests                                           |
 | `test:e2e`                  | Maestro suite on the booted iOS Simulator (`apps/mobile/e2e/run.sh`) |
+| `build`                     | Web static export (`apps/web/out`)                                   |
+| `web:dev`                   | Landing page dev server                                              |
 | `standard` / `standard:fix` | Prettier + ESLint, check or apply                                    |
 | `ci:quality`                | Full local gate: `standard`, `test:types`, `test:arch`, `test:unit`  |
 | `audit:docs`                | Docs audit: dead paths, broken links, frontmatter, probes            |

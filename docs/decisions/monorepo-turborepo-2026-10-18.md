@@ -99,6 +99,16 @@ city-turfer/
    `turbo run build` green, mobile still renders the same colours, a Vercel preview URL works, and
    the page passes a Lighthouse check (performance and accessibility).
 
+## Outcome
+
+- [1/3] #48 and [2/3] #49 merged on 2026-10-18; [3/3] `feat/web-landing` adds the packages and the
+  web app.
+- `auto-install-peers=false` is required: with `true`, pnpm installed peers npm never did and
+  CocoaPods autolinked them (Reanimated, Worklets, Gesture Handler).
+- `react-dom` in the workspace makes Expo add `web` to the app's platforms; `app.json` pins
+  `platforms: ios, android`. `apps/mobile/fingerprint.config.js` keeps `package.json` scripts out of
+  the runtime fingerprint.
+
 ## Risks
 
 - **Runtime fingerprint changes from PR 1 on** (hoisted autolinking paths and `package.json` scripts

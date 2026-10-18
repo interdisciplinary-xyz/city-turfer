@@ -18,6 +18,18 @@
     {
       "filename": "apps/mobile/app.json",
       "updater": "tools/release/app-json-version-updater.cjs"
+    },
+    {
+      "filename": "apps/web/package.json",
+      "type": "json"
+    },
+    {
+      "filename": "packages/brand/package.json",
+      "type": "json"
+    },
+    {
+      "filename": "packages/config/package.json",
+      "type": "json"
     }
   ],
   "types": [

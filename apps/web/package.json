@@ -1,0 +1,27 @@
+{
+  "name": "@cityturfer/web",
+  "version": "0.3.0",
+  "private": true,
+  "description": "CityTurfer landing page: a static showcase (Next.js static export, hosted on Vercel)",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "npx --yes serve@14 out",
+    "typecheck": "next typegen && tsc --noEmit",
+    "lint": "eslint src next.config.ts"
+  },
+  "dependencies": {
+    "@cityturfer/brand": "workspace:*",
+    "next": "16.4.2",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  },
+  "devDependencies": {
+    "@cityturfer/config": "workspace:*",
+    "@types/node": "^22.15.0",
+    "@types/react": "~19.2.2",
+    "@types/react-dom": "~19.2.2",
+    "eslint": "^9.39.5",
+    "typescript": "~6.0.3"
+  }
+}

@@ -38,9 +38,16 @@ module.exports = {
       name: 'constants-are-leaf',
       severity: 'error',
       comment:
-        'src/constants holds plain shared values: it imports nothing but other constants, so any layer may use it.',
-      from: { path: '^src/constants/' },
-      to: { pathNot: '^src/constants/' },
+        'src/constants holds plain shared values: it imports nothing but other constants and the shared brand tokens (@cityturfer/brand, plain values too), so any layer may use it.',
+      from: { path: '^src/constants/', pathNot: notTests },
+      to: {
+        pathNot: [
+          '^src/constants/',
+          '^@cityturfer/brand$',
+          '(^|/)packages/brand/',
+          '(^|/)node_modules/@cityturfer/brand/',
+        ],
+      },
     },
     { name: 'no-circular', severity: 'error', from: {}, to: { circular: true } },
   ],
