@@ -7,8 +7,7 @@
     "skip": "Przejdź do treści",
     "taglineLead": "Surfuj po mieście.",
     "taglineRamp": "Ulice są Twoje.",
-    "lede": "Chodź, biegaj albo jeździj na rowerze — każda ulica, którą pokonasz, staje się Twoim turfem. Wracaj i patrz, jak świeci coraz jaśniej.",
-    "comingSoon": "Wkrótce na iPhone’a"
+    "lede": "Chodź, biegaj albo jeździj na rowerze — każda ulica, którą pokonasz, staje się Twoim turfem. Wracaj i patrz, jak świeci coraz jaśniej."
   },
   "screens": {
     "turfMap": {
@@ -31,7 +30,8 @@
     "cta": "Pobierz na Androida",
     "note": "Plik APK na telefony z Androidem",
     "help": "Pierwsza instalacja? Przeglądarka zapyta o zgodę na instalowanie aplikacji — tak instaluje się aplikacje spoza Google Play.",
-    "iphone": "iPhone: wkrótce"
+    "appStore": "App Store",
+    "soon": "Wkrótce"
   },
   "waitlist": {
     "title": "Zapisz się na listę oczekujących",
