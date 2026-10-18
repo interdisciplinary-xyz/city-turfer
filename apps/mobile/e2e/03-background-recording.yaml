@@ -16,4 +16,4 @@ tags: [recording, background]
 - assertVisible: { text: 'Distance [1-9][0-9]{1,} m.*' }
 - runFlow: subflows/finish.yaml
 - extendedWaitUntil: { visible: { id: 'turf-gained' }, timeout: 30000 }
-- tapOn: 'Back'
+- runFlow: subflows/back.yaml
