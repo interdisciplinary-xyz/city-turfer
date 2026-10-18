@@ -12,5 +12,5 @@ tags: [history]
 - extendedWaitUntil: { visible: { id: 'turf-gained' }, timeout: 15000 }
 - assertVisible: { text: 'Distance [0-9].*' }
 - assertVisible: { text: 'Moving time [0-9].*' }
-- tapOn: 'Back'
-- tapOn: 'Back'
+- runFlow: subflows/back.yaml
+- runFlow: subflows/back.yaml
