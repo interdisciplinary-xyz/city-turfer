@@ -4,13 +4,13 @@ verified: 2026-10-17
 owner: founder
 scope:
   [
-    tools/device-diagnose.sh,
-    tools/diagnose-recording.mjs,
-    tools/fetch-maplibre-ios.sh,
-    e2e/run.sh,
-    src/platform/outbox.ts,
-    src/platform/diagnostics.ts,
-    app.json,
+    apps/mobile/tools/device-diagnose.sh,
+    apps/mobile/tools/diagnose-recording.mjs,
+    apps/mobile/tools/fetch-maplibre-ios.sh,
+    apps/mobile/e2e/run.sh,
+    apps/mobile/src/platform/outbox.ts,
+    apps/mobile/src/platform/diagnostics.ts,
+    apps/mobile/app.json,
   ]
 summary:
   Paste-and-run checklists for the incidents CityTurfer actually has — recording, outbox, OTA,
@@ -28,8 +28,8 @@ fix.
 1. On the phone: **Me → Info**. Note the update line: `Update <id> · <date> · production` is an OTA
    or embedded release build; "Development build (updates come from Metro)" means a dev build, and
    OTA incidents don't apply.
-2. Decide **native or JS**. A change to `modules/`, `plugins/`, permissions, icons or `app.json`
-   (its `version` too) needs a new build; anything else can ship as an OTA.
+2. Decide **native or JS**. A change to `apps/mobile/modules/`, `apps/mobile/plugins/`, permissions,
+   icons or `app.json` (its `version` too) needs a new build; anything else can ship as an OTA.
 3. **Location data is personal data.** Never copy the app's database (or any location trace) off the
    founder's iPhone without asking first, never paste coordinates into an issue or a chat, and
    delete the copy (`~/ct-phone`) when done. The diagnostics below print no coordinates.
@@ -47,22 +47,22 @@ Ask the founder before copying the phone's data. Then, with the iPhone connected
 
 ```bash
 xcrun devicectl list devices                  # find the iPhone's identifier
-tools/device-diagnose.sh <device-udid>        # copies Documents/SQLite to ~/ct-phone, prints the timeline
+apps/mobile/tools/device-diagnose.sh <device-udid>        # copies Documents/SQLite to ~/ct-phone, prints the timeline
 # Another session than the latest:
-node tools/diagnose-recording.mjs ~/ct-phone/turftrack-admin.db --session <id>
+node apps/mobile/tools/diagnose-recording.mjs ~/ct-phone/turftrack-admin.db --session <id>
 ```
 
 The timeline (no coordinates) shows, minute by minute: location batches with their app state and
 source, fixes received / accepted / rejected, worst accuracy, app-state changes, launches and task
 errors. Each `launch` row records `locationAlways`, `preciseLocation`, `bgSessionAvailable`,
-`liveStreaming` and `lowPowerMode` (`src/composition-root.ts`).
+`liveStreaming` and `lowPowerMode` (`apps/mobile/src/composition-root.ts`).
 
 Reproduce on the simulator without a phone:
 
 ```bash
-tools/sim-location.sh ios tools/fixtures/walk-2k.gpx    # replay movement into the booted simulator
+apps/mobile/tools/sim-location.sh ios apps/mobile/tools/fixtures/walk-2k.gpx    # replay movement into the booted simulator
 # start a recording, background the app (Cmd+Shift+H) for ≥ 60 s, foreground it: the route must have no gap
-tools/sim-location.sh ios --clear
+apps/mobile/tools/sim-location.sh ios --clear
 ```
 
 **Fix**
@@ -70,11 +70,12 @@ tools/sim-location.sh ios --clear
 - `locationAlways: false` or `preciseLocation: false`: iPhone Settings → CityTurfer → Location →
   **Always** and **Precise Location** on.
 - `bgSessionAvailable: false` or `liveStreaming: false`: the installed binary predates the native
-  module (`modules/background-session`). An OTA can't add native code: reinstall (incident #7).
+  module (`apps/mobile/modules/background-session`). An OTA can't add native code: reinstall
+  (incident #7).
 - `lowPowerMode: true`: Low Power Mode throttles location; turn it off for recordings.
 - Batches arrive but fixes are rejected: GPS accuracy worse than the profile's limit
-  (`src/contexts/recording/domain/tracking-profile.ts`), typical near tall buildings. Working as
-  intended.
+  (`apps/mobile/src/contexts/recording/domain/tracking-profile.ts`), typical near tall buildings.
+  Working as intended.
 - Already-recorded gaps: nothing to repair. Gaps over 45 s are separate segments, and their street
   estimates count distance but never turf.
 - Done: `rm -rf ~/ct-phone`.
@@ -87,17 +88,17 @@ tools/sim-location.sh ios --clear
 the activity is missing from History, or its turf never appears.
 
 Finishing writes the session and a `SessionFinished` event to `sys_outbox` in one transaction; the
-`EventDispatcher` (`src/platform/outbox.ts`) then hands it to Activity Log, whose `ActivityRecorded`
-event goes to Territory. A handler that throws leaves its event pending, and the dispatcher stops at
-the **first** pending event, so everything after it waits too. Failures are only `console.warn`ed in
-dev builds; they are not in `sys_diagnostics`.
+`EventDispatcher` (`apps/mobile/src/platform/outbox.ts`) then hands it to Activity Log, whose
+`ActivityRecorded` event goes to Territory. A handler that throws leaves its event pending, and the
+dispatcher stops at the **first** pending event, so everything after it waits too. Failures are only
+`console.warn`ed in dev builds; they are not in `sys_diagnostics`.
 
 **Triage**
 
 ```bash
 # Simulator: the database lives in the app's data container
 DB="$(xcrun simctl get_app_container booted com.turftrack.poc data)/Documents/SQLite/turftrack-admin.db"
-# iPhone (ask first): tools/device-diagnose.sh <udid>, then DB=~/ct-phone/turftrack-admin.db
+# iPhone (ask first): apps/mobile/tools/device-diagnose.sh <udid>, then DB=~/ct-phone/turftrack-admin.db
 sqlite3 "$DB" "SELECT id, type, datetime(created_at/1000,'unixepoch','localtime') FROM sys_outbox
                WHERE processed_at IS NULL ORDER BY id;"
 sqlite3 "$DB" "SELECT datetime(at/1000,'unixepoch','localtime'), kind, data FROM sys_diagnostics
@@ -109,10 +110,10 @@ Event payloads hold ids, activity types and timestamps, no coordinates.
 **Fix**
 
 1. Relaunch the app: the dispatcher retries every pending event on start (`getContainer()` in
-   `src/composition-root.ts`). Most stuck saves are a launch that was killed mid-chain.
+   `apps/mobile/src/composition-root.ts`). Most stuck saves are a launch that was killed mid-chain.
 2. If the same event stays pending, its handler fails every time. Run the app from Metro
-   (`npm start`) to see the `[outbox] handler failed for <type>` warning, then reproduce it in Jest
-   (`src/__tests__/end-to-end.test.ts` drives the full chain on real SQL).
+   (`pnpm start`) to see the `[outbox] handler failed for <type>` warning, then reproduce it in Jest
+   (`apps/mobile/src/__tests__/end-to-end.test.ts` drives the full chain on real SQL).
 3. **Don't mark outbox rows processed by hand.** That skips the activity or its turf for good. Fix
    the handler and ship it (OTA if JS-only); the pending event is delivered on the next launch.
 4. `fix/outbox-and-retention` (#30, in review) changes outbox handling; re-check this section after
@@ -127,9 +128,9 @@ Event payloads hold ids, activity types and timestamps, no coordinates.
 **Triage**
 
 ```bash
-npx eas-cli@latest channel:view production                         # branch + runtime of the latest group
-npx eas-cli@latest update:list --branch production --limit 5       # recent groups and their runtime versions
-npx expo-updates fingerprint:generate --platform ios               # this checkout's runtime fingerprint
+pnpm -C apps/mobile dlx eas-cli@latest channel:view production                         # branch + runtime of the latest group
+pnpm -C apps/mobile dlx eas-cli@latest update:list --branch production --limit 5       # recent groups and their runtime versions
+pnpm -C apps/mobile exec expo-updates fingerprint:generate --platform ios               # this checkout's runtime fingerprint
 ```
 
 `app.json` sets `runtimeVersion.policy: fingerprint`, channel `production`, and
@@ -158,8 +159,8 @@ runtime.
 **Triage**
 
 ```bash
-npx eas-cli@latest update:list --branch production --limit 5    # the bad group id and the last good one
-npx eas-cli@latest update:view <GROUP_ID>                       # details of one group
+pnpm -C apps/mobile dlx eas-cli@latest update:list --branch production --limit 5    # the bad group id and the last good one
+pnpm -C apps/mobile dlx eas-cli@latest update:view <GROUP_ID>                       # details of one group
 ```
 
 **Fix**
@@ -168,20 +169,20 @@ Roll back: republish the group published before the bad one (or the embedded upd
 none). The bad group must be the latest on its branch and runtime.
 
 ```bash
-npx eas-cli@latest update:rollback <BAD_GROUP_ID> -m "Roll back <what broke>" --non-interactive
+pnpm -C apps/mobile dlx eas-cli@latest update:rollback <BAD_GROUP_ID> -m "Roll back <what broke>" --non-interactive
 ```
 
 Or republish a specific known-good group:
 
 ```bash
-npx eas-cli@latest update:republish --group <GOOD_GROUP_ID> -m "Republish <id>: <why>" --non-interactive
+pnpm -C apps/mobile dlx eas-cli@latest update:republish --group <GOOD_GROUP_ID> -m "Republish <id>: <why>" --non-interactive
 ```
 
-Then the fix forward: revert the commit on the branch, and publish again once `npm run ci:quality`
+Then the fix forward: revert the commit on the branch, and publish again once `pnpm run ci:quality`
 passes:
 
 ```bash
-npx eas-cli@latest update --channel production --environment production --platform ios \
+pnpm -C apps/mobile dlx eas-cli@latest update --channel production --environment production --platform ios \
   --message "<what changed>" --non-interactive
 ```
 
@@ -192,13 +193,13 @@ phone that crashes before it can check needs a reinstall.
 
 ## #5 — The iOS build hangs in Swift Package Manager
 
-**Symptom:** `npx expo run:ios` (or Xcode) sits at "Resolving package graph" / downloading MapLibre
-and never finishes.
+**Symptom:** `pnpm -C apps/mobile exec expo run:ios` (or Xcode) sits at "Resolving package graph" /
+downloading MapLibre and never finishes.
 
 **Triage**
 
 ```bash
-cat vendor/maplibre-spm/.version 2>/dev/null || echo "MapLibre not vendored"
+cat apps/mobile/vendor/maplibre-spm/.version 2>/dev/null || echo "MapLibre not vendored"
 grep -n "with-local-maplibre" ios/Podfile    # the plugin's marker; missing = prebuilt without the plugin
 xcodebuild -version                          # Expo SDK 57 needs Xcode 26.4+
 ```
@@ -206,9 +207,9 @@ xcodebuild -version                          # Expo SDK 57 needs Xcode 26.4+
 **Fix**
 
 ```bash
-tools/fetch-maplibre-ios.sh          # downloads MapLibre with curl into vendor/maplibre-spm (checksum-pinned)
-npx expo prebuild --platform ios     # regenerates ios/; plugins/with-local-maplibre.js points SPM at the vendored copy
-npx expo run:ios
+apps/mobile/tools/fetch-maplibre-ios.sh          # downloads MapLibre with curl into apps/mobile/vendor/maplibre-spm (checksum-pinned)
+pnpm -C apps/mobile exec expo prebuild --platform ios     # regenerates ios/; apps/mobile/plugins/with-local-maplibre.js points SPM at the vendored copy
+pnpm -C apps/mobile exec expo run:ios
 ```
 
 `ios/` is generated (Continuous Native Generation): never fix it by hand; re-run prebuild.
@@ -217,7 +218,7 @@ npx expo run:ios
 
 ## #6 — The Maestro suite fails on stale state or the iOS "Save Password" sheet
 
-**Symptom:** `npm run test:e2e` fails early: a flow can't find the sign-in fields or finds old
+**Symptom:** `pnpm run test:e2e` fails early: a flow can't find the sign-in fields or finds old
 activities, or it stops right after sign-in with iOS's "Save Password?" sheet on screen.
 
 **Triage**
@@ -230,16 +231,16 @@ ls -t e2e-results | head -1                          # newest run: junit report 
 
 **Fix**
 
-- **Stale state:** `e2e/run.sh` wipes the app's SQLite files and the simulator keychain only for a
-  full run or `01-auth` (Maestro's `clearState` doesn't remove them on the iOS 27 simulator). A
-  single flow inherits whatever the last run left. Run the full suite, or `e2e/run.sh 01-auth`
-  before the flow you're debugging.
+- **Stale state:** `apps/mobile/e2e/run.sh` wipes the app's SQLite files and the simulator keychain
+  only for a full run or `01-auth` (Maestro's `clearState` doesn't remove them on the iOS 27
+  simulator). A single flow inherits whatever the last run left. Run the full suite, or
+  `apps/mobile/e2e/run.sh 01-auth` before the flow you're debugging.
 - **Wrong build:** with Metro running, flows open the dev client through `DEV_URL`; to test the
-  installed release build instead, stop Metro or run `DEV_URL= e2e/run.sh`.
+  installed release build instead, stop Metro or run `DEV_URL= apps/mobile/e2e/run.sh`.
 - **Save Password sheet:** iOS offers to save the password after a successful sign-in, and the next
   step can't see the app under it. `chore/ci-quality-gates` (#28, in review) adds a
-  `when: { visible: 'Not Now' }` tap to `e2e/subflows/sign-in.yaml` (commit `52e6a2f`). Until it
-  merges, cherry-pick that commit onto your local branch before running the suite.
+  `when: { visible: 'Not Now' }` tap to `apps/mobile/e2e/subflows/sign-in.yaml` (commit `52e6a2f`).
+  Until it merges, cherry-pick that commit onto your local branch before running the suite.
 
 ---
 
@@ -261,8 +262,8 @@ Reinstall a Release build over the existing app. **Don't delete the app first**:
 its database, and with it every activity and all turf.
 
 ```bash
-tools/fetch-maplibre-ios.sh                                     # once per machine (incident #5)
-npx expo run:ios --configuration Release --device <device-udid>
+apps/mobile/tools/fetch-maplibre-ios.sh                                     # once per machine (incident #5)
+pnpm -C apps/mobile exec expo run:ios --configuration Release --device <device-udid>
 ```
 
 A reinstall is also the moment for anything that changes the runtime fingerprint (pending native

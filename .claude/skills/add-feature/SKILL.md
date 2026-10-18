@@ -37,7 +37,7 @@ feature that touches more than three files, show the plan to the user before wri
 - `contexts/territory/{domain,application,infrastructure}`
   - Agent: `location-engineer`
   - Skill it follows: ddd-architecture, turf-territory
-- `src/app/`, `contexts/*/ui/`, maps (incl. Turf Map), styling
+- `apps/mobile/src/app/`, `contexts/*/ui/`, maps (incl. Turf Map), styling
   - Agent: `mobile-ui-engineer`
   - Skill it follows: turf-territory (for the Turf Map)
 - **tests, fixtures, simulator runs, Maestro**
@@ -51,7 +51,7 @@ parallel agents.
 ## 3. Verify
 
 ```bash
-npx tsc --noEmit && npx jest
+pnpm -C apps/mobile exec tsc --noEmit && pnpm -C apps/mobile exec jest
 ```
 
 Then, for anything a user can see or that touches tracking: dev build, plus a replayed fixture

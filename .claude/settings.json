@@ -1,16 +1,18 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx tsc:*)",
-      "Bash(npx jest:*)",
-      "Bash(npm test:*)",
-      "Bash(npm run:*)",
-      "Bash(npx expo install:*)",
-      "Bash(npx expo start:*)",
-      "Bash(npx expo run:*)",
-      "Bash(npx expo prebuild:*)",
       "Bash(node tools/:*)",
-      "Bash(tools/sim-location.sh:*)",
+      "Bash(pnpm -C apps/mobile exec tsc:*)",
+      "Bash(pnpm -C apps/mobile exec jest:*)",
+      "Bash(pnpm -C apps/mobile exec expo install:*)",
+      "Bash(pnpm -C apps/mobile exec expo start:*)",
+      "Bash(pnpm -C apps/mobile exec expo run:*)",
+      "Bash(pnpm -C apps/mobile exec expo prebuild:*)",
+      "Bash(node apps/mobile/tools/:*)",
+      "Bash(apps/mobile/tools/sim-location.sh:*)",
+      "Bash(pnpm exec turbo run:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm run:*)",
       "Bash(xcrun simctl:*)",
       "Bash(adb devices:*)",
       "Bash(adb emu geo:*)",
@@ -22,7 +24,12 @@
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
-        "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/format-ts.sh" }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/format-ts.sh"
+          }
+        ]
       }
     ]
   }

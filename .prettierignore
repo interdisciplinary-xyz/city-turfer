@@ -8,7 +8,12 @@ dist
 vendor
 
 # Auto-generated — don't churn on reformat
-package-lock.json
 CHANGELOG.md
-tools/fixtures/
-e2e/subflows/travel-*.yaml
+apps/mobile/tools/fixtures/
+apps/mobile/e2e/subflows/travel-*.yaml
+
+# pnpm lockfile
+pnpm-lock.yaml
+
+# Written by next dev (Next 16 agent notes); keep its exact text so it never shows as changed
+apps/web/AGENTS.md

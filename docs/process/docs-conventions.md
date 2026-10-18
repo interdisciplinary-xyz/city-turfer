@@ -11,15 +11,15 @@ summary:
 
 Canonical for: the frontmatter contract, where a doc lives, filenames, probes and the audit loop.
 Adapted from empatalk's docs conventions (`process/DOCS_CONVENTIONS.md` in that repo). Enforcement:
-`npm run audit:docs` (`tools/docs-audit.mjs`). Judgment layer: the `/audit-docs` command
+`pnpm run audit:docs` (`tools/docs-audit.mjs`). Judgment layer: the `/audit-docs` command
 (`.claude/commands/audit-docs.md`).
 
 ## The problem this solves
 
 A doc that is wrong looks exactly like a doc that is right. Before this, nothing in `docs/` said
-whether it was current: skills cited folders that no longer exist (src/tracking, src/metrics,
-src/db), and `CLAUDE.md` listed a platform logger and a zustand store that don't exist. So: **status
-lives in the file, and every derived number is generated.**
+whether it was current: skills cited folders that no longer exist (apps/mobile/src/tracking,
+apps/mobile/src/metrics, apps/mobile/src/db), and `CLAUDE.md` listed a platform logger and a zustand
+store that don't exist. So: **status lives in the file, and every derived number is generated.**
 
 ## 1. Frontmatter — required on every doc in `docs/`
 
@@ -28,7 +28,7 @@ lives in the file, and every derived number is generated.**
 status: canonical # canonical | superseded | historical | proposed | stale
 verified: 2026-10-17 # the day someone last checked these claims AGAINST CODE
 owner: founder
-scope: [src/contexts/recording, modules/background-session] # repo paths this doc describes
+scope: [apps/mobile/src/contexts/recording, apps/mobile/modules/background-session] # repo paths this doc describes
 summary: One line — what this doc is for, shown in the generated index
 ---
 ```
@@ -95,43 +95,46 @@ Any count that comes from the codebase goes in a probe:
 Bounded contexts: <!-- probe:contexts -->5<!-- /probe -->
 ```
 
-`npm run audit:docs` flags drift; `-- --fix-probes` rewrites every probe from code. The registry is
+`pnpm run audit:docs` flags drift; `-- --fix-probes` rewrites every probe from code. The registry is
 `PROBES` in `tools/docs-audit.mjs`; add one there rather than typing a number into prose. Today:
 
-- `contexts`: directories in `src/contexts/` (<!-- probe:contexts -->5<!-- /probe -->)
-- `achievements`: `id:` entries in `src/contexts/achievements/domain/achievements.ts`
+- `contexts`: directories in `apps/mobile/src/contexts/` (<!-- probe:contexts -->5<!-- /probe -->)
+- `achievements`: `id:` entries in `apps/mobile/src/contexts/achievements/domain/achievements.ts`
   (<!-- probe:achievements -->12<!-- /probe -->)
-- `e2e-flows`: `flowsOrder` entries in `e2e/config.yaml` (<!-- probe:e2e-flows -->10<!-- /probe -->)
-- `migrations`: `version:` entries in `src/platform/migrations.ts`
+- `e2e-flows`: `flowsOrder` entries in `apps/mobile/e2e/config.yaml`
+  (<!-- probe:e2e-flows -->10<!-- /probe -->)
+- `migrations`: `version:` entries in `apps/mobile/src/platform/migrations.ts`
   (<!-- probe:migrations -->5<!-- /probe -->)
 - `docs`: markdown files under `docs/` (<!-- probe:docs -->6<!-- /probe -->)
 
 **If a number is not probed, don't write it.** Write the derivation instead ("one per file in
-`e2e/`"). Numbers in session logs are fine: they are `historical` records of what was true then.
+`apps/mobile/e2e/`"). Numbers in session logs are fine: they are `historical` records of what was
+true then.
 
 ## 5. The generated index
 
 `docs/INDEX.md` is the complete inventory, generated from frontmatter by
-`npm run audit:docs -- --write-index`. Don't hand-edit it: change the doc's `status:`/`summary:` and
-re-run. The audit warns when the index is out of date.
+`pnpm run audit:docs -- --write-index`. Don't hand-edit it: change the doc's `status:`/`summary:`
+and re-run. The audit warns when the index is out of date.
 
 ## 6. The loop
 
 ```bash
-npm run audit:docs                       # signals: what looks wrong and where
-npm run audit:docs -- --doc <path>       # one file
-npm run audit:docs -- --fix-probes       # rewrite derived numbers from code
-npm run audit:docs -- --write-index      # regenerate docs/INDEX.md
-npm run audit:docs -- --strict           # exit 1 on any error (for CI)
+pnpm run audit:docs                       # signals: what looks wrong and where
+pnpm run audit:docs -- --doc <path>       # one file
+pnpm run audit:docs -- --fix-probes       # rewrite derived numbers from code
+pnpm run audit:docs -- --write-index      # regenerate docs/INDEX.md
+pnpm run audit:docs -- --strict           # exit 1 on any error (for CI)
 ```
 
 What it checks, in `docs/**`, `README.md`, `CLAUDE.md` and `.claude/**/*.md` (not `CHANGELOG.md`):
 
 - **frontmatter** (docs only): present, all five keys, valid `status`, real date not in the future,
   `scope:` paths exist, superseded docs name a successor
-- **dead-path**: an inline-code path (`src/…`, `tools/…`, `docs/…`, `e2e/…`, `.claude/…`, a
-  context-relative `recording/domain/…`, or a stale root such as app/ at the repo root) that doesn't
-  exist and isn't gitignored. Paths inside fenced code blocks and multi-word commands are skipped
+- **dead-path**: an inline-code path (`apps/mobile/src/…`, `tools/…`, `docs/…`, `apps/mobile/e2e/…`,
+  `.claude/…`, a context-relative `recording/domain/…`, or a stale root such as app/ at the repo
+  root) that doesn't exist and isn't gitignored. Paths inside fenced code blocks and multi-word
+  commands are skipped
 - **broken-link**: a relative Markdown link whose file or `#anchor` doesn't exist
 - **probe-drift**: a probe whose value no longer matches the code
 - **filename / placement**: kebab-case, nothing loose in `docs/` root
@@ -141,7 +144,7 @@ What it checks, in `docs/**`, `README.md`, `CLAUDE.md` and `.claude/**/*.md` (no
 
 The script emits **signals, never verdicts**. Deciding whether a doc is fixed, demoted, archived or
 deleted is the `/audit-docs` command's job, and the default for a rotten doc is _demote or delete_,
-not _rewrite_. `audit:docs` is not part of `npm run ci:quality` yet; adding `--strict` to CI is a
+not _rewrite_. `audit:docs` is not part of `pnpm run ci:quality` yet; adding `--strict` to CI is a
 follow-up once the docs are clean.
 
 ## 7. Rules that are easy to get wrong

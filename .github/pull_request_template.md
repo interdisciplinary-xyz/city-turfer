@@ -9,8 +9,8 @@
 
 <!-- Commands run and devices/simulators used. Recording changes need a simulator replay or a real-device run. -->
 
-- [ ] `npm run ci:quality` clean locally
-- [ ] `npm run test:e2e` (Maestro, iOS Simulator) — required for scope → release
+- [ ] `pnpm run ci:quality` clean locally
+- [ ] `pnpm run test:e2e` (Maestro, iOS Simulator) — required for scope → release
 
 ## Out of scope
 
@@ -36,5 +36,5 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started · ⚠️ blocked
 ## Quality gate
 
 - [ ] No new TODOs, `console.log`, or raw coordinates in logs
-- [ ] DDD dependency rules pass (`npm run test:arch`)
+- [ ] DDD dependency rules pass (`pnpm run test:arch`)
 - [ ] Every review thread addressed and resolved before merge

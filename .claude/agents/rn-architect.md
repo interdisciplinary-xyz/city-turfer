@@ -40,7 +40,8 @@ A plan with these sections, and nothing else:
 
 - Recorded data must survive backgrounding, screen lock and process death. Any design where points
   live only in JS memory is wrong.
-- Keep the metrics in `src/shared-kernel/` pure. Logic that can be a pure function should be one.
+- Keep the metrics in `apps/mobile/src/shared-kernel/` pure. Logic that can be a pure function
+  should be one.
 - Prefer Expo modules and config plugins over ejecting or hand-editing `ios/`/`android/`. If a
   native change is unavoidable, specify a config plugin.
 - Pick the smallest change that meets the criteria. Flag scope creep instead of planning it in.

@@ -34,8 +34,8 @@ to). Read the surrounding code, not only the hunks.
    `points` queried in list screens? Do updates run outside an active session (battery)? 5b.
    **Turf**: does a claim count a cell more than once per activity, bridge segment gaps, or use the
    import time instead of the activity time? Is the strength formula in sync with
-   `tools/turf-preview.mjs` and the vectors? Is the projection rebuildable, and do viewport queries
-   respect the feature budget?
+   `apps/mobile/tools/turf-preview.mjs` and the vectors? Is the projection rebuildable, and do
+   viewport queries respect the feature budget?
 6. **Privacy**: are coordinates logged outside `__DEV__`, sent to any network or analytics, or
    exported without user action?
 7. **Platform parity**: is the behaviour on iOS and Android equivalent, or is the difference
