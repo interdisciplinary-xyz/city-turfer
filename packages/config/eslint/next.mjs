@@ -22,6 +22,8 @@ export default [
       ...nextPlugin.configs.recommended.rules,
       ...nextPlugin.configs['core-web-vitals'].rules,
       'react/prop-types': 'off',
+      // App Router only: there is no pages/ directory to check links against.
+      '@next/next/no-html-link-for-pages': 'off',
     },
   },
 ];
