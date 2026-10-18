@@ -18,17 +18,51 @@ export default function Home() {
         Skip to content
       </a>
       <header className='hero'>
-        <div className='wrap'>
-          <Image className='mark' src={mark} alt='' priority width={132} height={132} />
-          <Image className='wordmark' src={wordmark} alt={NAME} priority width={320} height={101} />
-          <h1>
-            Surf your city. <span className='ramp-text'>Own your streets.</span>
-          </h1>
-          <p className='lede'>{PROMO}</p>
-          <p className='pill'>
-            <span className='pill-dot' aria-hidden='true' />
-            Coming soon to iPhone
-          </p>
+        <div className='wrap hero-grid'>
+          <div className='hero-copy'>
+            <Image className='mark' src={mark} alt='' priority width={132} height={132} />
+            <Image className='wordmark' src={wordmark} alt={NAME} priority width={320} height={101} />
+            <h1>
+              Surf your city. <span className='ramp-text'>Own your streets.</span>
+            </h1>
+            <p className='lede'>{PROMO}</p>
+            <p className='pill'>
+              <span className='pill-dot' aria-hidden='true' />
+              Coming soon to iPhone
+            </p>
+          </div>
+          <div className='screens'>
+            <figure className='screen'>
+              <div className='phone'>
+                <Image
+                  src='/screens/turf-map.jpg'
+                  alt='The Turf Map: glowing routes across Warsaw, with 3.02 km² of turf, 1530 cells and filters for walk, run and ride.'
+                  width={720}
+                  height={1565}
+                  priority
+                />
+              </div>
+              <figcaption>
+                <strong>The Turf Map</strong>
+                Every walk, run and ride on one dark map, glowing where you go most.
+              </figcaption>
+            </figure>
+            <figure className='screen'>
+              <div className='phone'>
+                <Image
+                  src='/screens/dashboard.jpg'
+                  alt="The Dashboard: this week's distance, time and activities, recent activities and the next achievement."
+                  width={720}
+                  height={1565}
+                  priority
+                />
+              </div>
+              <figcaption>
+                <strong>Your week at a glance</strong>
+                Distance, time, recent activities and the next achievement within reach.
+              </figcaption>
+            </figure>
+          </div>
         </div>
       </header>
 
@@ -81,43 +115,6 @@ export default function Home() {
                 </div>
               </li>
             </ol>
-          </div>
-        </section>
-
-        <section aria-labelledby='screens'>
-          <div className='wrap'>
-            <p className='eyebrow'>In the app</p>
-            <h2 id='screens'>Your city, lit up by the miles you put in.</h2>
-            <div className='screens'>
-              <figure className='screen'>
-                <div className='phone'>
-                  <Image
-                    src='/screens/turf-map.jpg'
-                    alt='The Turf Map: glowing routes across Warsaw, with 3.02 km² of turf, 1530 cells and filters for walk, run and ride.'
-                    width={720}
-                    height={1565}
-                  />
-                </div>
-                <figcaption>
-                  <strong>The Turf Map</strong>
-                  Every walk, run and ride on one dark map, glowing where you go most.
-                </figcaption>
-              </figure>
-              <figure className='screen'>
-                <div className='phone'>
-                  <Image
-                    src='/screens/dashboard.jpg'
-                    alt="The Dashboard: this week's distance, time and activities, recent activities and the next achievement."
-                    width={720}
-                    height={1565}
-                  />
-                </div>
-                <figcaption>
-                  <strong>Your week at a glance</strong>
-                  Distance, time, recent activities and the next achievement within reach.
-                </figcaption>
-              </figure>
-            </div>
           </div>
         </section>
 

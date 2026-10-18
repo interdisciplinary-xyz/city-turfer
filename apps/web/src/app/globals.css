@@ -63,9 +63,40 @@ img {
 
 .hero {
   position: relative;
-  padding: 72px 0 56px;
-  text-align: center;
+  padding: 56px 0 48px;
   isolation: isolate;
+}
+
+.hero-grid {
+  display: grid;
+  gap: 40px;
+  align-items: center;
+}
+
+.hero-copy {
+  text-align: center;
+}
+
+@media (min-width: 960px) {
+  .hero {
+    padding: 80px 0 64px;
+  }
+  .hero-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: 48px;
+  }
+  .hero-copy {
+    text-align: left;
+  }
+  .hero-copy .mark,
+  .hero-copy .wordmark,
+  .hero-copy h1,
+  .hero-copy .lede {
+    margin-left: 0;
+  }
+  .hero-copy h1 {
+    font-size: clamp(2.6rem, 4.4vw, 3.6rem);
+  }
 }
 
 .hero::before {
@@ -240,39 +271,41 @@ h2 {
 
 .screens {
   display: grid;
-  gap: 32px;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(12px, 3vw, 28px);
   justify-items: center;
-}
-
-@media (min-width: 760px) {
-  .screens {
-    grid-template-columns: 1fr 1fr;
-  }
+  align-items: start;
 }
 
 .screen {
   margin: 0;
-  max-width: 320px;
+  max-width: 280px;
   width: 100%;
 }
 
+/* stagger the second phone so the pair reads as one composition */
+.screen + .screen {
+  margin-top: 48px;
+}
+
 .phone {
-  border-radius: 40px;
-  padding: 10px;
+  border-radius: clamp(24px, 6vw, 40px);
+  padding: clamp(6px, 1.5vw, 10px);
   background: #000;
   border: 1px solid var(--border);
   box-shadow: 0 24px 80px color-mix(in srgb, var(--faint) 30%, transparent);
 }
 
 .phone img {
-  border-radius: 31px;
+  border-radius: clamp(18px, 5vw, 31px);
 }
 
 .screen figcaption {
-  margin-top: 16px;
+  margin-top: 14px;
   text-align: center;
   color: var(--muted);
+  font-size: clamp(0.8rem, 2.2vw, 0.95rem);
+  line-height: 1.45;
 }
 
 .screen figcaption strong {
