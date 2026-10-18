@@ -136,12 +136,13 @@ for (const r of rows) {
   b.gapSplits += d.gapSplits ?? 0;
   b.paused += d.ignoredWhilePaused ?? 0;
   for (const [k, n] of Object.entries(d.rejected ?? {})) b.rejected[k] = (b.rejected[k] ?? 0) + n;
-  if (d.appState)
+  if (d.appState) {
     b.states.add(
       (d.source ? `${d.source}:` : '') +
         d.appState +
         (d.bgSession === true ? '+session' : d.bgSession === false ? '-session' : '')
     );
+  }
   if (d.status) b.status.add(d.status);
   if (d.result) b.other.add(d.result);
   buckets.set(key, b);

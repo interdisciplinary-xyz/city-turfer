@@ -1,8 +1,11 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { trackFromPoints, type TrackPoint } from '@/shared-kernel';
 
 import { H3CellGrid } from '../../infrastructure/h3-cell-grid';
 import { Claim } from '../claim';
-import { strengthOf, tierOf } from '../strength';
+import { isStrong, strengthOf, tierOf } from '../strength';
 
 const grid = new H3CellGrid();
 const pt = (lat: number, lon: number, t: number, segment = 0): TrackPoint => ({
@@ -13,6 +16,28 @@ const pt = (lat: number, lon: number, t: number, segment = 0): TrackPoint => ({
   alt: null,
   accuracy: 5,
   speed: null,
+});
+
+interface Vectors {
+  strengthVectors: { visits: number; k: number; strength: number; tier: string; strong: boolean }[];
+  tierBoundaryVectors: { strength: number; tier: string; strong: boolean }[];
+}
+// Shared with tools/lib/turf.mjs (tools/__tests__/turf-parity.test.mjs): the formula is pinned here.
+const vectors: Vectors = JSON.parse(
+  readFileSync(join(__dirname, '../../../../../tools/fixtures/turf-vectors.json'), 'utf8')
+);
+
+describe('Strength vs tools/fixtures/turf-vectors.json', () => {
+  it.each(vectors.strengthVectors)('$visits visits, k=$k -> $strength ($tier)', (v) => {
+    const s = strengthOf(v.visits, v.k);
+    expect(s).toBeCloseTo(v.strength, 6);
+    expect(tierOf(s)).toBe(v.tier);
+    expect(isStrong(s)).toBe(v.strong);
+  });
+  it.each(vectors.tierBoundaryVectors)('strength $strength -> $tier', (v) => {
+    expect(tierOf(v.strength)).toBe(v.tier);
+    expect(isStrong(v.strength)).toBe(v.strong);
+  });
 });
 
 describe('Strength (permanent turf)', () => {

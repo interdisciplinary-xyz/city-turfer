@@ -1,0 +1,21 @@
+# Dashboard: greeting, this week, recent activities, achievements card; Stats links to History.
+appId: com.turftrack.poc
+tags: [dashboard]
+---
+- runFlow: subflows/launch.yaml
+- tapOn: { id: 'tab-dashboard' }
+- assertVisible: { id: 'dashboard-greeting' }
+- assertVisible: { id: 'dashboard-week-distance' }
+- tapOn: { id: 'recent-item-0' }
+- extendedWaitUntil: { visible: { id: 'turf-gained' }, timeout: 15000 }
+- tapOn: 'Back'
+- scrollUntilVisible: { element: { id: 'dashboard-achievements' } }
+- tapOn: { id: 'dashboard-achievements' }
+- assertVisible: { id: 'achievements-count' }
+- tapOn: 'Back'
+- tapOn: { id: 'tab-stats' }
+- scrollUntilVisible: { element: { id: 'stats-see-history' } }
+- tapOn: { id: 'stats-see-history' }
+- assertVisible: { id: 'history-item-0' }
+- tapOn: 'Back'
+- tapOn: { id: 'tab-dashboard' }

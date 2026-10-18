@@ -1,5 +1,7 @@
+import { weekStartOf } from '@/shared-kernel';
+
 import type { ActivityListItem } from '../../contract';
-import { activityStats, weekStartOf } from '../activity-stats';
+import { activityStats } from '../activity-stats';
 
 const at = (y: number, m: number, d: number, h = 12) => new Date(y, m - 1, d, h).getTime();
 const item = (id: string, type: ActivityListItem['type'], startedAt: number, distanceM: number): ActivityListItem => ({

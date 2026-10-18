@@ -6,7 +6,7 @@ import { type Email, type User, type UserId, userId } from '../domain/user';
  * The credentials live in this file only; replace this adapter with a real
  * provider by adding another AuthGateway and wiring it in the composition root.
  */
-const MOCK_EMAIL = 'admin@turftrack.com';
+const MOCK_EMAIL = 'admin@cityturfer.com';
 const MOCK_PASSWORD = 'admin1234';
 const ADMIN: User = { id: userId('admin'), email: MOCK_EMAIL, displayName: 'Admin' };
 

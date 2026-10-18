@@ -1,5 +1,6 @@
+import { router } from 'expo-router';
 import { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ACTIVITY_TYPES, TYPE_LABEL } from '@/constants/activity';
@@ -86,6 +87,17 @@ export default function StatsScreen() {
           </Text>
         </View>
       </Card>
+      <Pressable
+        testID='stats-see-history'
+        onPress={() => router.push('/history')}
+        accessibilityRole='link'
+        accessibilityLabel='See all activities'
+      >
+        <Card style={s.link}>
+          <Text style={[s.h2, { color: p.text }]}>All activities</Text>
+          <Text style={{ color: ACCENT, fontWeight: '700' }}>See all ›</Text>
+        </Card>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -93,6 +105,7 @@ export default function StatsScreen() {
 const s = StyleSheet.create({
   h1: { fontSize: 30, fontWeight: '900' },
   h2: { fontSize: 17, fontWeight: '800' },
+  link: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   bars: { flexDirection: 'row', alignItems: 'flex-end', height: 104, gap: 6 },
   barCol: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
   bar: { width: '100%', borderRadius: 6 },

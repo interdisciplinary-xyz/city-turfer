@@ -5,7 +5,7 @@ import { type ActivityType, type BoundingBox, type Clock, trackFromPoints, type 
 import type { ClaimView, TurfCellView, TurfSummaryView } from '../contract';
 import type { CellGrid, CellId } from '../domain/cell-grid';
 import { Claim } from '../domain/claim';
-import { strengthOf, tierOf } from '../domain/strength';
+import { isStrong, strengthOf, tierOf } from '../domain/strength';
 import type { CellRow, TerritoryRepository } from '../domain/territory-repository';
 
 /** Port: Activity Log's open-host track query. */
@@ -137,7 +137,7 @@ export class GetTurfSummary {
       area += a;
       if (now - r.firstAt <= 7 * 86_400_000) week += a;
       if (now - r.firstAt <= 30 * 86_400_000) month += a;
-      if (strengthOf(visits) >= 0.66) strong++;
+      if (isStrong(strengthOf(visits))) strong++;
       for (const t of ACTIVITY_TYPES) if (r[t] > 0) byType[t]++;
     }
     return {

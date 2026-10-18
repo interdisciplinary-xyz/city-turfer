@@ -1,5 +1,5 @@
 import { ACTIVITY_TYPES } from '@/constants/activity';
-import { type ActivityType } from '@/shared-kernel';
+import { type ActivityType, weekStartOf } from '@/shared-kernel';
 
 import type { ActivityListItem } from '../contract';
 
@@ -24,14 +24,6 @@ const add = (t: Totals, a: ActivityListItem) => {
   t.distanceM += a.distanceM;
   t.movingS += a.movingS;
 };
-
-/** Local Monday 00:00 of the week containing `ms`. */
-export function weekStartOf(ms: number): number {
-  const d = new Date(ms);
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-  return d.getTime();
-}
 
 /** Totals for the Stats tab; distances include street-routed gap estimates (as in History). */
 export function activityStats(items: readonly ActivityListItem[], now: number, weekCount = 8): ActivityStats {

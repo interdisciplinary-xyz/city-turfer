@@ -18,6 +18,11 @@ export interface SessionFinished extends DomainEvent<'SessionFinished'> {
   activityType: ActivityType;
   startedAt: number;
   endedAt: number;
+  /**
+   * Track Point segment numbers that begin with a manual Resume; every other segment after the
+   * first begins after a GPS gap. null/absent: unknown (session started by an older build).
+   */
+  resumedSegments?: number[] | null;
 }
 export interface SessionDiscarded extends DomainEvent<'SessionDiscarded'> {
   sessionId: string;
