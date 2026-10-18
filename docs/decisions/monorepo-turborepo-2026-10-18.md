@@ -101,8 +101,9 @@ city-turfer/
 
 ## Outcome
 
-- [1/3] #48 and [2/3] #49 merged on 2026-10-18; [3/3] `feat/web-landing` adds the packages and the
-  web app.
+- [1/3] #48, [2/3] #49 and [3/3] #50 merged on 2026-10-18. Follow-ups: #51 (hero screenshots,
+  portless), #52 (`@interdisciplinary/eslint-config` from empatalk replaces the ESLint presets in
+  `packages/config`), `feat/dev-toolbar` (`@interdisciplinary/dev-toolbar`).
 - `auto-install-peers=false` is required: with `true`, pnpm installed peers npm never did and
   CocoaPods autolinked them (Reanimated, Worklets, Gesture Handler).
 - `react-dom` in the workspace makes Expo add `web` to the app's platforms; `app.json` pins

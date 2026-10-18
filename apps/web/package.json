@@ -4,14 +4,15 @@
   "private": true,
   "description": "CityTurfer landing page: a static showcase (Next.js static export, hosted on Vercel)",
   "scripts": {
-    "dev": "portless run --lan --name cityturfer -- next dev",
+    "dev": "portless run --lan --name cityturfer -- node server.mjs",
     "build": "next build",
     "start": "npx --yes serve@14 out",
     "typecheck": "next typegen && tsc --noEmit",
-    "lint": "eslint src next.config.ts"
+    "lint": "eslint src next.config.ts server.mjs"
   },
   "dependencies": {
     "@cityturfer/brand": "workspace:*",
+    "@interdisciplinary/dev-toolbar": "workspace:*",
     "next": "16.4.2",
     "react": "19.2.3",
     "react-dom": "19.2.3"
@@ -27,7 +28,10 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.5",
     "globals": "^16.5.0",
+    "lucide-react": "^0.462.0",
     "portless": "^0.12.0",
+    "postcss": "^8.5.30",
+    "tailwindcss": "^3.4.19",
     "typescript": "~6.0.3"
   }
 }

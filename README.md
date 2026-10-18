@@ -81,15 +81,16 @@ a new build.
 The repo is a pnpm + Turborepo monorepo
 ([decision](./docs/decisions/monorepo-turborepo-2026-10-18.md)):
 
-| Path                      | What                                                                                             |
-| ------------------------- | ------------------------------------------------------------------------------------------------ |
-| `apps/mobile/`            | The Expo app (`@cityturfer/mobile`): app code, native module, plugins, Maestro, mobile dev tools |
-| `apps/web/`               | Landing page (`@cityturfer/web`): Next.js static export on Vercel                                |
-| `packages/brand/`         | `@cityturfer/brand`: colour tokens, name and copy, logo SVGs                                     |
-| `packages/config/`        | `@cityturfer/config`: Prettier and tsconfig bases                                                |
-| `packages/eslint-config/` | `@interdisciplinary/eslint-config`: ESLint presets and local rules, shared with empatalk         |
-| `tools/`                  | Repo-wide tools: docs audit, log audit, secret-file guard, release helpers                       |
-| `docs/`                   | Documentation, indexed in `docs/INDEX.md`                                                        |
+| Path                      | What                                                                                                                   |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `apps/mobile/`            | The Expo app (`@cityturfer/mobile`): app code, native module, plugins, Maestro, mobile dev tools                       |
+| `apps/web/`               | Landing page (`@cityturfer/web`): Next.js static export on Vercel                                                      |
+| `packages/brand/`         | `@cityturfer/brand`: colour tokens, name and copy, logo SVGs                                                           |
+| `packages/config/`        | `@cityturfer/config`: Prettier and tsconfig bases                                                                      |
+| `packages/eslint-config/` | `@interdisciplinary/eslint-config`: ESLint presets and local rules, shared with empatalk                               |
+| `packages/dev-toolbar/`   | `@interdisciplinary/dev-toolbar`: dev-only toolbar for the landing page (request log, route map), shared with empatalk |
+| `tools/`                  | Repo-wide tools: docs audit, log audit, secret-file guard, release helpers                                             |
+| `docs/`                   | Documentation, indexed in `docs/INDEX.md`                                                                              |
 
 Domain-Driven Design is a hard requirement. Each bounded context under `apps/mobile/src/contexts/*`
 has `domain/`, `application/`, `infrastructure/` and `ui/` layers and a public `index.ts`. Contexts
@@ -153,21 +154,21 @@ components and hooks.
 Everyday commands from the root `package.json` (they run the app's scripts through Turborepo or
 `pnpm --filter`); `pnpm run` is authoritative.
 
-| Name                        | Description                                                          |
-| --------------------------- | -------------------------------------------------------------------- |
-| `start`                     | Metro for an installed development build                             |
-| `ios` / `android`           | Build and install a development build                                |
-| `test:types` / `typecheck`  | `tsc --noEmit` in every workspace                                    |
-| `test:arch`                 | DDD dependency rules (dependency-cruiser)                            |
-| `test:unit`                 | Jest + node tool tests                                               |
-| `test`                      | `arch` + Jest + tool tests                                           |
-| `test:e2e`                  | Maestro suite on the booted iOS Simulator (`apps/mobile/e2e/run.sh`) |
-| `build`                     | Web static export (`apps/web/out`)                                   |
-| `web:dev`                   | Landing page at `https://cityturfer.local` (portless + `next dev`)   |
-| `standard` / `standard:fix` | Prettier + ESLint, check or apply                                    |
-| `ci:quality`                | Full local gate: `standard`, `test:types`, `test:arch`, `test:unit`  |
-| `audit:docs`                | Docs audit: dead paths, broken links, frontmatter, probes            |
-| `release`                   | `commit-and-tag-version` (run by CI on `main`, never by hand)        |
+| Name                        | Description                                                                             |
+| --------------------------- | --------------------------------------------------------------------------------------- |
+| `start`                     | Metro for an installed development build                                                |
+| `ios` / `android`           | Build and install a development build                                                   |
+| `test:types` / `typecheck`  | `tsc --noEmit` in every workspace                                                       |
+| `test:arch`                 | DDD dependency rules (dependency-cruiser)                                               |
+| `test:unit`                 | Jest + node tool tests                                                                  |
+| `test`                      | `arch` + Jest + tool tests                                                              |
+| `test:e2e`                  | Maestro suite on the booted iOS Simulator (`apps/mobile/e2e/run.sh`)                    |
+| `build`                     | Web static export (`apps/web/out`)                                                      |
+| `web:dev`                   | Landing page at `https://cityturfer.local` (portless + dev server with the dev toolbar) |
+| `standard` / `standard:fix` | Prettier + ESLint, check or apply                                                       |
+| `ci:quality`                | Full local gate: `standard`, `test:types`, `test:arch`, `test:unit`                     |
+| `audit:docs`                | Docs audit: dead paths, broken links, frontmatter, probes                               |
+| `release`                   | `commit-and-tag-version` (run by CI on `main`, never by hand)                           |
 
 > [!NOTE] **Tests passing doesn't prove background tracking works.** It needs a development build on
 > a device, or a simulator with replayed movement (`apps/mobile/tools/sim-location.sh`). See the
