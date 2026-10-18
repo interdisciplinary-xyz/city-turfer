@@ -33,7 +33,9 @@ received, #4 bad update).
 - **OTA:** changes only in `apps/mobile/src/` (TypeScript, screens, domain), JS-only dependencies,
   assets bundled by Metro.
 - **Reinstall** (`pnpm -C apps/mobile exec expo run:ios --configuration Release --device <udid>`,
-  runbook #7): anything that changes the fingerprint. Say so in the PR's "Risk & rollback".
+  runbook #7): anything that changes the fingerprint. Say so in the PR's "Risk & rollback". That
+  includes any edit under `apps/mobile/plugins/` (config plugins are hashed even when the change is
+  formatting, e.g. a lint autofix), `app.json`, native modules and native dependencies.
 
 To check, compare the fingerprint of the checkout you'll publish from with the runtime of the latest
 update the phone already runs:
