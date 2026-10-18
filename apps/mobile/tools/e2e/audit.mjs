@@ -12,7 +12,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const ALLOWED_TAGS = ['auth', 'recording', 'background', 'history', 'turf', 'me', 'dashboard'];
+export const ALLOWED_TAGS = ['auth', 'recording', 'background', 'history', 'turf', 'me', 'dashboard', 'health'];
 export const LAST_FLOW = '08-sign-out';
 
 /** Flow names (no extension) of top-level e2e/*.yaml, excluding config, dotfiles and subflows. */

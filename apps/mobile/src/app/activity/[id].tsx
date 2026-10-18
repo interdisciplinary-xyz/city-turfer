@@ -3,6 +3,7 @@ import { ActivityIndicator, Alert, Text, View } from 'react-native';
 
 import { ActivityDetailView } from '@/contexts/activity-log/ui/activity-detail-view';
 import { useActivity } from '@/contexts/activity-log/ui/hooks';
+import { isImportedFromHealth } from '@/contexts/health-sync';
 import { useClaim } from '@/contexts/territory/ui/hooks';
 import { ClaimLayers } from '@/contexts/territory/ui/layers';
 import { TurfGainedCard } from '@/contexts/territory/ui/turf-gained-card';
@@ -29,6 +30,11 @@ export default function ActivityScreen() {
     <>
       <Stack.Screen options={{ title: detail.name }} />
       <ActivityDetailView a={detail} mapOverlay={<ClaimLayers claim={claim} />}>
+        {isImportedFromHealth(detail.id) && (
+          <Text testID='from-apple-health' style={{ color: p.muted, textAlign: 'center' }}>
+            From Apple Health
+          </Text>
+        )}
         <TurfGainedCard claim={claim} />
         <Button
           testID='delete-activity'

@@ -1,11 +1,13 @@
 import * as Location from 'expo-location';
 import * as Updates from 'expo-updates';
 import { useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { ACCENT, TYPE_COLOR } from '@/constants/colors';
 import { useGapEstimationSetting } from '@/contexts/activity-log/ui/hooks';
+import { AppleHealthCard } from '@/contexts/health-sync/ui/apple-health-card';
 import { removeDemoHistory, seedDemoHistory } from '@/dev/demo-history';
+import { seedHealthWorkouts } from '@/dev/health-seed';
 import { useContainer } from '@/ui-kit/app-context';
 import { Button, Card } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
@@ -33,6 +35,19 @@ export default function InfoScreen() {
       Alert.alert('Demo history added', `${n} activities around your location. Open the Turf tab.`);
     } catch (e) {
       Alert.alert('Could not seed', String((e as Error).message ?? e));
+    } finally {
+      setSeeding(null);
+    }
+  };
+
+  const seedHealth = async () => {
+    try {
+      setSeeding('Writing to Apple Health…');
+      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const n = await seedHealthWorkouts({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+      Alert.alert('Health workouts added', `${n} workouts with routes are in Apple Health. Tap Import now.`);
+    } catch (e) {
+      Alert.alert('Could not seed Health', String((e as Error).message ?? e));
     } finally {
       setSeeding(null);
     }
@@ -126,6 +141,7 @@ export default function InfoScreen() {
           Off: no requests leave the phone; gaps stay as dashed straight lines.
         </Text>
       </Card>
+      <AppleHealthCard />
       {showDevTools && (
         <Card style={{ gap: 10 }}>
           <Text style={[s.h2, { color: p.text }]}>Developer tools</Text>
@@ -139,6 +155,16 @@ export default function InfoScreen() {
             onPress={seed}
             busy={!!seeding}
           />
+          {Platform.OS === 'ios' && (
+            <Button
+              testID='seed-health'
+              label='Add sample workouts to Apple Health'
+              color={p.border}
+              textColor={p.text}
+              onPress={seedHealth}
+              disabled={!!seeding}
+            />
+          )}
           <Button
             testID='remove-demo'
             label='Remove demo data'

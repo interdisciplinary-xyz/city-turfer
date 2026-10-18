@@ -1,0 +1,40 @@
+# Apple Health (iOS only): connect, put sample workouts into Health, import them as activities.
+# The Simulator has no Apple Watch, so the dev tool writes workouts with routes into Health first.
+appId: com.turftrack.poc
+tags: [health]
+---
+- runFlow:
+    when: { platform: iOS }
+    commands:
+      - runFlow: subflows/launch.yaml
+      - tapOn: { id: 'tab-me' }
+      - tapOn: { id: 'me-menu-info' }
+      - runFlow:
+          when: { visible: { id: 'health-connect' } }
+          commands:
+            - tapOn: { id: 'health-connect' }
+            # Apple's permission sheet: first time only, and it opens a moment later.
+            - extendedWaitUntil:
+                { visible: 'Health Access|Allow .*to access your Health data.*', timeout: 15000, optional: true }
+            - runFlow:
+                when: { visible: 'Select All.*|Turn On All' }
+                commands:
+                  - tapOn: 'Select All.*|Turn On All' # "Select All N Topics" on iOS 26, "Turn On All" before
+                  - tapOn: '^Allow$'
+                  # iOS 26 asks how much history to share: all of it, so the whole history imports.
+                  - runFlow:
+                      when: { visible: 'All Recorded Data and Future Data' }
+                      commands:
+                        - tapOn: 'All Recorded Data and Future Data'
+                        - tapOn: '^Allow$'
+      - scrollUntilVisible: { element: { id: 'health-import-switch' } }
+      - extendedWaitUntil: { visible: { id: 'health-last-import' }, timeout: 30000 }
+      - scrollUntilVisible: { element: { id: 'seed-health' } }
+      - tapOn: { id: 'seed-health' }
+      - extendedWaitUntil: { visible: 'Health workouts added', timeout: 60000 }
+      - tapOn: 'OK'
+      - scrollUntilVisible: { element: { id: 'health-import-now' }, direction: UP }
+      - tapOn: { id: 'health-import-now' }
+      - extendedWaitUntil: { visible: 'Last import: 3 workouts added', timeout: 120000 }
+      - takeScreenshot: 11-apple-health
+      - tapOn: 'Back'

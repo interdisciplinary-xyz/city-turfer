@@ -29,7 +29,7 @@ function mulberry32(seed: number) {
 const gaussian = (rand: () => number) => Math.sqrt(-2 * Math.log(1 - rand())) * Math.cos(2 * Math.PI * rand());
 const SPEED: Record<ActivityType, number> = { walk: 1.4, run: 3.0, cycle: 6.5 };
 
-function generateTrack(
+export function generateTrack(
   type: ActivityType,
   km: number,
   start: GeoPoint,
