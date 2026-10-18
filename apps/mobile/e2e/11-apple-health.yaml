@@ -35,6 +35,10 @@ tags: [health]
       - tapOn: 'OK'
       - scrollUntilVisible: { element: { id: 'health-import-now' }, direction: UP }
       - tapOn: { id: 'health-import-now' }
-      - extendedWaitUntil: { visible: 'Last import: 3 workouts added', timeout: 120000 }
+      # A fresh Simulator imports all 3; on reruns the new samples overlap earlier ones (same times)
+      # and are recognised as already in CityTurfer. Exact counts are unit-tested.
+      - extendedWaitUntil:
+          visible: 'Last import: (3 workouts added.*|.*already in CityTurfer.*)'
+          timeout: 120000
       - takeScreenshot: 11-apple-health
       - tapOn: 'Back'

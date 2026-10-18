@@ -82,7 +82,7 @@ export function AppleHealthCard() {
                 ? `Last import: ${describeImport(last)}`
                 : 'Not imported yet.'}
           </Text>
-          {!importing && last && last.imported === 0 && (
+          {!importing && last && last.imported === 0 && last.duplicates === 0 && (
             <Text style={{ color: p.muted, fontSize: 13 }}>{NO_WORKOUTS_HINT}</Text>
           )}
           {status.importEnabled && (

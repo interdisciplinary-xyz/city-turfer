@@ -16,9 +16,12 @@ export const NO_WORKOUTS_HINT =
 
 export const ERROR_TITLE = 'Apple Health';
 
-/** "12 added · 3 without a route" — the last import, in words. */
+/** "12 workouts added · 2 already in CityTurfer · 3 without a route" — the last import, in words. */
 export function describeImport(r: ImportReport): string {
   const parts = [`${r.imported} ${r.imported === 1 ? 'workout' : 'workouts'} added`];
+  if (r.duplicates > 0) {
+    parts.push(`${r.duplicates} already in CityTurfer`);
+  }
   if (r.withoutRoute > 0) {
     parts.push(`${r.withoutRoute} without a route`);
   }
