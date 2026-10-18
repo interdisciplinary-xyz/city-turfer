@@ -188,9 +188,21 @@ h1 {
   max-width: 14ch;
 }
 
+.line {
+  display: block;
+}
+
+/* Entrance animation (hero-motion): hidden until GSAP reveals them; the class is only set when
+   motion is allowed, and removed after 2.5 s if the script never runs. */
+.motion [data-anim] {
+  visibility: hidden;
+}
+
 .ramp-text {
   display: block;
   background: var(--ramp);
+  background-size: 200% 100%;
+  background-position: 0% 50%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;

@@ -8,6 +8,7 @@ import type { Locale } from '@/i18n/routing';
 
 import { ANDROID_APK_URL } from '../download-url';
 import { WAITLIST } from '../waitlist-config';
+import { HeroMotion } from './hero-motion';
 import { LanguageSwitcher } from './language-switcher';
 import { WaitlistForm } from './waitlist-form';
 
@@ -25,16 +26,31 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
         <div className='wrap hero-bar'>
           <LanguageSwitcher locale={locale} />
         </div>
-        <div className='wrap hero-grid'>
+        <HeroMotion className='wrap hero-grid'>
           <div className='hero-copy'>
-            <Image className='mark' src={mark} alt='' priority width={132} height={132} />
-            <Image className='wordmark' src={wordmark} alt={NAME} priority width={320} height={101} />
+            <Image className='mark' data-anim='mark' src={mark} alt='' priority width={132} height={132} />
+            <Image
+              className='wordmark'
+              data-anim='wordmark'
+              src={wordmark}
+              alt={NAME}
+              priority
+              width={320}
+              height={101}
+            />
             <h1>
-              {t('hero.taglineLead')} <span className='ramp-text'>{t('hero.taglineRamp')}</span>
+              <span className='line' data-anim='line'>
+                {t('hero.taglineLead')}
+              </span>{' '}
+              <span className='ramp-text' data-anim='line'>
+                {t('hero.taglineRamp')}
+              </span>
             </h1>
-            <p className='lede'>{t('hero.lede')}</p>
+            <p className='lede' data-anim='copy'>
+              {t('hero.lede')}
+            </p>
             {ANDROID_APK_URL ? (
-              <div className='download'>
+              <div className='download' data-anim='copy'>
                 <a className='download-btn' href={ANDROID_APK_URL} download>
                   {t('download.cta')}
                 </a>
@@ -43,22 +59,24 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
                 </p>
               </div>
             ) : (
-              <p className='pill'>
+              <p className='pill' data-anim='copy'>
                 <span className='pill-dot' aria-hidden='true' />
                 {t('hero.comingSoon')}
               </p>
             )}
             {WAITLIST ? (
-              <WaitlistForm
-                action={WAITLIST.url}
-                controller={WAITLIST.controller}
-                contactEmail={WAITLIST.contactEmail}
-                locale={locale}
-              />
+              <div data-anim='copy'>
+                <WaitlistForm
+                  action={WAITLIST.url}
+                  controller={WAITLIST.controller}
+                  contactEmail={WAITLIST.contactEmail}
+                  locale={locale}
+                />
+              </div>
             ) : null}
           </div>
-          <div className='screens'>
-            <figure className='screen'>
+          <div className='screens' data-anim-group='screens'>
+            <figure className='screen' data-anim='phone'>
               <div className='phone'>
                 <Image src='/screens/turf-map.jpg' alt={t('screens.turfMap.alt')} width={720} height={1565} priority />
               </div>
@@ -67,7 +85,7 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
                 {t('screens.turfMap.body')}
               </figcaption>
             </figure>
-            <figure className='screen'>
+            <figure className='screen' data-anim='phone'>
               <div className='phone'>
                 <Image
                   src='/screens/dashboard.jpg'
@@ -83,7 +101,7 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
               </figcaption>
             </figure>
           </div>
-        </div>
+        </HeroMotion>
       </main>
     </>
   );
