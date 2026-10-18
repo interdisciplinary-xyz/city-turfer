@@ -1,0 +1,19 @@
+{
+  "extends": "@cityturfer/config/tsconfig/base.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["es2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "moduleDetection": "force",
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "noUncheckedIndexedAccess": true,
+    "allowJs": true,
+    "jsx": "preserve",
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["src", "test"]
+}

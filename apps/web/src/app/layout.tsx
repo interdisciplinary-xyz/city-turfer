@@ -30,10 +30,25 @@ const tokens = {
   '--ride': TYPE_COLOR.cycle,
 } as CSSProperties;
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  // Dev toolbar: development build + a request from this machine only. Both imports are dynamic
+  // and sit inside the NODE_ENV branch, which the production build compiles to `if (false)` and
+  // drops, so neither the package, the adapter nor its CSS reaches the static export.
+  let devToolbar: ReactNode = null;
+  if (process.env.NODE_ENV === 'development') {
+    const { shouldRenderDevToolbar } = await import('@interdisciplinary/dev-toolbar/next');
+    if (await shouldRenderDevToolbar()) {
+      const { DevToolbarWithApp } = await import('./dev-toolbar-with-app');
+      devToolbar = <DevToolbarWithApp />;
+    }
+  }
+
   return (
     <html lang='en' style={tokens}>
-      <body>{children}</body>
+      <body>
+        {children}
+        {devToolbar}
+      </body>
     </html>
   );
 }

@@ -66,6 +66,7 @@ apps/web/                            Next.js landing page (@cityturfer/web): sta
 packages/brand/                      @cityturfer/brand: colour tokens (turf strength ramp), name + copy, logo SVGs; plain TS
 packages/config/                     @cityturfer/config: Prettier and tsconfig bases
 packages/eslint-config/              @interdisciplinary/eslint-config (shared with empatalk): presets base, react, package + local-rules
+packages/dev-toolbar/                @interdisciplinary/dev-toolbar (from empatalk): dev-only bottom toolbar for apps/web (request log, route map)
 tools/                               repo-wide tools (docs audit, log audit, secret-file guard, release)
 docs/  .github/  .husky/  .claude/   at the repo root
 ```
@@ -107,7 +108,7 @@ pnpm ios | pnpm android          # build and install a dev build (expo run:*)
 pnpm run typecheck               # tsc in every workspace (turbo)
 pnpm test                        # dependency rules (depcruise) + Jest + tool tests (turbo)
 pnpm run build                   # web static export (apps/web/out) via turbo
-pnpm run web:dev                 # landing page at https://cityturfer.local (portless + next dev)
+pnpm run web:dev                 # landing page at https://cityturfer.local (portless + server.mjs, dev toolbar)
 pnpm -C apps/mobile exec expo install <pkg>                     # add a native dependency to the app
 # Local quirks: watchman is disabled (broken Homebrew install) in jest + metro config; pnpm with
 #   node-linker=hoisted (.npmrc). iOS needs Xcode 26.4+ (Expo SDK 57). Xcode's SPM hangs downloading
