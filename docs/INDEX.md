@@ -76,8 +76,8 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   app.json is unpinned (pinned in f04bcf3)
 - ✅ [`sessions/v0.3.0.md`](sessions/v0.3.0.md): Session log v0.3.0 — v0.2.0 released, scope/v0.3.0
   opened, monorepo (Turborepo) designed
-- ✅ [`sessions/v0.4.0.md`](sessions/v0.4.0.md): Session log v0.4.0 — v0.3.0 released (monorepo +
-  landing page), scope/v0.4.0 opened
+- ✅ [`sessions/v0.4.0.md`](sessions/v0.4.0.md): Session log v0.4.0 — v0.3.0 released; Android APK
+  from the website, waitlist, GSAP motion; iOS stays free-tier
 
 ## Decision records
 
