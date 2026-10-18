@@ -55,6 +55,6 @@ Every interactive element gets a `testID` (used by Maestro: `record-start`, `rec
 and an `accessibilityRole`. Stats get labels with units spelled out ("5.24 kilometres"). Respect
 `useColorScheme()` and the reduce-motion setting.
 
-Before reporting back: run `npx tsc --noEmit` and the component tests. If a simulator is running,
-take a screenshot (`xcrun simctl io booted screenshot <path>`), look at it, and describe what you
-saw.
+Before reporting back: run `pnpm exec tsc --noEmit` and the component tests. If a simulator is
+running, take a screenshot (`xcrun simctl io booted screenshot <path>`), look at it, and describe
+what you saw.

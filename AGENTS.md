@@ -14,15 +14,15 @@ removed. Before writing any code that touches an Expo, EAS, or React Native API:
 
 ## Commands
 
-Use `bunx` instead of `npx` if the project uses bun (`bun.lock` present).
+This repo uses pnpm: `pnpm exec <bin>` for local binaries, `pnpm dlx <pkg>` for one-off packages.
 
 ```bash
-npx expo install <package>  # ALWAYS use instead of npm/yarn/pnpm/bun add — resolves SDK-compatible versions
-npx expo start              # start the dev server
-npx expo lint               # lint
-npx tsc --noEmit            # typecheck
-npx expo-doctor             # diagnose dependency and config issues
-npx expo install --fix      # fix incompatible package versions
+pnpm exec expo install <package>  # ALWAYS use instead of npm/yarn/pnpm/bun add — resolves SDK-compatible versions
+pnpm exec expo start              # start the dev server
+pnpm exec expo lint               # lint
+pnpm exec tsc --noEmit            # typecheck
+pnpm exec expo-doctor             # diagnose dependency and config issues
+pnpm exec expo install --fix      # fix incompatible package versions
 ```
 
 Run lint and typecheck before declaring any task done.
@@ -39,8 +39,8 @@ Run lint and typecheck before declaring any task done.
 
 Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submit`) and to ship
 over-the-air updates (`eas update`) — no local Xcode or Android Studio required. Run EAS CLI as
-`bunx eas-cli <command>` in Bun projects, or `npx eas-cli@latest <command>` otherwise; substitute
-that for bare `eas` in docs examples. Docs: https://docs.expo.dev/eas/index.md
+`bunx eas-cli <command>` in Bun projects, or `pnpm dlx eas-cli@latest <command>` otherwise;
+substitute that for bare `eas` in docs examples. Docs: https://docs.expo.dev/eas/index.md
 
 ## Rules
 
@@ -48,7 +48,7 @@ that for bare `eas` in docs examples. Docs: https://docs.expo.dev/eas/index.md
   Generation). Never create or edit them by hand — configure native behavior in `app.json` and
   config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app
-  needs a development build: `npx expo run:ios|android` locally, or
+  needs a development build: `pnpm exec expo run:ios|android` locally, or
   `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before
   adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md

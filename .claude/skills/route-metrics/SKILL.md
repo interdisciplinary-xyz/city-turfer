@@ -76,7 +76,7 @@ data.** Simplify only at render time, and memoise the result.
 ```bash
 node tools/gen-route.mjs --type run --km 5 --outliers 4 --pause 90 --format json > /tmp/run.json  # has truth.*
 node tools/route-stats.mjs tools/fixtures/run-5k-outliers-pause.gpx --json                         # oracle
-npx jest src/shared-kernel src/contexts/activity-log
+pnpm exec jest src/shared-kernel src/contexts/activity-log
 ```
 
 Each metric function needs tests for: an empty input, a single point, two identical points, a

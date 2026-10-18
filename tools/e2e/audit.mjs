@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// E2E coverage audit (`npm run e2e:audit`). Static checks that keep the Maestro suite, its
+// E2E coverage audit (`pnpm run e2e:audit`). Static checks that keep the Maestro suite, its
 // config and docs/quality/e2e.md consistent. Mirrors empatalk's e2e-coverage-audit idea.
 //   1. every e2e/*.yaml flow is in config.yaml flowsOrder, and vice versa
 //   2. 08-sign-out runs last (it signs the session out)

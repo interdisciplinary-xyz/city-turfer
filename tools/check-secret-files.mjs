@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `npm run check:secret-files` refuses to let personal location data or signing material enter a
+ * `pnpm run check:secret-files` refuses to let personal location data or signing material enter a
  * commit. `.gitignore` is not a leak boundary: it does not stop `git add -f`. Mirrors empatalk's
  * scripts/tools/check-secret-files.mjs.
  *

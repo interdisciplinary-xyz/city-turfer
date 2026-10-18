@@ -51,7 +51,7 @@ parallel agents.
 ## 3. Verify
 
 ```bash
-npx tsc --noEmit && npx jest
+pnpm exec tsc --noEmit && pnpm exec jest
 ```
 
 Then, for anything a user can see or that touches tracking: dev build, plus a replayed fixture

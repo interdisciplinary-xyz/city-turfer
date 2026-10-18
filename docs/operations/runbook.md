@@ -111,7 +111,7 @@ Event payloads hold ids, activity types and timestamps, no coordinates.
 1. Relaunch the app: the dispatcher retries every pending event on start (`getContainer()` in
    `src/composition-root.ts`). Most stuck saves are a launch that was killed mid-chain.
 2. If the same event stays pending, its handler fails every time. Run the app from Metro
-   (`npm start`) to see the `[outbox] handler failed for <type>` warning, then reproduce it in Jest
+   (`pnpm start`) to see the `[outbox] handler failed for <type>` warning, then reproduce it in Jest
    (`src/__tests__/end-to-end.test.ts` drives the full chain on real SQL).
 3. **Don't mark outbox rows processed by hand.** That skips the activity or its turf for good. Fix
    the handler and ship it (OTA if JS-only); the pending event is delivered on the next launch.
@@ -127,9 +127,9 @@ Event payloads hold ids, activity types and timestamps, no coordinates.
 **Triage**
 
 ```bash
-npx eas-cli@latest channel:view production                         # branch + runtime of the latest group
-npx eas-cli@latest update:list --branch production --limit 5       # recent groups and their runtime versions
-npx expo-updates fingerprint:generate --platform ios               # this checkout's runtime fingerprint
+pnpm dlx eas-cli@latest channel:view production                         # branch + runtime of the latest group
+pnpm dlx eas-cli@latest update:list --branch production --limit 5       # recent groups and their runtime versions
+pnpm exec expo-updates fingerprint:generate --platform ios               # this checkout's runtime fingerprint
 ```
 
 `app.json` sets `runtimeVersion.policy: fingerprint`, channel `production`, and
@@ -158,8 +158,8 @@ runtime.
 **Triage**
 
 ```bash
-npx eas-cli@latest update:list --branch production --limit 5    # the bad group id and the last good one
-npx eas-cli@latest update:view <GROUP_ID>                       # details of one group
+pnpm dlx eas-cli@latest update:list --branch production --limit 5    # the bad group id and the last good one
+pnpm dlx eas-cli@latest update:view <GROUP_ID>                       # details of one group
 ```
 
 **Fix**
@@ -168,20 +168,20 @@ Roll back: republish the group published before the bad one (or the embedded upd
 none). The bad group must be the latest on its branch and runtime.
 
 ```bash
-npx eas-cli@latest update:rollback <BAD_GROUP_ID> -m "Roll back <what broke>" --non-interactive
+pnpm dlx eas-cli@latest update:rollback <BAD_GROUP_ID> -m "Roll back <what broke>" --non-interactive
 ```
 
 Or republish a specific known-good group:
 
 ```bash
-npx eas-cli@latest update:republish --group <GOOD_GROUP_ID> -m "Republish <id>: <why>" --non-interactive
+pnpm dlx eas-cli@latest update:republish --group <GOOD_GROUP_ID> -m "Republish <id>: <why>" --non-interactive
 ```
 
-Then the fix forward: revert the commit on the branch, and publish again once `npm run ci:quality`
+Then the fix forward: revert the commit on the branch, and publish again once `pnpm run ci:quality`
 passes:
 
 ```bash
-npx eas-cli@latest update --channel production --environment production --platform ios \
+pnpm dlx eas-cli@latest update --channel production --environment production --platform ios \
   --message "<what changed>" --non-interactive
 ```
 
@@ -192,8 +192,8 @@ phone that crashes before it can check needs a reinstall.
 
 ## #5 — The iOS build hangs in Swift Package Manager
 
-**Symptom:** `npx expo run:ios` (or Xcode) sits at "Resolving package graph" / downloading MapLibre
-and never finishes.
+**Symptom:** `pnpm exec expo run:ios` (or Xcode) sits at "Resolving package graph" / downloading
+MapLibre and never finishes.
 
 **Triage**
 
@@ -207,8 +207,8 @@ xcodebuild -version                          # Expo SDK 57 needs Xcode 26.4+
 
 ```bash
 tools/fetch-maplibre-ios.sh          # downloads MapLibre with curl into vendor/maplibre-spm (checksum-pinned)
-npx expo prebuild --platform ios     # regenerates ios/; plugins/with-local-maplibre.js points SPM at the vendored copy
-npx expo run:ios
+pnpm exec expo prebuild --platform ios     # regenerates ios/; plugins/with-local-maplibre.js points SPM at the vendored copy
+pnpm exec expo run:ios
 ```
 
 `ios/` is generated (Continuous Native Generation): never fix it by hand; re-run prebuild.
@@ -217,7 +217,7 @@ npx expo run:ios
 
 ## #6 — The Maestro suite fails on stale state or the iOS "Save Password" sheet
 
-**Symptom:** `npm run test:e2e` fails early: a flow can't find the sign-in fields or finds old
+**Symptom:** `pnpm run test:e2e` fails early: a flow can't find the sign-in fields or finds old
 activities, or it stops right after sign-in with iOS's "Save Password?" sheet on screen.
 
 **Triage**
@@ -262,7 +262,7 @@ its database, and with it every activity and all turf.
 
 ```bash
 tools/fetch-maplibre-ios.sh                                     # once per machine (incident #5)
-npx expo run:ios --configuration Release --device <device-udid>
+pnpm exec expo run:ios --configuration Release --device <device-udid>
 ```
 
 A reinstall is also the moment for anything that changes the runtime fingerprint (pending native

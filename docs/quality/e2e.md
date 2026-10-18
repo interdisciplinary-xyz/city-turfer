@@ -3,9 +3,9 @@
 **Last reviewed:** 2026-10-17
 
 The Maestro suite in `e2e/` is the regression lock for what a runner does with the app. Run it with
-`npm run test:e2e` (`e2e/run.sh`, iOS Simulator, location pre-granted, flows run in the order of
-`e2e/config.yaml`). `npm run e2e:audit` (part of `ci:quality`) statically checks that this document,
-`config.yaml`, the flows and the `testID`s in `src/` agree. It does not run the app.
+`pnpm run test:e2e` (`e2e/run.sh`, iOS Simulator, location pre-granted, flows run in the order of
+`e2e/config.yaml`). `pnpm run e2e:audit` (part of `ci:quality`) statically checks that this
+document, `config.yaml`, the flows and the `testID`s in `src/` agree. It does not run the app.
 
 Adapted from empatalk's `docs/quality/E2E.md`.
 
@@ -62,5 +62,5 @@ Allowed tags are fixed in `tools/e2e/audit.mjs`
 1. Add `e2e/NN-name.yaml` with `tags: [...]` from the allowed set. Prefer `id:` selectors; add the
    `testID` in `src/` first.
 2. Add it to `flowsOrder` in `e2e/config.yaml` (keep `08-sign-out` last).
-3. Map it to a critical path in section 1 (or add a CP row), then run `npm run e2e:audit`.
+3. Map it to a critical path in section 1 (or add a CP row), then run `pnpm run e2e:audit`.
 4. No commented-out steps: delete them or fix the flow.
