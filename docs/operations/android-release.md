@@ -54,6 +54,13 @@ cd apps/mobile && maestro --device emulator-5554 test e2e --config e2e/config.ya
 Check at least: launch, sign-in, a recording with the foreground-service notification, the Turf Map.
 Background tracking still needs a real phone with the screen off.
 
+Against the release APK the suite runs through 05 and then stops at 06: its demo-history seeder is a
+dev tool, hidden in release builds. Run 07–09 on their own (`maestro test e2e/<flow>.yaml`); 10
+needs that seeded history. Start each run from a clean app (`adb shell pm clear com.turftrack.poc`,
+then grant the permissions again). Otherwise a recording left over from an earlier run blocks
+sign-out. If Maestro times out (`eraseText`, `DEADLINE_EXCEEDED`), the emulator is overloaded. Cold
+boot it (`-no-snapshot-load`) and wait until it is idle.
+
 ## Publish
 
 ```bash
