@@ -26,5 +26,11 @@
     "label": "Język",
     "en": "English",
     "pl": "Polski"
+  },
+  "download": {
+    "cta": "Pobierz na Androida",
+    "note": "Plik APK na telefony z Androidem",
+    "help": "Pierwsza instalacja? Przeglądarka zapyta o zgodę na instalowanie aplikacji — tak instaluje się aplikacje spoza Google Play.",
+    "iphone": "iPhone: wkrótce"
   }
 }

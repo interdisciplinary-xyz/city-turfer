@@ -6,6 +6,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import type { Locale } from '@/i18n/routing';
 
+import { ANDROID_APK_URL } from '../download-url';
 import { LanguageSwitcher } from './language-switcher';
 
 export default async function Home({ params }: { params: Promise<{ locale: Locale }> }) {
@@ -30,10 +31,25 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
               {t('hero.taglineLead')} <span className='ramp-text'>{t('hero.taglineRamp')}</span>
             </h1>
             <p className='lede'>{t('hero.lede')}</p>
-            <p className='pill'>
-              <span className='pill-dot' aria-hidden='true' />
-              {t('hero.comingSoon')}
-            </p>
+            {ANDROID_APK_URL ? (
+              <div className='download'>
+                <a className='download-btn' href={ANDROID_APK_URL} download>
+                  {t('download.cta')}
+                </a>
+                <p className='download-note'>
+                  {t('download.note')}. {t('download.help')}
+                </p>
+                <p className='pill'>
+                  <span className='pill-dot' aria-hidden='true' />
+                  {t('download.iphone')}
+                </p>
+              </div>
+            ) : (
+              <p className='pill'>
+                <span className='pill-dot' aria-hidden='true' />
+                {t('hero.comingSoon')}
+              </p>
+            )}
           </div>
           <div className='screens'>
             <figure className='screen'>
