@@ -53,6 +53,9 @@ const PLANNED_PATHS = new Set([
   'docs/spikes.md', // poc-plan.md M2: MapLibre spike decision record
   'docs/poc-report.md', // poc-plan.md M6: the PoC report
   'docs/roadmap.md', // add-feature skill: created after the PoC milestones
+  'apps/web', // monorepo [3/3]: the Next.js landing page
+  'packages/brand', // monorepo [3/3]: shared brand tokens and SVGs
+  'packages/config', // monorepo [3/3]: shared tsconfig, ESLint and Prettier presets
 ]);
 
 /** Index sections in reading order: folder → [heading, what lives here]. */

@@ -88,12 +88,4 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   v0.3.0 moves the repo to a pnpm + Turborepo monorepo — apps/mobile (Expo), apps/web (Next.js
   landing page), packages/brand and packages/config — in three PRs
 
-## Decision records
-
-`docs/decisions/` — Full write-ups of single decisions.
-
-- ✅
-  [`decisions/maplibre-over-react-native-maps-2026-10-15.md`](decisions/maplibre-over-react-native-maps-2026-10-15.md):
-  Decision record — MapLibre + OpenFreeMap for every map instead of react-native-maps
-
 <!-- docs-index:end -->
