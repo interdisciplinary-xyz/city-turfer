@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.2.0...v0.3.0) (2026-10-18)
+
+
+### Features
+
+* **web:** app screenshots in the hero; dev server through portless ([8333a31](https://github.com/interdisciplinary-xyz/city-turfer/commit/8333a31d0286802e536ad601874819578946cf1e))
+* **web:** dev toolbar from empatalk; session log up to date ([d935cb4](https://github.com/interdisciplinary-xyz/city-turfer/commit/d935cb44582d08911020cd5e6612f62b1f8f9da1)), closes [#50](https://github.com/interdisciplinary-xyz/city-turfer/issues/50) [-#52](https://github.com/interdisciplinary-xyz/-/issues/52)
+* **web:** hero-only landing page in English and Polish ([3dc88e3](https://github.com/interdisciplinary-xyz/city-turfer/commit/3dc88e32ca9f10fd993fe5688142a85f2f77ad16)), closes [#53](https://github.com/interdisciplinary-xyz/city-turfer/issues/53)
+* **web:** landing page and shared brand and config packages ([84faeb6](https://github.com/interdisciplinary-xyz/city-turfer/commit/84faeb623fad7e56f31a088cc09923a180fb5fc7))
+
+
+### Documentation
+
+* apps/mobile paths in the v0.3.0 session log and monorepo decision ([ce9b56f](https://github.com/interdisciplinary-xyz/city-turfer/commit/ce9b56ff4d3af83337e8588856c91240f0cb7071))
+* v0.3.0 session log and monorepo decision ([d8d547b](https://github.com/interdisciplinary-xyz/city-turfer/commit/d8d547b722221c1f3ac44de0d7fde155e6932d18))
+* v0.3.0 session log, [#54](https://github.com/interdisciplinary-xyz/city-turfer/issues/54) merged and scope complete ([9122286](https://github.com/interdisciplinary-xyz/city-turfer/commit/9122286827d6fab20b5a18bcdf5c42389f400557))
+
 ## [0.2.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.1.0...v0.2.0) (2026-10-18)
 
 
