@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@cityturfer/brand": "workspace:*",
+    "@cityturfer/ui": "workspace:*",
     "@kingstinct/react-native-healthkit": "16.2.0",
     "@maplibre/maplibre-react-native": "^11.5.0",
     "expo": "~57.0.29",

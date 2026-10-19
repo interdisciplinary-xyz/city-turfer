@@ -50,6 +50,9 @@ importers:
       '@cityturfer/brand':
         specifier: workspace:*
         version: link:../../packages/brand
+      '@cityturfer/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@kingstinct/react-native-healthkit':
         specifier: 16.2.0
         version: 16.2.0(react-native-nitro-modules@0.37.1(react-native@0.86.3(@react-native/jest-preset@0.87.1(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3))(react@19.2.3))(react-native@0.86.3(@react-native/jest-preset@0.87.1(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3))(react@19.2.3)
@@ -337,6 +340,61 @@ importers:
       vitest:
         specifier: ^4.0.18
         version: 4.1.12(@types/node@26.6.5)(jiti@2.6.1)(jsdom@20.0.3)(terser@5.51.2)(yaml@2.9.1)
+
+  packages/ui:
+    dependencies:
+      '@cityturfer/brand':
+        specifier: workspace:*
+        version: link:../brand
+    devDependencies:
+      '@cityturfer/config':
+        specifier: workspace:*
+        version: link:../config
+      '@interdisciplinary/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@react-native/jest-preset':
+        specifier: 0.86.3
+        version: 0.86.3(@babel/core@7.29.7)(react@19.2.3)
+      '@types/jest':
+        specifier: ^30.0.0
+        version: 30.0.0
+      '@types/react':
+        specifier: ~19.2.2
+        version: 19.2.18
+      '@types/react-test-renderer':
+        specifier: ~19.1.0
+        version: 19.1.0
+      babel-preset-expo:
+        specifier: ^57.0.15
+        version: 57.0.15(@babel/core@7.29.7)(@babel/runtime@7.29.10)(expo@57.0.29)(react-refresh@0.14.2)
+      eslint:
+        specifier: ^9.39.5
+        version: 9.39.5(jiti@2.6.1)
+      eslint-plugin-react:
+        specifier: ^7.37.5
+        version: 7.37.5(eslint@9.39.5(jiti@2.6.1))
+      eslint-plugin-react-hooks:
+        specifier: ^5.2.0
+        version: 5.2.0(eslint@9.39.5(jiti@2.6.1))
+      eslint-plugin-react-native-a11y:
+        specifier: ^3.5.1
+        version: 3.5.1(eslint@9.39.5(jiti@2.6.1))
+      jest:
+        specifier: ^30.5.2
+        version: 30.5.2(@types/node@26.6.5)
+      react:
+        specifier: 19.2.3
+        version: 19.2.3
+      react-native:
+        specifier: 0.86.3
+        version: 0.86.3(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3)
+      react-test-renderer:
+        specifier: 19.2.3
+        version: 19.2.3(react@19.2.3)
+      typescript:
+        specifier: ~6.0.3
+        version: 6.0.3
 
 packages:
 
@@ -1909,6 +1967,12 @@ packages:
     resolution: {integrity: sha512-lxmx0GqLEWRIpZfpYFXlYVIs3ENQwaW6Vmp6oi29l2GoQJ1wZfFZRdMimDWlGEk8LKfHar3QH3iaPMkTcK9lEQ==}
     engines: {node: ^20.19.4 || ^22.13.0 || ^24.3.0 || >= 25.0.0}
 
+  '@react-native/jest-preset@0.86.3':
+    resolution: {integrity: sha512-oMmBwXUpTgJvGlcXQQPuiQLykoM8jsWYp6RwdJ2NWyIWzJcGp1rmSr3XV7istoIcUt0wdOVLtQs0A0nDm9ND+A==}
+    engines: {node: '>= 20.19.4'}
+    peerDependencies:
+      react: ^19.2.3
+
   '@react-native/jest-preset@0.87.1':
     resolution: {integrity: sha512-RZO0W1ovniiwMdV8xA0kTv9Vk12TCGW+03NgwoVRAfKAhpQnPk5XMNnKR3zPWjIl/Wo3ZUdJpWxELYtidt5F+g==}
     engines: {node: '>= 22.13.0'}
@@ -2263,6 +2327,9 @@ packages:
     resolution: {integrity: sha512-I8bPpDLcHBv1qiIiXDCy71Rt8eQDKJP0sMSWJphDdAcdqiJ1sGpZamavoEIRZmYzjia9LuEb2HlYdDpmoENpvQ==}
     peerDependencies:
       '@types/react': ^19.2.0
+
+  '@types/react-test-renderer@19.1.0':
+    resolution: {integrity: sha512-XD0WZrHqjNrxA/MaR9O22w/RNidWR9YZmBdRGI7wcnWGrv/3dA8wKCJ8m63Sn+tLJhcjmuhOi629N66W6kgWzQ==}
 
   '@types/react@19.2.18':
     resolution: {integrity: sha512-AnzbBERsrLKtk2XSfTbYRLjQPdy116Sty4q+T+Bp3IC4l6jNBvreVPAHmpq9qhXQM7CXZPjLVmGMw9sy+hxQ3w==}
@@ -8917,6 +8984,18 @@ snapshots:
 
   '@react-native/gradle-plugin@0.86.3': {}
 
+  '@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3)':
+    dependencies:
+      '@jest/create-cache-key-function': 29.7.0
+      '@react-native/js-polyfills': 0.86.3
+      babel-jest: 29.7.0(@babel/core@7.29.7)
+      jest-environment-node: 29.7.0
+      react: 19.2.3
+      regenerator-runtime: 0.13.11
+    transitivePeerDependencies:
+      - '@babel/core'
+      - supports-color
+
   '@react-native/jest-preset@0.87.1(@babel/core@7.29.7)(react@19.2.3)':
     dependencies:
       '@jest/create-cache-key-function': 29.7.0
@@ -8934,6 +9013,15 @@ snapshots:
   '@react-native/js-polyfills@0.87.1': {}
 
   '@react-native/normalize-colors@0.86.3': {}
+
+  '@react-native/virtualized-lists@0.86.3(@types/react@19.2.18)(react-native@0.86.3(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3))(react@19.2.3)':
+    dependencies:
+      invariant: 2.2.4
+      nullthrows: 1.1.1
+      react: 19.2.3
+      react-native: 0.86.3(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3)
+    optionalDependencies:
+      '@types/react': 19.2.18
 
   '@react-native/virtualized-lists@0.86.3(@types/react@19.2.18)(react-native@0.86.3(@react-native/jest-preset@0.87.1(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3))(react@19.2.3)':
     dependencies:
@@ -9222,6 +9310,10 @@ snapshots:
   '@types/normalize-package-data@2.4.4': {}
 
   '@types/react-dom@19.2.7(@types/react@19.2.18)':
+    dependencies:
+      '@types/react': 19.2.18
+
+  '@types/react-test-renderer@19.1.0':
     dependencies:
       '@types/react': 19.2.18
 
@@ -13355,6 +13447,51 @@ snapshots:
       react-freeze: 1.0.4(react@19.2.3)
       react-native: 0.86.3(@react-native/jest-preset@0.87.1(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3)
       warn-once: 0.1.1
+
+  react-native@0.86.3(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3):
+    dependencies:
+      '@react-native/assets-registry': 0.86.3
+      '@react-native/codegen': 0.86.3
+      '@react-native/community-cli-plugin': 0.86.3
+      '@react-native/gradle-plugin': 0.86.3
+      '@react-native/js-polyfills': 0.86.3
+      '@react-native/normalize-colors': 0.86.3
+      '@react-native/virtualized-lists': 0.86.3(@types/react@19.2.18)(react-native@0.86.3(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3))(react@19.2.3)
+      abort-controller: 3.0.0
+      anser: 1.4.10
+      ansi-regex: 5.0.1
+      babel-plugin-syntax-hermes-parser: 0.36.0
+      base64-js: 1.5.1
+      commander: 12.1.0
+      flow-enums-runtime: 0.0.6
+      hermes-compiler: 250829098.0.17
+      invariant: 2.2.4
+      memoize-one: 5.2.1
+      metro-runtime: 0.84.5
+      metro-source-map: 0.84.5
+      nullthrows: 1.1.1
+      pretty-format: 29.7.0
+      promise: 8.3.0
+      react: 19.2.3
+      react-devtools-core: 6.1.5
+      react-refresh: 0.14.2
+      regenerator-runtime: 0.13.11
+      scheduler: 0.27.0
+      semver: 7.8.5
+      stacktrace-parser: 0.1.11
+      tinyglobby: 0.2.17
+      whatwg-fetch: 3.6.20
+      ws: 7.5.13
+      yargs: 17.7.3
+    optionalDependencies:
+      '@react-native/jest-preset': 0.86.3(@babel/core@7.29.7)(react@19.2.3)
+      '@types/react': 19.2.18
+    transitivePeerDependencies:
+      - '@react-native-community/cli'
+      - '@react-native/metro-config'
+      - bufferutil
+      - supports-color
+      - utf-8-validate
 
   react-native@0.86.3(@react-native/jest-preset@0.87.1(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3):
     dependencies:
