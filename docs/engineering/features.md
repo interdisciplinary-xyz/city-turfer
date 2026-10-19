@@ -36,7 +36,7 @@ Me drawer, and the screens pushed from them. Format adapted from empatalk's `FEA
 > | SQLite schema         | `apps/mobile/src/platform/migrations.ts`                               |
 
 Today: <!-- probe:achievements -->12<!-- /probe --> achievements,
-<!-- probe:e2e-flows -->10<!-- /probe --> Maestro flows, <!-- probe:migrations -->4<!-- /probe -->
+<!-- probe:e2e-flows -->11<!-- /probe --> Maestro flows, <!-- probe:migrations -->6<!-- /probe -->
 
 migrations.
 
@@ -93,7 +93,7 @@ and **Info**. (The `(tabs)/me` route only backs the tab and renders Profile.)
   "≈" when it includes estimated gaps), moving and elapsed time, average pace or speed, elevation
   "≈", km splits, turf gained (`territory/ui/turf-gained-card.tsx`), delete with confirmation
   (releases its turf). Shows "Saving your activity…" until the outbox has delivered
-  `SessionFinished`.
+  `SessionFinished`. Imported workouts say "From Apple Health".
 - **Profile** (`apps/mobile/src/app/profile.tsx`): avatar, name, email, totals (activities,
   distance, turf), unlocked achievements → Achievements.
 - **Achievements** (`apps/mobile/src/app/achievements.tsx`): every achievement with progress and an
@@ -102,8 +102,10 @@ and **Info**. (The `(tabs)/me` route only backs the tab and renders Profile.)
 - **Account** (`apps/mobile/src/app/account.tsx`): email, sign-in method ("Demo account"), sign out
   (blocked with an alert while a recording is in progress).
 - **Info** (`apps/mobile/src/app/info.tsx`): app version and OTA update id/channel, "Check for
-  updates", a data note, **Seed demo history** (90 days around the current location,
-  `apps/mobile/src/dev/demo-history.ts`).
+  updates", a data note, the **Apple Health** card (iOS: connect, import and save switches, last
+  import, Import now, Disconnect; `health-sync/ui/apple-health-card.tsx`), **Seed demo history** (90
+  days around the current location, `apps/mobile/src/dev/demo-history.ts`) and, on iOS, **Add sample
+  workouts to Apple Health** (`apps/mobile/src/dev/health-seed.ts`).
 - **Sign in** (`apps/mobile/src/app/sign-in.tsx`): the mock account; a wrong password shows
   `sign-in-error`.
 
@@ -117,9 +119,14 @@ and **Info**. (The `(tabs)/me` route only backs the tab and renders Profile.)
 - **Diagnostics**: `sys_diagnostics` timeline without coordinates, read by
   `apps/mobile/tools/device-diagnose.sh` and `apps/mobile/tools/diagnose-recording.mjs`.
 - **OTA**: `expo-updates` checks on load; channel `production`.
+- **Apple Health sync** (iOS): imports new walks, hikes, runs and rides with routes whenever the app
+  comes to the foreground (full history the first time) and saves each new recording to Health with
+  its route. No duplicates: `hs_links` remembers every workout in both directions.
 
 ## 4. Known gaps — claims that aren't true yet
 
+- **Apple Health is tested on the Simulator only.** Apple Watch workouts, real permission history
+  and large imports need the iPhone (`docs/operations/apple-health.md`).
 - **Android has never run on a device.** Both platforms are first-class on paper, but there is no
   Android SDK on the dev Mac; the native background session is iOS-only and Maestro runs on the iOS
   Simulator only (`apps/mobile/e2e/run.sh`).

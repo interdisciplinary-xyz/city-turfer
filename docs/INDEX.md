@@ -40,6 +40,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 
 `docs/operations/` — Runbook, OTA releases, device diagnostics.
 
+- ✅ [`operations/android-release.md`](operations/android-release.md): Build the Android APK on EAS,
+  publish it to the website download link, test it on an emulator
+- ✅ [`operations/apple-health.md`](operations/apple-health.md): Install the Apple Health build on
+  the iPhone and check import and export with real data
 - ❔ [`operations/observability.md`](operations/observability.md): _no frontmatter_
 - ✅ [`operations/ota-release.md`](operations/ota-release.md): How to ship a JS-only change over the
   air on EAS channel production, check it landed, and when a reinstall is needed instead
@@ -76,11 +80,17 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   app.json is unpinned (pinned in f04bcf3)
 - ✅ [`sessions/v0.3.0.md`](sessions/v0.3.0.md): Session log v0.3.0 — v0.2.0 released, scope/v0.3.0
   opened, monorepo (Turborepo) designed
+- ✅ [`sessions/v0.4.0.md`](sessions/v0.4.0.md): Session log v0.4.0 — v0.3.0 released; Apple Health
+  integration; Android APK from the website, store buttons, waitlist, GSAP motion; iOS stays
+  free-tier
 
 ## Decision records
 
 `docs/decisions/` — Full write-ups of single decisions.
 
+- ✅ [`decisions/apple-health-2026-10-18.md`](decisions/apple-health-2026-10-18.md): v0.4.0
+  integrates Apple Health — a Health Sync context imports walks, hikes, runs and rides with routes
+  (full history) as Activities that claim turf, and saves recordings to Health with routes
 - ✅
   [`decisions/maplibre-over-react-native-maps-2026-10-15.md`](decisions/maplibre-over-react-native-maps-2026-10-15.md):
   Decision record — MapLibre + OpenFreeMap for every map instead of react-native-maps

@@ -63,9 +63,11 @@ img {
 
 .hero {
   position: relative;
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
   min-height: 100svh;
-  padding: 16px 0 48px;
+  padding: 16px 0 40px;
   isolation: isolate;
 }
 
@@ -73,6 +75,12 @@ img {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 24px;
+}
+
+/* The hero fills the screen; its content sits in the vertical middle of the space under the bar. */
+.hero-grid {
+  flex: 1;
+  align-content: center;
 }
 
 .lang {
@@ -117,16 +125,41 @@ img {
   text-align: center;
 }
 
+/* Phones: text, buttons, then the screenshots. Desktop: text + phones in one row, buttons under both. */
+.hero-copy {
+  order: 1;
+}
+
+.hero-grid > .download {
+  order: 2;
+}
+
+.screens {
+  order: 3;
+}
+
 @media (min-width: 960px) {
   .hero {
-    padding: 24px 0 64px;
+    padding: 24px 0 40px;
   }
   .hero-grid {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
-    gap: 48px;
+    gap: 40px 48px;
+  }
+  /* Phones shrink on short screens so text, phones and the buttons row fit in one view. Only the
+     phone frame shrinks, never below 140px: the caption keeps the column's width (it used to shrink
+     with the figure, to one word per line on wide, short windows). Shorter than that, the page
+     scrolls. */
+  .screens .phone {
+    max-width: clamp(140px, calc((100svh - 400px) * 0.4), 280px);
+    margin-inline: auto;
   }
   .hero-copy {
     text-align: left;
+  }
+  .hero-grid > .download {
+    order: 4;
+    grid-column: 1 / -1;
   }
   .hero-copy .mark,
   .hero-copy .wordmark,
@@ -136,6 +169,14 @@ img {
   }
   .hero-copy h1 {
     font-size: clamp(2.6rem, 4.4vw, 3.6rem);
+  }
+  .hero-copy .mark {
+    width: 104px;
+    margin-bottom: 16px;
+  }
+  .hero-copy .wordmark {
+    width: 260px;
+    margin-bottom: 20px;
   }
 }
 
@@ -151,19 +192,19 @@ img {
 }
 
 .mark {
-  width: 132px;
+  width: clamp(88px, 22vw, 132px);
   margin: 0 auto 20px;
-  border-radius: 30px;
+  border-radius: 23%;
   box-shadow: 0 0 60px color-mix(in srgb, var(--glow) 35%, transparent);
 }
 
 .wordmark {
-  width: min(320px, 80%);
+  width: clamp(200px, 62vw, 320px);
   margin: 0 auto 28px;
 }
 
 h1 {
-  font-size: clamp(2.3rem, 7vw, 4.2rem);
+  font-size: clamp(1.9rem, 8vw, 3.4rem);
   line-height: 1.04;
   font-weight: 900;
   letter-spacing: -0.03em;
@@ -171,9 +212,21 @@ h1 {
   max-width: 14ch;
 }
 
+.line {
+  display: block;
+}
+
+/* Entrance animation (hero-motion): hidden until GSAP reveals them; the class is only set when
+   motion is allowed, and removed after 2.5 s if the script never runs. */
+.motion [data-anim] {
+  visibility: hidden;
+}
+
 .ramp-text {
   display: block;
   background: var(--ramp);
+  background-size: 200% 100%;
+  background-position: 0% 50%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -186,24 +239,198 @@ h1 {
   margin: 0 auto 28px;
 }
 
-.pill {
+/* ---------- Download ---------- */
+
+.download {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.store-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.store-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
-  padding: 10px 18px;
+  min-height: 52px;
+  padding: 14px 26px;
+  border-radius: 999px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.store-btn-android {
+  background: var(--glow);
+  color: var(--on-glow);
+  box-shadow: 0 10px 36px color-mix(in srgb, var(--glow) 40%, transparent);
+}
+
+.store-btn-android:hover,
+.store-btn-android:focus-visible {
+  background: color-mix(in srgb, var(--glow) 88%, white);
+}
+
+.store-btn-android:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
+}
+
+/* Not available yet: visibly a button, clearly switched off. */
+.store-btn-off {
+  border: 1px solid var(--border);
+  background: var(--night-raised);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.store-soon {
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.download-note {
+  margin: 0;
+  max-width: 44rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+/* ---------- Waitlist ---------- */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The waitlist is its own section under the full-screen hero, centred on every width. */
+.waitlist-section {
+  padding: clamp(56px, 10vw, 112px) 0;
+  border-top: 1px solid var(--border);
+}
+
+.waitlist {
+  margin: 0 auto;
+  max-width: 34rem;
+  text-align: center;
+}
+
+.waitlist-title {
+  margin: 0 0 18px;
+  font-size: clamp(1.4rem, 3.5vw, 1.9rem);
+  font-weight: 800;
+}
+
+.waitlist-row {
+  display: flex;
+  gap: 8px;
+}
+
+.waitlist-email {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 16px;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--night-raised);
-  font-weight: 700;
-  font-size: 0.95rem;
+  color: var(--text);
+  font: inherit;
 }
 
-.pill-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--glow);
-  box-shadow: 0 0 12px var(--glow);
+.waitlist-email::placeholder {
+  color: var(--muted);
+}
+
+.waitlist-email:focus-visible,
+.waitlist-submit:focus-visible,
+.waitlist-consent input:focus-visible {
+  outline: 2px solid var(--glow);
+  outline-offset: 2px;
+}
+
+.waitlist-submit {
+  min-height: 48px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--text);
+  color: var(--night);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.waitlist-submit:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.waitlist-consent {
+  display: flex;
+  justify-content: center;
+  text-align: left;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.waitlist-consent input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  accent-color: var(--glow);
+}
+
+.waitlist-privacy,
+.waitlist-error {
+  margin: 10px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.waitlist-error {
+  color: var(--strong);
+}
+
+.waitlist-done {
+  margin: 0;
+  padding: 14px 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--night-raised);
+}
+
+@media (max-width: 380px) {
+  .waitlist-row {
+    flex-direction: column;
+  }
 }
 
 /* ---------- Screens ---------- */
@@ -252,13 +479,21 @@ h1 {
   display: block;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .pill-dot {
-    animation: pulse 2.4s ease-in-out infinite;
+/* Short landscape screens (a phone on its side): smaller logo and tighter spacing, so the
+   headline is visible without scrolling. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .hero {
+    padding-top: 8px;
   }
-  @keyframes pulse {
-    50% {
-      box-shadow: 0 0 22px var(--glow);
-    }
+  .hero-bar {
+    margin-bottom: 8px;
+  }
+  .mark {
+    width: 64px;
+    margin-bottom: 12px;
+  }
+  .wordmark {
+    width: 200px;
+    margin-bottom: 16px;
   }
 }

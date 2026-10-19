@@ -1,0 +1,11 @@
+# Go back one screen. iOS: the header's "Back" button. Android: the system back (the header arrow has no label).
+appId: com.turftrack.poc
+---
+- runFlow:
+    when: { platform: iOS }
+    commands:
+      - tapOn: 'Back'
+- runFlow:
+    when: { platform: Android }
+    commands:
+      - back

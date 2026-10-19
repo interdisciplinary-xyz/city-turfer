@@ -14,4 +14,4 @@ tags: [history]
 - tapOn: 'Delete'
 - extendedWaitUntil: { visible: 'History', timeout: 10000 }
 - assertNotVisible: { text: '${maestro.copiedText}' }
-- tapOn: 'Back'
+- runFlow: subflows/back.yaml

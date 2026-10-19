@@ -107,7 +107,7 @@ export class RecordActivityFromSession {
   }
 }
 
-/** Dev/demo: create an activity from an existing track (e.g. seeded history, GPX). */
+/** Create an activity from an existing track (demo history, Apple Health). Idempotent by id. */
 export class ImportActivity {
   constructor(private readonly d: ActivityLogDeps) {}
   async execute(input: { id: string; type: ActivityType; points: TrackPoint[] }): Promise<boolean> {
@@ -121,6 +121,7 @@ export class ImportActivity {
       endedAt: input.points[input.points.length - 1].t,
       track: trackFromPoints(input.points),
       now: this.d.clock.now(),
+      origin: 'import',
     });
     await this.d.activities.save(activity, input.points);
     this.d.afterCommit();
@@ -346,6 +347,14 @@ export class DeleteActivity {
     a.markDeleted(this.d.clock.now());
     await this.d.activities.delete(a);
     this.d.afterCommit();
+  }
+}
+
+/** Open-host service: Activities of a type overlapping a time range (e.g. to spot an imported duplicate). */
+export class OverlappingActivitiesQuery {
+  constructor(private readonly d: Pick<ActivityLogDeps, 'activities'>) {}
+  execute(type: ActivityType, startedAt: number, endedAt: number) {
+    return this.d.activities.overlapping(type, startedAt, endedAt);
   }
 }
 
