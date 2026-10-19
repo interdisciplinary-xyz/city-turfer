@@ -38,8 +38,8 @@ export default [
     rules: { 'react/prop-types': 'off' },
   },
   {
-    // Config files and the dev server (server.mjs) run in Node; the server logs its URL.
-    files: ['*.config.*', 'server.mjs'],
+    // Config files, the dev server (server.mjs) and tools/ run in Node and print to stdout.
+    files: ['*.config.*', 'server.mjs', 'tools/**'],
     languageOptions: { globals: { ...globals.node } },
     rules: { 'no-console': 'off' },
   },

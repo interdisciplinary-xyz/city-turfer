@@ -136,9 +136,9 @@ node apps/mobile/tools/turf-preview.mjs apps/mobile/tools/fixtures/history --out
 ## Claude Code setup
 
 - Skills (`.claude/skills/`): `brand-system`, `ddd-architecture`, `turf-territory`, `scaffold-app`,
-  `add-feature`, `gps-tracking`, `route-metrics`, `route-storage`, `mobile-testing`.
+  `add-feature`, `gps-tracking`, `route-metrics`, `route-storage`, `mobile-testing`, `web-motion`.
 - Agents (`.claude/agents/`): `rn-architect`, `location-engineer`, `mobile-ui-engineer`,
-  `mobile-test-engineer`, `mobile-reviewer`, `brand-designer`.
+  `mobile-test-engineer`, `mobile-reviewer`, `brand-designer`, `web-engineer` (apps/web).
 - Commands (`.claude/commands/`): `audit-docs` (`/audit-docs`).
 
 ## Docs

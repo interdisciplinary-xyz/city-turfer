@@ -188,9 +188,21 @@ h1 {
   max-width: 14ch;
 }
 
+.line {
+  display: block;
+}
+
+/* Entrance animation (hero-motion): hidden until GSAP reveals them; the class is only set when
+   motion is allowed, and removed after 2.5 s if the script never runs. */
+.motion [data-anim] {
+  visibility: hidden;
+}
+
 .ramp-text {
   display: block;
   background: var(--ramp);
+  background-size: 200% 100%;
+  background-position: 0% 50%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -280,14 +292,21 @@ h1 {
   border: 0;
 }
 
+/* The waitlist is its own section under the full-screen hero, centred on every width. */
+.waitlist-section {
+  padding: clamp(56px, 10vw, 112px) 0;
+  border-top: 1px solid var(--border);
+}
+
 .waitlist {
-  margin: 28px auto 0;
-  max-width: 30rem;
-  text-align: left;
+  margin: 0 auto;
+  max-width: 34rem;
+  text-align: center;
 }
 
 .waitlist-title {
-  margin: 0 0 10px;
+  margin: 0 0 18px;
+  font-size: clamp(1.4rem, 3.5vw, 1.9rem);
   font-weight: 800;
 }
 
@@ -338,6 +357,8 @@ h1 {
 
 .waitlist-consent {
   display: flex;
+  justify-content: center;
+  text-align: left;
   gap: 10px;
   align-items: flex-start;
   margin-top: 12px;
@@ -373,12 +394,6 @@ h1 {
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: var(--night-raised);
-}
-
-@media (min-width: 960px) {
-  .waitlist {
-    margin-left: 0;
-  }
 }
 
 @media (max-width: 380px) {
