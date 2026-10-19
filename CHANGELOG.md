@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.4.0...v0.5.0) (2026-10-19)
+
+
+### Features
+
+* **brand:** spacing, radii, type scale, themes and CSS variables ([f046b1e](https://github.com/interdisciplinary-xyz/city-turfer/commit/f046b1eefb25d198bd32d30ab421b992ac42834b))
+* **storybook:** one Storybook for the app and the website ([f1015e7](https://github.com/interdisciplinary-xyz/city-turfer/commit/f1015e7212c434a957d98b44449289f1213cc7f5))
+* **ui:** @cityturfer/ui with Button, Card, Stat, Badge, ActivityRow, TurfLegend ([ab5a4ad](https://github.com/interdisciplinary-xyz/city-turfer/commit/ab5a4adabdf5fc441d688ab59734bc7bbac7be2a))
+
+
+### Bug Fixes
+
+* **brand:** legend outline, weight and tracking tokens from brand review ([0964b30](https://github.com/interdisciplinary-xyz/city-turfer/commit/0964b30f329d93fc8a0cd1a4bb1266a775deab42))
+* **ui:** one react-native for the whole workspace ([12b4b59](https://github.com/interdisciplinary-xyz/city-turfer/commit/12b4b5937a91cc1f0065f0265704374dd1a848a4))
+
+
+### Refactoring
+
+* **app:** screens use @cityturfer/ui components ([f8ef251](https://github.com/interdisciplinary-xyz/city-turfer/commit/f8ef2513a94862f62beb32fde31c1023c3a2620e))
+* **web:** split the hero into synchronous components ([8761638](https://github.com/interdisciplinary-xyz/city-turfer/commit/87616382983c63a4267fd3eb8ea1ddbb5fdcafac))
+
+
+### Documentation
+
+* design system decision, skill and v0.5.0 session log ([f70f1ac](https://github.com/interdisciplinary-xyz/city-turfer/commit/f70f1acd9bdab4f7d7134291bf9376848763105b))
+* v0.5.0 session log with the PR numbers ([63d50bc](https://github.com/interdisciplinary-xyz/city-turfer/commit/63d50bcb06cb1757c31890a87bdccc3fad2f3022))
+
 ## [0.4.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.3.0...v0.4.0) (2026-10-19)
 
 
