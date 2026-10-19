@@ -4,8 +4,10 @@ import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } fro
 import { ACCENT, DARK, TIER_COLOR } from '@/constants/colors';
 import { useApp } from '@/ui-kit/app-context';
 import { Button } from '@/ui-kit/components';
+import { useLightStatusBar } from '@/ui-kit/use-light-status-bar';
 
 export default function SignIn() {
+  useLightStatusBar();
   const { signIn } = useApp();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

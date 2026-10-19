@@ -117,6 +117,7 @@ pnpm run typecheck               # tsc in every workspace (turbo)
 pnpm test                        # dependency rules (depcruise) + Jest + tool tests (turbo)
 pnpm run build                   # web static export (apps/web/out) via turbo
 pnpm run web:dev                 # landing page at https://cityturfer.local (portless + server.mjs, dev toolbar)
+pnpm -C apps/mobile run android:build     # Android APK on EAS (docs/operations/android-release.md)
 pnpm -C apps/mobile exec expo install <pkg>                     # add a native dependency to the app
 # Local quirks: watchman is disabled (broken Homebrew install) in jest + metro config; pnpm with
 #   node-linker=hoisted (.npmrc). iOS needs Xcode 26.4+ (Expo SDK 57). Xcode's SPM hangs downloading
@@ -142,9 +143,11 @@ node apps/mobile/tools/turf-preview.mjs apps/mobile/tools/fixtures/history --out
 ## Claude Code setup
 
 - Skills (`.claude/skills/`): `brand-system`, `ddd-architecture`, `turf-territory`, `scaffold-app`,
-  `add-feature`, `gps-tracking`, `route-metrics`, `route-storage`, `mobile-testing`, `apple-health`.
+  `add-feature`, `gps-tracking`, `route-metrics`, `route-storage`, `mobile-testing`, `apple-health`,
+  `web-motion`.
 - Agents (`.claude/agents/`): `rn-architect`, `location-engineer`, `mobile-ui-engineer`,
-  `mobile-test-engineer`, `mobile-reviewer`, `brand-designer`, `health-engineer` (Apple Health).
+  `mobile-test-engineer`, `mobile-reviewer`, `brand-designer`, `health-engineer` (Apple Health),
+  `web-engineer` (apps/web).
 - Commands (`.claude/commands/`): `audit-docs` (`/audit-docs`).
 
 ## Docs

@@ -40,6 +40,8 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 
 `docs/operations/` — Runbook, OTA releases, device diagnostics.
 
+- ✅ [`operations/android-release.md`](operations/android-release.md): Build the Android APK on EAS,
+  publish it to the website download link, test it on an emulator
 - ✅ [`operations/apple-health.md`](operations/apple-health.md): Install the Apple Health build on
   the iPhone and check import and export with real data
 - ❔ [`operations/observability.md`](operations/observability.md): _no frontmatter_
@@ -78,8 +80,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   app.json is unpinned (pinned in f04bcf3)
 - ✅ [`sessions/v0.3.0.md`](sessions/v0.3.0.md): Session log v0.3.0 — v0.2.0 released, scope/v0.3.0
   opened, monorepo (Turborepo) designed
-- ✅ [`sessions/v0.4.0.md`](sessions/v0.4.0.md): Session log v0.4.0 — v0.3.0 released (monorepo +
-  landing page), scope/v0.4.0 opened
+- ✅ [`sessions/v0.4.0.md`](sessions/v0.4.0.md): Session log v0.4.0 — v0.3.0 released; Apple Health
+  integration; Android APK from the website, store buttons, waitlist, GSAP motion; iOS stays
+  free-tier
 
 ## Decision records
 
