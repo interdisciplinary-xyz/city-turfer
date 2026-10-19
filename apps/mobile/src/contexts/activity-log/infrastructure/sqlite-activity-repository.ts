@@ -123,6 +123,14 @@ export class SqliteActivityRepository implements ActivityRepository {
     });
   }
 
+  async overlapping(type: ActivityListItem['type'], startedAt: number, endedAt: number) {
+    const rows = await this.db.all<{ id: string; started_at: number; ended_at: number }>(
+      'SELECT id, started_at, ended_at FROM log_activities WHERE type = ? AND started_at < ? AND ended_at > ?',
+      [type, endedAt, startedAt]
+    );
+    return rows.map((r) => ({ id: r.id, startedAt: r.started_at, endedAt: r.ended_at }));
+  }
+
   async list(limit: number, before?: number): Promise<ActivityListItem[]> {
     const rows = await this.db.all<Row>(
       `SELECT id, type, name, started_at, distance_m, moving_s, estimated_m, estimated_moving_s, preview FROM log_activities

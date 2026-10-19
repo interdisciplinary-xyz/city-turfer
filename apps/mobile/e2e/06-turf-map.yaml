@@ -5,6 +5,7 @@ tags: [turf]
 - runFlow: subflows/launch.yaml
 - tapOn: { id: 'tab-me' }
 - tapOn: { id: 'me-menu-info' }
+- scrollUntilVisible: { element: { id: 'seed-demo' } }
 - tapOn: { id: 'seed-demo' }
 - extendedWaitUntil: { visible: 'Demo history added', timeout: 240000 }
 - tapOn: 'OK'
