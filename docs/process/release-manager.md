@@ -43,9 +43,13 @@ feat/<domain>  ─PR→  scope/vX.Y.Z  ─PR→  release/vX.Y.Z  ─PR→  main 
 4. PR titles MUST be `city-turfer - <branch-name>` (e.g. `city-turfer - feat/recording`).
 5. Merge commits, not squash (keeps conventional commits for the changelog). Scope → release PRs
    start as **draft**.
-6. **Pin at cut:** the first commit on `scope/vX.Y.0` sets `package.json` and `app.json` `version`
-   to `X.Y.0`. On merge to `main`, `release.yml` runs `commit-and-tag-version --release-as X.Y.0`,
-   writes `CHANGELOG.md` and pushes tag `vX.Y.0`. Tags are never created by hand.
+6. **Pin at cut:** the first commit on `scope/vX.Y.0` sets the `package.json` versions to `X.Y.0`.
+   `apps/mobile/app.json` `version` changes only with a native reinstall: it is part of the runtime
+   fingerprint, so bumping it in a JS-only release stops OTA updates matching installed builds
+   (`docs/decisions/design-system-2026-10-19.md`; note the release commit still bumps it, an open
+   risk listed there). On merge to `main`, `release.yml` runs
+   `commit-and-tag-version --release-as X.Y.0`, writes `CHANGELOG.md` and pushes tag `vX.Y.0`. Tags
+   are never created by hand.
 7. Fixes after promotion to release: short `fix/<slug>` branch PR'd into `release/vX.Y.0`, then
    merged back down into the next scope.
 8. Hotfixes on `main` (`hotfix/*`) must be merged back down into the active `release/*` and

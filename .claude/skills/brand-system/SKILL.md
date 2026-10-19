@@ -44,8 +44,8 @@ The brand palette **is** the turf strength ramp — the app's core mechanic is t
 
 | Token                   | Hex                               | Use                                                  |
 | ----------------------- | --------------------------------- | ---------------------------------------------------- |
-| `night`                 | `#0B0D12`                         | Primary background (Turf map, sign-in, splash, icon) |
-| `night-raised`          | `#151924`                         | Cards on dark                                        |
+| `night` (dark `bg`)     | `#0B0D12`                         | Primary background (Turf map, sign-in, splash, icon) |
+| `night-raised` (`card`) | `#151924`                         | Cards on dark                                        |
 | `faint`                 | `#7B2FF7`                         | Turf tier 1, gradient start                          |
 | `glow` (accent)         | `#F72FA8`                         | Primary accent: buttons, selection, links            |
 | `strong`                | `#FFB02E`                         | Turf tier 3, highlights                              |
@@ -56,8 +56,17 @@ Gradient **Ramp** = `faint → glow → strong → blazing`, always running from
 (movement "up" into white-hot). Never use the ramp for errors; errors use `#E5484D`/`#FF6369`.
 Tokens live in `packages/brand/src/colors.ts` (`@cityturfer/brand`, re-exported by
 `apps/mobile/src/constants/colors.ts`: `TIER_COLOR`, `ACCENT`, `LIGHT`, `DARK`, `TYPE_COLOR`;
-`usePalette()` in `apps/mobile/src/ui-kit/theme.ts`) — reference those, never hard-code hex in
-components.
+`usePalette()` from `@cityturfer/ui`, re-exported by `apps/mobile/src/ui-kit/theme.ts`) — reference
+those, never hard-code hex in components.
+
+Themes (`THEMES.light` / `THEMES.dark` = `LIGHT` / `DARK`) use semantic names: `bg`, `card`, `text`,
+`muted`, `border`, `danger`; `night` and `night-raised` are the dark `bg` and `card`. Spacing
+(`SPACE`), radii (`RADIUS`), type (`FONT_SIZE`, `FONT_WEIGHT`, `LABEL_TRACKING`) and the tier order
+(`TIER_ORDER`) live in `packages/brand/src/tokens.ts`; tier names users see (`TIER_LABEL`: Faint,
+Glowing, Strong, Blazing) in `copy.ts`. The website gets every token as a CSS variable from
+`cssVariables('dark')` (`--bg`, `--card`, `--glow`, `--walk`, `--space-lg`, `--radius-panel`,
+`--font-hero`, `--font-weight-black`, `--label-tracking`…). Components and Storybook: the
+`design-system` skill.
 
 ## Typography
 
