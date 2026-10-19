@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.5.0...v0.6.0) (2026-10-19)
+
+
+### Features
+
+* **storybook:** cityturfer logo and colours, docs pages, stories for every website piece ([9d395bd](https://github.com/interdisciplinary-xyz/city-turfer/commit/9d395bdbc47a1ed8606006a86aaa45ac904f3d4f))
+* **web:** serve the storybook build at /storybook on the local site ([594db00](https://github.com/interdisciplinary-xyz/city-turfer/commit/594db009c3f44ee08bb945add73a079ee1d69a4a))
+
 ## [0.5.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.4.0...v0.5.0) (2026-10-19)
 
 
