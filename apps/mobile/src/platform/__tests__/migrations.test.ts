@@ -27,7 +27,7 @@ describe('migration v5 (outbox retries and dead letters)', () => {
     );
 
     await migrate(db);
-    expect(await version(db)).toBe(6);
+    expect(await version(db)).toBe(7);
 
     const outbox = await db.all<Record<string, unknown>>('SELECT * FROM sys_outbox ORDER BY id');
     expect(outbox).toEqual([
@@ -63,8 +63,8 @@ describe('migration v5 (outbox retries and dead letters)', () => {
 
     // Second launch: nothing re-applied, no error, nothing lost.
     await migrate(db);
-    expect(await version(db)).toBe(6);
-    expect((await db.first<{ n: number }>('SELECT COUNT(*) AS n FROM sys_schema_version'))!.n).toBe(6);
+    expect(await version(db)).toBe(7);
+    expect((await db.first<{ n: number }>('SELECT COUNT(*) AS n FROM sys_schema_version'))!.n).toBe(7);
     expect((await db.first<{ n: number }>('SELECT COUNT(*) AS n FROM sys_outbox'))!.n).toBe(2);
   });
 });
