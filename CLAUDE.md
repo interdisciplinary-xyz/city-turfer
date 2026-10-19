@@ -129,6 +129,7 @@ pnpm run build                   # web static export (apps/web/out) via turbo
 pnpm run web:dev                 # landing page at https://cityturfer.local (portless + server.mjs, dev toolbar)
 pnpm --filter @cityturfer/storybook dev     # Storybook at http://localhost:6006 (app components + website pieces)
 pnpm --filter @cityturfer/storybook build   # static Storybook in apps/storybook/storybook-static
+#   …also served by `pnpm run web:dev` at https://cityturfer.local/storybook (rebuild to refresh)
 pnpm -C apps/mobile run android:build     # Android APK on EAS (docs/operations/android-release.md)
 pnpm -C apps/mobile exec expo install <pkg>                     # add a native dependency to the app
 # Local quirks: watchman is disabled (broken Homebrew install) in jest + metro config; pnpm with
