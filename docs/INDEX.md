@@ -96,6 +96,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`decisions/design-system-2026-10-19.md`](decisions/design-system-2026-10-19.md): v0.5.0 design
   system — tokens in @cityturfer/brand (TS + CSS variables), React Native components in
   @cityturfer/ui, one Storybook (react-native-web) for the app and the website, shipped OTA
+- ✅ [`decisions/home-city-2026-10-19.md`](decisions/home-city-2026-10-19.md): v0.7.0 Home City —
+  the Turfer picks a city from a bundled catalogue and the Turf Map (and the Record map before the
+  first fix) opens on it; stored per user, never sent anywhere
 - ✅
   [`decisions/maplibre-over-react-native-maps-2026-10-15.md`](decisions/maplibre-over-react-native-maps-2026-10-15.md):
   Decision record — MapLibre + OpenFreeMap for every map instead of react-native-maps

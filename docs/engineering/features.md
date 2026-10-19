@@ -36,7 +36,7 @@ Me drawer, and the screens pushed from them. Format adapted from empatalk's `FEA
 > | SQLite schema         | `apps/mobile/src/platform/migrations.ts`                               |
 
 Today: <!-- probe:achievements -->12<!-- /probe --> achievements,
-<!-- probe:e2e-flows -->11<!-- /probe --> Maestro flows, <!-- probe:migrations -->6<!-- /probe -->
+<!-- probe:e2e-flows -->12<!-- /probe --> Maestro flows, <!-- probe:migrations -->7<!-- /probe -->
 
 migrations.
 
@@ -61,10 +61,17 @@ opens on Dashboard after sign-in.
 - Walk / run / ride filter (`turf-filter-<type>`); at least one type stays selected.
 - Summary card (`turf-summary`): turf area and counts.
 - Cells are loaded per viewport (`GetTurfInViewport`); tracks come from activity previews.
+- Camera: opens on the **Home City** when one is chosen and flies to a newly chosen one; the
+  `turf-city` chip (⌂ city name) recentres on it, a long press opens the picker. Without a Home City
+  it fits all tracks once, or follows the Turfer when there are none, and the `turf-pick-city` chip
+  ("⌂ Your city") opens the picker. "⤢ All" (`turf-filter-all`) fits all tracks.
 
 ### Record (`apps/mobile/src/app/(tabs)/record.tsx` → `recording/ui/record-view.tsx`)
 
-- Type picker: walk, run, ride. Live map following the user, with a recenter button.
+- Type picker: walk, run, ride. Live map following the user, with a recenter button; before the
+  first GPS fix it shows the Home City (if one is chosen).
+- Before a recording starts, the `record-city` chip at the top ("⌂ Kraków ▾", or "⌂ Your city ▾")
+  opens the city picker; a newly chosen city is shown on the map (Recenter returns to the user).
 - Live stats: time, distance, current and average pace (walk, run) or speed (ride).
 - Pause / resume; auto-pause from the `TrackingProfile`; **hold to finish**.
 - A too-short recording can't be saved: "Too short to save" offers keep recording or discard.
@@ -81,8 +88,8 @@ opens on Dashboard after sign-in.
 
 ### Me (`apps/mobile/src/ui-kit/me-menu.tsx`)
 
-The Me tab doesn't open a screen: it slides in a drawer from the right with **Profile**, **Account**
-and **Info**. (The `(tabs)/me` route only backs the tab and renders Profile.)
+The Me tab doesn't open a screen: it slides in a drawer from the right with **Profile**,
+**Account**, **City** and **Info**. (The `(tabs)/me` route only backs the tab and renders Profile.)
 
 ## 2. Screens pushed from the tabs
 
@@ -106,6 +113,10 @@ and **Info**. (The `(tabs)/me` route only backs the tab and renders Profile.)
   import, Import now, Disconnect; `health-sync/ui/apple-health-card.tsx`), **Seed demo history** (90
   days around the current location, `apps/mobile/src/dev/demo-history.ts`) and, on iOS, **Add sample
   workouts to Apple Health** (`apps/mobile/src/dev/health-seed.ts`).
+- **Your city** (`apps/mobile/src/app/city.tsx` → `territory/ui/city-picker.tsx`): choose the Home
+  City from a bundled catalogue (23 Polish, 15 European cities); search ignores accents ("krakow"
+  finds Kraków); the current city is ticked; "Clear <city>". Stored per user (`ter_home_city`),
+  never sent anywhere.
 - **Sign in** (`apps/mobile/src/app/sign-in.tsx`): the mock account; a wrong password shows
   `sign-in-error`.
 
