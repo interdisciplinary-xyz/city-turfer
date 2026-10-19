@@ -1,13 +1,11 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityRow as ActivityRowView } from '@cityturfer/ui';
 
 import { TYPE_GLYPH } from '@/constants/activity';
-import { TYPE_COLOR } from '@/constants/colors';
 import { distanceText, formatDate, formatDuration, formatPaceOrSpeed } from '@/ui-kit/format';
-import { usePalette } from '@/ui-kit/theme';
 
 import type { ActivityListItem } from '../contract';
 
-/** One activity in History and on the Dashboard. */
+/** One activity in History and on the Dashboard: formats the item for the design-system row. */
 export function ActivityRow({
   item,
   onPress,
@@ -17,50 +15,19 @@ export function ActivityRow({
   onPress: () => void;
   testID?: string;
 }) {
-  const p = usePalette();
   const pace = formatPaceOrSpeed(item.type, item.distanceM, item.movingS);
+  const estimated = item.estimatedDistanceM > 0;
   return (
-    <Pressable
-      testID={testID}
+    <ActivityRowView
+      type={item.type}
+      glyph={TYPE_GLYPH[item.type]}
+      title={item.name}
+      subtitle={formatDate(item.startedAt)}
+      value={`${estimated ? '≈ ' : ''}${distanceText(item.distanceM)}`}
+      detail={`${formatDuration(item.movingS)} · ${pace.value}${pace.unit}`}
+      accessibilityLabel={`${item.name}, ${formatDate(item.startedAt)}, ${estimated ? 'about ' : ''}${distanceText(item.distanceM)}`}
       onPress={onPress}
-      accessibilityRole='button'
-      accessibilityLabel={`${item.name}, ${formatDate(item.startedAt)}, ${item.estimatedDistanceM > 0 ? 'about ' : ''}${distanceText(item.distanceM)}`}
-      style={[s.row, { backgroundColor: p.card, borderColor: p.border }]}
-    >
-      <View style={[s.badge, { backgroundColor: TYPE_COLOR[item.type] + '22' }]}>
-        <Text style={s.glyph}>{TYPE_GLYPH[item.type]}</Text>
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text style={[s.name, { color: p.text }]} numberOfLines={1}>
-          {item.name}
-        </Text>
-        <Text style={{ color: p.muted, fontSize: 13 }}>{formatDate(item.startedAt)}</Text>
-      </View>
-      <View style={{ alignItems: 'flex-end' }}>
-        <Text style={[s.dist, { color: p.text }]}>
-          {item.estimatedDistanceM > 0 ? '≈ ' : ''}
-          {distanceText(item.distanceM)}
-        </Text>
-        <Text style={{ color: p.muted, fontSize: 13 }}>
-          {formatDuration(item.movingS)} · {pace.value}
-          {pace.unit}
-        </Text>
-      </View>
-    </Pressable>
+      testID={testID}
+    />
   );
 }
-
-const s = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 12,
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  badge: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  glyph: { fontSize: 22 },
-  name: { fontSize: 16, fontWeight: '700' },
-  dist: { fontSize: 16, fontWeight: '800', fontVariant: ['tabular-nums'] },
-});

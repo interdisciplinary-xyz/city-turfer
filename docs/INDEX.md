@@ -83,6 +83,8 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`sessions/v0.4.0.md`](sessions/v0.4.0.md): Session log v0.4.0 — v0.3.0 released; Apple Health
   integration; Android APK from the website, store buttons, waitlist, GSAP motion; iOS stays
   free-tier
+- ✅ [`sessions/v0.5.0.md`](sessions/v0.5.0.md): Session log v0.5.0 — shared design system (tokens,
+  @cityturfer/ui, one Storybook) for the app and the website, shipped over the air
 
 ## Decision records
 
@@ -91,6 +93,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`decisions/apple-health-2026-10-18.md`](decisions/apple-health-2026-10-18.md): v0.4.0
   integrates Apple Health — a Health Sync context imports walks, hikes, runs and rides with routes
   (full history) as Activities that claim turf, and saves recordings to Health with routes
+- ✅ [`decisions/design-system-2026-10-19.md`](decisions/design-system-2026-10-19.md): v0.5.0 design
+  system — tokens in @cityturfer/brand (TS + CSS variables), React Native components in
+  @cityturfer/ui, one Storybook (react-native-web) for the app and the website, shipped OTA
 - ✅
   [`decisions/maplibre-over-react-native-maps-2026-10-15.md`](decisions/maplibre-over-react-native-maps-2026-10-15.md):
   Decision record — MapLibre + OpenFreeMap for every map instead of react-native-maps

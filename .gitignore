@@ -82,3 +82,6 @@ service-account*.json
 .next/
 out/
 next-env.d.ts
+
+# Storybook static build (apps/storybook)
+storybook-static/

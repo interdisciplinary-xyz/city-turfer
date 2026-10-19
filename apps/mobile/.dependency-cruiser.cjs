@@ -9,7 +9,7 @@ module.exports = {
       comment: 'Domain and shared kernel: no frameworks, no infrastructure, no outer layers.',
       from: { path: '^src/(shared-kernel|contexts/[^/]+/domain)/', pathNot: notTests },
       to: {
-        path: '^(node_modules/(react|react-native|expo[^/]*|zustand|h3-js|@maplibre|better-sqlite3)/|src/(platform|composition-root|wiring|app|ui-kit)|src/contexts/[^/]+/(application|infrastructure|ui)/)',
+        path: '^(node_modules/(react|react-native|expo[^/]*|zustand|h3-js|@maplibre|better-sqlite3|@cityturfer/ui)/|(\\.\\./)*packages/ui/|@cityturfer/ui$|src/(platform|composition-root|wiring|app|ui-kit)|src/contexts/[^/]+/(application|infrastructure|ui)/)',
       },
     },
     {
@@ -17,7 +17,7 @@ module.exports = {
       severity: 'error',
       from: { path: ctx + 'application/', pathNot: notTests },
       to: {
-        path: '^(node_modules/(react|react-native|expo[^/]*|h3-js|@maplibre)/|src/contexts/[^/]+/(infrastructure|ui)/|src/(composition-root|wiring|app|ui-kit))',
+        path: '^(node_modules/(react|react-native|expo[^/]*|h3-js|@maplibre|@cityturfer/ui)/|(\\.\\./)*packages/ui/|@cityturfer/ui$|src/contexts/[^/]+/(infrastructure|ui)/|src/(composition-root|wiring|app|ui-kit))',
       },
     },
     {
