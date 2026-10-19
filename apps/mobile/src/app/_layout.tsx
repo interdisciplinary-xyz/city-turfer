@@ -35,6 +35,7 @@ function Gate() {
         />
         <Stack.Screen name='account' options={{ headerShown: true, title: 'Account', headerBackTitle: 'Back' }} />
         <Stack.Screen name='info' options={{ headerShown: true, title: 'Info', headerBackTitle: 'Back' }} />
+        <Stack.Screen name='city' options={{ headerShown: true, title: 'Your city', headerBackTitle: 'Back' }} />
       </Stack.Protected>
     </Stack>
   );

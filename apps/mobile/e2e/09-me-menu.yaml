@@ -1,4 +1,4 @@
-# The Me tab slides in a drawer: header (→ Profile), Profile, Account, Info; tap outside closes it.
+# The Me tab slides in a drawer: header (→ Profile), Profile, Account, City, Info; tap outside closes it.
 appId: com.turftrack.poc
 tags: [me]
 ---
@@ -7,6 +7,7 @@ tags: [me]
 - assertVisible: { id: 'me-drawer' }
 - assertVisible: { id: 'me-menu-profile' }
 - assertVisible: { id: 'me-menu-account' }
+- assertVisible: { id: 'me-menu-city' }
 - assertVisible: { id: 'me-menu-info' }
 - assertNotVisible: { id: 'me-menu-achievements' }
 - takeScreenshot: 09-me-drawer

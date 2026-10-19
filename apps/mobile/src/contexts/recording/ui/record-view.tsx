@@ -15,7 +15,17 @@ import { trackWithGaps } from '@/ui-kit/track-geometry';
 import { HOLD_MS, STATUS_BANNER } from './record-view.constants';
 import { useRecording } from './use-recording';
 
-export function RecordView({ onFinished }: { onFinished: (activityId: string) => void }) {
+/**
+ * `initialCenter` ([lon, lat], e.g. the Home City) is where the map starts before the first fix;
+ * from then on it follows the Turfer.
+ */
+export function RecordView({
+  onFinished,
+  initialCenter,
+}: {
+  onFinished: (activityId: string) => void;
+  initialCenter?: [number, number] | null;
+}) {
   const p = usePalette();
   const scheme = useColorScheme();
   const insets = useSafeAreaInsets();
@@ -94,7 +104,7 @@ export function RecordView({ onFinished }: { onFinished: (activityId: string) =>
         compass={false}
       >
         <Camera
-          initialViewState={{ zoom: 16 }}
+          initialViewState={initialCenter ? { center: initialCenter, zoom: 13 } : { zoom: 16 }}
           trackUserLocation={following ? 'default' : undefined}
           // MapLibre drops tracking when the user pans; mirror that in our state.
           onTrackUserLocationChange={(e) => e.nativeEvent.trackUserLocation == null && setFollowing(false)}

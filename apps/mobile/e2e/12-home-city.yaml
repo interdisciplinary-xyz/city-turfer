@@ -1,0 +1,26 @@
+# Home City: Me → City, search without Polish letters, pick Kraków; the Turf Map shows its chip and
+# opens there. Then the choice is cleared, so later flows start without a Home City.
+appId: com.turftrack.poc
+tags: [turf]
+---
+- runFlow: subflows/launch.yaml
+- tapOn: { id: 'tab-me' }
+- tapOn: { id: 'me-menu-city' }
+- assertVisible: { id: 'city-search' }
+- tapOn: { id: 'city-search' }
+- inputText: 'krakow'
+- assertVisible: { id: 'city-pl-krakow' }
+- assertNotVisible: { id: 'city-pl-warsaw' }
+- tapOn: { id: 'city-pl-krakow' }
+- extendedWaitUntil: { notVisible: { id: 'city-search' }, timeout: 5000 }
+- tapOn: { id: 'tab-turf' }
+- assertVisible: { id: 'turf-city' }
+- assertVisible: '⌂ Kraków'
+- takeScreenshot: 12-turf-home-city
+# Clear the Home City again.
+- tapOn: { id: 'tab-me' }
+- tapOn: { id: 'me-menu-city' }
+- tapOn: { id: 'city-clear' }
+- extendedWaitUntil: { notVisible: { id: 'city-search' }, timeout: 5000 }
+- tapOn: { id: 'tab-turf' }
+- assertVisible: { id: 'turf-pick-city' }

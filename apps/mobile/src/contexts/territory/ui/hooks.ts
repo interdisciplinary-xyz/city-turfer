@@ -1,10 +1,40 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { ACTIVITY_TYPES } from '@/constants/activity';
 import { type ActivityType, type BoundingBox } from '@/shared-kernel';
 import { useApp, useContainer } from '@/ui-kit/app-context';
 
-import type { ClaimView, TurfCellView, TurfSummaryView } from '../contract';
+import type { CityView, ClaimView, TurfCellView, TurfSummaryView } from '../contract';
+
+/**
+ * The Home City: `undefined` while loading, `null` if none is chosen. Refreshes when the choice
+ * changes anywhere (the HomeCityChosen event bumps `dataVersion`).
+ */
+export function useHomeCity(): CityView | null | undefined {
+  const c = useContainer();
+  const { dataVersion } = useApp();
+  const [city, set] = useState<CityView | null | undefined>(undefined);
+  useEffect(() => {
+    let live = true;
+    c.territory.homeCity.execute().then((v) => live && set(v));
+    return () => {
+      live = false;
+    };
+  }, [c, dataVersion]);
+  return city;
+}
+
+/** Chooses (or, with null, clears) the Home City. */
+export function useChooseHomeCity(): (cityId: string | null) => Promise<void> {
+  const c = useContainer();
+  return useCallback((cityId) => c.territory.chooseHomeCity.execute(cityId), [c]);
+}
+
+/** Catalogue cities matching the query (synchronous: the catalogue ships with the app). */
+export function useCitySearch(query: string): CityView[] {
+  const c = useContainer();
+  return useMemo(() => c.territory.searchCities.execute(query), [c, query]);
+}
 
 export function useTurfSummary(): TurfSummaryView | null {
   const c = useContainer();
