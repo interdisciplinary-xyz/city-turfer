@@ -1,6 +1,6 @@
 import '../globals.css';
 
-import { DARK, NAME, ON_ACCENT, TIER_COLOR, TYPE_COLOR } from '@cityturfer/brand';
+import { cssVariables, DARK, NAME } from '@cityturfer/brand';
 import mark from '@cityturfer/brand/svg/mark.svg';
 import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
@@ -35,22 +35,9 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
 export const viewport: Viewport = { themeColor: DARK.bg, colorScheme: 'dark' };
 
-/** Brand tokens from @cityturfer/brand as CSS variables, so globals.css never hard-codes a hex. */
-const tokens = {
-  '--night': DARK.bg,
-  '--night-raised': DARK.card,
-  '--text': DARK.text,
-  '--muted': DARK.muted,
-  '--border': DARK.border,
-  '--faint': TIER_COLOR.faint,
-  '--glow': TIER_COLOR.glowing,
-  '--on-glow': ON_ACCENT,
-  '--strong': TIER_COLOR.strong,
-  '--blazing': TIER_COLOR.blazing,
-  '--walk': TYPE_COLOR.walk,
-  '--run': TYPE_COLOR.run,
-  '--ride': TYPE_COLOR.cycle,
-} as CSSProperties;
+/** Design tokens from @cityturfer/brand as CSS variables, so globals.css never hard-codes a value.
+ * The site is always dark, like the Turf Map. */
+const tokens = cssVariables('dark') as CSSProperties;
 
 export default async function LocaleLayout({
   children,

@@ -259,9 +259,18 @@ importers:
       '@interdisciplinary/eslint-config':
         specifier: workspace:*
         version: link:../eslint-config
+      '@types/jest':
+        specifier: ^30.0.0
+        version: 30.0.0
+      babel-preset-expo:
+        specifier: ^57.0.15
+        version: 57.0.15(@babel/core@7.29.7)(@babel/runtime@7.29.10)(expo@57.0.29)(react-refresh@0.14.2)
       eslint:
         specifier: ^9.39.5
         version: 9.39.5(jiti@2.6.1)
+      jest:
+        specifier: ^30.5.2
+        version: 30.5.2(@types/node@26.6.5)
       typescript:
         specifier: ~6.0.3
         version: 6.0.3
