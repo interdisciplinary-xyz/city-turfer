@@ -7,8 +7,7 @@
     "skip": "Skip to content",
     "taglineLead": "Surf your city.",
     "taglineRamp": "Own your streets.",
-    "lede": "Walk, run or ride — every street you cover becomes your turf. Come back and watch it glow.",
-    "comingSoon": "Coming soon to iPhone"
+    "lede": "Walk, run or ride — every street you cover becomes your turf. Come back and watch it glow."
   },
   "screens": {
     "turfMap": {
@@ -31,7 +30,8 @@
     "cta": "Download for Android",
     "note": "APK for Android phones",
     "help": "First install? Your browser asks you to allow installing apps from it — that's how apps from outside Google Play install.",
-    "iphone": "iPhone: coming soon"
+    "appStore": "App Store",
+    "soon": "Coming soon"
   },
   "waitlist": {
     "title": "Join the waitlist",

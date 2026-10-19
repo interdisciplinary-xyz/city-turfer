@@ -125,17 +125,37 @@ img {
   text-align: center;
 }
 
+/* Phones: text, buttons, then the screenshots. Desktop: text + phones in one row, buttons under both. */
+.hero-copy {
+  order: 1;
+}
+
+.hero-grid > .download {
+  order: 2;
+}
+
+.screens {
+  order: 3;
+}
+
 @media (min-width: 960px) {
   .hero {
-    /* bottom = the language bar's height + margin, so the content centres on the whole screen */
-    padding: 24px 0 92px;
+    padding: 24px 0 40px;
   }
   .hero-grid {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
-    gap: 48px;
+    gap: 40px 48px;
+  }
+  /* Phones shrink on short screens so text, phones and the buttons row fit in one view. */
+  .screens .screen {
+    max-width: min(280px, calc((100svh - 400px) * 0.4));
   }
   .hero-copy {
     text-align: left;
+  }
+  .hero-grid > .download {
+    order: 4;
+    grid-column: 1 / -1;
   }
   .hero-copy .mark,
   .hero-copy .wordmark,
@@ -215,26 +235,6 @@ h1 {
   margin: 0 auto 28px;
 }
 
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 18px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--night-raised);
-  font-weight: 700;
-  font-size: 0.95rem;
-}
-
-.pill-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--glow);
-  box-shadow: 0 0 12px var(--glow);
-}
-
 /* ---------- Download ---------- */
 
 .download {
@@ -242,40 +242,67 @@ h1 {
   flex-direction: column;
   align-items: center;
   gap: 12px;
+  text-align: center;
 }
 
-.download-btn {
+.store-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.store-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 10px;
   min-height: 52px;
-  padding: 14px 28px;
+  padding: 14px 26px;
   border-radius: 999px;
-  background: var(--glow);
-  color: var(--on-glow);
   font-weight: 800;
-  font-size: 1.05rem;
   text-decoration: none;
-  box-shadow: 0 10px 40px color-mix(in srgb, var(--glow) 45%, transparent);
 }
 
-.download-btn:hover,
-.download-btn:focus-visible {
+.store-btn-android {
+  background: var(--glow);
+  color: var(--on-glow);
+  box-shadow: 0 10px 36px color-mix(in srgb, var(--glow) 40%, transparent);
+}
+
+.store-btn-android:hover,
+.store-btn-android:focus-visible {
   background: color-mix(in srgb, var(--glow) 88%, white);
+}
+
+.store-btn-android:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
+}
+
+/* Not available yet: visibly a button, clearly switched off. */
+.store-btn-off {
+  border: 1px solid var(--border);
+  background: var(--night-raised);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.store-soon {
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .download-note {
   margin: 0;
-  max-width: 30rem;
+  max-width: 44rem;
   color: var(--muted);
   font-size: 0.85rem;
   line-height: 1.5;
-}
-
-@media (min-width: 960px) {
-  .download {
-    align-items: flex-start;
-  }
 }
 
 /* ---------- Waitlist ---------- */
@@ -464,16 +491,5 @@ h1 {
   .wordmark {
     width: 200px;
     margin-bottom: 16px;
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .pill-dot {
-    animation: pulse 2.4s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    50% {
-      box-shadow: 0 0 22px var(--glow);
-    }
   }
 }
