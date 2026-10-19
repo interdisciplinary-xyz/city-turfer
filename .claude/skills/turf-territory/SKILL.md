@@ -145,6 +145,23 @@ Keep sources as `ShapeSource` with stable ids, and update their `shape` rather t
 layers. Tracks for the whole history load once (simplified, cached per activity), then get filtered
 by type with a layer `filter` expression, not by rebuilding data.
 
+### Camera and the Home City
+
+- The **Home City** (ubiquitous language; UI copy "Your city") is a city from the bundled catalogue
+  (`territory/domain/city-catalog.ts`) that the maps open on. Stored per user as a catalogue id only
+  (`ter_home_city`, migration 7) with a `HomeCityChosen` event (no coordinates) in the same
+  transaction; `useHomeCity()` refreshes through `dataVersion`. Picker:
+  `apps/mobile/src/app/city.tsx` → `territory/ui/city-picker.tsx`. Decision:
+  `docs/decisions/home-city-2026-10-19.md`.
+- Turf Map camera: Home City set → `initialViewState.bounds` = the city's bounds (centre ± radius);
+  a newly chosen city → `fitBounds`; chip `turf-city` recentres. No Home City → fit all tracks once,
+  else follow the user. The Camera mounts only after the Home City has loaded (its initial view is
+  read once at mount).
+- Record map: starts on the Home City centre until the first fix (`initialCenter` prop from the
+  screen; Recording never imports Territory).
+- Catalogue ids are stored in user databases: never rename or reuse one; a removed id reads as no
+  Home City. Adding a city is a JS-only change (ships over the air).
+
 ## "Turf gained" UX
 
 After Finish, and on the activity detail: `GetClaimForActivity` → "+0.12 km² new turf · 340 cells
