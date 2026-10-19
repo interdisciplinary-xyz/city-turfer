@@ -30,6 +30,14 @@
     {
       "filename": "packages/config/package.json",
       "type": "json"
+    },
+    {
+      "filename": "packages/ui/package.json",
+      "type": "json"
+    },
+    {
+      "filename": "apps/storybook/package.json",
+      "type": "json"
     }
   ],
   "types": [
