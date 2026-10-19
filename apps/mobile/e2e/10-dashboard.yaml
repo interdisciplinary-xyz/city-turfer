@@ -8,14 +8,14 @@ tags: [dashboard]
 - assertVisible: { id: 'dashboard-week-distance' }
 - tapOn: { id: 'recent-item-0' }
 - extendedWaitUntil: { visible: { id: 'turf-gained' }, timeout: 15000 }
-- tapOn: 'Back'
+- runFlow: subflows/back.yaml
 - scrollUntilVisible: { element: { id: 'dashboard-achievements' } }
 - tapOn: { id: 'dashboard-achievements' }
 - assertVisible: { id: 'achievements-count' }
-- tapOn: 'Back'
+- runFlow: subflows/back.yaml
 - tapOn: { id: 'tab-stats' }
 - scrollUntilVisible: { element: { id: 'stats-see-history' } }
 - tapOn: { id: 'stats-see-history' }
 - assertVisible: { id: 'history-item-0' }
-- tapOn: 'Back'
+- runFlow: subflows/back.yaml
 - tapOn: { id: 'tab-dashboard' }

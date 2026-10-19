@@ -6,7 +6,7 @@ import { ACCENT, TIER_COLOR } from '@/constants/colors';
 import { type Achievement, type AchievementId, evaluateAchievements } from '@/contexts/achievements';
 import { useActivities } from '@/contexts/activity-log/ui/hooks';
 import { useTurfSummary } from '@/contexts/territory/ui/hooks';
-import { Card } from '@/ui-kit/components';
+import { Badge, Card, tint } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
 
 const SYMBOL: Record<AchievementId, SFSymbol> = {
@@ -58,11 +58,12 @@ export default function AchievementsScreen() {
         const color = a.unlocked ? TIER_COLOR.strong : p.muted;
         return (
           <Card style={a.unlocked ? s.row : { ...s.row, opacity: 0.85 }}>
-            <View
+            <Badge
               testID={`achievement-${a.id}`}
               accessible
               accessibilityLabel={`${a.title}. ${a.description} ${progressText(a)}`}
-              style={[s.badge, { backgroundColor: a.unlocked ? `${TIER_COLOR.strong}22` : p.bg }]}
+              size={52}
+              tint={a.unlocked ? tint(TIER_COLOR.strong) : p.bg}
             >
               <SymbolView
                 name={SYMBOL[a.id]}
@@ -70,7 +71,7 @@ export default function AchievementsScreen() {
                 size={26}
                 fallback={<Text style={{ fontSize: 22, color }}>★</Text>}
               />
-            </View>
+            </Badge>
             <View style={{ flex: 1, gap: 4 }}>
               <Text style={[s.title, { color: p.text }]}>{a.title}</Text>
               <Text style={{ color: p.muted, fontSize: 13 }}>{a.description}</Text>
@@ -97,7 +98,6 @@ export default function AchievementsScreen() {
 const s = StyleSheet.create({
   count: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 },
   row: { flexDirection: 'row', gap: 14, alignItems: 'center' },
-  badge: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 16, fontWeight: '800' },
   track: { height: 6, borderRadius: 3, overflow: 'hidden', marginTop: 4 },
   fill: { height: 6, borderRadius: 3 },

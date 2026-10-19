@@ -16,6 +16,15 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
 - **GPS**: `expo-location` + `expo-task-manager` (background updates, Android foreground service)
 - **Maps**: `@maplibre/maplibre-react-native` + OpenFreeMap vector tiles (keyless); dark style on
   the Turf Map
+- **Apple Health**: `@kingstinct/react-native-healthkit` (Nitro) behind the Health Sync
+  `HealthStore` port; iOS only (`apps/mobile/react-native.config.js` keeps it out of Android).
+  Import of walks, hikes, runs, rides with routes; export of recordings. Design:
+  `docs/decisions/apple-health-2026-10-18.md`
+- **Design system**: tokens in `@cityturfer/brand` (`packages/brand/src/tokens.ts`; the web gets
+  them as CSS variables from `cssVariables()`), React Native components in `@cityturfer/ui`
+  (`packages/ui`, peer dependencies only, no native code), one Storybook in `apps/storybook`
+  (Storybook 10 + react-native-web, port 6006; static build, Vercel project pending). Design:
+  `docs/decisions/design-system-2026-10-19.md`
 - **Spatial index**: `h3-js` (Turf Cells = H3 res 11), behind the Territory `CellGrid` port
 - **Repo tooling**: pnpm (`node-linker=hoisted`, version pinned in `packageManager`) + Turborepo
   (`turbo.json`, `pnpm-workspace.yaml`): workspaces apps/* and packages/*; design in
@@ -55,6 +64,8 @@ apps/mobile/                         the Expo app (package @cityturfer/mobile); 
     domain/ application/ infrastructure/ ui/ index.ts contract.ts
   src/contexts/territory/            CORE: Claim aggregate, turf strength, Territory projection, Turf Map
     domain/ application/ infrastructure/ ui/ index.ts contract.ts
+  src/contexts/health-sync/          Apple Health import/export (ACL: "workout" stays here), links + anchor
+    domain/ application/ infrastructure/ ui/ index.ts contract.ts
   src/contexts/achievements/         pure evaluation of achievements and the onboarding checklist
     domain/ infrastructure/ ui/ index.ts                  (infrastructure: onboarding dismissal flag)
   src/platform/                      SQLite, migrations, outbox + EventDispatcher, one-off jobs, diagnostics (no coordinates)
@@ -64,7 +75,9 @@ apps/mobile/                         the Expo app (package @cityturfer/mobile); 
   e2e/                               Maestro flows
   tools/                             mobile dev tools (GPX generator, stats oracle, simulator GPS playback, turf preview)
 apps/web/                            Next.js landing page (@cityturfer/web): static export (out/), hosted on Vercel
-packages/brand/                      @cityturfer/brand: colour tokens (turf strength ramp), name + copy, logo SVGs; plain TS
+apps/storybook/                      @cityturfer/storybook: one Storybook for @cityturfer/ui (react-native-web) and apps/web pieces
+packages/brand/                      @cityturfer/brand: colour + design tokens (turf strength ramp, spacing, type, themes, cssVariables), copy, logo SVGs; plain TS
+packages/ui/                         @cityturfer/ui: React Native design-system components (Button, Card, Stat, Badge, ActivityRow, TurfLegend)
 packages/config/                     @cityturfer/config: Prettier and tsconfig bases
 packages/eslint-config/              @interdisciplinary/eslint-config (shared with empatalk): presets base, react, package + local-rules
 packages/dev-toolbar/                @interdisciplinary/dev-toolbar (from empatalk): dev-only bottom toolbar for apps/web (request log, route map)
@@ -88,6 +101,9 @@ docs/  .github/  .husky/  .claude/   at the repo root
 - Turf strength formula and defaults are identical in `apps/mobile/src/contexts/territory/domain`
   and `apps/mobile/tools/turf-preview.mjs`, pinned by
   `apps/mobile/tools/fixtures/turf-vectors.json`.
+- `@cityturfer/ui` stays pure React Native with peer dependencies only (no Expo, MapLibre, HealthKit
+  or other native modules), so it never changes the runtime fingerprint; check the fingerprint after
+  touching it (`design-system` skill).
 - Brand colours and copy come from `@cityturfer/brand` (`apps/mobile/src/constants/colors.ts`
   re-exports them); never hard-code brand hex in either app.
 - Lint (`@interdisciplinary/eslint-config`): types and SCREAMING_SNAKE constants live in a colocated
@@ -96,7 +112,8 @@ docs/  .github/  .husky/  .claude/   at the repo root
 - Activity types are exactly `walk | run | cycle`; per-type tuning lives in the `TrackingProfile`
   value object (Recording domain).
 - Location data is personal data: no analytics on coordinates, no logging raw coordinates in
-  production builds.
+  production builds. Apple Health data likewise: never logged, sent or analysed; HealthKit only in
+  the foreground.
 - Never claim background tracking works because tests pass. It needs a dev build on a device or
   simulator with simulated movement (see the `mobile-testing` skill).
 
@@ -110,6 +127,9 @@ pnpm run typecheck               # tsc in every workspace (turbo)
 pnpm test                        # dependency rules (depcruise) + Jest + tool tests (turbo)
 pnpm run build                   # web static export (apps/web/out) via turbo
 pnpm run web:dev                 # landing page at https://cityturfer.local (portless + server.mjs, dev toolbar)
+pnpm --filter @cityturfer/storybook dev     # Storybook at http://localhost:6006 (app components + website pieces)
+pnpm --filter @cityturfer/storybook build   # static Storybook in apps/storybook/storybook-static
+pnpm -C apps/mobile run android:build     # Android APK on EAS (docs/operations/android-release.md)
 pnpm -C apps/mobile exec expo install <pkg>                     # add a native dependency to the app
 # Local quirks: watchman is disabled (broken Homebrew install) in jest + metro config; pnpm with
 #   node-linker=hoisted (.npmrc). iOS needs Xcode 26.4+ (Expo SDK 57). Xcode's SPM hangs downloading
@@ -135,9 +155,11 @@ node apps/mobile/tools/turf-preview.mjs apps/mobile/tools/fixtures/history --out
 ## Claude Code setup
 
 - Skills (`.claude/skills/`): `brand-system`, `ddd-architecture`, `turf-territory`, `scaffold-app`,
-  `add-feature`, `gps-tracking`, `route-metrics`, `route-storage`, `mobile-testing`.
+  `add-feature`, `gps-tracking`, `route-metrics`, `route-storage`, `mobile-testing`, `apple-health`,
+  `web-motion`, `design-system`.
 - Agents (`.claude/agents/`): `rn-architect`, `location-engineer`, `mobile-ui-engineer`,
-  `mobile-test-engineer`, `mobile-reviewer`, `brand-designer`.
+  `mobile-test-engineer`, `mobile-reviewer`, `brand-designer`, `health-engineer` (Apple Health),
+  `web-engineer` (apps/web).
 - Commands (`.claude/commands/`): `audit-docs` (`/audit-docs`).
 
 ## Docs

@@ -14,3 +14,7 @@ appId: com.turftrack.poc
 - runFlow:
     when: { visible: 'Continue' }
     commands: [{ tapOn: 'Continue' }]
+# Android dev builds open the Expo dev menu on their first launch, over the app; Back closes it.
+- runFlow:
+    when: { platform: Android, visible: 'Toggle performance monitor' }
+    commands: [{ pressKey: back }]

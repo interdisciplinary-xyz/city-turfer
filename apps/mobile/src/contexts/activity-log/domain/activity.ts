@@ -11,7 +11,7 @@ import {
   type Track,
 } from '@/shared-kernel';
 
-import type { ActivityDeleted, ActivityRecorded, ActivityTrackCorrected } from '../contract';
+import type { ActivityDeleted, ActivityOrigin, ActivityRecorded, ActivityTrackCorrected } from '../contract';
 import { acceptRoute, estimatedMovingS, type Gap, type GapRoute, routableGaps } from './gap-route';
 
 export interface ActivitySummary {
@@ -43,7 +43,7 @@ export function defaultName(type: ActivityType, startedAt: number): string {
   return `${part} ${{ walk: 'walk', run: 'run', cycle: 'ride' }[type]}`;
 }
 
-/** Aggregate root of the Activity Log: a finished, saved recording. */
+/** Aggregate root of the Activity Log: a finished, saved recording or an imported track. */
 export class Activity {
   private events: ActivityEvent[] = [];
   private constructor(private state: ActivityState) {}
@@ -56,6 +56,8 @@ export class Activity {
     track: Track;
     now: number;
     resumedSegments?: readonly number[] | null;
+    /** Default 'recording'. */
+    origin?: ActivityOrigin;
   }): Activity {
     const points = pointsOf(input.track);
     if (points.length < 2) {
@@ -81,6 +83,7 @@ export class Activity {
       activityType: input.type,
       startedAt: input.startedAt,
       endedAt: input.endedAt,
+      origin: input.origin ?? 'recording',
     });
     return a;
   }

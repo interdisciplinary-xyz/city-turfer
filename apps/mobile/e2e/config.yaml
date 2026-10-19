@@ -14,4 +14,5 @@ executionOrder:
     - 07-delete-activity
     - 09-me-menu
     - 10-dashboard
+    - 11-apple-health
     - 08-sign-out # last: signs out

@@ -9,6 +9,7 @@ import { AppState } from 'react-native';
 
 import { OsmRouteEstimator } from '@/contexts/activity-log/infrastructure/osm-route-estimator';
 import { SecureStoreGapEstimationSetting } from '@/contexts/activity-log/infrastructure/secure-store-gap-estimation-setting';
+import { HealthKitHealthStore } from '@/contexts/health-sync/infrastructure/healthkit-health-store';
 import { createIdentityApi } from '@/contexts/identity';
 import { CachedSessionStore } from '@/contexts/identity/infrastructure/cached-session-store';
 import { MockAuthGateway } from '@/contexts/identity/infrastructure/mock-auth-gateway';
@@ -59,6 +60,8 @@ const adapters = {
     isForeground: () => AppState.currentState === 'active',
     wait: (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
   },
+  health: new HealthKitHealthStore(),
+  isForeground: () => AppState.currentState === 'active',
 };
 
 let current: {
@@ -107,8 +110,14 @@ export async function getContainer(): Promise<Container | null> {
   current = entry;
   void promise.then(
     (c) => {
-      // Gaps recorded while headless (or offline) are estimated once the user opens the app.
-      const sub = AppState.addEventListener('change', (s) => s === 'active' && void c.estimateGaps());
+      // Gaps recorded while headless (or offline) are estimated, and new Apple Health workouts
+      // imported, whenever the user brings the app back.
+      const sub = AppState.addEventListener('change', (s) => {
+        if (s === 'active') {
+          void c.estimateGaps();
+          void c.syncHealth();
+        }
+      });
       if (current === entry) {
         entry.stop = () => sub.remove();
       } else {

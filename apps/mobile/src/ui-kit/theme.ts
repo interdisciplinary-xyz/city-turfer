@@ -1,9 +1,7 @@
-import { useColorScheme } from 'react-native';
-
-import { DARK, LIGHT } from '@/constants/colors';
-
-export type Palette = typeof LIGHT;
-
-export function usePalette(): Palette {
-  return useColorScheme() === 'dark' ? DARK : LIGHT;
-}
+/**
+ * The theme hook comes from the design system (`@cityturfer/ui`, `design-system` skill): it follows
+ * the device's colour scheme unless a ThemeProvider forces one. Re-exported so screens keep one
+ * import path.
+ */
+export type { Palette } from '@cityturfer/brand';
+export { usePalette } from '@cityturfer/ui';
