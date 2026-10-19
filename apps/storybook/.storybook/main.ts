@@ -13,8 +13,10 @@ const shim = (file: string) => fileURLToPath(new URL(`../src/shims/${file}`, imp
 const config: StorybookConfig = {
   framework: { name: '@storybook/react-native-web-vite', options: {} },
   stories: ['../src/**/*.stories.@(ts|tsx)'],
-  // The website's public files (phone screenshots) at the same URLs as on the site.
-  staticDirs: ['../../web/public'],
+  addons: ['@storybook/addon-docs'],
+  // The website's public files (phone screenshots) at the same URLs as on the site, and the brand
+  // SVGs (sidebar logo, tab icon) under brand/.
+  staticDirs: ['../../web/public', { from: '../../../packages/brand/svg', to: '/brand' }],
   core: { disableTelemetry: true },
   // Prop tables from the TS types; plain react-docgen can't follow React Native's imported types.
   typescript: { reactDocgen: 'react-docgen-typescript' },
