@@ -215,6 +215,49 @@ h1 {
   box-shadow: 0 0 12px var(--glow);
 }
 
+/* ---------- Download ---------- */
+
+.download {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.download-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 14px 28px;
+  border-radius: 999px;
+  background: var(--glow);
+  color: var(--on-glow);
+  font-weight: 800;
+  font-size: 1.05rem;
+  text-decoration: none;
+  box-shadow: 0 10px 40px color-mix(in srgb, var(--glow) 45%, transparent);
+}
+
+.download-btn:hover,
+.download-btn:focus-visible {
+  background: color-mix(in srgb, var(--glow) 88%, white);
+}
+
+.download-note {
+  margin: 0;
+  max-width: 30rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+@media (min-width: 960px) {
+  .download {
+    align-items: flex-start;
+  }
+}
+
 /* ---------- Screens ---------- */
 
 .screens {

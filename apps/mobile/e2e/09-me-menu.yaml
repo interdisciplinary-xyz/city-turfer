@@ -19,9 +19,9 @@ tags: [me]
 - tapOn: { id: 'profile-achievements' }
 - assertVisible: { id: 'achievements-count' }
 - assertVisible: { id: 'achievement-first-steps' }
-- tapOn: 'Back'
-- tapOn: 'Back'
+- runFlow: subflows/back.yaml
+- runFlow: subflows/back.yaml
 - tapOn: { id: 'tab-me' }
 - tapOn: { id: 'me-menu-info' }
 - assertVisible: { id: 'app-version' }
-- tapOn: 'Back'
+- runFlow: subflows/back.yaml

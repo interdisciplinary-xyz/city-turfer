@@ -26,5 +26,11 @@
     "label": "Language",
     "en": "English",
     "pl": "Polski"
+  },
+  "download": {
+    "cta": "Download for Android",
+    "note": "APK for Android phones",
+    "help": "First install? Your browser asks you to allow installing apps from it — that's how apps from outside Google Play install.",
+    "iphone": "iPhone: coming soon"
   }
 }
