@@ -2,6 +2,51 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.3.0...v0.4.0) (2026-10-19)
+
+
+### Features
+
+* **health:** apple health card, imported label, simulator seed tool and e2e flow ([1276972](https://github.com/interdisciplinary-xyz/city-turfer/commit/1276972402200534d1acf5de0c1998aaf32a7129))
+* **health:** import apple health workouts and save recordings to health ([44e710c](https://github.com/interdisciplinary-xyz/city-turfer/commit/44e710c0395c7da9053ef6c60c98705ba0369ad4))
+* **health:** show outings already in cityturfer; e2e accepts reruns ([48a95e6](https://github.com/interdisciplinary-xyz/city-turfer/commit/48a95e60e789372bb93eb4914dc7f1c3e3e76aff))
+* **web:** android and app store buttons; app store disabled until launch ([5f9be82](https://github.com/interdisciplinary-xyz/city-turfer/commit/5f9be82bdff3617d68e030d717b8d57aa1b5efa0))
+* **web:** android download button; script to publish the apk ([bb5cebf](https://github.com/interdisciplinary-xyz/city-turfer/commit/bb5cebf66a5994cf965149758f0a02fa61652321))
+* **web:** buttons in their own row under the text and phones ([1449026](https://github.com/interdisciplinary-xyz/city-turfer/commit/14490269c93061eee24c0e9ce07fbdaa474b6330))
+* **web:** centre the hero vertically; tune phone and landscape layouts ([b86e975](https://github.com/interdisciplinary-xyz/city-turfer/commit/b86e97565fdbe3ea7c1756bc13858397241e481d))
+* **web:** dashboard screenshot greets Adam ([fe5e393](https://github.com/interdisciplinary-xyz/city-turfer/commit/fe5e39384799aa2b915683293890fdbbfd5ba1e3))
+* **web:** gsap entrance and ambient motion; web-motion skill and web-engineer agent ([7062d82](https://github.com/interdisciplinary-xyz/city-turfer/commit/7062d820b006ec5cf25b7590d0b7a910ab76f1b5))
+* **web:** waitlist as its own centred section under the hero ([939246a](https://github.com/interdisciplinary-xyz/city-turfer/commit/939246a7f8c45976e90cda5d123555a3bcf5f584))
+* **web:** waitlist sign-up through brevo with double opt-in ([f845b96](https://github.com/interdisciplinary-xyz/city-turfer/commit/f845b96bf50278d175ccdd3bd738d72c99ec0d03))
+
+
+### Bug Fixes
+
+* **android:** crash on the first location update ([033c35c](https://github.com/interdisciplinary-xyz/city-turfer/commit/033c35c131f2d5a50d4de45dfc7e5cbca7a88fb4))
+* **mobile:** light status bar on the always-dark screens ([6c18b77](https://github.com/interdisciplinary-xyz/city-turfer/commit/6c18b7735587b988eb7420939c5e7a733edab03d))
+* **release:** bump app.json without reformatting it ([5d3cc20](https://github.com/interdisciplinary-xyz/city-turfer/commit/5d3cc20e2cda2560239e89f2ba454f72bc27170e))
+* **web:** hero captions wrapped one word per line on short, wide windows ([a51ab5b](https://github.com/interdisciplinary-xyz/city-turfer/commit/a51ab5b82e59c59ef19aefeb70112529f8dab560))
+
+
+### Documentation
+
+* android e2e notes for the release apk ([ca611d2](https://github.com/interdisciplinary-xyz/city-turfer/commit/ca611d2e1dd628e44061960c22fd86cb7478fdb2))
+* android release guide ([7934467](https://github.com/interdisciplinary-xyz/city-turfer/commit/79344676d5b22212109869ee9af32ef216a69e80))
+* apple health design, skill and health-engineer agent ([73ab055](https://github.com/interdisciplinary-xyz/city-turfer/commit/73ab055b54f9ebbaae0c741ee6cea64a1bea8fd2))
+* apple health in claude.md, architecture, features, e2e and device guide ([0753f0d](https://github.com/interdisciplinary-xyz/city-turfer/commit/0753f0d29a302d313771ac0ad7934a220e484f49))
+* format session log ([7e345c3](https://github.com/interdisciplinary-xyz/city-turfer/commit/7e345c3e03f5417ac1f064154d7ae317e4ce9712))
+* iphone on the apple health build ([68cbb2b](https://github.com/interdisciplinary-xyz/city-turfer/commit/68cbb2b72411ef1896df94efa28bb1d8ee3c6334))
+* v0.4.0 session log ([6980f30](https://github.com/interdisciplinary-xyz/city-turfer/commit/6980f300e31f3525659059c84c9283e26903fae8))
+* v0.4.0 session log — android apk, waitlist, motion ([d4d10de](https://github.com/interdisciplinary-xyz/city-turfer/commit/d4d10dea6e8787ef5a43709ffadf63c962d47af9))
+* v0.4.0 session log — apple health, store buttons ([1248a18](https://github.com/interdisciplinary-xyz/city-turfer/commit/1248a18fa50324a78b256a15e17beebdac73e8bd))
+* v0.4.0 session log — local test run, android exclusion, iphone import ([ca9a362](https://github.com/interdisciplinary-xyz/city-turfer/commit/ca9a362b1aa477841f7e4a9b2dd8ac27d39126f8))
+
+
+### Tests
+
+* **e2e:** back navigation that works on Android too ([12f3fc3](https://github.com/interdisciplinary-xyz/city-turfer/commit/12f3fc3bd323470675147fb6ee02c6a2ad537519))
+* **e2e:** close the expo dev menu on android's first launch ([a6d4b69](https://github.com/interdisciplinary-xyz/city-turfer/commit/a6d4b69a24fca8ab54f03f11c7695fe94132b3c3))
+
 ## [0.3.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.2.0...v0.3.0) (2026-10-18)
 
 

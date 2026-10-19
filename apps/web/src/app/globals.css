@@ -146,9 +146,13 @@ img {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
     gap: 40px 48px;
   }
-  /* Phones shrink on short screens so text, phones and the buttons row fit in one view. */
-  .screens .screen {
-    max-width: min(280px, calc((100svh - 400px) * 0.4));
+  /* Phones shrink on short screens so text, phones and the buttons row fit in one view. Only the
+     phone frame shrinks, never below 140px: the caption keeps the column's width (it used to shrink
+     with the figure, to one word per line on wide, short windows). Shorter than that, the page
+     scrolls. */
+  .screens .phone {
+    max-width: clamp(140px, calc((100svh - 400px) * 0.4), 280px);
+    margin-inline: auto;
   }
   .hero-copy {
     text-align: left;
