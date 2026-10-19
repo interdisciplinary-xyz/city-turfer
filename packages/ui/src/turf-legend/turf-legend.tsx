@@ -35,7 +35,8 @@ export function TurfLegend({
       style={[s.box, { backgroundColor: p.card, borderColor: p.border }, style]}
     >
       {compact ? null : <Text style={[s.title, { color: p.muted }]}>{title}</Text>}
-      <View style={s.bar}>
+      {/* Hairline outline: Blazing (near white) would vanish on a light card without it. */}
+      <View style={[s.bar, { borderColor: p.border }]}>
         {TIER_ORDER.map((tier) => (
           <View key={tier} style={[s.step, { backgroundColor: TIER_COLOR[tier] }]} />
         ))}
@@ -66,7 +67,14 @@ const s = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: LABEL_TRACKING,
   },
-  bar: { flexDirection: 'row', height: BAR_HEIGHT, borderRadius: BAR_HEIGHT / 2, overflow: 'hidden', gap: 2 },
+  bar: {
+    flexDirection: 'row',
+    height: BAR_HEIGHT,
+    borderRadius: BAR_HEIGHT / 2,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+    gap: 2,
+  },
   step: { flex: 1 },
   labels: { flexDirection: 'row' },
   label: { flex: 1, textAlign: 'center', fontSize: FONT_SIZE.caption, fontWeight: FONT_WEIGHT.semibold },

@@ -40,6 +40,8 @@ describe('cssVariables', () => {
       '--space-lg': '16px',
       '--radius-panel': '20px',
       '--font-hero': '52px',
+      '--font-weight-medium': '500',
+      '--label-tracking': '0.8px',
     });
   });
 

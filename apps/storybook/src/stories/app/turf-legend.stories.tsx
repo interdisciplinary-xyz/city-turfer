@@ -15,14 +15,15 @@ const meta = {
 
 export default meta;
 
-export const Default: StoryObj<typeof meta> = {};
+export const Default: StoryObj<typeof meta> = { args: { style: { maxWidth: 360 } } };
 
 export const Compact: StoryObj<typeof meta> = { args: { compact: true, style: { width: 160 } } };
 
 /** Labels are props, so a translation drops in (Polish shown). */
 export const Translated: StoryObj<typeof meta> = {
   args: {
+    style: { maxWidth: 360 },
     title: 'Siła turfu',
-    labels: { faint: 'Słaby', glowing: 'Żarzący', strong: 'Mocny', blazing: 'Płonący' },
+    labels: { faint: 'Słaby', glowing: 'Rozżarzony', strong: 'Mocny', blazing: 'Płonący' },
   },
 };
