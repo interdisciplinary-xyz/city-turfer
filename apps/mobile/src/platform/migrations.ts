@@ -178,6 +178,18 @@ const MIGRATIONS: { version: number; sql: string }[] = [
       );
     `,
   },
+  {
+    version: 7,
+    sql: `
+      -- Territory: the Home City (where the Turf Map opens), one row per user database.
+      -- Only a catalogue id is stored, never coordinates.
+      CREATE TABLE ter_home_city (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        city_id TEXT,
+        chosen_at INTEGER NOT NULL
+      );
+    `,
+  },
 ];
 
 /** `upTo` stops at a schema version (tests seeding an older database). */

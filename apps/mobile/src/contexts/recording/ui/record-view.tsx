@@ -1,5 +1,5 @@
-import { Camera, GeoJSONSource, Layer, Map, UserLocation } from '@maplibre/maplibre-react-native';
-import { useEffect, useMemo, useState } from 'react';
+import { Camera, type CameraRef, GeoJSONSource, Layer, Map, UserLocation } from '@maplibre/maplibre-react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -12,10 +12,15 @@ import { formatDistance, formatDuration, formatPaceOrSpeed, formatSpeedNow } fro
 import { usePalette } from '@/ui-kit/theme';
 import { trackWithGaps } from '@/ui-kit/track-geometry';
 
-import { HOLD_MS, STATUS_BANNER } from './record-view.constants';
+import { CITY_ZOOM, HOLD_MS, type RecordViewProps, STATUS_BANNER } from './record-view.constants';
 import { useRecording } from './use-recording';
 
-export function RecordView({ onFinished }: { onFinished: (activityId: string) => void }) {
+/**
+ * The map starts on the Home City (`city`) before the first fix, then follows the Turfer. Before a
+ * recording starts, a chip at the top shows the city and opens the picker; a newly chosen city is
+ * shown on the map (Recenter goes back to the Turfer).
+ */
+export function RecordView({ onFinished, city, onPickCity, focused = true }: RecordViewProps) {
   const p = usePalette();
   const scheme = useColorScheme();
   const insets = useSafeAreaInsets();
@@ -24,10 +29,27 @@ export function RecordView({ onFinished }: { onFinished: (activityId: string) =>
   const [busy, setBusy] = useState(false);
   const [following, setFollowing] = useState(true);
   const [holding, setHolding] = useState(false);
+  const camera = useRef<CameraRef>(null);
 
   useEffect(() => {
     void prepare();
   }, [prepare]);
+
+  // A city chosen from the chip (or elsewhere) while not recording: show it once the tab is on screen.
+  const shownCity = useRef<string | null>(city?.id ?? null);
+  useEffect(() => {
+    const id = city?.id ?? null;
+    if (!focused || id === shownCity.current) {
+      return;
+    }
+    shownCity.current = id;
+    if (city && !snapshot) {
+      // Stop following first, then fly once the Camera has dropped tracking (it would pull back).
+      setFollowing(false);
+      const t = setTimeout(() => camera.current?.flyTo({ center: city.center, zoom: CITY_ZOOM, duration: 800 }), 100);
+      return () => clearTimeout(t);
+    }
+  }, [city, focused, snapshot]);
 
   const activeType = snapshot?.type ?? type;
   const color = TYPE_COLOR[activeType];
@@ -94,7 +116,8 @@ export function RecordView({ onFinished }: { onFinished: (activityId: string) =>
         compass={false}
       >
         <Camera
-          initialViewState={{ zoom: 16 }}
+          ref={camera}
+          initialViewState={city ? { center: city.center, zoom: CITY_ZOOM } : { zoom: 16 }}
           trackUserLocation={following ? 'default' : undefined}
           // MapLibre drops tracking when the user pans; mirror that in our state.
           onTrackUserLocationChange={(e) => e.nativeEvent.trackUserLocation == null && setFollowing(false)}
@@ -123,6 +146,21 @@ export function RecordView({ onFinished }: { onFinished: (activityId: string) =>
           />
         </GeoJSONSource>
       </Map>
+
+      {!snapshot && onPickCity && (
+        <Pressable
+          testID='record-city'
+          accessibilityRole='button'
+          accessibilityLabel={city ? `City: ${city.name}` : 'Choose your city'}
+          accessibilityHint='Opens the city picker'
+          onPress={onPickCity}
+          style={[s.city, { top: insets.top + 12, backgroundColor: p.card }]}
+        >
+          <Text style={{ color: p.text, fontWeight: '700' }} numberOfLines={1}>
+            ⌂ {city ? city.name : 'Your city'} ▾
+          </Text>
+        </Pressable>
+      )}
 
       {!following && (
         <Pressable
@@ -261,6 +299,18 @@ const s = StyleSheet.create({
   typeChip: { flex: 1, alignItems: 'center', paddingVertical: 12, borderRadius: 14, borderWidth: 2, gap: 4 },
   typeGlyph: { fontSize: 26 },
   hint: { textAlign: 'center', fontSize: 13 },
+  city: {
+    position: 'absolute',
+    left: 12,
+    maxWidth: '55%',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+  },
   recenter: {
     position: 'absolute',
     right: 12,

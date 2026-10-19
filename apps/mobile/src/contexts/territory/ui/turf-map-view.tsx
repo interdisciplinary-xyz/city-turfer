@@ -11,12 +11,18 @@ import { formatArea } from '@/ui-kit/format';
 
 import { useTurfSummary, useTurfViewport } from './hooks';
 import { TurfLayers } from './layers';
-import type { TrackLine } from './turf-map-view.constants';
+import { FIT_PADDING, type TrackLine, type TurfMapViewProps } from './turf-map-view.constants';
 
 export type { TrackLine };
 
-/** The main feature: all tracks overlapping + glowing, permanent turf. Always dark. */
-export function TurfMapView({ tracks }: { tracks: TrackLine[] }) {
+/**
+ * The main feature: all tracks overlapping + glowing, permanent turf. Always dark.
+ * Camera: opens on the Home City when there is one (and flies to a newly chosen one when the map is
+ * next on screen); without one it fits all tracks, or follows the Turfer when there are none yet.
+ * The screen mounts this only once the Home City has loaded: on iOS MapLibre applies a Camera's
+ * initial view and follow mode only if the Camera exists at the map's first layout.
+ */
+export function TurfMapView({ tracks, homeCity, focused, onPickCity }: TurfMapViewProps) {
   const insets = useSafeAreaInsets();
   const camera = useRef<CameraRef>(null);
   const [view, setView] = useState<{ bbox: BoundingBox; zoom: number } | null>(null);
@@ -58,18 +64,39 @@ export function TurfMapView({ tracks }: { tracks: TrackLine[] }) {
   const fitAll = useCallback(() => {
     if (allBounds) {
       void camera.current?.fitBounds([...allBounds] as [number, number, number, number], {
-        padding: { top: 180, bottom: 60, left: 40, right: 40 },
+        padding: FIT_PADDING,
         duration: 600,
       });
     }
   }, [allBounds]);
 
+  const fitCity = useCallback(() => {
+    if (homeCity) {
+      void camera.current?.fitBounds(homeCity.bounds, { padding: FIT_PADDING, duration: 600 });
+    }
+  }, [homeCity]);
+
+  // No Home City: fit all tracks once they load (the Home City, when set, is the opening view).
   useEffect(() => {
-    if (!fitted.current && allBounds) {
+    if (!fitted.current && allBounds && homeCity === null) {
       fitted.current = true;
       setTimeout(fitAll, 300);
     }
-  }, [allBounds, fitAll]);
+  }, [allBounds, fitAll, homeCity]);
+
+  // A Home City chosen (or changed) after the map opened: fly there once the map is on screen.
+  const shownCity = useRef<string | null>(homeCity?.id ?? null);
+  useEffect(() => {
+    const id = homeCity?.id ?? null;
+    if (!focused || id === shownCity.current) {
+      return;
+    }
+    shownCity.current = id;
+    if (id !== null) {
+      fitted.current = true;
+      fitCity();
+    }
+  }, [homeCity, focused, fitCity]);
 
   const toggle = (t: ActivityType) =>
     setTypes((cur) => (cur.includes(t) ? (cur.length > 1 ? cur.filter((x) => x !== t) : cur) : [...cur, t]));
@@ -84,7 +111,11 @@ export function TurfMapView({ tracks }: { tracks: TrackLine[] }) {
         attributionPosition={{ bottom: 8, right: 8 }}
         onRegionDidChange={(e) => setView({ bbox: e.nativeEvent.bounds, zoom: e.nativeEvent.zoom })}
       >
-        <Camera ref={camera} initialViewState={{ zoom: 13 }} trackUserLocation={allBounds ? undefined : 'default'} />
+        <Camera
+          ref={camera}
+          initialViewState={homeCity ? { bounds: homeCity.bounds, padding: FIT_PADDING } : { zoom: 13 }}
+          trackUserLocation={homeCity || allBounds ? undefined : 'default'}
+        />
         <UserLocation />
         <TurfLayers cells={cells} />
         <GeoJSONSource id='turf-tracks' data={lines}>
@@ -146,6 +177,31 @@ export function TurfMapView({ tracks }: { tracks: TrackLine[] }) {
               </Pressable>
             );
           })}
+          {homeCity ? (
+            <Pressable
+              testID='turf-city'
+              onPress={fitCity}
+              onLongPress={onPickCity}
+              accessibilityRole='button'
+              accessibilityLabel={`Show ${homeCity.name}`}
+              accessibilityHint='Long press to choose another city'
+              accessibilityActions={onPickCity ? [{ name: 'longpress', label: 'Choose another city' }] : undefined}
+              onAccessibilityAction={(e) => e.nativeEvent.actionName === 'longpress' && onPickCity?.()}
+              style={[s.chip, { borderColor: DARK.border }]}
+            >
+              <Text style={s.chipText}>⌂ {homeCity.name}</Text>
+            </Pressable>
+          ) : onPickCity ? (
+            <Pressable
+              testID='turf-pick-city'
+              onPress={onPickCity}
+              accessibilityRole='button'
+              accessibilityLabel='Choose your city'
+              style={[s.chip, { borderColor: DARK.border }]}
+            >
+              <Text style={s.chipText}>⌂ Your city</Text>
+            </Pressable>
+          ) : null}
           {allBounds && (
             <Pressable
               testID='turf-filter-all'

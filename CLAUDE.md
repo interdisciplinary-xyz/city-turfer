@@ -62,7 +62,7 @@ apps/mobile/                         the Expo app (package @cityturfer/mobile); 
     domain/ application/ infrastructure/ ui/ index.ts
   src/contexts/activity-log/         Activity aggregate, history, detail, demo import, street-routed gap estimates
     domain/ application/ infrastructure/ ui/ index.ts contract.ts
-  src/contexts/territory/            CORE: Claim aggregate, turf strength, Territory projection, Turf Map
+  src/contexts/territory/            CORE: Claim aggregate, turf strength, Territory projection, Turf Map, Home City
     domain/ application/ infrastructure/ ui/ index.ts contract.ts
   src/contexts/health-sync/          Apple Health import/export (ACL: "workout" stays here), links + anchor
     domain/ application/ infrastructure/ ui/ index.ts contract.ts

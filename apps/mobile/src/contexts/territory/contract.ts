@@ -11,6 +11,21 @@ export interface TurfReleased extends DomainEvent<'TurfReleased'> {
   activityId: string;
 }
 
+/** The Turfer chose (or cleared, `cityId: null`) their Home City. Carries no coordinates. */
+export interface HomeCityChosen extends DomainEvent<'HomeCityChosen'> {
+  cityId: string | null;
+}
+
+/** A catalogue city as screens and maps see it. */
+export interface CityView {
+  id: string;
+  name: string;
+  country: string;
+  center: [number, number]; // [lon, lat]
+  /** [west, south, east, north]: what a map shows when it opens on this city. */
+  bounds: [number, number, number, number];
+}
+
 export type StrengthTier = 'faint' | 'glowing' | 'strong' | 'blazing';
 
 export interface TurfCellView {
