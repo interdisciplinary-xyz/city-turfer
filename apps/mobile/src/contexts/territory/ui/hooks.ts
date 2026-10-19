@@ -6,28 +6,50 @@ import { useApp, useContainer } from '@/ui-kit/app-context';
 
 import type { CityView, ClaimView, TurfCellView, TurfSummaryView } from '../contract';
 
+/** Screens showing the Home City, told to re-read it right after a choice (not via the outbox, which
+ * can be backing off behind an earlier event). */
+const homeCityListeners = new Set<() => void>();
+
 /**
- * The Home City: `undefined` while loading, `null` if none is chosen. Refreshes when the choice
- * changes anywhere (the HomeCityChosen event bumps `dataVersion`).
+ * The Home City: `undefined` while loading, `null` if none is chosen (or it can't be read: maps
+ * then fall back to their usual view rather than staying blank). Refreshes after a choice and on
+ * `dataVersion`.
  */
 export function useHomeCity(): CityView | null | undefined {
   const c = useContainer();
   const { dataVersion } = useApp();
   const [city, set] = useState<CityView | null | undefined>(undefined);
+  const [chosen, bump] = useState(0);
+  useEffect(() => {
+    const l = () => bump((n) => n + 1);
+    homeCityListeners.add(l);
+    return () => {
+      homeCityListeners.delete(l);
+    };
+  }, []);
   useEffect(() => {
     let live = true;
-    c.territory.homeCity.execute().then((v) => live && set(v));
+    c.territory.homeCity.execute().then(
+      (v) => live && set(v),
+      () => live && set((cur) => cur ?? null)
+    );
     return () => {
       live = false;
     };
-  }, [c, dataVersion]);
+  }, [c, dataVersion, chosen]);
   return city;
 }
 
-/** Chooses (or, with null, clears) the Home City. */
+/** Chooses (or, with null, clears) the Home City; every screen showing it re-reads it. */
 export function useChooseHomeCity(): (cityId: string | null) => Promise<void> {
   const c = useContainer();
-  return useCallback((cityId) => c.territory.chooseHomeCity.execute(cityId), [c]);
+  return useCallback(
+    async (cityId) => {
+      await c.territory.chooseHomeCity.execute(cityId);
+      homeCityListeners.forEach((l) => l());
+    },
+    [c]
+  );
 }
 
 /** Catalogue cities matching the query (synchronous: the catalogue ships with the app). */

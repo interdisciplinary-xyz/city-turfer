@@ -51,10 +51,22 @@ export function CityPicker({ onDone }: CityPickerProps) {
         accessibilityLabel='Search cities'
         style={[s.search, { color: p.text, backgroundColor: p.card, borderColor: p.border }]}
       />
+      {home ? (
+        <Button
+          testID='city-clear'
+          label={`Clear ${home.name}`}
+          color={p.card}
+          textColor={p.text}
+          disabled={busy}
+          onPress={() => pick(null)}
+          style={s.clear}
+        />
+      ) : null}
       <FlatList
         data={cities}
         keyExtractor={(c) => c.id}
         keyboardShouldPersistTaps='handled'
+        keyboardDismissMode='on-drag'
         contentContainerStyle={s.list}
         ListEmptyComponent={
           <Text testID='city-empty' style={[s.empty, { color: p.muted }]}>
@@ -85,17 +97,6 @@ export function CityPicker({ onDone }: CityPickerProps) {
           );
         }}
       />
-      {home ? (
-        <Button
-          testID='city-clear'
-          label={`Clear ${home.name}`}
-          color={p.card}
-          textColor={p.text}
-          disabled={busy}
-          onPress={() => pick(null)}
-          style={s.clear}
-        />
-      ) : null}
     </View>
   );
 }
@@ -124,5 +125,5 @@ const s = StyleSheet.create({
   country: { fontSize: FONT_SIZE.caption },
   check: { fontSize: FONT_SIZE.lead, fontWeight: FONT_WEIGHT.heavy },
   empty: { fontSize: FONT_SIZE.caption, textAlign: 'center', marginTop: SPACE.xl },
-  clear: { marginBottom: SPACE.xxl },
+  clear: { marginBottom: SPACE.md },
 });

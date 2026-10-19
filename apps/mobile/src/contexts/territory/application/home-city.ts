@@ -1,8 +1,8 @@
-import { type Clock, DomainError } from '@/shared-kernel';
+import type { Clock } from '@/shared-kernel';
 
 import type { CityView, HomeCityChosen } from '../contract';
 import { type City, cityBounds, searchCities } from '../domain/city';
-import { CITY_CATALOG, cityById } from '../domain/city-catalog';
+import { CITY_CATALOG, cityById, homeCityFromCatalogue } from '../domain/city-catalog';
 import type { HomeCityRepository } from '../domain/home-city-repository';
 
 export interface HomeCityDeps {
@@ -30,8 +30,8 @@ export class GetHomeCity {
 export class ChooseHomeCity {
   constructor(private readonly d: HomeCityDeps) {}
   async execute(cityId: string | null): Promise<void> {
-    if (cityId !== null && !cityById(cityId)) {
-      throw new DomainError('home-city.unknown', cityId);
+    if (cityId !== null) {
+      homeCityFromCatalogue(cityId);
     }
     if ((await this.d.homeCities.homeCityId()) === cityId) {
       return;

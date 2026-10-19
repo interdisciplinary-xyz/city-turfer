@@ -1,7 +1,7 @@
-import { distanceM } from '@/shared-kernel';
+import { distanceM, DomainError } from '@/shared-kernel';
 
 import { type City, cityBounds, foldForSearch, searchCities } from '../city';
-import { CITY_CATALOG, cityById } from '../city-catalog';
+import { CITY_CATALOG, cityById, homeCityFromCatalogue } from '../city-catalog';
 
 const names = (cities: City[]) => cities.map((c) => c.name);
 
@@ -83,5 +83,10 @@ describe('CITY_CATALOG', () => {
 
   it('returns null for unknown ids', () => {
     expect(cityById('xx-nowhere')).toBeNull();
+  });
+
+  it('only lets a catalogue city be the Home City', () => {
+    expect(homeCityFromCatalogue('pl-lodz').name).toBe('Łódź');
+    expect(() => homeCityFromCatalogue('xx-nowhere')).toThrow(DomainError);
   });
 });

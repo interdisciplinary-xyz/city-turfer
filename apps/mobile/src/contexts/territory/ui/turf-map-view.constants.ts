@@ -10,8 +10,10 @@ export interface TrackLine {
 
 export interface TurfMapViewProps {
   tracks: TrackLine[];
-  /** `undefined` while loading (the camera waits), `null` when no Home City is chosen. */
-  homeCity: CityView | null | undefined;
+  /** Loaded before mounting (the camera's initial view is fixed at mount); null when none. */
+  homeCity: CityView | null;
+  /** Whether the Turf tab is on screen: a newly chosen city is flown to when it next is. */
+  focused: boolean;
   /** Opens the city picker (the screen owns navigation). */
   onPickCity?: () => void;
 }

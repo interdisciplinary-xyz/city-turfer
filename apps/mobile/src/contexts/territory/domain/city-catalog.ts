@@ -1,3 +1,5 @@
+import { DomainError } from '@/shared-kernel';
+
 import type { City } from './city';
 
 const city = (id: string, name: string, country: string, lat: number, lon: number, radiusKm: number): City => ({
@@ -58,4 +60,13 @@ export const CITY_CATALOG: readonly City[] = [
 
 export function cityById(id: string): City | null {
   return CITY_CATALOG.find((c) => c.id === id) ?? null;
+}
+
+/** Rule: only a catalogue city can be the Home City. */
+export function homeCityFromCatalogue(id: string): City {
+  const city = cityById(id);
+  if (!city) {
+    throw new DomainError('home-city.unknown', id);
+  }
+  return city;
 }

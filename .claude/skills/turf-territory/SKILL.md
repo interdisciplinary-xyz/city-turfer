@@ -155,8 +155,10 @@ by type with a layer `filter` expression, not by rebuilding data.
   `docs/decisions/home-city-2026-10-19.md`.
 - Turf Map camera: Home City set → `initialViewState.bounds` = the city's bounds (centre ± radius);
   a newly chosen city → `fitBounds`; chip `turf-city` recentres. No Home City → fit all tracks once,
-  else follow the user. The Camera mounts only after the Home City has loaded (its initial view is
-  read once at mount).
+  else follow the user. The Turf and Record screens wait for the Home City before mounting their
+  map, and the Camera always mounts with the map: on iOS MapLibre applies `initialViewState` and
+  `trackUserLocation` only if the Camera exists at the map's first layout (a Camera added later is
+  ignored). A newly chosen city is flown to when the Turf tab is next focused.
 - Record map: starts on the Home City centre until the first fix (`initialCenter` prop from the
   screen; Recording never imports Territory).
 - Catalogue ids are stored in user databases: never rename or reuse one; a removed id reads as no
