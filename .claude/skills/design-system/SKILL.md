@@ -79,6 +79,18 @@ pnpm --filter @cityturfer/storybook build    # apps/storybook/storybook-static (
   website pieces synchronous (`useTranslations`, not `await getTranslations`).
 - Static files from `apps/web/public` are served at the same paths.
 - Native-only UI (Turf Map, live recording, Apple Health) gets a `NativePlaceholder` story.
+- **Coverage: every exported component has a story.** That means each `@cityturfer/ui` export, and
+  each website piece in `apps/web/src/app/[locale]/` (plus `Website/Page`, which composes
+  `page.tsx`, a server component that can't render here). Mobile screen components that read the
+  container (`contexts/*/ui/`) are not in Storybook. They join when their presentational part moves
+  to `packages/ui`.
+- **Branded Storybook UI:** `.storybook/theme.ts` (`create()` from `storybook/theming`, colours from
+  `@cityturfer/brand` `DARK` and `ACCENT`). It's used by `manager.ts` for the sidebar and toolbar,
+  and by `parameters.docs.theme` for the docs pages. The sidebar logo is `brandTitle` HTML: the mark
+  plus the "City/Turfer" wordmark. `manager-head.html` sets the tab icon. Brand SVGs are served at
+  `brand/` (a `staticDirs` entry). Keep every URL relative, so it works under `/storybook`.
+- **Docs pages:** `tags: ['autodocs']` in `preview.tsx` (`@storybook/addon-docs`). Each component's
+  `parameters.docs.description.component` is its intro.
 - Screenshots: serve `storybook-static` with a server that keeps query strings
   (`python3 -m http.server`; `serve` redirects `iframe.html?…` to `/iframe` and drops them) and load
   `iframe.html?id=<story-id>&viewMode=story&globals=scheme:light` inside an iframe of the exact size
