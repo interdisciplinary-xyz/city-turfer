@@ -1,4 +1,4 @@
-import { getTranslations } from 'next-intl/server';
+import { useTranslations } from 'next-intl';
 
 import { Link } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
@@ -6,8 +6,8 @@ import { routing } from '@/i18n/routing';
 import type { LanguageSwitcherProps } from './language-switcher.constants';
 
 /** Links to the same page in every language; the current one is marked, not linked. */
-export async function LanguageSwitcher({ locale, className }: LanguageSwitcherProps) {
-  const t = await getTranslations({ locale, namespace: 'language' });
+export function LanguageSwitcher({ locale, className }: LanguageSwitcherProps) {
+  const t = useTranslations('language');
   return (
     <nav aria-label={t('label')} className={['lang', className].filter(Boolean).join(' ')}>
       {routing.locales.map((l) =>
