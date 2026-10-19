@@ -17,3 +17,6 @@ pnpm-lock.yaml
 
 # Written by next dev (Next 16 agent notes); keep its exact text so it never shows as changed
 apps/web/AGENTS.md
+
+# Storybook static build
+storybook-static

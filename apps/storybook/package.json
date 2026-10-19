@@ -1,0 +1,38 @@
+{
+  "name": "@cityturfer/storybook",
+  "version": "0.5.0",
+  "private": true,
+  "description": "One Storybook for the CityTurfer design system: @cityturfer/ui (React Native, rendered with react-native-web) and the website's pieces from apps/web. Static build hosted on Vercel.",
+  "scripts": {
+    "dev": "storybook dev --port 6006 --no-open",
+    "build": "storybook build --output-dir storybook-static",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .storybook src"
+  },
+  "dependencies": {
+    "@cityturfer/brand": "workspace:*",
+    "@cityturfer/ui": "workspace:*",
+    "@gsap/react": "^2.1.2",
+    "gsap": "^3.15.0",
+    "next-intl": "^4.14.9",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-web": "^0.21.4"
+  },
+  "devDependencies": {
+    "@cityturfer/config": "workspace:*",
+    "@interdisciplinary/eslint-config": "workspace:*",
+    "@storybook/react-native-web-vite": "10.6.2",
+    "@types/node": "^22.15.0",
+    "@types/react": "~19.2.2",
+    "@types/react-dom": "~19.2.2",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^16.5.0",
+    "storybook": "10.6.2",
+    "typescript": "~6.0.3",
+    "vite": "^7.3.7"
+  }
+}

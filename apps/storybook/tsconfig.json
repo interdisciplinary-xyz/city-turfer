@@ -1,0 +1,17 @@
+{
+  "extends": "@cityturfer/config/tsconfig/base.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "types": ["node", "vite/client"],
+    "paths": {
+      "@/*": ["../web/src/*"]
+    }
+  },
+  "include": ["src", ".storybook", "../web/next-env.d.ts"]
+}
