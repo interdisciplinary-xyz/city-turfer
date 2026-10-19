@@ -9,14 +9,25 @@ import { ACCENT, DARK, LIGHT, ON_ACCENT, ON_TIER, ON_TYPE_COLOR, RAMP, TIER_COLO
 /** Spacing scale in points (app) and CSS pixels (web). */
 export const SPACE = { xxs: 2, xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 } as const;
 
-/** Corner radii. `full` makes a pill or a circle. */
+/**
+ * Corner radii. Role names say who uses them: `chip` (filter chips, legend), `control` (buttons,
+ * list rows), `card` (Card), `panel` (website panels); `sm` for small insets, `full` for pills and
+ * circles.
+ */
 export const RADIUS = { sm: 8, chip: 14, control: 16, card: 18, panel: 20, full: 999 } as const;
 
 /** Type sizes. Labels are uppercase; numbers use tabular figures (`brand-system` typography). */
 export const FONT_SIZE = { label: 12, caption: 13, unit: 15, body: 16, lead: 18, stat: 26, hero: 52 } as const;
 
 /** Font weights as strings, the form React Native and CSS both accept. */
-export const FONT_WEIGHT = { regular: '400', semibold: '600', bold: '700', heavy: '800', black: '900' } as const;
+export const FONT_WEIGHT = {
+  regular: '400',
+  medium: '500',
+  semibold: '600',
+  bold: '700',
+  heavy: '800',
+  black: '900',
+} as const;
 
 /** Letter spacing for uppercase labels, in points. */
 export const LABEL_TRACKING = 0.8;
@@ -69,5 +80,7 @@ export function cssVariables(scheme: ColorScheme): CssVariables {
     ...scale('space', SPACE, 'px'),
     ...scale('radius', RADIUS, 'px'),
     ...scale('font', FONT_SIZE, 'px'),
+    ...Object.fromEntries(Object.entries(FONT_WEIGHT).map(([key, value]) => [`--font-weight-${key}`, value])),
+    '--label-tracking': `${LABEL_TRACKING}px`,
   };
 }

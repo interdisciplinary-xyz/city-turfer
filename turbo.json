@@ -5,7 +5,10 @@
     "lint": { "outputs": [] },
     "arch": { "outputs": [] },
     "test:unit": { "outputs": [] },
-    "build": { "dependsOn": ["typecheck"], "outputs": [".next/**", "!.next/cache/**", "out/**"] },
+    "build": {
+      "dependsOn": ["typecheck"],
+      "outputs": [".next/**", "!.next/cache/**", "out/**", "storybook-static/**"]
+    },
     "dev": { "cache": false, "persistent": true }
   }
 }
