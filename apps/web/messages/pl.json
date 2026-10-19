@@ -32,5 +32,16 @@
     "note": "Plik APK na telefony z Androidem",
     "help": "Pierwsza instalacja? Przeglądarka zapyta o zgodę na instalowanie aplikacji — tak instaluje się aplikacje spoza Google Play.",
     "iphone": "iPhone: wkrótce"
+  },
+  "waitlist": {
+    "title": "Zapisz się na listę oczekujących",
+    "emailLabel": "Adres e-mail",
+    "emailPlaceholder": "ty@przyklad.pl",
+    "submit": "Zapisz mnie",
+    "sending": "Wysyłanie…",
+    "consent": "Napiszcie do mnie, gdy CityTurfer wystartuje. Mogę zrezygnować w każdej chwili.",
+    "sent": "Prawie gotowe — sprawdź skrzynkę i potwierdź adres e-mail, aby dołączyć do listy.",
+    "failed": "Nie udało się wysłać. Sprawdź połączenie i spróbuj ponownie.",
+    "privacy": "{controller} przechowuje Twój e-mail w Brevo (UE) wyłącznie po to, by poinformować Cię o starcie CityTurfer. Najpierw potwierdzasz go e-mailem. Aby go usunąć, napisz na {contactEmail}."
   }
 }

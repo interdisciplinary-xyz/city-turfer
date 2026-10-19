@@ -7,7 +7,9 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { Locale } from '@/i18n/routing';
 
 import { ANDROID_APK_URL } from '../download-url';
+import { WAITLIST } from '../waitlist-config';
 import { LanguageSwitcher } from './language-switcher';
+import { WaitlistForm } from './waitlist-form';
 
 export default async function Home({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;
@@ -37,11 +39,7 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
                   {t('download.cta')}
                 </a>
                 <p className='download-note'>
-                  {t('download.note')}. {t('download.help')}
-                </p>
-                <p className='pill'>
-                  <span className='pill-dot' aria-hidden='true' />
-                  {t('download.iphone')}
+                  {t('download.note')} · {t('download.iphone')}. {t('download.help')}
                 </p>
               </div>
             ) : (
@@ -50,6 +48,14 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
                 {t('hero.comingSoon')}
               </p>
             )}
+            {WAITLIST ? (
+              <WaitlistForm
+                action={WAITLIST.url}
+                controller={WAITLIST.controller}
+                contactEmail={WAITLIST.contactEmail}
+                locale={locale}
+              />
+            ) : null}
           </div>
           <div className='screens'>
             <figure className='screen'>
