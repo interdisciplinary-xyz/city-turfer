@@ -159,8 +159,9 @@ by type with a layer `filter` expression, not by rebuilding data.
   map, and the Camera always mounts with the map: on iOS MapLibre applies `initialViewState` and
   `trackUserLocation` only if the Camera exists at the map's first layout (a Camera added later is
   ignored). A newly chosen city is flown to when the Turf tab is next focused.
-- Record map: starts on the Home City centre until the first fix (`initialCenter` prop from the
-  screen; Recording never imports Territory).
+- Record map: starts on the Home City centre until the first fix; before a recording starts the
+  `record-city` chip opens the picker and a newly chosen city is flown to. The screen hands the city
+  in as a `RecordCity` prop (Recording never imports Territory).
 - Catalogue ids are stored in user databases: never rename or reuse one; a removed id reads as no
   Home City. Adding a city is a JS-only change (ships over the air).
 

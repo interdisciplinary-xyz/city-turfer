@@ -70,6 +70,8 @@ opens on Dashboard after sign-in.
 
 - Type picker: walk, run, ride. Live map following the user, with a recenter button; before the
   first GPS fix it shows the Home City (if one is chosen).
+- Before a recording starts, the `record-city` chip at the top ("⌂ Kraków ▾", or "⌂ Your city ▾")
+  opens the city picker; a newly chosen city is shown on the map (Recenter returns to the user).
 - Live stats: time, distance, current and average pace (walk, run) or speed (ride).
 - Pause / resume; auto-pause from the `TrackingProfile`; **hold to finish**.
 - A too-short recording can't be saved: "Too short to save" offers keep recording or discard.
