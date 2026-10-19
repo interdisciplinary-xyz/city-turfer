@@ -1,6 +1,6 @@
 {
   "name": "@cityturfer/storybook",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "description": "One Storybook for the CityTurfer design system: @cityturfer/ui (React Native, rendered with react-native-web) and the website's pieces from apps/web. Static build hosted on Vercel.",
   "scripts": {
@@ -23,6 +23,7 @@
   "devDependencies": {
     "@cityturfer/config": "workspace:*",
     "@interdisciplinary/eslint-config": "workspace:*",
+    "@storybook/addon-docs": "10.6.2",
     "@storybook/react-native-web-vite": "10.6.2",
     "@types/node": "^22.15.0",
     "@types/react": "~19.2.2",
