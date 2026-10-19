@@ -9,8 +9,8 @@
 
 :root {
   --ramp: linear-gradient(45deg, var(--faint), var(--glow) 45%, var(--strong) 80%, var(--blazing));
-  --radius: 20px;
-  --gutter: 16px;
+  --radius: var(--radius-panel);
+  --gutter: var(--space-lg);
   --max: 1080px;
   color-scheme: dark;
 }
@@ -21,7 +21,7 @@ html {
 
 body {
   margin: 0;
-  background: var(--night);
+  background: var(--bg);
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 17px;
@@ -53,7 +53,7 @@ img {
 .skip:focus {
   left: var(--gutter);
   top: var(--gutter);
-  background: var(--night-raised);
+  background: var(--card);
   padding: 8px 12px;
   border-radius: 8px;
   z-index: 10;
@@ -89,7 +89,7 @@ img {
   padding: 4px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: var(--night-raised);
+  background: var(--card);
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -283,7 +283,7 @@ h1 {
 /* Not available yet: visibly a button, clearly switched off. */
 .store-btn-off {
   border: 1px solid var(--border);
-  background: var(--night-raised);
+  background: var(--card);
   color: var(--muted);
   cursor: not-allowed;
 }
@@ -349,7 +349,7 @@ h1 {
   padding: 0 16px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: var(--night-raised);
+  background: var(--card);
   color: var(--text);
   font: inherit;
 }
@@ -371,7 +371,7 @@ h1 {
   border: 0;
   border-radius: 999px;
   background: var(--text);
-  color: var(--night);
+  color: var(--bg);
   font: inherit;
   font-weight: 800;
   cursor: pointer;
@@ -420,7 +420,7 @@ h1 {
   padding: 14px 18px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
-  background: var(--night-raised);
+  background: var(--card);
 }
 
 @media (max-width: 380px) {
