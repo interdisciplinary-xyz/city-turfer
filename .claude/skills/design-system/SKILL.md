@@ -66,6 +66,10 @@ logo) stay in the `brand-system` skill; this skill is about the code that carrie
 ```bash
 pnpm --filter @cityturfer/storybook dev      # http://localhost:6006 (6006: Metro owns 8081)
 pnpm --filter @cityturfer/storybook build    # apps/storybook/storybook-static (also in turbo build)
+# The website dev server (`pnpm run web:dev`) serves that build at https://cityturfer.local/storybook
+# (apps/web/tools/storybook-route.mjs, dev only). Rebuild to refresh it; live editing stays on 6006,
+# because Storybook's dev server only works at the site root. From a git worktree portless adds the
+# branch to the hostname; `npx portless alias cityturfer <port>` maps the plain name.
 ```
 
 - Toolbar: **Theme** (dark/light; app components only, website stories stay dark) and **Language**
