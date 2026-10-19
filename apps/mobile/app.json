@@ -4,10 +4,7 @@
     "slug": "turftrack",
     "scheme": "turftrack",
     "version": "0.3.0",
-    "platforms": [
-      "ios",
-      "android"
-    ],
+    "platforms": ["ios", "android"],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -35,11 +32,7 @@
         "android.permission.ACCESS_BACKGROUND_LOCATION",
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_BACKGROUND_LOCATION",
-        "android.permission.FOREGROUND_SERVICE",
-        "android.permission.FOREGROUND_SERVICE_LOCATION"
+        "android.permission.RECEIVE_BOOT_COMPLETED"
       ]
     },
     "plugins": [
@@ -70,6 +63,14 @@
             "image": "./assets/splash-icon.png",
             "backgroundColor": "#0B0D12"
           }
+        }
+      ],
+      [
+        "@kingstinct/react-native-healthkit",
+        {
+          "NSHealthShareUsageDescription": "CityTurfer imports your walks, runs, hikes and rides with their routes, so they count towards your turf.",
+          "NSHealthUpdateUsageDescription": "CityTurfer saves the walks, runs and rides you record to Apple Health as workouts with their routes.",
+          "background": false
         }
       ]
     ],

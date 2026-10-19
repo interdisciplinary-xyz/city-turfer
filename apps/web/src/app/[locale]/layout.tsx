@@ -11,6 +11,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { routing } from '@/i18n/routing';
 
 import { SITE_URL } from '../site-url';
+import { MOTION_BOOT_SCRIPT } from './hero-motion';
 import { LanguageSwitcher } from './language-switcher';
 
 /** Every language is prerendered by the static export. */
@@ -77,7 +78,12 @@ export default async function LocaleLayout({
   }
 
   return (
-    <html lang={locale} style={tokens}>
+    // suppressHydrationWarning: the motion boot script adds a class to <html> before React hydrates.
+    <html lang={locale} style={tokens} suppressHydrationWarning>
+      <head>
+        {/* Before first paint: hide [data-anim] for the entrance animation (skipped with reduced motion). */}
+        <script dangerouslySetInnerHTML={{ __html: MOTION_BOOT_SCRIPT }} />
+      </head>
       <body>
         {/* next-intl's Link (language switcher, also slotted into the dev toolbar) is a client
             component and reads the locale from this provider. */}

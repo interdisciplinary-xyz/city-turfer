@@ -141,6 +141,43 @@ const MIGRATIONS: { version: number; sql: string }[] = [
       ALTER TABLE sys_outbox ADD COLUMN dead_lettered_at INTEGER;
     `,
   },
+  {
+    version: 6,
+    sql: `
+      -- Health Sync (Apple Health): one settings row per user database
+      CREATE TABLE hs_state (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        connected_at INTEGER,
+        import_enabled INTEGER NOT NULL DEFAULT 1,
+        export_enabled INTEGER NOT NULL DEFAULT 1,
+        anchor TEXT,
+        last_import TEXT
+      );
+      -- One Activity <-> one Apple Health workout. No foreign key: the link outlives a deleted
+      -- Activity, so deleted imports are not imported again and recordings are not exported twice.
+      CREATE TABLE hs_links (
+        activity_id TEXT PRIMARY KEY,
+        health_uuid TEXT NOT NULL,
+        direction TEXT NOT NULL CHECK (direction IN ('import', 'export')),
+        at INTEGER NOT NULL,
+        route_saved INTEGER NOT NULL DEFAULT 1
+      );
+      CREATE UNIQUE INDEX hs_links_health_uuid ON hs_links (health_uuid);
+      -- Workouts to import again (route not readable yet, or reading failed)
+      CREATE TABLE hs_pending_imports (
+        health_uuid TEXT PRIMARY KEY,
+        type TEXT NOT NULL,
+        started_at INTEGER NOT NULL,
+        ended_at INTEGER NOT NULL,
+        attempts INTEGER NOT NULL DEFAULT 1
+      );
+      -- Recordings waiting to be saved to Apple Health (foreground only)
+      CREATE TABLE hs_pending_exports (
+        activity_id TEXT PRIMARY KEY,
+        attempts INTEGER NOT NULL DEFAULT 0
+      );
+    `,
+  },
 ];
 
 /** `upTo` stops at a schema version (tests seeding an older database). */

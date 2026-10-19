@@ -1,11 +1,16 @@
 // Published language of the Activity Log context (types only).
 import type { ActivityType, DomainEvent, TrackPoint } from '@/shared-kernel';
 
+/** Where an Activity came from: a finished Recording Session, or imported (demo history, Apple Health). */
+export type ActivityOrigin = 'recording' | 'import';
+
 export interface ActivityRecorded extends DomainEvent<'ActivityRecorded'> {
   activityId: string;
   activityType: ActivityType;
   startedAt: number;
   endedAt: number;
+  /** Absent on events written before v0.4.0: those were recordings or demo imports. */
+  origin?: ActivityOrigin;
 }
 export interface ActivityDeleted extends DomainEvent<'ActivityDeleted'> {
   activityId: string;

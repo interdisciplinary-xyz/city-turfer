@@ -7,8 +7,7 @@
     "skip": "Skip to content",
     "taglineLead": "Surf your city.",
     "taglineRamp": "Own your streets.",
-    "lede": "Walk, run or ride — every street you cover becomes your turf. Come back and watch it glow.",
-    "comingSoon": "Coming soon to iPhone"
+    "lede": "Walk, run or ride — every street you cover becomes your turf. Come back and watch it glow."
   },
   "screens": {
     "turfMap": {
@@ -26,5 +25,23 @@
     "label": "Language",
     "en": "English",
     "pl": "Polski"
+  },
+  "download": {
+    "cta": "Download for Android",
+    "note": "APK for Android phones",
+    "help": "First install? Your browser asks you to allow installing apps from it — that's how apps from outside Google Play install.",
+    "appStore": "App Store",
+    "soon": "Coming soon"
+  },
+  "waitlist": {
+    "title": "Join the waitlist",
+    "emailLabel": "Email address",
+    "emailPlaceholder": "you@example.com",
+    "submit": "Join",
+    "sending": "Sending…",
+    "consent": "Email me when CityTurfer launches. I can unsubscribe at any time.",
+    "sent": "Almost there — check your inbox and confirm your email to join the waitlist.",
+    "failed": "That didn't go through. Check your connection and try again.",
+    "privacy": "{controller} stores your email with Brevo (EU) only to tell you about CityTurfer's launch. You confirm by email first. To have it deleted, write to {contactEmail}."
   }
 }
