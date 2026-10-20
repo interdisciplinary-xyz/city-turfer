@@ -30,8 +30,9 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
   (`turbo.json`, `pnpm-workspace.yaml`): workspaces apps/* and packages/*; design in
   `docs/decisions/monorepo-turborepo-2026-10-18.md`
 - **Web**: Next.js 16 (App Router, `output: 'export'`) in `apps/web`, hosted on Vercel; static
-  showcase only (one hero section): no forms, cookies or third-party scripts. Languages via
-  `next-intl` (`/en`, `/pl`; copy in `apps/web/messages/*.json`, no CMS)
+  showcase (hero, APK download, waitlist): no backend, cookies or third-party scripts; the waitlist
+  form posts emails straight to Brevo (double opt-in, personal data). Languages via `next-intl`
+  (`/en`, `/pl`; copy in `apps/web/messages/*.json`, no CMS)
 - **Storage**: `expo-sqlite`, local-first; the phone stays the source of truth
 - **API** (planned, v0.8.0): `apps/api`, Hono on Vercel (`fra1`), routes declared with zod +
   `@hono/zod-openapi` into a generated OpenAPI 3.1 spec (`apps/api/openapi.json`), Swagger UI at
