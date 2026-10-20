@@ -135,6 +135,8 @@ pnpm run typecheck               # tsc in every workspace (turbo)
 pnpm test                        # dependency rules (depcruise) + Jest + tool tests (turbo)
 pnpm run build                   # web static export (apps/web/out) via turbo
 pnpm run web:dev                 # landing page at https://cityturfer.local (portless + server.mjs, dev toolbar)
+pnpm start:dev                   # web:dev, building Storybook first if storybook-static is missing
+pnpm cache:clean                 # delete node_modules, .turbo, .next, out, .expo (then pnpm install)
 pnpm --filter @cityturfer/storybook dev     # Storybook at http://localhost:6006 (app components + website pieces)
 pnpm --filter @cityturfer/storybook build   # static Storybook in apps/storybook/storybook-static
 pnpm --filter @cityturfer/api dev           # API on http://localhost:8787 (Swagger at /swagger); web:dev proxies /api/* to it
