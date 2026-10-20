@@ -86,4 +86,7 @@ export class InMemoryActivityRepository implements ActivityRepository {
   async gapRoutesOf(id: string) {
     return [...(this.rows.get(id)?.routes ?? [])];
   }
+  async gapsCheckedAt(id: string) {
+    return this.rows.get(id)?.checkedAt ?? null;
+  }
 }

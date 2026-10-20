@@ -62,3 +62,14 @@ describe('SqliteActivityRepository: why segments start', () => {
     expect(a.resumedSegments).toBeNull();
   });
 });
+
+describe('SqliteActivityRepository: gap routes check time', () => {
+  it('is null until the gaps are estimated, then the estimate time; null for an unknown id', async () => {
+    const { repo } = await setup();
+    await repo.save(record(null), points);
+    expect(await repo.gapsCheckedAt('a')).toBeNull();
+    await repo.saveGapRoutes('a', [], T0 + 5_000);
+    expect(await repo.gapsCheckedAt('a')).toBe(T0 + 5_000);
+    expect(await repo.gapsCheckedAt('nope')).toBeNull();
+  });
+});

@@ -16,6 +16,12 @@ export interface HomeCityChosen extends DomainEvent<'HomeCityChosen'> {
   cityId: string | null;
 }
 
+/** The Turfer's last Home City decision (`cityId: null`: cleared) and when it was made (epoch ms). */
+export interface HomeCityChoice {
+  cityId: string | null;
+  chosenAt: number;
+}
+
 /** A catalogue city as screens and maps see it. */
 export interface CityView {
   id: string;

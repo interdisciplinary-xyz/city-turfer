@@ -29,4 +29,6 @@ export interface ActivityRepository {
   /** Atomic: replace gap routes, set estimated totals, mark checked, ActivityDistanceEstimated → outbox. */
   saveGapRoutes(id: string, routes: readonly GapRoute[], now: number): Promise<void>;
   gapRoutesOf(id: string): Promise<GapRoute[]>;
+  /** When the gap routes were last estimated; null when not yet (or reset by a track correction). */
+  gapsCheckedAt(id: string): Promise<number | null>;
 }

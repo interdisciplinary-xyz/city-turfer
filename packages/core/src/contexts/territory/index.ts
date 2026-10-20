@@ -1,5 +1,11 @@
 // Public API of the Territory context.
-import { ChooseHomeCity, GetHomeCity, type HomeCityDeps, SearchCities } from './application/home-city';
+import {
+  ChooseHomeCity,
+  GetHomeCity,
+  HomeCityChoiceQuery,
+  type HomeCityDeps,
+  SearchCities,
+} from './application/home-city';
 import {
   ClaimTurfFromActivity,
   GetClaimForActivity,
@@ -19,6 +25,7 @@ export function createTerritoryApi(deps: TerritoryDeps & HomeCityDeps) {
     summary: new GetTurfSummary(deps),
     claimOf: new GetClaimForActivity(deps),
     homeCity: new GetHomeCity(deps),
+    homeCityChoice: new HomeCityChoiceQuery(deps),
     chooseHomeCity: new ChooseHomeCity(deps),
     searchCities: new SearchCities(),
   };

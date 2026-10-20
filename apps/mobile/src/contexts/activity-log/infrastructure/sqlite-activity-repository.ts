@@ -240,6 +240,14 @@ export class SqliteActivityRepository implements ActivityRepository {
     }));
   }
 
+  async gapsCheckedAt(id: string): Promise<number | null> {
+    const r = await this.db.first<{ at: number | null }>(
+      'SELECT gaps_checked_at AS at FROM log_activities WHERE id = ?',
+      [id]
+    );
+    return r?.at ?? null;
+  }
+
   async allIds(): Promise<string[]> {
     return (await this.db.all<{ id: string }>('SELECT id FROM log_activities ORDER BY started_at')).map((r) => r.id);
   }
