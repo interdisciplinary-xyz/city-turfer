@@ -42,7 +42,7 @@ export function swaggerHtml({ toolbar = false } = {}) {
           <img class="ct-wordmark" src="./brand/wordmark.svg" alt="CityTurfer" height="22" />
           <span>API</span>
         </h1>
-        <p class="ct-tagline">Local docs. Routes stay on your phone.</p>
+        <p class="ct-tagline">Local API docs · planned routes answer 501</p>
       </div>
     </header>
     <div id="swagger-ui"></div>${toolbar ? '\n    <div id="dev-toolbar-root"></div>' : ''}
