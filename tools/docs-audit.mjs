@@ -84,7 +84,7 @@ export const PROBES = {
       .length,
   /** Achievements: one `id: '…'` per definition in the achievements list. */
   achievements: () =>
-    countMatches(read('apps/mobile/src/contexts/achievements/domain/achievements.ts'), /^\s+id: '[a-z0-9-]+',/gm),
+    countMatches(read('packages/core/src/contexts/achievements/domain/achievements.ts'), /^\s+id: '[a-z0-9-]+',/gm),
   /** Maestro flows run by the suite: entries of flowsOrder in apps/mobile/e2e/config.yaml. */
   'e2e-flows': () => {
     const text = read('apps/mobile/e2e/config.yaml');
