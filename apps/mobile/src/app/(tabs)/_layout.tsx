@@ -3,16 +3,16 @@ import type { BottomTabBarButtonProps } from 'expo-router/build/react-navigation
 import { type SFSymbol, SymbolView } from 'expo-symbols';
 import { type ColorValue, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { ACCENT } from '@/constants/colors';
+import { ACCENT, ON_ACCENT } from '@/constants/colors';
 import { MeTabButton } from '@/ui-kit/me-menu';
 import { usePalette } from '@/ui-kit/theme';
 
-/** SF Symbol on iOS; the text glyph is the fallback elsewhere (Android). */
+/** SF Symbol on iOS (the `.fill` variant when focused); the text glyph is the fallback elsewhere (Android). */
 const icon =
-  (symbol: SFSymbol, glyph: string) =>
+  (symbol: SFSymbol, filled: SFSymbol, glyph: string) =>
   ({ color, focused }: { color: ColorValue; focused: boolean }) => (
     <SymbolView
-      name={symbol}
+      name={focused ? filled : symbol}
       type='monochrome'
       weight={focused ? 'semibold' : 'regular'}
       tintColor={color}
@@ -39,9 +39,9 @@ function RecordTabButton({ onPress, onLongPress, testID, 'aria-selected': select
         <SymbolView
           name='record.circle'
           weight='semibold'
-          tintColor='#FFFFFF'
+          tintColor={ON_ACCENT}
           size={30}
-          fallback={<Text style={{ fontSize: 26, color: '#FFFFFF' }}>●</Text>}
+          fallback={<Text style={{ fontSize: 26, color: ON_ACCENT }}>●</Text>}
         />
       </View>
       <Text style={[s.recordLabel, { color: focused ? ACCENT : p.muted }]}>Record</Text>
@@ -63,11 +63,15 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name='index'
-        options={{ title: 'Dashboard', tabBarIcon: icon('house', '⌂'), tabBarButtonTestID: 'tab-dashboard' }}
+        options={{
+          title: 'Dashboard',
+          tabBarIcon: icon('house', 'house.fill', '⌂'),
+          tabBarButtonTestID: 'tab-dashboard',
+        }}
       />
       <Tabs.Screen
         name='turf'
-        options={{ title: 'Turf', tabBarIcon: icon('hexagon', '⬢'), tabBarButtonTestID: 'tab-turf' }}
+        options={{ title: 'Turf', tabBarIcon: icon('hexagon', 'hexagon.fill', '⬢'), tabBarButtonTestID: 'tab-turf' }}
       />
       <Tabs.Screen
         name='record'
@@ -75,7 +79,11 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name='stats'
-        options={{ title: 'Stats', tabBarIcon: icon('chart.bar', '▤'), tabBarButtonTestID: 'tab-stats' }}
+        options={{
+          title: 'Stats',
+          tabBarIcon: icon('chart.bar', 'chart.bar.fill', '▤'),
+          tabBarButtonTestID: 'tab-stats',
+        }}
       />
       <Tabs.Screen
         name='me'

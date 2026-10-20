@@ -1,10 +1,14 @@
+import { NAME, RADIUS, SPACE, TAGLINE } from '@cityturfer/brand';
 import { useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { ACCENT, DARK, FONT_FAMILY, TIER_COLOR } from '@/constants/colors';
+import { ACCENT, DARK } from '@/constants/colors';
 import { useApp } from '@/ui-kit/app-context';
 import { Button } from '@/ui-kit/components';
 import { useLightStatusBar } from '@/ui-kit/use-light-status-bar';
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- Metro asset; the app has no *.png type declarations.
+const WORDMARK = require('../../assets/brand/out/wordmark.png');
 
 export default function SignIn() {
   useLightStatusBar();
@@ -28,11 +32,15 @@ export default function SignIn() {
   return (
     <KeyboardAvoidingView style={s.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={s.inner}>
-        <Text style={s.logo} accessibilityLabel='CityTurfer' numberOfLines={1} adjustsFontSizeToFit>
-          <Text style={s.logoCity}>City</Text>
-          <Text style={s.logoTurfer}>Turfer</Text>
-        </Text>
-        <Text style={s.tag}>Surf your city. Own your streets.</Text>
+        <Image
+          source={WORDMARK}
+          style={s.logo}
+          resizeMode='contain'
+          accessible
+          accessibilityRole='image'
+          accessibilityLabel={NAME}
+        />
+        <Text style={s.tag}>{TAGLINE}</Text>
         <TextInput
           testID='sign-in-email'
           style={s.input}
@@ -86,15 +94,14 @@ export default function SignIn() {
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: DARK.bg },
   inner: { flex: 1, justifyContent: 'center', padding: 24, gap: 14 },
-  logo: { fontSize: 34, textAlign: 'center', letterSpacing: -1, fontFamily: FONT_FAMILY.display },
-  logoCity: { color: TIER_COLOR.blazing },
-  logoTurfer: { color: TIER_COLOR.strong, textShadowColor: ACCENT, textShadowRadius: 18 },
+  // Outlined wordmark for dark backgrounds (packages/brand/svg/wordmark.svg, rendered to 1102 × 192).
+  logo: { width: '100%', maxWidth: 280, height: undefined, aspectRatio: 1102 / 192, alignSelf: 'center' },
   tag: { color: DARK.muted, textAlign: 'center', marginBottom: 24 },
   input: {
     backgroundColor: DARK.card,
     color: DARK.text,
-    borderRadius: 14,
-    paddingHorizontal: 16,
+    borderRadius: RADIUS.control,
+    paddingHorizontal: SPACE.lg,
     paddingVertical: 14,
     fontSize: 16,
     borderWidth: 1,

@@ -2,7 +2,7 @@ import { Camera, GeoJSONSource, Layer, Map } from '@maplibre/maplibre-react-nati
 import { type ReactNode, useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, useColorScheme, View } from 'react-native';
 
-import { TYPE_COLOR } from '@/constants/colors';
+import { FONT_FAMILY, TYPE_COLOR } from '@/constants/colors';
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from '@/constants/map';
 import { Card, Stat } from '@/ui-kit/components';
 import { formatDate, formatDistance, formatDuration, formatPaceOrSpeed } from '@/ui-kit/format';
@@ -85,9 +85,9 @@ export function ActivityDetailView({
               type='circle'
               paint={{
                 'circle-radius': 7,
-                'circle-color': ['match', ['get', 'kind'], 'start', '#2BD48B', '#E5484D'] as never,
+                'circle-color': ['match', ['get', 'kind'], 'start', color, p.text] as never,
                 'circle-stroke-width': 2,
-                'circle-stroke-color': '#fff',
+                'circle-stroke-color': p.card,
               }}
             />
           </GeoJSONSource>
@@ -125,7 +125,7 @@ export function ActivityDetailView({
               return (
                 <View key={sp.km} style={s.split}>
                   <Text style={{ color: p.muted, width: 50 }}>km {sp.km}</Text>
-                  <Text style={{ color: p.text, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
+                  <Text style={[s.splitValue, { color: p.text }]}>
                     {v.value} {v.unit}
                   </Text>
                 </View>
@@ -144,5 +144,6 @@ const s = StyleSheet.create({
   date: { fontSize: 14, fontWeight: '600' },
   h: { fontSize: 16, fontWeight: '800', marginBottom: 8 },
   split: { flexDirection: 'row', paddingVertical: 4 },
+  splitValue: { fontFamily: FONT_FAMILY.numeric, fontVariant: ['tabular-nums'] },
   note: { fontSize: 13, marginTop: 14, lineHeight: 18 },
 });

@@ -4,6 +4,7 @@ import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'r
 
 import { ACCENT } from '@/constants/colors';
 import { Button } from '@/ui-kit/components';
+import { AppSymbol } from '@/ui-kit/symbol';
 import { usePalette } from '@/ui-kit/theme';
 
 import { type CityPickerProps, COUNTRY_NAME } from './city-picker.constants';
@@ -92,7 +93,7 @@ export function CityPicker({ onDone }: CityPickerProps) {
                 <Text style={[s.name, { color: p.text }]}>{item.name}</Text>
                 <Text style={[s.country, { color: p.muted }]}>{COUNTRY_NAME[item.country] ?? item.country}</Text>
               </View>
-              {selected ? <Text style={[s.check, { color: ACCENT }]}>✓</Text> : null}
+              {selected ? <AppSymbol name='checkmark' fallback='✓' size={FONT_SIZE.lead} color={ACCENT} /> : null}
             </Pressable>
           );
         }}
@@ -123,7 +124,6 @@ const s = StyleSheet.create({
   rowText: { flex: 1 },
   name: { fontSize: FONT_SIZE.body, fontWeight: FONT_WEIGHT.bold },
   country: { fontSize: FONT_SIZE.caption },
-  check: { fontSize: FONT_SIZE.lead, fontWeight: FONT_WEIGHT.heavy },
   empty: { fontSize: FONT_SIZE.caption, textAlign: 'center', marginTop: SPACE.xl },
   clear: { marginBottom: SPACE.md },
 });
