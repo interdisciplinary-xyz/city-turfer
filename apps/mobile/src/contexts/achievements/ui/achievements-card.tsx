@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { ACCENT } from '@/constants/colors';
+import { ACCENT, FONT_FAMILY } from '@/constants/colors';
 import { Card } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
 
@@ -20,7 +20,7 @@ export function AchievementsCard({ summary, onPress }: { summary: AchievementsSu
       <Card style={{ gap: 10 }}>
         <View style={s.header}>
           <Text style={[s.title, { color: p.text }]}>Achievements</Text>
-          <Text style={{ color: ACCENT, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+          <Text style={{ color: ACCENT, fontFamily: FONT_FAMILY.numeric, fontVariant: ['tabular-nums'] }}>
             {summary.unlocked} / {summary.total} ›
           </Text>
         </View>

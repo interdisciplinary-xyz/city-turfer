@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { ACCENT } from '@/constants/colors';
+import { ACCENT, FONT_FAMILY } from '@/constants/colors';
 import { Card } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
 
@@ -25,7 +25,7 @@ export function OnboardingCard({
             <Text style={[s.title, { color: p.text }]}>Getting started</Text>
             <Text
               accessibilityLabel={`${progress.done} of ${progress.total} steps done`}
-              style={{ color: ACCENT, fontWeight: '800', fontVariant: ['tabular-nums'] }}
+              style={{ color: ACCENT, fontFamily: FONT_FAMILY.numeric, fontVariant: ['tabular-nums'] }}
             >
               {progress.done} of {progress.total}
             </Text>

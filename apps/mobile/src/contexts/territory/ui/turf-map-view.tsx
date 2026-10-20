@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ACTIVITY_TYPES, TYPE_GLYPH, TYPE_LABEL } from '@/constants/activity';
-import { DARK, TYPE_COLOR } from '@/constants/colors';
+import { DARK, FONT_FAMILY, TYPE_COLOR } from '@/constants/colors';
 import { MAP_STYLE_DARK } from '@/constants/map';
 import { type ActivityType, type BoundingBox } from '@/shared-kernel';
 import { formatArea } from '@/ui-kit/format';
@@ -234,7 +234,7 @@ const s = StyleSheet.create({
     gap: 4,
   },
   title: { color: DARK.muted, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
-  area: { color: '#FFF3C4', fontSize: 30, fontWeight: '800', fontVariant: ['tabular-nums'] },
+  area: { color: '#FFF3C4', fontSize: 30, fontFamily: FONT_FAMILY.numeric, fontVariant: ['tabular-nums'] },
   sub: { color: DARK.muted, fontSize: 13 },
   chips: { flexDirection: 'row', gap: 8, marginTop: 8, flexWrap: 'wrap' },
   chip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, borderWidth: 1.5 },
