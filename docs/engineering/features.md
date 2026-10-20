@@ -23,17 +23,17 @@ Me drawer, and the screens pushed from them. Format adapted from empatalk's `FEA
 > **Derived from code on 2026-10-17.** Where this doc and the code disagree, the code wins. Don't
 > hand-edit counts; re-derive them:
 >
-> | Thing                 | Derive with                                                            |
-> | --------------------- | ---------------------------------------------------------------------- |
-> | Tabs                  | `apps/mobile/src/app/(tabs)/_layout.tsx` → `Tabs.Screen`               |
-> | Pushed screens        | `apps/mobile/src/app/_layout.tsx` → `Stack.Screen`                     |
-> | Me drawer items       | `apps/mobile/src/ui-kit/me-menu.tsx` → `ITEMS`                         |
-> | Use cases per context | `apps/mobile/src/contexts/<context>/index.ts` → `create…Api`           |
-> | Achievements          | `apps/mobile/src/contexts/achievements/domain/achievements.ts` → `id:` |
-> | Tracking thresholds   | `apps/mobile/src/contexts/recording/domain/tracking-profile.ts`        |
-> | Turf strength, tiers  | `apps/mobile/src/contexts/territory/domain/strength.ts`                |
-> | Maestro flows         | `apps/mobile/e2e/config.yaml` → `flowsOrder`                           |
-> | SQLite schema         | `apps/mobile/src/platform/migrations.ts`                               |
+> | Thing                 | Derive with                                                              |
+> | --------------------- | ------------------------------------------------------------------------ |
+> | Tabs                  | `apps/mobile/src/app/(tabs)/_layout.tsx` → `Tabs.Screen`                 |
+> | Pushed screens        | `apps/mobile/src/app/_layout.tsx` → `Stack.Screen`                       |
+> | Me drawer items       | `apps/mobile/src/ui-kit/me-menu.tsx` → `ITEMS`                           |
+> | Use cases per context | `apps/mobile/src/contexts/<context>/index.ts` → `create…Api`             |
+> | Achievements          | `packages/core/src/contexts/achievements/domain/achievements.ts` → `id:` |
+> | Tracking thresholds   | `apps/mobile/src/contexts/recording/domain/tracking-profile.ts`          |
+> | Turf strength, tiers  | `packages/core/src/contexts/territory/domain/strength.ts`                |
+> | Maestro flows         | `apps/mobile/e2e/config.yaml` → `flowsOrder`                             |
+> | SQLite schema         | `apps/mobile/src/platform/migrations.ts`                                 |
 
 Today: <!-- probe:achievements -->12<!-- /probe --> achievements,
 <!-- probe:e2e-flows -->13<!-- /probe --> Maestro flows, <!-- probe:migrations -->7<!-- /probe -->

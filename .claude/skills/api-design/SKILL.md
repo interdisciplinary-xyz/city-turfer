@@ -31,7 +31,7 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   (problem, ids, cursor, headers, standard responses) in `apps/api/src/schemas/common.ts`; the error
   code catalogue in `apps/api/src/errors.ts`.
 - **Routes are driving adapters:** validate (zod) → call a use case → map the result to a DTO.
-  Business rules live in the domain (later `@cityturfer/core`), never in a handler.
+  Business rules live in the domain (`@cityturfer/core`, `packages/core`), never in a handler.
 - The spec is **generated**: `pnpm --filter @cityturfer/api run openapi` writes
   `apps/api/openapi.json`. Never edit it by hand. `ci:quality` regenerates it (fails on drift) and
   runs `redocly lint`.

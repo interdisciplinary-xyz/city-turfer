@@ -32,8 +32,8 @@ it, where the other sources are, and how to keep them honest.
 | What the website promises              | `apps/web/messages/en.json` and `pl.json`                                      |
 | What the OS permission sheets say      | `apps/mobile/app.json` (`infoPlist`, `android.permissions`, plugin strings)    |
 | User journeys as tested                | `apps/mobile/e2e/*.yaml` (Maestro flows, ordered in `config.yaml`)             |
-| Achievements and onboarding steps      | `apps/mobile/src/contexts/achievements/domain/`                                |
-| Turf strength and tiers                | `apps/mobile/src/contexts/territory/domain/strength.ts`                        |
+| Achievements and onboarding steps      | `packages/core/src/contexts/achievements/domain/`                              |
+| Turf strength and tiers                | `packages/core/src/contexts/territory/domain/strength.ts`                      |
 
 **Code wins.** If a doc and the code disagree, the doc is wrong. Say so; don't repeat the doc.
 

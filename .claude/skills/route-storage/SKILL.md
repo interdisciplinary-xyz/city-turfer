@@ -84,8 +84,8 @@ one.
 
 Typed functions only; screens never write SQL. Minimum set: `createActivity(type)`,
 `getActiveActivity()`, `appendPoints(activityId, points[])`, `setStatus(id, status)`,
-`bumpSegment(id)`, `finishActivity(id)` (recomputes summary with `apps/mobile/src/shared-kernel` and
-writes bbox + preview), `listActivities({ limit, before })` (keyset pagination on `started_at`),
+`bumpSegment(id)`, `finishActivity(id)` (recomputes summary with `packages/core/src/shared-kernel`
+and writes bbox + preview), `listActivities({ limit, before })` (keyset pagination on `started_at`),
 `getActivity(id)`, `getPoints(id)`, `renameActivity`, `deleteActivity(id)`.
 
 - `listActivities` must never select from `points`: the list reads only summary columns and

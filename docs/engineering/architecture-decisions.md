@@ -94,7 +94,7 @@ by the public FOSSGIS OSRM router (`routing.openstreetmap.de`, foot or bike prof
 `apps/mobile/src/contexts/activity-log/infrastructure/osm-route-estimator.ts`). Only the gap's two
 endpoints are sent, never a whole track. Estimates are stored in `log_gap_routes`, drawn dashed,
 counted in distance with a "≈", and **never claim turf**: a `GapRoute` is "display + distance only"
-(`apps/mobile/src/contexts/activity-log/domain/gap-route.ts`); Territory claims cells from the
+(`packages/core/src/contexts/activity-log/domain/gap-route.ts`); Territory claims cells from the
 recorded Segments only.
 
 **Rationale:** A straight line across a gap draws fake streets and fake turf. Street routing gives a
@@ -176,9 +176,9 @@ design, not a swap.
 **Status:** Accepted.
 
 **Decision:** Turf Cells are H3 res 11 hexagons (~50 m across), with res 9 for zoomed-out
-aggregation (`apps/mobile/src/contexts/territory/infrastructure/h3-cell-grid.ts`), behind
-Territory's `CellGrid` port so the domain never sees h3-js. h3-js is loaded through a Hermes-safe
-loader (`territory/infrastructure/h3.ts`).
+aggregation (`packages/core/src/h3/h3-cell-grid.ts`), behind Territory's `CellGrid` port so the
+domain never sees h3-js. h3-js is loaded through a Hermes-safe loader
+(`packages/core/src/h3/h3.ts`).
 
 **Rationale:** ~50 m is street-sized: a walk down a street claims a corridor of cells, and a
 neighbour street is a different cell. Hexagons have uniform neighbours, so corridors look even. The
@@ -308,7 +308,7 @@ heatmap or blur. No Google Maps key.
 
 **Decision:** One user per device, data on the device. Turf is a corridor of cells along the
 recorded track plus a glow; closed loops don't claim the area inside (cells come from points along
-each Segment, `apps/mobile/src/contexts/territory/domain/claim.ts`).
+each Segment, `packages/core/src/contexts/territory/domain/claim.ts`).
 
 **Rationale:** "Every street you cover" is the product promise; filling a loop would claim streets
 you never walked.
@@ -335,7 +335,7 @@ you never walked.
 **Status:** Accepted.
 
 **Decision:** Claimed cells never fade or get lost. Strength depends only on the number of visits:
-`strength = 1 − exp(−visits / 3)` (`apps/mobile/src/contexts/territory/domain/strength.ts`,
+`strength = 1 − exp(−visits / 3)` (`packages/core/src/contexts/territory/domain/strength.ts`,
 identical in `apps/mobile/tools/turf-preview.mjs`). Deleting an activity is the only way turf
 shrinks.
 

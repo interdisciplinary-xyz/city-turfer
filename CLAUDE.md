@@ -25,7 +25,12 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
   (`packages/ui`, peer dependencies only, no native code), one Storybook in `apps/storybook`
   (Storybook 10 + react-native-web, port 6006; static build, Vercel project pending). Design:
   `docs/decisions/design-system-2026-10-19.md`
-- **Spatial index**: `h3-js` (Turf Cells = H3 res 11), behind the Territory `CellGrid` port
+- **Spatial index**: `h3-js` (Turf Cells = H3 res 11), behind the Territory `CellGrid` port; the
+  adapter is `@cityturfer/core/h3`, the only place h3-js is declared (pinned exactly, one copy)
+- **Core**: `@cityturfer/core` (`packages/core`) holds the shared kernel, core constants and the
+  domain + application layers of Territory, Activity Log, Achievements and Identity, so the phone
+  and the API run the same rules. TS source, no React/Expo/native code; the app's old import paths
+  are re-export shims. Recording and Health Sync stay in the app (device only)
 - **Repo tooling**: pnpm (`node-linker=hoisted`, version pinned in `packageManager`) + Turborepo
   (`turbo.json`, `pnpm-workspace.yaml`): workspaces apps/* and packages/*; design in
   `docs/decisions/monorepo-turborepo-2026-10-18.md`
@@ -57,23 +62,23 @@ Activity…) from §2 of the plan in code and UI.
 apps/mobile/                         the Expo app (package @cityturfer/mobile); its paths below are relative to it
   index.ts                           entry: imports the background task first, then expo-router/entry
   src/app/                           expo-router screens (SDK 57 convention) — thin, compose context ui/ components
-  src/constants/                     shared constants (activity types, colours, map styles, tracking thresholds); imports nothing
+  src/constants/                     app constants (labels, colours, map styles) + re-exports of core constants; leaf
   src/ui-kit/                        theme hook, formatting, shared components, AppContext (auth + container)
   src/wiring.ts                      platform-independent wiring of all contexts (used by app + tests)
   src/dev/                           dev-only tools (demo history seeder)
-  src/shared-kernel/                 pure VOs + TrackAnalyzer (distance, splits, elevation, simplify)
-  src/contexts/identity/             AuthGateway port + MockAuthGateway (PoC), User
-    domain/ application/ infrastructure/ index.ts          (no ui/ layer)
+  src/shared-kernel/index.ts         re-export shim of @cityturfer/core/shared-kernel
+  src/contexts/identity/             MockAuthGateway (PoC), session stores; domain + use cases in core
+    infrastructure/ index.ts (shim)                        (no ui/ layer)
   src/contexts/recording/            CORE: RecordingSession aggregate, FixFilter, AutoPausePolicy, background task
     domain/ application/ infrastructure/ ui/ index.ts
-  src/contexts/activity-log/         Activity aggregate, history, detail, demo import, street-routed gap estimates
-    domain/ application/ infrastructure/ ui/ index.ts contract.ts
-  src/contexts/territory/            CORE: Claim aggregate, turf strength, Territory projection, Turf Map, Home City
-    domain/ application/ infrastructure/ ui/ index.ts contract.ts
+  src/contexts/activity-log/         history, detail, SQLite repo, OSM gap router; domain + use cases in core
+    infrastructure/ ui/ index.ts contract.ts (shims)
+  src/contexts/territory/            Turf Map, SQLite projection, Home City repo; domain + use cases in core
+    infrastructure/ ui/ index.ts contract.ts (shims)
   src/contexts/health-sync/          Apple Health import/export (ACL: "workout" stays here), links + anchor
     domain/ application/ infrastructure/ ui/ index.ts contract.ts
-  src/contexts/achievements/         pure evaluation of achievements and the onboarding checklist
-    domain/ infrastructure/ ui/ index.ts                  (infrastructure: onboarding dismissal flag)
+  src/contexts/achievements/         cards + onboarding dismissal flag; the pure evaluation is in core
+    infrastructure/ ui/ index.ts (shim)
   src/platform/                      SQLite, migrations, outbox + EventDispatcher, one-off jobs, diagnostics (no coordinates)
   src/composition-root.ts            lazy, React-free wiring (used by UI and headless task)
   modules/background-session/        native iOS module (CLBackgroundActivitySession + liveUpdates)
@@ -83,6 +88,8 @@ apps/mobile/                         the Expo app (package @cityturfer/mobile); 
 apps/web/                            Next.js landing page (@cityturfer/web): static export (out/), hosted on Vercel
 apps/storybook/                      @cityturfer/storybook: one Storybook for @cityturfer/ui (react-native-web) and apps/web pieces
 apps/api/                            @cityturfer/api: HTTP API (Hono on Vercel), /v1 routes over the app's use cases, OpenAPI + Swagger
+packages/core/                       @cityturfer/core: shared kernel, core constants, domain + application of territory,
+                                     activity-log, achievements, identity (src/contexts/<ctx>/{index,ports}.ts); H3 adapter in src/h3
 packages/brand/                      @cityturfer/brand: colour + design tokens (turf strength ramp, spacing, type, themes, cssVariables), copy, logo SVGs; plain TS
 packages/ui/                         @cityturfer/ui: React Native design-system components (Button, Card, Stat, Badge, ActivityRow, TurfLegend)
 packages/config/                     @cityturfer/config: Prettier and tsconfig bases
@@ -96,7 +103,10 @@ docs/  .github/  .husky/  .claude/   at the repo root
 
 - Dependency rule: `domain/` and `shared-kernel/` import nothing from react, react-native, expo-*,
   h3-js, MapLibre or infrastructure. Contexts talk only via each other's `index.ts` and published
-  events. Enforced by dependency-cruiser in `pnpm test`.
+  events. `packages/core` imports no framework, native module, UI package or app at all; only its
+  `packages/core/src/h3/` loads h3-js. The app uses core through its entries only
+  (`@cityturfer/core/<ctx>`; `/<ctx>/ports` just for that context's own adapters). Enforced by
+  dependency-cruiser in each workspace's `arch` script (`pnpm test`).
 - `TaskManager.defineTask` lives at module top level in
   `apps/mobile/src/contexts/recording/infrastructure/background-task.ts`, imported first by the
   app's `index.ts` entry. It is a driving adapter: translate Fixes via the ACL and call the
@@ -105,7 +115,7 @@ docs/  .github/  .husky/  .claude/   at the repo root
   idempotent.
 - Shared-kernel maths is pure, unit-tested, SI units (metres, seconds, m/s); convert only in UI
   formatting. Numbers must match `apps/mobile/tools/lib/geo.mjs`.
-- Turf strength formula and defaults are identical in `apps/mobile/src/contexts/territory/domain`
+- Turf strength formula and defaults are identical in `packages/core/src/contexts/territory/domain`
   and `apps/mobile/tools/turf-preview.mjs`, pinned by
   `apps/mobile/tools/fixtures/turf-vectors.json`.
 - `@cityturfer/ui` stays pure React Native with peer dependencies only (no Expo, MapLibre, HealthKit

@@ -15,7 +15,7 @@ Three layers, and each one catches things the others can't.
 
 ## 1. Unit (Jest, fast, every change)
 
-- `apps/mobile/src/shared-kernel/**` (metrics) and
+- `packages/core/src/shared-kernel/**` (metrics) and
   `apps/mobile/src/contexts/recording/domain/fix-filter.ts`: pure functions, tested directly against
   fixtures.
 - Repositories and the outbox: test against a real SQLite. Jest uses
