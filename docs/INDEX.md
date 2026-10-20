@@ -115,6 +115,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   the city picker (catalogue of 38 cities, migration 7), Turf and Record maps open on the chosen
   city; JS-only, ships over the air
 - ✅ [`sessions/v0.8.0.md`](sessions/v0.8.0.md): Session log v0.8.0 — API from skeleton (#89,
+- ✅ [`sessions/v0.9.0.md`](sessions/v0.9.0.md): Session log v0.9.0 — the whole app in the brand's
+  dark theme like the website, and the Record map with the Turf Map's dark style and turf colours (a
+  native change)
 
 ## Decision records
 
