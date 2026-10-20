@@ -19,7 +19,9 @@ summary:
 
 # CityTurfer — product brief
 
-Canonical for: what the product is, who it's for, what it promises and where it stands. Screen-level
+Canonical for: what the product is, who it's for, what it promises and where it stands. Siblings:
+[strategy](strategy.md) (draft), [discovery board](discovery-board.md) (evidence),
+[market landscape](market-landscape.md), [launch readiness](launch-readiness.md). Screen-level
 detail lives in [features.md](../engineering/features.md); the backlog lives in `NOTEBOOK.md`; how
 to use and maintain this brief is in the `product-knowledge` skill
 (`.claude/skills/product-knowledge/SKILL.md`). Code wins over this doc.
