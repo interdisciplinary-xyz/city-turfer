@@ -6,13 +6,17 @@
 // toolbar's request logger and route map get their `/__dev/*` endpoints. Production never runs
 // this: the site is a static export (`next build` → out/).
 //
-// It also serves the design system's Storybook build at /storybook (tools/storybook-route.mjs).
+// It also serves the design system's Storybook build at /storybook (tools/storybook-route.mjs), and
+// the API's Swagger docs at /swagger plus a proxy from /api/* to the API dev server
+// (tools/swagger-route.mjs).
 import { createServer } from 'node:http';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 
 import next from 'next';
 
 import { withStorybook } from './tools/storybook-route.mjs';
+import { withSwagger } from './tools/swagger-route.mjs';
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = process.env.HOST || '127.0.0.1';
@@ -26,7 +30,14 @@ const siteHandler = devNode
   ? devNode.withDevRequestLog(nextHandler, { port, appDir: path.join(process.cwd(), 'src/app') })
   : nextHandler;
 const storybookBuild = path.join(process.cwd(), '../storybook/storybook-static');
-const handler = dev ? withStorybook(siteHandler, storybookBuild) : siteHandler;
+const handler = dev
+  ? withSwagger(withStorybook(siteHandler, storybookBuild), {
+      // Resolved only in dev: swagger-ui-dist is a dev dependency.
+      distRoot: path.dirname(createRequire(import.meta.url).resolve('swagger-ui-dist/package.json')),
+      specFile: path.join(process.cwd(), '../api/openapi.json'),
+      apiUrl: process.env.API_URL,
+    })
+  : siteHandler;
 
 await app.prepare();
 createServer(handler)

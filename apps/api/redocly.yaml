@@ -1,0 +1,10 @@
+# Redocly lint for the generated spec (apps/api/openapi.json), run by `pnpm --filter @cityturfer/api lint`.
+extends:
+  - recommended
+rules:
+  # Public routes declare `security: []`; every other route needs bearerAuth.
+  security-defined: error
+  operation-4xx-response: error
+  # The servers are local dev ones on purpose (localhost API, cityturfer.local proxy); a production
+  # server joins when the Vercel project exists.
+  no-server-example.com: off
