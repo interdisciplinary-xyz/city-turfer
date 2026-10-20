@@ -5,10 +5,13 @@
 import Constants from 'expo-constants';
 import * as Crypto from 'expo-crypto';
 import * as Location from 'expo-location';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
 
+import { API_TIMEOUT_MS, API_UPLOAD_TIMEOUT_MS } from '@/constants/api';
 import { OsmRouteEstimator } from '@/contexts/activity-log/infrastructure/osm-route-estimator';
 import { SecureStoreGapEstimationSetting } from '@/contexts/activity-log/infrastructure/secure-store-gap-estimation-setting';
+import { createFetchApiClient } from '@/contexts/cloud-backup/infrastructure/fetch-api-client';
+import { SecureStoreDeviceTokenStore } from '@/contexts/cloud-backup/infrastructure/secure-store-device-token-store';
 import { HealthKitHealthStore } from '@/contexts/health-sync/infrastructure/healthkit-health-store';
 import { createIdentityApi } from '@/contexts/identity';
 import { CachedSessionStore } from '@/contexts/identity/infrastructure/cached-session-store';
@@ -62,7 +65,25 @@ const adapters = {
   },
   health: new HealthKitHealthStore(),
   isForeground: () => AppState.currentState === 'active',
+  cloudBackup: {
+    api: createFetchApiClient({
+      client: `${Platform.OS}/${Constants.expoConfig?.version ?? 'dev'}`,
+      timeoutMs: API_TIMEOUT_MS,
+      uploadTimeoutMs: API_UPLOAD_TIMEOUT_MS,
+    }),
+    tokens: (userId: string) => new SecureStoreDeviceTokenStore(userId),
+    timeZone: deviceTimeZone,
+  },
 };
+
+/** The device's IANA zone (sent with uploads; activities recorded before backup get the current one). */
+function deviceTimeZone(): string | null {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone ?? null;
+  } catch {
+    return null;
+  }
+}
 
 let current: {
   userId: string;
@@ -110,12 +131,13 @@ export async function getContainer(): Promise<Container | null> {
   current = entry;
   void promise.then(
     (c) => {
-      // Gaps recorded while headless (or offline) are estimated, and new Apple Health workouts
-      // imported, whenever the user brings the app back.
+      // Gaps recorded while headless (or offline) are estimated, new Apple Health workouts
+      // imported and queued backup work sent whenever the user brings the app back.
       const sub = AppState.addEventListener('change', (s) => {
         if (s === 'active') {
           void c.estimateGaps();
           void c.syncHealth();
+          void c.backUp();
         }
       });
       if (current === entry) {
