@@ -36,6 +36,26 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`engineering/features.md`](engineering/features.md): Inventory of every shipped feature by tab
   and screen, where it lives, and the claims that aren't true yet
 
+## What we build and why
+
+`docs/product/` — Product direction and roadmap.
+
+- ✅ [`product/discovery-board.md`](product/discovery-board.md): The live state of product discovery
+  — evidence log, assumption map, opportunity tree and the interview queue; every product claim
+  cites an id from here
+- ✅ [`product/launch-readiness.md`](product/launch-readiness.md): What stands between CityTurfer
+  and a public App Store / Google Play launch — store, privacy and legal blockers in order, with
+  today's status and sources (research 2026-10-20)
+- ✅ [`product/market-landscape.md`](product/market-landscape.md): Competitors, pricing benchmarks,
+  market facts (Poland first) and where CityTurfer is different — web research as of 2026-10-20,
+  with sources and uncertainty marked
+- ✅ [`product/product-brief.md`](product/product-brief.md): What CityTurfer is as a product —
+  vision, users, core loop, what a user can do today, what we promise vs what's true, success
+  criteria, open questions and known doc drift
+- 🚧 [`product/strategy.md`](product/strategy.md): Draft product strategy for the founder to accept
+  or change — diagnosis, guiding policy, positioning options, beachhead candidates, North Star,
+  Now/Next/Later and the decisions it needs
+
 ## Running it
 
 `docs/operations/` — Runbook, OTA releases, device diagnostics.
@@ -96,6 +116,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 
 `docs/decisions/` — Full write-ups of single decisions.
 
+- ✅ [`decisions/api-2026-10-20.md`](decisions/api-2026-10-20.md): v0.8.0 HTTP API — apps/api (Hono
+  on Vercel, Frankfurt) exposing the app's existing use cases as /v1 routes, contract-first with zod
+  → OpenAPI 3.1, documented with Swagger UI at cityturfer.local/swagger; the core logic moves to
+  packages/core in later phases
 - ✅ [`decisions/apple-health-2026-10-18.md`](decisions/apple-health-2026-10-18.md): v0.4.0
   integrates Apple Health — a Health Sync context imports walks, hikes, runs and rides with routes
   (full history) as Activities that claim turf, and saves recordings to Health with routes

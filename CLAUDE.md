@@ -164,10 +164,12 @@ node apps/mobile/tools/turf-preview.mjs apps/mobile/tools/fixtures/history --out
 
 - Skills (`.claude/skills/`): `brand-system`, `ddd-architecture`, `turf-territory`, `scaffold-app`,
   `add-feature`, `gps-tracking`, `route-metrics`, `route-storage`, `mobile-testing`, `apple-health`,
-  `web-motion`, `design-system`, `api-design`.
+  `web-motion`, `design-system`, `api-design`, `product-knowledge` (what the product is; docs in
+  `docs/product/`), `product-discovery`, `product-strategy`, `product-launch`.
 - Agents (`.claude/agents/`): `rn-architect`, `location-engineer`, `mobile-ui-engineer`,
   `mobile-test-engineer`, `mobile-reviewer`, `brand-designer`, `health-engineer` (Apple Health),
-  `web-engineer` (apps/web), `api-engineer` (back end: apps/api, server data, sync).
+  `web-engineer` (apps/web), `api-engineer` (back end: apps/api, server data, sync),
+  `product-manager` (the Product Owner persona; talk to it as the main session with the agent flag).
 - Commands (`.claude/commands/`): `audit-docs` (`/audit-docs`).
 
 ## Docs
