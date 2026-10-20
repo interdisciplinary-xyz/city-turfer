@@ -6,7 +6,8 @@ description:
   migrations, render performance on long routes and large turf histories (MapLibre layer order,
   GeoJSON re-serialisation), turf-model correctness, Apple Health duplicates and privacy, context
   boundaries (DDD), design-system rules, OTA vs native (runtime fingerprint), accessibility and e2e
-  coverage, and location-privacy leaks. Use after a feature is built and before committing, or when
+  coverage, location-privacy leaks, and website diffs in apps/web (static export, waitlist privacy,
+  i18n, motion, shared brand tokens). Use after a feature is built and before committing, or when
   the user asks for a review. Read-only.
 tools: Read, Grep, Glob, Bash, WebFetch
 model: opus
@@ -84,6 +85,22 @@ the surrounding code, not only the hunks, and include untracked files.
     - Do new Maestro flows pass the e2e audit, start from a known state (Keychain settings survive
       reinstalls), and avoid asserting on text that iOS exposes only as an accessibility label?
 14. Conventions from `CLAUDE.md` (constants files, `curly`, one import per module).
+
+## Website changes (apps/web)
+
+When the diff touches `apps/web`, `apps/storybook/src/stories/website/` or `packages/brand`, also
+read `.claude/agents/web-engineer.md` and `.claude/skills/web-motion/SKILL.md`, and check:
+
+- **Static export:** no API routes, server actions, cookies, analytics or third-party scripts; no
+  dev toolbar, secrets or test URLs in `apps/web/out`.
+- **Waitlist privacy:** consent checkbox required and unticked, privacy note names the controller
+  and the removal contact, no new fields or trackers, form hidden while its `NEXT_PUBLIC_*`
+  variables are unset.
+- **i18n:** identical keys in `apps/web/messages/en.json` and `pl.json`, no hard-coded copy.
+- **Motion and accessibility:** transform and opacity only, reduced motion honoured, every
+  `data-anim` revealed, labels and focus visible, no horizontal scroll at 320 px.
+- **Shared tokens:** a `packages/brand` change also changes the app. Is that intended and checked?
+- **Storybook:** website stories still render (synchronous components only).
 
 ## Output
 
