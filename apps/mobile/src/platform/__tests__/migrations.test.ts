@@ -27,7 +27,7 @@ describe('migration v5 (outbox retries and dead letters)', () => {
     );
 
     await migrate(db);
-    expect(await version(db)).toBe(7);
+    expect(await version(db)).toBe(8);
 
     const outbox = await db.all<Record<string, unknown>>('SELECT * FROM sys_outbox ORDER BY id');
     expect(outbox).toEqual([
@@ -63,8 +63,41 @@ describe('migration v5 (outbox retries and dead letters)', () => {
 
     // Second launch: nothing re-applied, no error, nothing lost.
     await migrate(db);
-    expect(await version(db)).toBe(7);
-    expect((await db.first<{ n: number }>('SELECT COUNT(*) AS n FROM sys_schema_version'))!.n).toBe(7);
+    expect(await version(db)).toBe(8);
+    expect((await db.first<{ n: number }>('SELECT COUNT(*) AS n FROM sys_schema_version'))!.n).toBe(8);
     expect((await db.first<{ n: number }>('SELECT COUNT(*) AS n FROM sys_outbox'))!.n).toBe(2);
+  });
+});
+
+describe('migration v8 (cloud backup)', () => {
+  it('adds empty backup tables to a v7 database, keeping its data', async () => {
+    const db = openNodeDatabase();
+    await migrate(db, 7);
+    await db.run(
+      `INSERT INTO log_activities (id, type, name, started_at, ended_at, distance_m, moving_s, elapsed_s, splits, created_at)
+       VALUES ('s1', 'run', 'Morning run', 1, 2, 5000, 1500, 1600, '[]', 3)`
+    );
+    await db.run("INSERT INTO ter_home_city (id, city_id, chosen_at) VALUES (1, 'pl-krakow', 5)");
+
+    await migrate(db);
+    expect(await version(db)).toBe(8);
+    expect(await db.first('SELECT COUNT(*) AS n FROM cb_state')).toEqual({ n: 0 });
+    expect(await db.first('SELECT COUNT(*) AS n FROM cb_activities')).toEqual({ n: 0 });
+    expect(await db.first('SELECT id FROM log_activities')).toEqual({ id: 's1' });
+    expect(await db.first('SELECT city_id FROM ter_home_city')).toEqual({ city_id: 'pl-krakow' });
+  });
+
+  it('allows one state row and only known statuses and operations', async () => {
+    const db = openNodeDatabase();
+    await migrate(db);
+    await db.run('INSERT INTO cb_state (id) VALUES (1)');
+    await expect(db.run('INSERT INTO cb_state (id) VALUES (2)')).rejects.toThrow();
+    await db.run("INSERT INTO cb_activities (activity_id, started_at, status, op) VALUES ('a', 1, 'none', 'upload')");
+    await expect(
+      db.run("INSERT INTO cb_activities (activity_id, started_at, status) VALUES ('b', 1, 'synced')")
+    ).rejects.toThrow();
+    await expect(
+      db.run("INSERT INTO cb_activities (activity_id, started_at, status, op) VALUES ('c', 1, 'none', 'patch')")
+    ).rejects.toThrow();
   });
 });

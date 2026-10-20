@@ -1,5 +1,11 @@
-import type { AuthGateway, SignInOutcome } from '../application/ports';
-import { type Email, type User, type UserId, userId } from '../domain/user';
+import {
+  type AuthGateway,
+  type Email,
+  type SignInOutcome,
+  type User,
+  type UserId,
+  userId,
+} from '@cityturfer/core/identity/ports';
 
 /**
  * PoC-only authentication (docs/poc-plan.md §4.0, §9). Exactly one account.

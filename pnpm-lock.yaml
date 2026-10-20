@@ -99,6 +99,9 @@ importers:
       '@cityturfer/brand':
         specifier: workspace:*
         version: link:../../packages/brand
+      '@cityturfer/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@cityturfer/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -156,9 +159,6 @@ importers:
       expo-updates:
         specifier: ~57.0.26
         version: 57.0.26(expo-dev-client@57.0.20(expo@57.0.29)(react-native@0.86.3(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3)))(expo@57.0.29)(react-native@0.86.3(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3))(react@19.2.3)
-      h3-js:
-        specifier: ^4.5.0
-        version: 4.5.0
       react:
         specifier: 19.2.3
         version: 19.2.3
@@ -410,6 +410,40 @@ importers:
         version: 6.0.3
 
   packages/config: {}
+
+  packages/core:
+    dependencies:
+      h3-js:
+        specifier: 4.5.0
+        version: 4.5.0
+    devDependencies:
+      '@cityturfer/config':
+        specifier: workspace:*
+        version: link:../config
+      '@interdisciplinary/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@types/jest':
+        specifier: ^30.0.0
+        version: 30.0.0
+      '@types/node':
+        specifier: ^22.15.0
+        version: 22.20.5
+      babel-preset-expo:
+        specifier: ^57.0.15
+        version: 57.0.15(@babel/core@7.29.7)(@babel/runtime@7.29.10)(expo@57.0.29)(react-refresh@0.18.0)
+      dependency-cruiser:
+        specifier: ^18.6.0
+        version: 18.6.0
+      eslint:
+        specifier: ^9.39.5
+        version: 9.39.5(jiti@2.6.1)
+      jest:
+        specifier: ^30.5.2
+        version: 30.5.2(@types/node@22.20.5)
+      typescript:
+        specifier: ~6.0.3
+        version: 6.0.3
 
   packages/dev-toolbar:
     devDependencies:

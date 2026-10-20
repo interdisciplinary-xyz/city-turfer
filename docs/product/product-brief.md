@@ -5,8 +5,8 @@ owner: founder
 scope:
   [
     apps/mobile/src/app,
-    apps/mobile/src/contexts/achievements/domain,
-    apps/mobile/src/contexts/territory/domain,
+    packages/core/src/contexts/achievements/domain,
+    packages/core/src/contexts/territory/domain,
     apps/mobile/app.json,
     apps/web/messages,
     packages/brand/src/copy.ts,
@@ -51,7 +51,8 @@ No persona research exists yet. What the product implies today:
 - **Runners and cyclists with an Apple Watch history**: Apple Health import fills the map on day one
   instead of starting from empty.
 - **Poland first, then European cities**: Polish company, EN/PL website, the Home City catalogue is
-  Polish cities first, then major European ones (`territory/domain/city-catalog.ts`).
+  Polish cities first, then major European ones
+  (`packages/core/src/contexts/territory/domain/city-catalog.ts`).
 - Users are called **Turfers** in brand copy.
 
 Gap: no explicit personas, jobs-to-be-done or interviews. Worth doing before the App Store step.
@@ -71,16 +72,16 @@ a reason to feel behind — by design.
 
 ## 4. Key ideas in user words
 
-| User sees                          | Means                                                                                                                                                                                      | Source                                   |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- |
-| Walk · Run · Ride                  | The three activity types (code says `cycle`). Hikes from Apple Health count as walks                                                                                                       | `recording/domain/tracking-profile.ts`   |
-| Turf, cell                         | Every ~50 m hexagon a track passes through (H3 res 11). Permanent; shrinks only when you delete the activity that claimed it                                                               | `territory/domain/claim.ts`              |
-| Turf gained                        | Per activity: new cells (+area) and reinforced cells (already yours)                                                                                                                       | activity detail                          |
-| Faint · Glowing · Strong · Blazing | Strength from visits only: `1 − e^(−visits/3)`. One activity = one visit per cell. Roughly 1 visit faint, 2–3 glowing, 4–6 strong, 7+ blazing. "Strong cells" in stats = strong or blazing | `territory/domain/strength.ts`           |
-| Your city                          | Optional Home City from a bundled list; only decides where maps open. Stored as an id on the phone, no geocoding                                                                           | `docs/decisions/home-city-2026-10-19.md` |
-| Dashed line, "≈"                   | A GPS gap (> 45 s). Optionally estimated along streets; estimated parts **never** claim turf                                                                                               | `activity-log/domain/gap-route.ts`       |
-| Achievements                       | <!-- probe:achievements -->12<!-- /probe --> computed live from history (first steps, 5K, night owl, turf lord…). No unlock dates or celebration                                           | `achievements/domain/achievements.ts`    |
-| Getting started                    | Dashboard checklist (record, see turf, try all three types, come back, unlock achievements); hideable                                                                                      | `achievements/domain/onboarding.ts`      |
+| User sees                          | Means                                                                                                                                                                                      | Source                                                           |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| Walk · Run · Ride                  | The three activity types (code says `cycle`). Hikes from Apple Health count as walks                                                                                                       | `recording/domain/tracking-profile.ts`                           |
+| Turf, cell                         | Every ~50 m hexagon a track passes through (H3 res 11). Permanent; shrinks only when you delete the activity that claimed it                                                               | `packages/core/src/contexts/territory/domain/claim.ts`           |
+| Turf gained                        | Per activity: new cells (+area) and reinforced cells (already yours)                                                                                                                       | activity detail                                                  |
+| Faint · Glowing · Strong · Blazing | Strength from visits only: `1 − e^(−visits/3)`. One activity = one visit per cell. Roughly 1 visit faint, 2–3 glowing, 4–6 strong, 7+ blazing. "Strong cells" in stats = strong or blazing | `packages/core/src/contexts/territory/domain/strength.ts`        |
+| Your city                          | Optional Home City from a bundled list; only decides where maps open. Stored as an id on the phone, no geocoding                                                                           | `docs/decisions/home-city-2026-10-19.md`                         |
+| Dashed line, "≈"                   | A GPS gap (> 45 s). Optionally estimated along streets; estimated parts **never** claim turf                                                                                               | `packages/core/src/contexts/activity-log/domain/gap-route.ts`    |
+| Achievements                       | <!-- probe:achievements -->12<!-- /probe --> computed live from history (first steps, 5K, night owl, turf lord…). No unlock dates or celebration                                           | `packages/core/src/contexts/achievements/domain/achievements.ts` |
+| Getting started                    | Dashboard checklist (record, see turf, try all three types, come back, unlock achievements); hideable                                                                                      | `packages/core/src/contexts/achievements/domain/onboarding.ts`   |
 
 Voice: confident, playful, outdoorsy; never guilt, fake urgency, leaderboards, "score", "points",
 "conquer" or "territory" in copy (`brand-system` skill).

@@ -119,8 +119,8 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 
 - ✅ [`decisions/api-2026-10-20.md`](decisions/api-2026-10-20.md): v0.8.0 HTTP API — apps/api (Hono
   on Vercel, Frankfurt) exposing the app's existing use cases as /v1 routes, contract-first with zod
-  → OpenAPI 3.1, documented with Swagger UI at cityturfer.local/swagger; the core logic moves to
-  packages/core in later phases. Its route table is superseded by api-sync-2026-10-20.md
+  → OpenAPI 3.1, documented with Swagger UI at cityturfer.local/swagger; the core logic now lives in
+  packages/core (phase 3 done). Its route table is superseded by api-sync-2026-10-20.md
 - ✅ [`decisions/api-sync-2026-10-20.md`](decisions/api-sync-2026-10-20.md): Sync-first v1 API
   contract — the phone pushes Activities (versions, ETags, If-Match, tombstones) and pulls one
   changes feed; route table, sync protocol, error catalogue and the founder's decisions D1–D13;

@@ -113,7 +113,7 @@ share that love (fix). Split the next version roughly half and half.
 | Task success | Recording incidents per 10 activities (gaps, lost activity) from testers |
 
 The de-facto activation definition is the in-app Getting started checklist
-(`apps/mobile/src/contexts/achievements/domain/onboarding.ts`); ask testers how far they got.
+(`packages/core/src/contexts/achievements/domain/onboarding.ts`); ask testers how far they got.
 
 ## Ethics check for engagement ideas
 
