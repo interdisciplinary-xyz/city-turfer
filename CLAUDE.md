@@ -32,7 +32,11 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
 - **Web**: Next.js 16 (App Router, `output: 'export'`) in `apps/web`, hosted on Vercel; static
   showcase only (one hero section): no forms, cookies or third-party scripts. Languages via
   `next-intl` (`/en`, `/pl`; copy in `apps/web/messages/*.json`, no CMS)
-- **Storage**: `expo-sqlite`, local-first; no backend in v1
+- **Storage**: `expo-sqlite`, local-first; the phone stays the source of truth
+- **API** (planned, v0.8.0): `apps/api`, Hono on Vercel (`fra1`), routes declared with zod +
+  `@hono/zod-openapi` into a generated OpenAPI 3.1 spec (`apps/api/openapi.json`), Swagger UI at
+  https://cityturfer.local/swagger. Neon Postgres + Drizzle and Better Auth later. Design:
+  `docs/decisions/api-2026-10-20.md`
 - **State**: SQLite is the source of truth; live-session UI state is an in-memory `LiveSessionStore`
   (`apps/mobile/src/contexts/recording/infrastructure/live-session-store.ts`, read via
   `useSyncExternalStore`). No zustand.
@@ -76,6 +80,7 @@ apps/mobile/                         the Expo app (package @cityturfer/mobile); 
   tools/                             mobile dev tools (GPX generator, stats oracle, simulator GPS playback, turf preview)
 apps/web/                            Next.js landing page (@cityturfer/web): static export (out/), hosted on Vercel
 apps/storybook/                      @cityturfer/storybook: one Storybook for @cityturfer/ui (react-native-web) and apps/web pieces
+apps/api/                            @cityturfer/api: HTTP API (Hono on Vercel), /v1 routes over the app's use cases, OpenAPI + Swagger
 packages/brand/                      @cityturfer/brand: colour + design tokens (turf strength ramp, spacing, type, themes, cssVariables), copy, logo SVGs; plain TS
 packages/ui/                         @cityturfer/ui: React Native design-system components (Button, Card, Stat, Badge, ActivityRow, TurfLegend)
 packages/config/                     @cityturfer/config: Prettier and tsconfig bases
@@ -129,6 +134,8 @@ pnpm run build                   # web static export (apps/web/out) via turbo
 pnpm run web:dev                 # landing page at https://cityturfer.local (portless + server.mjs, dev toolbar)
 pnpm --filter @cityturfer/storybook dev     # Storybook at http://localhost:6006 (app components + website pieces)
 pnpm --filter @cityturfer/storybook build   # static Storybook in apps/storybook/storybook-static
+pnpm --filter @cityturfer/api dev           # API on http://localhost:8787 (Swagger at /swagger); web:dev proxies /api/* to it
+pnpm --filter @cityturfer/api run openapi   # regenerate apps/api/openapi.json after changing routes (a test checks it)
 #   …also served by `pnpm run web:dev` at https://cityturfer.local/storybook (rebuild to refresh)
 pnpm -C apps/mobile run android:build     # Android APK on EAS (docs/operations/android-release.md)
 pnpm -C apps/mobile exec expo install <pkg>                     # add a native dependency to the app

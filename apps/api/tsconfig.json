@@ -1,0 +1,12 @@
+{
+  "extends": "@cityturfer/config/tsconfig/base.json",
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "noEmit": true
+  },
+  "include": ["src", "scripts", "vitest.config.ts"]
+}

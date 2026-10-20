@@ -1,0 +1,33 @@
+{
+  "name": "@cityturfer/api",
+  "version": "0.8.0",
+  "private": true,
+  "type": "module",
+  "description": "CityTurfer HTTP API: Hono on Vercel (fra1), routes declared with zod + @hono/zod-openapi into a generated OpenAPI 3.1 spec, Swagger UI at /swagger and cityturfer.local/swagger.",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "openapi": "tsx scripts/emit-openapi.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src scripts && redocly lint openapi.json --config redocly.yaml",
+    "test:unit": "vitest run"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.5",
+    "@hono/swagger-ui": "^0.6.1",
+    "@hono/zod-openapi": "^1.6.3",
+    "hono": "^4.13.13",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@cityturfer/config": "workspace:*",
+    "@interdisciplinary/eslint-config": "workspace:*",
+    "@redocly/cli": "^2.65.1",
+    "@types/node": "^22.15.0",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^16.5.0",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.12"
+  }
+}
