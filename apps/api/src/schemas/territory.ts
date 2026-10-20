@@ -1,8 +1,11 @@
 import { z } from '@hono/zod-openapi';
 
-import { ActivityType, BoundingBox, LonLat } from './common';
+import { ActivityType, BoundingBox, IsoDateTime, LonLat } from './common';
 
-/** Territory: turf cells (H3 res 11), claims, the summary, cities and the Home City. */
+/**
+ * Territory: turf cells (H3 res 11), claims, the summary and the Home City. The server recomputes
+ * all of it from uploaded tracks with the shared core; phones never upload turf.
+ */
 
 export const StrengthTier = z.enum(['faint', 'glowing', 'strong', 'blazing']).openapi('StrengthTier');
 
@@ -16,7 +19,9 @@ export const TurfCell = z
     visits: z.number().int().min(1).openapi({ example: 3 }),
     centroid: LonLat,
   })
-  .openapi('TurfCell');
+  .openapi('TurfCell', {
+    description: 'No polygon: clients draw the boundary from the H3 id (h3-js `cellToBoundary`).',
+  });
 
 export const TurfCells = z.object({ cells: z.array(TurfCell) }).openapi('TurfCells');
 
@@ -58,13 +63,16 @@ export const TurfSummary = z
 
 export const Claim = z
   .object({
-    activityId: z.string(),
+    activityId: z.string().openapi({ example: '3f9c2a64-5d1e-4b8e-9a51-0c7d2e6f1b20' }),
     cellCount: z.number().int().openapi({ example: 412 }),
     newCellCount: z.number().int().openapi({ example: 37 }),
     newAreaKm2: z.number().openapi({ example: 0.07 }),
-    cells: z.array(z.object({ id: z.string(), isNew: z.boolean() })),
+    cells: z.array(z.object({ id: z.string().openapi({ example: '8b1f53cae5a3fff' }), isNew: z.boolean() })),
   })
-  .openapi('Claim');
+  .openapi('Claim', {
+    description:
+      'The cells one activity covered. A cell is *new* for the claim with the earliest `(startedAt, activityId)` that covers it (decision D4), so the answer does not depend on upload order; it can change when an older activity arrives later.',
+  });
 
 export const City = z
   .object({
@@ -76,22 +84,23 @@ export const City = z
   })
   .openapi('City');
 
-export const CityList = z.object({ items: z.array(City) }).openapi('CityList');
-
-export const CitySearchQuery = z.object({
-  q: z
-    .string()
-    .max(80)
-    .optional()
-    .openapi({
-      param: { name: 'q', in: 'query' },
-      description: 'Accent-insensitive; all cities when omitted.',
-      example: 'krakow',
-    }),
-});
-
-export const HomeCity = z.object({ city: City.nullable() }).openapi('HomeCity');
+export const HomeCity = z
+  .object({
+    city: City.nullable(),
+    chosenAt: IsoDateTime.nullable().openapi({ description: 'Null when never chosen.' }),
+  })
+  .openapi('HomeCity');
 
 export const ChooseHomeCityBody = z
-  .object({ cityId: z.string().openapi({ example: 'pl-krakow' }) })
+  .object({
+    cityId: z
+      .string()
+      .min(1)
+      .max(64)
+      .nullable()
+      .openapi({ description: 'A catalogue city id, or null to clear.', example: 'pl-krakow' }),
+    chosenAt: IsoDateTime.openapi({
+      description: 'When the user chose it on the phone; the latest `chosenAt` wins (offline-safe).',
+    }),
+  })
   .openapi('ChooseHomeCityBody');

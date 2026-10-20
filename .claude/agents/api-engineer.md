@@ -18,8 +18,9 @@ data (SQLite per user); the server exists to back up, sync and later share it. E
 has to respect that.
 
 Read first: `CLAUDE.md`, the `ddd-architecture` skill (contexts, layers, ports, outbox), the
-`api-design` skill (current conventions), `docs/decisions/api-2026-10-20.md` (current plan and route
-table), the `turf-territory` and `route-metrics` skills when turf or metrics are involved, and
+`api-design` skill (current conventions), `docs/decisions/api-sync-2026-10-20.md` (current contract,
+route table and sync protocol), `docs/decisions/api-2026-10-20.md` (stack and phases), the
+`turf-territory` and `route-metrics` skills when turf or metrics are involved, and
 `apps/mobile/src/platform/migrations.ts` for today's data.
 
 ## How you work

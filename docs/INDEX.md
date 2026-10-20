@@ -121,7 +121,11 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`decisions/api-2026-10-20.md`](decisions/api-2026-10-20.md): v0.8.0 HTTP API — apps/api (Hono
   on Vercel, Frankfurt) exposing the app's existing use cases as /v1 routes, contract-first with zod
   → OpenAPI 3.1, documented with Swagger UI at cityturfer.local/swagger; the core logic moves to
-  packages/core in later phases
+  packages/core in later phases. Its route table is superseded by api-sync-2026-10-20.md
+- ✅ [`decisions/api-sync-2026-10-20.md`](decisions/api-sync-2026-10-20.md): Sync-first v1 API
+  contract — the phone pushes Activities (versions, ETags, If-Match, tombstones) and pulls one
+  changes feed; route table, sync protocol, error catalogue and the founder's decisions D1–D13;
+  supersedes the route table of api-2026-10-20.md
 - ✅ [`decisions/apple-health-2026-10-18.md`](decisions/apple-health-2026-10-18.md): v0.4.0
   integrates Apple Health — a Health Sync context imports walks, hikes, runs and rides with routes
   (full history) as Activities that claim turf, and saves recordings to Health with routes

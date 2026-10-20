@@ -5,6 +5,15 @@ rules:
   # Public routes declare `security: []`; every other route needs bearerAuth.
   security-defined: error
   operation-4xx-response: error
+  # Every operation is findable and described in Swagger.
+  operation-operationId: error
+  operation-summary: error
+  operation-tag-defined: error
+  operation-description: error
+  # Examples must match their schemas; nothing declared and unused.
+  no-invalid-schema-examples: error
+  no-invalid-media-type-examples: error
+  no-unused-components: error
   # The servers are local dev ones on purpose (localhost API, cityturfer.local proxy); a production
   # server joins when the Vercel project exists.
   no-server-example.com: off

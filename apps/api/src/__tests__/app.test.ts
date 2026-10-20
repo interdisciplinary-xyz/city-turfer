@@ -1,14 +1,16 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+import { gzipSync } from 'node:zlib';
 
 import { describe, expect, it } from 'vitest';
 
 import { createApp } from '../app';
-import { OPENAPI_CONFIG } from '../spec';
+import { defaultDeps, type RequestLogEntry, silentLog } from '../deps';
+import { API_VERSION, OPENAPI_CONFIG } from '../spec';
 
-const app = createApp();
+const app = createApp(defaultDeps({ log: silentLog }));
 const AUTH = { Authorization: 'Bearer test-token' };
-const PUBLIC = new Set(['getHealth', 'signIn', 'searchCities']);
+const PUBLIC = new Set(['getHealth', 'signIn']);
 const METHODS = ['get', 'put', 'post', 'patch', 'delete'] as const;
 
 type Operation = {
@@ -29,7 +31,7 @@ describe('routes', () => {
   it('answers health without auth', async () => {
     const res = await app.request('/v1/health');
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ status: 'ok', version: '0.1.0' });
+    expect(await res.json()).toEqual({ status: 'ok', version: API_VERSION });
   });
 
   it('answers planned routes with a 501 problem', async () => {
@@ -46,6 +48,38 @@ describe('routes', () => {
     expect(body).toMatchObject({ status: 400, code: 'invalid-request' });
     // Location data is personal data: never repeat coordinates in an error.
     expect(JSON.stringify(body)).not.toContain('52.2297');
+  });
+
+  it('accepts a well-formed upload (then 501) and refuses 7-column track points', async () => {
+    const point = (i: number) => [21.0122 + i * 1e-4, 52.2297, 1760857920000 + i * 3000, 0, 98.5];
+    const body = {
+      type: 'run',
+      name: 'Morning run',
+      source: 'recording',
+      startedAt: '2026-10-19T07:12:00Z',
+      endedAt: '2026-10-19T07:42:00Z',
+      resumedSegments: null,
+      trackHash: 'a'.repeat(64),
+      track: { points: [point(0), point(1)] },
+    };
+    const put = (b: unknown) =>
+      app.request('/v1/activities/3f9c2a64', {
+        method: 'PUT',
+        headers: { ...AUTH, 'Content-Type': 'application/json' },
+        body: JSON.stringify(b),
+      });
+    expect((await put(body)).status).toBe(501);
+    const old = await put({
+      ...body,
+      track: {
+        points: [
+          [...point(0), 5, 2.9],
+          [...point(1), 5, 2.9],
+        ],
+      },
+    });
+    expect(old.status).toBe(400);
+    expect(JSON.stringify(await old.json())).not.toContain('52.2297');
   });
 
   it('rejects an activity upload with a bad id or body', async () => {
@@ -67,7 +101,63 @@ describe('routes', () => {
     expect((await app.request('/openapi.json')).status).toBe(200);
     const ui = await app.request('/swagger');
     expect(ui.status).toBe(200);
-    expect(await ui.text()).toContain('swagger');
+    const html = await ui.text();
+    expect(html).toContain('swagger');
+    expect(html).toContain('showExtensions');
+  });
+});
+
+describe('platform middleware', () => {
+  const upload = (headers: Record<string, string>, body: BodyInit) =>
+    app.request('/v1/activities/3f9c2a64', { method: 'PUT', headers, body });
+
+  it('answers 401 before validating, so an anonymous caller learns nothing about the schema', async () => {
+    const res = await upload({ 'Content-Type': 'application/json' }, '{}');
+    expect(res.status).toBe(401);
+    expect(res.headers.get('www-authenticate')).toBe('Bearer');
+    expect(await res.json()).toMatchObject({ status: 401, code: 'auth.missing' });
+  });
+
+  it('answers 401 auth.invalid when the verifier rejects the token', async () => {
+    const strict = createApp(defaultDeps({ log: silentLog, auth: { verify: () => Promise.resolve(null) } }));
+    const res = await strict.request('/v1/me', { headers: AUTH });
+    expect(res.status).toBe(401);
+    expect(await res.json()).toMatchObject({ code: 'auth.invalid' });
+  });
+
+  it('lists invalid fields as JSON pointers', async () => {
+    const res = await upload({ ...AUTH, 'Content-Type': 'application/json' }, JSON.stringify({ type: 'swim' }));
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.errors).toContainEqual(expect.objectContaining({ pointer: '/type' }));
+  });
+
+  it('inflates gzip bodies before validation', async () => {
+    const res = await upload(
+      { ...AUTH, 'Content-Type': 'application/json', 'Content-Encoding': 'gzip' },
+      gzipSync(JSON.stringify({ type: 'swim' }))
+    );
+    expect(res.status).toBe(400);
+    expect((await res.json()).errors).toContainEqual(expect.objectContaining({ pointer: '/type' }));
+  });
+
+  it('refuses other encodings with 415 and oversized bodies with 413', async () => {
+    const br = await upload({ ...AUTH, 'Content-Type': 'application/json', 'Content-Encoding': 'br' }, '{}');
+    expect(br.status).toBe(415);
+    const big = await upload({ ...AUTH, 'Content-Type': 'application/json' }, 'x'.repeat(4_600_000));
+    expect(big.status).toBe(413);
+    expect(await big.json()).toMatchObject({ code: 'payload-too-large' });
+  });
+
+  it('gives every answer a request id and logs the route pattern, never the path', async () => {
+    const entries: RequestLogEntry[] = [];
+    const logged = createApp(defaultDeps({ log: { request: (e) => entries.push(e) } }));
+    const res = await logged.request('/v1/activities/3f9c2a64/track', { headers: AUTH });
+    expect(res.headers.get('x-request-id')).toBeTruthy();
+    expect(entries).toEqual([
+      expect.objectContaining({ method: 'GET', route: '/v1/activities/:activityId/track', status: 501 }),
+    ]);
+    expect(JSON.stringify(entries)).not.toContain('3f9c2a64');
   });
 });
 
@@ -77,7 +167,7 @@ describe('OpenAPI document', () => {
 
   it('is OpenAPI 3.1 with every route of the decision record', () => {
     expect(doc.openapi).toBe('3.1.0');
-    expect(ops).toHaveLength(20);
+    expect(ops).toHaveLength(22);
   });
 
   it('gives every operation a unique id and a bounded-context tag', () => {

@@ -1,107 +1,93 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 
-import { AUTH_ERRORS, BEARER_AUTH, problemResponse } from '../schemas/common';
-import {
-  ChooseHomeCityBody,
-  CityList,
-  CitySearchQuery,
-  HomeCity,
-  TurfCells,
-  TurfCellsQuery,
-  TurfSummary,
-} from '../schemas/territory';
-import { registerPlanned } from './planned';
+import type { AppEnv } from '../deps';
+import { ActivityIdParam, AUTH_ERRORS, INVALID, notFound, problemResponse } from '../schemas/common';
+import { ChooseHomeCityBody, Claim, HomeCity, TurfCells, TurfCellsQuery, TurfSummary } from '../schemas/territory';
+import { defineRoute } from './define';
 
 const TAG = ['Territory'];
 
-/** Territory: turf summary and cells, the city catalogue, the Home City. */
-export function registerTerritory(app: OpenAPIHono): void {
-  registerPlanned(app, {
+/** Territory: turf summary, cells and claims (recomputed from tracks), and the Home City. */
+export function registerTerritory(app: OpenAPIHono<AppEnv>): void {
+  defineRoute(app, {
+    status: 'planned',
     method: 'get',
     path: '/v1/turf/summary',
     tags: TAG,
     operationId: 'getTurfSummary',
     summary: 'Turf summary',
-    description: 'Area, cells, strong cells, new this week and month, cells per type (use case GetTurfSummary).',
-    security: BEARER_AUTH,
+    description:
+      'Area, cells, strong cells, new in the last 7 and 30 days (rolling, time-zone free), cells per type (use case GetTurfSummary).',
     responses: {
       200: { description: 'The summary.', content: { 'application/json': { schema: TurfSummary } } },
       ...AUTH_ERRORS,
     },
   });
 
-  registerPlanned(app, {
+  defineRoute(app, {
+    status: 'planned',
     method: 'get',
     path: '/v1/turf/cells',
     tags: TAG,
     operationId: 'getTurfCells',
     summary: 'Turf cells in a viewport',
     description:
-      'Cells in the bounding box (padded 10%), aggregated to coarser cells past 5,000 features (use case GetTurfInViewport).',
-    security: BEARER_AUTH,
+      'Cells in the bounding box (padded 10%), aggregated to coarser cells past 5,000 features (use case GetTurfInViewport). Cells come without polygons: draw them from the H3 id.',
     request: { query: TurfCellsQuery },
     responses: {
       200: { description: 'The cells.', content: { 'application/json': { schema: TurfCells } } },
-      400: problemResponse('Invalid query.'),
+      ...INVALID,
       ...AUTH_ERRORS,
     },
   });
 
-  registerPlanned(app, {
+  defineRoute(app, {
+    status: 'planned',
     method: 'get',
-    path: '/v1/cities',
+    path: '/v1/turf/claims/{activityId}',
     tags: TAG,
-    operationId: 'searchCities',
-    security: [],
-    summary: 'Search the city catalogue',
+    operationId: 'getClaim',
+    summary: 'Turf claimed by an activity',
     description:
-      'Accent-insensitive search of the bundled catalogue ("krakow" finds Kraków); public (use case SearchCities).',
-    request: { query: CitySearchQuery },
+      'Cells the activity covered and which were new (use case GetClaimForActivity). The Claim is a Territory aggregate keyed by the activity id.',
+    request: { params: ActivityIdParam },
     responses: {
-      200: { description: 'Matching cities, best first.', content: { 'application/json': { schema: CityList } } },
-      400: problemResponse('Invalid query.'),
+      200: { description: 'The claim.', content: { 'application/json': { schema: Claim } } },
+      ...INVALID,
+      ...AUTH_ERRORS,
+      ...notFound('claim'),
     },
   });
 
-  registerPlanned(app, {
+  defineRoute(app, {
+    status: 'planned',
     method: 'get',
-    path: '/v1/me/home-city',
+    path: '/v1/turf/home-city',
     tags: TAG,
     operationId: 'getHomeCity',
     summary: 'Home City',
     description: 'The city the maps open on, or null (use case GetHomeCity).',
-    security: BEARER_AUTH,
     responses: {
       200: { description: 'The Home City.', content: { 'application/json': { schema: HomeCity } } },
       ...AUTH_ERRORS,
     },
   });
 
-  registerPlanned(app, {
+  defineRoute(app, {
+    status: 'planned',
     method: 'put',
-    path: '/v1/me/home-city',
+    path: '/v1/turf/home-city',
     tags: TAG,
     operationId: 'chooseHomeCity',
-    summary: 'Choose the Home City',
-    description: 'Only catalogue cities (use case ChooseHomeCity).',
-    security: BEARER_AUTH,
+    summary: 'Choose or clear the Home City',
+    description:
+      'Only catalogue cities; `cityId: null` clears it (use case ChooseHomeCity). Last write wins on `chosenAt`: an older choice is ignored and the current one returned.',
     request: { body: { required: true, content: { 'application/json': { schema: ChooseHomeCityBody } } } },
     responses: {
-      200: { description: 'Chosen.', content: { 'application/json': { schema: HomeCity } } },
-      400: problemResponse('Invalid body.'),
+      200: { description: 'The Home City now.', content: { 'application/json': { schema: HomeCity } } },
+      ...INVALID,
       ...AUTH_ERRORS,
-      422: problemResponse('Not a catalogue city (`home-city.unknown`).'),
+      422: problemResponse('Not a catalogue city.', 'home-city.unknown'),
     },
-  });
-
-  registerPlanned(app, {
-    method: 'delete',
-    path: '/v1/me/home-city',
-    tags: TAG,
-    operationId: 'clearHomeCity',
-    summary: 'Clear the Home City',
-    description: 'Use case ChooseHomeCity(null). Idempotent.',
-    security: BEARER_AUTH,
-    responses: { 204: { description: 'Cleared.' }, ...AUTH_ERRORS },
   });
 }

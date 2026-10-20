@@ -37,6 +37,8 @@ export function swaggerHtml() {
         deepLinking: true,
         displayRequestDuration: true,
         persistAuthorization: true,
+        showExtensions: true,
+        docExpansion: 'list',
         presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
         layout: 'StandaloneLayout',
       });

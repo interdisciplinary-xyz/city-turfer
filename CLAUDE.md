@@ -36,8 +36,9 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
 - **Storage**: `expo-sqlite`, local-first; the phone stays the source of truth
 - **API** (planned, v0.8.0): `apps/api`, Hono on Vercel (`fra1`), routes declared with zod +
   `@hono/zod-openapi` into a generated OpenAPI 3.1 spec (`apps/api/openapi.json`), Swagger UI at
-  https://cityturfer.local/swagger. Neon Postgres + Drizzle and Better Auth later. Design:
-  `docs/decisions/api-2026-10-20.md`
+  https://cityturfer.local/swagger. Sync-first contract (versions, If-Match, tombstones, one changes
+  feed); Neon Postgres + Drizzle and Better Auth later. Design:
+  `docs/decisions/api-sync-2026-10-20.md` (contract) and `docs/decisions/api-2026-10-20.md` (stack)
 - **State**: SQLite is the source of truth; live-session UI state is an in-memory `LiveSessionStore`
   (`apps/mobile/src/contexts/recording/infrastructure/live-session-store.ts`, read via
   `useSyncExternalStore`). No zustand.

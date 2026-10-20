@@ -1,47 +1,53 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 
-import { AUTH_ERRORS, BEARER_AUTH, problemResponse } from '../schemas/common';
+import type { AppEnv } from '../deps';
+import { AUTH_ERRORS, INVALID, problemResponse } from '../schemas/common';
 import { Session, SignInBody, User } from '../schemas/identity';
-import { registerPlanned } from './planned';
+import { defineRoute } from './define';
 
 const TAG = ['Identity'];
 
-/** Identity: sign in, sign out, the current user. Use cases SignIn, SignOut, GetCurrentUser. */
-export function registerIdentity(app: OpenAPIHono): void {
-  registerPlanned(app, {
+/** Identity: sign in (mock), sign out, the current user. Use cases SignIn, SignOut, GetCurrentUser. */
+export function registerIdentity(app: OpenAPIHono<AppEnv>): void {
+  defineRoute(app, {
+    status: 'planned',
     method: 'post',
     path: '/v1/auth/sign-in',
     tags: TAG,
     operationId: 'signIn',
     security: [],
-    summary: 'Sign in',
-    description: 'Exchanges credentials for a bearer token. Mock `admin` account first; Better Auth later.',
+    'x-cityturfer-env': 'dev',
+    summary: 'Sign in (mock, dev only)',
+    description:
+      'Exchanges the mock `admin` credentials for a bearer token on local and preview servers only; production never seeds that account (decision D8). Better Auth brings its own sign-in endpoints later (D7).',
     request: { body: { required: true, content: { 'application/json': { schema: SignInBody } } } },
     responses: {
       200: { description: 'Signed in.', content: { 'application/json': { schema: Session } } },
-      400: problemResponse('Invalid body.'),
-      401: problemResponse('Wrong email or password.'),
+      ...INVALID,
+      401: problemResponse('Wrong email or password.', 'auth.invalid'),
+      429: AUTH_ERRORS[429],
     },
   });
 
-  registerPlanned(app, {
+  defineRoute(app, {
+    status: 'planned',
     method: 'delete',
     path: '/v1/auth/session',
     tags: TAG,
     operationId: 'signOut',
     summary: 'Sign out',
-    description: 'Revokes the current token.',
-    security: BEARER_AUTH,
+    description: 'Revokes the current token (use case SignOut).',
     responses: { 204: { description: 'Signed out.' }, ...AUTH_ERRORS },
   });
 
-  registerPlanned(app, {
+  defineRoute(app, {
+    status: 'planned',
     method: 'get',
     path: '/v1/me',
     tags: TAG,
     operationId: 'getMe',
     summary: 'Current user',
-    security: BEARER_AUTH,
+    description: 'Use case GetCurrentUser. Consents, export and erasure live under Privacy.',
     responses: {
       200: { description: 'The signed-in user.', content: { 'application/json': { schema: User } } },
       ...AUTH_ERRORS,
