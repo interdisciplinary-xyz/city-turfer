@@ -1,8 +1,10 @@
+import { NAME } from '@cityturfer/brand';
 import { type Href, router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import * as Updates from 'expo-updates';
 import { useEffect, useRef, useState } from 'react';
 import {
+  AccessibilityInfo,
   Animated,
   Easing,
   Modal,
@@ -15,11 +17,28 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ACCENT, ON_ACCENT } from '@/constants/colors';
+import { ACCENT, FONT_FAMILY, ON_ACCENT } from '@/constants/colors';
 
 import { useApp } from './app-context';
 import { CLOSE_DRAG_PX, DURATION_MS, ITEMS } from './me-menu.constants';
 import { usePalette } from './theme';
+
+/** True while the system "Reduce Motion" setting is on: the drawer then appears without sliding. */
+function useReduceMotion(): boolean {
+  const [reduce, setReduce] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((on) => alive && setReduce(on))
+      .catch(() => {});
+    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduce);
+    return () => {
+      alive = false;
+      sub.remove();
+    };
+  }, []);
+  return reduce;
+}
 
 /** The "Me" tab: slides in a drawer from the right instead of opening a screen. */
 export function MeTabButton({ testID }: { testID?: string }) {
@@ -37,7 +56,7 @@ export function MeTabButton({ testID }: { testID?: string }) {
         style={s.tab}
       >
         <SymbolView
-          name='person.crop.circle'
+          name={open ? 'person.crop.circle.fill' : 'person.crop.circle'}
           tintColor={color}
           size={24}
           fallback={<Text style={{ fontSize: 20, color }}>◉</Text>}
@@ -61,6 +80,10 @@ function MeDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [mounted, setMounted] = useState(open);
   const progress = useRef(new Animated.Value(0)).current; // 0 closed … 1 open
   const drag = useRef(new Animated.Value(0)).current; // px dragged to the right while open
+  const reduceMotion = useReduceMotion();
+  // Read inside the pan responder, which is created once.
+  const reduceMotionRef = useRef(reduceMotion);
+  reduceMotionRef.current = reduceMotion;
 
   useEffect(() => {
     if (open) {
@@ -68,14 +91,14 @@ function MeDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
       drag.setValue(0);
       Animated.timing(progress, {
         toValue: 1,
-        duration: DURATION_MS,
+        duration: reduceMotion ? 0 : DURATION_MS,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }).start();
     } else if (mounted) {
       Animated.timing(progress, {
         toValue: 0,
-        duration: DURATION_MS,
+        duration: reduceMotion ? 0 : DURATION_MS,
         easing: Easing.in(Easing.cubic),
         useNativeDriver: true,
       }).start(() => setMounted(false));
@@ -90,7 +113,12 @@ function MeDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
         if (g.dx > CLOSE_DRAG_PX || g.vx > 0.5) {
           onClose();
         } else {
-          Animated.spring(drag, { toValue: 0, useNativeDriver: true }).start();
+          Animated.timing(drag, {
+            toValue: 0,
+            duration: reduceMotionRef.current ? 0 : DURATION_MS,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }).start();
         }
       },
     })
@@ -165,7 +193,7 @@ function MeDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
             ))}
           </View>
           <Text style={[s.footer, { color: p.muted }]}>
-            CityTurfer
+            {NAME}
             {Updates.isEnabled && Updates.updateId ? ` · update ${Updates.updateId.slice(0, 8)}` : ''}
           </Text>
         </Animated.View>
@@ -202,8 +230,8 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 8,
   },
-  initial: { color: ON_ACCENT, fontSize: 28, fontWeight: '900' },
-  name: { fontSize: 20, fontWeight: '900' },
+  initial: { color: ON_ACCENT, fontSize: 28, fontFamily: FONT_FAMILY.display },
+  name: { fontSize: 20, fontFamily: FONT_FAMILY.display, letterSpacing: -0.5 },
   list: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 8 },
   item: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 20, paddingVertical: 16 },
   itemLabel: { flex: 1, fontSize: 17, fontWeight: '600' },

@@ -103,6 +103,7 @@ Open failures and the suggested fixes (not applied: each changes how the app loo
 | Glow as text/links on light theme        | 3.3:1     | Light-theme accent text `#C8137F` (5.1:1)                    |
 | Danger on light theme                    | 3.7:1     | `#CF2F35` (4.8:1)                                            |
 | Walk / run / ride lines on light         | 1.8–2.4:1 | Light-map variants `#14935C`, `#C85A12`, `#1477B8` (≥ 3.6:1) |
+| White label on danger (Hold to finish)   | 2.9–3.9:1 | Needs a deeper danger fill token; decide with the accent fix |
 
 ## Assets
 

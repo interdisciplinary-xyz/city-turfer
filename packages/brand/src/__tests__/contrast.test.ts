@@ -25,6 +25,13 @@ const PAIRS: Pair[] = [
   }),
   // Labels drawn on brand fills.
   { name: 'on-accent text on accent', fg: ON_ACCENT, bg: ACCENT, min: MIN_CONTRAST.text },
+  // Destructive buttons (Hold to finish): the accent label on the theme's danger fill.
+  ...(['light', 'dark'] as const).map((scheme) => ({
+    name: `on-accent text on ${scheme} danger`,
+    fg: ON_ACCENT,
+    bg: (scheme === 'light' ? LIGHT : DARK).danger,
+    min: MIN_CONTRAST.text,
+  })),
   ...TIER_ORDER.map((tier) => ({
     name: `on-tier text on ${tier}`,
     fg: ON_TIER[tier],
@@ -65,6 +72,8 @@ const PAIRS: Pair[] = [
 const KNOWN_FAILURES = new Set([
   'on-accent text on accent', // white on glow 3.5:1: buttons need night text or a deeper accent
   'on-tier text on glowing', // same pair as the accent
+  'on-accent text on light danger', // 3.9:1: white label on the danger button
+  'on-accent text on dark danger', // 2.9:1: the dark danger is tuned for text on night, not as a fill
   'light danger on bg', // 3.7:1: needs a darker red on light
   'light danger on card', // 3.9:1
   'accent text on light bg', // 3.3:1: links on light need a deeper pink

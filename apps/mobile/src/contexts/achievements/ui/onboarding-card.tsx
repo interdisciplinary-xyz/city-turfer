@@ -1,7 +1,7 @@
 import type { OnboardingProgress, OnboardingStepId } from '@cityturfer/core/achievements';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { ACCENT, FONT_FAMILY } from '@/constants/colors';
+import { ACCENT, FONT_FAMILY, ON_ACCENT } from '@/constants/colors';
 import { Card } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
 
@@ -84,5 +84,5 @@ const s = StyleSheet.create({
   fill: { height: 6, borderRadius: 3, backgroundColor: ACCENT },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 44 },
   check: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-  tick: { color: '#fff', fontWeight: '900', fontSize: 14 },
+  tick: { color: ON_ACCENT, fontWeight: '900', fontSize: 14 },
 });

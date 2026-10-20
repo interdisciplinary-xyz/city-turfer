@@ -9,6 +9,7 @@ import type { ActivityRowProps } from './activity-row.constants';
 export function ActivityRow({
   type,
   glyph,
+  icon,
   title,
   subtitle,
   value,
@@ -26,7 +27,9 @@ export function ActivityRow({
       accessibilityLabel={accessibilityLabel}
       style={[s.row, { backgroundColor: p.card, borderColor: p.border }]}
     >
-      <Badge glyph={glyph} tint={tint(TYPE_COLOR[type])} />
+      <Badge glyph={icon ? undefined : glyph} tint={tint(TYPE_COLOR[type])}>
+        {icon}
+      </Badge>
       <View style={s.main}>
         <Text style={[s.title, { color: p.text }]} numberOfLines={1}>
           {title}

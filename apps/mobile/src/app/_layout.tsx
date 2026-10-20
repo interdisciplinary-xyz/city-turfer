@@ -1,13 +1,16 @@
+import { FONT_SIZE } from '@cityturfer/brand';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { ACCENT, DARK } from '@/constants/colors';
+import { ACCENT, DARK, FONT_FAMILY } from '@/constants/colors';
 import { AppProvider, useApp } from '@/ui-kit/app-context';
+import { usePalette } from '@/ui-kit/theme';
 
 function Gate() {
   const { auth } = useApp();
+  const p = usePalette();
   if (auth.status === 'loading') {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: DARK.bg }}>
@@ -17,7 +20,26 @@ function Gate() {
   }
   const signedIn = auth.status === 'signed-in';
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        headerStyle: { backgroundColor: p.card },
+        // Back button in the text colour: the glow accent fails contrast on the light header (3.3:1).
+        headerTintColor: p.text,
+        // Own Text: headerTitleStyle is merged over the platform's bold weight, and Archivo plus a
+        // fontWeight falls back to the system font on Android.
+        headerTitle: ({ children }) => (
+          <Text
+            accessibilityRole='header'
+            numberOfLines={1}
+            style={{ color: p.text, fontFamily: FONT_FAMILY.display, fontSize: FONT_SIZE.lead }}
+          >
+            {children}
+          </Text>
+        ),
+        contentStyle: { backgroundColor: p.bg },
+      }}
+    >
       <Stack.Protected guard={!signedIn}>
         <Stack.Screen name='sign-in' />
       </Stack.Protected>
