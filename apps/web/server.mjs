@@ -8,13 +8,16 @@
 //
 // It also serves the design system's Storybook build at /storybook (tools/storybook-route.mjs), and
 // the API's Swagger docs at /swagger plus a proxy from /api/* to the API dev server
-// (tools/swagger-route.mjs).
+// (tools/swagger-route.mjs). Those pages, and /branding, answer only this machine, like the toolbar
+// (tools/local-only-route.mjs).
+import { readdirSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
 import next from 'next';
 
+import { withLocalOnly } from './tools/local-only-route.mjs';
 import { withStorybook } from './tools/storybook-route.mjs';
 import { withSwagger } from './tools/swagger-route.mjs';
 
@@ -30,13 +33,20 @@ const siteHandler = devNode
   ? devNode.withDevRequestLog(nextHandler, { port, appDir: path.join(process.cwd(), 'src/app') })
   : nextHandler;
 const storybookBuild = path.join(process.cwd(), '../storybook/storybook-static');
-const handler = dev
-  ? withSwagger(withStorybook(siteHandler, storybookBuild), {
-      // Resolved only in dev: swagger-ui-dist is a dev dependency.
-      distRoot: path.dirname(createRequire(import.meta.url).resolve('swagger-ui-dist/package.json')),
-      specFile: path.join(process.cwd(), '../api/openapi.json'),
-      apiUrl: process.env.API_URL,
-    })
+// Every language is a URL prefix (`/en`, `/pl`), one messages file each.
+const locales = readdirSync(path.join(process.cwd(), 'messages'))
+  .filter((file) => file.endsWith('.json'))
+  .map((file) => file.slice(0, -'.json'.length));
+const handler = devNode
+  ? withLocalOnly(
+      withSwagger(withStorybook(siteHandler, storybookBuild), {
+        // Resolved only in dev: swagger-ui-dist is a dev dependency.
+        distRoot: path.dirname(createRequire(import.meta.url).resolve('swagger-ui-dist/package.json')),
+        specFile: path.join(process.cwd(), '../api/openapi.json'),
+        apiUrl: process.env.API_URL,
+      }),
+      { isLocal: devNode.isLocalClient, locales }
+    )
   : siteHandler;
 
 await app.prepare();
