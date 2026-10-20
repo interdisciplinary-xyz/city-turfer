@@ -1,5 +1,5 @@
 {
-  "description": "Turf strength = 1 - exp(-visits/k); tiers: faint <0.33 <= glowing <0.66 <= strong <0.9 <= blazing; strong = strong|blazing (>= 0.66). Pins src/contexts/territory/domain/strength.ts and tools/lib/turf.mjs.",
+  "description": "Turf strength = 1 - exp(-visits/k); tiers: faint <0.33 <= glowing <0.66 <= strong <0.9 <= blazing; strong = strong|blazing (>= 0.66). Pins packages/core/src/contexts/territory/domain/strength.ts and apps/mobile/tools/lib/turf.mjs.",
   "defaultK": 3,
   "strengthVectors": [
     {

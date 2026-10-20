@@ -3,7 +3,7 @@ import type { StrengthTier } from '../contract';
 
 /**
  * Turf is permanent (docs/poc-plan.md §9): strength depends only on visits.
- * Must match tools/lib/turf.mjs (pinned by tools/fixtures/turf-vectors.json): strength = 1 − exp(−visits / k).
+ * Must match apps/mobile/tools/lib/turf.mjs (pinned by apps/mobile/tools/fixtures/turf-vectors.json): strength = 1 − exp(−visits / k).
  */
 export const TURF_SATURATION_K = 3;
 

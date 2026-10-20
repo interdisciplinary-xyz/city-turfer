@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { H3CellGrid } from '../../../../h3';
 import { trackFromPoints, type TrackPoint } from '../../../../shared-kernel';
-import { H3CellGrid } from '../../infrastructure/h3-cell-grid';
 import { Claim } from '../claim';
 import { isStrong, strengthOf, tierOf } from '../strength';
 
@@ -21,12 +21,12 @@ interface Vectors {
   strengthVectors: { visits: number; k: number; strength: number; tier: string; strong: boolean }[];
   tierBoundaryVectors: { strength: number; tier: string; strong: boolean }[];
 }
-// Shared with tools/lib/turf.mjs (tools/__tests__/turf-parity.test.mjs): the formula is pinned here.
+// Shared with apps/mobile/tools/lib/turf.mjs (apps/mobile/tools/__tests__/turf-parity.test.mjs): the formula is pinned here.
 const vectors: Vectors = JSON.parse(
-  readFileSync(join(__dirname, '../../../../../tools/fixtures/turf-vectors.json'), 'utf8')
+  readFileSync(join(__dirname, '../../../../../../../apps/mobile/tools/fixtures/turf-vectors.json'), 'utf8')
 );
 
-describe('Strength vs tools/fixtures/turf-vectors.json', () => {
+describe('Strength vs apps/mobile/tools/fixtures/turf-vectors.json', () => {
   it.each(vectors.strengthVectors)('$visits visits, k=$k -> $strength ($tier)', (v) => {
     const s = strengthOf(v.visits, v.k);
     expect(s).toBeCloseTo(v.strength, 6);

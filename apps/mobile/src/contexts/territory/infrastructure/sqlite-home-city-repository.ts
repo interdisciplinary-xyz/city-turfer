@@ -1,8 +1,8 @@
+import type { HomeCityRepository } from '@cityturfer/core/territory/ports';
+
 import type { Database } from '@/platform/database';
 import { appendToOutbox } from '@/platform/outbox';
 import type { DomainEvent } from '@/shared-kernel';
-
-import type { HomeCityRepository } from '../domain/home-city-repository';
 
 /** Table ter_home_city (migration 7): one row, the chosen catalogue id. */
 export class SqliteHomeCityRepository implements HomeCityRepository {

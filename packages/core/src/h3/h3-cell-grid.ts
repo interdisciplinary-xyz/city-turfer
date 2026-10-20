@@ -1,6 +1,5 @@
-import type { GeoPoint } from '@/shared-kernel';
-
-import type { CellGrid, CellId } from '../domain/cell-grid';
+import type { CellGrid, CellId } from '../contexts/territory/ports';
+import type { GeoPoint } from '../shared-kernel';
 import { cellArea, cellToBoundary, cellToLatLng, cellToParent, getHexagonEdgeLengthAvg, latLngToCell } from './h3';
 
 /** Turf Cells are H3 resolution 11 hexagons (~50 m across); zoomed-out aggregation uses res 9. */

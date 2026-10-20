@@ -1,5 +1,5 @@
 // Node check: tools/lib/turf.mjs (used by turf-preview.mjs) must match the pinned vectors,
-// the same file src/contexts/territory/domain/__tests__/territory.test.ts asserts against.
+// the same file packages/core/src/contexts/territory/domain/__tests__/territory.test.ts asserts against.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';

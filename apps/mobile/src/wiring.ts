@@ -3,6 +3,8 @@
  * Used by the composition root (with Expo adapters) and by integration tests
  * (with fakes). Contains no Expo imports.
  */
+import { H3CellGrid } from '@cityturfer/core/h3';
+
 import {
   type ActivityDeleted,
   type ActivityRecorded,
@@ -19,7 +21,6 @@ import { createRecordingApi, SerialCommandExecutor, type SessionFinished } from 
 import type { LiveSessionNotifier, LocationTracker, PermissionGateway } from '@/contexts/recording/application/ports';
 import { SqliteRecordingSessionRepository } from '@/contexts/recording/infrastructure/sqlite-recording-session-repository';
 import { createTerritoryApi } from '@/contexts/territory';
-import { H3CellGrid } from '@/contexts/territory/infrastructure/h3-cell-grid';
 import { SqliteHomeCityRepository } from '@/contexts/territory/infrastructure/sqlite-home-city-repository';
 import { SqliteTerritoryRepository } from '@/contexts/territory/infrastructure/sqlite-territory-repository';
 import type { Database } from '@/platform/database';

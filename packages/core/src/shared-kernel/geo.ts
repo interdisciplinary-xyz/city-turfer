@@ -18,7 +18,7 @@ export function geoPoint(lat: number, lon: number): GeoPoint {
 
 const toRad = (d: number) => (d * Math.PI) / 180;
 
-/** Great-circle distance in metres (haversine). Matches tools/lib/geo.mjs. */
+/** Great-circle distance in metres (haversine). Matches apps/mobile/tools/lib/geo.mjs. */
 export function distanceM(a: GeoPoint, b: GeoPoint): number {
   const dLat = toRad(b.lat - a.lat);
   const dLon = toRad(b.lon - a.lon);

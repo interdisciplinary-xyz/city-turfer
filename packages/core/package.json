@@ -6,6 +6,9 @@
   "exports": {
     "./constants": "./src/constants/index.ts",
     "./shared-kernel": "./src/shared-kernel/index.ts",
+    "./territory": "./src/contexts/territory/index.ts",
+    "./territory/ports": "./src/contexts/territory/ports.ts",
+    "./h3": "./src/h3/index.ts",
     "./package.json": "./package.json"
   },
   "scripts": {
@@ -13,6 +16,9 @@
     "lint": "eslint src",
     "arch": "depcruise src --config .dependency-cruiser.cjs",
     "test:unit": "jest"
+  },
+  "dependencies": {
+    "h3-js": "4.5.0"
   },
   "devDependencies": {
     "@cityturfer/config": "workspace:*",

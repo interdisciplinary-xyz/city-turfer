@@ -1,18 +1,23 @@
+import { createTerritoryApi, type HomeCityDeps, type TerritoryDeps } from '@/contexts/territory';
 import { migrate } from '@/platform/migrations';
 import { DomainError } from '@/shared-kernel';
 import { openNodeDatabase } from '@/test-support/node-database';
 
-import { SqliteHomeCityRepository } from '../../infrastructure/sqlite-home-city-repository';
-import { ChooseHomeCity, GetHomeCity, SearchCities } from '../home-city';
+import { SqliteHomeCityRepository } from '../sqlite-home-city-repository';
 
 const NOW = Date.parse('2026-10-19T12:00:00Z');
+
+// The Home City use cases through Territory's public API (they live in @cityturfer/core); the
+// claim use cases are not exercised here, so their dependencies are left out.
+const homeCityApi = (deps: HomeCityDeps) => createTerritoryApi(deps as TerritoryDeps & HomeCityDeps);
 
 async function setup() {
   const db = openNodeDatabase();
   await migrate(db);
   const afterCommit = jest.fn();
   const deps = { homeCities: new SqliteHomeCityRepository(db), clock: { now: () => NOW }, afterCommit };
-  return { db, afterCommit, get: new GetHomeCity(deps), choose: new ChooseHomeCity(deps) };
+  const api = homeCityApi(deps);
+  return { db, afterCommit, get: api.homeCity, choose: api.chooseHomeCity };
 }
 
 const outbox = (db: ReturnType<typeof openNodeDatabase>) =>
@@ -77,18 +82,18 @@ describe('Home City', () => {
   it('persists across repository instances (survives a restart)', async () => {
     const { db, choose } = await setup();
     await choose.execute('pl-wroclaw');
-    const fresh = new GetHomeCity({
+    const fresh = homeCityApi({
       homeCities: new SqliteHomeCityRepository(db),
       clock: { now: () => NOW },
       afterCommit: () => undefined,
-    });
+    }).homeCity;
     expect((await fresh.execute())?.name).toBe('Wrocław');
   });
 });
 
 describe('SearchCities', () => {
   it('returns city views for the picker', () => {
-    const [first] = new SearchCities().execute('pozn');
+    const [first] = homeCityApi({} as HomeCityDeps).searchCities.execute('pozn');
     expect(first).toMatchObject({ id: 'pl-poznan', name: 'Poznań' });
     expect(first.bounds).toHaveLength(4);
   });
