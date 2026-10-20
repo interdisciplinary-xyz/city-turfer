@@ -326,6 +326,25 @@ you never walked.
 
 **Rationale:** The glow — the reason to open the map — only reads on a dark basemap.
 
+---
+
+## The whole app is dark, like the website (2026-10-20)
+
+**Status:** Accepted. Extends "Why the Turf Map is always dark".
+
+**Decision:** The app always uses the brand's dark theme (`userInterfaceStyle: "dark"` in
+`apps/mobile/app.json`, so `useColorScheme()` reports `dark` and `usePalette()` returns `DARK`). The
+Record map uses `MAP_STYLE_DARK` and draws turf exactly as the Turf Map does (`TURF_STYLE`).
+
+**Rationale:** Founder request: the app should look like the homepage, which is dark only
+(`cssVariables('dark')`), and the Record map should show turf in the same colours as the Turf Map.
+The `LIGHT` theme stays in `@cityturfer/brand` for Storybook and a possible light mode later.
+
+**Consequence:** `app.json` is native config, so this changes the runtime fingerprint: it ships in a
+new build, not over the air. Two traps: `expo-splash-screen` resets iOS to `Automatic` whenever its
+config has a `dark` block (so the splash has none; it was identical anyway), and Android only
+honours `userInterfaceStyle` with `expo-system-ui` installed.
+
 **Trade-off:** One screen ignores the user's theme.
 
 ---

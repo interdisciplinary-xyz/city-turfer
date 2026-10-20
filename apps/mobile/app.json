@@ -7,7 +7,7 @@
     "platforms": ["ios", "android"],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
     "ios": {
       "bundleIdentifier": "com.turftrack.poc",
       "supportsTablet": false,
@@ -67,11 +67,7 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 220,
           "resizeMode": "contain",
-          "backgroundColor": "#0B0D12",
-          "dark": {
-            "image": "./assets/splash-icon.png",
-            "backgroundColor": "#0B0D12"
-          }
+          "backgroundColor": "#0B0D12"
         }
       ],
       [
