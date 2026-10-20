@@ -1,12 +1,12 @@
 import { RADIUS, SPACE } from '@cityturfer/brand';
 import { Camera, type CameraRef, GeoJSONSource, Layer, Map, UserLocation } from '@maplibre/maplibre-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AccessibilityInfo, Alert, Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { AccessibilityInfo, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ACTIVITY_TYPES, TYPE_LABEL } from '@/constants/activity';
 import { ON_ACCENT, ON_TIER, ON_TYPE_COLOR, TIER_COLOR, TYPE_COLOR } from '@/constants/colors';
-import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from '@/constants/map';
+import { MAP_STYLE_DARK } from '@/constants/map';
 import { type ActivityType } from '@/shared-kernel';
 import { Button, Stat } from '@/ui-kit/components';
 import { formatDistance, formatDuration, formatPaceOrSpeed, formatSpeedNow } from '@/ui-kit/format';
@@ -41,7 +41,6 @@ export function RecordView({
   turf,
 }: RecordViewProps) {
   const p = usePalette();
-  const scheme = useColorScheme();
   const insets = useSafeAreaInsets();
   const { snapshot, track, activeS, prepare, start, pause, resume, finish, discard } = useRecording();
   const [type, setType] = useState<ActivityType>('walk');
@@ -146,7 +145,7 @@ export function RecordView({
     <View style={[s.root, { backgroundColor: p.bg }]}>
       <Map
         style={StyleSheet.absoluteFill}
-        mapStyle={scheme === 'dark' ? MAP_STYLE_DARK : MAP_STYLE_LIGHT}
+        mapStyle={MAP_STYLE_DARK}
         logo={false}
         attributionPosition={{ top: insets.top + 8, left: 8 }}
         compass={false}

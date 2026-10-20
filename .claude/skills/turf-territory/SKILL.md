@@ -172,8 +172,8 @@ by type with a layer `filter` expression, not by rebuilding data.
   sits under it) shows the Turfer's turf under the live track, before and during a recording. On by
   default, remembered per user (`territory/infrastructure/turf-overlay-preference.ts`, secure store;
   unset or unreadable = shown). The screen composes it: `useTurfOverlay()` →
-  `<TurfLayers beforeId={LIVE_TRACK_BOTTOM_LAYER} look='overlay'>` as `RecordView`'s `mapOverlay`,
-  fed by `onViewChange` (both `onRegionIsChanging` and `onRegionDidChange`).
+  `<TurfLayers beforeId={LIVE_TRACK_BOTTOM_LAYER}>` as `RecordView`'s `mapOverlay`, fed by
+  `onViewChange` (both `onRegionIsChanging` and `onRegionDidChange`).
   - **Layer order:** MapLibre adds a layer on top of the style whatever its JSX position, so the
     overlay uses `beforeId`, is mounted after the live track (the `beforeId` layer must exist) and
     stays mounted when hidden (empty cells), and `UserLocation` comes last.
@@ -183,9 +183,8 @@ by type with a layer `filter` expression, not by rebuilding data.
     only when the view leaves it or crosses `DETAIL_ZOOM`. The view lives in a ref, so following the
     Turfer re-renders nothing; `TurfLayers` is memoised because GeoJSON sources re-serialise their
     data on every render.
-  - **Look:** `look='overlay'` (`territory/ui/layers.constants.ts` `TURF_LOOK`) draws lighter fill,
-    halo and heatmap than the Turf Map (`'full'`), so streets stay readable under the turf while
-    recording.
+  - **Look:** the Record map uses the Turf Map's dark style and the same turf look
+    (`territory/ui/layers.constants.ts` `TURF_STYLE`), so turf looks the same on both maps.
 - Catalogue ids are stored in user databases: never rename or reuse one; a removed id reads as no
   Home City. Adding a city is a JS-only change (ships over the air).
 
