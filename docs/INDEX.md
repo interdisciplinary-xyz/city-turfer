@@ -36,6 +36,14 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`engineering/features.md`](engineering/features.md): Inventory of every shipped feature by tab
   and screen, where it lives, and the claims that aren't true yet
 
+## What we build and why
+
+`docs/product/` — Product direction and roadmap.
+
+- ✅ [`product/product-brief.md`](product/product-brief.md): What CityTurfer is as a product —
+  vision, users, core loop, what a user can do today, what we promise vs what's true, success
+  criteria, open questions and known doc drift
+
 ## Running it
 
 `docs/operations/` — Runbook, OTA releases, device diagnostics.
