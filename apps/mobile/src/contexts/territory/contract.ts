@@ -1,5 +1,5 @@
 // Published language of the Territory context (types only).
-import type { ActivityType, DomainEvent } from '@/shared-kernel';
+import type { ActivityType, DomainEvent } from '../../shared-kernel';
 
 export interface TurfClaimed extends DomainEvent<'TurfClaimed'> {
   activityId: string;

@@ -1,5 +1,4 @@
-import type { ActivityType, BoundingBox } from '@/shared-kernel';
-
+import type { ActivityType, BoundingBox } from '../../../shared-kernel';
 import type { CellId } from './cell-grid';
 import type { Claim } from './claim';
 

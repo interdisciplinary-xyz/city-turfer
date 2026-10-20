@@ -1,5 +1,4 @@
-import type { ActivityType, GeoPoint, TrackPoint } from '@/shared-kernel';
-
+import type { ActivityType, GeoPoint, TrackPoint } from '../../../../shared-kernel';
 import { InMemoryActivityRepository } from '../../test-support/in-memory-activity-repository';
 import {
   MAX_REQUESTS_PER_RUN,

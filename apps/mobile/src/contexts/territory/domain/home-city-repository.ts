@@ -1,4 +1,4 @@
-import type { DomainEvent } from '@/shared-kernel';
+import type { DomainEvent } from '../../../shared-kernel';
 
 /** Stores which catalogue city is the user's Home City (per user: one database per user). */
 export interface HomeCityRepository {

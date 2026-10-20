@@ -1,4 +1,4 @@
-import { type ActivityType, weekStartOf } from '@/shared-kernel';
+import { type ActivityType, weekStartOf } from '../../../shared-kernel';
 
 /** What achievements are judged on: published facts from Activity Log and Territory. */
 export interface AchievementInput {

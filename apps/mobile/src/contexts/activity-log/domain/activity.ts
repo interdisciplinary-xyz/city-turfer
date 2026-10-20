@@ -1,4 +1,4 @@
-import { ELEV_HYSTERESIS_M, MOVING_SPEED_MPS } from '@/constants/tracking';
+import { ELEV_HYSTERESIS_M, MOVING_SPEED_MPS } from '../../../constants/tracking';
 import {
   type ActivityType,
   analyzeTrack,
@@ -9,8 +9,7 @@ import {
   simplify,
   type Split,
   type Track,
-} from '@/shared-kernel';
-
+} from '../../../shared-kernel';
 import type { ActivityDeleted, ActivityOrigin, ActivityRecorded, ActivityTrackCorrected } from '../contract';
 import { acceptRoute, estimatedMovingS, type Gap, type GapRoute, routableGaps } from './gap-route';
 

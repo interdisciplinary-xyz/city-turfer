@@ -1,5 +1,4 @@
-import type { Clock } from '@/shared-kernel';
-
+import type { Clock } from '../../../shared-kernel';
 import type { CityView, HomeCityChosen } from '../contract';
 import { type City, cityBounds, searchCities } from '../domain/city';
 import { CITY_CATALOG, cityById, homeCityFromCatalogue } from '../domain/city-catalog';

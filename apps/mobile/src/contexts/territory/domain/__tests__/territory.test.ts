@@ -1,8 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { trackFromPoints, type TrackPoint } from '@/shared-kernel';
-
+import { trackFromPoints, type TrackPoint } from '../../../../shared-kernel';
 import { H3CellGrid } from '../../infrastructure/h3-cell-grid';
 import { Claim } from '../claim';
 import { isStrong, strengthOf, tierOf } from '../strength';

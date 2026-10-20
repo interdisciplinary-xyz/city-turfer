@@ -1,5 +1,4 @@
-import { EARTH_RADIUS_M } from '@/constants/geo';
-
+import { EARTH_RADIUS_M } from '../constants/geo';
 import { DomainError } from './errors';
 
 export interface GeoPoint {

@@ -1,4 +1,4 @@
-import { type ActivityType, distanceM, type GeoPoint, type Track } from '@/shared-kernel';
+import { type ActivityType, distanceM, type GeoPoint, type Track } from '../../../shared-kernel';
 
 /**
  * Why a Segment boundary exists: a GPS gap (fixes stopped arriving), a manual Resume

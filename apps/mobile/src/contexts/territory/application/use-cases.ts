@@ -1,7 +1,12 @@
-import { ACTIVITY_TYPES } from '@/constants/activity';
-import { DETAIL_ZOOM } from '@/constants/map';
-import { type ActivityType, type BoundingBox, type Clock, trackFromPoints, type TrackPoint } from '@/shared-kernel';
-
+import { ACTIVITY_TYPES } from '../../../constants/activity';
+import { DETAIL_ZOOM } from '../../../constants/turf';
+import {
+  type ActivityType,
+  type BoundingBox,
+  type Clock,
+  trackFromPoints,
+  type TrackPoint,
+} from '../../../shared-kernel';
 import type { ClaimView, TurfCellView, TurfSummaryView } from '../contract';
 import type { CellGrid, CellId } from '../domain/cell-grid';
 import { Claim } from '../domain/claim';

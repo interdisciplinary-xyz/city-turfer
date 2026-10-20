@@ -1,4 +1,4 @@
-import type { GeoPoint } from '@/shared-kernel';
+import type { GeoPoint } from '../../../shared-kernel';
 
 export type CellId = string;
 

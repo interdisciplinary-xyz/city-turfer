@@ -1,5 +1,5 @@
 // Published language of the Activity Log context (types only).
-import type { ActivityType, DomainEvent, TrackPoint } from '@/shared-kernel';
+import type { ActivityType, DomainEvent, TrackPoint } from '../../shared-kernel';
 
 /** Where an Activity came from: a finished Recording Session, or imported (demo history, Apple Health). */
 export type ActivityOrigin = 'recording' | 'import';

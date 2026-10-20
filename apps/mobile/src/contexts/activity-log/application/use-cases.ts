@@ -6,8 +6,7 @@ import {
   splitAtGaps,
   trackFromPoints,
   type TrackPoint,
-} from '@/shared-kernel';
-
+} from '../../../shared-kernel';
 import type { ActivityDetail, ActivityListItem } from '../contract';
 import { Activity } from '../domain/activity';
 import type { ActivityRepository } from '../domain/activity-repository';

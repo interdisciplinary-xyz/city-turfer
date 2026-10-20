@@ -1,5 +1,4 @@
-import { distanceM, type Track, trackFromPoints, type TrackPoint } from '@/shared-kernel';
-
+import { distanceM, type Track, trackFromPoints, type TrackPoint } from '../../../../shared-kernel';
 import { Activity } from '../activity';
 import {
   acceptRoute,

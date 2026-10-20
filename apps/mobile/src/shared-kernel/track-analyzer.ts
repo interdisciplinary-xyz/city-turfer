@@ -1,5 +1,4 @@
-import { EARTH_RADIUS_M } from '@/constants/geo';
-
+import { EARTH_RADIUS_M } from '../constants/geo';
 import { distanceM, type GeoPoint } from './geo';
 import type { Track } from './track';
 

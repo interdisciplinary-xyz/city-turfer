@@ -1,5 +1,5 @@
-import { EARTH_RADIUS_M } from '@/constants/geo';
-import type { BoundingBox, GeoPoint } from '@/shared-kernel';
+import { EARTH_RADIUS_M } from '../../../constants/geo';
+import type { BoundingBox, GeoPoint } from '../../../shared-kernel';
 
 /**
  * A city the Turfer can choose as their Home City: where the Turf Map opens. Cities come from a

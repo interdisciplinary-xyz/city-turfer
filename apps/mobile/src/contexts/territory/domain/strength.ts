@@ -1,5 +1,4 @@
-import { DomainError } from '@/shared-kernel';
-
+import { DomainError } from '../../../shared-kernel';
 import type { StrengthTier } from '../contract';
 
 /**

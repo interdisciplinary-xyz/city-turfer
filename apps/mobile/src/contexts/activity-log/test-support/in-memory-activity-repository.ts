@@ -1,5 +1,4 @@
-import type { TrackPoint } from '@/shared-kernel';
-
+import type { TrackPoint } from '../../../shared-kernel';
 import type { ActivityListItem } from '../contract';
 import { Activity, type ActivityState } from '../domain/activity';
 import type { ActivityRepository } from '../domain/activity-repository';

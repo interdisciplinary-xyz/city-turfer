@@ -1,5 +1,4 @@
-import { distanceM, DomainError } from '@/shared-kernel';
-
+import { distanceM, DomainError } from '../../../../shared-kernel';
 import { type City, cityBounds, foldForSearch, searchCities } from '../city';
 import { CITY_CATALOG, cityById, homeCityFromCatalogue } from '../city-catalog';
 

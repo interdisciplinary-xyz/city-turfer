@@ -1,5 +1,4 @@
-import { ACTIVITY_TYPES, type ActivityTypeName } from '@/constants/activity';
-
+import { ACTIVITY_TYPES, type ActivityTypeName } from '../constants/activity';
 import { DomainError } from './errors';
 
 export type ActivityType = ActivityTypeName;

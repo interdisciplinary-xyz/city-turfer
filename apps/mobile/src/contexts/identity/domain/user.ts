@@ -1,4 +1,4 @@
-import { DomainError } from '@/shared-kernel';
+import { DomainError } from '../../../shared-kernel';
 
 export type UserId = string & { readonly __brand: 'UserId' };
 export const userId = (raw: string): UserId => {

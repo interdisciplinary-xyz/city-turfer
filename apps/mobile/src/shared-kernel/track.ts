@@ -1,5 +1,4 @@
-import { MAX_FIX_GAP_MS } from '@/constants/tracking';
-
+import { MAX_FIX_GAP_MS } from '../constants/tracking';
 import type { GeoPoint } from './geo';
 
 /** A Fix that passed the Fix Filter and became part of the route. SI units. */

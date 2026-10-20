@@ -1,5 +1,4 @@
-import type { TrackPoint } from '@/shared-kernel';
-
+import type { TrackPoint } from '../../../shared-kernel';
 import type { ActivityListItem } from '../contract';
 import type { Activity } from './activity';
 import type { GapRoute } from './gap-route';

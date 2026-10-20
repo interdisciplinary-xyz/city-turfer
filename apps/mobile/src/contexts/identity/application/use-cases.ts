@@ -1,5 +1,4 @@
-import { DomainError } from '@/shared-kernel';
-
+import { DomainError } from '../../../shared-kernel';
 import { email as parseEmail, type User } from '../domain/user';
 import type { AuthGateway, SessionStore, SignInOutcome } from './ports';
 

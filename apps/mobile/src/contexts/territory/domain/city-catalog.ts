@@ -1,5 +1,4 @@
-import { DomainError } from '@/shared-kernel';
-
+import { DomainError } from '../../../shared-kernel';
 import type { City } from './city';
 
 const city = (id: string, name: string, country: string, lat: number, lon: number, radiusKm: number): City => ({

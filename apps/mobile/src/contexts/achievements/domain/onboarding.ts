@@ -1,4 +1,4 @@
-import type { ActivityType } from '@/shared-kernel';
+import type { ActivityType } from '../../../shared-kernel';
 
 /** What the Getting started checklist is judged on: published facts, never stored state. */
 export interface OnboardingFacts {
