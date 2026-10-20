@@ -1,0 +1,2082 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CityTurfer API",
+    "version": "0.1.0",
+    "description": "The CityTurfer HTTP API: the app's use cases (Activity Log, Territory, Identity, Achievements) over HTTP, for backup, sync across devices and future clients.\n\n**Status:** routes marked `x-cityturfer-status: planned` are designed and answer `501` until they are built (docs/decisions/api-2026-10-20.md).\n\n**Conventions:** JSON in camelCase; SI units with a suffix (`distanceM`, `movingS`); ISO 8601 UTC timestamps; coordinates `[lon, lat]`; bounding boxes `[west, south, east, north]`; errors as `application/problem+json`.\n\n**Privacy:** GPS tracks are personal data. They belong to the user, can be exported (`GET /v1/me/export`) and erased (`DELETE /v1/me`), and are never logged.",
+    "license": {
+      "name": "Proprietary",
+      "identifier": "LicenseRef-Proprietary"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://cityturfer.local/api",
+      "description": "Local, through the website dev server (pnpm run web:dev)"
+    },
+    {
+      "url": "http://localhost:8787",
+      "description": "Local API dev server (pnpm --filter @cityturfer/api dev)"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Platform",
+      "description": "Health and docs."
+    },
+    {
+      "name": "Identity",
+      "description": "Sign-in and the current user."
+    },
+    {
+      "name": "Activity Log",
+      "description": "Finished activities and their tracks."
+    },
+    {
+      "name": "Territory",
+      "description": "Turf cells, claims, cities and the Home City."
+    },
+    {
+      "name": "Achievements",
+      "description": "Evaluated from activities and turf."
+    },
+    {
+      "name": "Privacy",
+      "description": "Export and erase everything (GDPR)."
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Token from POST /v1/auth/sign-in."
+      }
+    },
+    "schemas": {
+      "Health": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok"
+            ]
+          },
+          "version": {
+            "type": "string",
+            "example": "0.1.0"
+          }
+        },
+        "required": [
+          "status",
+          "version"
+        ]
+      },
+      "Session": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Bearer token for the Authorization header.",
+            "example": "ct_abc123"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-19T07:12:00Z"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        },
+        "required": [
+          "token",
+          "expiresAt",
+          "user"
+        ]
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "admin"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "admin@cityturfer.com"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "Admin"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "displayName"
+        ]
+      },
+      "Problem": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "https://cityturfer.app/problems/not-implemented"
+          },
+          "title": {
+            "type": "string",
+            "example": "Not implemented yet"
+          },
+          "status": {
+            "type": "integer",
+            "example": 501
+          },
+          "detail": {
+            "type": "string",
+            "example": "Planned in docs/decisions/api-2026-10-20.md."
+          },
+          "code": {
+            "type": "string",
+            "description": "Stable machine code, e.g. a DomainError's code.",
+            "example": "not-implemented"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ]
+      },
+      "SignInBody": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "admin@cityturfer.com"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1,
+            "example": "••••••••"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "ActivityList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivitySummary"
+            }
+          },
+          "nextBefore": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z",
+            "description": "Pass as `before` for the next page; null at the end."
+          }
+        },
+        "required": [
+          "items",
+          "nextBefore"
+        ]
+      },
+      "ActivitySummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "3f9c2a64-5d1e-4b8e-9a51-0c7d2e6f1b20"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ActivityType"
+          },
+          "name": {
+            "type": "string",
+            "example": "Morning run"
+          },
+          "source": {
+            "$ref": "#/components/schemas/ActivitySource"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z"
+          },
+          "endedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z"
+          },
+          "timeZone": {
+            "type": "string",
+            "minLength": 1,
+            "example": "Europe/Warsaw"
+          },
+          "distanceM": {
+            "type": "number",
+            "example": 5020
+          },
+          "estimatedDistanceM": {
+            "type": "number",
+            "description": "Part of distanceM estimated along streets over GPS gaps.",
+            "example": 0
+          },
+          "movingS": {
+            "type": "number",
+            "example": 1694
+          },
+          "elapsedS": {
+            "type": "number",
+            "example": 1760
+          },
+          "elevationGainM": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "example": 24
+          },
+          "preview": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LonLat"
+            },
+            "description": "Simplified track for list maps."
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "name",
+          "source",
+          "startedAt",
+          "endedAt",
+          "timeZone",
+          "distanceM",
+          "estimatedDistanceM",
+          "movingS",
+          "elapsedS",
+          "elevationGainM",
+          "preview"
+        ]
+      },
+      "ActivityType": {
+        "type": "string",
+        "enum": [
+          "walk",
+          "run",
+          "cycle"
+        ],
+        "example": "run"
+      },
+      "ActivitySource": {
+        "type": "string",
+        "enum": [
+          "recording",
+          "apple-health"
+        ]
+      },
+      "LonLat": {
+        "type": "array",
+        "prefixItems": [
+          {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          }
+        ],
+        "example": [
+          21.0122,
+          52.2297
+        ]
+      },
+      "ActivityUpload": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/ActivityType"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "Defaults like the app (e.g. \"Morning run\")."
+          },
+          "source": {
+            "$ref": "#/components/schemas/ActivitySource"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z"
+          },
+          "endedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z"
+          },
+          "timeZone": {
+            "type": "string",
+            "minLength": 1,
+            "example": "Europe/Warsaw"
+          },
+          "track": {
+            "$ref": "#/components/schemas/Track"
+          }
+        },
+        "required": [
+          "type",
+          "source",
+          "startedAt",
+          "endedAt",
+          "timeZone",
+          "track"
+        ]
+      },
+      "Track": {
+        "type": "object",
+        "properties": {
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrackPoint"
+            },
+            "maxItems": 40000
+          }
+        },
+        "required": [
+          "points"
+        ]
+      },
+      "TrackPoint": {
+        "type": "array",
+        "prefixItems": [
+          {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "integer",
+            "minimum": 0
+          },
+          {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        ],
+        "example": [
+          21.0122,
+          52.2297,
+          1760857920000,
+          0,
+          98.5,
+          5,
+          2.9
+        ]
+      },
+      "ActivityDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ActivitySummary"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "bbox": {
+                "$ref": "#/components/schemas/BoundingBox"
+              },
+              "splits": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Split"
+                }
+              }
+            },
+            "required": [
+              "bbox",
+              "splits"
+            ]
+          }
+        ]
+      },
+      "BoundingBox": {
+        "type": [
+          "array",
+          "null"
+        ],
+        "prefixItems": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "example": [
+          20.85,
+          52.12,
+          21.17,
+          52.34
+        ]
+      },
+      "Split": {
+        "type": "object",
+        "properties": {
+          "km": {
+            "type": "integer",
+            "example": 1
+          },
+          "durationS": {
+            "type": "number",
+            "example": 337
+          }
+        },
+        "required": [
+          "km",
+          "durationS"
+        ]
+      },
+      "ActivityRename": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "example": "Sunday long run"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "Claim": {
+        "type": "object",
+        "properties": {
+          "activityId": {
+            "type": "string"
+          },
+          "cellCount": {
+            "type": "integer",
+            "example": 412
+          },
+          "newCellCount": {
+            "type": "integer",
+            "example": 37
+          },
+          "newAreaKm2": {
+            "type": "number",
+            "example": 0.07
+          },
+          "cells": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "isNew": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "isNew"
+              ]
+            }
+          }
+        },
+        "required": [
+          "activityId",
+          "cellCount",
+          "newCellCount",
+          "newAreaKm2",
+          "cells"
+        ]
+      },
+      "TurfSummary": {
+        "type": "object",
+        "properties": {
+          "cellCount": {
+            "type": "integer",
+            "example": 1530
+          },
+          "areaKm2": {
+            "type": "number",
+            "example": 3.02
+          },
+          "strongCells": {
+            "type": "integer",
+            "example": 686
+          },
+          "newThisWeekKm2": {
+            "type": "number",
+            "example": 0.06
+          },
+          "newThisMonthKm2": {
+            "type": "number",
+            "example": 0.41
+          },
+          "byType": {
+            "type": "object",
+            "properties": {
+              "walk": {
+                "type": "integer"
+              },
+              "run": {
+                "type": "integer"
+              },
+              "cycle": {
+                "type": "integer"
+              }
+            },
+            "example": {
+              "walk": 820,
+              "run": 610,
+              "cycle": 300
+            }
+          }
+        },
+        "required": [
+          "cellCount",
+          "areaKm2",
+          "strongCells",
+          "newThisWeekKm2",
+          "newThisMonthKm2",
+          "byType"
+        ]
+      },
+      "TurfCells": {
+        "type": "object",
+        "properties": {
+          "cells": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TurfCell"
+            }
+          }
+        },
+        "required": [
+          "cells"
+        ]
+      },
+      "TurfCell": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "H3 cell index (res 11, or coarser when aggregated).",
+            "example": "8b1f53cae5a3fff"
+          },
+          "strength": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "example": 0.63
+          },
+          "tier": {
+            "$ref": "#/components/schemas/StrengthTier"
+          },
+          "visits": {
+            "type": "integer",
+            "minimum": 1,
+            "example": 3
+          },
+          "centroid": {
+            "$ref": "#/components/schemas/LonLat"
+          }
+        },
+        "required": [
+          "id",
+          "strength",
+          "tier",
+          "visits",
+          "centroid"
+        ]
+      },
+      "StrengthTier": {
+        "type": "string",
+        "enum": [
+          "faint",
+          "glowing",
+          "strong",
+          "blazing"
+        ]
+      },
+      "CityList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/City"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "City": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable catalogue id.",
+            "example": "pl-warsaw"
+          },
+          "name": {
+            "type": "string",
+            "example": "Warsaw"
+          },
+          "country": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "example": "PL"
+          },
+          "center": {
+            "$ref": "#/components/schemas/LonLat"
+          },
+          "bounds": {
+            "$ref": "#/components/schemas/BoundingBox"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "country",
+          "center",
+          "bounds"
+        ]
+      },
+      "HomeCity": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/City"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "city"
+        ]
+      },
+      "ChooseHomeCityBody": {
+        "type": "object",
+        "properties": {
+          "cityId": {
+            "type": "string",
+            "example": "pl-krakow"
+          }
+        },
+        "required": [
+          "cityId"
+        ]
+      },
+      "AchievementList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Achievement"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "Achievement": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "five-k"
+          },
+          "title": {
+            "type": "string",
+            "example": "5K"
+          },
+          "description": {
+            "type": "string",
+            "example": "Run 5 km in one go."
+          },
+          "unlocked": {
+            "type": "boolean",
+            "example": true
+          },
+          "current": {
+            "type": "number",
+            "example": 5.02
+          },
+          "target": {
+            "type": "number",
+            "example": 5
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "unlocked",
+          "current",
+          "target"
+        ]
+      },
+      "DataExport": {
+        "type": "object",
+        "properties": {
+          "exportedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "homeCity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/City"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "activities": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ActivityDetail"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "track": {
+                      "$ref": "#/components/schemas/Track"
+                    }
+                  },
+                  "required": [
+                    "track"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "exportedAt",
+          "user",
+          "homeCity",
+          "activities"
+        ]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/v1/health": {
+      "get": {
+        "tags": [
+          "Platform"
+        ],
+        "operationId": "getHealth",
+        "security": [],
+        "summary": "Liveness",
+        "description": "Public. Answers when the function is up; touches no data.",
+        "responses": {
+          "200": {
+            "description": "Up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/sign-in": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "signIn",
+        "security": [],
+        "summary": "Sign in",
+        "description": "Exchanges credentials for a bearer token. Mock `admin` account first; Better Auth later.",
+        "x-cityturfer-status": "planned",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignInBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed in.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Session"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Wrong email or password.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/session": {
+      "delete": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "signOut",
+        "summary": "Sign out",
+        "description": "Revokes the current token.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cityturfer-status": "planned",
+        "responses": {
+          "204": {
+            "description": "Signed out."
+          },
+          "401": {
+            "description": "Missing or invalid bearer token.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me": {
+      "get": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "getMe",
+        "summary": "Current user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cityturfer-status": "planned",
+        "responses": {
+          "200": {
+            "description": "The signed-in user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Privacy"
+        ],
+        "operationId": "deleteMe",
+        "summary": "Delete my account and data",
+        "description": "Erases the user and every row they own, tracks included (GDPR art. 17). The phone keeps its own copy.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cityturfer-status": "planned",
+        "responses": {
+          "204": {
+            "description": "Deleted."
+          },
+          "401": {
+            "description": "Missing or invalid bearer token.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/activities": {
+      "get": {
+        "tags": [
+          "Activity Log"
+        ],
+        "operationId": "listActivities",
+        "summary": "List activities",
+        "description": "Newest first, paged with `before` (use case ListActivities).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cityturfer-status": "planned",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50,
+              "example": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2026-10-19T07:12:00Z"
+            },
+            "required": false,
+            "name": "before",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of activities.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/activities/{activityId}": {
+      "put": {
+        "tags": [
+          "Activity Log"
+        ],
+        "operationId": "uploadActivity",
+        "summary": "Upload a finished activity",
+        "description": "Creates the activity with its track under the id the phone minted, or answers with the stored one if it already exists (idempotent; use case ImportActivity). The server computes distance, time, splits and claims turf from the track. Bodies are limited to 4.5 MB: send gzip (`Content-Encoding: gzip`) for long tracks.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cityturfer-status": "planned",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "example": "3f9c2a64-5d1e-4b8e-9a51-0c7d2e6f1b20"
+            },
+            "required": true,
+            "name": "activityId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityUpload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Already stored; unchanged.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivitySummary"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivitySummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "An activity with this id exists with a different track.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Track too large: split the upload.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A domain rule was broken (e.g. ends before it starts, track too short).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Activity Log"
+        ],
+        "operationId": "getActivity",
+        "summary": "Activity detail",
+        "description": "Summary, bounding box and km splits (use case GetActivityDetail).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cityturfer-status": "planned",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "example": "3f9c2a64-5d1e-4b8e-9a51-0c7d2e6f1b20"
+            },
+            "required": true,
+            "name": "activityId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The activity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No activity with this id for this user.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Activity Log"
+        ],
+        "operationId": "renameActivity",
+        "summary": "Rename an activity",
+        "description": "Use case RenameActivity.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cityturfer-status": "planned",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "example": "3f9c2a64-5d1e-4b8e-9a51-0c7d2e6f1b20"
+            },
+            "required": true,
+            "name": "activityId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityRename"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Renamed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivitySummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No activity with this id for this user.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Activity Log"
+        ],
+        "operationId": "deleteActivity",
+        "summary": "Delete an activity",
+        "description": "Deletes the activity and its track and releases its turf (use case DeleteActivity). Idempotent.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cityturfer-status": "planned",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "example": "3f9c2a64-5d1e-4b8e-9a51-0c7d2e6f1b20"
+            },
+            "required": true,
+            "name": "activityId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted (or already gone)."
+          },
+          "401": {
+            "description": "Missing or invalid bearer token.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/activities/{activityId}/track": {
+      "get": {
+        "tags": [
+          "Activity Log"
+        ],
+        "operationId": "getActivityTrack",
+        "summary": "Activity track",
+        "description": "Every track point, compact (use case ActivityTrackQuery). Personal data: never cached publicly.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cityturfer-status": "planned",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "example": "3f9c2a64-5d1e-4b8e-9a51-0c7d2e6f1b20"
+            },
+            "required": true,
+            "name": "activityId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The track.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Track"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No activity with this id for this user.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/activities/{activityId}/claim": {
+      "get": {
+        "tags": [
+          "Territory"
+        ],
+        "operationId": "getActivityClaim",
+        "summary": "Turf claimed by an activity",
+        "description": "Cells the activity covered and which were new (use case GetClaimForActivity).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cityturfer-status": "planned",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "example": "3f9c2a64-5d1e-4b8e-9a51-0c7d2e6f1b20"
+            },
+            "required": true,
+            "name": "activityId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The claim.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Claim"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No activity with this id for this user.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/turf/summary": {
+      "get": {
+        "tags": [
+          "Territory"
+        ],
+        "operationId": "getTurfSummary",
+        "summary": "Turf summary",
+        "description": "Area, cells, strong cells, new this week and month, cells per type (use case GetTurfSummary).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cityturfer-status": "planned",
+        "responses": {
+          "200": {
+            "description": "The summary.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TurfSummary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/turf/cells": {
+      "get": {
+        "tags": [
+          "Territory"
+        ],
+        "operationId": "getTurfCells",
+        "summary": "Turf cells in a viewport",
+        "description": "Cells in the bounding box (padded 10%), aggregated to coarser cells past 5,000 features (use case GetTurfInViewport).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cityturfer-status": "planned",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^-?\\d+(\\.\\d+)?(,-?\\d+(\\.\\d+)?){3}$",
+              "description": "west,south,east,north",
+              "example": "20.85,52.12,21.17,52.34"
+            },
+            "required": true,
+            "description": "west,south,east,north",
+            "name": "bbox",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 22,
+              "example": 13
+            },
+            "required": false,
+            "name": "zoom",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(walk|run|cycle)(,(walk|run|cycle))*$",
+              "description": "Comma-separated; all when omitted.",
+              "example": "walk,run"
+            },
+            "required": false,
+            "description": "Comma-separated; all when omitted.",
+            "name": "types",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The cells.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TurfCells"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/cities": {
+      "get": {
+        "tags": [
+          "Territory"
+        ],
+        "operationId": "searchCities",
+        "security": [],
+        "summary": "Search the city catalogue",
+        "description": "Accent-insensitive search of the bundled catalogue (\"krakow\" finds Kraków); public (use case SearchCities).",
+        "x-cityturfer-status": "planned",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 80,
+              "description": "Accent-insensitive; all cities when omitted.",
+              "example": "krakow"
+            },
+            "required": false,
+            "description": "Accent-insensitive; all cities when omitted.",
+            "name": "q",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching cities, best first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CityList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/home-city": {
+      "get": {
+        "tags": [
+          "Territory"
+        ],
+        "operationId": "getHomeCity",
+        "summary": "Home City",
+        "description": "The city the maps open on, or null (use case GetHomeCity).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cityturfer-status": "planned",
+        "responses": {
+          "200": {
+            "description": "The Home City.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeCity"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Territory"
+        ],
+        "operationId": "chooseHomeCity",
+        "summary": "Choose the Home City",
+        "description": "Only catalogue cities (use case ChooseHomeCity).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cityturfer-status": "planned",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChooseHomeCityBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Chosen.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeCity"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Not a catalogue city (`home-city.unknown`).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Territory"
+        ],
+        "operationId": "clearHomeCity",
+        "summary": "Clear the Home City",
+        "description": "Use case ChooseHomeCity(null). Idempotent.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cityturfer-status": "planned",
+        "responses": {
+          "204": {
+            "description": "Cleared."
+          },
+          "401": {
+            "description": "Missing or invalid bearer token.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/achievements": {
+      "get": {
+        "tags": [
+          "Achievements"
+        ],
+        "operationId": "listAchievements",
+        "summary": "Achievements",
+        "description": "Evaluated from activity and turf facts; nothing stored (evaluateAchievements).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cityturfer-status": "planned",
+        "responses": {
+          "200": {
+            "description": "Every achievement with progress.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AchievementList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/export": {
+      "get": {
+        "tags": [
+          "Privacy"
+        ],
+        "operationId": "exportMyData",
+        "summary": "Export all my data",
+        "description": "Everything the server holds about the user, tracks included (GDPR art. 15 and 20).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cityturfer-status": "planned",
+        "responses": {
+          "200": {
+            "description": "The export.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataExport"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}

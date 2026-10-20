@@ -1,0 +1,5 @@
+# Deliberate exceptions to the Redocly rules (redocly.yaml).
+openapi.json:
+  operation-4xx-response:
+    # GET /v1/health takes no input and touches no data: it can't fail with a 4xx.
+    - '#/paths/~1v1~1health/get/responses'

@@ -38,6 +38,10 @@
     {
       "filename": "apps/storybook/package.json",
       "type": "json"
+    },
+    {
+      "filename": "apps/api/package.json",
+      "type": "json"
     }
   ],
   "types": [
