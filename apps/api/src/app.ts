@@ -3,6 +3,7 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import { requestId } from 'hono/request-id';
 import { secureHeaders } from 'hono/secure-headers';
 
+import { AppError } from './backup/app-error';
 import { type ApiDeps, type AppEnv, defaultDeps } from './deps';
 import { isProblemCode } from './errors';
 import { inflateGzip, limitBody, logRequests } from './middleware';
@@ -18,9 +19,9 @@ import { OPENAPI_CONFIG, SPEC_PATH, SWAGGER_UI_OPTIONS } from './spec';
 
 /**
  * The CityTurfer API (`api-design` skill, docs/decisions/api-sync-2026-10-20.md). Routes are
- * driving adapters over the app's use cases; most are declared and documented but still planned
- * (501). Order per request: request id → log → secure headers → body limit → gzip → (route) auth →
- * validation → handler.
+ * driving adapters over the app's use cases (backup: src/backup/); the rest are declared and
+ * documented but still planned (501). Order per request: request id → log → secure headers → body
+ * limit → gzip → (route) auth → (live routes) database + user → validation → handler.
  */
 export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
   const app = new OpenAPIHono<AppEnv>({
@@ -52,7 +53,8 @@ export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
   app.openAPIRegistry.registerComponent('securitySchemes', 'bearerAuth', {
     type: 'http',
     scheme: 'bearer',
-    description: 'Token from POST /v1/auth/sign-in (mock, dev only; Better Auth later).',
+    description:
+      'Device token: a random secret minted with `pnpm --filter @cityturfer/api run token:new -- <userId>`; the server knows only its SHA-256 (env `API_TOKENS`). A stopgap until Better Auth.',
   });
   registerHeaders(app.openAPIRegistry);
 
@@ -68,7 +70,11 @@ export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
 
   app.notFound((c) => problem(c, 'not-found'));
   app.onError((err, c) => {
-    // A DomainError (later from @cityturfer/core) carries a catalogue code: answer it, e.g. 422.
+    // A use case's refusal (AppError) or a broken domain rule (DomainError from @cityturfer/core)
+    // carries a catalogue code: answer it, e.g. 403/410/412/422. Anything else is a 500 that says nothing.
+    if (err instanceof AppError) {
+      return problem(c, err.code, undefined, { headers: err.headers });
+    }
     const code = (err as { code?: unknown }).code;
     if (err.name === 'DomainError' && isProblemCode(code)) {
       return problem(c, code);
@@ -77,5 +83,3 @@ export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
   });
   return app;
 }
-
-export const app = createApp();

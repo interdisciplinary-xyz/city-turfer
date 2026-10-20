@@ -73,11 +73,21 @@ export const notFound = (what: string) => ({
   404: problemResponse(`No ${what} with this id for this user.`, 'not-found'),
 });
 
-/** Bearer token from `POST /v1/auth/sign-in` (Better Auth later). */
+/** Bearer device token (API_TOKENS; Better Auth later). */
 export const BEARER_AUTH = [{ bearerAuth: [] }];
 
 /** Spec extension marking routes that are declared but not built yet. */
 export const PLANNED = { 'x-cityturfer-status': 'planned' } as const;
+
+/** Live data routes without a configured or reachable database. */
+export const UNAVAILABLE = {
+  503: problemResponse('No database configured or reachable: retry later.', 'storage.unavailable'),
+} as const;
+
+/** Writes that need the `cloud-sync` consent (Apple Health activities also `apple-health-in-cloud-sync`). */
+export const CONSENT_REQUIRED = {
+  403: problemResponse('Give the consent first: `PUT /v1/me/consents/cloud-sync`.', 'consent.required'),
+} as const;
 
 export const NOT_IMPLEMENTED = {
   501: problemResponse('Planned route, not implemented yet.', 'not-implemented'),

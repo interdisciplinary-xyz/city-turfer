@@ -4,6 +4,7 @@ import type { AppEnv } from '../deps';
 import { AUTH_ERRORS, INVALID, problemResponse } from '../schemas/common';
 import { Session, SignInBody, User } from '../schemas/identity';
 import { defineRoute } from './define';
+import { userDto } from './dto';
 
 const TAG = ['Identity'];
 
@@ -40,17 +41,22 @@ export function registerIdentity(app: OpenAPIHono<AppEnv>): void {
     responses: { 204: { description: 'Signed out.' }, ...AUTH_ERRORS },
   });
 
-  defineRoute(app, {
-    status: 'planned',
-    method: 'get',
-    path: '/v1/me',
-    tags: TAG,
-    operationId: 'getMe',
-    summary: 'Current user',
-    description: 'Use case GetCurrentUser. Consents, export and erasure live under Privacy.',
-    responses: {
-      200: { description: 'The signed-in user.', content: { 'application/json': { schema: User } } },
-      ...AUTH_ERRORS,
+  defineRoute(
+    app,
+    {
+      status: 'live',
+      method: 'get',
+      path: '/v1/me',
+      tags: TAG,
+      operationId: 'getMe',
+      summary: 'Current user',
+      description:
+        'The user the bearer token belongs to (use case GetCurrentUser); created on its first authenticated request. Consents, export and erasure live under Privacy.',
+      responses: {
+        200: { description: 'The signed-in user.', content: { 'application/json': { schema: User } } },
+        ...AUTH_ERRORS,
+      },
     },
-  });
+    async (c) => c.json(userDto(await c.var.backup.me(c.var.userId)), 200)
+  );
 }

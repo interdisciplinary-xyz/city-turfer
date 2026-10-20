@@ -52,7 +52,7 @@ export const TrackHash = z
   .regex(/^[0-9a-f]{64}$/)
   .openapi({
     description:
-      'SHA-256 (hex) of `JSON.stringify(track.points)` as sent. Computed by the phone, checked by the server (422 `activity.track-hash-mismatch`); tells other devices whether to download the track again.',
+      'Canonical track hash: SHA-256 (lowercase hex) of the UTF-8 bytes of `JSON.stringify(track.points)` — no whitespace, points `[lon, lat, t, segment, altitudeM | null]` in upload order, numbers in ECMAScript shortest round-trip form (what `JSON.stringify` writes). The server computes it; a hash the client sends must match (422 `activity.track-hash-mismatch`). Tells other devices whether to download the track again.',
     example: '9f2b6c1d4e8a7b3c5d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e',
   });
 
@@ -165,7 +165,9 @@ export const ActivityUpload = z
         description: 'Segments that began with a manual Resume (tells a pause from a GPS gap); null when unknown.',
         example: [2],
       }),
-    trackHash: TrackHash,
+    trackHash: TrackHash.optional().openapi({
+      description: 'Optional (0.3.0): when sent, the server checks it against the canonical hash of `track.points`.',
+    }),
     track: Track,
   })
   .openapi('ActivityUpload');

@@ -1,6 +1,7 @@
 import type { MiddlewareHandler } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 
+import { BackupService } from './backup/use-cases';
 import type { AppEnv } from './deps';
 import { problem } from './problem';
 
@@ -90,5 +91,43 @@ export const requireBearer: MiddlewareHandler<AppEnv> = async (c, next) => {
     });
   }
   c.set('principal', principal);
+  return next();
+};
+
+/** Users already upserted by this function instance (one write per user per cold start). */
+const knownUsers = new WeakMap<object, Set<string>>();
+
+/**
+ * Route middleware for live data routes, after `requireBearer`: a verified principal (else 401),
+ * a configured database (else 503 `storage.unavailable`), and the user row (created on first sight).
+ */
+export const requireStore: MiddlewareHandler<AppEnv> = async (c, next) => {
+  const { principal, deps } = c.var;
+  if (!principal.verified || !principal.userId) {
+    return problem(c, 'auth.invalid', undefined, {
+      headers: { 'WWW-Authenticate': 'Bearer error="invalid_token"' },
+    });
+  }
+  const { store } = deps;
+  if (!store) {
+    return problem(c, 'storage.unavailable', 'No database is configured.');
+  }
+  const userId = principal.userId;
+  const seen = knownUsers.get(store) ?? new Set<string>();
+  knownUsers.set(store, seen);
+  if (!seen.has(userId)) {
+    try {
+      await store.ensureUser({
+        id: userId,
+        email: principal.profile?.email ?? null,
+        displayName: principal.profile?.displayName ?? null,
+      });
+    } catch {
+      return problem(c, 'storage.unavailable', 'The database did not answer: retry later.');
+    }
+    seen.add(userId);
+  }
+  c.set('userId', userId);
+  c.set('backup', new BackupService(store, deps.clock));
   return next();
 };
