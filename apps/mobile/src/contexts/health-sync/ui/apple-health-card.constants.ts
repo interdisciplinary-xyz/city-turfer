@@ -9,7 +9,7 @@ export const HISTORY_TIP =
   'When Apple asks how much data to share, choose "All Recorded Data" to bring in your whole history, not just the last 30 days.';
 
 export const APPLE_HEALTH_PRIVACY =
-  'Health data stays on this phone. To stop CityTurfer reading or writing it, open the Health app › Sharing › Apps › CityTurfer.';
+  'Health data stays on this phone (unless you include Apple Health workouts in Cloud backup). To stop CityTurfer reading or writing it, open the Health app › Sharing › Apps › CityTurfer.';
 
 export const NO_WORKOUTS_HINT =
   'Nothing found? In the Health app › Sharing › Apps › CityTurfer, allow Workouts and Workout Routes, with all recorded data.';

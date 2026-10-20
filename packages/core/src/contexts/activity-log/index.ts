@@ -1,5 +1,6 @@
 // Public API of the Activity Log context.
 import {
+  ActivityArchiveQuery,
   type ActivityLogDeps,
   ActivityTrackQuery,
   CapEstimatedMovingTime,
@@ -25,6 +26,7 @@ export function createActivityLogApi(deps: ActivityLogDeps) {
     rename: new RenameActivity(deps),
     remove: new DeleteActivity(deps),
     trackQuery: new ActivityTrackQuery(deps),
+    archive: new ActivityArchiveQuery(deps),
     overlapping: new OverlappingActivitiesQuery(deps),
     splitTrackGaps: new SplitTrackGaps(deps),
     estimateGapRoutes: new EstimateGapRoutes(deps),

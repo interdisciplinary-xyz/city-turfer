@@ -92,19 +92,19 @@ those names mean something to GitHub.
 Any count that comes from the codebase goes in a probe:
 
 ```md
-Bounded contexts: <!-- probe:contexts -->6<!-- /probe -->
+Bounded contexts: <!-- probe:contexts -->7<!-- /probe -->
 ```
 
 `pnpm run audit:docs` flags drift; `-- --fix-probes` rewrites every probe from code. The registry is
 `PROBES` in `tools/docs-audit.mjs`; add one there rather than typing a number into prose. Today:
 
-- `contexts`: directories in `apps/mobile/src/contexts/` (<!-- probe:contexts -->6<!-- /probe -->)
+- `contexts`: directories in `apps/mobile/src/contexts/` (<!-- probe:contexts -->7<!-- /probe -->)
 - `achievements`: `id:` entries in `packages/core/src/contexts/achievements/domain/achievements.ts`
   (<!-- probe:achievements -->12<!-- /probe -->)
 - `e2e-flows`: `flowsOrder` entries in `apps/mobile/e2e/config.yaml`
   (<!-- probe:e2e-flows -->13<!-- /probe -->)
 - `migrations`: `version:` entries in `apps/mobile/src/platform/migrations.ts`
-  (<!-- probe:migrations -->7<!-- /probe -->)
+  (<!-- probe:migrations -->8<!-- /probe -->)
 - `docs`: markdown files under `docs/` (<!-- probe:docs -->39<!-- /probe -->)
 - `api-operations`: HTTP operations in `apps/api/openapi.json`
   (<!-- probe:api-operations -->22<!-- /probe -->)

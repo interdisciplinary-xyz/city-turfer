@@ -17,7 +17,7 @@ async function setup() {
   const afterCommit = jest.fn();
   const deps = { homeCities: new SqliteHomeCityRepository(db), clock: { now: () => NOW }, afterCommit };
   const api = homeCityApi(deps);
-  return { db, afterCommit, get: api.homeCity, choose: api.chooseHomeCity };
+  return { db, afterCommit, get: api.homeCity, choose: api.chooseHomeCity, choice: api.homeCityChoice };
 }
 
 const outbox = (db: ReturnType<typeof openNodeDatabase>) =>
@@ -48,6 +48,15 @@ describe('Home City', () => {
     // The event names the city only: no coordinates in the outbox.
     expect(JSON.parse(events[0].payload)).toEqual({ type: 'HomeCityChosen', v: 1, at: NOW, cityId: 'pl-krakow' });
     expect(afterCommit).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports the last decision with its time, a cleared one included (Cloud Backup)', async () => {
+    const { choose, choice } = await setup();
+    expect(await choice.execute()).toBeNull();
+    await choose.execute('pl-krakow');
+    expect(await choice.execute()).toEqual({ cityId: 'pl-krakow', chosenAt: NOW });
+    await choose.execute(null);
+    expect(await choice.execute()).toEqual({ cityId: null, chosenAt: NOW });
   });
 
   it('replaces and clears the choice', async () => {

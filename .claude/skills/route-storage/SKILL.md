@@ -107,7 +107,9 @@ Round-trip test: export a fixture-backed activity, parse it with `parseGpx` from
 
 ## Privacy
 
-- Coordinates never leave the device except through an explicit user export or share.
+- Coordinates leave the device only through an explicit user export or share, or the opt-in cloud
+  backup (Info › Cloud backup: consent first, our EU API, device token;
+  `apps/mobile/src/contexts/cloud-backup`).
 - Offer "hide start/end": when sharing, trim the first and last 200 m. Apply it to exports only;
   stored data stays untouched.
 - "Delete all data" in Settings drops all rows and runs `VACUUM`.

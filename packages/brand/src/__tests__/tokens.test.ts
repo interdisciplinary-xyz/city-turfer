@@ -43,6 +43,8 @@ describe('cssVariables', () => {
       '--font-weight-medium': '500',
       '--label-tracking': '0.8px',
     });
+    expect(cssVariables('dark')['--font-family-display']).toMatch(/^'ArchivoExpanded-Black', -apple-system/);
+    expect(cssVariables('dark')['--font-family-numeric']).toMatch(/^'Archivo-ExtraBold', /);
   });
 
   it('switches only the theme colours between schemes', () => {

@@ -69,6 +69,11 @@ export class InMemoryActivityRepository implements ActivityRepository {
   async allIds() {
     return [...this.rows.values()].sort((a, b) => a.state.startedAt - b.state.startedAt).map((r) => r.state.id);
   }
+  async timeline() {
+    return [...this.rows.values()]
+      .map((r) => ({ id: r.state.id, startedAt: r.state.startedAt, endedAt: r.state.endedAt }))
+      .sort((a, b) => a.startedAt - b.startedAt || a.id.localeCompare(b.id));
+  }
   async idsWithUncheckedGaps() {
     return [...this.rows.values()]
       .filter((r) => r.checkedAt == null)
@@ -85,5 +90,8 @@ export class InMemoryActivityRepository implements ActivityRepository {
   }
   async gapRoutesOf(id: string) {
     return [...(this.rows.get(id)?.routes ?? [])];
+  }
+  async gapsCheckedAt(id: string) {
+    return this.rows.get(id)?.checkedAt ?? null;
   }
 }

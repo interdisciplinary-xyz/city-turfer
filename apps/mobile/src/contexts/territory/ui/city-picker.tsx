@@ -11,7 +11,8 @@ import { useChooseHomeCity, useCitySearch, useHomeCity } from './hooks';
 
 /**
  * Picks the Home City from the bundled catalogue: the Turf Map opens on it. Search ignores accents
- * ("krakow" finds Kraków). Nothing about the choice leaves the phone.
+ * ("krakow" finds Kraków). The search never leaves the phone; the chosen city's id is backed up
+ * only when Cloud backup is on.
  */
 export function CityPicker({ onDone }: CityPickerProps) {
   const p = usePalette();

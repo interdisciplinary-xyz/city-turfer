@@ -47,3 +47,22 @@ export interface ActivityDistanceEstimated extends DomainEvent<'ActivityDistance
   activityId: string;
   estimatedDistanceM: number;
 }
+
+/**
+ * A complete, portable copy of one Activity: what a backup (or, later, a GPX export) needs to
+ * rebuild it elsewhere. Summary numbers are left out: they are derived from the track.
+ */
+export interface ActivityArchive {
+  id: string;
+  type: ActivityType;
+  name: string;
+  startedAt: number;
+  endedAt: number;
+  /** Segments that began with a manual Resume; null when unknown. */
+  resumedSegments: number[] | null;
+  track: TrackPoint[];
+  /** Street routes estimated across GPS gaps (display and distance only, never turf). */
+  gapRoutes: { afterSegment: number; distanceM: number; movingS: number; coords: [number, number][] }[];
+  /** When the gap routes were estimated; null when not yet. */
+  gapsCheckedAt: number | null;
+}

@@ -1,5 +1,5 @@
 import type { Clock } from '../../../shared-kernel';
-import type { CityView, HomeCityChosen } from '../contract';
+import type { CityView, HomeCityChoice, HomeCityChosen } from '../contract';
 import { type City, cityBounds, searchCities } from '../domain/city';
 import { CITY_CATALOG, cityById, homeCityFromCatalogue } from '../domain/city-catalog';
 import type { HomeCityRepository } from '../domain/home-city-repository';
@@ -30,6 +30,14 @@ export class GetHomeCity {
     const id = await this.d.homeCities.homeCityId();
     const city = id ? cityById(id) : null;
     return city ? toCityView(city) : null;
+  }
+}
+
+/** Open-host service: the last Home City decision with its time (Cloud Backup: last write wins). */
+export class HomeCityChoiceQuery {
+  constructor(private readonly d: HomeCityDeps) {}
+  execute(): Promise<HomeCityChoice | null> {
+    return this.d.homeCities.homeCityChoice();
   }
 }
 

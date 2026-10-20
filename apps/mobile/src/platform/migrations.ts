@@ -190,6 +190,41 @@ const MIGRATIONS: { version: number; sql: string }[] = [
       );
     `,
   },
+  {
+    version: 8,
+    sql: `
+      -- Cloud Backup: one settings row per user database. The device token is NOT here
+      -- (expo-secure-store); server_url is only a testing override (NULL: the built-in URL).
+      CREATE TABLE cb_state (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        enabled INTEGER NOT NULL DEFAULT 0,
+        health_enabled INTEGER NOT NULL DEFAULT 0,
+        server_url TEXT,
+        cursor TEXT,                   -- last nextCursor of GET /v1/sync/changes
+        backfilled_at INTEGER,         -- NULL: plan the first upload (again) on the next run
+        home_city_pending INTEGER NOT NULL DEFAULT 0,
+        withdrawals_pending TEXT,      -- consents withdrawn on the phone, not yet on the server (comma list)
+        last_run_at INTEGER,
+        last_error TEXT                -- an error code, never a message or a body
+      );
+      -- One row per Activity the backup knows about. No foreign key: a row outlives a deleted
+      -- Activity so its DELETE can still be sent, and a server tombstone is never re-uploaded.
+      CREATE TABLE cb_activities (
+        activity_id TEXT PRIMARY KEY,
+        started_at INTEGER NOT NULL,   -- upload order: oldest first
+        status TEXT NOT NULL CHECK (status IN ('none', 'backed-up', 'deleted', 'gone', 'too-large', 'rejected')),
+        op TEXT CHECK (op IN ('upload', 'replace', 'delete')),  -- NULL: nothing to send
+        gaps_pending INTEGER NOT NULL DEFAULT 0,
+        rev INTEGER NOT NULL DEFAULT 0,  -- +1 per queued change: a finished send clears only what it sent
+        server_version INTEGER,
+        uploaded_at INTEGER,
+        attempts INTEGER NOT NULL DEFAULT 0,
+        next_attempt_at INTEGER,
+        error_code TEXT
+      );
+      CREATE INDEX idx_cb_activities_work ON cb_activities(started_at) WHERE op IS NOT NULL OR gaps_pending = 1;
+    `,
+  },
 ];
 
 /** `upTo` stops at a schema version (tests seeding an older database). */

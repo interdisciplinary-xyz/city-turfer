@@ -5,8 +5,10 @@
  */
 import { H3CellGrid } from '@cityturfer/core/h3';
 
+import { API_BASE_URL, CLOUD_BACKUP_POLICY_VERSION } from '@/constants/api';
 import {
   type ActivityDeleted,
+  type ActivityDistanceEstimated,
   type ActivityRecorded,
   type ActivityTrackCorrected,
   createActivityLogApi,
@@ -14,6 +16,13 @@ import {
   type RouteEstimator,
 } from '@/contexts/activity-log';
 import { SqliteActivityRepository } from '@/contexts/activity-log/infrastructure/sqlite-activity-repository';
+import {
+  type ApiClientFactory,
+  type CloudBackupDeps,
+  createCloudBackupApi,
+  type DeviceTokenStore,
+} from '@/contexts/cloud-backup';
+import { SqliteBackupRepository } from '@/contexts/cloud-backup/infrastructure/sqlite-backup-repository';
 import { createHealthSyncApi, type HealthStore } from '@/contexts/health-sync';
 import { SqliteHealthSyncRepository } from '@/contexts/health-sync/infrastructure/sqlite-health-sync-repository';
 import { UNAVAILABLE_HEALTH_STORE } from '@/contexts/health-sync/infrastructure/unavailable-health-store';
@@ -41,8 +50,35 @@ export interface DeviceAdapters {
   health?: HealthStore;
   /** Is the app in the foreground? Omitted: always (tests). HealthKit work waits for it. */
   isForeground?: () => boolean;
+  /** Cloud Backup's HTTP client and per-user token store. Omitted: no server (backup can't be turned on). */
+  cloudBackup?: CloudBackupAdapters;
   clock?: Clock;
 }
+
+export interface CloudBackupAdapters {
+  api: ApiClientFactory;
+  tokens: (userId: string) => DeviceTokenStore;
+  timeZone?: () => string | null;
+  /** Default: API_BASE_URL. */
+  serverUrl?: string;
+}
+
+/** No server configured (most tests): every request answers "offline", and there is never a token. */
+const NO_CLOUD_BACKUP: CloudBackupAdapters = {
+  api: () => {
+    const offline = async () => ({ ok: false as const, failure: { kind: 'offline' as const } });
+    return {
+      setConsent: offline,
+      changes: offline,
+      putActivity: offline,
+      activityVersion: offline,
+      deleteActivity: offline,
+      putGapRoutes: offline,
+      putHomeCity: offline,
+    };
+  },
+  tokens: () => ({ read: async () => null, save: async () => undefined, clear: async () => undefined }),
+};
 
 /** No setting given (e.g. tests that don't exercise gaps): never call the router. */
 const GAP_ROUTING_OFF: GapRoutingEnvironment = {
@@ -109,6 +145,30 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     onExportError: (code) => diagnostics.log('task-error', { code }),
   });
 
+  const backupAdapters = a.cloudBackup ?? NO_CLOUD_BACKUP;
+  const cloudBackupDeps: CloudBackupDeps = {
+    repo: new SqliteBackupRepository(db),
+    api: backupAdapters.api,
+    tokens: backupAdapters.tokens(userId),
+    activities: {
+      timeline: () => activityLog.archive.timeline(),
+      archiveOf: (id) => activityLog.archive.of(id),
+    },
+    homeCity: { choice: () => territory.homeCityChoice.execute() },
+    clock,
+    isForeground: a.isForeground ?? (() => true),
+    defaultServerUrl: backupAdapters.serverUrl ?? API_BASE_URL,
+    policyVersion: CLOUD_BACKUP_POLICY_VERSION,
+    timeZone: backupAdapters.timeZone ?? (() => null),
+    // Counts and codes only: no ids, names or coordinates.
+    onRunFinished: (r) => {
+      if (r.uploaded + r.deleted + r.failed + r.refused > 0 || r.error) {
+        diagnostics.log('backup', { ...r });
+      }
+    },
+  };
+  const cloudBackup = createCloudBackupApi(cloudBackupDeps);
+
   // Context map (docs/poc-plan.md §3): Recording → Activity Log → Territory; Activity Log ↔ Health Sync.
   dispatcher.on('SessionFinished', (e: DomainEvent) => activityLog.recordFromSession.execute(e as SessionFinished));
   dispatcher.on('ActivityRecorded', async (e: DomainEvent) => {
@@ -119,10 +179,24 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
   });
   dispatcher.on('ActivityDeleted', (e: DomainEvent) => territory.release.execute((e as ActivityDeleted).activityId));
   dispatcher.on('ActivityTrackCorrected', (e: DomainEvent) => territory.reclaim.execute(e as ActivityTrackCorrected));
+  // Activity Log, Territory → Cloud Backup: local queueing only (no network inside the outbox).
+  dispatcher.on('ActivityRecorded', (e: DomainEvent) => cloudBackup.queue.activityRecorded(e as ActivityRecorded));
+  dispatcher.on('ActivityDeleted', (e: DomainEvent) => cloudBackup.queue.activityDeleted(e as ActivityDeleted));
+  dispatcher.on('ActivityTrackCorrected', (e: DomainEvent) =>
+    cloudBackup.queue.trackCorrected(e as ActivityTrackCorrected)
+  );
+  dispatcher.on('ActivityDistanceEstimated', (e: DomainEvent) =>
+    cloudBackup.queue.gapRoutesEstimated(e as ActivityDistanceEstimated)
+  );
+  dispatcher.on('HomeCityChosen', () => cloudBackup.queue.homeCityChosen());
 
   // Best effort, outside the outbox (needs the network): route new recording gaps after every dispatch run.
   const estimateGaps = () => activityLog.estimateGapRoutes.execute().catch(() => 0);
   dispatcher.onChange(() => void estimateGaps());
+
+  /** Sends queued backup work. Foreground only (RunBackup checks), never throws. */
+  const backUp = (options?: { now?: boolean }) => cloudBackup.run.execute(options).catch(() => null);
+  dispatcher.onChange(() => void backUp());
 
   /** Saves queued recordings to Apple Health, then imports new workouts. Foreground only. */
   const syncHealth = () =>
@@ -160,6 +234,7 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     await dispatcher.dispatchPending();
     await estimateGaps();
     await syncHealth();
+    await backUp();
   }
 
   /** Is a Recording Session active (recording, paused or auto-paused)? Gates sign-out. */
@@ -174,11 +249,13 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     runLaunchMaintenance,
     estimateGaps,
     syncHealth,
+    backUp,
     hasActiveSession,
     recording,
     activityLog,
     territory,
     healthSync,
+    cloudBackup,
   };
 }
 

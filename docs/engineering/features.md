@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-17
+verified: 2026-10-20
 owner: founder
 scope:
   [
@@ -36,7 +36,7 @@ Me drawer, and the screens pushed from them. Format adapted from empatalk's `FEA
 > | SQLite schema         | `apps/mobile/src/platform/migrations.ts`                                 |
 
 Today: <!-- probe:achievements -->12<!-- /probe --> achievements,
-<!-- probe:e2e-flows -->13<!-- /probe --> Maestro flows, <!-- probe:migrations -->7<!-- /probe -->
+<!-- probe:e2e-flows -->13<!-- /probe --> Maestro flows, <!-- probe:migrations -->8<!-- /probe -->
 
 migrations.
 
@@ -113,13 +113,16 @@ The Me tab doesn't open a screen: it slides in a drawer from the right with **Pr
   (blocked with an alert while a recording is in progress).
 - **Info** (`apps/mobile/src/app/info.tsx`): app version and OTA update id/channel, "Check for
   updates", a data note, the **Apple Health** card (iOS: connect, import and save switches, last
-  import, Import now, Disconnect; `health-sync/ui/apple-health-card.tsx`), **Seed demo history** (90
-  days around the current location, `apps/mobile/src/dev/demo-history.ts`) and, on iOS, **Add sample
-  workouts to Apple Health** (`apps/mobile/src/dev/health-seed.ts`).
+  import, Import now, Disconnect; `health-sync/ui/apple-health-card.tsx`), the **Cloud backup** card
+  (`cloud-backup/ui/cloud-backup-card.tsx`: paste the device token, "Back up to CityTurfer cloud"
+  consent switch, "Include Apple Health workouts" on iOS, "Backed up N of M activities · last run
+  …", errors in plain words, Back up now, a server URL override for testing), **Seed demo history**
+  (90 days around the current location, `apps/mobile/src/dev/demo-history.ts`) and, on iOS, **Add
+  sample workouts to Apple Health** (`apps/mobile/src/dev/health-seed.ts`).
 - **Your city** (`apps/mobile/src/app/city.tsx` → `territory/ui/city-picker.tsx`): choose the Home
   City from a bundled catalogue (23 Polish, 15 European cities); search ignores accents ("krakow"
-  finds Kraków); the current city is ticked; "Clear <city>". Stored per user (`ter_home_city`),
-  never sent anywhere.
+  finds Kraków); the current city is ticked; "Clear <city>". Stored per user (`ter_home_city`); its
+  id and time go to the server only with Cloud backup on.
 - **Sign in** (`apps/mobile/src/app/sign-in.tsx`): the mock account; a wrong password shows
   `sign-in-error`.
 
@@ -136,6 +139,12 @@ The Me tab doesn't open a screen: it slides in a drawer from the right with **Pr
 - **Apple Health sync** (iOS): imports new walks, hikes, runs and rides with routes whenever the app
   comes to the foreground (full history the first time) and saves each new recording to Health with
   its route. No duplicates: `hs_links` remembers every workout in both directions.
+- **Cloud backup** (opt-in, `contexts/cloud-backup`): one-way copy to the CityTurfer API (contract
+  `apps/api/openapi.json`). Turning it on records the consent, compares the history with the
+  server's manifest and uploads what is missing, oldest first, two at a time; afterwards new
+  recordings, deletes, corrected tracks, gap routes and the Home City follow via the outbox. Never
+  `demo-*`; `hk-*` only with the Apple Health switch. Network work runs in the foreground only
+  (launch, app active, after each outbox run); the outbox handlers just queue (`cb_activities`).
 
 ## 4. Known gaps — claims that aren't true yet
 
@@ -157,5 +166,9 @@ The Me tab doesn't open a screen: it slides in a drawer from the right with **Pr
 - **The PoC report (M6) isn't written** and the Q4 performance budget (a year of history on a
   mid-range Android) is unmeasured.
 - **Achievements have no unlock dates or celebration.**
+- **Cloud backup is one-way and untested against the real server.** No pull, restore or second
+  device; renames are not sent (no `ActivityRenamed` event); bodies are plain JSON (no gzip); the
+  server's `trackHash` is not sent; deletes made while backup is off stay on the server. Tests use
+  an in-memory server (`cloud-backup/test-support/fake-api-server.ts`); no Maestro flow.
 - **Sign-in is a mock.** One account; the app refuses to start with mock auth in a production
   environment.

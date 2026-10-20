@@ -7,7 +7,7 @@ import {
   trackFromPoints,
   type TrackPoint,
 } from '../../../shared-kernel';
-import type { ActivityDetail, ActivityListItem } from '../contract';
+import type { ActivityArchive, ActivityDetail, ActivityListItem } from '../contract';
 import { Activity } from '../domain/activity';
 import type { ActivityRepository } from '../domain/activity-repository';
 import { estimatedTotals, type GapRoute } from '../domain/gap-route';
@@ -362,5 +362,40 @@ export class ActivityTrackQuery {
   constructor(private readonly d: Pick<ActivityLogDeps, 'activities'>) {}
   execute(id: string): Promise<TrackPoint[]> {
     return this.d.activities.trackOf(id);
+  }
+}
+
+/**
+ * Open-host service: every Activity, oldest first, as a complete copy (Cloud Backup). Read-only.
+ */
+export class ActivityArchiveQuery {
+  constructor(private readonly d: Pick<ActivityLogDeps, 'activities'>) {}
+  /** Every Activity's id, start and end, oldest first: cheap, no tracks loaded. */
+  timeline(): Promise<{ id: string; startedAt: number; endedAt: number }[]> {
+    return this.d.activities.timeline();
+  }
+  async of(id: string): Promise<ActivityArchive | null> {
+    const a = await this.d.activities.get(id);
+    if (!a) {
+      return null;
+    }
+    const s = a.toState();
+    const routes = await this.d.activities.gapRoutesOf(id);
+    return {
+      id: s.id,
+      type: s.type,
+      name: s.name,
+      startedAt: s.startedAt,
+      endedAt: s.endedAt,
+      resumedSegments: s.resumedSegments ? [...s.resumedSegments] : null,
+      track: await this.d.activities.trackOf(id),
+      gapRoutes: routes.map((r) => ({
+        afterSegment: r.afterSegment,
+        distanceM: r.distanceM,
+        movingS: r.movingS,
+        coords: r.coords.map(([lon, lat]) => [lon, lat] as [number, number]),
+      })),
+      gapsCheckedAt: await this.d.activities.gapsCheckedAt(id),
+    };
   }
 }

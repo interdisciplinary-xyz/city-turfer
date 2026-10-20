@@ -21,6 +21,8 @@ export interface ActivityRepository {
   /** Atomic: updated totals + replaced track + pulled events → outbox. */
   saveCorrection(activity: Activity, track: readonly TrackPoint[]): Promise<void>;
   allIds(): Promise<string[]>;
+  /** Every Activity's id and start, oldest first (ties by id). */
+  timeline(): Promise<ActivityTimeRange[]>;
   /** Activities whose recording gaps have not been routed yet, oldest first. */
   idsWithUncheckedGaps(): Promise<string[]>;
   typeOf(id: string): Promise<ActivityListItem['type'] | null>;
@@ -29,4 +31,6 @@ export interface ActivityRepository {
   /** Atomic: replace gap routes, set estimated totals, mark checked, ActivityDistanceEstimated → outbox. */
   saveGapRoutes(id: string, routes: readonly GapRoute[], now: number): Promise<void>;
   gapRoutesOf(id: string): Promise<GapRoute[]>;
+  /** When the gap routes were last estimated; null when not yet (or reset by a track correction). */
+  gapsCheckedAt(id: string): Promise<number | null>;
 }
