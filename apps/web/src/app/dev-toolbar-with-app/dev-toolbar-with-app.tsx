@@ -21,15 +21,16 @@ import {
  * `process.env.NODE_ENV === 'development'` branch, so a production build drops it, together with
  * the package and its CSS.
  */
-export const DevToolbarWithApp = ({ locale, languageSwitcher }: DevToolbarWithAppProps) => (
+export const DevToolbarWithApp = ({ locale }: DevToolbarWithAppProps) => (
   <DevToolbar
     user={null}
     brandLabel={NAME}
     locale={locale}
     locales={routing.locales}
     defaultLocale={routing.defaultLocale}
-    languageSwitcher={languageSwitcher}
     links={DEV_TOOLBAR_LINKS}
     storagePrefix={DEV_TOOLBAR_STORAGE_PREFIX}
+    // The site makes no API calls of its own, so the API logger row has nothing to show.
+    requestLogger={false}
   />
 );
