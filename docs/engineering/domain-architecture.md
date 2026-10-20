@@ -27,7 +27,7 @@ language is `docs/poc-plan.md` §2. Where this doc and the code disagree, the co
 
 ## 1. Context map
 
-There are <!-- probe:contexts -->6<!-- /probe --> bounded contexts, one directory each in
+There are <!-- probe:contexts -->7<!-- /probe --> bounded contexts, one directory each in
 `apps/mobile/src/contexts/`:
 
 - **identity** (generic): `AuthGateway` port, `MockAuthGateway`, session in `expo-secure-store`.
@@ -44,6 +44,12 @@ There are <!-- probe:contexts -->6<!-- /probe --> bounded contexts, one director
   never leaves it). `HealthStore` port (HealthKit adapter on iOS), links and anchor in `hs_links` /
   `hs_state`. Imports through Activity Log's `importActivity`; exports on `ActivityRecorded` with
   origin `recording`. Design: `docs/decisions/apple-health-2026-10-18.md`.
+- **cloud-backup** (supporting): one-way, opt-in backup to the CityTurfer API. `ApiClient` port
+  (fetch adapter = the anti-corruption layer for HTTP), device token in `expo-secure-store`, state
+  in `cb_state` / `cb_activities`. Reads Activity Log's `archive` query and Territory's
+  `homeCityChoice`; its outbox handlers on `ActivityRecorded`, `ActivityDeleted`,
+  `ActivityTrackCorrected`, `ActivityDistanceEstimated` and `HomeCityChosen` only queue work, which
+  `RunBackup` sends in the foreground. Never `demo-*`; `hk-*` only with its own consent.
 - **achievements** (supporting): pure `evaluateAchievements` / `summarizeAchievements` over facts
   the UI passes in. Layers: `domain/ ui/`, no persistence.
 
@@ -53,6 +59,8 @@ Recording ──────────────────▶ Activity Log
           ◀── FinishedTrackQuery ──────    ◀── ActivityTrackQuery ─────────
               (Activity Log pulls the track)    (Territory pulls the track)
 Health Sync ── importActivity ──▶ Activity Log ── ActivityRecorded (origin recording) ──▶ Health Sync
+Activity Log, Territory ── ActivityRecorded · Deleted · TrackCorrected · DistanceEstimated · HomeCityChosen ──▶ Cloud Backup
+          ◀── archive · homeCityChoice ── (Cloud Backup pulls the activity and the Home City, then PUTs them)
 Identity: selects the user's database at sign-in; other contexts see only a user id.
 Achievements: no events; screens pass it Activity Log and Territory facts.
 ```

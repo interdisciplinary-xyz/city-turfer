@@ -45,18 +45,20 @@ iPhone (free Apple ID) and a sideloaded Android APK.
 
 ## What leaves the phone today (for the policy and labels)
 
-| Flow                      | Data                                     | To                       | Note                                                    |
-| ------------------------- | ---------------------------------------- | ------------------------ | ------------------------------------------------------- |
-| Map tiles                 | Tile coordinates of the viewed area + IP | OpenFreeMap              | Attribution required; no SLA                            |
-| Gap estimation (optional) | Two endpoints of each GPS gap + IP + UA  | routing.openstreetmap.de | Logged by the operator; 1 req/s; skipped near start/end |
-| Update check              | App/runtime version + IP                 | EAS Update (Expo)        | —                                                       |
-| Waitlist (website)        | Email + consent                          | Brevo (EU)               | Double opt-in                                           |
-| Website hosting           | IP, request                              | Vercel                   | Static site, no cookies                                 |
+| Flow                      | Data                                                                                                                                         | To                           | Note                                                     |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | -------------------------------------------------------- |
+| Map tiles                 | Tile coordinates of the viewed area + IP                                                                                                     | OpenFreeMap                  | Attribution required; no SLA                             |
+| Gap estimation (optional) | Two endpoints of each GPS gap + IP + UA                                                                                                      | routing.openstreetmap.de     | Logged by the operator; 1 req/s; skipped near start/end  |
+| Update check              | App/runtime version + IP                                                                                                                     | EAS Update (Expo)            | —                                                        |
+| Waitlist (website)        | Email + consent                                                                                                                              | Brevo (EU)                   | Double opt-in                                            |
+| Website hosting           | IP, request                                                                                                                                  | Vercel                       | Static site, no cookies                                  |
+| Cloud backup (opt-in)     | Activities with full tracks, names, times, time zone, gap routes, Home City id; Apple Health imports only with a second switch; device token | CityTurfer API (Vercel fra1) | Consent with policy version; one-way; never demo history |
 
-Routes, turf and Apple Health data stay in the on-device SQLite database. **Planned:** the v0.8.0
-API (`docs/decisions/api-2026-10-20.md`) adds accounts and track upload to Vercel + Neon (Frankfurt)
-— when it ships, the policy, App Privacy label (Location, linked to the user), Data safety form,
-account deletion (Apple 5.1.1(v)) and DPIA all change.
+Without Cloud backup, routes, turf and Apple Health data stay in the on-device SQLite database. The
+v0.8.0 phone client (Info › Cloud backup, `apps/mobile/src/contexts/cloud-backup`) uploads tracks to
+the API (`docs/decisions/api-sync-2026-10-20.md`) once the user pastes a device token and turns it
+on — before that ships beyond the founder, the policy, App Privacy label (Location, linked to the
+user), Data safety form, account deletion (Apple 5.1.1(v)) and DPIA all change.
 
 ## Learning without analytics at launch
 
