@@ -1,7 +1,7 @@
 ---
 name: turf-territory
 description:
-  TurfTrack's main feature — turning recorded tracks into "turf" — the Territory bounded context
+  CityTurfer's main feature — turning recorded tracks into "turf" — the Territory bounded context
   (Claim aggregate, Turf Cells on an H3 grid, permanent turf with visit-based Strength, Territory
   projection, rebuild/release), and the Turf Map rendering on MapLibre (heatmap glow,
   strength-coloured cells, overlapping blurred tracks, zoom level-of-detail). Use for anything in

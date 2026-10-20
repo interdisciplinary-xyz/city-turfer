@@ -1,7 +1,7 @@
 ---
 name: route-storage
 description:
-  TurfTrack's local-first persistence with expo-sqlite — schema for activities and track points,
+  CityTurfer's local-first persistence with expo-sqlite — schema for activities and track points,
   migrations, repository functions, write patterns from the background task, query performance for
   long routes, deletion, and GPX 1.1 export (planned, not built). Use when touching
   apps/mobile/src/platform/ (database, migrations, outbox) or a context's sqlite-*-repository.ts,

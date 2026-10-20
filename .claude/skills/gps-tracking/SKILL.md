@@ -1,9 +1,9 @@
 ---
 name: gps-tracking
 description:
-  How TurfTrack records GPS routes reliably with expo-location + expo-task-manager — background task
-  wiring, permission flow (foreground → background, iOS/Android differences), per-activity accuracy
-  settings, Android foreground service, point filtering (accuracy, speed spikes, jitter),
+  How CityTurfer records GPS routes reliably with expo-location + expo-task-manager — background
+  task wiring, permission flow (foreground → background, iOS/Android differences), per-activity
+  accuracy settings, Android foreground service, point filtering (accuracy, speed spikes, jitter),
   auto-pause, crash/kill recovery and battery. Use for any work in
   apps/mobile/src/contexts/recording/, anything involving location permissions, "tracking stops when
   screen is off", missing points, GPS jumps, drift while standing still, or battery drain.
@@ -62,7 +62,7 @@ await Location.startLocationUpdatesAsync(LOCATION_TASK, {
   foregroundService: {
     // Android: required for background
     notificationTitle: 'Recording your run',
-    notificationBody: 'Tap to return to TurfTrack',
+    notificationBody: 'Tap to return to CityTurfer',
     killServiceOnDestroy: false,
   },
 });

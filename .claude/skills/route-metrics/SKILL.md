@@ -1,12 +1,12 @@
 ---
 name: route-metrics
 description:
-  Formulas and conventions for TurfTrack activity statistics — haversine distance, elapsed vs moving
-  time, pace (min/km) vs speed (km/h) per activity type, km splits, elevation gain with smoothing
-  and hysteresis, calories (MET), and route simplification (Douglas–Peucker) for map rendering. Use
-  when writing or changing anything in apps/mobile/src/shared-kernel/ (track-analyzer, geo, track),
-  when stats look wrong ("distance too long", "pace jumps", "elevation gain is huge"), or when
-  adding a new stat.
+  Formulas and conventions for CityTurfer activity statistics — haversine distance, elapsed vs
+  moving time, pace (min/km) vs speed (km/h) per activity type, km splits, elevation gain with
+  smoothing and hysteresis, calories (MET), and route simplification (Douglas–Peucker) for map
+  rendering. Use when writing or changing anything in apps/mobile/src/shared-kernel/
+  (track-analyzer, geo, track), when stats look wrong ("distance too long", "pace jumps", "elevation
+  gain is huge"), or when adding a new stat.
 ---
 
 > **Where the code lives** (see `docs/poc-plan.md`): the maths is in
