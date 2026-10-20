@@ -102,29 +102,66 @@ unverified on-device.
 
 ## 3. E2E (Maestro, before a release)
 
-Flows live in `apps/mobile/e2e/`, run in the order of `flowsOrder` in `apps/mobile/e2e/config.yaml`
-by `apps/mobile/e2e/run.sh`: `01-auth` (wrong password shows `sign-in-error`; `admin@cityturfer.com`
-/ `admin1234` reaches the tabs), `02-record-run` (pause, resume, hold to finish → an activity with
-turf gained), `03-background-recording`, `04-too-short`, `05-history-detail`, `06-turf-map`,
-`07-delete-activity`, `09-me-menu`, `10-dashboard`, and `08-sign-out` last. Shared steps live in
-`apps/mobile/e2e/subflows/` (`travel-*.yaml` are generated from GPX by
-`apps/mobile/tools/e2e/gpx-to-travel.mjs`). Use `testID` props on every interactive element. Maestro
-selects by `id:`.
+**Flows:** `apps/mobile/e2e/`, run in the order of `flowsOrder` in `apps/mobile/e2e/config.yaml`.
+The source of truth is that file and `docs/quality/e2e.md` (critical paths CP-n). `08-sign-out`
+always runs last. Shared steps live in `apps/mobile/e2e/subflows/` (`launch`, `sign-in`,
+`allow-location`, `finish`, `back`; `travel-*.yaml` are generated from GPX by
+`apps/mobile/tools/e2e/gpx-to-travel.mjs`).
 
-Example:
+**Run:**
+
+- `apps/mobile/e2e/run.sh` runs all flows; `apps/mobile/e2e/run.sh 13-record-turf` runs one.
+- Pass `DEVICE=<udid>` when more than one simulator or emulator is up. Maestro lives at
+  `~/.maestro/maestro/bin/maestro` if it isn't on PATH.
+- A full run wipes the app's SQLite and the simulator keychain first; a single flow keeps the state.
+- With Metro on 8081, flows open the dev-client link, so the JS comes from **whatever checkout Metro
+  serves**. Check with `lsof -nP -iTCP:8081 -sTCP:LISTEN` and that process's `cwd`.
+- **Android emulator:**
+  `maestro --device emulator-5554 test apps/mobile/e2e --config apps/mobile/e2e/config.yaml -e DEV_URL="exp+turftrack://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081"`,
+  after `adb reverse tcp:8081 tcp:8081` and granting location and notification permissions
+  (`docs/operations/android-release.md`).
+
+**Write:**
+
+- Select by `id:` (`testID`). Every id a flow uses must exist in `apps/mobile/src`, and tags must
+  come from the allowed list. Run `pnpm -C apps/mobile run e2e:audit` (also part of `ci:quality`).
+- Register a new flow in `flowsOrder` and add its critical path to `docs/quality/e2e.md`.
+- Toggles: `assertVisible: { id: 'record-turf', checked: true }` reads the switch's
+  `accessibilityState`.
+
+**Pitfalls (each cost a run):**
+
+- **iOS exposes accessibility labels, not text.** A chip with `accessibilityLabel="Show Kraków"`
+  that displays "⌂ Kraków" is found by "Show Kraków", not by its text. Assert on ids or labels.
+- **The Expo dev menu can open over the app** on a dev build's launch (always on Android's first
+  launch; sometimes on iOS). It swallows taps. `subflows/launch.yaml` closes it: Back on Android,
+  "Close" on iOS. Use that subflow.
+- **Settings in secure storage (Keychain) survive reinstalls and single-flow runs.** A flow that
+  changes one must normalise it first (`runFlow: when: … commands: …`) and leave the default at the
+  end.
+- **Host load:** an overloaded Mac or emulator shows up as `eraseText` or driver start-up timeouts,
+  apps taking more than 60 s to open, and simulated GPS (`travel`) that never reaches the app.
+  - Check `uptime`. Cold-boot the emulator (`-no-snapshot-load`), and rerun on an idle machine
+    before calling it an app bug.
+  - Another Claude session building or installing on the same Mac is enough to cause it.
+- **Stopping a run mid-flow** fails the current flow. Ignore that result.
+
+Example (shape of a flow):
 
 ```yaml
-appId: com.turftrack.app
+# What the flow proves, and the state it leaves behind.
+appId: com.turftrack.poc
+tags: [recording]
 ---
-- launchApp: { clearState: true }
+- runFlow: subflows/launch.yaml
+- tapOn: { id: 'tab-record' }
 - tapOn: { id: 'activity-type-run' }
 - tapOn: { id: 'record-start' }
-- runFlow: { when: { visible: 'Allow' }, commands: [{ tapOn: 'Allow While Using App' }] }
-- runScript: start-sim-route.js # or run apps/mobile/tools/sim-location.sh beforehand
-- extendedWaitUntil: { visible: { id: 'stat-distance' }, timeout: 30000 }
-- tapOn: { id: 'record-stop' }
-- tapOn: { id: 'save-activity' }
-- assertVisible: { id: 'history-item-0' }
+- runFlow: subflows/allow-location.yaml
+- extendedWaitUntil: { visible: { id: 'stat-distance' }, timeout: 15000 }
+- runFlow: subflows/travel-run.yaml
+- runFlow: subflows/finish.yaml
+- extendedWaitUntil: { visible: { id: 'turf-gained' }, timeout: 30000 }
 ```
 
 ## Real devices
