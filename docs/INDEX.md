@@ -85,6 +85,12 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   free-tier
 - ✅ [`sessions/v0.5.0.md`](sessions/v0.5.0.md): Session log v0.5.0 — shared design system (tokens,
   @cityturfer/ui, one Storybook) for the app and the website, shipped over the air
+- ✅ [`sessions/v0.6.0.md`](sessions/v0.6.0.md): Session log v0.6.0 — v0.5.0 released; Storybook
+  branded as CityTurfer, docs pages and stories for every shared and website component, served at
+  cityturfer.local/storybook; no app change
+- ✅ [`sessions/v0.7.0.md`](sessions/v0.7.0.md): Session log v0.7.0 — v0.6.0 released; Home City and
+  the city picker (catalogue of 38 cities, migration 7), Turf and Record maps open on the chosen
+  city; JS-only, ships over the air
 
 ## Decision records
 
