@@ -5,6 +5,7 @@ import { TIER_COLOR } from '@/constants/colors';
 import { DETAIL_ZOOM } from '@/constants/map';
 
 import type { ClaimView, TurfCellView } from '../contract';
+import { TURF_LOOK, type TurfLook } from './layers.constants';
 
 const tierColor = [
   'match',
@@ -21,9 +22,19 @@ const tierColor = [
 /**
  * Heatmap glow (zoomed out) + strength-coloured hexagons with a halo (zoomed in). `beforeId` puts
  * the layers under another layer: MapLibre adds layers on top of the style regardless of where they
- * sit in the JSX. Memoised: GeoJSON sources re-serialise their data whenever they re-render.
+ * sit in the JSX. `look` softens the turf on maps where it isn't the subject (`TURF_LOOK`).
+ * Memoised: GeoJSON sources re-serialise their data whenever they re-render.
  */
-export const TurfLayers = memo(function TurfLayers({ cells, beforeId }: { cells: TurfCellView[]; beforeId?: string }) {
+export const TurfLayers = memo(function TurfLayers({
+  cells,
+  beforeId,
+  look = 'full',
+}: {
+  cells: TurfCellView[];
+  beforeId?: string;
+  look?: TurfLook;
+}) {
+  const style = TURF_LOOK[look];
   const points = useMemo<GeoJSON.FeatureCollection>(
     () => ({
       type: 'FeatureCollection',
@@ -63,7 +74,7 @@ export const TurfLayers = memo(function TurfLayers({ cells, beforeId }: { cells:
             // and only repeated streets saturate to white.
             'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 8, 0.12, 11, 0.22, 14, 0.5],
             'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 8, 4, 11, 9, 14, 22],
-            'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 12.5, 0.95, DETAIL_ZOOM + 1, 0],
+            'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 12.5, style.heatOpacity, DETAIL_ZOOM + 1, 0],
             'heatmap-color': [
               'interpolate',
               ['linear'],
@@ -90,9 +101,9 @@ export const TurfLayers = memo(function TurfLayers({ cells, beforeId }: { cells:
           minzoom={DETAIL_ZOOM}
           paint={{
             'line-color': tierColor as never,
-            'line-width': 10,
+            'line-width': style.haloWidth,
             'line-blur': 8,
-            'line-opacity': ['*', 0.7, ['get', 'strength']],
+            'line-opacity': ['*', style.haloOpacity, ['get', 'strength']],
           }}
         />
         <Layer
@@ -100,7 +111,10 @@ export const TurfLayers = memo(function TurfLayers({ cells, beforeId }: { cells:
           type='fill'
           beforeId={beforeId}
           minzoom={DETAIL_ZOOM}
-          paint={{ 'fill-color': tierColor as never, 'fill-opacity': ['+', 0.18, ['*', 0.55, ['get', 'strength']]] }}
+          paint={{
+            'fill-color': tierColor as never,
+            'fill-opacity': ['+', style.fillBase, ['*', style.fillScale, ['get', 'strength']]],
+          }}
         />
       </GeoJSONSource>
     </>

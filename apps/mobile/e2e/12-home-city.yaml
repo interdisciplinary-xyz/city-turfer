@@ -33,6 +33,6 @@ tags: [turf]
 - tapOn: { id: 'record-city' }
 - tapOn: { id: 'city-clear' }
 - extendedWaitUntil: { notVisible: { id: 'city-search' }, timeout: 5000 }
-- assertVisible: 'Choose your city'
+- assertVisible: { id: 'record-city', text: 'Choose your city' }
 - tapOn: { id: 'tab-turf' }
 - assertVisible: { id: 'turf-pick-city' }

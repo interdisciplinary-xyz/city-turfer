@@ -34,9 +34,6 @@ export type RecordViewProps = {
 /** The live track's lowest layer: overlays go under it with `beforeId`. */
 export const LIVE_TRACK_BOTTOM_LAYER = 'live-track-gap';
 
-/** Height of a map chip plus the gap below it: Recenter sits under the turf toggle. */
-export const CHIP_STACK = 52;
-
 /** Zoom for showing a whole city on the Record map. */
 export const CITY_ZOOM = 13;
 

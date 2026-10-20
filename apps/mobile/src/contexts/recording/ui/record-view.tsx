@@ -13,7 +13,6 @@ import { usePalette } from '@/ui-kit/theme';
 import { trackWithGaps } from '@/ui-kit/track-geometry';
 
 import {
-  CHIP_STACK,
   CITY_ZOOM,
   HOLD_MS,
   LIVE_TRACK_BOTTOM_LAYER,
@@ -185,32 +184,34 @@ export function RecordView({
         </Pressable>
       )}
 
-      {turf && (
-        <Pressable
-          testID='record-turf'
-          accessibilityRole='switch'
-          accessibilityLabel='Show my turf'
-          accessibilityState={{ checked: turf.shown }}
-          onPress={turf.onToggle}
-          hitSlop={8}
-          style={[s.chipRight, { top: insets.top + 12, backgroundColor: turf.shown ? TIER_COLOR.glowing : p.card }]}
-        >
-          <Text style={{ color: turf.shown ? ON_TIER.glowing : p.text, fontWeight: '700' }}>⬡ Turf</Text>
-        </Pressable>
-      )}
-
-      {!following && (
-        <Pressable
-          testID='recenter'
-          accessibilityRole='button'
-          accessibilityLabel='Recenter on my location'
-          onPress={() => setFollowing(true)}
-          hitSlop={8}
-          style={[s.chipRight, { top: insets.top + 12 + (turf ? CHIP_STACK : 0), backgroundColor: p.card }]}
-        >
-          <Text style={{ color: p.text, fontWeight: '700' }}>◎ Recenter</Text>
-        </Pressable>
-      )}
+      {/* One column at the top right, so the chips never overlap whatever the text size. */}
+      <View style={[s.chipColumn, { top: insets.top + 12 }]} pointerEvents='box-none'>
+        {turf && (
+          <Pressable
+            testID='record-turf'
+            accessibilityRole='switch'
+            accessibilityLabel='Show my turf'
+            accessibilityState={{ checked: turf.shown }}
+            onPress={turf.onToggle}
+            hitSlop={6}
+            style={[s.chip, { backgroundColor: turf.shown ? TIER_COLOR.glowing : p.card }]}
+          >
+            <Text style={{ color: turf.shown ? ON_TIER.glowing : p.text, fontWeight: '700' }}>⬡ Turf</Text>
+          </Pressable>
+        )}
+        {!following && (
+          <Pressable
+            testID='recenter'
+            accessibilityRole='button'
+            accessibilityLabel='Recenter on my location'
+            onPress={() => setFollowing(true)}
+            hitSlop={6}
+            style={[s.chip, { backgroundColor: p.card }]}
+          >
+            <Text style={{ color: p.text, fontWeight: '700' }}>◎ Recenter</Text>
+          </Pressable>
+        )}
+      </View>
 
       <View style={[s.panel, { backgroundColor: p.card, paddingBottom: 40 }]}>
         {banner && (
@@ -349,9 +350,8 @@ const s = StyleSheet.create({
     shadowRadius: 6,
     elevation: 4,
   },
-  chipRight: {
-    position: 'absolute',
-    right: 12,
+  chipColumn: { position: 'absolute', right: 12, alignItems: 'flex-end', gap: 12 },
+  chip: {
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 20,
