@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.6.0...v0.7.0) (2026-10-20)
+
+
+### Features
+
+* **recording:** pick the home city from the top of the record tab ([a382d87](https://github.com/interdisciplinary-xyz/city-turfer/commit/a382d87844f52c51fb35c2112ca334181d6bc7ff))
+* **territory:** city picker and turf map opening on the home city ([4830b6e](https://github.com/interdisciplinary-xyz/city-turfer/commit/4830b6e4705732900ed54b10711b17e692d9c49a))
+* **territory:** home city, a catalogue city the turf map opens on ([0920814](https://github.com/interdisciplinary-xyz/city-turfer/commit/09208147cd197b7a073fa1025b3abfa54401e64a))
+
+
+### Bug Fixes
+
+* **territory:** turf map camera on ios and home city refresh from review ([e9dd6fa](https://github.com/interdisciplinary-xyz/city-turfer/commit/e9dd6fa9ecb244edc427a7324e12af92c45212e2))
+
+
+### Documentation
+
+* **territory:** home city decision, features, skill and e2e coverage ([1a95c48](https://github.com/interdisciplinary-xyz/city-turfer/commit/1a95c486cc1f68a7c7f843212e2c259d470a4465))
+
 ## [0.6.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.5.0...v0.6.0) (2026-10-19)
 
 
