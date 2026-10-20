@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 
+import type { AppEnv } from '../deps';
 import {
   ActivityDetail,
   ActivityList,
@@ -9,23 +10,23 @@ import {
   ActivityUpload,
   Track,
 } from '../schemas/activities';
-import { ActivityIdParam, AUTH_ERRORS, BEARER_AUTH, problemResponse } from '../schemas/common';
+import { ActivityIdParam, AUTH_ERRORS, problemResponse } from '../schemas/common';
 import { Claim } from '../schemas/territory';
-import { registerPlanned } from './planned';
+import { defineRoute } from './define';
 
 const TAG = ['Activity Log'];
 const NOT_FOUND = { 404: problemResponse('No activity with this id for this user.') };
 
 /** Activity Log: list, upload, detail, rename, delete, track; and the activity's turf claim. */
-export function registerActivities(app: OpenAPIHono): void {
-  registerPlanned(app, {
+export function registerActivities(app: OpenAPIHono<AppEnv>): void {
+  defineRoute(app, {
+    status: 'planned',
     method: 'get',
     path: '/v1/activities',
     tags: TAG,
     operationId: 'listActivities',
     summary: 'List activities',
     description: 'Newest first, paged with `before` (use case ListActivities).',
-    security: BEARER_AUTH,
     request: { query: ActivityListQuery },
     responses: {
       200: { description: 'A page of activities.', content: { 'application/json': { schema: ActivityList } } },
@@ -34,7 +35,8 @@ export function registerActivities(app: OpenAPIHono): void {
     },
   });
 
-  registerPlanned(app, {
+  defineRoute(app, {
+    status: 'planned',
     method: 'put',
     path: '/v1/activities/{activityId}',
     tags: TAG,
@@ -42,7 +44,6 @@ export function registerActivities(app: OpenAPIHono): void {
     summary: 'Upload a finished activity',
     description:
       'Creates the activity with its track under the id the phone minted, or answers with the stored one if it already exists (idempotent; use case ImportActivity). The server computes distance, time, splits and claims turf from the track. Bodies are limited to 4.5 MB: send gzip (`Content-Encoding: gzip`) for long tracks.',
-    security: BEARER_AUTH,
     request: {
       params: ActivityIdParam,
       body: { required: true, content: { 'application/json': { schema: ActivityUpload } } },
@@ -58,14 +59,14 @@ export function registerActivities(app: OpenAPIHono): void {
     },
   });
 
-  registerPlanned(app, {
+  defineRoute(app, {
+    status: 'planned',
     method: 'get',
     path: '/v1/activities/{activityId}',
     tags: TAG,
     operationId: 'getActivity',
     summary: 'Activity detail',
     description: 'Summary, bounding box and km splits (use case GetActivityDetail).',
-    security: BEARER_AUTH,
     request: { params: ActivityIdParam },
     responses: {
       200: { description: 'The activity.', content: { 'application/json': { schema: ActivityDetail } } },
@@ -74,14 +75,14 @@ export function registerActivities(app: OpenAPIHono): void {
     },
   });
 
-  registerPlanned(app, {
+  defineRoute(app, {
+    status: 'planned',
     method: 'patch',
     path: '/v1/activities/{activityId}',
     tags: TAG,
     operationId: 'renameActivity',
     summary: 'Rename an activity',
     description: 'Use case RenameActivity.',
-    security: BEARER_AUTH,
     request: {
       params: ActivityIdParam,
       body: { required: true, content: { 'application/json': { schema: ActivityRename } } },
@@ -94,26 +95,26 @@ export function registerActivities(app: OpenAPIHono): void {
     },
   });
 
-  registerPlanned(app, {
+  defineRoute(app, {
+    status: 'planned',
     method: 'delete',
     path: '/v1/activities/{activityId}',
     tags: TAG,
     operationId: 'deleteActivity',
     summary: 'Delete an activity',
     description: 'Deletes the activity and its track and releases its turf (use case DeleteActivity). Idempotent.',
-    security: BEARER_AUTH,
     request: { params: ActivityIdParam },
     responses: { 204: { description: 'Deleted (or already gone).' }, ...AUTH_ERRORS },
   });
 
-  registerPlanned(app, {
+  defineRoute(app, {
+    status: 'planned',
     method: 'get',
     path: '/v1/activities/{activityId}/track',
     tags: TAG,
     operationId: 'getActivityTrack',
     summary: 'Activity track',
     description: 'Every track point, compact (use case ActivityTrackQuery). Personal data: never cached publicly.',
-    security: BEARER_AUTH,
     request: { params: ActivityIdParam },
     responses: {
       200: { description: 'The track.', content: { 'application/json': { schema: Track } } },
@@ -122,14 +123,14 @@ export function registerActivities(app: OpenAPIHono): void {
     },
   });
 
-  registerPlanned(app, {
+  defineRoute(app, {
+    status: 'planned',
     method: 'get',
     path: '/v1/activities/{activityId}/claim',
     tags: ['Territory'],
     operationId: 'getActivityClaim',
     summary: 'Turf claimed by an activity',
     description: 'Cells the activity covered and which were new (use case GetClaimForActivity).',
-    security: BEARER_AUTH,
     request: { params: ActivityIdParam },
     responses: {
       200: { description: 'The claim.', content: { 'application/json': { schema: Claim } } },

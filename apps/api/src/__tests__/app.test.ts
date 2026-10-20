@@ -1,12 +1,14 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+import { gzipSync } from 'node:zlib';
 
 import { describe, expect, it } from 'vitest';
 
 import { createApp } from '../app';
+import { defaultDeps, type RequestLogEntry, silentLog } from '../deps';
 import { OPENAPI_CONFIG } from '../spec';
 
-const app = createApp();
+const app = createApp(defaultDeps({ log: silentLog }));
 const AUTH = { Authorization: 'Bearer test-token' };
 const PUBLIC = new Set(['getHealth', 'signIn', 'searchCities']);
 const METHODS = ['get', 'put', 'post', 'patch', 'delete'] as const;
@@ -68,6 +70,60 @@ describe('routes', () => {
     const ui = await app.request('/swagger');
     expect(ui.status).toBe(200);
     expect(await ui.text()).toContain('swagger');
+  });
+});
+
+describe('platform middleware', () => {
+  const upload = (headers: Record<string, string>, body: BodyInit) =>
+    app.request('/v1/activities/3f9c2a64', { method: 'PUT', headers, body });
+
+  it('answers 401 before validating, so an anonymous caller learns nothing about the schema', async () => {
+    const res = await upload({ 'Content-Type': 'application/json' }, '{}');
+    expect(res.status).toBe(401);
+    expect(res.headers.get('www-authenticate')).toBe('Bearer');
+    expect(await res.json()).toMatchObject({ status: 401, code: 'auth.missing' });
+  });
+
+  it('answers 401 auth.invalid when the verifier rejects the token', async () => {
+    const strict = createApp(defaultDeps({ log: silentLog, auth: { verify: () => Promise.resolve(null) } }));
+    const res = await strict.request('/v1/me', { headers: AUTH });
+    expect(res.status).toBe(401);
+    expect(await res.json()).toMatchObject({ code: 'auth.invalid' });
+  });
+
+  it('lists invalid fields as JSON pointers', async () => {
+    const res = await upload({ ...AUTH, 'Content-Type': 'application/json' }, JSON.stringify({ type: 'swim' }));
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.errors).toContainEqual(expect.objectContaining({ pointer: '/type' }));
+  });
+
+  it('inflates gzip bodies before validation', async () => {
+    const res = await upload(
+      { ...AUTH, 'Content-Type': 'application/json', 'Content-Encoding': 'gzip' },
+      gzipSync(JSON.stringify({ type: 'swim' }))
+    );
+    expect(res.status).toBe(400);
+    expect((await res.json()).errors).toContainEqual(expect.objectContaining({ pointer: '/type' }));
+  });
+
+  it('refuses other encodings with 415 and oversized bodies with 413', async () => {
+    const br = await upload({ ...AUTH, 'Content-Type': 'application/json', 'Content-Encoding': 'br' }, '{}');
+    expect(br.status).toBe(415);
+    const big = await upload({ ...AUTH, 'Content-Type': 'application/json' }, 'x'.repeat(4_600_000));
+    expect(big.status).toBe(413);
+    expect(await big.json()).toMatchObject({ code: 'payload-too-large' });
+  });
+
+  it('gives every answer a request id and logs the route pattern, never the path', async () => {
+    const entries: RequestLogEntry[] = [];
+    const logged = createApp(defaultDeps({ log: { request: (e) => entries.push(e) } }));
+    const res = await logged.request('/v1/activities/3f9c2a64/track', { headers: AUTH });
+    expect(res.headers.get('x-request-id')).toBeTruthy();
+    expect(entries).toEqual([
+      expect.objectContaining({ method: 'GET', route: '/v1/activities/:activityId/track', status: 501 }),
+    ]);
+    expect(JSON.stringify(entries)).not.toContain('3f9c2a64');
   });
 });
 

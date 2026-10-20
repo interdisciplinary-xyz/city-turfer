@@ -1,28 +1,52 @@
 import { swaggerUI } from '@hono/swagger-ui';
-import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
+import { OpenAPIHono } from '@hono/zod-openapi';
+import { requestId } from 'hono/request-id';
+import { secureHeaders } from 'hono/secure-headers';
 
+import { type ApiDeps, type AppEnv, defaultDeps } from './deps';
+import { isProblemCode } from './errors';
+import { inflateGzip, limitBody, logRequests } from './middleware';
 import { problem } from './problem';
+import { registerAchievements } from './routes/achievements';
 import { registerActivities } from './routes/activities';
 import { registerIdentity } from './routes/identity';
-import { registerMe } from './routes/me';
+import { registerPlatform } from './routes/platform';
+import { registerPrivacy } from './routes/privacy';
 import { registerTerritory } from './routes/territory';
-import { API_VERSION, OPENAPI_CONFIG, SPEC_PATH } from './spec';
+import { OPENAPI_CONFIG, SPEC_PATH } from './spec';
 
 /**
- * The CityTurfer API (`api-design` skill, docs/decisions/api-2026-10-20.md). Routes are driving
- * adapters over the app's use cases; most are declared and documented but still planned (501).
+ * The CityTurfer API (`api-design` skill, docs/decisions/api-sync-2026-10-20.md). Routes are
+ * driving adapters over the app's use cases; most are declared and documented but still planned
+ * (501). Order per request: request id → log → secure headers → body limit → gzip → (route) auth →
+ * validation → handler.
  */
-export function createApp(): OpenAPIHono {
-  const app = new OpenAPIHono({
-    // Invalid input → 400 problem. Never echo the input: it may hold coordinates.
+export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
+  const app = new OpenAPIHono<AppEnv>({
+    // Invalid input → 400 problem with JSON pointers. Never echo the input: it may hold coordinates.
     defaultHook: (result, c) => {
       if (!result.success) {
-        const fields = [...new Set(result.error.issues.map((i) => i.path.join('.') || '(body)'))].join(', ');
-        return problem(c, 400, 'invalid-request', 'Invalid request', `Check: ${fields}.`);
+        const errors = result.error.issues.map((i) => ({
+          pointer: `/${i.path.map((p) => String(p).replaceAll('~', '~0').replaceAll('/', '~1')).join('/')}`,
+          code: i.code,
+        }));
+        return problem(c, 'invalid-request', `Check: ${[...new Set(errors.map((e) => e.pointer))].join(', ')}.`, {
+          errors,
+        });
       }
       return undefined;
     },
   });
+
+  app.use('*', requestId());
+  app.use('*', async (c, next) => {
+    c.set('deps', deps);
+    await next();
+  });
+  app.use('*', logRequests);
+  app.use('*', secureHeaders());
+  app.use('/v1/*', limitBody);
+  app.use('/v1/*', inflateGzip);
 
   app.openAPIRegistry.registerComponent('securitySchemes', 'bearerAuth', {
     type: 'http',
@@ -30,44 +54,25 @@ export function createApp(): OpenAPIHono {
     description: 'Token from POST /v1/auth/sign-in.',
   });
 
-  app.openapi(
-    createRoute({
-      method: 'get',
-      path: '/v1/health',
-      tags: ['Platform'],
-      operationId: 'getHealth',
-      security: [],
-      summary: 'Liveness',
-      description: 'Public. Answers when the function is up; touches no data.',
-      responses: {
-        200: {
-          description: 'Up.',
-          content: {
-            'application/json': {
-              schema: z
-                .object({
-                  status: z.literal('ok'),
-                  version: z.string().openapi({ example: API_VERSION }),
-                })
-                .openapi('Health'),
-            },
-          },
-        },
-      },
-    }),
-    (c) => c.json({ status: 'ok' as const, version: API_VERSION }, 200)
-  );
-
+  registerPlatform(app);
   registerIdentity(app);
   registerActivities(app);
   registerTerritory(app);
-  registerMe(app);
+  registerAchievements(app);
+  registerPrivacy(app);
 
   app.doc31(SPEC_PATH, OPENAPI_CONFIG);
   app.get('/swagger', swaggerUI({ url: SPEC_PATH, title: 'CityTurfer API' }));
 
-  app.notFound((c) => problem(c, 404, 'not-found', 'Not found'));
-  app.onError((_err, c) => problem(c, 500, 'internal', 'Something went wrong'));
+  app.notFound((c) => problem(c, 'not-found'));
+  app.onError((err, c) => {
+    // A DomainError (later from @cityturfer/core) carries a catalogue code: answer it, e.g. 422.
+    const code = (err as { code?: unknown }).code;
+    if (err.name === 'DomainError' && isProblemCode(code)) {
+      return problem(c, code);
+    }
+    return problem(c, 'internal');
+  });
   return app;
 }
 
