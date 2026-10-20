@@ -341,7 +341,9 @@ Record map uses `MAP_STYLE_DARK` and draws turf exactly as the Turf Map does (`T
 The `LIGHT` theme stays in `@cityturfer/brand` for Storybook and a possible light mode later.
 
 **Consequence:** `app.json` is native config, so this changes the runtime fingerprint: it ships in a
-new build, not over the air.
+new build, not over the air. Two traps: `expo-splash-screen` resets iOS to `Automatic` whenever its
+config has a `dark` block (so the splash has none; it was identical anyway), and Android only
+honours `userInterfaceStyle` with `expo-system-ui` installed.
 
 **Trade-off:** One screen ignores the user's theme.
 
