@@ -3,7 +3,7 @@
   "info": {
     "title": "CityTurfer API",
     "version": "0.2.0",
-    "description": "The CityTurfer HTTP API: the app's use cases (Activity Log, Territory, Identity, Achievements) over HTTP, for backup, sync across devices and future clients.\n\n**Status:** routes marked `x-cityturfer-status: planned` are designed and answer `501` until they are built (docs/decisions/api-2026-10-20.md).\n\n**Conventions:** JSON in camelCase; SI units with a suffix (`distanceM`, `movingS`); ISO 8601 UTC timestamps; coordinates `[lon, lat]`; bounding boxes `[west, south, east, north]`; errors as `application/problem+json`.\n\n**Privacy:** GPS tracks are personal data. They belong to the user, can be exported (`GET /v1/me/export`) and erased (`DELETE /v1/me`), and are never logged.",
+    "description": "The CityTurfer HTTP API: the app's use cases (Identity, Sync, Activity Log, Territory) over HTTP, for backup, sync across devices and future clients.\n\n**Status:** routes marked `x-cityturfer-status: planned` are designed and answer `501` until they are built (docs/decisions/api-2026-10-20.md).\n\n**Conventions:** JSON in camelCase; SI units with a suffix (`distanceM`, `movingS`); ISO 8601 UTC timestamps; coordinates `[lon, lat]`; bounding boxes `[west, south, east, north]`; errors as `application/problem+json`.\n\n**Privacy:** GPS tracks are personal data. They belong to the user, can be exported (`GET /v1/me/export`) and erased (`DELETE /v1/me`), and are never logged.",
     "license": {
       "name": "Proprietary",
       "identifier": "LicenseRef-Proprietary"
@@ -38,11 +38,7 @@
     },
     {
       "name": "Territory",
-      "description": "Turf cells, claims, cities and the Home City."
-    },
-    {
-      "name": "Achievements",
-      "description": "Evaluated from activities and turf."
+      "description": "Turf summary, cells and claims (recomputed from tracks) and the Home City."
     },
     {
       "name": "Privacy",
@@ -987,51 +983,6 @@
         ],
         "description": "Replaces every gap route of the activity (empty: none found)."
       },
-      "Claim": {
-        "type": "object",
-        "properties": {
-          "activityId": {
-            "type": "string"
-          },
-          "cellCount": {
-            "type": "integer",
-            "example": 412
-          },
-          "newCellCount": {
-            "type": "integer",
-            "example": 37
-          },
-          "newAreaKm2": {
-            "type": "number",
-            "example": 0.07
-          },
-          "cells": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "isNew": {
-                  "type": "boolean"
-                }
-              },
-              "required": [
-                "id",
-                "isNew"
-              ]
-            }
-          }
-        },
-        "required": [
-          "activityId",
-          "cellCount",
-          "newCellCount",
-          "newAreaKm2",
-          "cells"
-        ]
-      },
       "TurfSummary": {
         "type": "object",
         "properties": {
@@ -1130,7 +1081,8 @@
           "tier",
           "visits",
           "centroid"
-        ]
+        ],
+        "description": "No polygon: clients draw the boundary from the H3 id (h3-js `cellToBoundary`)."
       },
       "StrengthTier": {
         "type": "string",
@@ -1141,92 +1093,98 @@
           "blazing"
         ]
       },
-      "CityList": {
+      "Claim": {
         "type": "object",
         "properties": {
-          "items": {
+          "activityId": {
+            "type": "string",
+            "example": "3f9c2a64-5d1e-4b8e-9a51-0c7d2e6f1b20"
+          },
+          "cellCount": {
+            "type": "integer",
+            "example": 412
+          },
+          "newCellCount": {
+            "type": "integer",
+            "example": 37
+          },
+          "newAreaKm2": {
+            "type": "number",
+            "example": 0.07
+          },
+          "cells": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/City"
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "example": "8b1f53cae5a3fff"
+                },
+                "isNew": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "isNew"
+              ]
             }
           }
         },
         "required": [
-          "items"
-        ]
+          "activityId",
+          "cellCount",
+          "newCellCount",
+          "newAreaKm2",
+          "cells"
+        ],
+        "description": "The cells one activity covered. A cell is *new* for the claim with the earliest `(startedAt, activityId)` that covers it (decision D4), so the answer does not depend on upload order; it can change when an older activity arrives later."
       },
       "HomeCity": {
         "type": "object",
         "properties": {
           "city": {
             "$ref": "#/components/schemas/City"
+          },
+          "chosenAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z",
+            "description": "Null when never chosen."
           }
         },
         "required": [
-          "city"
+          "city",
+          "chosenAt"
         ]
       },
       "ChooseHomeCityBody": {
         "type": "object",
         "properties": {
           "cityId": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "A catalogue city id, or null to clear.",
             "example": "pl-krakow"
+          },
+          "chosenAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z",
+            "description": "When the user chose it on the phone; the latest `chosenAt` wins (offline-safe)."
           }
         },
         "required": [
-          "cityId"
-        ]
-      },
-      "AchievementList": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Achievement"
-            }
-          }
-        },
-        "required": [
-          "items"
-        ]
-      },
-      "Achievement": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "five-k"
-          },
-          "title": {
-            "type": "string",
-            "example": "5K"
-          },
-          "description": {
-            "type": "string",
-            "example": "Run 5 km in one go."
-          },
-          "unlocked": {
-            "type": "boolean",
-            "example": true
-          },
-          "current": {
-            "type": "number",
-            "example": 5.02
-          },
-          "target": {
-            "type": "number",
-            "example": 5
-          }
-        },
-        "required": [
-          "id",
-          "title",
-          "description",
-          "unlocked",
-          "current",
-          "target"
+          "cityId",
+          "chosenAt"
         ]
       }
     },
@@ -3451,152 +3409,6 @@
         }
       }
     },
-    "/v1/activities/{activityId}/claim": {
-      "get": {
-        "tags": [
-          "Territory"
-        ],
-        "operationId": "getActivityClaim",
-        "summary": "[planned] Turf claimed by an activity",
-        "description": "Cells the activity covered and which were new (use case GetClaimForActivity).",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "x-cityturfer-status": "planned",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 100,
-              "pattern": "^[A-Za-z0-9_-]+$",
-              "example": "3f9c2a64-5d1e-4b8e-9a51-0c7d2e6f1b20"
-            },
-            "required": true,
-            "name": "activityId",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The claim.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Claim"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
-            "content": {
-              "application/problem+json": {
-                "examples": {
-                  "auth.missing": {
-                    "summary": "auth.missing",
-                    "value": {
-                      "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
-                      "status": 401,
-                      "code": "auth.missing"
-                    }
-                  },
-                  "auth.invalid": {
-                    "summary": "auth.invalid",
-                    "value": {
-                      "type": "https://cityturfer.app/problems/auth.invalid",
-                      "title": "Invalid or expired token",
-                      "status": 401,
-                      "code": "auth.invalid"
-                    }
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No activity with this id for this user. Codes: `not-found`.",
-            "content": {
-              "application/problem+json": {
-                "examples": {
-                  "not-found": {
-                    "summary": "not-found",
-                    "value": {
-                      "type": "https://cityturfer.app/problems/not-found",
-                      "title": "Not found",
-                      "status": 404,
-                      "code": "not-found"
-                    }
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Too many requests: wait `Retry-After` seconds. Codes: `rate-limited`.",
-            "headers": {
-              "Retry-After": {
-                "$ref": "#/components/headers/RetryAfter"
-              },
-              "RateLimit": {
-                "$ref": "#/components/headers/RateLimit"
-              },
-              "RateLimit-Policy": {
-                "$ref": "#/components/headers/RateLimitPolicy"
-              }
-            },
-            "content": {
-              "application/problem+json": {
-                "examples": {
-                  "rate-limited": {
-                    "summary": "rate-limited",
-                    "value": {
-                      "type": "https://cityturfer.app/problems/rate-limited",
-                      "title": "Too many requests",
-                      "status": 429,
-                      "code": "rate-limited"
-                    }
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "501": {
-            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
-            "content": {
-              "application/problem+json": {
-                "examples": {
-                  "not-implemented": {
-                    "summary": "not-implemented",
-                    "value": {
-                      "type": "https://cityturfer.app/problems/not-implemented",
-                      "title": "Not implemented yet",
-                      "status": 501,
-                      "code": "not-implemented"
-                    }
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v1/turf/summary": {
       "get": {
         "tags": [
@@ -3604,7 +3416,7 @@
         ],
         "operationId": "getTurfSummary",
         "summary": "[planned] Turf summary",
-        "description": "Area, cells, strong cells, new this week and month, cells per type (use case GetTurfSummary).",
+        "description": "Area, cells, strong cells, new in the last 7 and 30 days (rolling, time-zone free), cells per type (use case GetTurfSummary).",
         "security": [
           {
             "bearerAuth": []
@@ -3715,7 +3527,7 @@
         ],
         "operationId": "getTurfCells",
         "summary": "[planned] Turf cells in a viewport",
-        "description": "Cells in the bounding box (padded 10%), aggregated to coarser cells past 5,000 features (use case GetTurfInViewport).",
+        "description": "Cells in the bounding box (padded 10%), aggregated to coarser cells past 5,000 features (use case GetTurfInViewport). Cells come without polygons: draw them from the H3 id.",
         "security": [
           {
             "bearerAuth": []
@@ -3774,9 +3586,20 @@
             }
           },
           "400": {
-            "description": "Invalid query.",
+            "description": "Invalid input. Codes: `invalid-request`.",
             "content": {
               "application/problem+json": {
+                "examples": {
+                  "invalid-request": {
+                    "summary": "invalid-request",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/invalid-request",
+                      "title": "Invalid request",
+                      "status": 400,
+                      "code": "invalid-request"
+                    }
+                  }
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -3869,45 +3692,143 @@
         }
       }
     },
-    "/v1/cities": {
+    "/v1/turf/claims/{activityId}": {
       "get": {
         "tags": [
           "Territory"
         ],
-        "operationId": "searchCities",
-        "security": [],
-        "summary": "[planned] Search the city catalogue",
-        "description": "Accent-insensitive search of the bundled catalogue (\"krakow\" finds Kraków); public (use case SearchCities).",
+        "operationId": "getClaim",
+        "summary": "[planned] Turf claimed by an activity",
+        "description": "Cells the activity covered and which were new (use case GetClaimForActivity). The Claim is a Territory aggregate keyed by the activity id.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "x-cityturfer-status": "planned",
         "parameters": [
           {
             "schema": {
               "type": "string",
-              "maxLength": 80,
-              "description": "Accent-insensitive; all cities when omitted.",
-              "example": "krakow"
+              "minLength": 1,
+              "maxLength": 100,
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "example": "3f9c2a64-5d1e-4b8e-9a51-0c7d2e6f1b20"
             },
-            "required": false,
-            "description": "Accent-insensitive; all cities when omitted.",
-            "name": "q",
-            "in": "query"
+            "required": true,
+            "name": "activityId",
+            "in": "path"
           }
         ],
         "responses": {
           "200": {
-            "description": "Matching cities, best first.",
+            "description": "The claim.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CityList"
+                  "$ref": "#/components/schemas/Claim"
                 }
               }
             }
           },
           "400": {
-            "description": "Invalid query.",
+            "description": "Invalid input. Codes: `invalid-request`.",
             "content": {
               "application/problem+json": {
+                "examples": {
+                  "invalid-request": {
+                    "summary": "invalid-request",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/invalid-request",
+                      "title": "Invalid request",
+                      "status": 400,
+                      "code": "invalid-request"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.missing": {
+                    "summary": "auth.missing",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.missing",
+                      "title": "Missing bearer token",
+                      "status": 401,
+                      "code": "auth.missing"
+                    }
+                  },
+                  "auth.invalid": {
+                    "summary": "auth.invalid",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.invalid",
+                      "title": "Invalid or expired token",
+                      "status": 401,
+                      "code": "auth.invalid"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No claim with this id for this user. Codes: `not-found`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "not-found": {
+                    "summary": "not-found",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/not-found",
+                      "title": "Not found",
+                      "status": 404,
+                      "code": "not-found"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: wait `Retry-After` seconds. Codes: `rate-limited`.",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimitPolicy"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "rate-limited": {
+                    "summary": "rate-limited",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/rate-limited",
+                      "title": "Too many requests",
+                      "status": 429,
+                      "code": "rate-limited"
+                    }
+                  }
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -3938,7 +3859,7 @@
         }
       }
     },
-    "/v1/me/home-city": {
+    "/v1/turf/home-city": {
       "get": {
         "tags": [
           "Territory"
@@ -4053,8 +3974,8 @@
           "Territory"
         ],
         "operationId": "chooseHomeCity",
-        "summary": "[planned] Choose the Home City",
-        "description": "Only catalogue cities (use case ChooseHomeCity).",
+        "summary": "[planned] Choose or clear the Home City",
+        "description": "Only catalogue cities; `cityId: null` clears it (use case ChooseHomeCity). Last write wins on `chosenAt`: an older choice is ignored and the current one returned.",
         "security": [
           {
             "bearerAuth": []
@@ -4073,7 +3994,7 @@
         },
         "responses": {
           "200": {
-            "description": "Chosen.",
+            "description": "The Home City now.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4083,9 +4004,20 @@
             }
           },
           "400": {
-            "description": "Invalid body.",
+            "description": "Invalid input. Codes: `invalid-request`.",
             "content": {
               "application/problem+json": {
+                "examples": {
+                  "invalid-request": {
+                    "summary": "invalid-request",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/invalid-request",
+                      "title": "Invalid request",
+                      "status": 400,
+                      "code": "invalid-request"
+                    }
+                  }
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -4123,219 +4055,17 @@
             }
           },
           "422": {
-            "description": "Not a catalogue city (`home-city.unknown`).",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Too many requests: wait `Retry-After` seconds. Codes: `rate-limited`.",
-            "headers": {
-              "Retry-After": {
-                "$ref": "#/components/headers/RetryAfter"
-              },
-              "RateLimit": {
-                "$ref": "#/components/headers/RateLimit"
-              },
-              "RateLimit-Policy": {
-                "$ref": "#/components/headers/RateLimitPolicy"
-              }
-            },
+            "description": "Not a catalogue city. Codes: `home-city.unknown`.",
             "content": {
               "application/problem+json": {
                 "examples": {
-                  "rate-limited": {
-                    "summary": "rate-limited",
+                  "home-city.unknown": {
+                    "summary": "home-city.unknown",
                     "value": {
-                      "type": "https://cityturfer.app/problems/rate-limited",
-                      "title": "Too many requests",
-                      "status": 429,
-                      "code": "rate-limited"
-                    }
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "501": {
-            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
-            "content": {
-              "application/problem+json": {
-                "examples": {
-                  "not-implemented": {
-                    "summary": "not-implemented",
-                    "value": {
-                      "type": "https://cityturfer.app/problems/not-implemented",
-                      "title": "Not implemented yet",
-                      "status": 501,
-                      "code": "not-implemented"
-                    }
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Territory"
-        ],
-        "operationId": "clearHomeCity",
-        "summary": "[planned] Clear the Home City",
-        "description": "Use case ChooseHomeCity(null). Idempotent.",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "x-cityturfer-status": "planned",
-        "responses": {
-          "204": {
-            "description": "Cleared."
-          },
-          "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
-            "content": {
-              "application/problem+json": {
-                "examples": {
-                  "auth.missing": {
-                    "summary": "auth.missing",
-                    "value": {
-                      "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
-                      "status": 401,
-                      "code": "auth.missing"
-                    }
-                  },
-                  "auth.invalid": {
-                    "summary": "auth.invalid",
-                    "value": {
-                      "type": "https://cityturfer.app/problems/auth.invalid",
-                      "title": "Invalid or expired token",
-                      "status": 401,
-                      "code": "auth.invalid"
-                    }
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Too many requests: wait `Retry-After` seconds. Codes: `rate-limited`.",
-            "headers": {
-              "Retry-After": {
-                "$ref": "#/components/headers/RetryAfter"
-              },
-              "RateLimit": {
-                "$ref": "#/components/headers/RateLimit"
-              },
-              "RateLimit-Policy": {
-                "$ref": "#/components/headers/RateLimitPolicy"
-              }
-            },
-            "content": {
-              "application/problem+json": {
-                "examples": {
-                  "rate-limited": {
-                    "summary": "rate-limited",
-                    "value": {
-                      "type": "https://cityturfer.app/problems/rate-limited",
-                      "title": "Too many requests",
-                      "status": 429,
-                      "code": "rate-limited"
-                    }
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "501": {
-            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
-            "content": {
-              "application/problem+json": {
-                "examples": {
-                  "not-implemented": {
-                    "summary": "not-implemented",
-                    "value": {
-                      "type": "https://cityturfer.app/problems/not-implemented",
-                      "title": "Not implemented yet",
-                      "status": 501,
-                      "code": "not-implemented"
-                    }
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/achievements": {
-      "get": {
-        "tags": [
-          "Achievements"
-        ],
-        "operationId": "listAchievements",
-        "summary": "[planned] Achievements",
-        "description": "Evaluated from activity and turf facts; nothing stored (evaluateAchievements).",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "x-cityturfer-status": "planned",
-        "responses": {
-          "200": {
-            "description": "Every achievement with progress.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AchievementList"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
-            "content": {
-              "application/problem+json": {
-                "examples": {
-                  "auth.missing": {
-                    "summary": "auth.missing",
-                    "value": {
-                      "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
-                      "status": 401,
-                      "code": "auth.missing"
-                    }
-                  },
-                  "auth.invalid": {
-                    "summary": "auth.invalid",
-                    "value": {
-                      "type": "https://cityturfer.app/problems/auth.invalid",
-                      "title": "Invalid or expired token",
-                      "status": 401,
-                      "code": "auth.invalid"
+                      "type": "https://cityturfer.app/problems/home-city.unknown",
+                      "title": "Not a catalogue city",
+                      "status": 422,
+                      "code": "home-city.unknown"
                     }
                   }
                 },

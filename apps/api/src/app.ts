@@ -7,7 +7,6 @@ import { type ApiDeps, type AppEnv, defaultDeps } from './deps';
 import { isProblemCode } from './errors';
 import { inflateGzip, limitBody, logRequests } from './middleware';
 import { problem } from './problem';
-import { registerAchievements } from './routes/achievements';
 import { registerActivities } from './routes/activities';
 import { registerIdentity } from './routes/identity';
 import { registerPlatform } from './routes/platform';
@@ -63,7 +62,6 @@ export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
   registerSync(app);
   registerActivities(app);
   registerTerritory(app);
-  registerAchievements(app);
 
   app.doc31(SPEC_PATH, OPENAPI_CONFIG);
   app.get('/swagger', swaggerUI({ url: SPEC_PATH, title: 'CityTurfer API', ...SWAGGER_UI_OPTIONS }));

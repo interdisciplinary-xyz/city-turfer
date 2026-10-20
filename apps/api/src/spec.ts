@@ -30,7 +30,7 @@ export const OPENAPI_CONFIG = {
     title: 'CityTurfer API',
     version: API_VERSION,
     description: [
-      "The CityTurfer HTTP API: the app's use cases (Activity Log, Territory, Identity, Achievements) over HTTP, for backup, sync across devices and future clients.",
+      "The CityTurfer HTTP API: the app's use cases (Identity, Sync, Activity Log, Territory) over HTTP, for backup, sync across devices and future clients.",
       '',
       '**Status:** routes marked `x-cityturfer-status: planned` are designed and answer `501` until they are built (docs/decisions/api-2026-10-20.md).',
       '',
@@ -52,8 +52,7 @@ export const OPENAPI_CONFIG = {
     { name: 'Identity', description: 'Sign-in and the current user.' },
     { name: 'Sync', description: 'The changes feed devices pull; uploads go to the Activity Log.' },
     { name: 'Activity Log', description: 'Finished activities and their tracks.' },
-    { name: 'Territory', description: 'Turf cells, claims, cities and the Home City.' },
-    { name: 'Achievements', description: 'Evaluated from activities and turf.' },
+    { name: 'Territory', description: 'Turf summary, cells and claims (recomputed from tracks) and the Home City.' },
     { name: 'Privacy', description: 'Export and erase everything (GDPR).' },
   ],
 };

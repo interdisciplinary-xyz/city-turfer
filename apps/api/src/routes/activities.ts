@@ -21,7 +21,6 @@ import {
   notFound,
   problemResponse,
 } from '../schemas/common';
-import { Claim } from '../schemas/territory';
 import { defineRoute } from './define';
 
 const TAG = ['Activity Log'];
@@ -30,7 +29,7 @@ const DELETED = { 410: problemResponse('The activity was deleted (delete wins; n
 const IF_MATCH = z.object({ 'If-Match': IfMatch });
 const json = <T>(schema: T) => ({ 'application/json': { schema } });
 
-/** Activity Log: list, upload, detail, rename, delete, track, gap routes; and the activity's turf claim. */
+/** Activity Log: list, upload, detail, rename, delete, track, gap routes. */
 export function registerActivities(app: OpenAPIHono<AppEnv>): void {
   defineRoute(app, {
     status: 'planned',
@@ -200,22 +199,6 @@ export function registerActivities(app: OpenAPIHono<AppEnv>): void {
       ...AUTH_ERRORS,
       ...NOT_FOUND,
       ...DELETED,
-    },
-  });
-
-  defineRoute(app, {
-    status: 'planned',
-    method: 'get',
-    path: '/v1/activities/{activityId}/claim',
-    tags: ['Territory'],
-    operationId: 'getActivityClaim',
-    summary: 'Turf claimed by an activity',
-    description: 'Cells the activity covered and which were new (use case GetClaimForActivity).',
-    request: { params: ActivityIdParam },
-    responses: {
-      200: { description: 'The claim.', content: json(Claim) },
-      ...AUTH_ERRORS,
-      ...NOT_FOUND,
     },
   });
 }

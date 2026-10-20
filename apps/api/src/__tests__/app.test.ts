@@ -10,7 +10,7 @@ import { API_VERSION, OPENAPI_CONFIG } from '../spec';
 
 const app = createApp(defaultDeps({ log: silentLog }));
 const AUTH = { Authorization: 'Bearer test-token' };
-const PUBLIC = new Set(['getHealth', 'signIn', 'searchCities']);
+const PUBLIC = new Set(['getHealth', 'signIn']);
 const METHODS = ['get', 'put', 'post', 'patch', 'delete'] as const;
 
 type Operation = {
@@ -167,7 +167,7 @@ describe('OpenAPI document', () => {
 
   it('is OpenAPI 3.1 with every route of the decision record', () => {
     expect(doc.openapi).toBe('3.1.0');
-    expect(ops).toHaveLength(22);
+    expect(ops).toHaveLength(19);
   });
 
   it('gives every operation a unique id and a bounded-context tag', () => {
