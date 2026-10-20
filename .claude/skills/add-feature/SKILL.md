@@ -11,11 +11,12 @@ description:
 
 ## 0. Know where we are
 
-Read `CLAUDE.md` and `docs/poc-plan.md`. During the PoC, the milestones in §6 of the plan (M1
-scaffold + auth → M2 walk → M3 turf → M4 run and cycle → M5 history → M6 validation) are the
-roadmap. Work on the first unfinished one, and use its build list and exit checks as the acceptance
-criteria; after it, use `docs/roadmap.md` (create it from the roadmap below if it's missing). If
-there's no `package.json`, run the `scaffold-app` skill first.
+Read `CLAUDE.md` and `docs/product/product-brief.md` (what the product is and promises; the
+`product-knowledge` skill). The backlog is `NOTEBOOK.md` at the repo root, one block per version:
+work on the open version's unticked items. For a feature that needs product shaping first (who it's
+for, copy, success criteria), ask the `product-manager` agent for a spec. The PoC milestones in
+`docs/poc-plan.md` §6 are history; their exit checks still make good acceptance criteria. If there's
+no `package.json`, run the `scaffold-app` skill first.
 
 ## 1. Plan (rn-architect)
 
@@ -64,8 +65,7 @@ Run the `mobile-reviewer` agent on the diff. Fix the blocking findings and re-ru
 
 ## 5. Close out
 
-Tick the item in `docs/roadmap.md`. Report what was verified (tests, simulator, device) and what
-wasn't.
+Tick the item in `NOTEBOOK.md`. Report what was verified (tests, simulator, device) and what wasn't.
 
 ## Roadmap (v1)
 

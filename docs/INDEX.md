@@ -36,6 +36,26 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`engineering/features.md`](engineering/features.md): Inventory of every shipped feature by tab
   and screen, where it lives, and the claims that aren't true yet
 
+## What we build and why
+
+`docs/product/` — Product direction and roadmap.
+
+- ✅ [`product/discovery-board.md`](product/discovery-board.md): The live state of product discovery
+  — evidence log, assumption map, opportunity tree and the interview queue; every product claim
+  cites an id from here
+- ✅ [`product/launch-readiness.md`](product/launch-readiness.md): What stands between CityTurfer
+  and a public App Store / Google Play launch — store, privacy and legal blockers in order, with
+  today's status and sources (research 2026-10-20)
+- ✅ [`product/market-landscape.md`](product/market-landscape.md): Competitors, pricing benchmarks,
+  market facts (Poland first) and where CityTurfer is different — web research as of 2026-10-20,
+  with sources and uncertainty marked
+- ✅ [`product/product-brief.md`](product/product-brief.md): What CityTurfer is as a product —
+  vision, users, core loop, what a user can do today, what we promise vs what's true, success
+  criteria, open questions and known doc drift
+- 🚧 [`product/strategy.md`](product/strategy.md): Draft product strategy for the founder to accept
+  or change — diagnosis, guiding policy, positioning options, beachhead candidates, North Star,
+  Now/Next/Later and the decisions it needs
+
 ## Running it
 
 `docs/operations/` — Runbook, OTA releases, device diagnostics.
@@ -91,6 +111,8 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`sessions/v0.7.0.md`](sessions/v0.7.0.md): Session log v0.7.0 — v0.6.0 released; Home City and
   the city picker (catalogue of 38 cities, migration 7), Turf and Record maps open on the chosen
   city; JS-only, ships over the air
+- ✅ [`sessions/v0.8.0.md`](sessions/v0.8.0.md): Session log v0.8.0 — API skeleton with the whole v1
+  contract in Swagger (#89,
 
 ## Decision records
 

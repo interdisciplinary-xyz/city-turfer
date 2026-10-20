@@ -30,8 +30,9 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
   (`turbo.json`, `pnpm-workspace.yaml`): workspaces apps/* and packages/*; design in
   `docs/decisions/monorepo-turborepo-2026-10-18.md`
 - **Web**: Next.js 16 (App Router, `output: 'export'`) in `apps/web`, hosted on Vercel; static
-  showcase only (one hero section): no forms, cookies or third-party scripts. Languages via
-  `next-intl` (`/en`, `/pl`; copy in `apps/web/messages/*.json`, no CMS)
+  showcase (hero, APK download, waitlist): no backend, cookies or third-party scripts; the waitlist
+  form posts emails straight to Brevo (double opt-in, personal data). Languages via `next-intl`
+  (`/en`, `/pl`; copy in `apps/web/messages/*.json`, no CMS)
 - **Storage**: `expo-sqlite`, local-first; the phone stays the source of truth
 - **API** (planned, v0.8.0): `apps/api`, Hono on Vercel (`fra1`), routes declared with zod +
   `@hono/zod-openapi` into a generated OpenAPI 3.1 spec (`apps/api/openapi.json`), Swagger UI at
@@ -165,10 +166,12 @@ node apps/mobile/tools/turf-preview.mjs apps/mobile/tools/fixtures/history --out
 
 - Skills (`.claude/skills/`): `brand-system`, `ddd-architecture`, `turf-territory`, `scaffold-app`,
   `add-feature`, `gps-tracking`, `route-metrics`, `route-storage`, `mobile-testing`, `apple-health`,
-  `web-motion`, `design-system`, `api-design`.
+  `web-motion`, `design-system`, `api-design`, `product-knowledge` (what the product is; docs in
+  `docs/product/`), `product-discovery`, `product-strategy`, `product-launch`.
 - Agents (`.claude/agents/`): `rn-architect`, `location-engineer`, `mobile-ui-engineer`,
   `mobile-test-engineer`, `mobile-reviewer`, `brand-designer`, `health-engineer` (Apple Health),
-  `web-engineer` (apps/web), `api-engineer` (back end: apps/api, server data, sync).
+  `web-engineer` (apps/web), `api-engineer` (back end: apps/api, server data, sync),
+  `product-manager` (the Product Owner persona; talk to it as the main session with the agent flag).
 - Commands (`.claude/commands/`): `audit-docs` (`/audit-docs`).
 
 ## Docs
