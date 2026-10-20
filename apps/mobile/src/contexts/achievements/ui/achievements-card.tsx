@@ -1,10 +1,9 @@
+import type { AchievementsSummary } from '@cityturfer/core/achievements';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ACCENT } from '@/constants/colors';
 import { Card } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
-
-import type { AchievementsSummary } from '../domain/achievements-summary';
 
 /** Dashboard teaser: unlocked count and the next achievement within reach. */
 export function AchievementsCard({ summary, onPress }: { summary: AchievementsSummary; onPress: () => void }) {

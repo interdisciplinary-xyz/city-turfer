@@ -1,10 +1,9 @@
+import type { OnboardingProgress, OnboardingStepId } from '@cityturfer/core/achievements';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ACCENT } from '@/constants/colors';
 import { Card } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
-
-import type { OnboardingProgress, OnboardingStepId } from '../domain/onboarding';
 
 /** Dashboard "Getting started" checklist. Each step opens the place where it gets done. */
 export function OnboardingCard({

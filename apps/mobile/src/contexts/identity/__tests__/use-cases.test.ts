@@ -1,6 +1,7 @@
-import { createIdentityApi } from '../../index';
-import { MockAuthGateway } from '../../infrastructure/mock-auth-gateway';
-import type { SessionStore } from '../ports';
+import type { SessionStore } from '@cityturfer/core/identity/ports';
+
+import { createIdentityApi } from '..';
+import { MockAuthGateway } from '../infrastructure/mock-auth-gateway';
 
 function memoryStore(initial: string | null = null) {
   let id = initial;
