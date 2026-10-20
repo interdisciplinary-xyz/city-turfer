@@ -12,6 +12,7 @@ import { registerActivities } from './routes/activities';
 import { registerIdentity } from './routes/identity';
 import { registerPlatform } from './routes/platform';
 import { registerPrivacy } from './routes/privacy';
+import { registerSync } from './routes/sync';
 import { registerTerritory } from './routes/territory';
 import { registerHeaders } from './schemas/common';
 import { OPENAPI_CONFIG, SPEC_PATH, SWAGGER_UI_OPTIONS } from './spec';
@@ -58,10 +59,11 @@ export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
 
   registerPlatform(app);
   registerIdentity(app);
+  registerPrivacy(app);
+  registerSync(app);
   registerActivities(app);
   registerTerritory(app);
   registerAchievements(app);
-  registerPrivacy(app);
 
   app.doc31(SPEC_PATH, OPENAPI_CONFIG);
   app.get('/swagger', swaggerUI({ url: SPEC_PATH, title: 'CityTurfer API', ...SWAGGER_UI_OPTIONS }));

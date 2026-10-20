@@ -50,6 +50,7 @@ export const OPENAPI_CONFIG = {
   tags: [
     { name: 'Platform', description: 'Health and docs.' },
     { name: 'Identity', description: 'Sign-in and the current user.' },
+    { name: 'Sync', description: 'The changes feed devices pull; uploads go to the Activity Log.' },
     { name: 'Activity Log', description: 'Finished activities and their tracks.' },
     { name: 'Territory', description: 'Turf cells, claims, cities and the Home City.' },
     { name: 'Achievements', description: 'Evaluated from activities and turf.' },
