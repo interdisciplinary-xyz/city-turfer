@@ -36,7 +36,7 @@ Me drawer, and the screens pushed from them. Format adapted from empatalk's `FEA
 > | SQLite schema         | `apps/mobile/src/platform/migrations.ts`                               |
 
 Today: <!-- probe:achievements -->12<!-- /probe --> achievements,
-<!-- probe:e2e-flows -->12<!-- /probe --> Maestro flows, <!-- probe:migrations -->7<!-- /probe -->
+<!-- probe:e2e-flows -->13<!-- /probe --> Maestro flows, <!-- probe:migrations -->7<!-- /probe -->
 
 migrations.
 
@@ -72,6 +72,9 @@ opens on Dashboard after sign-in.
   first GPS fix it shows the Home City (if one is chosen).
 - Before a recording starts, the `record-city` chip at the top ("⌂ Kraków ▾", or "⌂ Your city ▾")
   opens the city picker; a newly chosen city is shown on the map (Recenter returns to the user).
+- The "⬡ Turf" chip (`record-turf`, top right; Recenter sits under it) shows or hides the Turfer's
+  turf under the live track, before and during a recording. On by default and remembered per user
+  (`territory/ui/hooks.ts` `useTurfOverlay`, composed in by the screen).
 - Live stats: time, distance, current and average pace (walk, run) or speed (ride).
 - Pause / resume; auto-pause from the `TrackingProfile`; **hold to finish**.
 - A too-short recording can't be saved: "Too short to save" offers keep recording or discard.

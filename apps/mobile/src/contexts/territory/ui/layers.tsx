@@ -1,5 +1,5 @@
 import { GeoJSONSource, Layer } from '@maplibre/maplibre-react-native';
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 
 import { TIER_COLOR } from '@/constants/colors';
 import { DETAIL_ZOOM } from '@/constants/map';
@@ -18,8 +18,12 @@ const tierColor = [
   TIER_COLOR.blazing,
 ] as const;
 
-/** Heatmap glow (zoomed out) + strength-coloured hexagons with a halo (zoomed in). */
-export function TurfLayers({ cells }: { cells: TurfCellView[] }) {
+/**
+ * Heatmap glow (zoomed out) + strength-coloured hexagons with a halo (zoomed in). `beforeId` puts
+ * the layers under another layer: MapLibre adds layers on top of the style regardless of where they
+ * sit in the JSX. Memoised: GeoJSON sources re-serialise their data whenever they re-render.
+ */
+export const TurfLayers = memo(function TurfLayers({ cells, beforeId }: { cells: TurfCellView[]; beforeId?: string }) {
   const points = useMemo<GeoJSON.FeatureCollection>(
     () => ({
       type: 'FeatureCollection',
@@ -51,6 +55,7 @@ export function TurfLayers({ cells }: { cells: TurfCellView[] }) {
         <Layer
           id='turf-heat'
           type='heatmap'
+          beforeId={beforeId}
           maxzoom={DETAIL_ZOOM + 1}
           paint={{
             'heatmap-weight': ['interpolate', ['linear'], ['get', 'strength'], 0, 0.15, 1, 1],
@@ -81,6 +86,7 @@ export function TurfLayers({ cells }: { cells: TurfCellView[] }) {
         <Layer
           id='turf-halo'
           type='line'
+          beforeId={beforeId}
           minzoom={DETAIL_ZOOM}
           paint={{
             'line-color': tierColor as never,
@@ -92,13 +98,14 @@ export function TurfLayers({ cells }: { cells: TurfCellView[] }) {
         <Layer
           id='turf-fill'
           type='fill'
+          beforeId={beforeId}
           minzoom={DETAIL_ZOOM}
           paint={{ 'fill-color': tierColor as never, 'fill-opacity': ['+', 0.18, ['*', 0.55, ['get', 'strength']]] }}
         />
       </GeoJSONSource>
     </>
   );
-}
+});
 
 /** The cells one activity claimed; new turf highlighted. */
 export function ClaimLayers({ claim }: { claim: ClaimView | null }) {
