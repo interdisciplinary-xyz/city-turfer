@@ -266,19 +266,17 @@
               "$ref": "#/components/schemas/ActivitySummary"
             }
           },
-          "nextBefore": {
+          "nextCursor": {
             "type": [
               "string",
               "null"
             ],
-            "format": "date-time",
-            "example": "2026-10-19T07:12:00Z",
-            "description": "Pass as `before` for the next page; null at the end."
+            "description": "Pass as `cursor` for the next page; null at the end."
           }
         },
         "required": [
           "items",
-          "nextBefore"
+          "nextCursor"
         ]
       },
       "ActivitySummary": {
@@ -293,6 +291,9 @@
           },
           "name": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "As in the app (1–80 characters).",
             "example": "Morning run"
           },
           "source": {
@@ -309,22 +310,28 @@
             "example": "2026-10-19T07:12:00Z"
           },
           "timeZone": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
             "minLength": 1,
             "maxLength": 64,
-            "example": "Europe/Warsaw"
+            "example": "Europe/Warsaw",
+            "description": "IANA zone the phone reported; display only."
           },
           "distanceM": {
             "type": "number",
+            "description": "Recorded + estimated over GPS gaps.",
             "example": 5020
           },
           "estimatedDistanceM": {
             "type": "number",
-            "description": "Part of distanceM estimated along streets over GPS gaps.",
+            "description": "Part of distanceM estimated along streets over GPS gaps (D3).",
             "example": 0
           },
           "movingS": {
             "type": "number",
+            "description": "Recorded + estimated moving time.",
             "example": 1694
           },
           "elapsedS": {
@@ -344,6 +351,32 @@
               "$ref": "#/components/schemas/LonLat"
             },
             "description": "Simplified track for list maps."
+          },
+          "pointCount": {
+            "type": "integer",
+            "example": 1412
+          },
+          "trackHash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "SHA-256 (hex) of `JSON.stringify(track.points)` as sent. Computed by the phone, checked by the server (422 `activity.track-hash-mismatch`); tells other devices whether to download the track again.",
+            "example": "9f2b6c1d4e8a7b3c5d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Grows by one with every change; the `ETag` is `\"v<version>\"`.",
+            "example": 3
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z"
+          },
+          "coreVersion": {
+            "type": "string",
+            "description": "Version of the shared core that computed the numbers.",
+            "example": "0.8.0"
           }
         },
         "required": [
@@ -359,7 +392,12 @@
           "movingS",
           "elapsedS",
           "elevationGainM",
-          "preview"
+          "preview",
+          "pointCount",
+          "trackHash",
+          "version",
+          "updatedAt",
+          "coreVersion"
         ]
       },
       "ActivityType": {
@@ -375,8 +413,11 @@
         "type": "string",
         "enum": [
           "recording",
-          "apple-health"
-        ]
+          "apple-health",
+          "import"
+        ],
+        "description": "`recording`: a finished Recording Session; `apple-health`: imported from Apple Health (`hk-…` id, needs the `apple-health-in-cloud-sync` consent); `import`: any other import. Demo history (`demo-…`) is never uploaded.",
+        "example": "recording"
       },
       "LonLat": {
         "type": "array",
@@ -407,8 +448,9 @@
           "name": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 120,
-            "description": "Defaults like the app (e.g. \"Morning run\")."
+            "maxLength": 80,
+            "description": "As in the app (1–80 characters).",
+            "example": "Morning run"
           },
           "source": {
             "$ref": "#/components/schemas/ActivitySource"
@@ -427,7 +469,28 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 64,
-            "example": "Europe/Warsaw"
+            "example": "Europe/Warsaw",
+            "description": "IANA zone; for activities recorded before sync, the phone sends its current zone."
+          },
+          "resumedSegments": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": "Segments that began with a manual Resume (tells a pause from a GPS gap); null when unknown.",
+            "example": [
+              2
+            ]
+          },
+          "trackHash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "SHA-256 (hex) of `JSON.stringify(track.points)` as sent. Computed by the phone, checked by the server (422 `activity.track-hash-mismatch`); tells other devices whether to download the track again.",
+            "example": "9f2b6c1d4e8a7b3c5d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e"
           },
           "track": {
             "$ref": "#/components/schemas/Track"
@@ -435,10 +498,12 @@
         },
         "required": [
           "type",
+          "name",
           "source",
           "startedAt",
           "endedAt",
-          "timeZone",
+          "resumedSegments",
+          "trackHash",
           "track"
         ]
       },
@@ -450,12 +515,37 @@
             "items": {
               "$ref": "#/components/schemas/TrackPoint"
             },
-            "maxItems": 40000
+            "minItems": 2,
+            "maxItems": 40000,
+            "example": [
+              [
+                21.0122,
+                52.2297,
+                1760857920000,
+                0,
+                98.5
+              ],
+              [
+                21.0125,
+                52.2299,
+                1760857923000,
+                0,
+                98.7
+              ],
+              [
+                21.0129,
+                52.2301,
+                1760857926000,
+                0,
+                98.9
+              ]
+            ]
           }
         },
         "required": [
           "points"
-        ]
+        ],
+        "description": "Every point of an activity, in time order. Personal data."
       },
       "TrackPoint": {
         "type": "array",
@@ -482,28 +572,15 @@
               "number",
               "null"
             ]
-          },
-          {
-            "type": [
-              "number",
-              "null"
-            ]
-          },
-          {
-            "type": [
-              "number",
-              "null"
-            ]
           }
         ],
+        "description": "Columns: `[lon, lat, t, segment, altitudeM]` — longitude and latitude (degrees, WGS 84), time (epoch ms, UTC), segment number (a new segment starts after a pause or GPS gap; segments are never bridged), altitude in metres or null. Accuracy and speed are not sent (data minimisation, decision D1).",
         "example": [
           21.0122,
           52.2297,
           1760857920000,
           0,
-          98.5,
-          5,
-          2.9
+          98.5
         ]
       },
       "ActivityDetail": {
@@ -522,11 +599,30 @@
                 "items": {
                   "$ref": "#/components/schemas/Split"
                 }
+              },
+              "resumedSegments": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "description": "Segments that began with a manual Resume; null when unknown."
+              },
+              "gapRoutes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/GapRoute"
+                }
               }
             },
             "required": [
               "bbox",
-              "splits"
+              "splits",
+              "resumedSegments",
+              "gapRoutes"
             ]
           }
         ]
@@ -565,15 +661,62 @@
             "type": "integer",
             "example": 1
           },
-          "durationS": {
+          "movingS": {
             "type": "number",
+            "description": "Moving time of this kilometre (not cumulative).",
             "example": 337
           }
         },
         "required": [
           "km",
-          "durationS"
+          "movingS"
         ]
+      },
+      "GapRoute": {
+        "type": "object",
+        "properties": {
+          "afterSegment": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The gap after this segment.",
+            "example": 0
+          },
+          "distanceM": {
+            "type": "number",
+            "minimum": 0,
+            "example": 240
+          },
+          "movingS": {
+            "type": "number",
+            "minimum": 0,
+            "example": 85
+          },
+          "coords": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LonLat"
+            },
+            "minItems": 2,
+            "maxItems": 5000,
+            "example": [
+              [
+                21.0129,
+                52.2301
+              ],
+              [
+                21.0141,
+                52.2307
+              ]
+            ]
+          }
+        },
+        "required": [
+          "afterSegment",
+          "distanceM",
+          "movingS",
+          "coords"
+        ],
+        "description": "A street route the phone estimated across a GPS gap: counted in distance, drawn dashed, never claimed as turf. The server never computes these (D3)."
       },
       "ActivityRename": {
         "type": "object",
@@ -581,13 +724,37 @@
           "name": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 120,
-            "example": "Sunday long run"
+            "maxLength": 80,
+            "description": "As in the app (1–80 characters).",
+            "example": "Morning run"
           }
         },
         "required": [
           "name"
         ]
+      },
+      "GapRoutesUpload": {
+        "type": "object",
+        "properties": {
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z",
+            "description": "When the phone estimated them."
+          },
+          "routes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GapRoute"
+            },
+            "maxItems": 200
+          }
+        },
+        "required": [
+          "checkedAt",
+          "routes"
+        ],
+        "description": "Replaces every gap route of the activity (empty: none found)."
       },
       "Claim": {
         "type": "object",
@@ -1351,7 +1518,7 @@
         ],
         "operationId": "listActivities",
         "summary": "[planned] List activities",
-        "description": "Newest first, paged with `before` (use case ListActivities).",
+        "description": "Newest first (`startedAt`, then id), paged with an opaque `cursor` (use case ListActivities). Deleted activities are not listed: sync clients read tombstones from `GET /v1/sync/changes`.",
         "security": [
           {
             "bearerAuth": []
@@ -1374,11 +1541,22 @@
           {
             "schema": {
               "type": "string",
-              "format": "date-time",
-              "example": "2026-10-19T07:12:00Z"
+              "minLength": 1,
+              "maxLength": 512,
+              "description": "Opaque: pass `nextCursor` of the previous page. Omit for the first page.",
+              "example": "eyJzIjoxMjh9"
             },
             "required": false,
-            "name": "before",
+            "description": "Opaque: pass `nextCursor` of the previous page. Omit for the first page.",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/ActivityType"
+            },
+            "required": false,
+            "name": "type",
             "in": "query"
           }
         ],
@@ -1394,9 +1572,20 @@
             }
           },
           "400": {
-            "description": "Invalid query.",
+            "description": "Invalid input. Codes: `invalid-request`.",
             "content": {
               "application/problem+json": {
+                "examples": {
+                  "invalid-request": {
+                    "summary": "invalid-request",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/invalid-request",
+                      "title": "Invalid request",
+                      "status": 400,
+                      "code": "invalid-request"
+                    }
+                  }
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -1495,8 +1684,8 @@
           "Activity Log"
         ],
         "operationId": "uploadActivity",
-        "summary": "[planned] Upload a finished activity",
-        "description": "Creates the activity with its track under the id the phone minted, or answers with the stored one if it already exists (idempotent; use case ImportActivity). The server computes distance, time, splits and claims turf from the track. Bodies are limited to 4.5 MB: send gzip (`Content-Encoding: gzip`) for long tracks.",
+        "summary": "[planned] Upload or replace a finished activity",
+        "description": "Stores the activity with its track under the id the phone minted (use cases ImportActivity and, for a corrected track, CorrectTrack). The server recomputes distance, time, splits and turf from the track with the shared core.\n\n- **New id** → `201` with `ETag` and `Location`.\n- **Same content again** (same `trackHash`, name and fields) → `200`, unchanged: replays are safe.\n- **Different content** → send `If-Match` with the current `ETag`: `200` and version + 1; a stale one → `412`, none → `428`.\n- **Deleted id** → `410 activity.deleted`: delete the activity locally too.\n\nBodies are limited to 4.5 MB: send long tracks with `Content-Encoding: gzip`.",
         "security": [
           {
             "bearerAuth": []
@@ -1515,6 +1704,18 @@
             "required": true,
             "name": "activityId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 64,
+              "description": "The `ETag` you last saw. Required to replace an existing resource with different content.",
+              "example": "\"v3\""
+            },
+            "required": false,
+            "description": "The `ETag` you last saw. Required to replace an existing resource with different content.",
+            "name": "If-Match",
+            "in": "header"
           }
         ],
         "requestBody": {
@@ -1529,7 +1730,12 @@
         },
         "responses": {
           "200": {
-            "description": "Already stored; unchanged.",
+            "description": "Unchanged (replay) or replaced.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -1540,6 +1746,14 @@
           },
           "201": {
             "description": "Created.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Location": {
+                "$ref": "#/components/headers/Location"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -1549,9 +1763,20 @@
             }
           },
           "400": {
-            "description": "Invalid body.",
+            "description": "Invalid input. Codes: `invalid-request`.",
             "content": {
               "application/problem+json": {
+                "examples": {
+                  "invalid-request": {
+                    "summary": "invalid-request",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/invalid-request",
+                      "title": "Invalid request",
+                      "status": 400,
+                      "code": "invalid-request"
+                    }
+                  }
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -1588,10 +1813,42 @@
               }
             }
           },
-          "409": {
-            "description": "An activity with this id exists with a different track.",
+          "410": {
+            "description": "The activity was deleted (delete wins; no undelete). Codes: `activity.deleted`.",
             "content": {
               "application/problem+json": {
+                "examples": {
+                  "activity.deleted": {
+                    "summary": "activity.deleted",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/activity.deleted",
+                      "title": "Activity was deleted",
+                      "status": 410,
+                      "code": "activity.deleted"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "`If-Match` is stale: pull, re-apply, retry. Codes: `precondition-failed`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "precondition-failed": {
+                    "summary": "precondition-failed",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/precondition-failed",
+                      "title": "The resource changed since your version",
+                      "status": 412,
+                      "code": "precondition-failed"
+                    }
+                  }
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -1599,9 +1856,41 @@
             }
           },
           "413": {
-            "description": "Track too large: split the upload.",
+            "description": "Body too large, even inflated. Codes: `payload-too-large`.",
             "content": {
               "application/problem+json": {
+                "examples": {
+                  "payload-too-large": {
+                    "summary": "payload-too-large",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/payload-too-large",
+                      "title": "Request body too large",
+                      "status": 413,
+                      "code": "payload-too-large"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Not JSON, or an encoding other than gzip. Codes: `unsupported-media-type`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "unsupported-media-type": {
+                    "summary": "unsupported-media-type",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/unsupported-media-type",
+                      "title": "Unsupported content type or encoding",
+                      "status": 415,
+                      "code": "unsupported-media-type"
+                    }
+                  }
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -1609,9 +1898,77 @@
             }
           },
           "422": {
-            "description": "A domain rule was broken (e.g. ends before it starts, track too short).",
+            "description": "A domain rule was broken. Codes: `activity.track-too-short`, `activity.ends-before-start`, `activity.invalid-name`, `activity.track-hash-mismatch`, `claim.in-future`.",
             "content": {
               "application/problem+json": {
+                "examples": {
+                  "activity.track-too-short": {
+                    "summary": "activity.track-too-short",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/activity.track-too-short",
+                      "title": "A track needs at least two points",
+                      "status": 422,
+                      "code": "activity.track-too-short"
+                    }
+                  },
+                  "activity.ends-before-start": {
+                    "summary": "activity.ends-before-start",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/activity.ends-before-start",
+                      "title": "The activity ends before it starts",
+                      "status": 422,
+                      "code": "activity.ends-before-start"
+                    }
+                  },
+                  "activity.invalid-name": {
+                    "summary": "activity.invalid-name",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/activity.invalid-name",
+                      "title": "Names are 1 to 80 characters",
+                      "status": 422,
+                      "code": "activity.invalid-name"
+                    }
+                  },
+                  "activity.track-hash-mismatch": {
+                    "summary": "activity.track-hash-mismatch",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/activity.track-hash-mismatch",
+                      "title": "trackHash does not match the track",
+                      "status": 422,
+                      "code": "activity.track-hash-mismatch"
+                    }
+                  },
+                  "claim.in-future": {
+                    "summary": "claim.in-future",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/claim.in-future",
+                      "title": "The activity starts in the future",
+                      "status": 422,
+                      "code": "claim.in-future"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "The activity exists with different content: send `If-Match`. Codes: `precondition-required`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "precondition-required": {
+                    "summary": "precondition-required",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/precondition-required",
+                      "title": "Send If-Match to change an existing resource",
+                      "status": 428,
+                      "code": "precondition-required"
+                    }
+                  }
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -1679,7 +2036,7 @@
         ],
         "operationId": "getActivity",
         "summary": "[planned] Activity detail",
-        "description": "Summary, bounding box and km splits (use case GetActivityDetail).",
+        "description": "Summary, bounding box, km splits and gap routes (use case GetActivityDetail).",
         "security": [
           {
             "bearerAuth": []
@@ -1703,10 +2060,36 @@
         "responses": {
           "200": {
             "description": "The activity.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ActivityDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input. Codes: `invalid-request`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "invalid-request": {
+                    "summary": "invalid-request",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/invalid-request",
+                      "title": "Invalid request",
+                      "status": 400,
+                      "code": "invalid-request"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -1742,9 +2125,41 @@
             }
           },
           "404": {
-            "description": "No activity with this id for this user.",
+            "description": "No activity with this id for this user. Codes: `not-found`.",
             "content": {
               "application/problem+json": {
+                "examples": {
+                  "not-found": {
+                    "summary": "not-found",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/not-found",
+                      "title": "Not found",
+                      "status": 404,
+                      "code": "not-found"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "The activity was deleted (delete wins; no undelete). Codes: `activity.deleted`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "activity.deleted": {
+                    "summary": "activity.deleted",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/activity.deleted",
+                      "title": "Activity was deleted",
+                      "status": 410,
+                      "code": "activity.deleted"
+                    }
+                  }
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -1812,7 +2227,7 @@
         ],
         "operationId": "renameActivity",
         "summary": "[planned] Rename an activity",
-        "description": "Use case RenameActivity.",
+        "description": "Use case RenameActivity. Without `If-Match` the last write wins (decision D6); with it, a stale version answers `412`.",
         "security": [
           {
             "bearerAuth": []
@@ -1831,6 +2246,18 @@
             "required": true,
             "name": "activityId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 64,
+              "description": "The `ETag` you last saw. Required to replace an existing resource with different content.",
+              "example": "\"v3\""
+            },
+            "required": false,
+            "description": "The `ETag` you last saw. Required to replace an existing resource with different content.",
+            "name": "If-Match",
+            "in": "header"
           }
         ],
         "requestBody": {
@@ -1845,7 +2272,12 @@
         },
         "responses": {
           "200": {
-            "description": "Renamed.",
+            "description": "Renamed; version + 1.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -1855,9 +2287,20 @@
             }
           },
           "400": {
-            "description": "Invalid body.",
+            "description": "Invalid input. Codes: `invalid-request`.",
             "content": {
               "application/problem+json": {
+                "examples": {
+                  "invalid-request": {
+                    "summary": "invalid-request",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/invalid-request",
+                      "title": "Invalid request",
+                      "status": 400,
+                      "code": "invalid-request"
+                    }
+                  }
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -1895,9 +2338,83 @@
             }
           },
           "404": {
-            "description": "No activity with this id for this user.",
+            "description": "No activity with this id for this user. Codes: `not-found`.",
             "content": {
               "application/problem+json": {
+                "examples": {
+                  "not-found": {
+                    "summary": "not-found",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/not-found",
+                      "title": "Not found",
+                      "status": 404,
+                      "code": "not-found"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "The activity was deleted (delete wins; no undelete). Codes: `activity.deleted`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "activity.deleted": {
+                    "summary": "activity.deleted",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/activity.deleted",
+                      "title": "Activity was deleted",
+                      "status": 410,
+                      "code": "activity.deleted"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "`If-Match` is stale. Codes: `precondition-failed`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "precondition-failed": {
+                    "summary": "precondition-failed",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/precondition-failed",
+                      "title": "The resource changed since your version",
+                      "status": 412,
+                      "code": "precondition-failed"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid name. Codes: `activity.invalid-name`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "activity.invalid-name": {
+                    "summary": "activity.invalid-name",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/activity.invalid-name",
+                      "title": "Names are 1 to 80 characters",
+                      "status": 422,
+                      "code": "activity.invalid-name"
+                    }
+                  }
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -1965,7 +2482,7 @@
         ],
         "operationId": "deleteActivity",
         "summary": "[planned] Delete an activity",
-        "description": "Deletes the activity and its track and releases its turf (use case DeleteActivity). Idempotent.",
+        "description": "Deletes the activity, its track and gap routes, releases its turf (use case DeleteActivity) and leaves a tombstone: other devices learn it from `GET /v1/sync/changes`, and a later upload of the same id answers `410`. Idempotent: `204` even when already gone. No undelete (D5).",
         "security": [
           {
             "bearerAuth": []
@@ -1989,6 +2506,27 @@
         "responses": {
           "204": {
             "description": "Deleted (or already gone)."
+          },
+          "400": {
+            "description": "Invalid input. Codes: `invalid-request`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "invalid-request": {
+                    "summary": "invalid-request",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/invalid-request",
+                      "title": "Invalid request",
+                      "status": 400,
+                      "code": "invalid-request"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
           },
           "401": {
             "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
@@ -2083,7 +2621,7 @@
         ],
         "operationId": "getActivityTrack",
         "summary": "[planned] Activity track",
-        "description": "Every track point, compact (use case ActivityTrackQuery). Personal data: never cached publicly.",
+        "description": "Every track point, compact (use case ActivityTrackQuery). The `ETag` is the `trackHash`: send it as `If-None-Match` to get `304` when the track has not changed. Personal data: `Cache-Control: private, no-cache`.",
         "security": [
           {
             "bearerAuth": []
@@ -2102,15 +2640,55 @@
             "required": true,
             "name": "activityId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 80,
+              "description": "A `trackHash` in quotes."
+            },
+            "required": false,
+            "description": "A `trackHash` in quotes.",
+            "name": "If-None-Match",
+            "in": "header"
           }
         ],
         "responses": {
           "200": {
             "description": "The track.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Track"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not modified since the `If-None-Match` track."
+          },
+          "400": {
+            "description": "Invalid input. Codes: `invalid-request`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "invalid-request": {
+                    "summary": "invalid-request",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/invalid-request",
+                      "title": "Invalid request",
+                      "status": 400,
+                      "code": "invalid-request"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -2146,9 +2724,244 @@
             }
           },
           "404": {
-            "description": "No activity with this id for this user.",
+            "description": "No activity with this id for this user. Codes: `not-found`.",
             "content": {
               "application/problem+json": {
+                "examples": {
+                  "not-found": {
+                    "summary": "not-found",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/not-found",
+                      "title": "Not found",
+                      "status": 404,
+                      "code": "not-found"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "The activity was deleted (delete wins; no undelete). Codes: `activity.deleted`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "activity.deleted": {
+                    "summary": "activity.deleted",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/activity.deleted",
+                      "title": "Activity was deleted",
+                      "status": 410,
+                      "code": "activity.deleted"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: wait `Retry-After` seconds. Codes: `rate-limited`.",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimitPolicy"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "rate-limited": {
+                    "summary": "rate-limited",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/rate-limited",
+                      "title": "Too many requests",
+                      "status": 429,
+                      "code": "rate-limited"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "not-implemented": {
+                    "summary": "not-implemented",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/not-implemented",
+                      "title": "Not implemented yet",
+                      "status": 501,
+                      "code": "not-implemented"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/activities/{activityId}/gap-routes": {
+      "put": {
+        "tags": [
+          "Activity Log"
+        ],
+        "operationId": "saveGapRoutes",
+        "summary": "[planned] Save the estimated gap routes",
+        "description": "Replaces the street routes the phone estimated across GPS gaps (use case SaveGapRoutes; decision D3). Display only: they add to distance and moving time and are drawn dashed, never claimed as turf. Idempotent; version + 1 when they changed.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cityturfer-status": "planned",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "example": "3f9c2a64-5d1e-4b8e-9a51-0c7d2e6f1b20"
+            },
+            "required": true,
+            "name": "activityId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GapRoutesUpload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivitySummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input. Codes: `invalid-request`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "invalid-request": {
+                    "summary": "invalid-request",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/invalid-request",
+                      "title": "Invalid request",
+                      "status": 400,
+                      "code": "invalid-request"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.missing": {
+                    "summary": "auth.missing",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.missing",
+                      "title": "Missing bearer token",
+                      "status": 401,
+                      "code": "auth.missing"
+                    }
+                  },
+                  "auth.invalid": {
+                    "summary": "auth.invalid",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.invalid",
+                      "title": "Invalid or expired token",
+                      "status": 401,
+                      "code": "auth.invalid"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No activity with this id for this user. Codes: `not-found`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "not-found": {
+                    "summary": "not-found",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/not-found",
+                      "title": "Not found",
+                      "status": 404,
+                      "code": "not-found"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "The activity was deleted (delete wins; no undelete). Codes: `activity.deleted`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "activity.deleted": {
+                    "summary": "activity.deleted",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/activity.deleted",
+                      "title": "Activity was deleted",
+                      "status": 410,
+                      "code": "activity.deleted"
+                    }
+                  }
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -2281,9 +3094,20 @@
             }
           },
           "404": {
-            "description": "No activity with this id for this user.",
+            "description": "No activity with this id for this user. Codes: `not-found`.",
             "content": {
               "application/problem+json": {
+                "examples": {
+                  "not-found": {
+                    "summary": "not-found",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/not-found",
+                      "title": "Not found",
+                      "status": 404,
+                      "code": "not-found"
+                    }
+                  }
+                },
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }

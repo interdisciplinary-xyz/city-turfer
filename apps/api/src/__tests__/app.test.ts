@@ -50,6 +50,38 @@ describe('routes', () => {
     expect(JSON.stringify(body)).not.toContain('52.2297');
   });
 
+  it('accepts a well-formed upload (then 501) and refuses 7-column track points', async () => {
+    const point = (i: number) => [21.0122 + i * 1e-4, 52.2297, 1760857920000 + i * 3000, 0, 98.5];
+    const body = {
+      type: 'run',
+      name: 'Morning run',
+      source: 'recording',
+      startedAt: '2026-10-19T07:12:00Z',
+      endedAt: '2026-10-19T07:42:00Z',
+      resumedSegments: null,
+      trackHash: 'a'.repeat(64),
+      track: { points: [point(0), point(1)] },
+    };
+    const put = (b: unknown) =>
+      app.request('/v1/activities/3f9c2a64', {
+        method: 'PUT',
+        headers: { ...AUTH, 'Content-Type': 'application/json' },
+        body: JSON.stringify(b),
+      });
+    expect((await put(body)).status).toBe(501);
+    const old = await put({
+      ...body,
+      track: {
+        points: [
+          [...point(0), 5, 2.9],
+          [...point(1), 5, 2.9],
+        ],
+      },
+    });
+    expect(old.status).toBe(400);
+    expect(JSON.stringify(await old.json())).not.toContain('52.2297');
+  });
+
   it('rejects an activity upload with a bad id or body', async () => {
     const res = await app.request('/v1/activities/not%20an%20id', {
       method: 'PUT',
@@ -135,7 +167,7 @@ describe('OpenAPI document', () => {
 
   it('is OpenAPI 3.1 with every route of the decision record', () => {
     expect(doc.openapi).toBe('3.1.0');
-    expect(ops).toHaveLength(20);
+    expect(ops).toHaveLength(21);
   });
 
   it('gives every operation a unique id and a bounded-context tag', () => {
