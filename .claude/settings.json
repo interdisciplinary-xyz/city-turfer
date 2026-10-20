@@ -2,33 +2,77 @@
   "permissions": {
     "allow": [
       "Bash(node tools/:*)",
+      "Bash(node --test tools/:*)",
       "Bash(pnpm -C apps/mobile exec tsc:*)",
       "Bash(pnpm -C apps/mobile exec jest:*)",
       "Bash(pnpm -C apps/mobile exec expo install:*)",
       "Bash(pnpm -C apps/mobile exec expo start:*)",
       "Bash(pnpm -C apps/mobile exec expo run:*)",
       "Bash(pnpm -C apps/mobile exec expo prebuild:*)",
+      "Bash(pnpm -C apps/mobile exec expo-updates fingerprint:generate:*)",
       "Bash(node apps/mobile/tools/:*)",
       "Bash(apps/mobile/tools/sim-location.sh:*)",
       "Bash(pnpm exec turbo run:*)",
       "Bash(pnpm test:*)",
       "Bash(pnpm run:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git fetch:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
       "Bash(xcrun simctl:*)",
       "Bash(adb devices:*)",
       "Bash(adb emu geo:*)",
       "Bash(adb shell input:*)",
       "Bash(maestro test:*)"
+    ],
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.local)",
+      "Read(**/*.p8)",
+      "Read(**/*.keystore)",
+      "Read(**/*.mobileprovision)"
     ]
   },
   "hooks": {
-    "PostToolUse": [
+    "SessionStart": [
       {
-        "matcher": "Edit|Write",
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/format-ts.sh"
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-start.mjs",
+            "timeout": 10
           }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pre-edit.mjs", "timeout": 10 }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pre-bash.mjs", "timeout": 10 }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/format-ts.sh", "timeout": 30 },
+          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-edit.mjs", "timeout": 10 }
         ]
       }
     ]
