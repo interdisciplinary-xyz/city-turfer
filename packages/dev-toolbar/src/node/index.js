@@ -14,5 +14,6 @@
  *
  * Plain ESM JavaScript (JSDoc types): no TS loader runs at that point.
  */
+export { isLocalClient } from './local-client.js';
 export { withDevRequestLog } from './request-log.js';
 export { withDevWarmUp } from './warm-up.js';

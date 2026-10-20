@@ -8,7 +8,7 @@
 //
 // It also serves the design system's Storybook build at /storybook (tools/storybook-route.mjs), and
 // the API's Swagger docs at /swagger plus a proxy from /api/* to the API dev server
-// (tools/swagger-route.mjs).
+// (tools/swagger-route.mjs), with the CityTurfer skin and the dev toolbar.
 import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
 import path from 'node:path';
@@ -36,6 +36,10 @@ const handler = dev
       distRoot: path.dirname(createRequire(import.meta.url).resolve('swagger-ui-dist/package.json')),
       specFile: path.join(process.cwd(), '../api/openapi.json'),
       apiUrl: process.env.API_URL,
+      webRoot: process.cwd(),
+      brandDir: path.join(process.cwd(), '../../packages/brand/svg'),
+      // Same rule as the site's toolbar: only requests from this machine.
+      isLocal: devNode.isLocalClient,
     })
   : siteHandler;
 
