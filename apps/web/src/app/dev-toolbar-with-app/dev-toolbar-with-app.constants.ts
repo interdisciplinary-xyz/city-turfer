@@ -13,6 +13,8 @@ export type DevToolbarWithAppProps = {
 
 /** Quick links in the toolbar's action row (opened in a new tab). */
 export const DEV_TOOLBAR_LINKS: readonly DevToolbarLink[] = [
+  // The brand definition page (src/app/branding), served by the site itself.
+  { label: 'Branding', href: '/branding' },
   { label: 'GitHub', href: 'https://github.com/interdisciplinary-xyz/city-turfer' },
   { label: 'Pull requests', href: 'https://github.com/interdisciplinary-xyz/city-turfer/pulls' },
   { label: 'Vercel', href: 'https://vercel.com/micha-dopieralskis-projects' },
