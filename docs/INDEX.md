@@ -62,6 +62,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 
 - ✅ [`operations/android-release.md`](operations/android-release.md): Build the Android APK on EAS,
   publish it to the website download link, test it on an emulator
+- ✅ [`operations/api-deploy.md`](operations/api-deploy.md): Deploy the CityTurfer API — Vercel
+  project city-turfer-api (apps/api, fra1), Neon Postgres env vars, applying migrations, minting and
+  rotating device tokens, checking health
 - ✅ [`operations/apple-health.md`](operations/apple-health.md): Install the Apple Health build on
   the iPhone and check import and export with real data
 - ❔ [`operations/observability.md`](operations/observability.md): _no frontmatter_
@@ -121,6 +124,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   on Vercel, Frankfurt) exposing the app's existing use cases as /v1 routes, contract-first with zod
   → OpenAPI 3.1, documented with Swagger UI at cityturfer.local/swagger; the core logic now lives in
   packages/core (phase 3 done). Its route table is superseded by api-sync-2026-10-20.md
+- ✅ [`decisions/api-device-tokens-2026-10-20.md`](decisions/api-device-tokens-2026-10-20.md):
+  Stopgap for the first live backup — secret device tokens (API_TOKENS holds only SHA-256 hashes)
+  instead of Better Auth, one-way backup phone → server on Neon Postgres via Drizzle, canonical
+  trackHash computed by the server (contract 0.3.0)
 - ✅ [`decisions/api-sync-2026-10-20.md`](decisions/api-sync-2026-10-20.md): Sync-first v1 API
   contract — the phone pushes Activities (versions, ETags, If-Match, tombstones) and pulls one
   changes feed; route table, sync protocol, error catalogue and the founder's decisions D1–D13;

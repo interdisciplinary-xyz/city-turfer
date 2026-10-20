@@ -105,7 +105,7 @@ Bounded contexts: <!-- probe:contexts -->6<!-- /probe -->
   (<!-- probe:e2e-flows -->13<!-- /probe -->)
 - `migrations`: `version:` entries in `apps/mobile/src/platform/migrations.ts`
   (<!-- probe:migrations -->7<!-- /probe -->)
-- `docs`: markdown files under `docs/` (<!-- probe:docs -->36<!-- /probe -->)
+- `docs`: markdown files under `docs/` (<!-- probe:docs -->39<!-- /probe -->)
 - `api-operations`: HTTP operations in `apps/api/openapi.json`
   (<!-- probe:api-operations -->22<!-- /probe -->)
 

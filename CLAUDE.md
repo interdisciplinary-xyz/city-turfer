@@ -40,11 +40,14 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
   form posts emails straight to Brevo (double opt-in, personal data). Languages via `next-intl`
   (`/en`, `/pl`; copy in `apps/web/messages/*.json`, no CMS)
 - **Storage**: `expo-sqlite`, local-first; the phone stays the source of truth
-- **API** (planned, v0.8.0): `apps/api`, Hono on Vercel (`fra1`), routes declared with zod +
-  `@hono/zod-openapi` into a generated OpenAPI 3.1 spec (`apps/api/openapi.json`), Swagger UI at
+- **API** (v0.8.0, one-way backup live): `apps/api`, Hono on Vercel (`fra1`, project
+  `city-turfer-api`, esbuild bundle), routes declared with zod + `@hono/zod-openapi` into a
+  generated OpenAPI 3.1 spec (`apps/api/openapi.json`), Swagger UI at
   https://cityturfer.local/swagger. Sync-first contract (versions, If-Match, tombstones, one changes
-  feed); Neon Postgres + Drizzle and Better Auth later. Design:
-  `docs/decisions/api-sync-2026-10-20.md` (contract) and `docs/decisions/api-2026-10-20.md` (stack)
+  feed); Neon Postgres + Drizzle (PGlite in tests), device tokens until Better Auth. Design:
+  `docs/decisions/api-sync-2026-10-20.md` (contract),
+  `docs/decisions/api-device-tokens-2026-10-20.md` (backup, tokens),
+  `docs/decisions/api-2026-10-20.md` (stack); runbook `docs/operations/api-deploy.md`
 - **State**: SQLite is the source of truth; live-session UI state is an in-memory `LiveSessionStore`
   (`apps/mobile/src/contexts/recording/infrastructure/live-session-store.ts`, read via
   `useSyncExternalStore`). No zustand.
@@ -145,6 +148,10 @@ pnpm run typecheck               # tsc in every workspace (turbo)
 pnpm test                        # dependency rules (depcruise) + Jest + tool tests (turbo)
 pnpm run build                   # web static export (apps/web/out) via turbo
 pnpm run web:dev                 # landing page at https://cityturfer.local (portless + server.mjs, dev toolbar)
+pnpm --filter @cityturfer/api dev                       # API on :8787 (PGlite + token dev-token without env)
+pnpm --filter @cityturfer/api run db:generate           # SQL migration from apps/api/src/db/schema.ts (commit apps/api/drizzle/)
+DATABASE_URL=… pnpm --filter @cityturfer/api run db:migrate   # apply migrations to Neon (docs/operations/api-deploy.md)
+pnpm --filter @cityturfer/api run token:new -- <userId>       # device token + API_TOKENS entry (stopgap auth)
 pnpm --filter @cityturfer/storybook dev     # Storybook at http://localhost:6006 (app components + website pieces)
 pnpm --filter @cityturfer/storybook build   # static Storybook in apps/storybook/storybook-static
 pnpm --filter @cityturfer/api dev           # API on http://localhost:8787 (Swagger at /swagger); web:dev proxies /api/* to it
