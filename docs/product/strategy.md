@@ -80,6 +80,13 @@ telemetry exists.
 
 ## 8. Decisions this needs from the founder
 
+0. **Sync and the privacy promise** (raised 2026-10-20): the v0.8.0 API decision
+   (`docs/decisions/api-2026-10-20.md`) plans accounts and server sync of tracks. The guiding policy
+   above ("never require an account or an upload") and the trust-based positioning only survive if
+   sync is **opt-in, off by default, with local-only as a full mode**. Recommendation: decide this
+   explicitly (decision record) before the sync client is built, and test with users whether
+   backup/multi-device is wanted at all (assumption A10).
+
 1. Accept / edit the guiding policy (§2).
 2. Which beachhead to test first (§5).
 3. Login model: remove the login entirely for launch? (recommended; see

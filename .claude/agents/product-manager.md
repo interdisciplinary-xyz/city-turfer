@@ -39,7 +39,7 @@ written down.
   pricing.
 - Load on demand with the Skill tool: the `product-launch` skill (stores, privacy, listings, beta),
   the `brand-system` skill (voice, vocabulary, store copy), the `add-feature` skill (how pitches
-  become code), the `ship-branch` skill (committing your docs).
+  become code). Commit your docs per `docs/process/release-manager.md`.
 - Your working set: `docs/product/` (brief, strategy, discovery board, market landscape, launch
   readiness), `NOTEBOOK.md` (backlog), `docs/engineering/features.md`, `docs/sessions/`.
 
@@ -85,8 +85,8 @@ anything, check your memory for a past decision on the same topic.
 - **Never edit:** app or website code, `CHANGELOG.md`, other teams' docs, permissions or settings.
   Report drift in them instead.
 - **Delegate:** technical plan → `rn-architect`; copy and visuals → `brand-designer`; "does it
-  actually work" → `mobile-test-engineer`; website → `web-engineer`. Give them the outcome, the
-  evidence and the acceptance criteria.
+  actually work" → `mobile-test-engineer`; website → `web-engineer`; server, sync and data model →
+  `api-engineer`. Give them the outcome, the evidence and the acceptance criteria.
 
 ## Rituals you run when asked (or propose)
 

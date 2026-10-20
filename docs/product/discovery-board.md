@@ -32,17 +32,18 @@ of the app is real but counts as `founder`, not as market evidence._
 Importance and evidence are 1–5. Test high importance + low evidence first. All rows are
 **assumptions** seeded from the product brief and market research.
 
-| #   | Assumption                                                             | Type         | Imp | Ev  | Cheapest test                                                        | Pre-registered criterion                         | Status |
-| --- | ---------------------------------------------------------------------- | ------------ | --- | --- | -------------------------------------------------------------------- | ------------------------------------------------ | ------ |
-| A1  | Seeing streets glow brighter on return is a reason to go out again     | Desirability | 5   | 1   | 2–3 week diary study, 8 testers                                      | ≥5/8 mention turf/glow as a reason to go out     | open   |
-| A2  | People understand the Turf Map without explanation                     | Usability    | 5   | 1   | 5 hallway tests: "show me your streets and the ones you visit most"  | ≥4/5 succeed unaided                             | open   |
-| A3  | Background recording is reliable on a mid-range Android phone          | Feasibility  | 5   | 1   | 10 real outings on 2–3 Android phones, screen off                    | ≤1 gap >30 s per hour, no lost activity          | open   |
-| A4  | Apple Health import creates a day-one "wow"                            | Desirability | 4   | 2   | Watch 5 people with Watch history import and react                   | ≥4/5 react positively unprompted                 | open   |
-| A5  | "Nothing leaves your phone / no account" is a reason to choose us      | Desirability | 4   | 1   | Website headline variants (privacy vs glow) by time window           | Privacy variant signup rate ≥ glow variant       | open   |
-| A6  | Walkers (not only runners/riders) are the best-fit segment             | Desirability | 4   | 1   | Waitlist question "Walk, run or ride?" + interviews                  | Walkers ≥40 % of signups and most "very" answers | open   |
-| A7  | Someone would pay once (~€20–30) for CityTurfer                        | Viability    | 3   | 0   | "Founding Turfer" fake door on the website (disclosed, no payment)   | ≥10 % of waitlist visitors click                 | later  |
-| A8  | Permanent turf (no decay) keeps people engaged better than decay would | Desirability | 3   | 1   | Interview probe on Turf/INTVL users' feelings about losing turf      | Pattern across ≥5 interviews                     | open   |
-| A9  | A share image of your turf brings new users without hurting privacy    | Viability    | 3   | 0   | Concierge: founder makes images for 5 testers; count shares/sign-ups | ≥2 sign-ups attributed                           | later  |
+| #   | Assumption                                                                           | Type         | Imp | Ev  | Cheapest test                                                        | Pre-registered criterion                          | Status |
+| --- | ------------------------------------------------------------------------------------ | ------------ | --- | --- | -------------------------------------------------------------------- | ------------------------------------------------- | ------ |
+| A1  | Seeing streets glow brighter on return is a reason to go out again                   | Desirability | 5   | 1   | 2–3 week diary study, 8 testers                                      | ≥5/8 mention turf/glow as a reason to go out      | open   |
+| A2  | People understand the Turf Map without explanation                                   | Usability    | 5   | 1   | 5 hallway tests: "show me your streets and the ones you visit most"  | ≥4/5 succeed unaided                              | open   |
+| A3  | Background recording is reliable on a mid-range Android phone                        | Feasibility  | 5   | 1   | 10 real outings on 2–3 Android phones, screen off                    | ≤1 gap >30 s per hour, no lost activity           | open   |
+| A4  | Apple Health import creates a day-one "wow"                                          | Desirability | 4   | 2   | Watch 5 people with Watch history import and react                   | ≥4/5 react positively unprompted                  | open   |
+| A5  | "Nothing leaves your phone / no account" is a reason to choose us                    | Desirability | 4   | 1   | Website headline variants (privacy vs glow) by time window           | Privacy variant signup rate ≥ glow variant        | open   |
+| A6  | Walkers (not only runners/riders) are the best-fit segment                           | Desirability | 4   | 1   | Waitlist question "Walk, run or ride?" + interviews                  | Walkers ≥40 % of signups and most "very" answers  | open   |
+| A7  | Someone would pay once (~€20–30) for CityTurfer                                      | Viability    | 3   | 0   | "Founding Turfer" fake door on the website (disclosed, no payment)   | ≥10 % of waitlist visitors click                  | later  |
+| A8  | Permanent turf (no decay) keeps people engaged better than decay would               | Desirability | 3   | 1   | Interview probe on Turf/INTVL users' feelings about losing turf      | Pattern across ≥5 interviews                      | open   |
+| A10 | Turfers want cloud backup / multi-device sync enough to accept an account and upload | Desirability | 5   | 0   | Interview probe + website fake door "Back up your turf" (disclosed)  | ≥3/5 interviewees raise loss/new-phone unprompted | open   |
+| A9  | A share image of your turf brings new users without hurting privacy                  | Viability    | 3   | 0   | Concierge: founder makes images for 5 testers; count shares/sign-ups | ≥2 sign-ups attributed                            | later  |
 
 ## Opportunity tree
 

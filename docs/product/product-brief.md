@@ -134,10 +134,15 @@ from tester interviews or an opt-in, coordinate-free signal.
 
 ## 8. Non-goals (for now)
 
-From `docs/poc-plan.md` §1 and the architecture decisions: other users' turf, contested turf, sync
-or a backend, sharing (needs privacy zones first: the map reveals home — risk R8), real accounts,
-turf decay, closed loops claiming the area inside, monetization (nothing in the repo), analytics on
-coordinates.
+From `docs/poc-plan.md` §1 and the architecture decisions: other users' turf, contested turf,
+sharing (needs privacy zones first: the map reveals home — risk R8), real accounts, turf decay,
+closed loops claiming the area inside, monetization (nothing in the repo), analytics on coordinates.
+
+**Changed on 2026-10-20:** "sync or a backend" and "real accounts" are no longer non-goals. The
+v0.8.0 API decision (`docs/decisions/api-2026-10-20.md`) plans an HTTP API on Vercel with Neon
+Postgres in Frankfurt, real auth and a mobile sync client that **uploads tracks**. That collides
+with the brand line "Your routes stay on your phone." and the local-first positioning — see open
+question 8.
 
 ## 9. Open product questions
 
@@ -152,6 +157,9 @@ coordinates.
    never casino"?
 6. **Sharing**: a share card for one activity (backlog) needs a privacy stance on start/end points.
 7. **Business model**: none yet. Free, one-off, or subscription — and what would be paid?
+8. **Sync vs "routes stay on your phone"**: is server sync opt-in (off by default, local-only stays
+   a first-class mode), and how do the brand line, privacy policy and store labels change when it
+   ships? Decide before phase 5 of the API plan.
 
 ## 10. Known doc drift (found 2026-10-20)
 

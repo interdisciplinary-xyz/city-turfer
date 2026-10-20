@@ -53,7 +53,10 @@ iPhone (free Apple ID) and a sideloaded Android APK.
 | Waitlist (website)        | Email + consent                          | Brevo (EU)               | Double opt-in                                           |
 | Website hosting           | IP, request                              | Vercel                   | Static site, no cookies                                 |
 
-Routes, turf and Apple Health data stay in the on-device SQLite database.
+Routes, turf and Apple Health data stay in the on-device SQLite database. **Planned:** the v0.8.0
+API (`docs/decisions/api-2026-10-20.md`) adds accounts and track upload to Vercel + Neon (Frankfurt)
+— when it ships, the policy, App Privacy label (Location, linked to the user), Data safety form,
+account deletion (Apple 5.1.1(v)) and DPIA all change.
 
 ## Learning without analytics at launch
 
