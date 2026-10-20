@@ -1,0 +1,37 @@
+# Home City: Me → City, search without Polish letters, pick Kraków; the Turf Map and the Record tab
+# show it. Then change it from the Record tab's chip (Gdańsk) and clear it, so later flows start
+# without a Home City.
+appId: com.turftrack.poc
+tags: [turf]
+---
+- runFlow: subflows/launch.yaml
+- tapOn: { id: 'tab-me' }
+- tapOn: { id: 'me-menu-city' }
+- assertVisible: { id: 'city-search' }
+- tapOn: { id: 'city-search' }
+- inputText: 'krakow'
+- assertVisible: { id: 'city-pl-krakow' }
+- assertNotVisible: { id: 'city-pl-warsaw' }
+- tapOn: { id: 'city-pl-krakow' }
+- extendedWaitUntil: { notVisible: { id: 'city-search' }, timeout: 5000 }
+- tapOn: { id: 'tab-turf' }
+- assertVisible: { id: 'turf-city' }
+- assertVisible: '⌂ Kraków'
+- takeScreenshot: 12-turf-home-city
+# The Record tab shows the city at the top and changes it from there.
+- tapOn: { id: 'tab-record' }
+- assertVisible: '⌂ Kraków ▾'
+- tapOn: { id: 'record-city' }
+- tapOn: { id: 'city-search' }
+- inputText: 'gdansk'
+- tapOn: { id: 'city-pl-gdansk' }
+- extendedWaitUntil: { notVisible: { id: 'city-search' }, timeout: 5000 }
+- assertVisible: '⌂ Gdańsk ▾'
+- takeScreenshot: 12-record-home-city
+# Clear the Home City again.
+- tapOn: { id: 'record-city' }
+- tapOn: { id: 'city-clear' }
+- extendedWaitUntil: { notVisible: { id: 'city-search' }, timeout: 5000 }
+- assertVisible: '⌂ Your city ▾'
+- tapOn: { id: 'tab-turf' }
+- assertVisible: { id: 'turf-pick-city' }

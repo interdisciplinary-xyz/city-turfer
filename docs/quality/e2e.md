@@ -16,17 +16,18 @@ A critical path is a journey that, if broken, loses a user's data or breaks the 
 (record, own the streets). Every row must name an existing flow, or say `unit-only` when there is
 none; the audit enforces this. Gaps are listed honestly in section 3.
 
-| ID   | Critical path                                                         | Flows                               | Coverage                         |
-| ---- | --------------------------------------------------------------------- | ----------------------------------- | -------------------------------- |
-| CP-1 | Sign in (wrong password rejected, session survives restart), sign out | `01-auth`, `08-sign-out`            | Covered                          |
-| CP-2 | Record a run, pause/resume, hold to finish, activity with turf gained | `02-record-run`, `04-too-short`     | Covered                          |
-| CP-3 | Recording continues while the app is backgrounded (simulated walk)    | `03-background-recording`           | Covered on simulator only        |
-| CP-4 | Kill the app mid-recording and recover the session on relaunch        | none, unit-only                     | Unit-only (`end-to-end.test.ts`) |
-| CP-5 | Turf appears after an activity and on the Turf map                    | `02-record-run`, `06-turf-map`      | Covered                          |
-| CP-6 | Deleting an activity releases its turf                                | `07-delete-activity`                | Row only: turf not asserted      |
-| CP-7 | Dashboard: week stats, recent activities, achievements, Stats links   | `10-dashboard`, `05-history-detail` | Covered                          |
-| CP-8 | Me drawer: Profile, Account, Info, tap-outside closes, Achievements   | `09-me-menu`                        | Covered                          |
-| CP-9 | Apple Health: connect, import workouts with routes (iOS)              | `11-apple-health`                   | Simulator only; Watch on device  |
+| ID    | Critical path                                                                                        | Flows                               | Coverage                                                  |
+| ----- | ---------------------------------------------------------------------------------------------------- | ----------------------------------- | --------------------------------------------------------- |
+| CP-1  | Sign in (wrong password rejected, session survives restart), sign out                                | `01-auth`, `08-sign-out`            | Covered                                                   |
+| CP-2  | Record a run, pause/resume, hold to finish, activity with turf gained                                | `02-record-run`, `04-too-short`     | Covered                                                   |
+| CP-3  | Recording continues while the app is backgrounded (simulated walk)                                   | `03-background-recording`           | Covered on simulator only                                 |
+| CP-4  | Kill the app mid-recording and recover the session on relaunch                                       | none, unit-only                     | Unit-only (`end-to-end.test.ts`)                          |
+| CP-5  | Turf appears after an activity and on the Turf map                                                   | `02-record-run`, `06-turf-map`      | Covered                                                   |
+| CP-6  | Deleting an activity releases its turf                                                               | `07-delete-activity`                | Row only: turf not asserted                               |
+| CP-7  | Dashboard: week stats, recent activities, achievements, Stats links                                  | `10-dashboard`, `05-history-detail` | Covered                                                   |
+| CP-8  | Me drawer: Profile, Account, City, Info, tap-outside closes, Achievements                            | `09-me-menu`                        | Covered                                                   |
+| CP-9  | Apple Health: connect, import workouts with routes (iOS)                                             | `11-apple-health`                   | Simulator only; Watch on device                           |
+| CP-10 | Home City: pick a city (accent-free search) from Me and from the Record tab, Turf Map chip, clear it | `12-home-city`                      | Chip asserted; camera position checked by screenshot only |
 
 ## 2. Flow inventory
 

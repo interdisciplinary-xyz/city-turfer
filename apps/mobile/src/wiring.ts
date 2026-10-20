@@ -20,6 +20,7 @@ import type { LiveSessionNotifier, LocationTracker, PermissionGateway } from '@/
 import { SqliteRecordingSessionRepository } from '@/contexts/recording/infrastructure/sqlite-recording-session-repository';
 import { createTerritoryApi } from '@/contexts/territory';
 import { H3CellGrid } from '@/contexts/territory/infrastructure/h3-cell-grid';
+import { SqliteHomeCityRepository } from '@/contexts/territory/infrastructure/sqlite-home-city-repository';
 import { SqliteTerritoryRepository } from '@/contexts/territory/infrastructure/sqlite-territory-repository';
 import type { Database } from '@/platform/database';
 import { Diagnostics } from '@/platform/diagnostics';
@@ -82,6 +83,7 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
 
   const territory = createTerritoryApi({
     repo: new SqliteTerritoryRepository(db),
+    homeCities: new SqliteHomeCityRepository(db),
     grid: new H3CellGrid(),
     tracks: { trackOf: (id) => activityLog.trackQuery.execute(id) },
     clock,
