@@ -15,6 +15,14 @@ export function toCityView(c: City): CityView {
   return { id: c.id, name: c.name, country: c.country, center: [c.center.lon, c.center.lat], bounds: [w, s, e, n] };
 }
 
+/**
+ * The catalogue city with this id, as a view (servers answer it for a stored Home City).
+ * Throws DomainError `home-city.unknown` when the id is not in the catalogue.
+ */
+export function catalogueCityView(id: string): CityView {
+  return toCityView(homeCityFromCatalogue(id));
+}
+
 /** The user's Home City, or null. An id no longer in the catalogue reads as null. */
 export class GetHomeCity {
   constructor(private readonly d: HomeCityDeps) {}
