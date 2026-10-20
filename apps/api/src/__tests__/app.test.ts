@@ -167,7 +167,7 @@ describe('OpenAPI document', () => {
 
   it('is OpenAPI 3.1 with every route of the decision record', () => {
     expect(doc.openapi).toBe('3.1.0');
-    expect(ops).toHaveLength(19);
+    expect(ops).toHaveLength(22);
   });
 
   it('gives every operation a unique id and a bounded-context tag', () => {

@@ -53,6 +53,6 @@ export const OPENAPI_CONFIG = {
     { name: 'Sync', description: 'The changes feed devices pull; uploads go to the Activity Log.' },
     { name: 'Activity Log', description: 'Finished activities and their tracks.' },
     { name: 'Territory', description: 'Turf summary, cells and claims (recomputed from tracks) and the Home City.' },
-    { name: 'Privacy', description: 'Export and erase everything (GDPR).' },
+    { name: 'Privacy', description: 'Consents, export and erasure of everything (GDPR).' },
   ],
 };

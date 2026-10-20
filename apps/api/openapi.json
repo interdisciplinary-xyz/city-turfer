@@ -42,7 +42,7 @@
     },
     {
       "name": "Privacy",
-      "description": "Export and erase everything (GDPR)."
+      "description": "Consents, export and erasure of everything (GDPR)."
     }
   ],
   "components": {
@@ -257,340 +257,228 @@
           "password"
         ]
       },
-      "DataExport": {
+      "ErasureJob": {
         "type": "object",
         "properties": {
-          "exportedAt": {
+          "status": {
             "type": "string",
-            "format": "date-time"
+            "enum": [
+              "scheduled"
+            ]
           },
-          "user": {
-            "$ref": "#/components/schemas/User"
-          },
-          "homeCity": {
-            "$ref": "#/components/schemas/City"
-          },
-          "activities": {
-            "type": "array",
-            "items": {
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/ActivityDetail"
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "track": {
-                      "$ref": "#/components/schemas/Track"
-                    }
-                  },
-                  "required": [
-                    "track"
-                  ]
-                }
-              ]
-            }
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z"
           }
         },
         "required": [
-          "exportedAt",
-          "user",
-          "homeCity",
-          "activities"
-        ]
-      },
-      "City": {
-        "type": [
-          "object",
-          "null"
+          "status",
+          "requestedAt"
         ],
+        "description": "Sessions are revoked at once; rows and stored files follow. Database backups keep data for the provider’s restore window."
+      },
+      "DataExportJob": {
+        "type": "object",
         "properties": {
           "id": {
             "type": "string",
-            "description": "Stable catalogue id.",
-            "example": "pl-warsaw"
+            "example": "exp_01"
           },
-          "name": {
+          "status": {
             "type": "string",
-            "example": "Warsaw"
+            "enum": [
+              "pending",
+              "ready",
+              "failed",
+              "expired"
+            ],
+            "example": "ready"
           },
-          "country": {
+          "requestedAt": {
             "type": "string",
-            "minLength": 2,
-            "maxLength": 2,
-            "example": "PL"
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z"
           },
-          "center": {
-            "$ref": "#/components/schemas/LonLat"
+          "readyAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z"
           },
-          "bounds": {
-            "$ref": "#/components/schemas/BoundingBox"
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri",
+            "description": "Short-lived signed link to a zip: `data.json` (account, consents, activities, tombstones, Home City) and one GPX file per activity. Only while `ready`.",
+            "example": "https://files.cityturfer.app/exports/exp_01.zip?signature=abc123"
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z",
+            "description": "The link stops working 24 h after it is ready."
           }
         },
         "required": [
           "id",
-          "name",
-          "country",
-          "center",
-          "bounds"
+          "status",
+          "requestedAt",
+          "readyAt",
+          "url",
+          "expiresAt"
         ]
       },
-      "LonLat": {
-        "type": "array",
-        "prefixItems": [
-          {
-            "type": "number",
-            "minimum": -180,
-            "maximum": 180
-          },
-          {
-            "type": "number",
-            "minimum": -90,
-            "maximum": 90
-          }
-        ],
-        "description": "[longitude, latitude] (GeoJSON order).",
-        "example": [
-          21.0122,
-          52.2297
-        ]
-      },
-      "BoundingBox": {
-        "type": "array",
-        "prefixItems": [
-          {
-            "type": "number"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "number"
-          }
-        ],
-        "description": "[west, south, east, north].",
-        "example": [
-          20.85,
-          52.12,
-          21.17,
-          52.34
-        ]
-      },
-      "ActivityType": {
-        "type": "string",
-        "enum": [
-          "walk",
-          "run",
-          "cycle"
-        ],
-        "example": "run"
-      },
-      "ActivitySource": {
-        "type": "string",
-        "enum": [
-          "recording",
-          "apple-health",
-          "import"
-        ],
-        "description": "`recording`: a finished Recording Session; `apple-health`: imported from Apple Health (`hk-…` id, needs the `apple-health-in-cloud-sync` consent); `import`: any other import. Demo history (`demo-…`) is never uploaded.",
-        "example": "recording"
-      },
-      "Split": {
+      "ConsentList": {
         "type": "object",
         "properties": {
-          "km": {
-            "type": "integer",
-            "example": 1
-          },
-          "movingS": {
-            "type": "number",
-            "description": "Moving time of this kilometre (not cumulative).",
-            "example": 337
-          }
-        },
-        "required": [
-          "km",
-          "movingS"
-        ]
-      },
-      "GapRoute": {
-        "type": "object",
-        "properties": {
-          "afterSegment": {
-            "type": "integer",
-            "minimum": 0,
-            "description": "The gap after this segment.",
-            "example": 0
-          },
-          "distanceM": {
-            "type": "number",
-            "minimum": 0,
-            "example": 240
-          },
-          "movingS": {
-            "type": "number",
-            "minimum": 0,
-            "example": 85
-          },
-          "coords": {
+          "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/LonLat"
+              "$ref": "#/components/schemas/Consent"
             },
-            "minItems": 2,
-            "maxItems": 5000,
-            "example": [
-              [
-                21.0129,
-                52.2301
-              ],
-              [
-                21.0141,
-                52.2307
-              ]
-            ]
+            "description": "The latest decision per purpose."
           }
         },
         "required": [
-          "afterSegment",
-          "distanceM",
-          "movingS",
-          "coords"
-        ],
-        "description": "A street route the phone estimated across a GPS gap: counted in distance, drawn dashed, never claimed as turf. The server never computes these (D3)."
-      },
-      "Track": {
-        "type": "object",
-        "properties": {
-          "points": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TrackPoint"
-            },
-            "minItems": 2,
-            "maxItems": 40000,
-            "example": [
-              [
-                21.0122,
-                52.2297,
-                1760857920000,
-                0,
-                98.5
-              ],
-              [
-                21.0125,
-                52.2299,
-                1760857923000,
-                0,
-                98.7
-              ],
-              [
-                21.0129,
-                52.2301,
-                1760857926000,
-                0,
-                98.9
-              ]
-            ]
-          }
-        },
-        "required": [
-          "points"
-        ],
-        "description": "Every point of an activity, in time order. Personal data."
-      },
-      "TrackPoint": {
-        "type": "array",
-        "prefixItems": [
-          {
-            "type": "number",
-            "minimum": -180,
-            "maximum": 180
-          },
-          {
-            "type": "number",
-            "minimum": -90,
-            "maximum": 90
-          },
-          {
-            "type": "integer"
-          },
-          {
-            "type": "integer",
-            "minimum": 0
-          },
-          {
-            "type": [
-              "number",
-              "null"
-            ]
-          }
-        ],
-        "description": "Columns: `[lon, lat, t, segment, altitudeM]` — longitude and latitude (degrees, WGS 84), time (epoch ms, UTC), segment number (a new segment starts after a pause or GPS gap; segments are never bridged), altitude in metres or null. Accuracy and speed are not sent (data minimisation, decision D1).",
-        "example": [
-          21.0122,
-          52.2297,
-          1760857920000,
-          0,
-          98.5
+          "items"
         ]
       },
-      "ActivityDetail": {
-        "allOf": [
+      "Consent": {
+        "type": "object",
+        "properties": {
+          "purpose": {
+            "$ref": "#/components/schemas/ConsentPurpose"
+          },
+          "granted": {
+            "type": "boolean",
+            "example": true
+          },
+          "policyVersion": {
+            "type": "string",
+            "description": "Privacy policy version shown to the user.",
+            "example": "2026-10"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z"
+          }
+        },
+        "required": [
+          "purpose",
+          "granted",
+          "policyVersion",
+          "at"
+        ]
+      },
+      "ConsentPurpose": {
+        "type": "string",
+        "enum": [
+          "cloud-sync",
+          "apple-health-in-cloud-sync"
+        ],
+        "description": "`cloud-sync`: back up and sync activities with their GPS tracks. `apple-health-in-cloud-sync`: include workouts imported from Apple Health (decision D2). Without `cloud-sync` the server accepts no uploads.",
+        "example": "cloud-sync"
+      },
+      "SetConsentBody": {
+        "type": "object",
+        "properties": {
+          "granted": {
+            "type": "boolean",
+            "example": true
+          },
+          "policyVersion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "example": "2026-10"
+          }
+        },
+        "required": [
+          "granted",
+          "policyVersion"
+        ]
+      },
+      "ChangesPage": {
+        "type": "object",
+        "properties": {
+          "changes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Change"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "description": "Always present: store it and pass it next time, even when `hasMore` is false.",
+            "example": "eyJzIjoxMjh9"
+          },
+          "hasMore": {
+            "type": "boolean",
+            "description": "True: ask again now with `nextCursor`.",
+            "example": false
+          }
+        },
+        "required": [
+          "changes",
+          "nextCursor",
+          "hasMore"
+        ]
+      },
+      "Change": {
+        "oneOf": [
           {
+            "$ref": "#/components/schemas/ActivityUpserted"
+          },
+          {
+            "$ref": "#/components/schemas/ActivityTombstone"
+          },
+          {
+            "$ref": "#/components/schemas/HomeCityChanged"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "activity.upserted": "#/components/schemas/ActivityUpserted",
+            "activity.deleted": "#/components/schemas/ActivityTombstone",
+            "home-city.chosen": "#/components/schemas/HomeCityChanged"
+          }
+        }
+      },
+      "ActivityUpserted": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "activity.upserted"
+            ]
+          },
+          "changedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z",
+            "description": "When the server recorded the change."
+          },
+          "activity": {
             "$ref": "#/components/schemas/ActivitySummary"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "bbox": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/BoundingBox"
-                  },
-                  {
-                    "type": [
-                      "array",
-                      "null"
-                    ]
-                  }
-                ]
-              },
-              "splits": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/Split"
-                }
-              },
-              "resumedSegments": {
-                "type": [
-                  "array",
-                  "null"
-                ],
-                "items": {
-                  "type": "integer",
-                  "minimum": 0
-                },
-                "description": "Segments that began with a manual Resume; null when unknown."
-              },
-              "gapRoutes": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/GapRoute"
-                }
-              }
-            },
-            "required": [
-              "bbox",
-              "splits",
-              "resumedSegments",
-              "gapRoutes"
-            ]
           }
-        ]
+        },
+        "required": [
+          "type",
+          "changedAt",
+          "activity"
+        ],
+        "description": "Created or changed (track, name, gap routes). Download the track only when `activity.trackHash` differs from yours."
       },
       "ActivitySummary": {
         "type": "object",
@@ -713,78 +601,44 @@
           "coreVersion"
         ]
       },
-      "ChangesPage": {
-        "type": "object",
-        "properties": {
-          "changes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Change"
-            }
+      "ActivityType": {
+        "type": "string",
+        "enum": [
+          "walk",
+          "run",
+          "cycle"
+        ],
+        "example": "run"
+      },
+      "ActivitySource": {
+        "type": "string",
+        "enum": [
+          "recording",
+          "apple-health",
+          "import"
+        ],
+        "description": "`recording`: a finished Recording Session; `apple-health`: imported from Apple Health (`hk-…` id, needs the `apple-health-in-cloud-sync` consent); `import`: any other import. Demo history (`demo-…`) is never uploaded.",
+        "example": "recording"
+      },
+      "LonLat": {
+        "type": "array",
+        "prefixItems": [
+          {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
           },
-          "nextCursor": {
-            "type": "string",
-            "description": "Always present: store it and pass it next time, even when `hasMore` is false.",
-            "example": "eyJzIjoxMjh9"
-          },
-          "hasMore": {
-            "type": "boolean",
-            "description": "True: ask again now with `nextCursor`.",
-            "example": false
+          {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
           }
-        },
-        "required": [
-          "changes",
-          "nextCursor",
-          "hasMore"
+        ],
+        "description": "[longitude, latitude] (GeoJSON order).",
+        "example": [
+          21.0122,
+          52.2297
         ]
-      },
-      "Change": {
-        "oneOf": [
-          {
-            "$ref": "#/components/schemas/ActivityUpserted"
-          },
-          {
-            "$ref": "#/components/schemas/ActivityTombstone"
-          },
-          {
-            "$ref": "#/components/schemas/HomeCityChanged"
-          }
-        ],
-        "discriminator": {
-          "propertyName": "type",
-          "mapping": {
-            "activity.upserted": "#/components/schemas/ActivityUpserted",
-            "activity.deleted": "#/components/schemas/ActivityTombstone",
-            "home-city.chosen": "#/components/schemas/HomeCityChanged"
-          }
-        }
-      },
-      "ActivityUpserted": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "activity.upserted"
-            ]
-          },
-          "changedAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-10-19T07:12:00Z",
-            "description": "When the server recorded the change."
-          },
-          "activity": {
-            "$ref": "#/components/schemas/ActivitySummary"
-          }
-        },
-        "required": [
-          "type",
-          "changedAt",
-          "activity"
-        ],
-        "description": "Created or changed (track, name, gap routes). Download the track only when `activity.trackHash` differs from yours."
       },
       "ActivityTombstone": {
         "type": "object",
@@ -944,6 +798,217 @@
           "trackHash",
           "track"
         ]
+      },
+      "Track": {
+        "type": "object",
+        "properties": {
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrackPoint"
+            },
+            "minItems": 2,
+            "maxItems": 40000,
+            "example": [
+              [
+                21.0122,
+                52.2297,
+                1760857920000,
+                0,
+                98.5
+              ],
+              [
+                21.0125,
+                52.2299,
+                1760857923000,
+                0,
+                98.7
+              ],
+              [
+                21.0129,
+                52.2301,
+                1760857926000,
+                0,
+                98.9
+              ]
+            ]
+          }
+        },
+        "required": [
+          "points"
+        ],
+        "description": "Every point of an activity, in time order. Personal data."
+      },
+      "TrackPoint": {
+        "type": "array",
+        "prefixItems": [
+          {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "integer",
+            "minimum": 0
+          },
+          {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        ],
+        "description": "Columns: `[lon, lat, t, segment, altitudeM]` — longitude and latitude (degrees, WGS 84), time (epoch ms, UTC), segment number (a new segment starts after a pause or GPS gap; segments are never bridged), altitude in metres or null. Accuracy and speed are not sent (data minimisation, decision D1).",
+        "example": [
+          21.0122,
+          52.2297,
+          1760857920000,
+          0,
+          98.5
+        ]
+      },
+      "ActivityDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ActivitySummary"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "bbox": {
+                "$ref": "#/components/schemas/BoundingBox"
+              },
+              "splits": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Split"
+                }
+              },
+              "resumedSegments": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "description": "Segments that began with a manual Resume; null when unknown."
+              },
+              "gapRoutes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/GapRoute"
+                }
+              }
+            },
+            "required": [
+              "bbox",
+              "splits",
+              "resumedSegments",
+              "gapRoutes"
+            ]
+          }
+        ]
+      },
+      "BoundingBox": {
+        "type": [
+          "array",
+          "null"
+        ],
+        "prefixItems": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "description": "[west, south, east, north].",
+        "example": [
+          20.85,
+          52.12,
+          21.17,
+          52.34
+        ]
+      },
+      "Split": {
+        "type": "object",
+        "properties": {
+          "km": {
+            "type": "integer",
+            "example": 1
+          },
+          "movingS": {
+            "type": "number",
+            "description": "Moving time of this kilometre (not cumulative).",
+            "example": 337
+          }
+        },
+        "required": [
+          "km",
+          "movingS"
+        ]
+      },
+      "GapRoute": {
+        "type": "object",
+        "properties": {
+          "afterSegment": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The gap after this segment.",
+            "example": 0
+          },
+          "distanceM": {
+            "type": "number",
+            "minimum": 0,
+            "example": 240
+          },
+          "movingS": {
+            "type": "number",
+            "minimum": 0,
+            "example": 85
+          },
+          "coords": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LonLat"
+            },
+            "minItems": 2,
+            "maxItems": 5000,
+            "example": [
+              [
+                21.0129,
+                52.2301
+              ],
+              [
+                21.0141,
+                52.2307
+              ]
+            ]
+          }
+        },
+        "required": [
+          "afterSegment",
+          "distanceM",
+          "movingS",
+          "coords"
+        ],
+        "description": "A street route the phone estimated across a GPS gap: counted in distance, drawn dashed, never claimed as turf. The server never computes these (D3)."
       },
       "ActivityRename": {
         "type": "object",
@@ -1160,6 +1225,42 @@
         "required": [
           "city",
           "chosenAt"
+        ]
+      },
+      "City": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable catalogue id.",
+            "example": "pl-warsaw"
+          },
+          "name": {
+            "type": "string",
+            "example": "Warsaw"
+          },
+          "country": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "example": "PL"
+          },
+          "center": {
+            "$ref": "#/components/schemas/LonLat"
+          },
+          "bounds": {
+            "$ref": "#/components/schemas/BoundingBox"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "country",
+          "center",
+          "bounds"
         ]
       },
       "ChooseHomeCityBody": {
@@ -1508,7 +1609,7 @@
         ],
         "operationId": "deleteMe",
         "summary": "[planned] Delete my account and data",
-        "description": "Erases the user and every row they own, tracks included (GDPR art. 17). The phone keeps its own copy.",
+        "description": "Erases the user and every row they own — activities, tracks, gap routes, turf, tombstones, consents, exports (use case EraseAccount; GDPR art. 17, App Store account deletion). Sessions end at once; the rest is a job. The phone keeps its own copy.",
         "security": [
           {
             "bearerAuth": []
@@ -1516,8 +1617,15 @@
         ],
         "x-cityturfer-status": "planned",
         "responses": {
-          "204": {
-            "description": "Deleted."
+          "202": {
+            "description": "Erasure scheduled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErasureJob"
+                }
+              }
+            }
           },
           "401": {
             "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
@@ -1605,14 +1713,297 @@
         }
       }
     },
-    "/v1/me/export": {
+    "/v1/me/exports": {
+      "post": {
+        "tags": [
+          "Privacy"
+        ],
+        "operationId": "requestDataExport",
+        "summary": "[planned] Request an export of all my data",
+        "description": "Starts an export of everything the server holds about the user, tracks included (use case RequestDataExport; GDPR art. 15 and 20). Poll the `Location`. Vercel caps responses at 4.5 MB, so the data comes as a file, not in the response.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cityturfer-status": "planned",
+        "responses": {
+          "202": {
+            "description": "Export started.",
+            "headers": {
+              "Location": {
+                "$ref": "#/components/headers/Location"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataExportJob"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.missing": {
+                    "summary": "auth.missing",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.missing",
+                      "title": "Missing bearer token",
+                      "status": 401,
+                      "code": "auth.missing"
+                    }
+                  },
+                  "auth.invalid": {
+                    "summary": "auth.invalid",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.invalid",
+                      "title": "Invalid or expired token",
+                      "status": 401,
+                      "code": "auth.invalid"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: wait `Retry-After` seconds. Codes: `rate-limited`.",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimitPolicy"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "rate-limited": {
+                    "summary": "rate-limited",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/rate-limited",
+                      "title": "Too many requests",
+                      "status": 429,
+                      "code": "rate-limited"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "not-implemented": {
+                    "summary": "not-implemented",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/not-implemented",
+                      "title": "Not implemented yet",
+                      "status": 501,
+                      "code": "not-implemented"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/exports/{exportId}": {
       "get": {
         "tags": [
           "Privacy"
         ],
-        "operationId": "exportMyData",
-        "summary": "[planned] Export all my data",
-        "description": "Everything the server holds about the user, tracks included (GDPR art. 15 and 20).",
+        "operationId": "getDataExport",
+        "summary": "[planned] Export status and download link",
+        "description": "Use case GetDataExport. The link works for 24 h once `ready`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cityturfer-status": "planned",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "example": "exp_01"
+            },
+            "required": true,
+            "name": "exportId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The export.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataExportJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input. Codes: `invalid-request`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "invalid-request": {
+                    "summary": "invalid-request",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/invalid-request",
+                      "title": "Invalid request",
+                      "status": 400,
+                      "code": "invalid-request"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.missing": {
+                    "summary": "auth.missing",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.missing",
+                      "title": "Missing bearer token",
+                      "status": 401,
+                      "code": "auth.missing"
+                    }
+                  },
+                  "auth.invalid": {
+                    "summary": "auth.invalid",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.invalid",
+                      "title": "Invalid or expired token",
+                      "status": 401,
+                      "code": "auth.invalid"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No export with this id for this user. Codes: `not-found`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "not-found": {
+                    "summary": "not-found",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/not-found",
+                      "title": "Not found",
+                      "status": 404,
+                      "code": "not-found"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: wait `Retry-After` seconds. Codes: `rate-limited`.",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimitPolicy"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "rate-limited": {
+                    "summary": "rate-limited",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/rate-limited",
+                      "title": "Too many requests",
+                      "status": 429,
+                      "code": "rate-limited"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "not-implemented": {
+                    "summary": "not-implemented",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/not-implemented",
+                      "title": "Not implemented yet",
+                      "status": 501,
+                      "code": "not-implemented"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/consents": {
+      "get": {
+        "tags": [
+          "Privacy"
+        ],
+        "operationId": "listConsents",
+        "summary": "[planned] My consents",
+        "description": "The latest decision per purpose (use case ListConsents).",
         "security": [
           {
             "bearerAuth": []
@@ -1621,11 +2012,164 @@
         "x-cityturfer-status": "planned",
         "responses": {
           "200": {
-            "description": "The export.",
+            "description": "The consents.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DataExport"
+                  "$ref": "#/components/schemas/ConsentList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.missing": {
+                    "summary": "auth.missing",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.missing",
+                      "title": "Missing bearer token",
+                      "status": 401,
+                      "code": "auth.missing"
+                    }
+                  },
+                  "auth.invalid": {
+                    "summary": "auth.invalid",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.invalid",
+                      "title": "Invalid or expired token",
+                      "status": 401,
+                      "code": "auth.invalid"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: wait `Retry-After` seconds. Codes: `rate-limited`.",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimitPolicy"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "rate-limited": {
+                    "summary": "rate-limited",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/rate-limited",
+                      "title": "Too many requests",
+                      "status": 429,
+                      "code": "rate-limited"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "not-implemented": {
+                    "summary": "not-implemented",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/not-implemented",
+                      "title": "Not implemented yet",
+                      "status": 501,
+                      "code": "not-implemented"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/consents/{purpose}": {
+      "put": {
+        "tags": [
+          "Privacy"
+        ],
+        "operationId": "setConsent",
+        "summary": "[planned] Give or withdraw a consent",
+        "description": "Records the decision with the policy version (use case GiveOrWithdrawConsent). Withdrawing `cloud-sync` stops sync; erasing the data already stored is `DELETE /v1/me`. Withdrawing `apple-health-in-cloud-sync` stops new Apple Health uploads.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cityturfer-status": "planned",
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/ConsentPurpose"
+            },
+            "required": true,
+            "description": "`cloud-sync`: back up and sync activities with their GPS tracks. `apple-health-in-cloud-sync`: include workouts imported from Apple Health (decision D2). Without `cloud-sync` the server accepts no uploads.",
+            "name": "purpose",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetConsentBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recorded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input. Codes: `invalid-request`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "invalid-request": {
+                    "summary": "invalid-request",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/invalid-request",
+                      "title": "Invalid request",
+                      "status": 400,
+                      "code": "invalid-request"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
