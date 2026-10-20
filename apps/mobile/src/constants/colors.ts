@@ -9,6 +9,7 @@ import type { ActivityTypeName } from './activity';
 export {
   ACCENT,
   DARK,
+  FONT_FAMILY,
   LIGHT,
   ON_ACCENT,
   ON_LIGHT,

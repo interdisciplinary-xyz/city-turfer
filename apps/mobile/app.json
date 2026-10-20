@@ -39,6 +39,15 @@
       "expo-router",
       "expo-sqlite",
       "expo-secure-store",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "../../packages/brand/fonts/ArchivoExpanded-Black.ttf",
+            "../../packages/brand/fonts/Archivo-ExtraBold.ttf"
+          ]
+        }
+      ],
       "@maplibre/maplibre-react-native",
       [
         "expo-location",

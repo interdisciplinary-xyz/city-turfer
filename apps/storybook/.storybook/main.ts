@@ -16,7 +16,12 @@ const config: StorybookConfig = {
   addons: ['@storybook/addon-docs'],
   // The website's public files (phone screenshots) at the same URLs as on the site, and the brand
   // SVGs (sidebar logo, tab icon) under brand/.
-  staticDirs: ['../../web/public', { from: '../../../packages/brand/svg', to: '/brand' }],
+  staticDirs: [
+    '../../web/public',
+    { from: '../../../packages/brand/svg', to: '/brand' },
+    // Archivo woff2 files for the @font-face rules in preview-head.html.
+    { from: '../../../packages/brand/fonts', to: '/fonts' },
+  ],
   core: { disableTelemetry: true },
   // Prop tables from the TS types; plain react-docgen can't follow React Native's imported types.
   typescript: { reactDocgen: 'react-docgen-typescript' },

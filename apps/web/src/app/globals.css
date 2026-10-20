@@ -1,5 +1,5 @@
 /* CityTurfer landing page. Colours are CSS variables set from @cityturfer/brand in layout.tsx.
-   The page is always dark, like the Turf Map. System fonts only (brand-system: no font download). */
+   The page is always dark, like the Turf Map. Body text is the system font; headings use the self-hosted Archivo display font (fonts.ts). */
 
 *,
 *::before,
@@ -13,6 +13,10 @@
   --gutter: var(--space-lg);
   --max: 1080px;
   color-scheme: dark;
+  /* next/font sets --face-*; the brand variables from cssVariables() are the fallback stack. The
+     weight is baked into each font, so never bold them (font-synthesis: none). */
+  --display: var(--face-display), var(--font-family-display);
+  --numeric: var(--face-numeric), var(--font-family-numeric);
 }
 
 html {
@@ -23,7 +27,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--font-family-body);
   font-size: 17px;
   line-height: 1.55;
   overflow-x: hidden;
@@ -205,9 +209,12 @@ img {
 
 h1 {
   font-size: clamp(1.9rem, 8vw, 3.4rem);
-  line-height: 1.04;
-  font-weight: 900;
-  letter-spacing: -0.03em;
+  font-family: var(--display);
+  font-weight: normal;
+  font-synthesis: none;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  overflow-wrap: break-word;
   margin: 0 auto 18px;
   max-width: 14ch;
 }
@@ -337,8 +344,11 @@ h1 {
 
 .waitlist-title {
   margin: 0 0 18px;
-  font-size: clamp(1.4rem, 3.5vw, 1.9rem);
-  font-weight: 800;
+  font-family: var(--display);
+  font-size: clamp(1.25rem, 3.5vw, 1.7rem);
+  font-weight: normal;
+  font-synthesis: none;
+  line-height: 1.2;
 }
 
 .waitlist-row {

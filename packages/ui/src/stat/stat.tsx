@@ -1,10 +1,10 @@
-import { FONT_SIZE, FONT_WEIGHT, LABEL_TRACKING, SPACE } from '@cityturfer/brand';
+import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT, LABEL_TRACKING, SPACE } from '@cityturfer/brand';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { usePalette } from '../theme/theme';
 import type { StatProps } from './stat.constants';
 
-/** A number with its unit and caption: tabular figures, heavy weight (brand typography). */
+/** A number with its unit and caption: tabular figures, Archivo ExtraBold (brand typography). */
 export function Stat({ label, value, unit, big, testID }: StatProps) {
   const p = usePalette();
   return (
@@ -20,7 +20,7 @@ export function Stat({ label, value, unit, big, testID }: StatProps) {
 
 const s = StyleSheet.create({
   stat: { alignItems: 'center', flex: 1 },
-  value: { fontWeight: FONT_WEIGHT.heavy, fontVariant: ['tabular-nums'] },
+  value: { fontFamily: FONT_FAMILY.numeric, fontVariant: ['tabular-nums'] },
   unit: { fontSize: FONT_SIZE.unit, fontWeight: FONT_WEIGHT.semibold },
   label: {
     fontSize: FONT_SIZE.label,

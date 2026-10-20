@@ -1,7 +1,8 @@
 {
   "meta": {
     "title": "CityTurfer — Surf your city. Own your streets.",
-    "description": "Walk, run or ride — every street you cover becomes your turf. Come back and watch it glow."
+    "description": "Walk, run or ride — every street you cover becomes your turf. Come back and watch it glow.",
+    "ogAlt": "CityTurfer: glowing routes on a dark city map, with the tagline Surf your city. Own your streets."
   },
   "hero": {
     "skip": "Skip to content",
