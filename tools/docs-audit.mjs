@@ -95,6 +95,12 @@ export const PROBES = {
   migrations: () => countMatches(read('apps/mobile/src/platform/migrations.ts'), /^\s+version: \d+,/gm),
   /** Tracked docs under docs/. */
   docs: () => listFiles('docs').filter((f) => f.endsWith('.md')).length,
+  /** HTTP operations in the generated API spec (apps/api/openapi.json). */
+  'api-operations': () =>
+    Object.values(JSON.parse(read('apps/api/openapi.json')).paths).reduce(
+      (n, item) => n + ['get', 'put', 'post', 'patch', 'delete'].filter((m) => item[m]).length,
+      0
+    ),
 };
 
 const PROBE_RE = /<!-- probe:([\w-]+) -->([^<]*)<!-- \/probe -->/g;

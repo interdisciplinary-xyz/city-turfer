@@ -102,10 +102,12 @@ Bounded contexts: <!-- probe:contexts -->6<!-- /probe -->
 - `achievements`: `id:` entries in `apps/mobile/src/contexts/achievements/domain/achievements.ts`
   (<!-- probe:achievements -->12<!-- /probe -->)
 - `e2e-flows`: `flowsOrder` entries in `apps/mobile/e2e/config.yaml`
-  (<!-- probe:e2e-flows -->11<!-- /probe -->)
+  (<!-- probe:e2e-flows -->12<!-- /probe -->)
 - `migrations`: `version:` entries in `apps/mobile/src/platform/migrations.ts`
-  (<!-- probe:migrations -->6<!-- /probe -->)
-- `docs`: markdown files under `docs/` (<!-- probe:docs -->6<!-- /probe -->)
+  (<!-- probe:migrations -->7<!-- /probe -->)
+- `docs`: markdown files under `docs/` (<!-- probe:docs -->30<!-- /probe -->)
+- `api-operations`: HTTP operations in `apps/api/openapi.json`
+  (<!-- probe:api-operations -->22<!-- /probe -->)
 
 **If a number is not probed, don't write it.** Write the derivation instead ("one per file in
 `apps/mobile/e2e/`"). Numbers in session logs are fine: they are `historical` records of what was
