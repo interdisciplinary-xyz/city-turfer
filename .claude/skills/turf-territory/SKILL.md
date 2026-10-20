@@ -162,6 +162,24 @@ by type with a layer `filter` expression, not by rebuilding data.
 - Record map: starts on the Home City centre until the first fix; before a recording starts the
   `record-city` chip opens the picker and a newly chosen city is flown to. The screen hands the city
   in as a `RecordCity` prop (Recording never imports Territory).
+- Record map turf overlay (v0.8.0): the "⬡ Turf" chip (`record-turf`, a switch, top right; Recenter
+  sits under it) shows the Turfer's turf under the live track, before and during a recording. On by
+  default, remembered per user (`territory/infrastructure/turf-overlay-preference.ts`, secure store;
+  unset or unreadable = shown). The screen composes it: `useTurfOverlay()` →
+  `<TurfLayers beforeId={LIVE_TRACK_BOTTOM_LAYER} look='overlay'>` as `RecordView`'s `mapOverlay`,
+  fed by `onViewChange` (both `onRegionIsChanging` and `onRegionDidChange`).
+  - **Layer order:** MapLibre adds a layer on top of the style whatever its JSX position, so the
+    overlay uses `beforeId`, is mounted after the live track (the `beforeId` layer must exist) and
+    stays mounted when hidden (empty cells), and `UserLocation` comes last.
+  - **Cost:** turf is loaded for the view grown by half its size on each side
+    (`territory/ui/turf-overlay-area.ts`, 4× the area, about 4.8× with the query's own padding:
+    larger areas hit `GetTurfInViewport`'s 5000-cell budget and lose their hexagons) and re-read
+    only when the view leaves it or crosses `DETAIL_ZOOM`. The view lives in a ref, so following the
+    Turfer re-renders nothing; `TurfLayers` is memoised because GeoJSON sources re-serialise their
+    data on every render.
+  - **Look:** `look='overlay'` (`territory/ui/layers.constants.ts` `TURF_LOOK`) draws lighter fill,
+    halo and heatmap than the Turf Map (`'full'`), so streets stay readable under the turf while
+    recording.
 - Catalogue ids are stored in user databases: never rename or reuse one; a removed id reads as no
   Home City. Adding a city is a JS-only change (ships over the air).
 

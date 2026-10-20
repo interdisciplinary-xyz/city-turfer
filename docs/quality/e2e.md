@@ -16,34 +16,37 @@ A critical path is a journey that, if broken, loses a user's data or breaks the 
 (record, own the streets). Every row must name an existing flow, or say `unit-only` when there is
 none; the audit enforces this. Gaps are listed honestly in section 3.
 
-| ID    | Critical path                                                                                        | Flows                               | Coverage                                                  |
-| ----- | ---------------------------------------------------------------------------------------------------- | ----------------------------------- | --------------------------------------------------------- |
-| CP-1  | Sign in (wrong password rejected, session survives restart), sign out                                | `01-auth`, `08-sign-out`            | Covered                                                   |
-| CP-2  | Record a run, pause/resume, hold to finish, activity with turf gained                                | `02-record-run`, `04-too-short`     | Covered                                                   |
-| CP-3  | Recording continues while the app is backgrounded (simulated walk)                                   | `03-background-recording`           | Covered on simulator only                                 |
-| CP-4  | Kill the app mid-recording and recover the session on relaunch                                       | none, unit-only                     | Unit-only (`end-to-end.test.ts`)                          |
-| CP-5  | Turf appears after an activity and on the Turf map                                                   | `02-record-run`, `06-turf-map`      | Covered                                                   |
-| CP-6  | Deleting an activity releases its turf                                                               | `07-delete-activity`                | Row only: turf not asserted                               |
-| CP-7  | Dashboard: week stats, recent activities, achievements, Stats links                                  | `10-dashboard`, `05-history-detail` | Covered                                                   |
-| CP-8  | Me drawer: Profile, Account, City, Info, tap-outside closes, Achievements                            | `09-me-menu`                        | Covered                                                   |
-| CP-9  | Apple Health: connect, import workouts with routes (iOS)                                             | `11-apple-health`                   | Simulator only; Watch on device                           |
-| CP-10 | Home City: pick a city (accent-free search) from Me and from the Record tab, Turf Map chip, clear it | `12-home-city`                      | Chip asserted; camera position checked by screenshot only |
+| ID    | Critical path                                                                                          | Flows                               | Coverage                                                              |
+| ----- | ------------------------------------------------------------------------------------------------------ | ----------------------------------- | --------------------------------------------------------------------- |
+| CP-1  | Sign in (wrong password rejected, session survives restart), sign out                                  | `01-auth`, `08-sign-out`            | Covered                                                               |
+| CP-2  | Record a run, pause/resume, hold to finish, activity with turf gained                                  | `02-record-run`, `04-too-short`     | Covered                                                               |
+| CP-3  | Recording continues while the app is backgrounded (simulated walk)                                     | `03-background-recording`           | Covered on simulator only                                             |
+| CP-4  | Kill the app mid-recording and recover the session on relaunch                                         | none, unit-only                     | Unit-only (`end-to-end.test.ts`)                                      |
+| CP-5  | Turf appears after an activity and on the Turf map                                                     | `02-record-run`, `06-turf-map`      | Covered                                                               |
+| CP-6  | Deleting an activity releases its turf                                                                 | `07-delete-activity`                | Row only: turf not asserted                                           |
+| CP-7  | Dashboard: week stats, recent activities, achievements, Stats links                                    | `10-dashboard`, `05-history-detail` | Covered                                                               |
+| CP-8  | Me drawer: Profile, Account, City, Info, tap-outside closes, Achievements                              | `09-me-menu`                        | Covered                                                               |
+| CP-9  | Apple Health: connect, import workouts with routes (iOS)                                               | `11-apple-health`                   | Simulator only; Watch on device                                       |
+| CP-10 | Home City: pick a city (accent-free search) from Me and from the Record tab, Turf Map chip, clear it   | `12-home-city`                      | Chip asserted; camera position checked by screenshot only             |
+| CP-11 | Record tab turf toggle: on by default, hides and shows the turf, remembered, available while recording | `13-record-turf`                    | Toggle state asserted; the turf on the map checked by screenshot only |
 
 ## 2. Flow inventory
 
-| Flow                      | Tag(s)                | Purpose                                                              |
-| ------------------------- | --------------------- | -------------------------------------------------------------------- |
-| `01-auth`                 | auth                  | Wrong password rejected, demo account accepted, session persists     |
-| `02-record-run`           | recording             | Live distance grows, pause/resume, finish, turf gained               |
-| `03-background-recording` | recording, background | Home button, simulated 220 m walk, distance grew after foregrounding |
-| `04-too-short`            | recording             | Fewer than 2 points: finish refused, Discard offered                 |
-| `05-history-detail`       | history               | Recent activities, See all, detail stats and turf gained             |
-| `06-turf-map`             | turf                  | Demo history seeds turf; summary and type filters                    |
-| `07-delete-activity`      | history               | Delete confirmation, row disappears from History                     |
-| `09-me-menu`              | me                    | Drawer items, tap outside closes, Profile and Achievements           |
-| `10-dashboard`            | dashboard             | Greeting, week distance, recent item, achievements, Stats to History |
-| `11-apple-health`         | health                | iOS: connect Health, seed sample workouts, import 3 with routes      |
-| `08-sign-out`             | auth                  | Sign out returns to sign-in. Runs last because it ends the session   |
+| Flow                      | Tag(s)                | Purpose                                                               |
+| ------------------------- | --------------------- | --------------------------------------------------------------------- |
+| `01-auth`                 | auth                  | Wrong password rejected, demo account accepted, session persists      |
+| `02-record-run`           | recording             | Live distance grows, pause/resume, finish, turf gained                |
+| `03-background-recording` | recording, background | Home button, simulated 220 m walk, distance grew after foregrounding  |
+| `04-too-short`            | recording             | Fewer than 2 points: finish refused, Discard offered                  |
+| `05-history-detail`       | history               | Recent activities, See all, detail stats and turf gained              |
+| `06-turf-map`             | turf                  | Demo history seeds turf; summary and type filters                     |
+| `07-delete-activity`      | history               | Delete confirmation, row disappears from History                      |
+| `09-me-menu`              | me                    | Drawer items, tap outside closes, Profile and Achievements            |
+| `10-dashboard`            | dashboard             | Greeting, week distance, recent item, achievements, Stats to History  |
+| `11-apple-health`         | health                | iOS: connect Health, seed sample workouts, import 3 with routes       |
+| `12-home-city`            | turf                  | Pick, change and clear the Home City from Me and the Record tab       |
+| `13-record-turf`          | recording, turf       | Record tab turf toggle: default on, remembered, works while recording |
+| `08-sign-out`             | auth                  | Sign out returns to sign-in. Runs last because it ends the session    |
 
 Allowed tags are fixed in `apps/mobile/tools/e2e/audit.mjs`
 (`auth recording background history turf me dashboard health`). Subflows in

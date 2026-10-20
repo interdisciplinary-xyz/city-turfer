@@ -23,6 +23,15 @@ fi
 xcrun simctl privacy "$DEVICE" grant location-always "$BUNDLE" >/dev/null 2>&1 || true
 xcrun simctl location "$DEVICE" clear >/dev/null 2>&1 || true   # stop any running route replay
 xcrun simctl location "$DEVICE" set 52.213302,20.998991
+# Dev builds add Expo's dev menu: it can open at launch, and its floating "Tools" button sits over
+# the top-right map chips (record-turf, recenter), swallowing taps. Switch both off, in the app's
+# own preferences (UserDefaults.standard) and through the simulator's defaults, with the app closed.
+xcrun simctl terminate "$DEVICE" "$BUNDLE" >/dev/null 2>&1 || true
+APP_PREFS="$(xcrun simctl get_app_container "$DEVICE" "$BUNDLE" data 2>/dev/null || true)/Library/Preferences/$BUNDLE.plist"
+for key in EXDevMenuShowsAtLaunch EXDevMenuShowFloatingActionButton; do
+  xcrun simctl spawn "$DEVICE" defaults write "$BUNDLE" "$key" -bool NO >/dev/null 2>&1 || true
+  if [[ -f "$APP_PREFS" ]]; then plutil -replace "$key" -bool NO "$APP_PREFS" >/dev/null 2>&1 || true; fi
+done
 
 # Clean slate for full runs and the auth flow: Maestro's clearState does not remove
 # the SQLite files on the iOS 27 simulator, so wipe them (and the keychain) ourselves.

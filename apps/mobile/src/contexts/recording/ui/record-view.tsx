@@ -4,7 +4,7 @@ import { Alert, Pressable, StyleSheet, Text, useColorScheme, View } from 'react-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ACTIVITY_TYPES, TYPE_GLYPH, TYPE_LABEL } from '@/constants/activity';
-import { ON_TYPE_COLOR, TYPE_COLOR } from '@/constants/colors';
+import { ON_TIER, ON_TYPE_COLOR, TIER_COLOR, TYPE_COLOR } from '@/constants/colors';
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from '@/constants/map';
 import { type ActivityType } from '@/shared-kernel';
 import { Button, Stat } from '@/ui-kit/components';
@@ -12,15 +12,31 @@ import { formatDistance, formatDuration, formatPaceOrSpeed, formatSpeedNow } fro
 import { usePalette } from '@/ui-kit/theme';
 import { trackWithGaps } from '@/ui-kit/track-geometry';
 
-import { CITY_ZOOM, HOLD_MS, type RecordViewProps, STATUS_BANNER } from './record-view.constants';
+import {
+  CITY_ZOOM,
+  HOLD_MS,
+  LIVE_TRACK_BOTTOM_LAYER,
+  type RecordViewProps,
+  STATUS_BANNER,
+} from './record-view.constants';
 import { useRecording } from './use-recording';
 
 /**
  * The map starts on the Home City (`city`) before the first fix, then follows the Turfer. Before a
  * recording starts, a chip at the top shows the city and opens the picker; a newly chosen city is
- * shown on the map (Recenter goes back to the Turfer).
+ * shown on the map (Recenter goes back to the Turfer). With `turf`, a chip at the top right shows
+ * or hides the Turfer's turf, before and during a recording. The screen passes the turf as
+ * `mapOverlay` (layers placed under `LIVE_TRACK_BOTTOM_LAYER`, empty while hidden).
  */
-export function RecordView({ onFinished, city, onPickCity, focused = true }: RecordViewProps) {
+export function RecordView({
+  onFinished,
+  city,
+  onPickCity,
+  focused = true,
+  mapOverlay,
+  onViewChange,
+  turf,
+}: RecordViewProps) {
   const p = usePalette();
   const scheme = useColorScheme();
   const insets = useSafeAreaInsets();
@@ -114,6 +130,9 @@ export function RecordView({ onFinished, city, onPickCity, focused = true }: Rec
         logo={false}
         attributionPosition={{ top: insets.top + 8, left: 8 }}
         compass={false}
+        // Both: while following the Turfer, settle events can be rare or dropped.
+        onRegionIsChanging={(e) => onViewChange?.({ bbox: e.nativeEvent.bounds, zoom: e.nativeEvent.zoom })}
+        onRegionDidChange={(e) => onViewChange?.({ bbox: e.nativeEvent.bounds, zoom: e.nativeEvent.zoom })}
       >
         <Camera
           ref={camera}
@@ -122,10 +141,9 @@ export function RecordView({ onFinished, city, onPickCity, focused = true }: Rec
           // MapLibre drops tracking when the user pans; mirror that in our state.
           onTrackUserLocationChange={(e) => e.nativeEvent.trackUserLocation == null && setFollowing(false)}
         />
-        <UserLocation accuracy heading />
         <GeoJSONSource id='live-track' data={lines}>
           <Layer
-            id='live-track-gap'
+            id={LIVE_TRACK_BOTTOM_LAYER}
             type='line'
             filter={['==', ['get', 'kind'], 'gap'] as never}
             paint={{ 'line-color': color, 'line-width': 3, 'line-opacity': 0.6, 'line-dasharray': [1.5, 2] }}
@@ -145,6 +163,10 @@ export function RecordView({ onFinished, city, onPickCity, focused = true }: Rec
             layout={{ 'line-cap': 'round', 'line-join': 'round' }}
           />
         </GeoJSONSource>
+        {/* Mounted after the live track so it can sit under it (`beforeId`); always mounted so the
+            order holds when it's toggled. Empty while hidden. */}
+        {mapOverlay}
+        <UserLocation accuracy heading />
       </Map>
 
       {!snapshot && onPickCity && (
@@ -162,17 +184,34 @@ export function RecordView({ onFinished, city, onPickCity, focused = true }: Rec
         </Pressable>
       )}
 
-      {!following && (
-        <Pressable
-          testID='recenter'
-          accessibilityRole='button'
-          accessibilityLabel='Recenter on my location'
-          onPress={() => setFollowing(true)}
-          style={[s.recenter, { top: insets.top + 12, backgroundColor: p.card }]}
-        >
-          <Text style={{ color: p.text, fontWeight: '700' }}>◎ Recenter</Text>
-        </Pressable>
-      )}
+      {/* One column at the top right, so the chips never overlap whatever the text size. */}
+      <View style={[s.chipColumn, { top: insets.top + 12 }]} pointerEvents='box-none'>
+        {turf && (
+          <Pressable
+            testID='record-turf'
+            accessibilityRole='switch'
+            accessibilityLabel='Show my turf'
+            accessibilityState={{ checked: turf.shown }}
+            onPress={turf.onToggle}
+            hitSlop={6}
+            style={[s.chip, { backgroundColor: turf.shown ? TIER_COLOR.glowing : p.card }]}
+          >
+            <Text style={{ color: turf.shown ? ON_TIER.glowing : p.text, fontWeight: '700' }}>⬡ Turf</Text>
+          </Pressable>
+        )}
+        {!following && (
+          <Pressable
+            testID='recenter'
+            accessibilityRole='button'
+            accessibilityLabel='Recenter on my location'
+            onPress={() => setFollowing(true)}
+            hitSlop={6}
+            style={[s.chip, { backgroundColor: p.card }]}
+          >
+            <Text style={{ color: p.text, fontWeight: '700' }}>◎ Recenter</Text>
+          </Pressable>
+        )}
+      </View>
 
       <View style={[s.panel, { backgroundColor: p.card, paddingBottom: 40 }]}>
         {banner && (
@@ -311,9 +350,8 @@ const s = StyleSheet.create({
     shadowRadius: 6,
     elevation: 4,
   },
-  recenter: {
-    position: 'absolute',
-    right: 12,
+  chipColumn: { position: 'absolute', right: 12, alignItems: 'flex-end', gap: 12 },
+  chip: {
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 20,
