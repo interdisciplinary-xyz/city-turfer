@@ -1,10 +1,11 @@
+import { FONT_SIZE, SPACE, TIER_LABEL } from '@cityturfer/brand';
 import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ACTIVITY_TYPES, TYPE_LABEL } from '@/constants/activity';
-import { ACCENT, TYPE_COLOR } from '@/constants/colors';
+import { ACCENT, FONT_FAMILY, TYPE_COLOR } from '@/constants/colors';
 import { activityStats } from '@/contexts/activity-log/ui/activity-stats';
 import { useActivities } from '@/contexts/activity-log/ui/hooks';
 import { useTurfSummary } from '@/contexts/territory/ui/hooks';
@@ -26,7 +27,7 @@ export default function StatsScreen() {
   return (
     <ScrollView
       style={{ backgroundColor: p.bg }}
-      contentContainerStyle={{ padding: 16, paddingTop: insets.top + 16, gap: 14 }}
+      contentContainerStyle={{ padding: SPACE.lg, paddingTop: insets.top + SPACE.lg, gap: 14 }}
     >
       <Text style={[s.h1, { color: p.text }]}>Stats</Text>
 
@@ -62,7 +63,7 @@ export default function StatsScreen() {
         <View style={{ flexDirection: 'row' }}>
           <Stat label='Area' value={area[0]} unit={area[1]} />
           <Stat label='Cells' value={summary ? String(summary.cellCount) : '—'} />
-          <Stat label='Strong' value={summary ? String(summary.strongCells) : '—'} />
+          <Stat label={TIER_LABEL.strong} value={summary ? String(summary.strongCells) : '—'} />
         </View>
       </Card>
 
@@ -103,13 +104,13 @@ export default function StatsScreen() {
 }
 
 const s = StyleSheet.create({
-  h1: { fontSize: 30, fontWeight: '900' },
+  h1: { fontSize: 28, fontFamily: FONT_FAMILY.display, letterSpacing: -0.5 },
   h2: { fontSize: 17, fontWeight: '800' },
   link: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   bars: { flexDirection: 'row', alignItems: 'flex-end', height: 104, gap: 6 },
   barCol: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
   bar: { width: '100%', borderRadius: 6 },
-  barLabel: { fontSize: 10, marginTop: 4, fontVariant: ['tabular-nums'] },
+  barLabel: { fontSize: FONT_SIZE.label, marginTop: 4, fontVariant: ['tabular-nums'] },
   row: { flexDirection: 'row', alignItems: 'center' },
   totalRow: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 10 },
   dot: { width: 10, height: 10, borderRadius: 5 },

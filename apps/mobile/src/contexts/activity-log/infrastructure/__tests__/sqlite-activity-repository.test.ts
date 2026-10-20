@@ -1,8 +1,9 @@
+import { Activity } from '@cityturfer/core/activity-log/ports';
+
 import { migrate } from '@/platform/migrations';
 import { trackFromPoints, type TrackPoint } from '@/shared-kernel';
 import { openNodeDatabase } from '@/test-support/node-database';
 
-import { Activity } from '../../domain/activity';
 import { SqliteActivityRepository } from '../sqlite-activity-repository';
 
 const T0 = Date.parse('2026-01-01T07:00:00Z');
@@ -59,5 +60,36 @@ describe('SqliteActivityRepository: why segments start', () => {
     const a = (await repo.get('a'))!.toState();
     expect(a.summary.splits).toEqual([{ km: 1, seconds: 600 }]);
     expect(a.resumedSegments).toBeNull();
+  });
+});
+
+describe('SqliteActivityRepository: gap routes check time', () => {
+  it('is null until the gaps are estimated, then the estimate time; null for an unknown id', async () => {
+    const { repo } = await setup();
+    await repo.save(record(null), points);
+    expect(await repo.gapsCheckedAt('a')).toBeNull();
+    await repo.saveGapRoutes('a', [], T0 + 5_000);
+    expect(await repo.gapsCheckedAt('a')).toBe(T0 + 5_000);
+    expect(await repo.gapsCheckedAt('nope')).toBeNull();
+  });
+});
+
+describe('SqliteActivityRepository: timeline', () => {
+  it('lists id, start and end of every activity, oldest first', async () => {
+    const { repo } = await setup();
+    const later = Activity.record({
+      id: 'b',
+      type: 'run',
+      startedAt: T0 + 86_400_000,
+      endedAt: T0 + 86_580_000,
+      track: trackFromPoints(points.map((p) => ({ ...p, t: p.t + 86_400_000 }))),
+      now: T0,
+    });
+    await repo.save(later, points);
+    await repo.save(record(null), points);
+    expect(await repo.timeline()).toEqual([
+      { id: 'a', startedAt: T0, endedAt: T0 + 180_000 },
+      { id: 'b', startedAt: T0 + 86_400_000, endedAt: T0 + 86_580_000 },
+    ]);
   });
 });

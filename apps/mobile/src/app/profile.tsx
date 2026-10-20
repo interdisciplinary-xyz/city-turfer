@@ -1,8 +1,9 @@
+import { SPACE } from '@cityturfer/brand';
 import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { ACCENT } from '@/constants/colors';
+import { ACCENT, FONT_FAMILY, ON_ACCENT } from '@/constants/colors';
 import { evaluateAchievements } from '@/contexts/achievements';
 import { useActivities } from '@/contexts/activity-log/ui/hooks';
 import { useTurfSummary } from '@/contexts/territory/ui/hooks';
@@ -33,7 +34,7 @@ export default function ProfileScreen() {
   const name = user?.displayName ?? 'You';
 
   return (
-    <ScrollView style={{ backgroundColor: p.bg }} contentContainerStyle={{ padding: 16, gap: 14 }}>
+    <ScrollView style={{ backgroundColor: p.bg }} contentContainerStyle={{ padding: SPACE.lg, gap: 14 }}>
       <View style={s.header}>
         <View style={s.avatar}>
           <Text style={s.initial}>{name.slice(0, 1).toUpperCase()}</Text>
@@ -73,8 +74,8 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 6,
   },
-  initial: { color: '#FFFFFF', fontSize: 38, fontWeight: '900' },
-  name: { fontSize: 26, fontWeight: '900' },
+  initial: { color: ON_ACCENT, fontSize: 34, fontFamily: FONT_FAMILY.display },
+  name: { fontSize: 24, fontFamily: FONT_FAMILY.display, letterSpacing: -0.5 },
   link: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   linkText: { fontSize: 17, fontWeight: '800' },
 });

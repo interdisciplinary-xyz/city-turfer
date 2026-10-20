@@ -84,7 +84,7 @@ export const PROBES = {
       .length,
   /** Achievements: one `id: '…'` per definition in the achievements list. */
   achievements: () =>
-    countMatches(read('apps/mobile/src/contexts/achievements/domain/achievements.ts'), /^\s+id: '[a-z0-9-]+',/gm),
+    countMatches(read('packages/core/src/contexts/achievements/domain/achievements.ts'), /^\s+id: '[a-z0-9-]+',/gm),
   /** Maestro flows run by the suite: entries of flowsOrder in apps/mobile/e2e/config.yaml. */
   'e2e-flows': () => {
     const text = read('apps/mobile/e2e/config.yaml');
@@ -95,6 +95,12 @@ export const PROBES = {
   migrations: () => countMatches(read('apps/mobile/src/platform/migrations.ts'), /^\s+version: \d+,/gm),
   /** Tracked docs under docs/. */
   docs: () => listFiles('docs').filter((f) => f.endsWith('.md')).length,
+  /** HTTP operations in the generated API spec (apps/api/openapi.json). */
+  'api-operations': () =>
+    Object.values(JSON.parse(read('apps/api/openapi.json')).paths).reduce(
+      (n, item) => n + ['get', 'put', 'post', 'patch', 'delete'].filter((m) => item[m]).length,
+      0
+    ),
 };
 
 const PROBE_RE = /<!-- probe:([\w-]+) -->([^<]*)<!-- \/probe -->/g;
@@ -552,4 +558,6 @@ async function main() {
   }
 }
 
-await main();
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  await main();
+}

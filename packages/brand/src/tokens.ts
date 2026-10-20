@@ -29,6 +29,24 @@ export const FONT_WEIGHT = {
   black: '900',
 } as const;
 
+/**
+ * Brand typefaces: Archivo (OFL), cut into two static fonts in `packages/brand/fonts/` by
+ * `packages/brand/scripts/make-fonts.py`. The names are the PostScript names, which is how iOS,
+ * Android (expo-font config plugin) and the website's `@font-face` all address them. The weight is
+ * part of the font: never combine these with `fontWeight`, or Android falls back to the system
+ * font. Body text and labels stay on the system font.
+ */
+export const FONT_FAMILY = {
+  /** Logo, hero and screen titles: Archivo Expanded Black. */
+  display: 'ArchivoExpanded-Black',
+  /** Big numbers (distance, time, area): Archivo ExtraBold, always with tabular figures. */
+  numeric: 'Archivo-ExtraBold',
+} as const;
+
+/** System font stack the website falls back to (and uses for body text). */
+export const SYSTEM_FONT_STACK =
+  "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
+
 /** Letter spacing for uppercase labels, in points. */
 export const LABEL_TRACKING = 0.8;
 
@@ -82,5 +100,8 @@ export function cssVariables(scheme: ColorScheme): CssVariables {
     ...scale('font', FONT_SIZE, 'px'),
     ...Object.fromEntries(Object.entries(FONT_WEIGHT).map(([key, value]) => [`--font-weight-${key}`, value])),
     '--label-tracking': `${LABEL_TRACKING}px`,
+    '--font-family-display': `'${FONT_FAMILY.display}', ${SYSTEM_FONT_STACK}`,
+    '--font-family-numeric': `'${FONT_FAMILY.numeric}', ${SYSTEM_FONT_STACK}`,
+    '--font-family-body': SYSTEM_FONT_STACK,
   };
 }

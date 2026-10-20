@@ -113,14 +113,14 @@ infrastructure, and no context reaches into another's layers. Full design:
 
 Shared code outside the contexts:
 
-| Path                               | Purpose                                                                          |
-| ---------------------------------- | -------------------------------------------------------------------------------- |
-| `apps/mobile/src/shared-kernel`    | Pure value objects and maths in SI units (distance, splits, elevation, simplify) |
-| `apps/mobile/src/constants`        | Shared constants (activity types, colours, map styles); imports nothing          |
-| `apps/mobile/src/platform`         | SQLite, migrations, outbox and event dispatcher, one-off jobs, diagnostics       |
-| `apps/mobile/src/ui-kit`           | Theme hook, formatting, shared components, app context, Me menu                  |
-| `apps/mobile/src/composition-root` | Lazy, React-free wiring used by the UI and the headless background task          |
-| `apps/mobile/modules/`             | Native module `background-session` (iOS `CLBackgroundActivitySession`)           |
+| Path                                 | Purpose                                                                                                                                                                          |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/core` (`@cityturfer/core`) | Shared kernel (SI maths: distance, splits, elevation, simplify), core constants, domain + use cases of identity, activity-log, territory, achievements (the app re-exports them) |
+| `apps/mobile/src/constants`          | Shared constants (activity types, colours, map styles); imports nothing                                                                                                          |
+| `apps/mobile/src/platform`           | SQLite, migrations, outbox and event dispatcher, one-off jobs, diagnostics                                                                                                       |
+| `apps/mobile/src/ui-kit`             | Theme hook, formatting, shared components, app context, Me menu                                                                                                                  |
+| `apps/mobile/src/composition-root`   | Lazy, React-free wiring used by the UI and the headless background task                                                                                                          |
+| `apps/mobile/modules/`               | Native module `background-session` (iOS `CLBackgroundActivitySession`)                                                                                                           |
 
 The background location task is defined at module top level in
 `apps/mobile/src/contexts/recording/infrastructure/background-task.ts` and imported first by

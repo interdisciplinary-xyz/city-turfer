@@ -1,5 +1,4 @@
-import type { SessionStore } from '../application/ports';
-import type { UserId } from '../domain/user';
+import type { SessionStore, UserId } from '@cityturfer/core/identity/ports';
 
 /**
  * Keeps the signed-in user id in memory, so the background location task does

@@ -8,7 +8,7 @@ export class Diagnostics {
   constructor(private readonly db: Database) {}
 
   log(
-    kind: 'launch' | 'app-state' | 'batch' | 'task-error' | 'maintenance' | 'tracker',
+    kind: 'launch' | 'app-state' | 'batch' | 'task-error' | 'maintenance' | 'tracker' | 'backup',
     data: Record<string, unknown>
   ): void {
     void this.db

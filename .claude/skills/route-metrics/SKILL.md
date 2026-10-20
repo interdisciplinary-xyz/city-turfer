@@ -1,24 +1,25 @@
 ---
 name: route-metrics
 description:
-  Formulas and conventions for TurfTrack activity statistics — haversine distance, elapsed vs moving
-  time, pace (min/km) vs speed (km/h) per activity type, km splits, elevation gain with smoothing
-  and hysteresis, calories (MET), and route simplification (Douglas–Peucker) for map rendering. Use
-  when writing or changing anything in apps/mobile/src/shared-kernel/ (track-analyzer, geo, track),
-  when stats look wrong ("distance too long", "pace jumps", "elevation gain is huge"), or when
-  adding a new stat.
+  Formulas and conventions for CityTurfer activity statistics — haversine distance, elapsed vs
+  moving time, pace (min/km) vs speed (km/h) per activity type, km splits, elevation gain with
+  smoothing and hysteresis, calories (MET), and route simplification (Douglas–Peucker) for map
+  rendering. Use when writing or changing anything in packages/core/src/shared-kernel/
+  (track-analyzer, geo, track; the app's apps/mobile/src/shared-kernel is a re-export shim), when
+  stats look wrong ("distance too long", "pace jumps", "elevation gain is huge"), or when adding a
+  new stat.
 ---
 
-> **Where the code lives** (see `docs/poc-plan.md`): the maths is in
-> `apps/mobile/src/shared-kernel/` — `analyzeTrack`, `elevationGain` and `simplify` in
-> `apps/mobile/src/shared-kernel/track-analyzer.ts`, haversine `distanceM` in
-> `apps/mobile/src/shared-kernel/geo.ts`, segments and `splitAtGaps` in
-> `apps/mobile/src/shared-kernel/track.ts`. Display formatting is in
+> **Where the code lives** (see `docs/poc-plan.md`): the maths is in `@cityturfer/core`
+> (`packages/core/src/shared-kernel/`, re-exported by the app's `@/shared-kernel`) — `analyzeTrack`,
+> `elevationGain` and `simplify` in `packages/core/src/shared-kernel/track-analyzer.ts`, haversine
+> `distanceM` in `packages/core/src/shared-kernel/geo.ts`, segments and `splitAtGaps` in
+> `packages/core/src/shared-kernel/track.ts`. Display formatting is in
 > `apps/mobile/src/ui-kit/format.ts`.
 
 # Route metrics
 
-All of the metrics code in `apps/mobile/src/shared-kernel/` is **pure TypeScript with no React or
+All of the metrics code in `packages/core/src/shared-kernel/` is **pure TypeScript with no React or
 Expo imports**, uses SI units (m, s, m/s), and has unit tests. The reference implementation is
 `apps/mobile/tools/lib/geo.mjs` and `apps/mobile/tools/route-stats.mjs`. The app's output must match
 it within tolerance on the fixtures in `apps/mobile/tools/fixtures/`.
@@ -79,7 +80,8 @@ data.** Simplify only at render time, and memoise the result.
 ```bash
 node apps/mobile/tools/gen-route.mjs --type run --km 5 --outliers 4 --pause 90 --format json > /tmp/run.json  # has truth.*
 node apps/mobile/tools/route-stats.mjs apps/mobile/tools/fixtures/run-5k-outliers-pause.gpx --json                         # oracle
-pnpm -C apps/mobile exec jest apps/mobile/src/shared-kernel apps/mobile/src/contexts/activity-log
+pnpm -C apps/mobile exec jest src/shared-kernel     # oracle parity (drives RecordingSession)
+pnpm --filter @cityturfer/core test:unit            # Activity Log domain + use cases, Territory
 ```
 
 Each metric function needs tests for: an empty input, a single point, two identical points, a

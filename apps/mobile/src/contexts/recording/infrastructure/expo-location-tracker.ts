@@ -1,6 +1,8 @@
+import { NAME } from '@cityturfer/brand';
 import * as Location from 'expo-location';
 import { Platform } from 'react-native';
 
+import { ACCENT } from '@/constants/colors';
 import { LOCATION_TASK } from '@/constants/location';
 
 import type { LocationTracker, PermissionGateway, PermissionResult } from '../application/ports';
@@ -59,8 +61,8 @@ export class ExpoLocationTracker implements LocationTracker {
       deferredUpdatesInterval: 0,
       foregroundService: {
         notificationTitle: `Recording your ${LABEL[profile.type]}`,
-        notificationBody: 'CityTurfer is claiming your streets. Tap to open.',
-        notificationColor: '#F72FA8',
+        notificationBody: `${NAME} is claiming your streets. Tap to open.`,
+        notificationColor: ACCENT,
         killServiceOnDestroy: false,
       },
     });

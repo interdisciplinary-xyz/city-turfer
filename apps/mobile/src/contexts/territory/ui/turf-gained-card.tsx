@@ -1,6 +1,6 @@
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
-import { TIER_COLOR } from '@/constants/colors';
+import { FONT_FAMILY, TIER_COLOR } from '@/constants/colors';
 import { Card } from '@/ui-kit/components';
 import { formatArea } from '@/ui-kit/format';
 import { usePalette } from '@/ui-kit/theme';
@@ -31,6 +31,6 @@ export function TurfGainedCard({ claim }: { claim: ClaimView | null }) {
 
 const s = StyleSheet.create({
   h: { fontSize: 16, fontWeight: '800', marginBottom: 6 },
-  big: { fontSize: 22, fontWeight: '800' },
+  big: { fontSize: 22, fontFamily: FONT_FAMILY.numeric, fontVariant: ['tabular-nums'] },
   row: { flexDirection: 'row', gap: 8, alignItems: 'center' },
 });

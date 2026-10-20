@@ -1,0 +1,32 @@
+<!--
+  App Store / Google Play screenshot: headline above a phone showing a real app screen. Rendered by
+  apps/mobile/tools/brand/render-assets.mjs at each store size; the {{…}} slots are filled there.
+  Colours are brand tokens (packages/brand/src/colors.ts); the brand test checks they stay in sync.
+  Replace the screen with a full-resolution simulator screenshot before submitting.
+-->
+<style>
+  @font-face { font-family: 'ArchivoExpanded-Black'; src: url({{FONT_DISPLAY}}) format('woff2'); }
+  .frame {
+    position: relative; overflow: hidden; width: {{W}}px; height: {{H}}px; box-sizing: border-box;
+    background: radial-gradient(90% 55% at 50% 70%, #2A1238 0%, #0B0D12 72%);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, sans-serif; color: #EEF1F7;
+    --u: calc({{W}}px / 100);
+  }
+  .copy { position: absolute; left: calc(var(--u) * 8); right: calc(var(--u) * 8); top: calc(var(--u) * 11); text-align: center; }
+  .headline { margin: 0; font-family: 'ArchivoExpanded-Black', sans-serif; font-size: calc(var(--u) * 8.4); line-height: 1.06; letter-spacing: calc(var(--u) * -0.2); color: #FFF3C4; }
+  .headline em { font-style: normal; background: linear-gradient(45deg, #F72FA8, #FFB02E 70%, #FFF3C4); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .sub { margin: calc(var(--u) * 3.6) auto 0; font-size: calc(var(--u) * 3.6); line-height: 1.35; color: #9AA3B5; max-width: calc(var(--u) * 76); }
+  .phone {
+    position: absolute; left: 50%; transform: translateX(-50%); top: calc({{H}}px * 0.27); width: calc(var(--u) * 74);
+    border-radius: calc(var(--u) * 9); overflow: hidden; border: calc(var(--u) * 2) solid #151924;
+    box-shadow: 0 0 calc(var(--u) * 24) rgba(247, 47, 168, 0.32), 0 calc(var(--u) * 6) calc(var(--u) * 16) rgba(0, 0, 0, 0.6);
+  }
+  .phone img { display: block; width: 100%; }
+</style>
+<div class="frame">
+  <div class="copy">
+    <p class="headline">{{HEADLINE}}</p>
+    <p class="sub">{{SUB}}</p>
+  </div>
+  <div class="phone"><img src="{{SCREEN}}" alt="" /></div>
+</div>

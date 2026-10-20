@@ -1,12 +1,11 @@
+import type { CellId, CellRow, Claim, TerritoryRepository } from '@cityturfer/core/territory/ports';
+
 import { insertMany } from '@/platform/batch';
 import type { Database } from '@/platform/database';
 import { appendToOutbox } from '@/platform/outbox';
 import type { ActivityType, BoundingBox } from '@/shared-kernel';
 
 import type { TurfReleased } from '../contract';
-import type { CellId } from '../domain/cell-grid';
-import type { Claim } from '../domain/claim';
-import type { CellRow, TerritoryRepository } from '../domain/territory-repository';
 
 type Row = { cell: string; lat: number; lon: number; walk: number; run: number; cycle: number; first_at: number };
 const toCellRow = (r: Row): CellRow => ({

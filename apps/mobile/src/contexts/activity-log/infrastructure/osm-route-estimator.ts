@@ -1,6 +1,6 @@
-import type { ActivityType, GeoPoint } from '@/shared-kernel';
+import { type RouteEstimator, RouterRateLimited, RouterUnreachable } from '@cityturfer/core/activity-log';
 
-import { type RouteEstimator, RouterRateLimited, RouterUnreachable } from '../application/use-cases';
+import type { ActivityType, GeoPoint } from '@/shared-kernel';
 
 /**
  * FOSSGIS OpenStreetMap routing (OSRM). Receives only the two endpoints of a

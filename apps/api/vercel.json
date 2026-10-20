@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["fra1"],
+  "buildCommand": "pnpm run build",
+  "outputDirectory": "dist",
+  "ignoreCommand": "npx turbo-ignore @cityturfer/api --fallback=HEAD^1"
+}

@@ -1,10 +1,12 @@
+import { NAME, SPACE, TAGLINE } from '@cityturfer/brand';
 import * as Location from 'expo-location';
 import * as Updates from 'expo-updates';
 import { useRef, useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
-import { ACCENT, TYPE_COLOR } from '@/constants/colors';
+import { ACCENT } from '@/constants/colors';
 import { useGapEstimationSetting } from '@/contexts/activity-log/ui/hooks';
+import { CloudBackupCard } from '@/contexts/cloud-backup/ui/cloud-backup-card';
 import { AppleHealthCard } from '@/contexts/health-sync/ui/apple-health-card';
 import { removeDemoHistory, seedDemoHistory } from '@/dev/demo-history';
 import { seedHealthWorkouts } from '@/dev/health-seed';
@@ -97,7 +99,7 @@ export default function InfoScreen() {
   };
 
   return (
-    <ScrollView style={{ backgroundColor: p.bg }} contentContainerStyle={{ padding: 16, gap: 14 }}>
+    <ScrollView style={{ backgroundColor: p.bg }} contentContainerStyle={{ padding: SPACE.lg, gap: 14 }}>
       <Card style={{ gap: 8 }}>
         <Text style={[s.h2, { color: p.text }]}>App version</Text>
         <Pressable testID='app-version-press' accessibilityRole='text' onLongPress={onVersionLongPress}>
@@ -121,8 +123,9 @@ export default function InfoScreen() {
       <Card style={{ gap: 8 }}>
         <Text style={[s.h2, { color: p.text }]}>Your data</Text>
         <Text style={{ color: p.muted }}>
-          Activities and turf are stored only on this phone. When GPS drops out, just the two ends of the gap are sent
-          to the OpenStreetMap router to estimate the street route — never your whole track.
+          Activities and turf live on this phone; they reach our server only if you turn on Cloud backup below. When GPS
+          drops out, just the two ends of the gap are sent to the OpenStreetMap router to estimate the street route —
+          never your whole track.
         </Text>
         <View style={s.row}>
           <Text style={[s.label, { color: p.text }]}>Estimate GPS gaps along streets</Text>
@@ -142,6 +145,7 @@ export default function InfoScreen() {
         </Text>
       </Card>
       <AppleHealthCard />
+      <CloudBackupCard />
       {showDevTools && (
         <Card style={{ gap: 10 }}>
           <Text style={[s.h2, { color: p.text }]}>Developer tools</Text>
@@ -151,7 +155,8 @@ export default function InfoScreen() {
           <Button
             testID='seed-demo'
             label={seeding ?? 'Seed demo history'}
-            color={TYPE_COLOR.cycle}
+            color={p.border}
+            textColor={p.text}
             onPress={seed}
             busy={!!seeding}
           />
@@ -175,9 +180,7 @@ export default function InfoScreen() {
           />
         </Card>
       )}
-      <Text style={{ color: p.muted, textAlign: 'center', fontSize: 12 }}>
-        CityTurfer · Surf your city. Own your streets. · proof of concept
-      </Text>
+      <Text style={{ color: p.muted, textAlign: 'center', fontSize: 12 }}>{`${NAME} · ${TAGLINE}`}</Text>
     </ScrollView>
   );
 }
