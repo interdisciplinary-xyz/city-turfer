@@ -39,7 +39,9 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
   showcase (hero, APK download, waitlist): no backend, cookies or third-party scripts; the waitlist
   form posts emails straight to Brevo (double opt-in, personal data). Languages via `next-intl`
   (`/en`, `/pl`; copy in `apps/web/messages/*.json`, no CMS)
-- **Storage**: `expo-sqlite`, local-first; the phone stays the source of truth
+- **Storage**: `expo-sqlite`, local-first; the phone stays the source of truth. Optional one-way
+  cloud backup to `apps/api` (`apps/mobile/src/contexts/cloud-backup`), only after the user's
+  consent (Info › Cloud backup); device token in the secure store
 - **API** (planned, v0.8.0): `apps/api`, Hono on Vercel (`fra1`), routes declared with zod +
   `@hono/zod-openapi` into a generated OpenAPI 3.1 spec (`apps/api/openapi.json`), Swagger UI at
   https://cityturfer.local/swagger. Sync-first contract (versions, If-Match, tombstones, one changes
@@ -78,6 +80,8 @@ apps/mobile/                         the Expo app (package @cityturfer/mobile); 
     infrastructure/ ui/ index.ts contract.ts (shims)
   src/contexts/health-sync/          Apple Health import/export (ACL: "workout" stays here), links + anchor
     domain/ application/ infrastructure/ ui/ index.ts contract.ts
+  src/contexts/cloud-backup/         opt-in one-way backup to apps/api: consent, queue (migration v8), uploads
+    domain/ application/ infrastructure/ ui/ index.ts
   src/contexts/achievements/         cards + onboarding dismissal flag; the pure evaluation is in core
     infrastructure/ ui/ index.ts (shim)
   src/platform/                      SQLite, migrations, outbox + EventDispatcher, one-off jobs, diagnostics (no coordinates)
@@ -130,8 +134,9 @@ docs/  .github/  .husky/  .claude/   at the repo root
 - Activity types are exactly `walk | run | cycle`; per-type tuning lives in the `TrackingProfile`
   value object (Recording domain).
 - Location data is personal data: no analytics on coordinates, no logging raw coordinates in
-  production builds. Apple Health data likewise: never logged, sent or analysed; HealthKit only in
-  the foreground.
+  production builds. Apple Health data likewise: never logged or analysed; it reaches our API only
+  as imported Activities, and only when the user turns on "Include Apple Health workouts" in cloud
+  backup. HealthKit only in the foreground.
 - Never claim background tracking works because tests pass. It needs a dev build on a device or
   simulator with simulated movement (see the `mobile-testing` skill).
 
