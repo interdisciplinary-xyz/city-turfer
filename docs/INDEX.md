@@ -111,6 +111,8 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`sessions/v0.7.0.md`](sessions/v0.7.0.md): Session log v0.7.0 — v0.6.0 released; Home City and
   the city picker (catalogue of 38 cities, migration 7), Turf and Record maps open on the chosen
   city; JS-only, ships over the air
+- ✅ [`sessions/v0.8.0.md`](sessions/v0.8.0.md): Session log v0.8.0 — API skeleton with the whole v1
+  contract in Swagger (#89,
 
 ## Decision records
 
