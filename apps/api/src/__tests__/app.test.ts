@@ -7,7 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../app';
 import { defaultDeps, type RequestLogEntry, silentLog } from '../deps';
 import { API_VERSION, OPENAPI_CONFIG } from '../spec';
-import { backupApp, TOKENS } from './support';
+import { backupApp, closeSharedDb, TOKENS } from './support';
 
 /** Spec and planned routes: no database, the placeholder auth (any bearer token, never verified). */
 const app = createApp(defaultDeps({ log: silentLog }));
@@ -38,6 +38,7 @@ beforeAll(async () => {
 });
 afterAll(async () => {
   await live.close();
+  await closeSharedDb();
 });
 const METHODS = ['get', 'put', 'post', 'patch', 'delete'] as const;
 

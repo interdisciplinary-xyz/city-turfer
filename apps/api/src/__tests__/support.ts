@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
 
+import { sql } from 'drizzle-orm';
+
 import { createApp } from '../app';
 import { deviceTokenAuth, parseApiTokens } from '../auth/device-tokens';
 import { createPgliteDb } from '../db/pglite';
@@ -16,9 +18,38 @@ export const API_TOKENS = JSON.stringify({
   [sha256(TOKENS.other)]: 'other',
 });
 
-/** The app on a fresh, migrated in-memory Postgres (PGlite), with a controllable clock. */
+/**
+ * One migrated in-memory Postgres (PGlite) per test file: starting PGlite takes seconds (over 10 s
+ * on CI runners), emptying its tables takes milliseconds. Vitest isolates modules per file, so
+ * files never share it. Close it with `closeSharedDb()` in the file's `afterAll`.
+ */
+let shared: ReturnType<typeof createPgliteDb> | null = null;
+
+export async function closeSharedDb(): Promise<void> {
+  if (shared) {
+    const { close } = await shared;
+    shared = null;
+    await close();
+  }
+}
+
+/** Empties every table of the public schema and restarts its sequences (the change feed's too). */
+async function emptyTables(db: Awaited<ReturnType<typeof createPgliteDb>>['db']): Promise<void> {
+  const result = await db.execute(sql`SELECT tablename FROM pg_tables WHERE schemaname = 'public'`);
+  const rows = (result as unknown as { rows: { tablename: string }[] }).rows;
+  if (rows.length > 0) {
+    const list = rows.map((r) => `"${r.tablename}"`).join(', ');
+    await db.execute(sql.raw(`TRUNCATE ${list} RESTART IDENTITY CASCADE`));
+  }
+}
+
+/** The app on an empty, migrated in-memory Postgres (PGlite), with a controllable clock. */
 export async function backupApp() {
-  const { db, close } = await createPgliteDb();
+  shared ??= createPgliteDb();
+  const { db } = await shared;
+  await emptyTables(db);
+  // The shared database outlives each test; `closeSharedDb()` closes it once per file.
+  const close = async () => undefined;
   const store = new DrizzleBackupStore(db);
   const clock = { t: Date.parse('2026-10-20T08:00:00Z'), now: () => clock.t };
   const app = createApp(

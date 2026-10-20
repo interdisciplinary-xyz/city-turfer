@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createApp } from '../app';
 import { trackHashOf } from '../backup/hashing';
 import { defaultDeps, silentLog } from '../deps';
-import { backupApp, TOKENS, track, upload } from './support';
+import { backupApp, closeSharedDb, TOKENS, track, upload } from './support';
 
 type Harness = Awaited<ReturnType<typeof backupApp>>;
 let h: Harness;
@@ -17,6 +17,7 @@ beforeEach(async () => {
 afterEach(async () => {
   await h.close();
 });
+afterAll(closeSharedDb);
 
 const grant = (token: string = TOKENS.admin, purpose = 'cloud-sync') =>
   h.call('PUT', `/v1/me/consents/${purpose}`, { token, body: { granted: true, policyVersion: '2026-10' } });
