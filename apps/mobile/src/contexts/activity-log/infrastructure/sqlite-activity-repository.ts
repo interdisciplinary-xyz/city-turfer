@@ -1,12 +1,17 @@
+import {
+  Activity,
+  type ActivityRepository,
+  type ActivityState,
+  estimatedTotals,
+  type GapRoute,
+} from '@cityturfer/core/activity-log/ports';
+
 import { insertMany } from '@/platform/batch';
 import type { Database } from '@/platform/database';
 import { appendToOutbox } from '@/platform/outbox';
 import type { TrackPoint } from '@/shared-kernel';
 
 import type { ActivityDistanceEstimated, ActivityListItem } from '../contract';
-import { Activity, type ActivityState } from '../domain/activity';
-import type { ActivityRepository } from '../domain/activity-repository';
-import { estimatedTotals, type GapRoute } from '../domain/gap-route';
 
 type Row = {
   id: string;

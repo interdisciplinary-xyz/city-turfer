@@ -1,8 +1,9 @@
+import { Activity } from '@cityturfer/core/activity-log/ports';
+
 import { migrate } from '@/platform/migrations';
 import { trackFromPoints, type TrackPoint } from '@/shared-kernel';
 import { openNodeDatabase } from '@/test-support/node-database';
 
-import { Activity } from '../../domain/activity';
 import { SqliteActivityRepository } from '../sqlite-activity-repository';
 
 const T0 = Date.parse('2026-01-01T07:00:00Z');

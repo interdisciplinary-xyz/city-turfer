@@ -8,6 +8,8 @@
     "./shared-kernel": "./src/shared-kernel/index.ts",
     "./territory": "./src/contexts/territory/index.ts",
     "./territory/ports": "./src/contexts/territory/ports.ts",
+    "./activity-log": "./src/contexts/activity-log/index.ts",
+    "./activity-log/ports": "./src/contexts/activity-log/ports.ts",
     "./h3": "./src/h3/index.ts",
     "./package.json": "./package.json"
   },
