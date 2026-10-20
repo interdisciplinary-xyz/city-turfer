@@ -5,6 +5,7 @@ import { Alert, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View 
 
 import { ACCENT, TYPE_COLOR } from '@/constants/colors';
 import { useGapEstimationSetting } from '@/contexts/activity-log/ui/hooks';
+import { CloudBackupCard } from '@/contexts/cloud-backup/ui/cloud-backup-card';
 import { AppleHealthCard } from '@/contexts/health-sync/ui/apple-health-card';
 import { removeDemoHistory, seedDemoHistory } from '@/dev/demo-history';
 import { seedHealthWorkouts } from '@/dev/health-seed';
@@ -121,8 +122,9 @@ export default function InfoScreen() {
       <Card style={{ gap: 8 }}>
         <Text style={[s.h2, { color: p.text }]}>Your data</Text>
         <Text style={{ color: p.muted }}>
-          Activities and turf are stored only on this phone. When GPS drops out, just the two ends of the gap are sent
-          to the OpenStreetMap router to estimate the street route — never your whole track.
+          Activities and turf live on this phone; they reach our server only if you turn on Cloud backup below. When GPS
+          drops out, just the two ends of the gap are sent to the OpenStreetMap router to estimate the street route —
+          never your whole track.
         </Text>
         <View style={s.row}>
           <Text style={[s.label, { color: p.text }]}>Estimate GPS gaps along streets</Text>
@@ -142,6 +144,7 @@ export default function InfoScreen() {
         </Text>
       </Card>
       <AppleHealthCard />
+      <CloudBackupCard />
       {showDevTools && (
         <Card style={{ gap: 10 }}>
           <Text style={[s.h2, { color: p.text }]}>Developer tools</Text>
