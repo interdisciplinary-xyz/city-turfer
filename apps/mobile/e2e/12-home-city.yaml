@@ -29,8 +29,16 @@ tags: [turf]
 - extendedWaitUntil: { notVisible: { id: 'city-search' }, timeout: 5000 }
 - assertVisible: 'City: Gdańsk'
 - takeScreenshot: 12-record-home-city
-# Clear the Home City again.
+# Clear the Home City again. Right after a choice the map is still flying to the city and the
+# picker's screen is still closing: a tap then can be dropped, so tap again if the picker isn't up.
+- waitForAnimationToEnd
 - tapOn: { id: 'record-city' }
+- runFlow:
+    when: { notVisible: { id: 'city-search' } }
+    commands:
+      - waitForAnimationToEnd
+      - tapOn: { id: 'record-city' }
+- extendedWaitUntil: { visible: { id: 'city-clear' }, timeout: 5000 }
 - tapOn: { id: 'city-clear' }
 - extendedWaitUntil: { notVisible: { id: 'city-search' }, timeout: 5000 }
 - assertVisible: { id: 'record-city', text: 'Choose your city' }
