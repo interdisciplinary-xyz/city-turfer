@@ -21,18 +21,35 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
   Import of walks, hikes, runs, rides with routes; export of recordings. Design:
   `docs/decisions/apple-health-2026-10-18.md`
 - **Design system**: tokens in `@cityturfer/brand` (`packages/brand/src/tokens.ts`; the web gets
-  them as CSS variables from `cssVariables()`), React Native components in `@cityturfer/ui`
-  (`packages/ui`, peer dependencies only, no native code), one Storybook in `apps/storybook`
-  (Storybook 10 + react-native-web, port 6006; static build, Vercel project pending). Design:
-  `docs/decisions/design-system-2026-10-19.md`
-- **Spatial index**: `h3-js` (Turf Cells = H3 res 11), behind the Territory `CellGrid` port
+  them as CSS variables from `cssVariables()`; brand typeface Archivo, bundled in the app via the
+  `expo-font` plugin; brand foundations in `docs/decisions/brand-foundations-2026-10-20.md`), React
+  Native components in `@cityturfer/ui` (`packages/ui`, peer dependencies only, no native code), one
+  Storybook in `apps/storybook` (Storybook 10 + react-native-web, port 6006; static build, Vercel
+  project pending). Design: `docs/decisions/design-system-2026-10-19.md`
+- **Spatial index**: `h3-js` (Turf Cells = H3 res 11), behind the Territory `CellGrid` port; the
+  adapter is `@cityturfer/core/h3`, the only place h3-js is declared (pinned exactly, one copy)
+- **Core**: `@cityturfer/core` (`packages/core`) holds the shared kernel, core constants and the
+  domain + application layers of Territory, Activity Log, Achievements and Identity, so the phone
+  and the API run the same rules. TS source, no React/Expo/native code; the app's old import paths
+  are re-export shims. Recording and Health Sync stay in the app (device only)
 - **Repo tooling**: pnpm (`node-linker=hoisted`, version pinned in `packageManager`) + Turborepo
   (`turbo.json`, `pnpm-workspace.yaml`): workspaces apps/* and packages/*; design in
   `docs/decisions/monorepo-turborepo-2026-10-18.md`
 - **Web**: Next.js 16 (App Router, `output: 'export'`) in `apps/web`, hosted on Vercel; static
-  showcase only (one hero section): no forms, cookies or third-party scripts. Languages via
-  `next-intl` (`/en`, `/pl`; copy in `apps/web/messages/*.json`, no CMS)
-- **Storage**: `expo-sqlite`, local-first; no backend in v1
+  showcase (hero, APK download, waitlist): no backend, cookies or third-party scripts; the waitlist
+  form posts emails straight to Brevo (double opt-in, personal data). Languages via `next-intl`
+  (`/en`, `/pl`; copy in `apps/web/messages/*.json`, no CMS)
+- **Storage**: `expo-sqlite`, local-first; the phone stays the source of truth. Optional one-way
+  cloud backup to `apps/api` (`apps/mobile/src/contexts/cloud-backup`), only after the user's
+  consent (Info › Cloud backup); device token in the secure store
+- **API** (v0.8.0, one-way backup live): `apps/api`, Hono on Vercel (`fra1`, project
+  `city-turfer-api`, esbuild bundle), routes declared with zod + `@hono/zod-openapi` into a
+  generated OpenAPI 3.1 spec (`apps/api/openapi.json`), Swagger UI at
+  https://cityturfer.local/swagger. Sync-first contract (versions, If-Match, tombstones, one changes
+  feed); Neon Postgres + Drizzle (PGlite in tests), device tokens until Better Auth. Design:
+  `docs/decisions/api-sync-2026-10-20.md` (contract),
+  `docs/decisions/api-device-tokens-2026-10-20.md` (backup, tokens),
+  `docs/decisions/api-2026-10-20.md` (stack); runbook `docs/operations/api-deploy.md`
 - **State**: SQLite is the source of truth; live-session UI state is an in-memory `LiveSessionStore`
   (`apps/mobile/src/contexts/recording/infrastructure/live-session-store.ts`, read via
   `useSyncExternalStore`). No zustand.
@@ -51,23 +68,25 @@ Activity…) from §2 of the plan in code and UI.
 apps/mobile/                         the Expo app (package @cityturfer/mobile); its paths below are relative to it
   index.ts                           entry: imports the background task first, then expo-router/entry
   src/app/                           expo-router screens (SDK 57 convention) — thin, compose context ui/ components
-  src/constants/                     shared constants (activity types, colours, map styles, tracking thresholds); imports nothing
+  src/constants/                     app constants (labels, colours, map styles) + re-exports of core constants; leaf
   src/ui-kit/                        theme hook, formatting, shared components, AppContext (auth + container)
   src/wiring.ts                      platform-independent wiring of all contexts (used by app + tests)
   src/dev/                           dev-only tools (demo history seeder)
-  src/shared-kernel/                 pure VOs + TrackAnalyzer (distance, splits, elevation, simplify)
-  src/contexts/identity/             AuthGateway port + MockAuthGateway (PoC), User
-    domain/ application/ infrastructure/ index.ts          (no ui/ layer)
+  src/shared-kernel/index.ts         re-export shim of @cityturfer/core/shared-kernel
+  src/contexts/identity/             MockAuthGateway (PoC), session stores; domain + use cases in core
+    infrastructure/ index.ts (shim)                        (no ui/ layer)
   src/contexts/recording/            CORE: RecordingSession aggregate, FixFilter, AutoPausePolicy, background task
     domain/ application/ infrastructure/ ui/ index.ts
-  src/contexts/activity-log/         Activity aggregate, history, detail, demo import, street-routed gap estimates
-    domain/ application/ infrastructure/ ui/ index.ts contract.ts
-  src/contexts/territory/            CORE: Claim aggregate, turf strength, Territory projection, Turf Map, Home City
-    domain/ application/ infrastructure/ ui/ index.ts contract.ts
+  src/contexts/activity-log/         history, detail, SQLite repo, OSM gap router; domain + use cases in core
+    infrastructure/ ui/ index.ts contract.ts (shims)
+  src/contexts/territory/            Turf Map, SQLite projection, Home City repo; domain + use cases in core
+    infrastructure/ ui/ index.ts contract.ts (shims)
   src/contexts/health-sync/          Apple Health import/export (ACL: "workout" stays here), links + anchor
     domain/ application/ infrastructure/ ui/ index.ts contract.ts
-  src/contexts/achievements/         pure evaluation of achievements and the onboarding checklist
-    domain/ infrastructure/ ui/ index.ts                  (infrastructure: onboarding dismissal flag)
+  src/contexts/cloud-backup/         opt-in one-way backup to apps/api: consent, queue (migration v8), uploads
+    domain/ application/ infrastructure/ ui/ index.ts
+  src/contexts/achievements/         cards + onboarding dismissal flag; the pure evaluation is in core
+    infrastructure/ ui/ index.ts (shim)
   src/platform/                      SQLite, migrations, outbox + EventDispatcher, one-off jobs, diagnostics (no coordinates)
   src/composition-root.ts            lazy, React-free wiring (used by UI and headless task)
   modules/background-session/        native iOS module (CLBackgroundActivitySession + liveUpdates)
@@ -76,6 +95,9 @@ apps/mobile/                         the Expo app (package @cityturfer/mobile); 
   tools/                             mobile dev tools (GPX generator, stats oracle, simulator GPS playback, turf preview)
 apps/web/                            Next.js landing page (@cityturfer/web): static export (out/), hosted on Vercel
 apps/storybook/                      @cityturfer/storybook: one Storybook for @cityturfer/ui (react-native-web) and apps/web pieces
+apps/api/                            @cityturfer/api: HTTP API (Hono on Vercel), /v1 routes over the app's use cases, OpenAPI + Swagger
+packages/core/                       @cityturfer/core: shared kernel, core constants, domain + application of territory,
+                                     activity-log, achievements, identity (src/contexts/<ctx>/{index,ports}.ts); H3 adapter in src/h3
 packages/brand/                      @cityturfer/brand: colour + design tokens (turf strength ramp, spacing, type, themes, cssVariables), copy, logo SVGs; plain TS
 packages/ui/                         @cityturfer/ui: React Native design-system components (Button, Card, Stat, Badge, ActivityRow, TurfLegend)
 packages/config/                     @cityturfer/config: Prettier and tsconfig bases
@@ -89,7 +111,10 @@ docs/  .github/  .husky/  .claude/   at the repo root
 
 - Dependency rule: `domain/` and `shared-kernel/` import nothing from react, react-native, expo-*,
   h3-js, MapLibre or infrastructure. Contexts talk only via each other's `index.ts` and published
-  events. Enforced by dependency-cruiser in `pnpm test`.
+  events. `packages/core` imports no framework, native module, UI package or app at all; only its
+  `packages/core/src/h3/` loads h3-js. The app uses core through its entries only
+  (`@cityturfer/core/<ctx>`; `/<ctx>/ports` just for that context's own adapters). Enforced by
+  dependency-cruiser in each workspace's `arch` script (`pnpm test`).
 - `TaskManager.defineTask` lives at module top level in
   `apps/mobile/src/contexts/recording/infrastructure/background-task.ts`, imported first by the
   app's `index.ts` entry. It is a driving adapter: translate Fixes via the ACL and call the
@@ -98,7 +123,7 @@ docs/  .github/  .husky/  .claude/   at the repo root
   idempotent.
 - Shared-kernel maths is pure, unit-tested, SI units (metres, seconds, m/s); convert only in UI
   formatting. Numbers must match `apps/mobile/tools/lib/geo.mjs`.
-- Turf strength formula and defaults are identical in `apps/mobile/src/contexts/territory/domain`
+- Turf strength formula and defaults are identical in `packages/core/src/contexts/territory/domain`
   and `apps/mobile/tools/turf-preview.mjs`, pinned by
   `apps/mobile/tools/fixtures/turf-vectors.json`.
 - `@cityturfer/ui` stays pure React Native with peer dependencies only (no Expo, MapLibre, HealthKit
@@ -112,8 +137,9 @@ docs/  .github/  .husky/  .claude/   at the repo root
 - Activity types are exactly `walk | run | cycle`; per-type tuning lives in the `TrackingProfile`
   value object (Recording domain).
 - Location data is personal data: no analytics on coordinates, no logging raw coordinates in
-  production builds. Apple Health data likewise: never logged, sent or analysed; HealthKit only in
-  the foreground.
+  production builds. Apple Health data likewise: never logged or analysed; it reaches our API only
+  as imported Activities, and only when the user turns on "Include Apple Health workouts" in cloud
+  backup. HealthKit only in the foreground.
 - Never claim background tracking works because tests pass. It needs a dev build on a device or
   simulator with simulated movement (see the `mobile-testing` skill).
 
@@ -127,8 +153,14 @@ pnpm run typecheck               # tsc in every workspace (turbo)
 pnpm test                        # dependency rules (depcruise) + Jest + tool tests (turbo)
 pnpm run build                   # web static export (apps/web/out) via turbo
 pnpm run web:dev                 # landing page at https://cityturfer.local (portless + server.mjs, dev toolbar)
+pnpm --filter @cityturfer/api dev                       # API on :8787 (PGlite + token dev-token without env)
+pnpm --filter @cityturfer/api run db:generate           # SQL migration from apps/api/src/db/schema.ts (commit apps/api/drizzle/)
+DATABASE_URL=… pnpm --filter @cityturfer/api run db:migrate   # apply migrations to Neon (docs/operations/api-deploy.md)
+pnpm --filter @cityturfer/api run token:new -- <userId>       # device token + API_TOKENS entry (stopgap auth)
 pnpm --filter @cityturfer/storybook dev     # Storybook at http://localhost:6006 (app components + website pieces)
 pnpm --filter @cityturfer/storybook build   # static Storybook in apps/storybook/storybook-static
+pnpm --filter @cityturfer/api dev           # API on http://localhost:8787 (Swagger at /swagger); web:dev proxies /api/* to it
+pnpm --filter @cityturfer/api run openapi   # regenerate apps/api/openapi.json after changing routes (a test checks it)
 #   …also served by `pnpm run web:dev` at https://cityturfer.local/storybook (rebuild to refresh)
 pnpm -C apps/mobile run android:build     # Android APK on EAS (docs/operations/android-release.md)
 pnpm -C apps/mobile exec expo install <pkg>                     # add a native dependency to the app
@@ -157,11 +189,22 @@ node apps/mobile/tools/turf-preview.mjs apps/mobile/tools/fixtures/history --out
 
 - Skills (`.claude/skills/`): `brand-system`, `ddd-architecture`, `turf-territory`, `scaffold-app`,
   `add-feature`, `gps-tracking`, `route-metrics`, `route-storage`, `mobile-testing`, `apple-health`,
-  `web-motion`, `design-system`.
+  `web-motion`, `design-system`, `api-design`, `product-knowledge` (what the product is; docs in
+  `docs/product/`), `product-discovery`, `product-strategy`, `product-launch`, `verify-change`
+  (prove a change before calling it done), `ship-branch` (commit, push, PR per the branch flow),
+  `ai-harness` (this setup).
 - Agents (`.claude/agents/`): `rn-architect`, `location-engineer`, `mobile-ui-engineer`,
   `mobile-test-engineer`, `mobile-reviewer`, `brand-designer`, `health-engineer` (Apple Health),
-  `web-engineer` (apps/web).
+  `web-engineer` (apps/web), `api-engineer` (back end: apps/api, server data, sync),
+  `product-manager` (the Product Owner persona; talk to it as the main session with the agent flag),
+  `harness-engineer` (skills, agents, hooks, audits).
 - Commands (`.claude/commands/`): `audit-docs` (`/audit-docs`).
+- Hooks (`.claude/settings.json`, rules in `tools/harness/hook-rules.mjs`): deny edits that break
+  the dependency rule, touch `CHANGELOG.md`, secret files or generated native folders; deny push to
+  main, force-push to scope/release, hand-made tags, `--no-verify`, wrong PR title/base; ask before
+  merges and copying device data; flag unguarded logs and hard-coded brand hex after edits; Prettier
+  on save. A hook block is a rule doing its job: fix the cause, never route around it.
+- `pnpm run audit:harness` (in `ci:quality`) checks the harness still matches the code.
 
 ## Docs
 

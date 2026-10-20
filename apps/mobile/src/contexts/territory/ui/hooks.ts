@@ -1,14 +1,20 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { ACTIVITY_TYPES } from '@/constants/activity';
 import { type ActivityType, type BoundingBox } from '@/shared-kernel';
 import { useApp, useContainer } from '@/ui-kit/app-context';
 
 import type { CityView, ClaimView, TurfCellView, TurfSummaryView } from '../contract';
+import { turfOverlayPreference } from '../infrastructure/turf-overlay-preference';
+import { overlayArea, overlayStillCovers } from './turf-overlay-area';
+import type { OverlayView } from './turf-overlay-area.constants';
 
 /** Screens showing the Home City, told to re-read it right after a choice (not via the outbox, which
  * can be backing off behind an earlier event). */
 const homeCityListeners = new Set<() => void>();
+
+/** One empty list, so a hidden overlay hands the same reference to memoised layers. */
+const NO_CELLS: TurfCellView[] = [];
 
 /**
  * The Home City: `undefined` while loading, `null` if none is chosen (or it can't be read: maps
@@ -90,6 +96,59 @@ export function useTurfViewport(
     };
   }, [c, key, dataVersion, types.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
   return cells;
+}
+
+/**
+ * The Turfer's turf as an overlay for another map (the Record map), with a remembered on/off
+ * switch. `shown` is `undefined` while the choice loads. Feed the map's view to `onViewChange`
+ * (stable; cheap to call on every camera move): turf is loaded for an area around the view
+ * (`overlayArea`) and only re-read once the view leaves it, so a map following the Turfer neither
+ * queries nor re-renders on every location update.
+ */
+export function useTurfOverlay(): {
+  shown: boolean | undefined;
+  setShown: (shown: boolean) => void;
+  cells: TurfCellView[];
+  onViewChange: (view: OverlayView) => void;
+} {
+  const c = useContainer();
+  const [shown, setShownState] = useState<boolean | undefined>(undefined);
+  useEffect(() => {
+    let live = true;
+    setShownState(undefined); // another Turfer: don't show the previous one's choice
+    void turfOverlayPreference.isShown(c.userId).then((v) => live && setShownState(v));
+    return () => {
+      live = false;
+    };
+  }, [c]);
+  const setShown = useCallback(
+    (v: boolean) => {
+      setShownState(v);
+      void turfOverlayPreference.setShown(c.userId, v);
+    },
+    [c]
+  );
+
+  const [area, setArea] = useState<OverlayView | null>(null);
+  const view = useRef<OverlayView | null>(null);
+  const showing = useRef(false);
+  showing.current = shown === true;
+  const follow = useCallback(() => {
+    const v = view.current;
+    if (showing.current && v) {
+      setArea((a) => (overlayStillCovers(a, v) ? a : overlayArea(v)));
+    }
+  }, []);
+  const onViewChange = useCallback(
+    (v: OverlayView) => {
+      view.current = v;
+      follow();
+    },
+    [follow]
+  );
+  useEffect(follow, [shown, follow]);
+  const cells = useTurfViewport(shown ? area : null);
+  return { shown, setShown, cells: shown ? cells : NO_CELLS, onViewChange };
 }
 
 export function useClaim(activityId: string): ClaimView | null {

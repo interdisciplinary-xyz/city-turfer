@@ -16,22 +16,31 @@ tags: [turf]
 - extendedWaitUntil: { notVisible: { id: 'city-search' }, timeout: 5000 }
 - tapOn: { id: 'tab-turf' }
 - assertVisible: { id: 'turf-city' }
-- assertVisible: '⌂ Kraków'
+# iOS exposes the chips' accessibility labels, not their text ("⌂ Kraków").
+- assertVisible: 'Show Kraków'
 - takeScreenshot: 12-turf-home-city
 # The Record tab shows the city at the top and changes it from there.
 - tapOn: { id: 'tab-record' }
-- assertVisible: '⌂ Kraków ▾'
+- assertVisible: 'City: Kraków'
 - tapOn: { id: 'record-city' }
 - tapOn: { id: 'city-search' }
 - inputText: 'gdansk'
 - tapOn: { id: 'city-pl-gdansk' }
 - extendedWaitUntil: { notVisible: { id: 'city-search' }, timeout: 5000 }
-- assertVisible: '⌂ Gdańsk ▾'
+- assertVisible: 'City: Gdańsk'
 - takeScreenshot: 12-record-home-city
-# Clear the Home City again.
+# Clear the Home City again. Right after a choice the map is still flying to the city and the
+# picker's screen is still closing: a tap then can be dropped, so tap again if the picker isn't up.
+- waitForAnimationToEnd
 - tapOn: { id: 'record-city' }
+- runFlow:
+    when: { notVisible: { id: 'city-search' } }
+    commands:
+      - waitForAnimationToEnd
+      - tapOn: { id: 'record-city' }
+- extendedWaitUntil: { visible: { id: 'city-clear' }, timeout: 5000 }
 - tapOn: { id: 'city-clear' }
 - extendedWaitUntil: { notVisible: { id: 'city-search' }, timeout: 5000 }
-- assertVisible: '⌂ Your city ▾'
+- assertVisible: { id: 'record-city', text: 'Choose your city' }
 - tapOn: { id: 'tab-turf' }
 - assertVisible: { id: 'turf-pick-city' }

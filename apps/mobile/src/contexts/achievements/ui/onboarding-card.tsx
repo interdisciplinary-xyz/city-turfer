@@ -1,10 +1,9 @@
+import type { OnboardingProgress, OnboardingStepId } from '@cityturfer/core/achievements';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { ACCENT } from '@/constants/colors';
+import { ACCENT, FONT_FAMILY, ON_ACCENT } from '@/constants/colors';
 import { Card } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
-
-import type { OnboardingProgress, OnboardingStepId } from '../domain/onboarding';
 
 /** Dashboard "Getting started" checklist. Each step opens the place where it gets done. */
 export function OnboardingCard({
@@ -25,7 +24,7 @@ export function OnboardingCard({
             <Text style={[s.title, { color: p.text }]}>Getting started</Text>
             <Text
               accessibilityLabel={`${progress.done} of ${progress.total} steps done`}
-              style={{ color: ACCENT, fontWeight: '800', fontVariant: ['tabular-nums'] }}
+              style={{ color: ACCENT, fontFamily: FONT_FAMILY.numeric, fontVariant: ['tabular-nums'] }}
             >
               {progress.done} of {progress.total}
             </Text>
@@ -85,5 +84,5 @@ const s = StyleSheet.create({
   fill: { height: 6, borderRadius: 3, backgroundColor: ACCENT },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 44 },
   check: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-  tick: { color: '#fff', fontWeight: '900', fontSize: 14 },
+  tick: { color: ON_ACCENT, fontWeight: '900', fontSize: 14 },
 });

@@ -1,7 +1,7 @@
 ---
 name: route-storage
 description:
-  TurfTrack's local-first persistence with expo-sqlite — schema for activities and track points,
+  CityTurfer's local-first persistence with expo-sqlite — schema for activities and track points,
   migrations, repository functions, write patterns from the background task, query performance for
   long routes, deletion, and GPX 1.1 export (planned, not built). Use when touching
   apps/mobile/src/platform/ (database, migrations, outbox) or a context's sqlite-*-repository.ts,
@@ -84,8 +84,8 @@ one.
 
 Typed functions only; screens never write SQL. Minimum set: `createActivity(type)`,
 `getActiveActivity()`, `appendPoints(activityId, points[])`, `setStatus(id, status)`,
-`bumpSegment(id)`, `finishActivity(id)` (recomputes summary with `apps/mobile/src/shared-kernel` and
-writes bbox + preview), `listActivities({ limit, before })` (keyset pagination on `started_at`),
+`bumpSegment(id)`, `finishActivity(id)` (recomputes summary with `packages/core/src/shared-kernel`
+and writes bbox + preview), `listActivities({ limit, before })` (keyset pagination on `started_at`),
 `getActivity(id)`, `getPoints(id)`, `renameActivity`, `deleteActivity(id)`.
 
 - `listActivities` must never select from `points`: the list reads only summary columns and
@@ -107,7 +107,9 @@ Round-trip test: export a fixture-backed activity, parse it with `parseGpx` from
 
 ## Privacy
 
-- Coordinates never leave the device except through an explicit user export or share.
+- Coordinates leave the device only through an explicit user export or share, or the opt-in cloud
+  backup (Info › Cloud backup: consent first, our EU API, device token;
+  `apps/mobile/src/contexts/cloud-backup`).
 - Offer "hide start/end": when sharing, trim the first and last 200 m. Apply it to exports only;
   stored data stays untouched.
 - "Delete all data" in Settings drops all rows and runs `VACUUM`.

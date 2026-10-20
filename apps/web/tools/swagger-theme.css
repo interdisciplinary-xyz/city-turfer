@@ -1,0 +1,821 @@
+/* CityTurfer skin for Swagger UI (dev only). No colour literals here: every colour is a variable
+   from @cityturfer/brand's cssVariables('dark'), which swagger-brand.mjs puts in :root when it
+   serves this file. Swagger's own stylesheet loads first; the `.swagger-ui` prefix wins. */
+
+:root {
+  color-scheme: dark;
+  --ct-ramp: linear-gradient(45deg, var(--ramp-stops));
+  --ct-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --ct-focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--glow);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-family-body);
+  font-size: 16px;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+a {
+  color: var(--glow);
+}
+
+/* The dev toolbar keeps its own look: its links are not page links. */
+.font-mono a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Header: mark + wordmark + "API", closed by a Ramp rule. */
+.ct-header {
+  border-bottom: 3px solid transparent;
+  border-image: var(--ct-ramp) 1;
+  background: var(--card);
+}
+.ct-header-inner {
+  max-width: 1460px;
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-xl);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+.ct-header h1 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  font-size: 1.25rem;
+  font-weight: var(--font-weight-heavy);
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.ct-mark {
+  display: block;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+}
+.ct-wordmark {
+  display: block;
+  height: 22px;
+  width: auto;
+}
+.ct-tagline {
+  margin: 0 0 0 auto;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.swagger-ui .topbar {
+  display: none;
+}
+
+/* ---- Swagger UI ------------------------------------------------------------------------ */
+.swagger-ui {
+  font-family: var(--font-family-body);
+  color: var(--text);
+}
+.swagger-ui .wrapper {
+  max-width: 1460px;
+  padding: 0 var(--space-xl);
+}
+.swagger-ui .info {
+  margin: var(--space-xxxl) 0 var(--space-xl);
+}
+.swagger-ui .info .title,
+.swagger-ui .info .title small,
+.swagger-ui .info h1,
+.swagger-ui .info h2,
+.swagger-ui .info h3,
+.swagger-ui .info h4,
+.swagger-ui .info h5,
+.swagger-ui .info li,
+.swagger-ui .info p,
+.swagger-ui .info table,
+.swagger-ui .info th,
+.swagger-ui .info td {
+  font-family: var(--font-family-body);
+  color: var(--text);
+}
+.swagger-ui .info .title {
+  font-weight: var(--font-weight-heavy);
+  letter-spacing: -0.02em;
+}
+.swagger-ui .info .title small {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.swagger-ui .info .title small.version-stamp {
+  background: var(--card);
+  border: 1px solid var(--glow);
+}
+.swagger-ui .info .title small.version-stamp pre {
+  color: var(--glow);
+}
+.swagger-ui .info .title small pre {
+  color: var(--muted);
+}
+.swagger-ui .info a,
+.swagger-ui .info .base-url,
+.swagger-ui a.nostyle,
+.swagger-ui .renderedMarkdown a {
+  color: var(--glow);
+}
+.swagger-ui .info .base-url {
+  color: var(--muted);
+}
+.swagger-ui .info code,
+.swagger-ui .renderedMarkdown code,
+.swagger-ui .markdown code {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--blazing);
+  font-family: var(--ct-mono);
+  padding: 1px 6px;
+}
+.swagger-ui .info table,
+.swagger-ui .markdown table {
+  border-collapse: collapse;
+}
+.swagger-ui .info table th,
+.swagger-ui .info table td,
+.swagger-ui .markdown table th,
+.swagger-ui .markdown table td {
+  border: 1px solid var(--border);
+  padding: var(--space-sm) var(--space-md);
+}
+.swagger-ui .info pre,
+.swagger-ui .markdown pre {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-md);
+  overflow-x: auto;
+}
+
+.swagger-ui .scheme-container {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  box-shadow: none;
+  margin: 0 0 var(--space-xl);
+  padding: var(--space-lg) 0;
+}
+.swagger-ui .scheme-container .schemes {
+  gap: var(--space-md);
+}
+
+/* Labels, plain text, headings. */
+.swagger-ui label,
+.swagger-ui .servers > label,
+.swagger-ui .servers > label select,
+.swagger-ui .opblock-tag,
+.swagger-ui .opblock-tag small,
+.swagger-ui .opblock .opblock-section-header h4,
+.swagger-ui .opblock .opblock-section-header label,
+.swagger-ui .opblock-description-wrapper,
+.swagger-ui .opblock-description-wrapper p,
+.swagger-ui .opblock-external-docs-wrapper,
+.swagger-ui .opblock-external-docs-wrapper p,
+.swagger-ui .opblock-title_normal,
+.swagger-ui .opblock-title_normal p,
+.swagger-ui .responses-inner h4,
+.swagger-ui .responses-inner h5,
+.swagger-ui .response-col_status,
+.swagger-ui .response-col_description,
+.swagger-ui .response-col_links,
+.swagger-ui table thead tr th,
+.swagger-ui table thead tr td,
+.swagger-ui .parameter__name,
+.swagger-ui .parameter__type,
+.swagger-ui .parameter__in,
+.swagger-ui .parameter__deprecated,
+.swagger-ui .parameters-col_description p,
+.swagger-ui .tab li,
+.swagger-ui .model,
+.swagger-ui .model-title,
+.swagger-ui section.models h4,
+.swagger-ui section.models h5,
+.swagger-ui .model-box,
+.swagger-ui .prop-type,
+.swagger-ui .prop-format,
+.swagger-ui .btn,
+.swagger-ui select,
+.swagger-ui input[type='text'],
+.swagger-ui input[type='email'],
+.swagger-ui input[type='password'],
+.swagger-ui input[type='search'],
+.swagger-ui textarea,
+.swagger-ui .dialog-ux .modal-ux-header h3,
+.swagger-ui .dialog-ux .modal-ux-content h4,
+.swagger-ui .dialog-ux .modal-ux-content p,
+.swagger-ui .auth-container h4,
+.swagger-ui .auth-container h6,
+.swagger-ui .auth-container .wrapper,
+.swagger-ui .markdown p,
+.swagger-ui .markdown li,
+.swagger-ui .renderedMarkdown p,
+.swagger-ui .renderedMarkdown li,
+.swagger-ui .responses-table .response-col_description__inner p,
+.swagger-ui .loading-container .loading::after {
+  font-family: var(--font-family-body);
+  color: var(--text);
+}
+.swagger-ui .parameter__type,
+.swagger-ui .parameter__in,
+.swagger-ui .prop-format,
+.swagger-ui .opblock-summary-description,
+.swagger-ui .opblock-tag small,
+.swagger-ui .response-col_links,
+.swagger-ui table thead tr th,
+.swagger-ui .opblock-section-header .opblock-title,
+.swagger-ui .model-title__text,
+.swagger-ui .renderedMarkdown em {
+  color: var(--muted);
+}
+.swagger-ui .parameter__name.required::after,
+.swagger-ui .parameter__name.required span,
+.swagger-ui table.parameters .parameter__name.required::after {
+  color: var(--danger);
+}
+.swagger-ui .required {
+  color: var(--danger);
+}
+.swagger-ui table thead tr th,
+.swagger-ui table thead tr td {
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+.swagger-ui table tbody tr td {
+  border-top: 1px solid var(--border);
+  color: var(--text);
+}
+.swagger-ui .parameter__name,
+.swagger-ui .parameter__type,
+.swagger-ui .opblock-summary-path,
+.swagger-ui .opblock-summary-path__deprecated,
+.swagger-ui .response-col_status,
+.swagger-ui .prop-type,
+.swagger-ui .prop-format,
+.swagger-ui .model-title,
+.swagger-ui .model .property,
+.swagger-ui .microlight,
+.swagger-ui .curl-command pre,
+.swagger-ui .responses-table .response-col_status {
+  font-variant-numeric: tabular-nums;
+}
+.swagger-ui .opblock-summary-path,
+.swagger-ui .opblock-summary-path a,
+.swagger-ui .parameter__name,
+.swagger-ui .prop-type,
+.swagger-ui .microlight,
+.swagger-ui pre,
+.swagger-ui code {
+  font-family: var(--ct-mono);
+}
+.swagger-ui .prop-type {
+  color: var(--strong);
+}
+
+/* Inputs. */
+.swagger-ui select,
+.swagger-ui input[type='text'],
+.swagger-ui input[type='email'],
+.swagger-ui input[type='password'],
+.swagger-ui input[type='search'],
+.swagger-ui input[type='file'],
+.swagger-ui textarea {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+  min-height: 40px;
+}
+.swagger-ui select {
+  background-color: var(--bg);
+}
+.swagger-ui textarea {
+  color: var(--text);
+}
+.swagger-ui textarea.curl {
+  background: var(--bg);
+  color: var(--text);
+}
+.swagger-ui input[type='text']::placeholder,
+.swagger-ui textarea::placeholder {
+  color: var(--muted);
+}
+.swagger-ui input[disabled],
+.swagger-ui select[disabled],
+.swagger-ui textarea[disabled] {
+  background: var(--card);
+  color: var(--muted);
+}
+.swagger-ui input.invalid,
+.swagger-ui select.invalid,
+.swagger-ui textarea.invalid {
+  border-color: var(--danger);
+  background: var(--bg);
+}
+.swagger-ui .errors-wrapper {
+  background: var(--card);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+}
+.swagger-ui .errors-wrapper hgroup h4,
+.swagger-ui .errors-wrapper .errors h4,
+.swagger-ui .errors-wrapper .errors small {
+  color: var(--danger);
+}
+
+/* Visible focus on every control. */
+.swagger-ui a:focus-visible,
+.swagger-ui button:focus-visible,
+.swagger-ui select:focus-visible,
+.swagger-ui input:focus-visible,
+.swagger-ui textarea:focus-visible,
+.swagger-ui [tabindex]:focus-visible,
+.swagger-ui .opblock-summary-control:focus-visible,
+.ct-header a:focus-visible {
+  outline: none;
+  box-shadow: var(--ct-focus);
+}
+
+/* Buttons: ghost by default, glow-filled for the main action (dark text: AA on glow). */
+.swagger-ui .btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+  color: var(--text);
+  font-weight: var(--font-weight-bold);
+  min-height: 40px;
+  transition:
+    border-color 150ms ease-out,
+    background-color 150ms ease-out;
+}
+.swagger-ui .btn:hover {
+  border-color: var(--glow);
+  box-shadow: none;
+}
+.swagger-ui .btn.execute,
+.swagger-ui .btn.authorize,
+.swagger-ui .btn.modal-btn.auth.authorize {
+  background: var(--glow);
+  border-color: var(--glow);
+  color: var(--bg);
+}
+.swagger-ui .btn.authorize {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.swagger-ui .btn.authorize svg {
+  fill: var(--bg);
+}
+.swagger-ui .btn.authorize span {
+  color: var(--bg);
+}
+.swagger-ui .btn.execute:hover,
+.swagger-ui .btn.authorize:hover {
+  background: var(--blazing);
+  border-color: var(--blazing);
+}
+.swagger-ui .btn.cancel,
+.swagger-ui .btn.btn-clear,
+.swagger-ui .btn.try-out__btn.cancel {
+  background: transparent;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.swagger-ui .btn.try-out__btn {
+  border-color: var(--glow);
+  color: var(--glow);
+}
+.swagger-ui .btn.authorize.unlocked {
+  background: transparent;
+  color: var(--glow);
+}
+.swagger-ui .btn.authorize.unlocked span {
+  color: var(--glow);
+}
+.swagger-ui .btn.authorize.unlocked svg {
+  fill: var(--glow);
+}
+.swagger-ui .copy-to-clipboard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.swagger-ui .copy-to-clipboard button {
+  filter: invert(1);
+}
+
+/* Tags. */
+.swagger-ui .opblock-tag {
+  border-bottom: 1px solid var(--border);
+  font-weight: var(--font-weight-bold);
+}
+.swagger-ui .opblock-tag:hover {
+  background: var(--card);
+}
+.swagger-ui .opblock-tag svg,
+.swagger-ui .expand-methods svg,
+.swagger-ui .expand-operation svg,
+.swagger-ui .model-toggle::after,
+.swagger-ui .arrow {
+  fill: var(--muted);
+}
+
+/* Operations: raised cards, the method colour only on the badge and a thin left edge. */
+.swagger-ui .opblock {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+  margin: 0 0 var(--space-md);
+}
+.swagger-ui .opblock .opblock-summary {
+  border-bottom: 0;
+}
+.swagger-ui .opblock.is-open .opblock-summary {
+  border-bottom: 1px solid var(--border);
+}
+.swagger-ui .opblock .opblock-summary-description {
+  color: var(--muted);
+}
+.swagger-ui .opblock .opblock-summary-path,
+.swagger-ui .opblock .opblock-summary-path__deprecated {
+  color: var(--text);
+}
+.swagger-ui .opblock .opblock-section-header {
+  background: var(--bg);
+  box-shadow: none;
+  border-bottom: 1px solid var(--border);
+}
+.swagger-ui .opblock-body pre.microlight,
+.swagger-ui .highlight-code > .microlight,
+.swagger-ui .highlight-code pre {
+  background: var(--bg) !important;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text) !important;
+}
+.swagger-ui .opblock-body pre.microlight span,
+.swagger-ui .highlight-code .microlight span {
+  color: inherit !important;
+}
+.swagger-ui .opblock-body pre.microlight .headerline {
+  color: var(--muted) !important;
+}
+.swagger-ui .opblock.opblock-deprecated {
+  opacity: 0.7;
+}
+
+.swagger-ui .opblock .opblock-summary-method {
+  border-radius: var(--radius-sm);
+  color: var(--bg);
+  font-family: var(--font-family-body);
+  font-weight: var(--font-weight-heavy);
+  letter-spacing: var(--label-tracking);
+  min-width: 72px;
+  text-shadow: none;
+}
+.swagger-ui .opblock.opblock-get,
+.swagger-ui .opblock.opblock-get .opblock-summary-method,
+.swagger-ui .opblock.opblock-get .tab-header .tab-item.active h4 span::after {
+  --ct-method: var(--text);
+}
+.swagger-ui .opblock.opblock-post {
+  --ct-method: var(--glow);
+}
+.swagger-ui .opblock.opblock-put {
+  --ct-method: var(--strong);
+}
+.swagger-ui .opblock.opblock-patch {
+  --ct-method: var(--faint);
+}
+.swagger-ui .opblock.opblock-delete {
+  --ct-method: var(--danger);
+}
+.swagger-ui .opblock.opblock-head,
+.swagger-ui .opblock.opblock-options {
+  --ct-method: var(--muted);
+}
+.swagger-ui .opblock {
+  border-left-color: var(--ct-method, var(--border));
+}
+.swagger-ui .opblock .opblock-summary-method {
+  background: var(--ct-method, var(--muted));
+}
+/* Patch's faint violet is only 3:1 on cards, so its badge text is the light text colour. */
+.swagger-ui .opblock.opblock-patch .opblock-summary-method {
+  color: var(--blazing);
+}
+
+/* Planned routes (x-cityturfer-status), shown by showExtensions. */
+.swagger-ui .opblock-summary .opblock-summary-description + * {
+  color: var(--muted);
+}
+.swagger-ui .opblock-body .opblock-description-wrapper + .opblock-external-docs-wrapper {
+  color: var(--text);
+}
+.swagger-ui .opblock table.extension,
+.swagger-ui .opblock-extension-row td {
+  color: var(--strong);
+}
+
+/* Responses. */
+.swagger-ui .responses-inner {
+  background: transparent;
+}
+.swagger-ui .response-control-media-type--accept-controller select {
+  border-color: var(--glow);
+}
+.swagger-ui .responses-table .response-col_status {
+  font-weight: var(--font-weight-bold);
+}
+.swagger-ui .live-responses-table .response-col_status {
+  color: var(--text);
+}
+.swagger-ui .request-url pre,
+.swagger-ui .curl-command .curl {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+}
+.swagger-ui .response-col_description__inner span,
+.swagger-ui .response-col_description__inner pre {
+  background: var(--bg);
+  color: var(--text);
+}
+.swagger-ui .tab li {
+  color: var(--muted);
+}
+.swagger-ui .tab li.active,
+.swagger-ui .tab li:first-of-type::after {
+  color: var(--text);
+}
+.swagger-ui .tab li button.tablinks {
+  color: inherit;
+  background: none;
+}
+.swagger-ui .tab li button.tablinks.active {
+  color: var(--glow);
+}
+.swagger-ui .opblock-body select {
+  background-color: var(--bg);
+}
+.swagger-ui .execute-wrapper,
+.swagger-ui .btn-group {
+  padding: var(--space-md) var(--space-xl);
+}
+.swagger-ui .loading-container .loading::before {
+  border-color: var(--border);
+  border-top-color: var(--glow);
+}
+
+/* Models. */
+.swagger-ui section.models {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin: var(--space-xxxl) 0;
+}
+.swagger-ui section.models.is-open h4 {
+  border-bottom: 1px solid var(--border);
+}
+.swagger-ui section.models .model-container {
+  background: var(--card);
+  border-radius: var(--radius-sm);
+}
+.swagger-ui section.models .model-container:hover {
+  background: var(--card);
+  border-color: var(--glow);
+}
+.swagger-ui .model-box,
+.swagger-ui .model-box-control,
+.swagger-ui .models-control {
+  color: var(--text);
+}
+.swagger-ui .model .property.primitive,
+.swagger-ui .model span.prop-enum,
+.swagger-ui table.model tbody tr td:first-of-type {
+  color: var(--muted);
+}
+.swagger-ui .model-toggle {
+  color: var(--text);
+}
+.swagger-ui .inner-object table,
+.swagger-ui table.model {
+  border-color: var(--border);
+}
+.swagger-ui .json-schema-2020-12,
+.swagger-ui .json-schema-2020-12__title,
+.swagger-ui .json-schema-2020-12-keyword__name,
+.swagger-ui .json-schema-2020-12-keyword__value {
+  color: var(--text);
+}
+.swagger-ui .json-schema-2020-12-expand-deep-button,
+.swagger-ui .json-schema-2020-12-accordion {
+  background: none;
+  color: var(--muted);
+}
+
+/* Authorize dialog. */
+.swagger-ui .dialog-ux .backdrop-ux {
+  background: var(--bg);
+  opacity: 0.8;
+}
+.swagger-ui .dialog-ux .modal-ux {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: none;
+  max-width: calc(100vw - 2 * var(--space-lg));
+}
+.swagger-ui .dialog-ux .modal-ux-header {
+  border-bottom: 1px solid var(--border);
+}
+.swagger-ui .dialog-ux .modal-ux-header .close-modal {
+  background: none;
+}
+.swagger-ui .dialog-ux .modal-ux-header .close-modal svg {
+  fill: var(--muted);
+}
+.swagger-ui .auth-btn-wrapper {
+  gap: var(--space-md);
+}
+.swagger-ui .auth-container {
+  border-bottom: 1px solid var(--border);
+}
+
+/* Small things: servers, deep-link anchors, copy button, markdown tables inside the spec. */
+.swagger-ui .servers > label select {
+  max-width: 100%;
+  min-width: min(100%, 320px);
+}
+.swagger-ui .servers-title {
+  color: var(--muted);
+  font-size: 0.75rem;
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+.swagger-ui .link {
+  color: var(--glow);
+}
+.swagger-ui .opblock-summary-control {
+  align-items: center;
+  color: var(--text);
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+}
+.swagger-ui .opblock-summary-control:focus-visible {
+  border-radius: var(--radius-sm);
+}
+.swagger-ui .opblock-summary-path {
+  font-size: 0.95rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.swagger-ui .opblock-summary-description {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.swagger-ui .opblock-summary svg {
+  fill: var(--muted);
+}
+.swagger-ui .opblock-summary-control .arrow {
+  fill: var(--muted);
+}
+.swagger-ui .authorization__btn svg,
+.swagger-ui .authorization__btn.locked svg,
+.swagger-ui .authorization__btn.unlocked svg {
+  fill: var(--muted);
+}
+.swagger-ui .lock-btn {
+  background: none;
+}
+
+@media (max-width: 640px) {
+  .ct-header-inner,
+  .swagger-ui .wrapper {
+    padding-left: var(--space-lg);
+    padding-right: var(--space-lg);
+  }
+  .ct-tagline {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+  .swagger-ui .opblock .opblock-section-header {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+  .swagger-ui table {
+    display: block;
+    overflow-x: auto;
+  }
+  .swagger-ui .scheme-container .schemes {
+    flex-wrap: wrap;
+  }
+}
+
+/* Swagger tints each operation by method with more specific selectors than the rules above; these
+   win by using :is() and by coming last. Card colours, method colour on the left edge and badge. */
+.swagger-ui
+  .opblock:is(
+    .opblock-get,
+    .opblock-post,
+    .opblock-put,
+    .opblock-patch,
+    .opblock-delete,
+    .opblock-head,
+    .opblock-options
+  ) {
+  background: var(--card);
+  border-color: var(--border);
+  border-left-color: var(--ct-method);
+}
+.swagger-ui
+  .opblock:is(
+    .opblock-get,
+    .opblock-post,
+    .opblock-put,
+    .opblock-patch,
+    .opblock-delete,
+    .opblock-head,
+    .opblock-options
+  )
+  .opblock-summary {
+  border-color: var(--border);
+}
+.swagger-ui
+  .opblock:is(
+    .opblock-get,
+    .opblock-post,
+    .opblock-put,
+    .opblock-patch,
+    .opblock-delete,
+    .opblock-head,
+    .opblock-options
+  )
+  .opblock-summary-method {
+  background: var(--ct-method);
+  color: var(--bg);
+}
+.swagger-ui .opblock.opblock-patch .opblock-summary-method {
+  color: var(--blazing);
+}
+.swagger-ui
+  .opblock:is(
+    .opblock-get,
+    .opblock-post,
+    .opblock-put,
+    .opblock-patch,
+    .opblock-delete,
+    .opblock-head,
+    .opblock-options
+  )
+  .tab-header
+  .tab-item.active
+  h4
+  span::after {
+  background: var(--ct-method);
+}
+.swagger-ui .opblock .opblock-section-header {
+  background: var(--bg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

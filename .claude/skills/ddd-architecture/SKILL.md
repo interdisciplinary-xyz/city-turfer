@@ -1,27 +1,40 @@
 ---
 name: ddd-architecture
 description:
-  TurfTrack's Domain-Driven Design rules and code patterns — bounded contexts (Identity, Recording,
+  CityTurfer's Domain-Driven Design rules and code patterns — bounded contexts (Identity, Recording,
   Activity Log, Territory, Shared Kernel), layers (domain/application/infrastructure/ui), dependency
   rule enforced by dependency-cruiser, aggregate/value-object/domain-event/repository/use-case
   templates, transactional outbox, composition root usable from the headless background task, and
-  the ubiquitous language. Use before writing or reviewing any code in apps/mobile/src/, when
+  the ubiquitous language, and what lives in packages/core (@cityturfer/core: shared kernel, core
+  constants, domain + application of Territory, Activity Log, Achievements, Identity) versus the
+  app. Use before writing or reviewing any code in apps/mobile/src/ or packages/core/, when
   deciding where code belongs, adding an aggregate, use case, port, adapter, event or context, or
   when a dependency-cruiser rule fails.
 ---
 
-# DDD architecture for TurfTrack
+# DDD architecture for CityTurfer
 
 DDD is a **hard requirement** for this project. The design lives in `docs/poc-plan.md`, sections
 2–5. This skill covers how to apply it in code.
 
 ## Where does this code go?
 
+First, which package. **`packages/core` (`@cityturfer/core`)** holds what the phone and the server
+both run: the shared kernel, the core constants (activity types, tracking thresholds, Earth radius,
+`DETAIL_ZOOM`) and the `domain/` + `application/` + `contract.ts` + public `index.ts` of
+**Territory, Activity Log, Achievements and Identity**, plus the H3 adapter
+(`packages/core/src/h3/`, entry `@cityturfer/core/h3`). **`apps/mobile`** keeps everything
+device-bound: Recording and Health Sync (all layers), every adapter (SQLite repositories, Expo, OSM
+router, secure store), `platform/` (SQLite, migrations, outbox), UI and wiring. Core is TS source
+with no React, Expo, native module, UI package or `@/` import; its contexts use relative imports.
+
 - **is a business rule or invariant ("can't resume a finished session", "drop fixes faster than 8
   m/s for a run")**: the context's `domain/`, **inside the aggregate** or a domain policy
-- **is pure maths on tracks or measures used by both contexts**: `apps/mobile/src/shared-kernel/`
+  (`packages/core/src/contexts/<ctx>/domain/` for the four core contexts)
+- **is pure maths on tracks or measures used by both contexts**: `packages/core/src/shared-kernel/`
+  (the app's `@/shared-kernel` is a re-export shim)
 - **orchestrates: load aggregate → call method → save → publish**: the context's `application/` (one
-  use case per file)
+  use case per file; in core for the four core contexts)
 - **talks to Expo, SQLite, the filesystem or the OS**: the context's `infrastructure/` (an adapter
   implementing a port)
 - **is cross-cutting plumbing (db connection, migrations, outbox, dispatcher, jobs, diagnostics)**:
@@ -78,6 +91,13 @@ module.exports = {
   options: { tsConfig: { fileName: 'tsconfig.json' }, doNotFollow: { path: 'node_modules' } },
 };
 ```
+
+`packages/core/.dependency-cruiser.cjs` repeats the layer rules for core and adds
+`core-is-platform-free` (no React, Expo, native, UI packages or apps anywhere in core) and
+`h3-only-in-h3`. The app's config adds `core-via-entry-points` (only `@cityturfer/core/<entry>`,
+never files under `packages/core/src/` directly), `core-ports-for-own-adapters` and
+`core-ports-only-of-own-context` (`@cityturfer/core/<ctx>/ports` is for that context's
+`infrastructure/`, test doubles and the wiring). Both run as each workspace's `arch` script.
 
 Exceptions: the root `index.ts` imports the background task module (it sits outside
 `apps/mobile/src/`, so depcruise doesn't cruise it), and `apps/mobile/src/composition-root.ts` /
@@ -244,10 +264,14 @@ export async function getContainer(): Promise<Container> {
 Use no DI library: plain functions, constructed lazily. The background task and the UI's
 `AppProvider` (`apps/mobile/src/ui-kit/app-context.tsx`) both call `getContainer()`.
 
-### Context public API (`index.ts`)
+### Context public API (`index.ts`) and adapter SPI (`ports.ts`)
 
 Export only: the application API factory and its types, published event types, and (for `ui/`)
-hooks. Never export domain classes or repositories.
+hooks. Never export domain classes or repositories. A core context also has `ports.ts`
+(`@cityturfer/core/<ctx>/ports`): the repository/gateway ports and the aggregate its adapters
+implement or rehydrate (e.g. `Claim`, `Activity`), imported only by that context's adapters in the
+app. The app keeps `src/contexts/<ctx>/index.ts` (and `contract.ts`) as `export *` shims, so
+`@/contexts/<ctx>` keeps working. Add a new core entry to `packages/core/package.json` `exports`.
 
 ## Testing per layer
 
@@ -257,7 +281,11 @@ hooks. Never export domain classes or repositories.
   `FakeLocationTracker` under `application/__tests__/fakes/`.
 - **Infrastructure**: real SQL through the better-sqlite3 adapter. Test that atomic save rolls back
   everything if the outbox insert fails.
-- **Architecture**: `depcruise` runs as part of `pnpm test`.
+- **Where tests live**: a test that uses only core code lives next to it in `packages/core` (its own
+  Jest, `pnpm --filter @cityturfer/core test:unit`); a test that needs SQLite, Expo fakes or
+  Recording stays in the app (e.g. the Home City and Identity use-case tests, the oracle parity
+  test).
+- **Architecture**: `depcruise` runs as part of `pnpm test` (`turbo run arch` covers app and core).
 
 ## Smells to reject in review
 

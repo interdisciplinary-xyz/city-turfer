@@ -1,4 +1,5 @@
 import type { BrandActivityType } from '@cityturfer/brand';
+import type { ReactNode } from 'react';
 
 /**
  * Presentational: every string arrives formatted. The Activity Log context maps its
@@ -6,8 +7,10 @@ import type { BrandActivityType } from '@cityturfer/brand';
  */
 export type ActivityRowProps = {
   type: BrandActivityType;
-  /** Emoji for the activity type, shown in the badge. */
+  /** Emoji for the activity type, shown in the badge when there is no `icon`. */
   glyph: string;
+  /** The app's icon for the type (an SF Symbol), drawn in the badge instead of the glyph. */
+  icon?: ReactNode;
   title: string;
   /** Date line under the title. */
   subtitle: string;

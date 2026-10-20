@@ -1,6 +1,5 @@
+import type { GapEstimationSetting } from '@cityturfer/core/activity-log';
 import * as SecureStore from 'expo-secure-store';
-
-import type { GapEstimationSetting } from '../application/use-cases';
 
 const KEY = 'cityturfer.settings.estimate-gaps';
 

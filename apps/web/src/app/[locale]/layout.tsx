@@ -10,9 +10,11 @@ import type { CSSProperties, ReactNode } from 'react';
 
 import { routing } from '@/i18n/routing';
 
+import { displayFont, numericFont } from '../fonts';
 import { SITE_URL } from '../site-url';
 import { MOTION_BOOT_SCRIPT } from './hero-motion';
 import { LanguageSwitcher } from './language-switcher';
+import { OG_IMAGE_HEIGHT, OG_IMAGE_PATH, OG_IMAGE_WIDTH } from './layout.constants';
 
 /** Every language is prerendered by the static export. */
 export const generateStaticParams = () => routing.locales.map((locale) => ({ locale }));
@@ -25,7 +27,16 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     title: t('title'),
     description: t('description'),
     icons: { icon: mark.src, apple: mark.src },
-    openGraph: { title: NAME, description: t('description'), type: 'website', locale },
+    openGraph: {
+      title: NAME,
+      description: t('description'),
+      type: 'website',
+      locale,
+      images: [
+        { url: new URL(OG_IMAGE_PATH, SITE_URL).href, width: OG_IMAGE_WIDTH, height: OG_IMAGE_HEIGHT, alt: t('ogAlt') },
+      ],
+    },
+    twitter: { card: 'summary_large_image', title: NAME, description: t('description') },
     alternates: {
       canonical: `/${locale}`,
       languages: Object.fromEntries(routing.locales.map((l) => [l, `/${l}`])),
@@ -66,7 +77,12 @@ export default async function LocaleLayout({
 
   return (
     // suppressHydrationWarning: the motion boot script adds a class to <html> before React hydrates.
-    <html lang={locale} style={tokens} suppressHydrationWarning>
+    <html
+      lang={locale}
+      className={`${displayFont.variable} ${numericFont.variable}`}
+      style={tokens}
+      suppressHydrationWarning
+    >
       <head>
         {/* Before first paint: hide [data-anim] for the entrance animation (skipped with reduced motion). */}
         <script dangerouslySetInnerHTML={{ __html: MOTION_BOOT_SCRIPT }} />

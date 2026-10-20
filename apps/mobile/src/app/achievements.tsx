@@ -1,8 +1,9 @@
+import { SPACE } from '@cityturfer/brand';
 import { type SFSymbol, SymbolView } from 'expo-symbols';
 import { useMemo } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 
-import { ACCENT, TIER_COLOR } from '@/constants/colors';
+import { ACCENT } from '@/constants/colors';
 import { type Achievement, type AchievementId, evaluateAchievements } from '@/contexts/achievements';
 import { useActivities } from '@/contexts/activity-log/ui/hooks';
 import { useTurfSummary } from '@/contexts/territory/ui/hooks';
@@ -46,7 +47,7 @@ export default function AchievementsScreen() {
   return (
     <FlatList
       style={{ backgroundColor: p.bg }}
-      contentContainerStyle={{ padding: 16, gap: 10 }}
+      contentContainerStyle={{ padding: SPACE.lg, gap: 10 }}
       data={list}
       keyExtractor={(a) => a.id}
       ListHeaderComponent={
@@ -55,7 +56,7 @@ export default function AchievementsScreen() {
         </Text>
       }
       renderItem={({ item: a }) => {
-        const color = a.unlocked ? TIER_COLOR.strong : p.muted;
+        const color = a.unlocked ? ACCENT : p.muted;
         return (
           <Card style={a.unlocked ? s.row : { ...s.row, opacity: 0.85 }}>
             <Badge
@@ -63,7 +64,7 @@ export default function AchievementsScreen() {
               accessible
               accessibilityLabel={`${a.title}. ${a.description} ${progressText(a)}`}
               size={52}
-              tint={a.unlocked ? tint(TIER_COLOR.strong) : p.bg}
+              tint={a.unlocked ? tint(ACCENT) : p.bg}
             >
               <SymbolView
                 name={SYMBOL[a.id]}
@@ -81,7 +82,7 @@ export default function AchievementsScreen() {
                     s.fill,
                     {
                       width: `${(a.current / a.target) * 100}%`,
-                      backgroundColor: a.unlocked ? TIER_COLOR.strong : ACCENT,
+                      backgroundColor: ACCENT,
                     },
                   ]}
                 />

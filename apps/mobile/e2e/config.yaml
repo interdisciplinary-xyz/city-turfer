@@ -16,4 +16,5 @@ executionOrder:
     - 10-dashboard
     - 11-apple-health
     - 12-home-city
+    - 13-record-turf
     - 08-sign-out # last: signs out

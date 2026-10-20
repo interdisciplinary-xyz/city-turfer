@@ -1,10 +1,12 @@
 ---
 status: canonical
-verified: 2026-10-17
+verified: 2026-10-20
 owner: founder
 scope:
   [
     apps/mobile/.dependency-cruiser.cjs,
+    packages/core/.dependency-cruiser.cjs,
+    packages/core/src,
     apps/mobile/src/contexts,
     apps/mobile/src/wiring.ts,
     apps/mobile/src/composition-root.ts,
@@ -25,7 +27,7 @@ language is `docs/poc-plan.md` §2. Where this doc and the code disagree, the co
 
 ## 1. Context map
 
-There are <!-- probe:contexts -->6<!-- /probe --> bounded contexts, one directory each in
+There are <!-- probe:contexts -->7<!-- /probe --> bounded contexts, one directory each in
 `apps/mobile/src/contexts/`:
 
 - **identity** (generic): `AuthGateway` port, `MockAuthGateway`, session in `expo-secure-store`.
@@ -42,6 +44,12 @@ There are <!-- probe:contexts -->6<!-- /probe --> bounded contexts, one director
   never leaves it). `HealthStore` port (HealthKit adapter on iOS), links and anchor in `hs_links` /
   `hs_state`. Imports through Activity Log's `importActivity`; exports on `ActivityRecorded` with
   origin `recording`. Design: `docs/decisions/apple-health-2026-10-18.md`.
+- **cloud-backup** (supporting): one-way, opt-in backup to the CityTurfer API. `ApiClient` port
+  (fetch adapter = the anti-corruption layer for HTTP), device token in `expo-secure-store`, state
+  in `cb_state` / `cb_activities`. Reads Activity Log's `archive` query and Territory's
+  `homeCityChoice`; its outbox handlers on `ActivityRecorded`, `ActivityDeleted`,
+  `ActivityTrackCorrected`, `ActivityDistanceEstimated` and `HomeCityChosen` only queue work, which
+  `RunBackup` sends in the foreground. Never `demo-*`; `hk-*` only with its own consent.
 - **achievements** (supporting): pure `evaluateAchievements` / `summarizeAchievements` over facts
   the UI passes in. Layers: `domain/ ui/`, no persistence.
 
@@ -51,6 +59,8 @@ Recording ──────────────────▶ Activity Log
           ◀── FinishedTrackQuery ──────    ◀── ActivityTrackQuery ─────────
               (Activity Log pulls the track)    (Territory pulls the track)
 Health Sync ── importActivity ──▶ Activity Log ── ActivityRecorded (origin recording) ──▶ Health Sync
+Activity Log, Territory ── ActivityRecorded · Deleted · TrackCorrected · DistanceEstimated · HomeCityChosen ──▶ Cloud Backup
+          ◀── archive · homeCityChoice ── (Cloud Backup pulls the activity and the Home City, then PUTs them)
 Identity: selects the user's database at sign-in; other contexts see only a user id.
 Achievements: no events; screens pass it Activity Log and Territory facts.
 ```
@@ -68,11 +78,19 @@ entry in the architecture decisions (`docs/engineering/architecture-decisions.md
 ## 2. Layers
 
 Each context has some of `domain/`, `application/`, `infrastructure/`, `ui/`, plus a public
-`index.ts` (and `contract.ts` for published types). Outside the contexts:
+`index.ts` (and `contract.ts` for published types).
 
-- `apps/mobile/src/shared-kernel/`: pure value objects and maths in SI units (geo, track,
-  track-analyzer, time, events, errors)
-- `apps/mobile/src/constants/`: plain shared values; a leaf any layer may import
+**`packages/core` (`@cityturfer/core`)** holds what the phone and the server both run: the shared
+kernel, the core constants and the `domain/` + `application/` + `contract.ts` + `index.ts` of
+Territory, Activity Log, Achievements and Identity, each with a `ports.ts` adapter SPI, plus the H3
+adapter (`packages/core/src/h3/`). The app keeps those contexts' adapters and UI, and `index.ts` /
+`contract.ts` as `export *` shims. Recording and Health Sync live wholly in the app (device only).
+Outside the contexts:
+
+- `packages/core/src/shared-kernel/`: pure value objects and maths in SI units (geo, track,
+  track-analyzer, time, events, errors); `apps/mobile/src/shared-kernel/index.ts` re-exports it
+- `packages/core/src/constants/` (core values) and `apps/mobile/src/constants/` (labels, colours,
+  map styles, re-exports of core values): leaves any layer may import
 - `apps/mobile/src/platform/`: database adapters, migrations, outbox + `EventDispatcher`, one-off
   jobs, diagnostics
 - `apps/mobile/src/wiring.ts`: platform-independent wiring of all contexts (app and tests)
@@ -87,8 +105,11 @@ from `application`/`domain`; `wiring` and `composition-root` may import anything
 
 ## 3. What dependency-cruiser enforces
 
-`pnpm run test:arch` (also inside `pnpm test` and `pnpm run ci:quality`) runs depcruise over
-`apps/mobile/src/` with `.dependency-cruiser.cjs`. Every rule is severity `error`; test folders
+`pnpm run test:arch` (also inside `pnpm test` and `pnpm run ci:quality`) runs each workspace's
+`arch` script: depcruise over `apps/mobile/src/` with `apps/mobile/.dependency-cruiser.cjs` and over
+`packages/core/src/` with `packages/core/.dependency-cruiser.cjs` (the same layer rules on
+`packages/core/src/shared-kernel/` and `packages/core/src/contexts/`). Both resolve hoisted
+`../../node_modules/…` paths and package `exports`. Every rule is severity `error`; test folders
 (`__tests__/`, `test-support/`) are exempt from the first three.
 
 - **`domain-is-pure`**: `apps/mobile/src/shared-kernel/` and every `domain/` import nothing from
@@ -103,7 +124,16 @@ from `application`/`domain`; `wiring` and `composition-root` may import anything
 - **`screens-use-ui-layer`**: `apps/mobile/src/app/` may not import a context's `domain/`,
   `application/` or `infrastructure/`, nor `apps/mobile/src/platform/`. Screens use `ui/` hooks and
   components and the public API.
-- **`constants-are-leaf`**: `apps/mobile/src/constants/` imports only other constants.
+- **`constants-are-leaf`**: `apps/mobile/src/constants/` imports only other constants, the brand
+  tokens and core constants; `packages/core/src/constants/` imports only other core constants.
+- **`core-is-platform-free`** (core): nothing in `packages/core/src` imports react, react-native,
+  expo, MapLibre, HealthKit, better-sqlite3, `@cityturfer/ui` / `@cityturfer/brand` or an app.
+- **`h3-only-in-h3`** (core): only `packages/core/src/h3/` imports h3-js.
+- **`core-via-entry-points`** (app): app code imports core only through its `exports` entries
+  (`@cityturfer/core/<entry>`), never files under `packages/core/src/` directly.
+- **`core-ports-for-own-adapters`** / **`core-ports-only-of-own-context`** (app):
+  `@cityturfer/core/<ctx>/ports` is imported only by that context's `infrastructure/`, test doubles,
+  tests and the wiring.
 - **`no-circular`**: no import cycles anywhere.
 
 Not enforced (by design or not yet):

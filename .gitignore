@@ -85,3 +85,7 @@ next-env.d.ts
 
 # Storybook static build (apps/storybook)
 storybook-static/
+
+# Vercel (local `vercel build` output) and the API dev database (PGlite)
+.vercel
+apps/api/.data/

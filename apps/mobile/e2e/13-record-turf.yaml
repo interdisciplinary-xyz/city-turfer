@@ -1,0 +1,32 @@
+# Record tab: the Turf toggle shows the Turfer's turf under the map. It is on by default, stays
+# available while recording, and the choice survives a restart. Ends switched on (the default).
+appId: com.turftrack.poc
+tags: [recording, turf]
+---
+- runFlow: subflows/launch.yaml
+- tapOn: { id: 'tab-record' }
+# The setting survives reinstalls (Keychain): an interrupted earlier run may have left it off.
+- runFlow:
+    when: { visible: { id: 'record-turf', checked: false } }
+    commands: [{ tapOn: { id: 'record-turf' } }]
+- assertVisible: { id: 'record-turf', checked: true }
+- takeScreenshot: 13-record-turf-on
+- tapOn: { id: 'record-turf' }
+- assertVisible: { id: 'record-turf', checked: false }
+- takeScreenshot: 13-record-turf-off
+# The choice is remembered.
+- stopApp
+- runFlow: subflows/launch.yaml
+- tapOn: { id: 'tab-record' }
+- assertVisible: { id: 'record-turf', checked: false }
+# Available during a recording too.
+- tapOn: { id: 'record-start' }
+- runFlow: subflows/allow-location.yaml
+- extendedWaitUntil: { visible: { id: 'stat-distance' }, timeout: 15000 }
+- tapOn: { id: 'record-turf' }
+- assertVisible: { id: 'record-turf', checked: true }
+- runFlow: subflows/finish.yaml
+- extendedWaitUntil: { visible: 'Too short to save', timeout: 10000 }
+- tapOn: 'Discard'
+- extendedWaitUntil: { visible: { id: 'record-start' }, timeout: 10000 }
+- assertVisible: { id: 'record-turf', checked: true }

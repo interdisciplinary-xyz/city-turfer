@@ -1,13 +1,15 @@
+import { FONT_SIZE, LABEL_TRACKING, RADIUS, TIER_LABEL } from '@cityturfer/brand';
 import { Camera, type CameraRef, GeoJSONSource, Layer, Map, UserLocation } from '@maplibre/maplibre-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ACTIVITY_TYPES, TYPE_GLYPH, TYPE_LABEL } from '@/constants/activity';
-import { DARK, TYPE_COLOR } from '@/constants/colors';
+import { ACTIVITY_TYPES, TYPE_LABEL } from '@/constants/activity';
+import { DARK, FONT_FAMILY, TIER_COLOR, TYPE_COLOR } from '@/constants/colors';
 import { MAP_STYLE_DARK } from '@/constants/map';
 import { type ActivityType, type BoundingBox } from '@/shared-kernel';
 import { formatArea } from '@/ui-kit/format';
+import { ActivitySymbol, AppSymbol } from '@/ui-kit/symbol';
 
 import { useTurfSummary, useTurfViewport } from './hooks';
 import { TurfLayers } from './layers';
@@ -63,16 +65,20 @@ export function TurfMapView({ tracks, homeCity, focused, onPickCity }: TurfMapVi
 
   const fitAll = useCallback(() => {
     if (allBounds) {
-      void camera.current?.fitBounds([...allBounds] as [number, number, number, number], {
-        padding: FIT_PADDING,
-        duration: 600,
-      });
+      void AccessibilityInfo.isReduceMotionEnabled().then((reduce) =>
+        camera.current?.fitBounds([...allBounds] as [number, number, number, number], {
+          padding: FIT_PADDING,
+          duration: reduce ? 0 : 600,
+        })
+      );
     }
   }, [allBounds]);
 
   const fitCity = useCallback(() => {
     if (homeCity) {
-      void camera.current?.fitBounds(homeCity.bounds, { padding: FIT_PADDING, duration: 600 });
+      void AccessibilityInfo.isReduceMotionEnabled().then((reduce) =>
+        camera.current?.fitBounds(homeCity.bounds, { padding: FIT_PADDING, duration: reduce ? 0 : 600 })
+      );
     }
   }, [homeCity]);
 
@@ -149,7 +155,7 @@ export function TurfMapView({ tracks, homeCity, focused, onPickCity }: TurfMapVi
         </Text>
         <Text style={s.sub}>
           {summary
-            ? `${summary.cellCount} cells · ${summary.strongCells} strong · +${formatArea(summary.newThisWeekKm2)} this week`
+            ? `${summary.cellCount} cells · ${summary.strongCells} ${TIER_LABEL.strong.toLowerCase()} · +${formatArea(summary.newThisWeekKm2)} this week`
             : 'Loading…'}
         </Text>
         <View style={s.chips}>
@@ -171,9 +177,8 @@ export function TurfMapView({ tracks, homeCity, focused, onPickCity }: TurfMapVi
                   },
                 ]}
               >
-                <Text style={s.chipText}>
-                  {TYPE_GLYPH[t]} {TYPE_LABEL[t]}
-                </Text>
+                <ActivitySymbol type={t} size={FONT_SIZE.caption} color={DARK.text} />
+                <Text style={s.chipText}>{TYPE_LABEL[t]}</Text>
               </Pressable>
             );
           })}
@@ -189,7 +194,8 @@ export function TurfMapView({ tracks, homeCity, focused, onPickCity }: TurfMapVi
               onAccessibilityAction={(e) => e.nativeEvent.actionName === 'longpress' && onPickCity?.()}
               style={[s.chip, { borderColor: DARK.border }]}
             >
-              <Text style={s.chipText}>⌂ {homeCity.name}</Text>
+              <AppSymbol name='house' fallback='⌂' size={FONT_SIZE.caption} color={DARK.text} />
+              <Text style={s.chipText}>{homeCity.name}</Text>
             </Pressable>
           ) : onPickCity ? (
             <Pressable
@@ -199,7 +205,8 @@ export function TurfMapView({ tracks, homeCity, focused, onPickCity }: TurfMapVi
               accessibilityLabel='Choose your city'
               style={[s.chip, { borderColor: DARK.border }]}
             >
-              <Text style={s.chipText}>⌂ Your city</Text>
+              <AppSymbol name='house' fallback='⌂' size={FONT_SIZE.caption} color={DARK.text} />
+              <Text style={s.chipText}>Your city</Text>
             </Pressable>
           ) : null}
           {allBounds && (
@@ -210,7 +217,13 @@ export function TurfMapView({ tracks, homeCity, focused, onPickCity }: TurfMapVi
               accessibilityLabel='Show all turf'
               style={[s.chip, { borderColor: DARK.border }]}
             >
-              <Text style={s.chipText}>⤢ All</Text>
+              <AppSymbol
+                name='arrow.up.left.and.arrow.down.right'
+                fallback='⤢'
+                size={FONT_SIZE.caption}
+                color={DARK.text}
+              />
+              <Text style={s.chipText}>All</Text>
             </Pressable>
           )}
         </View>
@@ -228,16 +241,31 @@ const s = StyleSheet.create({
     position: 'absolute',
     left: 12,
     right: 12,
-    backgroundColor: 'rgba(21,25,36,0.92)',
-    borderRadius: 18,
+    // Night-raised at 92% (EB): the map shows faintly through.
+    backgroundColor: `${DARK.card}EB`,
+    borderRadius: RADIUS.card,
     padding: 14,
     gap: 4,
   },
-  title: { color: DARK.muted, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
-  area: { color: '#FFF3C4', fontSize: 30, fontWeight: '800', fontVariant: ['tabular-nums'] },
-  sub: { color: DARK.muted, fontSize: 13 },
+  title: {
+    color: DARK.muted,
+    fontSize: FONT_SIZE.label,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: LABEL_TRACKING,
+  },
+  area: { color: TIER_COLOR.blazing, fontSize: 30, fontFamily: FONT_FAMILY.numeric, fontVariant: ['tabular-nums'] },
+  sub: { color: DARK.muted, fontSize: FONT_SIZE.caption },
   chips: { flexDirection: 'row', gap: 8, marginTop: 8, flexWrap: 'wrap' },
-  chip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, borderWidth: 1.5 },
-  chipText: { color: DARK.text, fontWeight: '700', fontSize: 13 },
-  empty: { color: DARK.text, marginTop: 8, fontSize: 13 },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: RADIUS.chip,
+    borderWidth: 1.5,
+  },
+  chipText: { color: DARK.text, fontWeight: '700', fontSize: FONT_SIZE.caption },
+  empty: { color: DARK.text, marginTop: 8, fontSize: FONT_SIZE.caption },
 });

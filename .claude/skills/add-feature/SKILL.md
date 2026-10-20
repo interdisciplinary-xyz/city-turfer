@@ -1,7 +1,7 @@
 ---
 name: add-feature
 description:
-  End-to-end workflow for building a TurfTrack feature (e.g. record screen, history list, activity
+  End-to-end workflow for building a CityTurfer feature (e.g. record screen, history list, activity
   detail map, GPX export, auto-pause, splits, settings) — plan with rn-architect, delegate to the
   specialist agents, test, verify on a simulator, review. Use when the user asks to build, implement
   or add a user-facing feature to the app, or says "next feature" / "continue the roadmap".
@@ -11,11 +11,12 @@ description:
 
 ## 0. Know where we are
 
-Read `CLAUDE.md` and `docs/poc-plan.md`. During the PoC, the milestones in §6 of the plan (M1
-scaffold + auth → M2 walk → M3 turf → M4 run and cycle → M5 history → M6 validation) are the
-roadmap. Work on the first unfinished one, and use its build list and exit checks as the acceptance
-criteria; after it, use `docs/roadmap.md` (create it from the roadmap below if it's missing). If
-there's no `package.json`, run the `scaffold-app` skill first.
+Read `CLAUDE.md` and `docs/product/product-brief.md` (what the product is and promises; the
+`product-knowledge` skill). The backlog is `NOTEBOOK.md` at the repo root, one block per version:
+work on the open version's unticked items. For a feature that needs product shaping first (who it's
+for, copy, success criteria), ask the `product-manager` agent for a spec. The PoC milestones in
+`docs/poc-plan.md` §6 are history; their exit checks still make good acceptance criteria. If there's
+no `package.json`, run the `scaffold-app` skill first.
 
 ## 1. Plan (rn-architect)
 
@@ -50,13 +51,10 @@ parallel agents.
 
 ## 3. Verify
 
-```bash
-pnpm -C apps/mobile exec tsc --noEmit && pnpm -C apps/mobile exec jest
-```
-
-Then, for anything a user can see or that touches tracking: dev build, plus a replayed fixture
-(`mobile-testing` skill, layer 2). Capture a simulator screenshot
-(`xcrun simctl io booted screenshot /tmp/shot.png`) and look at it.
+Follow the `verify-change` skill: it picks the checks from what the diff touched (tsc, dependency
+rules, Jest, oracle and turf vectors, privacy audit, fingerprint) and, for anything a user can see
+or that touches tracking, a dev build with a replayed fixture (`mobile-testing` skill, layer 2) and
+a simulator screenshot (`xcrun simctl io booted screenshot /tmp/shot.png`) you actually look at.
 
 ## 4. Review
 
@@ -64,8 +62,9 @@ Run the `mobile-reviewer` agent on the diff. Fix the blocking findings and re-ru
 
 ## 5. Close out
 
-Tick the item in `docs/roadmap.md`. Report what was verified (tests, simulator, device) and what
-wasn't.
+Tick the item in `NOTEBOOK.md`. Report what was verified (tests, simulator, device) and what wasn't.
+When the user wants it shipped, follow the `ship-branch` skill (commit, push, PR into the active
+scope).
 
 ## Roadmap (v1)
 

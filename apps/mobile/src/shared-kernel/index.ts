@@ -1,7 +1,3 @@
-export * from './activity-type';
-export * from './errors';
-export * from './events';
-export * from './geo';
-export * from './time';
-export * from './track';
-export * from './track-analyzer';
+// Re-export shim: the Shared Kernel lives in @cityturfer/core (packages/core/src/shared-kernel), so
+// the phone and the server run the same maths. Kept so `@/shared-kernel` imports keep working.
+export * from '@cityturfer/core/shared-kernel';

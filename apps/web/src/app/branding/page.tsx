@@ -1,0 +1,472 @@
+import './branding.css';
+
+import {
+  ACCENT,
+  contrastRatio,
+  cssVariables,
+  DARK,
+  FONT_SIZE,
+  LABEL_TRACKING,
+  LIGHT,
+  MIN_CONTRAST,
+  NAME,
+  ON_ACCENT,
+  ON_TIER,
+  PRIVACY_LINE,
+  PROMO,
+  RADIUS,
+  SPACE,
+  TAGLINES,
+  TIER_COLOR,
+  TIER_LABEL,
+  TIER_ORDER,
+  TYPE_COLOR,
+} from '@cityturfer/brand';
+import mark from '@cityturfer/brand/svg/mark.svg';
+import markForeground from '@cityturfer/brand/svg/mark-foreground.svg';
+import markMonochrome from '@cityturfer/brand/svg/mark-monochrome.svg';
+import wordmark from '@cityturfer/brand/svg/wordmark.svg';
+import wordmarkLight from '@cityturfer/brand/svg/wordmark-light.svg';
+import Image, { type StaticImageData } from 'next/image';
+import type { CSSProperties, ReactNode } from 'react';
+
+import { displayFont, numericFont } from '../fonts';
+import {
+  ACTIVITY_LABEL,
+  ASSETS,
+  AUDIENCES,
+  BRANDING_DESCRIPTION,
+  BRANDING_TITLE,
+  CONTRAST_FIXES,
+  DECISION_DOC_URL,
+  FONTS,
+  NAME_RULES,
+  PERSONALITY,
+  PILLARS,
+  POSITIONING,
+  RENDER_COMMAND,
+  SECTIONS,
+  TIER_MEANING,
+  TYPE_RULES,
+  VISUAL_LANGUAGE,
+} from './page.constants';
+
+/**
+ * /branding: the brand definition as one page, rendered from @cityturfer/brand so it can't drift
+ * from the tokens. Outside `[locale]/` (English only, like the brand docs), so it renders its own
+ * document; noindex and not in the sitemap. Linked from the dev toolbar.
+ */
+export default function BrandingPage() {
+  return (
+    <html
+      lang='en'
+      className={`${displayFont.variable} ${numericFont.variable}`}
+      style={cssVariables('dark') as CSSProperties}
+    >
+      <head>
+        <title>{`${BRANDING_TITLE} · ${NAME}`}</title>
+        <meta name='description' content={BRANDING_DESCRIPTION} />
+        <meta name='robots' content='noindex' />
+        <meta name='viewport' content='width=device-width, initial-scale=1' />
+        <link rel='icon' href={mark.src} />
+      </head>
+      <body className='brand'>
+        <header className='brand-hero'>
+          <div className='brand-wrap'>
+            <p className='brand-kicker'>{BRANDING_TITLE}</p>
+            <Image src={wordmark} alt={NAME} width={420} height={132} priority className='brand-hero-wordmark' />
+            <p className='brand-tagline'>{TAGLINES[0]}</p>
+            <p className='brand-lede'>{PROMO}</p>
+            <nav className='brand-nav' aria-label='Sections'>
+              {SECTIONS.map((s) => (
+                <a key={s.id} href={`#${s.id}`}>
+                  {s.label}
+                </a>
+              ))}
+            </nav>
+          </div>
+        </header>
+
+        <main className='brand-wrap'>
+          <Section id='positioning' title='Positioning' note='Draft for founder review'>
+            <p className='brand-statement'>{POSITIONING}</p>
+            <div className='brand-table-scroll'>
+              <table className='brand-table'>
+                <thead>
+                  <tr>
+                    <th>Audience</th>
+                    <th>What they want</th>
+                    <th>Lead with</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {AUDIENCES.map((a) => (
+                    <tr key={a.name}>
+                      <td>{a.name}</td>
+                      <td>{a.want}</td>
+                      <td className='brand-quote'>{a.lead}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Section>
+
+          <Section id='personality' title='Personality'>
+            <div className='brand-grid brand-grid-2'>
+              {PERSONALITY.map((t) => (
+                <div key={t.we} className='brand-card'>
+                  <p className='brand-yes'>
+                    <strong>{t.we}</strong> · {t.weAre}
+                  </p>
+                  <p className='brand-no'>
+                    Not {t.notName.toLowerCase()} · {t.weAreNot}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <h3>Pillars</h3>
+            <div className='brand-grid brand-grid-3'>
+              {PILLARS.map((p) => (
+                <div key={p.name} className='brand-card brand-pillar'>
+                  <p className='brand-pillar-name'>{p.name}</p>
+                  <p>{p.text}</p>
+                </div>
+              ))}
+            </div>
+          </Section>
+
+          <Section id='voice' title='Name & voice'>
+            <ul className='brand-taglines'>
+              {TAGLINES.map((line, i) => (
+                <li key={line}>
+                  <span className='brand-label'>{i === 0 ? 'Tagline' : `Alternative ${i}`}</span>
+                  <span className='brand-tagline-item'>{line}</span>
+                </li>
+              ))}
+              <li>
+                <span className='brand-label'>Privacy line</span>
+                <span className='brand-tagline-item'>{PRIVACY_LINE}</span>
+              </li>
+            </ul>
+            <ul className='brand-rules'>
+              {NAME_RULES.map((rule) => (
+                <li key={rule}>{rule}</li>
+              ))}
+            </ul>
+          </Section>
+
+          <Section id='logo' title='Logo'>
+            <div className='brand-grid brand-grid-3'>
+              <LogoTile src={mark} label='Mark' file='mark.svg' />
+              <LogoTile src={markForeground} label='Mark foreground (adaptive icon)' file='mark-foreground.svg' />
+              <LogoTile src={markMonochrome} label='Monochrome (themed icon)' file='mark-monochrome.svg' />
+              <LogoTile src={wordmark} label='Wordmark on dark' file='wordmark.svg' wide />
+              <LogoTile src={wordmarkLight} label='Wordmark on light' file='wordmark-light.svg' wide light />
+            </div>
+            <p className='brand-muted'>
+              The wordmark is outlined Archivo Expanded (“City” Medium, “Turfer” Black), generated by a script: never
+              edit the SVGs by hand. Keep clear space of at least half a hexagon side around the mark. Don’t recolour
+              the hexagon, rotate the mark, put it on busy photos or add drop shadows.
+            </p>
+          </Section>
+
+          <Section id='colour' title='Colour' note='The palette is the turf strength ramp'>
+            <div className='brand-ramp' aria-hidden='true' />
+            <div className='brand-grid brand-grid-4'>
+              {TIER_ORDER.map((tier) => (
+                <Swatch
+                  key={tier}
+                  name={TIER_LABEL[tier]}
+                  token={tier === 'glowing' ? 'glow · accent' : tier}
+                  hex={TIER_COLOR[tier]}
+                  on={ON_TIER[tier]}
+                  note={TIER_MEANING[tier]}
+                />
+              ))}
+            </div>
+            <h3>Activity colours</h3>
+            <p className='brand-muted'>Tracks only; never for turf.</p>
+            <div className='brand-grid brand-grid-3'>
+              {(['walk', 'run', 'cycle'] as const).map((type) => (
+                <Swatch
+                  key={type}
+                  name={ACTIVITY_LABEL[type]}
+                  token={type === 'cycle' ? 'ride' : type}
+                  hex={TYPE_COLOR[type]}
+                  on={DARK.bg}
+                />
+              ))}
+            </div>
+            <h3>Themes</h3>
+            <div className='brand-grid brand-grid-2'>
+              <ThemeCard name='Dark (Turf Map, website, splash)' theme={DARK} />
+              <ThemeCard name='Light' theme={LIGHT} />
+            </div>
+          </Section>
+
+          <Section id='type' title='Typography' note='Archivo (SIL Open Font License)'>
+            <div className='brand-stack'>
+              {FONTS.map((f) => (
+                <div key={f.role} className='brand-card brand-type'>
+                  <div className='brand-type-meta'>
+                    <span className='brand-label'>{f.role}</span>
+                    <span>{f.family}</span>
+                    <span className='brand-muted'>{f.use}</span>
+                  </div>
+                  <p className='brand-type-sample' style={{ fontFamily: `var(${f.cssVar})` }}>
+                    {f.sample}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <h3>Type scale</h3>
+            <div className='brand-card'>
+              {Object.entries(FONT_SIZE).map(([key, size]) => (
+                <div key={key} className='brand-scale-row'>
+                  <span className='brand-label'>
+                    {key} · {size}
+                  </span>
+                  <span
+                    className={key === 'label' ? 'brand-label' : 'brand-scale-sample'}
+                    style={{ fontSize: `min(${size}px, 11vw)` }}
+                  >
+                    {key === 'label' ? 'TURF STRENGTH' : NAME}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <ul className='brand-rules'>
+              {TYPE_RULES.map((rule) => (
+                <li key={rule}>{rule.replace('0.8', String(LABEL_TRACKING))}</li>
+              ))}
+            </ul>
+          </Section>
+
+          <Section id='layout' title='Spacing & radii'>
+            <div className='brand-grid brand-grid-2'>
+              <div className='brand-card'>
+                <h3 className='brand-card-title'>Spacing</h3>
+                {Object.entries(SPACE).map(([key, value]) => (
+                  <div key={key} className='brand-space-row'>
+                    <span className='brand-label'>
+                      {key} · {value}
+                    </span>
+                    <span className='brand-space-bar' style={{ width: value * 4 }} />
+                  </div>
+                ))}
+              </div>
+              <div className='brand-card'>
+                <h3 className='brand-card-title'>Radii</h3>
+                <div className='brand-radii'>
+                  {Object.entries(RADIUS).map(([key, value]) => (
+                    <div key={key} className='brand-radius'>
+                      <span className='brand-radius-box' style={{ borderRadius: Math.min(value, 32) }} />
+                      <span className='brand-label'>
+                        {key} · {value === RADIUS.full ? 'full' : value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Section>
+
+          <Section id='visual' title='Visual language'>
+            <div className='brand-grid brand-grid-2'>
+              {VISUAL_LANGUAGE.map((v) => (
+                <div key={v.name} className='brand-card'>
+                  <h3 className='brand-card-title'>{v.name}</h3>
+                  <p>{v.text}</p>
+                </div>
+              ))}
+            </div>
+          </Section>
+
+          <Section
+            id='a11y'
+            title='Accessibility'
+            note={`WCAG 2.2 AA: ${MIN_CONTRAST.text}:1 text, ${MIN_CONTRAST.ui}:1 UI`}
+          >
+            <div className='brand-table-scroll'>
+              <table className='brand-table'>
+                <thead>
+                  <tr>
+                    <th>Pair</th>
+                    <th>Ratio</th>
+                    <th>Needs</th>
+                    <th>Result</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <ContrastRow name='Text on dark' fg={DARK.text} bg={DARK.bg} min={MIN_CONTRAST.text} />
+                  <ContrastRow name='Muted on dark card' fg={DARK.muted} bg={DARK.card} min={MIN_CONTRAST.text} />
+                  <ContrastRow name='Glow on dark' fg={ACCENT} bg={DARK.bg} min={MIN_CONTRAST.text} />
+                  <ContrastRow name='Label on glow button' fg={ON_ACCENT} bg={ACCENT} min={MIN_CONTRAST.text} />
+                  <ContrastRow name='Faint turf on dark' fg={TIER_COLOR.faint} bg={DARK.bg} min={MIN_CONTRAST.ui} />
+                  <ContrastRow name='Text on light' fg={LIGHT.text} bg={LIGHT.bg} min={MIN_CONTRAST.text} />
+                  <ContrastRow name='Glow on light' fg={ACCENT} bg={LIGHT.bg} min={MIN_CONTRAST.text} />
+                  <ContrastRow name='Danger on light' fg={LIGHT.danger} bg={LIGHT.bg} min={MIN_CONTRAST.text} />
+                  {(['walk', 'run', 'cycle'] as const).map((type) => (
+                    <ContrastRow
+                      key={type}
+                      name={`${ACTIVITY_LABEL[type]} line on light`}
+                      fg={TYPE_COLOR[type]}
+                      bg={LIGHT.bg}
+                      min={MIN_CONTRAST.ui}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <h3>Open fixes (not applied yet)</h3>
+            <div className='brand-table-scroll'>
+              <table className='brand-table'>
+                <thead>
+                  <tr>
+                    <th>Pair</th>
+                    <th>Today</th>
+                    <th>Suggested fix</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {CONTRAST_FIXES.map((f) => (
+                    <tr key={f.pair}>
+                      <td>{f.pair}</td>
+                      <td className='brand-num'>{f.today}</td>
+                      <td>{f.fix}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Section>
+
+          <Section id='assets' title='Assets'>
+            <Image src='/og-image.png' alt='Social image' width={1200} height={630} className='brand-og' />
+            <div className='brand-table-scroll'>
+              <table className='brand-table'>
+                <tbody>
+                  {ASSETS.map((a) => (
+                    <tr key={a.name}>
+                      <td>{a.name}</td>
+                      <td>
+                        <code>{a.where}</code>
+                      </td>
+                      <td className='brand-muted'>{a.note}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className='brand-muted'>
+              Render everything with <code>{RENDER_COMMAND}</code>. Full rationale:{' '}
+              <a href={DECISION_DOC_URL}>brand foundations decision</a>.
+            </p>
+          </Section>
+        </main>
+      </body>
+    </html>
+  );
+}
+
+function Section({ id, title, note, children }: { id: string; title: string; note?: string; children: ReactNode }) {
+  return (
+    <section id={id} className='brand-section' aria-labelledby={`${id}-title`}>
+      <h2 id={`${id}-title`}>{title}</h2>
+      {note ? <p className='brand-note'>{note}</p> : null}
+      {children}
+    </section>
+  );
+}
+
+function LogoTile({
+  src,
+  label,
+  file,
+  wide,
+  light,
+}: {
+  src: StaticImageData;
+  label: string;
+  file: string;
+  wide?: boolean;
+  light?: boolean;
+}) {
+  return (
+    <figure className={`brand-logo${wide ? ' brand-logo-wide' : ''}`}>
+      <div className='brand-logo-art' style={light ? { background: LIGHT.bg } : undefined}>
+        <Image src={src} alt={label} className={wide ? 'brand-logo-img-wide' : 'brand-logo-img'} />
+      </div>
+      <figcaption>
+        <span>{label}</span>
+        <a href={src.src} download={file}>
+          {file}
+        </a>
+      </figcaption>
+    </figure>
+  );
+}
+
+function Swatch({
+  name,
+  token,
+  hex,
+  on,
+  note,
+}: {
+  name: string;
+  token: string;
+  hex: string;
+  on: string;
+  note?: string;
+}) {
+  return (
+    <div className='brand-swatch'>
+      <div className='brand-swatch-chip' style={{ background: hex, color: on }}>
+        <span className='brand-swatch-name'>{name}</span>
+        <span className='brand-num'>{contrastRatio(on, hex).toFixed(1)}:1</span>
+      </div>
+      <div className='brand-swatch-meta'>
+        <code>{hex}</code>
+        <span className='brand-label'>{token}</span>
+        {note ? <span className='brand-muted'>{note}</span> : null}
+      </div>
+    </div>
+  );
+}
+
+function ThemeCard({ name, theme }: { name: string; theme: typeof DARK }) {
+  return (
+    <div className='brand-theme' style={{ background: theme.bg, color: theme.text, borderColor: theme.border }}>
+      <p className='brand-theme-name'>{name}</p>
+      <div className='brand-theme-card' style={{ background: theme.card, borderColor: theme.border }}>
+        {Object.entries(theme).map(([key, hex]) => (
+          <div key={key} className='brand-theme-row'>
+            <span className='brand-theme-dot' style={{ background: hex, borderColor: theme.border }} />
+            <span>{key}</span>
+            <code style={{ color: theme.muted }}>{hex}</code>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ContrastRow({ name, fg, bg, min }: { name: string; fg: string; bg: string; min: number }) {
+  const ratio = contrastRatio(fg, bg);
+  const pass = ratio >= min;
+  return (
+    <tr>
+      <td>
+        <span className='brand-pair' style={{ background: bg, color: fg }}>
+          Aa
+        </span>{' '}
+        {name}
+      </td>
+      <td className='brand-num'>{ratio.toFixed(1)}:1</td>
+      <td className='brand-num'>{min}:1</td>
+      <td className={pass ? 'brand-pass' : 'brand-fail'}>{pass ? 'Pass' : 'Fail'}</td>
+    </tr>
+  );
+}

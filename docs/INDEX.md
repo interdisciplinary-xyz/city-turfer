@@ -36,12 +36,35 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`engineering/features.md`](engineering/features.md): Inventory of every shipped feature by tab
   and screen, where it lives, and the claims that aren't true yet
 
+## What we build and why
+
+`docs/product/` — Product direction and roadmap.
+
+- ✅ [`product/discovery-board.md`](product/discovery-board.md): The live state of product discovery
+  — evidence log, assumption map, opportunity tree and the interview queue; every product claim
+  cites an id from here
+- ✅ [`product/launch-readiness.md`](product/launch-readiness.md): What stands between CityTurfer
+  and a public App Store / Google Play launch — store, privacy and legal blockers in order, with
+  today's status and sources (research 2026-10-20)
+- ✅ [`product/market-landscape.md`](product/market-landscape.md): Competitors, pricing benchmarks,
+  market facts (Poland first) and where CityTurfer is different — web research as of 2026-10-20,
+  with sources and uncertainty marked
+- ✅ [`product/product-brief.md`](product/product-brief.md): What CityTurfer is as a product —
+  vision, users, core loop, what a user can do today, what we promise vs what's true, success
+  criteria, open questions and known doc drift
+- 🚧 [`product/strategy.md`](product/strategy.md): Draft product strategy for the founder to accept
+  or change — diagnosis, guiding policy, positioning options, beachhead candidates, North Star,
+  Now/Next/Later and the decisions it needs
+
 ## Running it
 
 `docs/operations/` — Runbook, OTA releases, device diagnostics.
 
 - ✅ [`operations/android-release.md`](operations/android-release.md): Build the Android APK on EAS,
   publish it to the website download link, test it on an emulator
+- ✅ [`operations/api-deploy.md`](operations/api-deploy.md): Deploy the CityTurfer API — Vercel
+  project city-turfer-api (apps/api, fra1), Neon Postgres env vars, applying migrations, minting and
+  rotating device tokens, checking health
 - ✅ [`operations/apple-health.md`](operations/apple-health.md): Install the Apple Health build on
   the iPhone and check import and export with real data
 - ❔ [`operations/observability.md`](operations/observability.md): _no frontmatter_
@@ -85,14 +108,37 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   free-tier
 - ✅ [`sessions/v0.5.0.md`](sessions/v0.5.0.md): Session log v0.5.0 — shared design system (tokens,
   @cityturfer/ui, one Storybook) for the app and the website, shipped over the air
+- ✅ [`sessions/v0.6.0.md`](sessions/v0.6.0.md): Session log v0.6.0 — v0.5.0 released; Storybook
+  branded as CityTurfer, docs pages and stories for every shared and website component, served at
+  cityturfer.local/storybook; no app change
+- ✅ [`sessions/v0.7.0.md`](sessions/v0.7.0.md): Session log v0.7.0 — v0.6.0 released; Home City and
+  the city picker (catalogue of 38 cities, migration 7), Turf and Record maps open on the chosen
+  city; JS-only, ships over the air
+- ✅ [`sessions/v0.8.0.md`](sessions/v0.8.0.md): Session log v0.8.0 — API from skeleton (#89,
 
 ## Decision records
 
 `docs/decisions/` — Full write-ups of single decisions.
 
+- ✅ [`decisions/api-2026-10-20.md`](decisions/api-2026-10-20.md): v0.8.0 HTTP API — apps/api (Hono
+  on Vercel, Frankfurt) exposing the app's existing use cases as /v1 routes, contract-first with zod
+  → OpenAPI 3.1, documented with Swagger UI at cityturfer.local/swagger; the core logic now lives in
+  packages/core (phase 3 done). Its route table is superseded by api-sync-2026-10-20.md
+- ✅ [`decisions/api-device-tokens-2026-10-20.md`](decisions/api-device-tokens-2026-10-20.md):
+  Stopgap for the first live backup — secret device tokens (API_TOKENS holds only SHA-256 hashes)
+  instead of Better Auth, one-way backup phone → server on Neon Postgres via Drizzle, canonical
+  trackHash computed by the server (contract 0.3.0)
+- ✅ [`decisions/api-sync-2026-10-20.md`](decisions/api-sync-2026-10-20.md): Sync-first v1 API
+  contract — the phone pushes Activities (versions, ETags, If-Match, tombstones) and pulls one
+  changes feed; route table, sync protocol, error catalogue and the founder's decisions D1–D13;
+  supersedes the route table of api-2026-10-20.md
 - ✅ [`decisions/apple-health-2026-10-18.md`](decisions/apple-health-2026-10-18.md): v0.4.0
   integrates Apple Health — a Health Sync context imports walks, hikes, runs and rides with routes
   (full history) as Activities that claim turf, and saves recordings to Health with routes
+- ✅ [`decisions/brand-foundations-2026-10-20.md`](decisions/brand-foundations-2026-10-20.md): Brand
+  foundations (positioning for three audiences, personality, pillars), Archivo as the brand typeface
+  everywhere, visual language beyond colour, WCAG contrast rules with the open palette fixes, and
+  the asset set (outlined wordmarks, social image, store screenshots)
 - ✅ [`decisions/design-system-2026-10-19.md`](decisions/design-system-2026-10-19.md): v0.5.0 design
   system — tokens in @cityturfer/brand (TS + CSS variables), React Native components in
   @cityturfer/ui, one Storybook (react-native-web) for the app and the website, shipped OTA

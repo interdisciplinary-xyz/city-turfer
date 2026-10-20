@@ -1,12 +1,18 @@
+import {
+  Activity,
+  type ActivityRepository,
+  type ActivityState,
+  type ActivityTimeRange,
+  estimatedTotals,
+  type GapRoute,
+} from '@cityturfer/core/activity-log/ports';
+
 import { insertMany } from '@/platform/batch';
 import type { Database } from '@/platform/database';
 import { appendToOutbox } from '@/platform/outbox';
 import type { TrackPoint } from '@/shared-kernel';
 
 import type { ActivityDistanceEstimated, ActivityListItem } from '../contract';
-import { Activity, type ActivityState } from '../domain/activity';
-import type { ActivityRepository } from '../domain/activity-repository';
-import { estimatedTotals, type GapRoute } from '../domain/gap-route';
 
 type Row = {
   id: string;
@@ -233,6 +239,20 @@ export class SqliteActivityRepository implements ActivityRepository {
       movingS: r.moving_s,
       coords: JSON.parse(r.coords),
     }));
+  }
+
+  async gapsCheckedAt(id: string): Promise<number | null> {
+    const r = await this.db.first<{ at: number | null }>(
+      'SELECT gaps_checked_at AS at FROM log_activities WHERE id = ?',
+      [id]
+    );
+    return r?.at ?? null;
+  }
+
+  timeline(): Promise<ActivityTimeRange[]> {
+    return this.db.all<ActivityTimeRange>(
+      'SELECT id, started_at AS startedAt, ended_at AS endedAt FROM log_activities ORDER BY started_at, id'
+    );
   }
 
   async allIds(): Promise<string[]> {

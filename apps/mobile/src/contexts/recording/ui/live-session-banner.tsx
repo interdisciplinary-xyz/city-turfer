@@ -1,3 +1,4 @@
+import { RADIUS } from '@cityturfer/brand';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { TYPE_LABEL } from '@/constants/activity';
@@ -36,7 +37,7 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 10,
     backgroundColor: ACCENT,
-    borderRadius: 14,
+    borderRadius: RADIUS.chip,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },

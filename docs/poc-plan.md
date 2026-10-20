@@ -2,7 +2,7 @@
 status: historical
 verified: 2026-10-15
 owner: founder
-scope: [apps/mobile/src/contexts, apps/mobile/src/shared-kernel, apps/mobile/src/platform]
+scope: [apps/mobile/src/contexts, packages/core/src, apps/mobile/src/platform]
 summary:
   The PoC plan as written (draft v5, 2026-10-15) — ubiquitous language (§2) and context map (§3) are
   still the vocabulary; folder layout and milestones are the original plan, not current code

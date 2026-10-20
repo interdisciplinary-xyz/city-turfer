@@ -1,0 +1,60 @@
+import type {
+  ActivityRecord,
+  ActivityTypeName,
+  ChangeRecord,
+  CompactPoint,
+  ConsentRecord,
+  GapRoutesRecord,
+  HomeCityRecord,
+  TombstoneRecord,
+  UserRecord,
+} from './model';
+
+/** Reads scoped to one user: every query filters on the user id (object-level authorisation). */
+export interface UserReader {
+  user(): Promise<UserRecord | null>;
+  consents(): Promise<ConsentRecord[]>;
+  activity(id: string): Promise<ActivityRecord | null>;
+  tombstone(id: string): Promise<TombstoneRecord | null>;
+  track(id: string): Promise<CompactPoint[] | null>;
+  gapRoutes(id: string): Promise<GapRoutesRecord | null>;
+  homeCity(): Promise<HomeCityRecord | null>;
+  /** Newest first by (startedAt, id); `before` is the last item of the previous page. */
+  listActivities(q: {
+    limit: number;
+    type?: ActivityTypeName;
+    before?: { startedAt: number; id: string };
+  }): Promise<ActivityRecord[]>;
+  /** Activities, tombstones and the Home City whose change seq is above `afterSeq`, in seq order. */
+  changesSince(afterSeq: number, limit: number): Promise<ChangeRecord[]>;
+  /** The user's change counter (highest seq handed out). */
+  currentSeq(): Promise<number>;
+}
+
+/** One transaction scoped to one user. */
+export interface UserWriter extends UserReader {
+  /** Locks the user's row until commit: all writes of one user are serialised (no lost updates). */
+  lock(): Promise<void>;
+  /** Next change seq of this user (after `lock`). */
+  nextSeq(): Promise<number>;
+  putConsent(consent: ConsentRecord): Promise<void>;
+  insertActivity(activity: ActivityRecord, points: CompactPoint[]): Promise<void>;
+  /** Replaces the row; `points` replaces the track when given. */
+  updateActivity(activity: ActivityRecord, points?: CompactPoint[]): Promise<void>;
+  /** Deletes the activity with its track and gap routes. */
+  deleteActivity(id: string): Promise<void>;
+  putTombstone(tombstone: TombstoneRecord): Promise<void>;
+  /** Replaces the gap routes; null removes them. */
+  putGapRoutes(activityId: string, routes: GapRoutesRecord | null): Promise<void>;
+  putHomeCity(homeCity: HomeCityRecord): Promise<void>;
+}
+
+/** Port: the server's storage (Postgres via Drizzle in production, PGlite in tests and dev). */
+export interface BackupStore {
+  read(userId: string): UserReader;
+  write<T>(userId: string, fn: (tx: UserWriter) => Promise<T>): Promise<T>;
+  /** Creates the user on first sight; fills a missing email or display name. */
+  ensureUser(user: UserRecord): Promise<void>;
+  /** True when the database answers. */
+  ping(): Promise<boolean>;
+}
