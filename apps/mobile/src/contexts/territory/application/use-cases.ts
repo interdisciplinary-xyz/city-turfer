@@ -1,5 +1,6 @@
+import { DETAIL_ZOOM } from '@cityturfer/core/constants';
+
 import { ACTIVITY_TYPES } from '../../../constants/activity';
-import { DETAIL_ZOOM } from '../../../constants/turf';
 import {
   type ActivityType,
   type BoundingBox,
