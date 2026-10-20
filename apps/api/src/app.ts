@@ -13,7 +13,8 @@ import { registerIdentity } from './routes/identity';
 import { registerPlatform } from './routes/platform';
 import { registerPrivacy } from './routes/privacy';
 import { registerTerritory } from './routes/territory';
-import { OPENAPI_CONFIG, SPEC_PATH } from './spec';
+import { registerHeaders } from './schemas/common';
+import { OPENAPI_CONFIG, SPEC_PATH, SWAGGER_UI_OPTIONS } from './spec';
 
 /**
  * The CityTurfer API (`api-design` skill, docs/decisions/api-sync-2026-10-20.md). Routes are
@@ -51,8 +52,9 @@ export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
   app.openAPIRegistry.registerComponent('securitySchemes', 'bearerAuth', {
     type: 'http',
     scheme: 'bearer',
-    description: 'Token from POST /v1/auth/sign-in.',
+    description: 'Token from POST /v1/auth/sign-in (mock, dev only; Better Auth later).',
   });
+  registerHeaders(app.openAPIRegistry);
 
   registerPlatform(app);
   registerIdentity(app);
@@ -62,7 +64,7 @@ export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
   registerPrivacy(app);
 
   app.doc31(SPEC_PATH, OPENAPI_CONFIG);
-  app.get('/swagger', swaggerUI({ url: SPEC_PATH, title: 'CityTurfer API' }));
+  app.get('/swagger', swaggerUI({ url: SPEC_PATH, title: 'CityTurfer API', ...SWAGGER_UI_OPTIONS }));
 
   app.notFound((c) => problem(c, 'not-found'));
   app.onError((err, c) => {

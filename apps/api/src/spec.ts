@@ -4,9 +4,22 @@
  * Version of the API contract, not of the app: bump it when the contract changes. (The app's release
  * commit bumps package.json versions; the spec must not change with it.)
  */
-export const API_VERSION = '0.1.0';
+export const API_VERSION = '0.2.0';
 
 export const SPEC_PATH = '/openapi.json';
+
+/**
+ * Swagger UI options shared by the API's /swagger and the website's dev route
+ * (apps/web/tools/swagger-route.mjs keeps the same values; both are tested). `showExtensions` makes
+ * `x-cityturfer-status: planned` visible.
+ */
+export const SWAGGER_UI_OPTIONS = {
+  deepLinking: true,
+  displayRequestDuration: true,
+  persistAuthorization: true,
+  showExtensions: true,
+  docExpansion: 'list',
+} as const;
 
 /** Local dev API (`pnpm --filter @cityturfer/api dev`). */
 export const LOCAL_API_PORT = 8787;

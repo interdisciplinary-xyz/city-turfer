@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createApp } from '../app';
 import { defaultDeps, type RequestLogEntry, silentLog } from '../deps';
-import { OPENAPI_CONFIG } from '../spec';
+import { API_VERSION, OPENAPI_CONFIG } from '../spec';
 
 const app = createApp(defaultDeps({ log: silentLog }));
 const AUTH = { Authorization: 'Bearer test-token' };
@@ -31,7 +31,7 @@ describe('routes', () => {
   it('answers health without auth', async () => {
     const res = await app.request('/v1/health');
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ status: 'ok', version: '0.1.0' });
+    expect(await res.json()).toEqual({ status: 'ok', version: API_VERSION });
   });
 
   it('answers planned routes with a 501 problem', async () => {
@@ -69,7 +69,9 @@ describe('routes', () => {
     expect((await app.request('/openapi.json')).status).toBe(200);
     const ui = await app.request('/swagger');
     expect(ui.status).toBe(200);
-    expect(await ui.text()).toContain('swagger');
+    const html = await ui.text();
+    expect(html).toContain('swagger');
+    expect(html).toContain('showExtensions');
   });
 });
 

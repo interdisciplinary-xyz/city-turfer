@@ -39,6 +39,10 @@ test('the page loads Swagger UI with the spec next to it', () => {
   const html = swaggerHtml();
   assert.match(html, /url: '\.\/openapi\.json'/);
   assert.match(html, /swagger-ui-bundle\.js/);
+  // Same options as the API's own /swagger (apps/api/src/spec.ts SWAGGER_UI_OPTIONS): planned
+  // routes are visible through their x-cityturfer-status extension.
+  assert.match(html, /showExtensions: true/);
+  assert.match(html, /docExpansion: 'list'/);
 });
 
 let dist;

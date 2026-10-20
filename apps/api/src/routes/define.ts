@@ -31,7 +31,7 @@ export function defineRoute(app: OpenAPIHono<AppEnv>, spec: RouteSpec, handler?:
   const route = createRoute({
     ...config,
     security,
-    ...(planned ? PLANNED : {}),
+    ...(planned ? { ...PLANNED, summary: `[planned] ${config.summary ?? ''}`.trim() } : {}),
     responses: planned ? { ...config.responses, ...NOT_IMPLEMENTED } : config.responses,
     middleware: isPublic ? [] : [requireBearer],
   });
