@@ -1,7 +1,7 @@
 ---
 name: add-feature
 description:
-  End-to-end workflow for building a TurfTrack feature (e.g. record screen, history list, activity
+  End-to-end workflow for building a CityTurfer feature (e.g. record screen, history list, activity
   detail map, GPX export, auto-pause, splits, settings) — plan with rn-architect, delegate to the
   specialist agents, test, verify on a simulator, review. Use when the user asks to build, implement
   or add a user-facing feature to the app, or says "next feature" / "continue the roadmap".
@@ -51,13 +51,10 @@ parallel agents.
 
 ## 3. Verify
 
-```bash
-pnpm -C apps/mobile exec tsc --noEmit && pnpm -C apps/mobile exec jest
-```
-
-Then, for anything a user can see or that touches tracking: dev build, plus a replayed fixture
-(`mobile-testing` skill, layer 2). Capture a simulator screenshot
-(`xcrun simctl io booted screenshot /tmp/shot.png`) and look at it.
+Follow the `verify-change` skill: it picks the checks from what the diff touched (tsc, dependency
+rules, Jest, oracle and turf vectors, privacy audit, fingerprint) and, for anything a user can see
+or that touches tracking, a dev build with a replayed fixture (`mobile-testing` skill, layer 2) and
+a simulator screenshot (`xcrun simctl io booted screenshot /tmp/shot.png`) you actually look at.
 
 ## 4. Review
 
@@ -66,6 +63,8 @@ Run the `mobile-reviewer` agent on the diff. Fix the blocking findings and re-ru
 ## 5. Close out
 
 Tick the item in `NOTEBOOK.md`. Report what was verified (tests, simulator, device) and what wasn't.
+When the user wants it shipped, follow the `ship-branch` skill (commit, push, PR into the active
+scope).
 
 ## Roadmap (v1)
 

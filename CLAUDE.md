@@ -21,10 +21,11 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
   Import of walks, hikes, runs, rides with routes; export of recordings. Design:
   `docs/decisions/apple-health-2026-10-18.md`
 - **Design system**: tokens in `@cityturfer/brand` (`packages/brand/src/tokens.ts`; the web gets
-  them as CSS variables from `cssVariables()`), React Native components in `@cityturfer/ui`
-  (`packages/ui`, peer dependencies only, no native code), one Storybook in `apps/storybook`
-  (Storybook 10 + react-native-web, port 6006; static build, Vercel project pending). Design:
-  `docs/decisions/design-system-2026-10-19.md`
+  them as CSS variables from `cssVariables()`; brand typeface Archivo, bundled in the app via the
+  `expo-font` plugin; brand foundations in `docs/decisions/brand-foundations-2026-10-20.md`), React
+  Native components in `@cityturfer/ui` (`packages/ui`, peer dependencies only, no native code), one
+  Storybook in `apps/storybook` (Storybook 10 + react-native-web, port 6006; static build, Vercel
+  project pending). Design: `docs/decisions/design-system-2026-10-19.md`
 - **Spatial index**: `h3-js` (Turf Cells = H3 res 11), behind the Territory `CellGrid` port; the
   adapter is `@cityturfer/core/h3`, the only place h3-js is declared (pinned exactly, one copy)
 - **Core**: `@cityturfer/core` (`packages/core`) holds the shared kernel, core constants and the
@@ -177,12 +178,21 @@ node apps/mobile/tools/turf-preview.mjs apps/mobile/tools/fixtures/history --out
 - Skills (`.claude/skills/`): `brand-system`, `ddd-architecture`, `turf-territory`, `scaffold-app`,
   `add-feature`, `gps-tracking`, `route-metrics`, `route-storage`, `mobile-testing`, `apple-health`,
   `web-motion`, `design-system`, `api-design`, `product-knowledge` (what the product is; docs in
-  `docs/product/`), `product-discovery`, `product-strategy`, `product-launch`.
+  `docs/product/`), `product-discovery`, `product-strategy`, `product-launch`, `verify-change`
+  (prove a change before calling it done), `ship-branch` (commit, push, PR per the branch flow),
+  `ai-harness` (this setup).
 - Agents (`.claude/agents/`): `rn-architect`, `location-engineer`, `mobile-ui-engineer`,
   `mobile-test-engineer`, `mobile-reviewer`, `brand-designer`, `health-engineer` (Apple Health),
   `web-engineer` (apps/web), `api-engineer` (back end: apps/api, server data, sync),
-  `product-manager` (the Product Owner persona; talk to it as the main session with the agent flag).
+  `product-manager` (the Product Owner persona; talk to it as the main session with the agent flag),
+  `harness-engineer` (skills, agents, hooks, audits).
 - Commands (`.claude/commands/`): `audit-docs` (`/audit-docs`).
+- Hooks (`.claude/settings.json`, rules in `tools/harness/hook-rules.mjs`): deny edits that break
+  the dependency rule, touch `CHANGELOG.md`, secret files or generated native folders; deny push to
+  main, force-push to scope/release, hand-made tags, `--no-verify`, wrong PR title/base; ask before
+  merges and copying device data; flag unguarded logs and hard-coded brand hex after edits; Prettier
+  on save. A hook block is a rule doing its job: fix the cause, never route around it.
+- `pnpm run audit:harness` (in `ci:quality`) checks the harness still matches the code.
 
 ## Docs
 

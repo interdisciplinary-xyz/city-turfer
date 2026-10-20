@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { ACCENT, DARK, TIER_COLOR } from '@/constants/colors';
+import { ACCENT, DARK, FONT_FAMILY, TIER_COLOR } from '@/constants/colors';
 import { useApp } from '@/ui-kit/app-context';
 import { Button } from '@/ui-kit/components';
 import { useLightStatusBar } from '@/ui-kit/use-light-status-bar';
@@ -28,7 +28,7 @@ export default function SignIn() {
   return (
     <KeyboardAvoidingView style={s.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={s.inner}>
-        <Text style={s.logo} accessibilityLabel='CityTurfer'>
+        <Text style={s.logo} accessibilityLabel='CityTurfer' numberOfLines={1} adjustsFontSizeToFit>
           <Text style={s.logoCity}>City</Text>
           <Text style={s.logoTurfer}>Turfer</Text>
         </Text>
@@ -86,9 +86,9 @@ export default function SignIn() {
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: DARK.bg },
   inner: { flex: 1, justifyContent: 'center', padding: 24, gap: 14 },
-  logo: { fontSize: 46, textAlign: 'center', letterSpacing: -1.5 },
-  logoCity: { fontWeight: '500', color: TIER_COLOR.blazing },
-  logoTurfer: { fontWeight: '900', color: TIER_COLOR.strong, textShadowColor: ACCENT, textShadowRadius: 18 },
+  logo: { fontSize: 34, textAlign: 'center', letterSpacing: -1, fontFamily: FONT_FAMILY.display },
+  logoCity: { color: TIER_COLOR.blazing },
+  logoTurfer: { color: TIER_COLOR.strong, textShadowColor: ACCENT, textShadowRadius: 18 },
   tag: { color: DARK.muted, textAlign: 'center', marginBottom: 24 },
   input: {
     backgroundColor: DARK.card,

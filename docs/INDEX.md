@@ -111,8 +111,7 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`sessions/v0.7.0.md`](sessions/v0.7.0.md): Session log v0.7.0 — v0.6.0 released; Home City and
   the city picker (catalogue of 38 cities, migration 7), Turf and Record maps open on the chosen
   city; JS-only, ships over the air
-- ✅ [`sessions/v0.8.0.md`](sessions/v0.8.0.md): Session log v0.8.0 — API skeleton with the whole v1
-  contract in Swagger (#89,
+- ✅ [`sessions/v0.8.0.md`](sessions/v0.8.0.md): Session log v0.8.0 — API skeleton (#89,
 
 ## Decision records
 
@@ -129,6 +128,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`decisions/apple-health-2026-10-18.md`](decisions/apple-health-2026-10-18.md): v0.4.0
   integrates Apple Health — a Health Sync context imports walks, hikes, runs and rides with routes
   (full history) as Activities that claim turf, and saves recordings to Health with routes
+- ✅ [`decisions/brand-foundations-2026-10-20.md`](decisions/brand-foundations-2026-10-20.md): Brand
+  foundations (positioning for three audiences, personality, pillars), Archivo as the brand typeface
+  everywhere, visual language beyond colour, WCAG contrast rules with the open palette fixes, and
+  the asset set (outlined wordmarks, social image, store screenshots)
 - ✅ [`decisions/design-system-2026-10-19.md`](decisions/design-system-2026-10-19.md): v0.5.0 design
   system — tokens in @cityturfer/brand (TS + CSS variables), React Native components in
   @cityturfer/ui, one Storybook (react-native-web) for the app and the website, shipped OTA

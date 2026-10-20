@@ -123,6 +123,9 @@ importers:
       expo-dev-client:
         specifier: ~57.0.20
         version: 57.0.20(expo@57.0.29)(react-native@0.86.3(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3))
+      expo-font:
+        specifier: ~57.0.4
+        version: 57.0.4(expo@57.0.29)(react-native@0.86.3(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3))(react@19.2.3)
       expo-keep-awake:
         specifier: ~57.0.2
         version: 57.0.2(expo@57.0.29)(react@19.2.3)
@@ -390,6 +393,9 @@ importers:
       '@types/jest':
         specifier: ^30.0.0
         version: 30.0.0
+      '@types/node':
+        specifier: ^22.15.0
+        version: 22.20.5
       babel-preset-expo:
         specifier: ^57.0.15
         version: 57.0.15(@babel/core@7.29.7)(@babel/runtime@7.29.10)(expo@57.0.29)(react-refresh@0.18.0)

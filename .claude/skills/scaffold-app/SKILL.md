@@ -1,14 +1,14 @@
 ---
 name: scaffold-app
 description:
-  Bootstrap the TurfTrack Expo/React Native project from an empty directory (milestone M1) —
+  Bootstrap the CityTurfer Expo/React Native project from an empty directory (milestone M1) —
   create-expo-app, install the GPS/map/storage stack, mock sign-in, configure app.config.ts
   permissions and background location, folder layout, Jest, and a first dev build. Use when the
   project has no package.json yet, or when the user says "set up the project", "init the app",
   "scaffold", or asks to add one of the core stack libraries.
 ---
 
-# Scaffold the TurfTrack app
+# Scaffold the CityTurfer app
 
 Goal: a dev build that launches on iOS + Android, with the stack from `CLAUDE.md` installed and
 configured, an empty but typed folder skeleton, and passing `tsc` + `jest`. Do not build features
@@ -48,8 +48,8 @@ plugins: [
   '@maplibre/maplibre-react-native',
   ['expo-location', {
     locationAlwaysAndWhenInUsePermission:
-      'TurfTrack records your route while you walk, run or ride, including when the screen is off.',
-    locationWhenInUsePermission: 'TurfTrack shows your position and records your route.',
+      'CityTurfer records your route while you walk, run or ride, including when the screen is off.',
+    locationWhenInUsePermission: 'CityTurfer shows your position and records your route.',
     isIosBackgroundLocationEnabled: true,
     isAndroidBackgroundLocationEnabled: true,
     isAndroidForegroundServiceEnabled: true,

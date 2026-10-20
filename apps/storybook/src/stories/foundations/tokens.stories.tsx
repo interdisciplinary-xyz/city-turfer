@@ -1,4 +1,14 @@
-import { ACCENT, FONT_SIZE, RADIUS, SPACE, TIER_COLOR, TIER_LABEL, TIER_ORDER, TYPE_COLOR } from '@cityturfer/brand';
+import {
+  ACCENT,
+  FONT_FAMILY,
+  FONT_SIZE,
+  RADIUS,
+  SPACE,
+  TIER_COLOR,
+  TIER_LABEL,
+  TIER_ORDER,
+  TYPE_COLOR,
+} from '@cityturfer/brand';
 import { usePalette } from '@cityturfer/ui';
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import type { ReactNode } from 'react';
@@ -74,7 +84,10 @@ function Tokens() {
       </Section>
       <Section title='Type scale'>
         {Object.entries(FONT_SIZE).map(([name, value]) => (
-          <Text key={name} style={{ color: p.text, fontSize: value, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+          <Text
+            key={name}
+            style={{ color: p.text, fontSize: value, fontFamily: FONT_FAMILY.numeric, fontVariant: ['tabular-nums'] }}
+          >
             {name} {value}
           </Text>
         ))}

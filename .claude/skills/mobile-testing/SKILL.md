@@ -1,7 +1,7 @@
 ---
 name: mobile-testing
 description:
-  How to test TurfTrack — Jest unit tests for metrics/filter/db, mocking
+  How to test CityTurfer — Jest unit tests for metrics/filter/db, mocking
   expo-location/task-manager/sqlite, GPS fixture generation with apps/mobile/tools/gen-route.mjs,
   the route-stats oracle, replaying routes into the iOS Simulator / Android emulator with
   apps/mobile/tools/sim-location.sh, background-tracking manual checks, and Maestro E2E flows. Use
@@ -9,7 +9,7 @@ description:
   "does it work?".
 ---
 
-# Testing TurfTrack
+# Testing CityTurfer
 
 Three layers, and each one catches things the others can't.
 

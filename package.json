@@ -26,7 +26,8 @@
     "audit:logs": "node tools/audit-logs.mjs",
     "check:secret-files": "node tools/check-secret-files.mjs",
     "audit:docs": "node tools/docs-audit.mjs",
-    "ci:quality": "pnpm run standard:format && pnpm run standard:lint && turbo run typecheck arch test:unit build && pnpm run test:tools && pnpm run audit:logs && pnpm run e2e:audit",
+    "audit:harness": "node tools/harness-audit.mjs",
+    "ci:quality": "pnpm run standard:format && pnpm run standard:lint && turbo run typecheck arch test:unit build && pnpm run test:tools && pnpm run audit:logs && pnpm run audit:harness && pnpm run e2e:audit",
     "build": "turbo run build",
     "web:dev": "pnpm --filter @cityturfer/web dev"
   },

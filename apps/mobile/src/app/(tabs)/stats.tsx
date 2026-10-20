@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ACTIVITY_TYPES, TYPE_LABEL } from '@/constants/activity';
-import { ACCENT, TYPE_COLOR } from '@/constants/colors';
+import { ACCENT, FONT_FAMILY, TYPE_COLOR } from '@/constants/colors';
 import { activityStats } from '@/contexts/activity-log/ui/activity-stats';
 import { useActivities } from '@/contexts/activity-log/ui/hooks';
 import { useTurfSummary } from '@/contexts/territory/ui/hooks';
@@ -103,7 +103,7 @@ export default function StatsScreen() {
 }
 
 const s = StyleSheet.create({
-  h1: { fontSize: 30, fontWeight: '900' },
+  h1: { fontSize: 28, fontFamily: FONT_FAMILY.display, letterSpacing: -0.5 },
   h2: { fontSize: 17, fontWeight: '800' },
   link: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   bars: { flexDirection: 'row', alignItems: 'flex-end', height: 104, gap: 6 },

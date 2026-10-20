@@ -1,7 +1,7 @@
 ---
 name: ddd-architecture
 description:
-  TurfTrack's Domain-Driven Design rules and code patterns — bounded contexts (Identity, Recording,
+  CityTurfer's Domain-Driven Design rules and code patterns — bounded contexts (Identity, Recording,
   Activity Log, Territory, Shared Kernel), layers (domain/application/infrastructure/ui), dependency
   rule enforced by dependency-cruiser, aggregate/value-object/domain-event/repository/use-case
   templates, transactional outbox, composition root usable from the headless background task, and
@@ -12,7 +12,7 @@ description:
   when a dependency-cruiser rule fails.
 ---
 
-# DDD architecture for TurfTrack
+# DDD architecture for CityTurfer
 
 DDD is a **hard requirement** for this project. The design lives in `docs/poc-plan.md`, sections
 2–5. This skill covers how to apply it in code.
