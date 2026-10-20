@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "CityTurfer API",
-    "version": "0.2.0",
-    "description": "The CityTurfer HTTP API: the app's use cases over HTTP, to back up and sync a local-first phone and, later, other clients.\n\n## Getting started\n\n- **Base URL:** pick a server above. Locally, `pnpm --filter @cityturfer/api dev` runs the API on port 8787 and `pnpm run web:dev` serves this page at https://cityturfer.local/swagger with the API under `/api`.\n- **Status:** `GET /v1/health` is live. Every other route is designed but **planned**: its summary starts with `[planned]`, it carries `x-cityturfer-status: planned` and answers `501` once auth and validation pass.\n- **Auth:** send `Authorization: Bearer <token>` (button **Authorize**). Any token passes the placeholder today; Better Auth replaces it. A missing token answers `401` *before* the input is validated.\n- **Headers you send:** `Content-Type: application/json`; `Content-Encoding: gzip` for long tracks; `If-Match` to change an existing activity; `CityTurfer-Client: ios/0.8.0+123` (old clients may get `426 client.too-old`).\n- **Headers you get:** `X-Request-Id` on every answer (quote it when reporting a problem), `ETag` on activities, `Location` on 201/202, `Retry-After` and `RateLimit` on 429.\n- **Limits:** request and response bodies ≤ 4.5 MB (Vercel); ≤ 40,000 points per track; gzip bodies inflate to ≤ 16 MB.\n\n## Sync flow (phone ↔ server)\n\nThe phone is local-first and authoritative for what it recorded; the server stores activities with their tracks and recomputes everything derived (summaries, turf). Writes are keyed by ids the phone mints, so every request can be retried.\n\n**First upload of an existing history**\n1. `PUT /v1/me/consents/cloud-sync` (and `apple-health-in-cloud-sync` to include Apple Health imports).\n2. `GET /v1/sync/changes` without a cursor, every page: what the server already has (the manifest).\n3. For each local activity, oldest first (never `demo-…`): absent → `PUT /v1/activities/{id}`; same `trackHash` → done; different → `PUT` with `If-Match`; tombstoned → delete it locally.\n4. `PUT /v1/activities/{id}/gap-routes` where the phone estimated gaps; `PUT /v1/turf/home-city`.\n5. Keep the last `nextCursor`.\n\n**Every day after**\n- **Push** from the outbox: recorded → `PUT`; track corrected → `PUT` + `If-Match`; renamed → `PATCH`; deleted → `DELETE`; gaps estimated → `PUT …/gap-routes`; Home City → `PUT /v1/turf/home-city`.\n- **Pull** on launch and foreground: `GET /v1/sync/changes?cursor=…` while `hasMore`; fetch `GET /v1/activities/{id}/track` (with `If-None-Match`) only when `trackHash` is new; apply tombstones by deleting locally. Pull **before** importing from Apple Health, so a workout recorded on another phone is not imported twice.\n\n**Conflicts:** same content → `200` (replay). Stale `If-Match` → `412`: pull, re-apply, retry. Different content without `If-Match` → `428`. Deleted id → `410 activity.deleted`: delete wins. Renames and the Home City: last write wins. Invalid cursor → `410 sync.cursor-expired`: start again without one.\n\n## Errors\n\nEvery error is `application/problem+json` (RFC 9457) with a stable `code`. `detail` is for people and never repeats input values; a `400` lists JSON pointers in `errors[]`.\n\n| code | status | meaning |\n| --- | --- | --- |\n| `invalid-request` | 400 | Invalid request |\n| `auth.missing` | 401 | Missing bearer token |\n| `auth.invalid` | 401 | Invalid or expired token |\n| `not-found` | 404 | Not found |\n| `activity.deleted` | 410 | Activity was deleted |\n| `sync.cursor-expired` | 410 | Sync cursor expired: sync again without a cursor |\n| `precondition-failed` | 412 | The resource changed since your version |\n| `payload-too-large` | 413 | Request body too large |\n| `unsupported-media-type` | 415 | Unsupported content type or encoding |\n| `activity.track-too-short` | 422 | A track needs at least two points |\n| `activity.ends-before-start` | 422 | The activity ends before it starts |\n| `activity.invalid-name` | 422 | Names are 1 to 80 characters |\n| `activity.track-hash-mismatch` | 422 | trackHash does not match the track |\n| `claim.in-future` | 422 | The activity starts in the future |\n| `home-city.unknown` | 422 | Not a catalogue city |\n| `client.too-old` | 426 | Update the app to sync |\n| `precondition-required` | 428 | Send If-Match to change an existing resource |\n| `rate-limited` | 429 | Too many requests |\n| `internal` | 500 | Something went wrong |\n| `not-implemented` | 501 | Not implemented yet |\n\n## Units and formats\n\nJSON in camelCase. SI units with a suffix (`distanceM`, `movingS`, `areaKm2`). Timestamps ISO 8601 UTC; an activity may carry its IANA `timeZone` for display — the server derives nothing from local time. Coordinates `[lon, lat]` (GeoJSON order); bounding boxes `[west, south, east, north]`. Track points `[lon, lat, t, segment, altitudeM]`. Turf cells are H3 indexes (resolution 11).\n\n## Privacy\n\nGPS tracks, turf cells and the Home City are personal data. Cloud sync needs the `cloud-sync` consent; everything can be exported (`POST /v1/me/exports`) and erased (`DELETE /v1/me`). Nothing of it is logged: logs hold the route pattern, status, duration, request id and user id. Examples on this page use public landmarks (Warsaw Old Town).",
+    "version": "0.3.0",
+    "description": "The CityTurfer HTTP API: the app's use cases over HTTP, to back up and sync a local-first phone and, later, other clients.\n\n## Getting started\n\n- **Base URL:** pick a server above. Locally, `pnpm --filter @cityturfer/api dev` runs the API on port 8787 and `pnpm run web:dev` serves this page at https://cityturfer.local/swagger with the API under `/api`.\n- **Status:** the one-way **backup** (phone → server) is live: health, `/v1/me`, consents, activity upload/read/delete, track, gap routes, the changes feed and the Home City. The rest is designed but **planned**: its summary starts with `[planned]`, it carries `x-cityturfer-status: planned` and answers `501` once auth and validation pass. Live data routes answer `503 storage.unavailable` when the server has no database.\n- **Auth:** send `Authorization: Bearer <device token>` (button **Authorize**). Tokens are random secrets minted per user (`pnpm --filter @cityturfer/api run token:new -- <userId>`); the server stores only their SHA-256. A stopgap until Better Auth. A missing token answers `401` *before* the input is validated. Locally, `dev-token` works for user `admin` when `API_TOKENS` is not set.\n- **Consent:** activity and Home City writes need `PUT /v1/me/consents/cloud-sync` with `granted: true` first (else `403 consent.required`); Apple Health activities also `apple-health-in-cloud-sync`.\n- **Headers you send:** `Content-Type: application/json`; `Content-Encoding: gzip` for long tracks; `If-Match` to change an existing activity; `CityTurfer-Client: ios/0.8.0+123` (old clients may get `426 client.too-old`).\n- **Headers you get:** `X-Request-Id` on every answer (quote it when reporting a problem), `ETag` on activities, `Location` on 201/202, `Retry-After` and `RateLimit` on 429.\n- **Limits:** request and response bodies ≤ 4.5 MB (Vercel); ≤ 40,000 points per track; gzip bodies inflate to ≤ 16 MB.\n\n## Sync flow (phone ↔ server)\n\nThe phone is local-first and authoritative for what it recorded; the server stores activities with their tracks and recomputes everything derived (summaries, turf). Writes are keyed by ids the phone mints, so every request can be retried.\n\n**First upload of an existing history**\n1. `PUT /v1/me/consents/cloud-sync` (and `apple-health-in-cloud-sync` to include Apple Health imports).\n2. `GET /v1/sync/changes` without a cursor, every page: what the server already has (the manifest).\n3. For each local activity, oldest first (never `demo-…`): absent → `PUT /v1/activities/{id}`; same `trackHash` → done; different → `PUT` with `If-Match`; tombstoned → delete it locally.\n4. `PUT /v1/activities/{id}/gap-routes` where the phone estimated gaps; `PUT /v1/turf/home-city`.\n5. Keep the last `nextCursor`.\n\n**Every day after**\n- **Push** from the outbox: recorded → `PUT`; track corrected → `PUT` + `If-Match`; renamed → `PATCH`; deleted → `DELETE`; gaps estimated → `PUT …/gap-routes`; Home City → `PUT /v1/turf/home-city`.\n- **Pull** on launch and foreground: `GET /v1/sync/changes?cursor=…` while `hasMore`; fetch `GET /v1/activities/{id}/track` (with `If-None-Match`) only when `trackHash` is new; apply tombstones by deleting locally. Pull **before** importing from Apple Health, so a workout recorded on another phone is not imported twice.\n\n**Conflicts:** same content → `200` (replay). Stale `If-Match` → `412`: pull, re-apply, retry. Different content without `If-Match` → `428`. Deleted id → `410 activity.deleted`: delete wins. Renames and the Home City: last write wins. Invalid cursor → `410 sync.cursor-expired`: start again without one.\n\n## Errors\n\nEvery error is `application/problem+json` (RFC 9457) with a stable `code`. `detail` is for people and never repeats input values; a `400` lists JSON pointers in `errors[]`.\n\n| code | status | meaning |\n| --- | --- | --- |\n| `invalid-request` | 400 | Invalid request |\n| `auth.missing` | 401 | Missing bearer token |\n| `auth.invalid` | 401 | Invalid or expired token |\n| `consent.required` | 403 | Give the cloud-sync consent first |\n| `not-found` | 404 | Not found |\n| `activity.deleted` | 410 | Activity was deleted |\n| `sync.cursor-expired` | 410 | Sync cursor expired: sync again without a cursor |\n| `precondition-failed` | 412 | The resource changed since your version |\n| `payload-too-large` | 413 | Request body too large |\n| `unsupported-media-type` | 415 | Unsupported content type or encoding |\n| `activity.track-too-short` | 422 | A track needs at least two points |\n| `activity.ends-before-start` | 422 | The activity ends before it starts |\n| `activity.invalid-name` | 422 | Names are 1 to 80 characters |\n| `activity.track-hash-mismatch` | 422 | trackHash does not match the track |\n| `claim.in-future` | 422 | The activity starts in the future |\n| `home-city.unknown` | 422 | Not a catalogue city |\n| `client.too-old` | 426 | Update the app to sync |\n| `precondition-required` | 428 | Send If-Match to change an existing resource |\n| `rate-limited` | 429 | Too many requests |\n| `internal` | 500 | Something went wrong |\n| `not-implemented` | 501 | Not implemented yet |\n| `storage.unavailable` | 503 | Storage is not available: retry later |\n\n## Units and formats\n\nJSON in camelCase. SI units with a suffix (`distanceM`, `movingS`, `areaKm2`). Timestamps ISO 8601 UTC; an activity may carry its IANA `timeZone` for display — the server derives nothing from local time. Coordinates `[lon, lat]` (GeoJSON order); bounding boxes `[west, south, east, north]`. Track points `[lon, lat, t, segment, altitudeM]`. `trackHash` = SHA-256 hex of `JSON.stringify(track.points)` (no whitespace, ECMAScript number formatting, upload order); the server computes it, so sending it is optional. Turf cells are H3 indexes (resolution 11).\n\n## Privacy\n\nGPS tracks, turf cells and the Home City are personal data. Cloud sync needs the `cloud-sync` consent; everything can be exported (`POST /v1/me/exports`) and erased (`DELETE /v1/me`). Nothing of it is logged: logs hold the route pattern, status, duration, request id and user id. Examples on this page use public landmarks (Warsaw Old Town).",
     "license": {
       "name": "Proprietary",
       "identifier": "LicenseRef-Proprietary"
@@ -54,7 +54,7 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "description": "Token from POST /v1/auth/sign-in (mock, dev only; Better Auth later)."
+        "description": "Device token: a random secret minted with `pnpm --filter @cityturfer/api run token:new -- <userId>`; the server knows only its SHA-256 (env `API_TOKENS`). A stopgap until Better Auth."
       }
     },
     "headers": {
@@ -106,12 +106,23 @@
           },
           "version": {
             "type": "string",
-            "example": "0.2.0"
+            "example": "0.3.0"
+          },
+          "database": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "unreachable",
+              "not-configured"
+            ],
+            "description": "Whether the database answers a trivial query (no details). Live data routes answer 503 unless `ok`.",
+            "example": "ok"
           }
         },
         "required": [
           "status",
-          "version"
+          "version",
+          "database"
         ]
       },
       "Session": {
@@ -145,12 +156,16 @@
             "example": "admin"
           },
           "email": {
-            "type": "string",
-            "format": "email",
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Null when the token configuration names no e-mail (device tokens).",
             "example": "admin@cityturfer.com"
           },
           "displayName": {
             "type": "string",
+            "description": "Falls back to the user id.",
             "example": "Admin"
           }
         },
@@ -203,6 +218,7 @@
           "invalid-request",
           "auth.missing",
           "auth.invalid",
+          "consent.required",
           "not-found",
           "activity.deleted",
           "sync.cursor-expired",
@@ -219,7 +235,8 @@
           "precondition-required",
           "rate-limited",
           "internal",
-          "not-implemented"
+          "not-implemented",
+          "storage.unavailable"
         ],
         "description": "Stable machine code (catalogue in the API description, \"Errors\")."
       },
@@ -564,7 +581,7 @@
           "trackHash": {
             "type": "string",
             "pattern": "^[0-9a-f]{64}$",
-            "description": "SHA-256 (hex) of `JSON.stringify(track.points)` as sent. Computed by the phone, checked by the server (422 `activity.track-hash-mismatch`); tells other devices whether to download the track again.",
+            "description": "Canonical track hash: SHA-256 (lowercase hex) of the UTF-8 bytes of `JSON.stringify(track.points)` — no whitespace, points `[lon, lat, t, segment, altitudeM | null]` in upload order, numbers in ECMAScript shortest round-trip form (what `JSON.stringify` writes). The server computes it; a hash the client sends must match (422 `activity.track-hash-mismatch`). Tells other devices whether to download the track again.",
             "example": "9f2b6c1d4e8a7b3c5d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e"
           },
           "version": {
@@ -785,7 +802,7 @@
           "trackHash": {
             "type": "string",
             "pattern": "^[0-9a-f]{64}$",
-            "description": "SHA-256 (hex) of `JSON.stringify(track.points)` as sent. Computed by the phone, checked by the server (422 `activity.track-hash-mismatch`); tells other devices whether to download the track again.",
+            "description": "Optional (0.3.0): when sent, the server checks it against the canonical hash of `track.points`.",
             "example": "9f2b6c1d4e8a7b3c5d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e"
           },
           "track": {
@@ -799,7 +816,6 @@
           "startedAt",
           "endedAt",
           "resumedSegments",
-          "trackHash",
           "track"
         ]
       },
@@ -1303,8 +1319,8 @@
         ],
         "operationId": "getHealth",
         "security": [],
-        "summary": "Liveness",
-        "description": "Public. Answers when the function is up; touches no data.",
+        "summary": "Liveness and database reachability",
+        "description": "Public. Answers `200` when the function is up; `database` tells whether the database answers a trivial query (it reads no user data and reveals no details).",
         "responses": {
           "200": {
             "description": "Up.",
@@ -1559,14 +1575,13 @@
           "Identity"
         ],
         "operationId": "getMe",
-        "summary": "[planned] Current user",
-        "description": "Use case GetCurrentUser. Consents, export and erasure live under Privacy.",
+        "summary": "Current user",
+        "description": "The user the bearer token belongs to (use case GetCurrentUser); created on its first authenticated request. Consents, export and erasure live under Privacy.",
         "security": [
           {
             "bearerAuth": []
           }
         ],
-        "x-cityturfer-status": "planned",
         "responses": {
           "200": {
             "description": "The signed-in user.",
@@ -1640,18 +1655,18 @@
               }
             }
           },
-          "501": {
-            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
+          "503": {
+            "description": "No database configured or reachable: retry later. Codes: `storage.unavailable`.",
             "content": {
               "application/problem+json": {
                 "examples": {
-                  "not-implemented": {
-                    "summary": "not-implemented",
+                  "storage.unavailable": {
+                    "summary": "storage.unavailable",
                     "value": {
-                      "type": "https://cityturfer.app/problems/not-implemented",
-                      "title": "Not implemented yet",
-                      "status": 501,
-                      "code": "not-implemented"
+                      "type": "https://cityturfer.app/problems/storage.unavailable",
+                      "title": "Storage is not available: retry later",
+                      "status": 503,
+                      "code": "storage.unavailable"
                     }
                   }
                 },
@@ -2062,14 +2077,13 @@
           "Privacy"
         ],
         "operationId": "listConsents",
-        "summary": "[planned] My consents",
-        "description": "The latest decision per purpose (use case ListConsents).",
+        "summary": "My consents",
+        "description": "The latest decision per purpose (use case ListConsents); purposes never decided are absent.",
         "security": [
           {
             "bearerAuth": []
           }
         ],
-        "x-cityturfer-status": "planned",
         "responses": {
           "200": {
             "description": "The consents.",
@@ -2143,18 +2157,18 @@
               }
             }
           },
-          "501": {
-            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
+          "503": {
+            "description": "No database configured or reachable: retry later. Codes: `storage.unavailable`.",
             "content": {
               "application/problem+json": {
                 "examples": {
-                  "not-implemented": {
-                    "summary": "not-implemented",
+                  "storage.unavailable": {
+                    "summary": "storage.unavailable",
                     "value": {
-                      "type": "https://cityturfer.app/problems/not-implemented",
-                      "title": "Not implemented yet",
-                      "status": 501,
-                      "code": "not-implemented"
+                      "type": "https://cityturfer.app/problems/storage.unavailable",
+                      "title": "Storage is not available: retry later",
+                      "status": 503,
+                      "code": "storage.unavailable"
                     }
                   }
                 },
@@ -2173,14 +2187,13 @@
           "Privacy"
         ],
         "operationId": "setConsent",
-        "summary": "[planned] Give or withdraw a consent",
-        "description": "Records the decision with the policy version (use case GiveOrWithdrawConsent). Withdrawing `cloud-sync` stops sync; erasing the data already stored is `DELETE /v1/me`. Withdrawing `apple-health-in-cloud-sync` stops new Apple Health uploads.",
+        "summary": "Give or withdraw a consent",
+        "description": "Records the decision with the policy version and the server time (use case GiveOrWithdrawConsent). Without `cloud-sync` granted, activity and Home City writes answer `403 consent.required`. Withdrawing `cloud-sync` stops sync but erases nothing; erasing the data already stored is `DELETE /v1/me`. Withdrawing `apple-health-in-cloud-sync` stops new Apple Health uploads.",
         "security": [
           {
             "bearerAuth": []
           }
         ],
-        "x-cityturfer-status": "planned",
         "parameters": [
           {
             "schema": {
@@ -2296,18 +2309,18 @@
               }
             }
           },
-          "501": {
-            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
+          "503": {
+            "description": "No database configured or reachable: retry later. Codes: `storage.unavailable`.",
             "content": {
               "application/problem+json": {
                 "examples": {
-                  "not-implemented": {
-                    "summary": "not-implemented",
+                  "storage.unavailable": {
+                    "summary": "storage.unavailable",
                     "value": {
-                      "type": "https://cityturfer.app/problems/not-implemented",
-                      "title": "Not implemented yet",
-                      "status": 501,
-                      "code": "not-implemented"
+                      "type": "https://cityturfer.app/problems/storage.unavailable",
+                      "title": "Storage is not available: retry later",
+                      "status": 503,
+                      "code": "storage.unavailable"
                     }
                   }
                 },
@@ -2326,14 +2339,13 @@
           "Sync"
         ],
         "operationId": "listChanges",
-        "summary": "[planned] Changes since a cursor",
-        "description": "Upserts, tombstones and Home City choices in server order since `cursor` (use case ListChanges). Without a cursor it lists everything the server holds for the user — the manifest a phone compares with its own history on the first upload.\n\nPull on launch, on foreground and after pushing; repeat while `hasMore`. Changes made by the calling device come back too: apply them idempotently (same `version` → nothing to do).",
+        "summary": "Changes since a cursor",
+        "description": "Upserts, tombstones and Home City choices in server order since `cursor` (use case ListChanges). Without a cursor it lists everything the server holds for the user — the manifest a phone compares with its own history on the first upload. Each activity, tombstone and the Home City appears once, at its latest change.\n\nPull on launch, on foreground and after pushing; repeat while `hasMore`. Changes made by the calling device come back too: apply them idempotently (same `version` → nothing to do).",
         "security": [
           {
             "bearerAuth": []
           }
         ],
-        "x-cityturfer-status": "planned",
         "parameters": [
           {
             "schema": {
@@ -2476,18 +2488,18 @@
               }
             }
           },
-          "501": {
-            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
+          "503": {
+            "description": "No database configured or reachable: retry later. Codes: `storage.unavailable`.",
             "content": {
               "application/problem+json": {
                 "examples": {
-                  "not-implemented": {
-                    "summary": "not-implemented",
+                  "storage.unavailable": {
+                    "summary": "storage.unavailable",
                     "value": {
-                      "type": "https://cityturfer.app/problems/not-implemented",
-                      "title": "Not implemented yet",
-                      "status": 501,
-                      "code": "not-implemented"
+                      "type": "https://cityturfer.app/problems/storage.unavailable",
+                      "title": "Storage is not available: retry later",
+                      "status": 503,
+                      "code": "storage.unavailable"
                     }
                   }
                 },
@@ -2506,14 +2518,13 @@
           "Activity Log"
         ],
         "operationId": "listActivities",
-        "summary": "[planned] List activities",
+        "summary": "List activities",
         "description": "Newest first (`startedAt`, then id), paged with an opaque `cursor` (use case ListActivities). Deleted activities are not listed: sync clients read tombstones from `GET /v1/sync/changes`.",
         "security": [
           {
             "bearerAuth": []
           }
         ],
-        "x-cityturfer-status": "planned",
         "parameters": [
           {
             "schema": {
@@ -2643,18 +2654,18 @@
               }
             }
           },
-          "501": {
-            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
+          "503": {
+            "description": "No database configured or reachable: retry later. Codes: `storage.unavailable`.",
             "content": {
               "application/problem+json": {
                 "examples": {
-                  "not-implemented": {
-                    "summary": "not-implemented",
+                  "storage.unavailable": {
+                    "summary": "storage.unavailable",
                     "value": {
-                      "type": "https://cityturfer.app/problems/not-implemented",
-                      "title": "Not implemented yet",
-                      "status": 501,
-                      "code": "not-implemented"
+                      "type": "https://cityturfer.app/problems/storage.unavailable",
+                      "title": "Storage is not available: retry later",
+                      "status": 503,
+                      "code": "storage.unavailable"
                     }
                   }
                 },
@@ -2673,14 +2684,13 @@
           "Activity Log"
         ],
         "operationId": "uploadActivity",
-        "summary": "[planned] Upload or replace a finished activity",
-        "description": "Stores the activity with its track under the id the phone minted (use cases ImportActivity and, for a corrected track, CorrectTrack). The server recomputes distance, time, splits and turf from the track with the shared core.\n\n- **New id** → `201` with `ETag` and `Location`.\n- **Same content again** (same `trackHash`, name and fields) → `200`, unchanged: replays are safe.\n- **Different content** → send `If-Match` with the current `ETag`: `200` and version + 1; a stale one → `412`, none → `428`.\n- **Deleted id** → `410 activity.deleted`: delete the activity locally too.\n\nBodies are limited to 4.5 MB: send long tracks with `Content-Encoding: gzip`.",
+        "summary": "Upload or replace a finished activity",
+        "description": "Stores the activity with its track under the id the phone minted (use cases ImportActivity and, for a corrected track, CorrectTrack). The server recomputes distance, time and splits from the track with the shared core and computes the canonical `trackHash` (a hash the client sends must match). Needs the `cloud-sync` consent (Apple Health activities also `apple-health-in-cloud-sync`).\n\n- **New id** → `201` with `ETag` and `Location`.\n- **Same content again** (same track, name and fields) → `200`, unchanged: replays are safe.\n- **Different content** → send `If-Match` with the current `ETag`: `200` and version + 1; a stale one → `412`, none → `428` (both carry the current `ETag`). A new track drops the stored gap routes: send them again.\n- **Deleted id** → `410 activity.deleted`: delete the activity locally too.\n\nBodies are limited to 4.5 MB: send long tracks with `Content-Encoding: gzip`.",
         "security": [
           {
             "bearerAuth": []
           }
         ],
-        "x-cityturfer-status": "planned",
         "parameters": [
           {
             "schema": {
@@ -2793,6 +2803,27 @@
                       "title": "Invalid or expired token",
                       "status": 401,
                       "code": "auth.invalid"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Give the consent first: `PUT /v1/me/consents/cloud-sync`. Codes: `consent.required`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "consent.required": {
+                    "summary": "consent.required",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/consent.required",
+                      "title": "Give the cloud-sync consent first",
+                      "status": 403,
+                      "code": "consent.required"
                     }
                   }
                 },
@@ -2996,18 +3027,18 @@
               }
             }
           },
-          "501": {
-            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
+          "503": {
+            "description": "No database configured or reachable: retry later. Codes: `storage.unavailable`.",
             "content": {
               "application/problem+json": {
                 "examples": {
-                  "not-implemented": {
-                    "summary": "not-implemented",
+                  "storage.unavailable": {
+                    "summary": "storage.unavailable",
                     "value": {
-                      "type": "https://cityturfer.app/problems/not-implemented",
-                      "title": "Not implemented yet",
-                      "status": 501,
-                      "code": "not-implemented"
+                      "type": "https://cityturfer.app/problems/storage.unavailable",
+                      "title": "Storage is not available: retry later",
+                      "status": 503,
+                      "code": "storage.unavailable"
                     }
                   }
                 },
@@ -3024,14 +3055,13 @@
           "Activity Log"
         ],
         "operationId": "getActivity",
-        "summary": "[planned] Activity detail",
+        "summary": "Activity detail",
         "description": "Summary, bounding box, km splits and gap routes (use case GetActivityDetail).",
         "security": [
           {
             "bearerAuth": []
           }
         ],
-        "x-cityturfer-status": "planned",
         "parameters": [
           {
             "schema": {
@@ -3187,18 +3217,18 @@
               }
             }
           },
-          "501": {
-            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
+          "503": {
+            "description": "No database configured or reachable: retry later. Codes: `storage.unavailable`.",
             "content": {
               "application/problem+json": {
                 "examples": {
-                  "not-implemented": {
-                    "summary": "not-implemented",
+                  "storage.unavailable": {
+                    "summary": "storage.unavailable",
                     "value": {
-                      "type": "https://cityturfer.app/problems/not-implemented",
-                      "title": "Not implemented yet",
-                      "status": 501,
-                      "code": "not-implemented"
+                      "type": "https://cityturfer.app/problems/storage.unavailable",
+                      "title": "Storage is not available: retry later",
+                      "status": 503,
+                      "code": "storage.unavailable"
                     }
                   }
                 },
@@ -3470,14 +3500,13 @@
           "Activity Log"
         ],
         "operationId": "deleteActivity",
-        "summary": "[planned] Delete an activity",
-        "description": "Deletes the activity, its track and gap routes, releases its turf (use case DeleteActivity) and leaves a tombstone: other devices learn it from `GET /v1/sync/changes`, and a later upload of the same id answers `410`. Idempotent: `204` even when already gone. No undelete (D5).",
+        "summary": "Delete an activity",
+        "description": "Deletes the activity, its track and gap routes, releases its turf (use case DeleteActivity) and leaves a tombstone (the id and when; no personal data): other devices learn it from `GET /v1/sync/changes`, and a later upload of the same id answers `410`. Idempotent: `204` even when already gone or never uploaded. No undelete (D5). Works without the `cloud-sync` consent: it only removes data.",
         "security": [
           {
             "bearerAuth": []
           }
         ],
-        "x-cityturfer-status": "planned",
         "parameters": [
           {
             "schema": {
@@ -3579,18 +3608,18 @@
               }
             }
           },
-          "501": {
-            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
+          "503": {
+            "description": "No database configured or reachable: retry later. Codes: `storage.unavailable`.",
             "content": {
               "application/problem+json": {
                 "examples": {
-                  "not-implemented": {
-                    "summary": "not-implemented",
+                  "storage.unavailable": {
+                    "summary": "storage.unavailable",
                     "value": {
-                      "type": "https://cityturfer.app/problems/not-implemented",
-                      "title": "Not implemented yet",
-                      "status": 501,
-                      "code": "not-implemented"
+                      "type": "https://cityturfer.app/problems/storage.unavailable",
+                      "title": "Storage is not available: retry later",
+                      "status": 503,
+                      "code": "storage.unavailable"
                     }
                   }
                 },
@@ -3609,14 +3638,13 @@
           "Activity Log"
         ],
         "operationId": "getActivityTrack",
-        "summary": "[planned] Activity track",
-        "description": "Every track point, compact (use case ActivityTrackQuery). The `ETag` is the `trackHash`: send it as `If-None-Match` to get `304` when the track has not changed. Personal data: `Cache-Control: private, no-cache`.",
+        "summary": "Activity track",
+        "description": "Every track point, compact, as uploaded (use case ActivityTrackQuery). The `ETag` is the `trackHash` in quotes: send it as `If-None-Match` to get `304` when the track has not changed. Personal data: `Cache-Control: private, no-cache`.",
         "security": [
           {
             "bearerAuth": []
           }
         ],
-        "x-cityturfer-status": "planned",
         "parameters": [
           {
             "schema": {
@@ -3786,18 +3814,18 @@
               }
             }
           },
-          "501": {
-            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
+          "503": {
+            "description": "No database configured or reachable: retry later. Codes: `storage.unavailable`.",
             "content": {
               "application/problem+json": {
                 "examples": {
-                  "not-implemented": {
-                    "summary": "not-implemented",
+                  "storage.unavailable": {
+                    "summary": "storage.unavailable",
                     "value": {
-                      "type": "https://cityturfer.app/problems/not-implemented",
-                      "title": "Not implemented yet",
-                      "status": 501,
-                      "code": "not-implemented"
+                      "type": "https://cityturfer.app/problems/storage.unavailable",
+                      "title": "Storage is not available: retry later",
+                      "status": 503,
+                      "code": "storage.unavailable"
                     }
                   }
                 },
@@ -3816,14 +3844,13 @@
           "Activity Log"
         ],
         "operationId": "saveGapRoutes",
-        "summary": "[planned] Save the estimated gap routes",
-        "description": "Replaces the street routes the phone estimated across GPS gaps (use case SaveGapRoutes; decision D3). Display only: they add to distance and moving time and are drawn dashed, never claimed as turf. Idempotent; version + 1 when they changed.",
+        "summary": "Save the estimated gap routes",
+        "description": "Replaces the street routes the phone estimated across GPS gaps (use case SaveGapRoutes; decision D3). Display only: they add to distance and moving time and are drawn dashed, never claimed as turf. Idempotent; version + 1 when they changed. Needs the `cloud-sync` consent.",
         "security": [
           {
             "bearerAuth": []
           }
         ],
-        "x-cityturfer-status": "planned",
         "parameters": [
           {
             "schema": {
@@ -3915,6 +3942,27 @@
               }
             }
           },
+          "403": {
+            "description": "Give the consent first: `PUT /v1/me/consents/cloud-sync`. Codes: `consent.required`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "consent.required": {
+                    "summary": "consent.required",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/consent.required",
+                      "title": "Give the cloud-sync consent first",
+                      "status": 403,
+                      "code": "consent.required"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
             "description": "No activity with this id for this user. Codes: `not-found`.",
             "content": {
@@ -3989,18 +4037,18 @@
               }
             }
           },
-          "501": {
-            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
+          "503": {
+            "description": "No database configured or reachable: retry later. Codes: `storage.unavailable`.",
             "content": {
               "application/problem+json": {
                 "examples": {
-                  "not-implemented": {
-                    "summary": "not-implemented",
+                  "storage.unavailable": {
+                    "summary": "storage.unavailable",
                     "value": {
-                      "type": "https://cityturfer.app/problems/not-implemented",
-                      "title": "Not implemented yet",
-                      "status": 501,
-                      "code": "not-implemented"
+                      "type": "https://cityturfer.app/problems/storage.unavailable",
+                      "title": "Storage is not available: retry later",
+                      "status": 503,
+                      "code": "storage.unavailable"
                     }
                   }
                 },
@@ -4469,14 +4517,13 @@
           "Territory"
         ],
         "operationId": "getHomeCity",
-        "summary": "[planned] Home City",
-        "description": "The city the maps open on, or null (use case GetHomeCity).",
+        "summary": "Home City",
+        "description": "The city the maps open on, or null (use case GetHomeCity). `chosenAt` stays set after a clear (`city: null`).",
         "security": [
           {
             "bearerAuth": []
           }
         ],
-        "x-cityturfer-status": "planned",
         "responses": {
           "200": {
             "description": "The Home City.",
@@ -4550,18 +4597,18 @@
               }
             }
           },
-          "501": {
-            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
+          "503": {
+            "description": "No database configured or reachable: retry later. Codes: `storage.unavailable`.",
             "content": {
               "application/problem+json": {
                 "examples": {
-                  "not-implemented": {
-                    "summary": "not-implemented",
+                  "storage.unavailable": {
+                    "summary": "storage.unavailable",
                     "value": {
-                      "type": "https://cityturfer.app/problems/not-implemented",
-                      "title": "Not implemented yet",
-                      "status": 501,
-                      "code": "not-implemented"
+                      "type": "https://cityturfer.app/problems/storage.unavailable",
+                      "title": "Storage is not available: retry later",
+                      "status": 503,
+                      "code": "storage.unavailable"
                     }
                   }
                 },
@@ -4578,14 +4625,13 @@
           "Territory"
         ],
         "operationId": "chooseHomeCity",
-        "summary": "[planned] Choose or clear the Home City",
-        "description": "Only catalogue cities; `cityId: null` clears it (use case ChooseHomeCity). Last write wins on `chosenAt`: an older choice is ignored and the current one returned.",
+        "summary": "Choose or clear the Home City",
+        "description": "Only catalogue cities; `cityId: null` clears it (use case ChooseHomeCity). Last write wins on `chosenAt`: an older (or equally old) choice is ignored and the current one returned. Needs the `cloud-sync` consent.",
         "security": [
           {
             "bearerAuth": []
           }
         ],
-        "x-cityturfer-status": "planned",
         "requestBody": {
           "required": true,
           "content": {
@@ -4658,6 +4704,27 @@
               }
             }
           },
+          "403": {
+            "description": "Give the consent first: `PUT /v1/me/consents/cloud-sync`. Codes: `consent.required`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "consent.required": {
+                    "summary": "consent.required",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/consent.required",
+                      "title": "Give the cloud-sync consent first",
+                      "status": 403,
+                      "code": "consent.required"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Not a catalogue city. Codes: `home-city.unknown`.",
             "content": {
@@ -4711,18 +4778,18 @@
               }
             }
           },
-          "501": {
-            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
+          "503": {
+            "description": "No database configured or reachable: retry later. Codes: `storage.unavailable`.",
             "content": {
               "application/problem+json": {
                 "examples": {
-                  "not-implemented": {
-                    "summary": "not-implemented",
+                  "storage.unavailable": {
+                    "summary": "storage.unavailable",
                     "value": {
-                      "type": "https://cityturfer.app/problems/not-implemented",
-                      "title": "Not implemented yet",
-                      "status": 501,
-                      "code": "not-implemented"
+                      "type": "https://cityturfer.app/problems/storage.unavailable",
+                      "title": "Storage is not available: retry later",
+                      "status": 503,
+                      "code": "storage.unavailable"
                     }
                   }
                 },

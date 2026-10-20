@@ -1,5 +1,9 @@
-// Vercel entry: zero-config Hono detects `export default app` here and deploys it as one Node
-// function (region in vercel.json). Local development uses src/server.ts.
-import { app } from './app';
+// Vercel entry. `pnpm run build` (vercel.json buildCommand) bundles this file with esbuild into
+// dist/index.mjs, which the zero-config Hono builder picks up (outputDirectory: dist); see
+// scripts/build.ts for why. Local development uses src/server.ts.
+import { createApp } from './app';
+import { productionDeps } from './wiring';
+
+const app = createApp(productionDeps(process.env));
 
 export default app;

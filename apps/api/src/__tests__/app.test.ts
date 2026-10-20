@@ -2,15 +2,44 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { gzipSync } from 'node:zlib';
 
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createApp } from '../app';
 import { defaultDeps, type RequestLogEntry, silentLog } from '../deps';
 import { API_VERSION, OPENAPI_CONFIG } from '../spec';
+import { backupApp, closeSharedDb, TOKENS } from './support';
 
+/** Spec and planned routes: no database, the placeholder auth (any bearer token, never verified). */
 const app = createApp(defaultDeps({ log: silentLog }));
 const AUTH = { Authorization: 'Bearer test-token' };
 const PUBLIC = new Set(['getHealth', 'signIn']);
+/** The one-way backup (docs/decisions/api-sync-2026-10-20.md): live since 0.3.0. */
+const LIVE = new Set([
+  'getHealth',
+  'getMe',
+  'listConsents',
+  'setConsent',
+  'listChanges',
+  'listActivities',
+  'uploadActivity',
+  'getActivity',
+  'deleteActivity',
+  'getActivityTrack',
+  'saveGapRoutes',
+  'getHomeCity',
+  'chooseHomeCity',
+]);
+
+/** Live routes on PGlite with real device tokens. */
+let live: Awaited<ReturnType<typeof backupApp>>;
+const LIVE_AUTH = { Authorization: `Bearer ${TOKENS.admin}` };
+beforeAll(async () => {
+  live = await backupApp();
+});
+afterAll(async () => {
+  await live.close();
+  await closeSharedDb();
+});
 const METHODS = ['get', 'put', 'post', 'patch', 'delete'] as const;
 
 type Operation = {
@@ -31,11 +60,11 @@ describe('routes', () => {
   it('answers health without auth', async () => {
     const res = await app.request('/v1/health');
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ status: 'ok', version: API_VERSION });
+    expect(await res.json()).toEqual({ status: 'ok', version: API_VERSION, database: 'not-configured' });
   });
 
   it('answers planned routes with a 501 problem', async () => {
-    const res = await app.request('/v1/me', { headers: AUTH });
+    const res = await app.request('/v1/turf/summary', { headers: AUTH });
     expect(res.status).toBe(501);
     expect(res.headers.get('content-type')).toContain('application/problem+json');
     expect(await res.json()).toMatchObject({ status: 501, code: 'not-implemented' });
@@ -50,7 +79,13 @@ describe('routes', () => {
     expect(JSON.stringify(body)).not.toContain('52.2297');
   });
 
-  it('accepts a well-formed upload (then 501) and refuses 7-column track points', async () => {
+  it('refuses live routes to an unverified caller (placeholder auth) with 401', async () => {
+    const res = await app.request('/v1/me', { headers: AUTH });
+    expect(res.status).toBe(401);
+    expect(await res.json()).toMatchObject({ code: 'auth.invalid' });
+  });
+
+  it('refuses 7-column track points on a live upload', async () => {
     const point = (i: number) => [21.0122 + i * 1e-4, 52.2297, 1760857920000 + i * 3000, 0, 98.5];
     const body = {
       type: 'run',
@@ -59,16 +94,14 @@ describe('routes', () => {
       startedAt: '2026-10-19T07:12:00Z',
       endedAt: '2026-10-19T07:42:00Z',
       resumedSegments: null,
-      trackHash: 'a'.repeat(64),
       track: { points: [point(0), point(1)] },
     };
     const put = (b: unknown) =>
-      app.request('/v1/activities/3f9c2a64', {
+      live.app.request('/v1/activities/3f9c2a64', {
         method: 'PUT',
-        headers: { ...AUTH, 'Content-Type': 'application/json' },
+        headers: { ...LIVE_AUTH, 'Content-Type': 'application/json' },
         body: JSON.stringify(b),
       });
-    expect((await put(body)).status).toBe(501);
     const old = await put({
       ...body,
       track: {
@@ -83,9 +116,9 @@ describe('routes', () => {
   });
 
   it('rejects an activity upload with a bad id or body', async () => {
-    const res = await app.request('/v1/activities/not%20an%20id', {
+    const res = await live.app.request('/v1/activities/not%20an%20id', {
       method: 'PUT',
-      headers: { ...AUTH, 'Content-Type': 'application/json' },
+      headers: { ...LIVE_AUTH, 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'swim' }),
     });
     expect(res.status).toBe(400);
@@ -109,7 +142,7 @@ describe('routes', () => {
 
 describe('platform middleware', () => {
   const upload = (headers: Record<string, string>, body: BodyInit) =>
-    app.request('/v1/activities/3f9c2a64', { method: 'PUT', headers, body });
+    live.app.request('/v1/activities/3f9c2a64', { method: 'PUT', headers, body });
 
   it('answers 401 before validating, so an anonymous caller learns nothing about the schema', async () => {
     const res = await upload({ 'Content-Type': 'application/json' }, '{}');
@@ -126,7 +159,7 @@ describe('platform middleware', () => {
   });
 
   it('lists invalid fields as JSON pointers', async () => {
-    const res = await upload({ ...AUTH, 'Content-Type': 'application/json' }, JSON.stringify({ type: 'swim' }));
+    const res = await upload({ ...LIVE_AUTH, 'Content-Type': 'application/json' }, JSON.stringify({ type: 'swim' }));
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.errors).toContainEqual(expect.objectContaining({ pointer: '/type' }));
@@ -134,7 +167,7 @@ describe('platform middleware', () => {
 
   it('inflates gzip bodies before validation', async () => {
     const res = await upload(
-      { ...AUTH, 'Content-Type': 'application/json', 'Content-Encoding': 'gzip' },
+      { ...LIVE_AUTH, 'Content-Type': 'application/json', 'Content-Encoding': 'gzip' },
       gzipSync(JSON.stringify({ type: 'swim' }))
     );
     expect(res.status).toBe(400);
@@ -142,9 +175,9 @@ describe('platform middleware', () => {
   });
 
   it('refuses other encodings with 415 and oversized bodies with 413', async () => {
-    const br = await upload({ ...AUTH, 'Content-Type': 'application/json', 'Content-Encoding': 'br' }, '{}');
+    const br = await upload({ ...LIVE_AUTH, 'Content-Type': 'application/json', 'Content-Encoding': 'br' }, '{}');
     expect(br.status).toBe(415);
-    const big = await upload({ ...AUTH, 'Content-Type': 'application/json' }, 'x'.repeat(4_600_000));
+    const big = await upload({ ...LIVE_AUTH, 'Content-Type': 'application/json' }, 'x'.repeat(4_600_000));
     expect(big.status).toBe(413);
     expect(await big.json()).toMatchObject({ code: 'payload-too-large' });
   });
@@ -152,10 +185,10 @@ describe('platform middleware', () => {
   it('gives every answer a request id and logs the route pattern, never the path', async () => {
     const entries: RequestLogEntry[] = [];
     const logged = createApp(defaultDeps({ log: { request: (e) => entries.push(e) } }));
-    const res = await logged.request('/v1/activities/3f9c2a64/track', { headers: AUTH });
+    const res = await logged.request('/v1/turf/claims/3f9c2a64', { headers: AUTH });
     expect(res.headers.get('x-request-id')).toBeTruthy();
     expect(entries).toEqual([
-      expect.objectContaining({ method: 'GET', route: '/v1/activities/:activityId/track', status: 501 }),
+      expect.objectContaining({ method: 'GET', route: '/v1/turf/claims/:activityId', status: 501 }),
     ]);
     expect(JSON.stringify(entries)).not.toContain('3f9c2a64');
   });
@@ -185,10 +218,16 @@ describe('OpenAPI document', () => {
     }
   });
 
-  it('marks every route but health as planned, with a 501 answer', () => {
-    for (const o of ops.filter((x) => x.op.operationId !== 'getHealth')) {
-      expect(o.op['x-cityturfer-status']).toBe('planned');
-      expect(o.op.responses).toHaveProperty('501');
+  it('marks the backup routes live (503 without a database) and the rest planned (501)', () => {
+    for (const o of ops) {
+      const id = o.op.operationId!;
+      if (LIVE.has(id)) {
+        expect([id, o.op['x-cityturfer-status']]).toEqual([id, undefined]);
+        expect([id, Object.hasOwn(o.op.responses ?? {}, '503')]).toEqual([id, !PUBLIC.has(id)]);
+      } else {
+        expect([id, o.op['x-cityturfer-status']]).toEqual([id, 'planned']);
+        expect(o.op.responses).toHaveProperty('501');
+      }
     }
   });
 

@@ -31,6 +31,6 @@ export function createTerritoryApi(deps: TerritoryDeps & HomeCityDeps) {
   };
 }
 export type TerritoryApi = ReturnType<typeof createTerritoryApi>;
-export type { HomeCityDeps } from './application/home-city';
+export { catalogueCityView, type HomeCityDeps } from './application/home-city';
 export type { ActivityTrackSource, TerritoryDeps } from './application/use-cases';
 export type * from './contract';

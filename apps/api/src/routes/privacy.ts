@@ -1,4 +1,4 @@
-import type { OpenAPIHono } from '@hono/zod-openapi';
+import type { OpenAPIHono, z } from '@hono/zod-openapi';
 
 import type { AppEnv } from '../deps';
 import { AUTH_ERRORS, INVALID, LOCATION_HEADER, notFound } from '../schemas/common';
@@ -10,7 +10,8 @@ import {
   ExportIdParam,
   SetConsentBody,
 } from '../schemas/privacy';
-import { defineRoute } from './define';
+import { defineRoute, valid } from './define';
+import { consentListDto } from './dto';
 
 const TAG = ['Privacy'];
 const json = <T>(schema: T) => ({ 'application/json': { schema } });
@@ -64,34 +65,46 @@ export function registerPrivacy(app: OpenAPIHono<AppEnv>): void {
     },
   });
 
-  defineRoute(app, {
-    status: 'planned',
-    method: 'get',
-    path: '/v1/me/consents',
-    tags: TAG,
-    operationId: 'listConsents',
-    summary: 'My consents',
-    description: 'The latest decision per purpose (use case ListConsents).',
-    responses: {
-      200: { description: 'The consents.', content: json(ConsentList) },
-      ...AUTH_ERRORS,
+  defineRoute(
+    app,
+    {
+      status: 'live',
+      method: 'get',
+      path: '/v1/me/consents',
+      tags: TAG,
+      operationId: 'listConsents',
+      summary: 'My consents',
+      description: 'The latest decision per purpose (use case ListConsents); purposes never decided are absent.',
+      responses: {
+        200: { description: 'The consents.', content: json(ConsentList) },
+        ...AUTH_ERRORS,
+      },
     },
-  });
+    async (c) => c.json(consentListDto(await c.var.backup.consents(c.var.userId)), 200)
+  );
 
-  defineRoute(app, {
-    status: 'planned',
-    method: 'put',
-    path: '/v1/me/consents/{purpose}',
-    tags: TAG,
-    operationId: 'setConsent',
-    summary: 'Give or withdraw a consent',
-    description:
-      'Records the decision with the policy version (use case GiveOrWithdrawConsent). Withdrawing `cloud-sync` stops sync; erasing the data already stored is `DELETE /v1/me`. Withdrawing `apple-health-in-cloud-sync` stops new Apple Health uploads.',
-    request: { params: ConsentPurposeParam, body: { required: true, content: json(SetConsentBody) } },
-    responses: {
-      200: { description: 'Recorded.', content: json(ConsentList) },
-      ...INVALID,
-      ...AUTH_ERRORS,
+  defineRoute(
+    app,
+    {
+      status: 'live',
+      method: 'put',
+      path: '/v1/me/consents/{purpose}',
+      tags: TAG,
+      operationId: 'setConsent',
+      summary: 'Give or withdraw a consent',
+      description:
+        'Records the decision with the policy version and the server time (use case GiveOrWithdrawConsent). Without `cloud-sync` granted, activity and Home City writes answer `403 consent.required`. Withdrawing `cloud-sync` stops sync but erases nothing; erasing the data already stored is `DELETE /v1/me`. Withdrawing `apple-health-in-cloud-sync` stops new Apple Health uploads.',
+      request: { params: ConsentPurposeParam, body: { required: true, content: json(SetConsentBody) } },
+      responses: {
+        200: { description: 'Recorded.', content: json(ConsentList) },
+        ...INVALID,
+        ...AUTH_ERRORS,
+      },
     },
-  });
+    async (c) => {
+      const { purpose } = valid<z.infer<typeof ConsentPurposeParam>>(c, 'param');
+      const body = valid<z.infer<typeof SetConsentBody>>(c, 'json');
+      return c.json(consentListDto(await c.var.backup.setConsent(c.var.userId, purpose, body)), 200);
+    }
+  );
 }

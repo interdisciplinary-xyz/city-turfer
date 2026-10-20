@@ -1,9 +1,10 @@
-import type { OpenAPIHono } from '@hono/zod-openapi';
+import type { OpenAPIHono, z } from '@hono/zod-openapi';
 
 import type { AppEnv } from '../deps';
-import { ActivityIdParam, AUTH_ERRORS, INVALID, notFound, problemResponse } from '../schemas/common';
+import { ActivityIdParam, AUTH_ERRORS, CONSENT_REQUIRED, INVALID, notFound, problemResponse } from '../schemas/common';
 import { ChooseHomeCityBody, Claim, HomeCity, TurfCells, TurfCellsQuery, TurfSummary } from '../schemas/territory';
-import { defineRoute } from './define';
+import { defineRoute, valid } from './define';
+import { homeCityDto, ms } from './dto';
 
 const TAG = ['Territory'];
 
@@ -59,35 +60,52 @@ export function registerTerritory(app: OpenAPIHono<AppEnv>): void {
     },
   });
 
-  defineRoute(app, {
-    status: 'planned',
-    method: 'get',
-    path: '/v1/turf/home-city',
-    tags: TAG,
-    operationId: 'getHomeCity',
-    summary: 'Home City',
-    description: 'The city the maps open on, or null (use case GetHomeCity).',
-    responses: {
-      200: { description: 'The Home City.', content: { 'application/json': { schema: HomeCity } } },
-      ...AUTH_ERRORS,
+  defineRoute(
+    app,
+    {
+      status: 'live',
+      method: 'get',
+      path: '/v1/turf/home-city',
+      tags: TAG,
+      operationId: 'getHomeCity',
+      summary: 'Home City',
+      description:
+        'The city the maps open on, or null (use case GetHomeCity). `chosenAt` stays set after a clear (`city: null`).',
+      responses: {
+        200: { description: 'The Home City.', content: { 'application/json': { schema: HomeCity } } },
+        ...AUTH_ERRORS,
+      },
     },
-  });
+    async (c) => c.json(homeCityDto(await c.var.backup.homeCity(c.var.userId)), 200)
+  );
 
-  defineRoute(app, {
-    status: 'planned',
-    method: 'put',
-    path: '/v1/turf/home-city',
-    tags: TAG,
-    operationId: 'chooseHomeCity',
-    summary: 'Choose or clear the Home City',
-    description:
-      'Only catalogue cities; `cityId: null` clears it (use case ChooseHomeCity). Last write wins on `chosenAt`: an older choice is ignored and the current one returned.',
-    request: { body: { required: true, content: { 'application/json': { schema: ChooseHomeCityBody } } } },
-    responses: {
-      200: { description: 'The Home City now.', content: { 'application/json': { schema: HomeCity } } },
-      ...INVALID,
-      ...AUTH_ERRORS,
-      422: problemResponse('Not a catalogue city.', 'home-city.unknown'),
+  defineRoute(
+    app,
+    {
+      status: 'live',
+      method: 'put',
+      path: '/v1/turf/home-city',
+      tags: TAG,
+      operationId: 'chooseHomeCity',
+      summary: 'Choose or clear the Home City',
+      description:
+        'Only catalogue cities; `cityId: null` clears it (use case ChooseHomeCity). Last write wins on `chosenAt`: an older (or equally old) choice is ignored and the current one returned. Needs the `cloud-sync` consent.',
+      request: { body: { required: true, content: { 'application/json': { schema: ChooseHomeCityBody } } } },
+      responses: {
+        200: { description: 'The Home City now.', content: { 'application/json': { schema: HomeCity } } },
+        ...INVALID,
+        ...AUTH_ERRORS,
+        ...CONSENT_REQUIRED,
+        422: problemResponse('Not a catalogue city.', 'home-city.unknown'),
+      },
     },
-  });
+    async (c) => {
+      const body = valid<z.infer<typeof ChooseHomeCityBody>>(c, 'json');
+      const now = await c.var.backup.chooseHomeCity(c.var.userId, {
+        cityId: body.cityId,
+        chosenAt: ms(body.chosenAt),
+      });
+      return c.json(homeCityDto(now), 200);
+    }
+  );
 }

@@ -7,6 +7,7 @@ export const PROBLEM_CODES = {
   'invalid-request': { status: 400, title: 'Invalid request' },
   'auth.missing': { status: 401, title: 'Missing bearer token' },
   'auth.invalid': { status: 401, title: 'Invalid or expired token' },
+  'consent.required': { status: 403, title: 'Give the cloud-sync consent first' },
   'not-found': { status: 404, title: 'Not found' },
   'activity.deleted': { status: 410, title: 'Activity was deleted' },
   'sync.cursor-expired': { status: 410, title: 'Sync cursor expired: sync again without a cursor' },
@@ -24,6 +25,7 @@ export const PROBLEM_CODES = {
   'rate-limited': { status: 429, title: 'Too many requests' },
   internal: { status: 500, title: 'Something went wrong' },
   'not-implemented': { status: 501, title: 'Not implemented yet' },
+  'storage.unavailable': { status: 503, title: 'Storage is not available: retry later' },
 } as const;
 
 export type ProblemCode = keyof typeof PROBLEM_CODES;
