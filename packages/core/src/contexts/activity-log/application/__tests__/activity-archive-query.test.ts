@@ -37,7 +37,10 @@ describe('ActivityArchiveQuery', () => {
     const t = setup();
     await new ImportActivity(t.deps).execute({ id: 'later', type: 'walk', points: line(T0 + 7_200_000, 3) });
     await new ImportActivity(t.deps).execute({ id: 'earlier', type: 'walk', points: line(T0, 3) });
-    expect(await t.archive.ids()).toEqual(['earlier', 'later']);
+    expect((await t.archive.timeline()).map((a) => [a.id, a.startedAt])).toEqual([
+      ['earlier', T0],
+      ['later', T0 + 7_200_000],
+    ]);
   });
 
   it('copies name, times, resumed segments, the whole track and the gap routes', async () => {

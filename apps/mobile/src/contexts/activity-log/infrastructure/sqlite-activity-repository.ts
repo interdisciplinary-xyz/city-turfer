@@ -2,6 +2,7 @@ import {
   Activity,
   type ActivityRepository,
   type ActivityState,
+  type ActivityTimeRange,
   estimatedTotals,
   type GapRoute,
 } from '@cityturfer/core/activity-log/ports';
@@ -246,6 +247,12 @@ export class SqliteActivityRepository implements ActivityRepository {
       [id]
     );
     return r?.at ?? null;
+  }
+
+  timeline(): Promise<ActivityTimeRange[]> {
+    return this.db.all<ActivityTimeRange>(
+      'SELECT id, started_at AS startedAt, ended_at AS endedAt FROM log_activities ORDER BY started_at, id'
+    );
   }
 
   async allIds(): Promise<string[]> {

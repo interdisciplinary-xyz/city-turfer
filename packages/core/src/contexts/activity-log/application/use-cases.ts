@@ -370,9 +370,9 @@ export class ActivityTrackQuery {
  */
 export class ActivityArchiveQuery {
   constructor(private readonly d: Pick<ActivityLogDeps, 'activities'>) {}
-  /** Ids of every Activity, oldest first. */
-  ids(): Promise<string[]> {
-    return this.d.activities.allIds();
+  /** Every Activity's id, start and end, oldest first: cheap, no tracks loaded. */
+  timeline(): Promise<{ id: string; startedAt: number; endedAt: number }[]> {
+    return this.d.activities.timeline();
   }
   async of(id: string): Promise<ActivityArchive | null> {
     const a = await this.d.activities.get(id);

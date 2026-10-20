@@ -73,3 +73,23 @@ describe('SqliteActivityRepository: gap routes check time', () => {
     expect(await repo.gapsCheckedAt('nope')).toBeNull();
   });
 });
+
+describe('SqliteActivityRepository: timeline', () => {
+  it('lists id, start and end of every activity, oldest first', async () => {
+    const { repo } = await setup();
+    const later = Activity.record({
+      id: 'b',
+      type: 'run',
+      startedAt: T0 + 86_400_000,
+      endedAt: T0 + 86_580_000,
+      track: trackFromPoints(points.map((p) => ({ ...p, t: p.t + 86_400_000 }))),
+      now: T0,
+    });
+    await repo.save(later, points);
+    await repo.save(record(null), points);
+    expect(await repo.timeline()).toEqual([
+      { id: 'a', startedAt: T0, endedAt: T0 + 180_000 },
+      { id: 'b', startedAt: T0 + 86_400_000, endedAt: T0 + 86_580_000 },
+    ]);
+  });
+});

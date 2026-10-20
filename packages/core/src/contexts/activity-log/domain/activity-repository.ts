@@ -21,6 +21,8 @@ export interface ActivityRepository {
   /** Atomic: updated totals + replaced track + pulled events → outbox. */
   saveCorrection(activity: Activity, track: readonly TrackPoint[]): Promise<void>;
   allIds(): Promise<string[]>;
+  /** Every Activity's id and start, oldest first (ties by id). */
+  timeline(): Promise<ActivityTimeRange[]>;
   /** Activities whose recording gaps have not been routed yet, oldest first. */
   idsWithUncheckedGaps(): Promise<string[]>;
   typeOf(id: string): Promise<ActivityListItem['type'] | null>;
