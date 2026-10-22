@@ -5,8 +5,9 @@ description:
   (Claim aggregate, Turf Cells on an H3 grid, permanent turf with visit-based Strength, Territory
   projection, rebuild/release), and the Turf Map rendering on MapLibre (heatmap glow,
   strength-coloured cells, overlapping blurred tracks, zoom level-of-detail). Use for anything in
-  apps/mobile/src/contexts/territory/, the Turf Map screen, "turf gained" on activities, tuning turf
-  parameters, or turf performance with large histories.
+  packages/core/src/contexts/territory/ (domain, use cases, contract), packages/core/src/h3/ or
+  apps/mobile/src/contexts/territory/ (SQLite projection, Turf Map UI), the Turf Map screen, "turf
+  gained" on activities, tuning turf parameters, or turf performance with large histories.
 ---
 
 # Turf & Territory
@@ -88,10 +89,15 @@ export interface CellGrid {
 }
 ```
 
-- `H3CellGrid` (infrastructure) uses h3-js: `latLngToCell(lat, lng, 11)`, `cellToBoundary`,
-  `cellToParent`, `polygonToCells`, `cellArea(c, 'm2')`. Resolution 11 claims; resolution 7 is the
-  parent for viewport indexing (`ter_cells.parent_r7`); resolution 9 is the aggregation level when
-  zoomed out.
+- **Where it lives:** Territory's domain, use cases and contract are in
+  `packages/core/src/contexts/territory/` (`@cityturfer/core/territory`; adapters import
+  `@cityturfer/core/territory/ports`); the SQLite projection, preferences and Turf Map UI stay in
+  `apps/mobile/src/contexts/territory/`. The server will claim turf with the same core code.
+- `H3CellGrid` (`packages/core/src/h3/`, entry `@cityturfer/core/h3`) uses h3-js, pinned to one
+  exact version in `packages/core/package.json` (guarded by `tools/__tests__/single-h3.test.mjs`):
+  `latLngToCell(lat, lng, 11)`, `cellToBoundary`, `cellToParent`, `polygonToCells`,
+  `cellArea(c, 'm2')`. Resolution 11 claims; resolution 7 is the parent for viewport indexing
+  (`ter_cells.parent_r7`); resolution 9 is the aggregation level when zoomed out.
 - The domain never imports h3-js. Tests use `SquareCellGrid` (pure TS, the same as
   `apps/mobile/tools/turf-preview.mjs`).
 
@@ -148,9 +154,9 @@ by type with a layer `filter` expression, not by rebuilding data.
 ### Camera and the Home City
 
 - The **Home City** (ubiquitous language; UI copy "Your city") is a city from the bundled catalogue
-  (`territory/domain/city-catalog.ts`) that the maps open on. Stored per user as a catalogue id only
-  (`ter_home_city`, migration 7) with a `HomeCityChosen` event (no coordinates) in the same
-  transaction; `useHomeCity()` refreshes through `dataVersion`. Picker:
+  (`packages/core/src/contexts/territory/domain/city-catalog.ts`) that the maps open on. Stored per
+  user as a catalogue id only (`ter_home_city`, migration 7) with a `HomeCityChosen` event (no
+  coordinates) in the same transaction; `useHomeCity()` refreshes through `dataVersion`. Picker:
   `apps/mobile/src/app/city.tsx` → `territory/ui/city-picker.tsx`. Decision:
   `docs/decisions/home-city-2026-10-19.md`.
 - Turf Map camera: Home City set → `initialViewState.bounds` = the city's bounds (centre ± radius);
@@ -166,8 +172,8 @@ by type with a layer `filter` expression, not by rebuilding data.
   sits under it) shows the Turfer's turf under the live track, before and during a recording. On by
   default, remembered per user (`territory/infrastructure/turf-overlay-preference.ts`, secure store;
   unset or unreadable = shown). The screen composes it: `useTurfOverlay()` →
-  `<TurfLayers beforeId={LIVE_TRACK_BOTTOM_LAYER} look='overlay'>` as `RecordView`'s `mapOverlay`,
-  fed by `onViewChange` (both `onRegionIsChanging` and `onRegionDidChange`).
+  `<TurfLayers beforeId={LIVE_TRACK_BOTTOM_LAYER}>` as `RecordView`'s `mapOverlay`, fed by
+  `onViewChange` (both `onRegionIsChanging` and `onRegionDidChange`).
   - **Layer order:** MapLibre adds a layer on top of the style whatever its JSX position, so the
     overlay uses `beforeId`, is mounted after the live track (the `beforeId` layer must exist) and
     stays mounted when hidden (empty cells), and `UserLocation` comes last.
@@ -177,9 +183,8 @@ by type with a layer `filter` expression, not by rebuilding data.
     only when the view leaves it or crosses `DETAIL_ZOOM`. The view lives in a ref, so following the
     Turfer re-renders nothing; `TurfLayers` is memoised because GeoJSON sources re-serialise their
     data on every render.
-  - **Look:** `look='overlay'` (`territory/ui/layers.constants.ts` `TURF_LOOK`) draws lighter fill,
-    halo and heatmap than the Turf Map (`'full'`), so streets stay readable under the turf while
-    recording.
+  - **Look:** the Record map uses the Turf Map's dark style and the same turf look
+    (`territory/ui/layers.constants.ts` `TURF_STYLE`), so turf looks the same on both maps.
 - Catalogue ids are stored in user databases: never rename or reuse one; a removed id reads as no
   Home City. Adding a city is a JS-only change (ships over the air).
 

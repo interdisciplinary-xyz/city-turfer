@@ -1,7 +1,8 @@
-import { ActivityRow as ActivityRowView } from '@cityturfer/ui';
+import { ActivityRow as ActivityRowView, usePalette } from '@cityturfer/ui';
 
 import { TYPE_GLYPH } from '@/constants/activity';
 import { distanceText, formatDate, formatDuration, formatPaceOrSpeed } from '@/ui-kit/format';
+import { ActivitySymbol } from '@/ui-kit/symbol';
 
 import type { ActivityListItem } from '../contract';
 
@@ -15,12 +16,14 @@ export function ActivityRow({
   onPress: () => void;
   testID?: string;
 }) {
+  const p = usePalette();
   const pace = formatPaceOrSpeed(item.type, item.distanceM, item.movingS);
   const estimated = item.estimatedDistanceM > 0;
   return (
     <ActivityRowView
       type={item.type}
       glyph={TYPE_GLYPH[item.type]}
+      icon={<ActivitySymbol type={item.type} size={20} color={p.text} />}
       title={item.name}
       subtitle={formatDate(item.startedAt)}
       value={`${estimated ? '≈ ' : ''}${distanceText(item.distanceM)}`}

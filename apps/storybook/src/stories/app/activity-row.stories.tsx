@@ -1,6 +1,6 @@
 import { ActivityRow } from '@cityturfer/ui';
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 import { fn } from 'storybook/test';
 
 const meta = {
@@ -25,6 +25,11 @@ export const Run: StoryObj<typeof meta> = {};
 /** A gap in the GPS track was filled with a street-routed estimate: the distance is approximate. */
 export const EstimatedDistance: StoryObj<typeof meta> = {
   args: { type: 'walk', glyph: '🚶', title: 'Morning walk', value: '≈ 3.10 km', detail: '41:02 · 13:14/km' },
+};
+
+/** The app passes an SF Symbol as `icon` (Storybook has no SF Symbols, so a stand-in glyph here). */
+export const WithIcon: StoryObj<typeof meta> = {
+  args: { icon: <Text style={{ fontSize: 20 }}>◆</Text> },
 };
 
 /** History list: rows as the app stacks them. */

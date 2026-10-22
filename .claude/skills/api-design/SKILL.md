@@ -21,17 +21,24 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
 
 - `apps/api` (`@cityturfer/api`): Hono app in `apps/api/src/app.ts`, Vercel entry
   `apps/api/src/index.ts` (`export default app`), local server `apps/api/src/server.ts`
-  (`@hono/node-server`, port 8787).
-- `createApp(deps)` takes its dependencies (`ApiDeps` in `apps/api/src/deps.ts`: auth, clock); tests
-  and later the Postgres wiring inject their own. Middleware: request id, then per route auth
-  (**before** validation: no token → 401, never 400), then zod validation.
+  (`@hono/node-server`, port 8787), bundled for Vercel by `apps/api/scripts/build.ts`.
+- `createApp(deps)` takes its dependencies (`ApiDeps` in `apps/api/src/deps.ts`: auth, clock, log,
+  `store`); `apps/api/src/wiring.ts` builds them from env (Neon + `API_TOKENS`), tests inject PGlite
+  (`apps/api/src/__tests__/support.ts`). Middleware: request id, then per route auth (**before**
+  validation: no token → 401, never 400), on live routes the database + user (`requireStore`: 503
+  `storage.unavailable` without a database), then zod validation.
+- **Backup (live since contract 0.3.0):** application layer `apps/api/src/backup/` (`BackupService`
+  use cases, `BackupStore` port, canonical `trackHash` in `hashing.ts`, summary via
+  `@cityturfer/core` in `summary.ts`); adapter `apps/api/src/db/` (Drizzle schema, store, Neon and
+  PGlite clients); migrations in `apps/api/drizzle/` (committed). Decision:
+  `docs/decisions/api-device-tokens-2026-10-20.md`.
 - Routes per bounded context in `apps/api/src/routes/<context>.ts` (identity, privacy, sync,
   activities, territory), declared through `defineRoute()` (`routes/define.ts`) with
   `status: 'planned' | 'live'`; schemas in `apps/api/src/schemas/<context>.ts`; shared pieces
   (problem, ids, cursor, headers, standard responses) in `apps/api/src/schemas/common.ts`; the error
   code catalogue in `apps/api/src/errors.ts`.
 - **Routes are driving adapters:** validate (zod) → call a use case → map the result to a DTO.
-  Business rules live in the domain (later `@cityturfer/core`), never in a handler.
+  Business rules live in the domain (`@cityturfer/core`, `packages/core`), never in a handler.
 - The spec is **generated**: `pnpm --filter @cityturfer/api run openapi` writes
   `apps/api/openapi.json`. Never edit it by hand. `ci:quality` regenerates it (fails on drift) and
   runs `redocly lint`.
@@ -67,9 +74,13 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
 - **Headers:** `X-Request-Id` on every answer; `CityTurfer-Client` (426 `client.too-old`);
   `Retry-After` + `RateLimit` on 429; `Location` on 201/202.
 - **Auth:** `bearerAuth` (HTTP bearer). Every route needs it except `GET /v1/health`,
-  `POST /v1/auth/sign-in` (mock, dev only), `/openapi.json` and `/swagger`. Until a real
-  `AuthGateway` is wired, the placeholder only checks that a bearer token is present; no live route
-  may trust it.
+  `POST /v1/auth/sign-in` (mock, dev only), `/openapi.json` and `/swagger`. Today: **device tokens**
+  (stopgap until Better Auth) — env `API_TOKENS` maps `sha256(token)` hex → user id, compared in
+  constant time; unknown → 401 `auth.invalid`. The user row is created on first sight. The
+  placeholder verifier (spec generation, planned-route tests) marks callers unverified, which live
+  routes refuse.
+- **Consent:** activity and Home City writes need `cloud-sync` granted (Apple Health activities also
+  `apple-health-in-cloud-sync`), else 403 `consent.required`; `DELETE` never needs it.
 - **Planned routes** are declared with full schemas, answer `501` (`code: "not-implemented"`), carry
   `x-cityturfer-status: planned` and a `[planned]` summary prefix, so Swagger shows the whole API
   before it is built.
@@ -95,6 +106,24 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   download link.
 - Hobby is non-commercial: Pro before launch. Functions run on Node (h3-js is plain JS).
 - Don't add `builds` to `vercel.json` (it turns zero-config off).
+
+## Running it (env, migrations, tokens)
+
+- **Local:** `pnpm --filter @cityturfer/api dev` (port 8787; `PORT=8788 …` for another). Without
+  `DATABASE_URL` it uses PGlite in `apps/api/.data/` (gitignored, migrated on start); without
+  `API_TOKENS` the token `dev-token` is user `admin`.
+- **Env (Vercel):** `DATABASE_URL` (Neon pooled), optional `DATABASE_URL_UNPOOLED` (migrations),
+  `API_TOKENS`. Runbook: `docs/operations/api-deploy.md`.
+- **Schema change:** edit `apps/api/src/db/schema.ts` (`user_id` first in every key), then
+  `pnpm --filter @cityturfer/api run db:generate`, commit `apps/api/drizzle/`. Apply with
+  `DATABASE_URL=… pnpm --filter @cityturfer/api run db:migrate` before deploying (not in the build).
+  Tests run the same migrations on PGlite.
+- **Tokens:** `pnpm --filter @cityturfer/api run token:new -- <userId>` prints the token (device
+  only) and the `API_TOKENS` entry. Rotate: add new hash, update device, remove old hash.
+- **Build:** `pnpm --filter @cityturfer/api run build` bundles `apps/api/src/index.ts` +
+  `@cityturfer/core` with esbuild into `dist/index.mjs`; `vercel.json` (`outputDirectory: dist`)
+  makes the Hono builder use it. Vercel's own per-file transpile can't run extensionless ESM imports
+  or the core's TS.
 
 ## Adding a route
 

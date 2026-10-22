@@ -99,8 +99,8 @@ You build the UI of CityTurfer: walks, runs and rides on a real map become the T
 - **Maestro sees the accessibility label, not the text, on iOS.** A chip labelled "Show Kraków" that
   displays "⌂ Kraków" is found by the label. Keep labels meaningful.
 - New testIDs used in a Maestro flow must exist in `apps/mobile/src` (the e2e audit checks this).
-- Stats spell out units in labels ("5.24 kilometres"). Respect `useColorScheme()` (the Turf Map is
-  always dark) and reduce motion.
+- Stats spell out units in labels ("5.24 kilometres"). The app is always dark
+  (`userInterfaceStyle: "dark"`, like the website); use `usePalette()`, and respect reduce motion.
 
 ## Before reporting back
 

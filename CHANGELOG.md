@@ -2,6 +2,79 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.7.0...v0.8.0) (2026-10-20)
+
+
+### Features
+
+* **activity-log:** move Activity Log's domain and use cases into @cityturfer/core ([8bc6fb3](https://github.com/interdisciplinary-xyz/city-turfer/commit/8bc6fb3a885256126f0f0d1040d2d41785256deb))
+* **api:** add the sync changes feed ([af02325](https://github.com/interdisciplinary-xyz/city-turfer/commit/af02325b68d9730858ebdcf8010c3585187f59db))
+* **api:** apps/api with every v1 route declared and documented ([feeaa7f](https://github.com/interdisciplinary-xyz/city-turfer/commit/feeaa7ff4551fb509c42b45df9e32e3b51e7f266))
+* **api:** async data export, erasure job and consents ([6b1d883](https://github.com/interdisciplinary-xyz/city-turfer/commit/6b1d88399a4797c7d4768c5263ba5346a8295967))
+* **api:** live one-way backup on postgres with device tokens ([f2da76f](https://github.com/interdisciplinary-xyz/city-turfer/commit/f2da76f4824d1eeed39d29c7f5aa0a36c3fa5d9f))
+* **api:** make the activity log contract sync-ready ([aefbd31](https://github.com/interdisciplinary-xyz/city-turfer/commit/aefbd3192a60cf635707d99c74cdd15f5bd3f2b0))
+* **api:** move territory routes under /v1/turf and drop device-only ones ([31f6c97](https://github.com/interdisciplinary-xyz/city-turfer/commit/31f6c9766a69e926287ffd7284420279575f24f3))
+* **api:** share contract pieces and show planned routes in swagger ([6ec2c38](https://github.com/interdisciplinary-xyz/city-turfer/commit/6ec2c3885f1ae47a0fd72f8d5ba8533db33da896))
+* **app:** add the cloud backup card to the info screen ([1507df4](https://github.com/interdisciplinary-xyz/city-turfer/commit/1507df46ae0a9ef5c608947c900f21961f1c1ae9))
+* **app:** apply the brand across the mobile screens ([bba0cb2](https://github.com/interdisciplinary-xyz/city-turfer/commit/bba0cb219c75bf6c3b2c53a56904062583d30fc3))
+* **app:** archivo for titles and stats ([5db8d34](https://github.com/interdisciplinary-xyz/city-turfer/commit/5db8d343dff8cf7d928ce9f3caef8796ea1b6aa6))
+* **brand:** archivo typeface, contrast check and brand asset templates ([9e206fc](https://github.com/interdisciplinary-xyz/city-turfer/commit/9e206fce115ddafd8cd91783744ea750f6af7432))
+* **cloud-backup:** back up activities to the cityturfer api ([be2e22d](https://github.com/interdisciplinary-xyz/city-turfer/commit/be2e22d633cbc6b0bebae23621c101ef7a9fb872))
+* **core:** add @cityturfer/core with the shared kernel and core constants ([ab1a514](https://github.com/interdisciplinary-xyz/city-turfer/commit/ab1a5142b359390d56349b6fa0e68e061c4c0f6c))
+* **core:** add the activity archive and home city choice queries ([a40a9d5](https://github.com/interdisciplinary-xyz/city-turfer/commit/a40a9d5554742ee849e51c5849cda30ba4dba7b8))
+* **core:** expose the catalogue city view for a home city id ([96d02ec](https://github.com/interdisciplinary-xyz/city-turfer/commit/96d02ec81aa58f4d0bc8d6c25bb7ed2993f72e86))
+* **core:** list the activity timeline without loading tracks ([52c885e](https://github.com/interdisciplinary-xyz/city-turfer/commit/52c885ef8a508997d095c4af081c745b4632d72d))
+* **core:** move Achievements and Identity into @cityturfer/core ([bbefe0d](https://github.com/interdisciplinary-xyz/city-turfer/commit/bbefe0d48108bde703438efdbd47eb0568b503d6))
+* **platform:** add migration v8 for cloud backup state ([76b5ab2](https://github.com/interdisciplinary-xyz/city-turfer/commit/76b5ab26c37edf89df8bed9c7b73fa269fb6fa5e))
+* **territory:** move Territory's domain and use cases into @cityturfer/core ([fecedd3](https://github.com/interdisciplinary-xyz/city-turfer/commit/fecedd37f06c5a555f3b756bda3101470bb64bde))
+* **territory:** softer turf on the record map, chips in one column, reliable e2e taps ([c68fdc2](https://github.com/interdisciplinary-xyz/city-turfer/commit/c68fdc2c84e19ded917fafc5a32fb5aef296d532))
+* **territory:** turf toggle on the record map (wip) ([df45d95](https://github.com/interdisciplinary-xyz/city-turfer/commit/df45d954ed1326939158b2cf393cc7c1dfdc7362))
+* **ui:** stat unit off Archivo, activity row takes an icon ([f42cb07](https://github.com/interdisciplinary-xyz/city-turfer/commit/f42cb07b626eb45517395bf3f0ba73f0d5b0bf3b))
+* **web:** /branding page with the brand definition ([952901a](https://github.com/interdisciplinary-xyz/city-turfer/commit/952901a41eb1094c3c677affa9648beaadb39370))
+* **web:** archivo headlines and social share image ([1b6aa2d](https://github.com/interdisciplinary-xyz/city-turfer/commit/1b6aa2d161e00c2f9eff3137014a22f6e648f908))
+* **web:** brand the swagger docs page and show the dev toolbar on it ([1d7fa2f](https://github.com/interdisciplinary-xyz/city-turfer/commit/1d7fa2f59e685d25cb2f88e53fee0ec71eecf048))
+* **web:** swagger ui at /swagger and an /api proxy on the local site ([8306cad](https://github.com/interdisciplinary-xyz/city-turfer/commit/8306cad037734764741c27f64ab9ab35a646a9aa))
+
+
+### Bug Fixes
+
+* **web:** swagger header tagline that reads as api docs ([3632b39](https://github.com/interdisciplinary-xyz/city-turfer/commit/3632b3955579e5f145dd74b243c3d6098761b72c))
+
+
+### Refactoring
+
+* **api:** add seams for real implementations ([42e2d24](https://github.com/interdisciplinary-xyz/city-turfer/commit/42e2d244e7ec6ee0f743a7ab8b8f78d2bee67ee2))
+* **core:** prepare the core-bound code for packages/core in place ([d5f0b82](https://github.com/interdisciplinary-xyz/city-turfer/commit/d5f0b827ac2ffa84d5cda155b3275c2b7ed12b96))
+
+
+### Documentation
+
+* api decision, api-design skill and api-engineer agent ([11dfd4d](https://github.com/interdisciplinary-xyz/city-turfer/commit/11dfd4dc95b6d950f2cec8c6ca948247847087a1))
+* api-engineer becomes the back-end engineer agent ([d15c812](https://github.com/interdisciplinary-xyz/city-turfer/commit/d15c812992f86c893a47094ae6e78c3de84e377b))
+* **api:** add the guide to swagger and guard the docs against drift ([fff303c](https://github.com/interdisciplinary-xyz/city-turfer/commit/fff303c93d1ee1ca17278625b145c92bc5c6a874))
+* **api:** device tokens, migrations and the deploy runbook ([3110f4c](https://github.com/interdisciplinary-xyz/city-turfer/commit/3110f4c7b4bd506c047b1c683651f9df57c114e2))
+* **api:** record the sync-first api contract ([a04c104](https://github.com/interdisciplinary-xyz/city-turfer/commit/a04c104f8bfdafdc94d4cf19084dfe041ba33818))
+* **brand:** brand foundations, brand-system skill and brand-designer agent ([62098f9](https://github.com/interdisciplinary-xyz/city-turfer/commit/62098f9457ff5abf17305047447347304515522b))
+* **cloud-backup:** describe the backup card, context and what leaves the phone ([9e0d8f9](https://github.com/interdisciplinary-xyz/city-turfer/commit/9e0d8f91b27c2e8e5105a1002601d2d12031e8dc))
+* **cloud-backup:** say where location data may leave the phone now ([efb8500](https://github.com/interdisciplinary-xyz/city-turfer/commit/efb8500acef1f28e2b4f02cf86a4325895bfbb14))
+* **core:** describe packages/core and point docs at the moved code ([c2c5556](https://github.com/interdisciplinary-xyz/city-turfer/commit/c2c55561b186d737f612c7d49655cf3b94cede3f))
+* **product:** product brief, product-knowledge skill and product-manager agent ([127d767](https://github.com/interdisciplinary-xyz/city-turfer/commit/127d767f0701e5b2f3355af4228b5474ce3f89de))
+* **product:** product owner persona with discovery, strategy and launch skills ([17d4678](https://github.com/interdisciplinary-xyz/city-turfer/commit/17d4678fc367abc95ae416fa9c8d3a74880b241c))
+* v0.6.0 and v0.7.0 session logs ([09588bc](https://github.com/interdisciplinary-xyz/city-turfer/commit/09588bccf15d4ef5696893017616bf8bc3f5ca31))
+* v0.8.0 session log ([b431fac](https://github.com/interdisciplinary-xyz/city-turfer/commit/b431fac7c490ae8fac8ad54babe0906d6377b95f)), closes [#89](https://github.com/interdisciplinary-xyz/city-turfer/issues/89) [#90](https://github.com/interdisciplinary-xyz/city-turfer/issues/90) [#88](https://github.com/interdisciplinary-xyz/city-turfer/issues/88)
+* v0.8.0 session log — [#93](https://github.com/interdisciplinary-xyz/city-turfer/issues/93), [#94](https://github.com/interdisciplinary-xyz/city-turfer/issues/94) merged; [#95](https://github.com/interdisciplinary-xyz/city-turfer/issues/95), [#96](https://github.com/interdisciplinary-xyz/city-turfer/issues/96) open ([598f8ef](https://github.com/interdisciplinary-xyz/city-turfer/commit/598f8ef1537f99b321b1aa0b580f5ee13604ffaf))
+* v0.8.0 session log — [#95](https://github.com/interdisciplinary-xyz/city-turfer/issues/95), [#96](https://github.com/interdisciplinary-xyz/city-turfer/issues/96), [#98](https://github.com/interdisciplinary-xyz/city-turfer/issues/98), [#99](https://github.com/interdisciplinary-xyz/city-turfer/issues/99) merged ([612c138](https://github.com/interdisciplinary-xyz/city-turfer/commit/612c1386e89b3596112d77e6fc469c40704410d8))
+* v0.8.0 session log — core, cloud backup and brand rollout ([#100](https://github.com/interdisciplinary-xyz/city-turfer/issues/100)–[#106](https://github.com/interdisciplinary-xyz/city-turfer/issues/106)) ([244b030](https://github.com/interdisciplinary-xyz/city-turfer/commit/244b03054cc40948586b48aec9eb303b7286aa2e))
+* v0.8.0 session log — turf overlay PR [#94](https://github.com/interdisciplinary-xyz/city-turfer/issues/94) ([cba7c0e](https://github.com/interdisciplinary-xyz/city-turfer/commit/cba7c0eaf668db3c201b4c9a6dbd60ea17efa593))
+
+
+### Tests
+
+* **api:** one pglite database per test file, emptied between tests ([2e72b45](https://github.com/interdisciplinary-xyz/city-turfer/commit/2e72b454bda70b3b7f3c48d2bca1c46c10a1c5d4))
+* **brand:** pin the Archivo font-family CSS variables ([044bb1d](https://github.com/interdisciplinary-xyz/city-turfer/commit/044bb1dca4b09d84375d96ed217c991038649ae5))
+* **brand:** track the white label on the danger button ([2188695](https://github.com/interdisciplinary-xyz/city-turfer/commit/21886958e370691dbbec3575bc9d457ca7ee4e3a))
+* **e2e:** home city flow retries the record chip tap after a choice ([885f44e](https://github.com/interdisciplinary-xyz/city-turfer/commit/885f44eb5c7220c85a64948d9d597a47219199d4))
+
 ## [0.7.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.6.0...v0.7.0) (2026-10-20)
 
 

@@ -1,6 +1,6 @@
+import { evaluateOnboarding, type OnboardingFacts, type OnboardingProgress } from '@cityturfer/core/achievements';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { evaluateOnboarding, type OnboardingFacts, type OnboardingProgress } from '../domain/onboarding';
 import { onboardingDismissal } from '../infrastructure/onboarding-dismissal';
 
 /** Checklist progress plus persisted dismissal. `progress` is null while loading, once hidden, or when complete. */

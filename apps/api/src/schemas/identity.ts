@@ -5,8 +5,11 @@ import { z } from '@hono/zod-openapi';
 export const User = z
   .object({
     id: z.string().openapi({ example: 'admin' }),
-    email: z.string().email().openapi({ example: 'admin@cityturfer.com' }),
-    displayName: z.string().openapi({ example: 'Admin' }),
+    email: z.string().nullable().openapi({
+      description: 'Null when the token configuration names no e-mail (device tokens).',
+      example: 'admin@cityturfer.com',
+    }),
+    displayName: z.string().openapi({ description: 'Falls back to the user id.', example: 'Admin' }),
   })
   .openapi('User');
 

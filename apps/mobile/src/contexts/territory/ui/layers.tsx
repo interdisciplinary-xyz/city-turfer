@@ -5,7 +5,7 @@ import { TIER_COLOR } from '@/constants/colors';
 import { DETAIL_ZOOM } from '@/constants/map';
 
 import type { ClaimView, TurfCellView } from '../contract';
-import { TURF_LOOK, type TurfLook } from './layers.constants';
+import { TURF_STYLE as style } from './layers.constants';
 
 const tierColor = [
   'match',
@@ -22,19 +22,10 @@ const tierColor = [
 /**
  * Heatmap glow (zoomed out) + strength-coloured hexagons with a halo (zoomed in). `beforeId` puts
  * the layers under another layer: MapLibre adds layers on top of the style regardless of where they
- * sit in the JSX. `look` softens the turf on maps where it isn't the subject (`TURF_LOOK`).
+ * sit in the JSX. Drawn the same on every map (`TURF_STYLE`).
  * Memoised: GeoJSON sources re-serialise their data whenever they re-render.
  */
-export const TurfLayers = memo(function TurfLayers({
-  cells,
-  beforeId,
-  look = 'full',
-}: {
-  cells: TurfCellView[];
-  beforeId?: string;
-  look?: TurfLook;
-}) {
-  const style = TURF_LOOK[look];
+export const TurfLayers = memo(function TurfLayers({ cells, beforeId }: { cells: TurfCellView[]; beforeId?: string }) {
   const points = useMemo<GeoJSON.FeatureCollection>(
     () => ({
       type: 'FeatureCollection',

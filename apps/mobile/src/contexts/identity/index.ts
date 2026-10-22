@@ -1,13 +1,3 @@
-// Public API of the Identity context.
-import { GetCurrentUser, type IdentityDeps, SignIn, SignOut } from './application/use-cases';
-
-export function createIdentityApi(deps: IdentityDeps, isRecording: () => Promise<boolean>) {
-  return {
-    signIn: new SignIn(deps),
-    signOut: new SignOut(deps, isRecording),
-    currentUser: new GetCurrentUser(deps),
-  };
-}
-export type IdentityApi = ReturnType<typeof createIdentityApi>;
-export type { IdentityDeps } from './application/use-cases';
-export type { User } from './domain/user';
+// Re-export shim: Identity's domain and use cases live in @cityturfer/core
+// (packages/core/src/contexts/identity). The mock gateway and session stores stay here.
+export * from '@cityturfer/core/identity';

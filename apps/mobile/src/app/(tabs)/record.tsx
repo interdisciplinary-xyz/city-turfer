@@ -33,7 +33,7 @@ export default function RecordScreen() {
       onPickCity={() => router.push('/city')}
       focused={focused}
       onFinished={(id) => router.push(`/activity/${id}`)}
-      mapOverlay={<TurfLayers cells={turf.cells} beforeId={LIVE_TRACK_BOTTOM_LAYER} look='overlay' />}
+      mapOverlay={<TurfLayers cells={turf.cells} beforeId={LIVE_TRACK_BOTTOM_LAYER} />}
       onViewChange={turf.onViewChange}
       turf={{ shown, onToggle: () => turf.setShown(!shown) }}
     />

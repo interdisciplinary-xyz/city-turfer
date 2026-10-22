@@ -8,5 +8,6 @@ export const ITEMS: { label: string; href: Href; symbol: SFSymbol; glyph: string
   { label: 'Info', href: '/info', symbol: 'info.circle', glyph: 'ⓘ', testID: 'me-menu-info' },
 ];
 
-export const DURATION_MS = 220;
+/** Drawer slide and snap-back (0 with Reduce Motion on). */
+export const DURATION_MS = 200;
 export const CLOSE_DRAG_PX = 80;

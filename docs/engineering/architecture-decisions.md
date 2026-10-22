@@ -94,7 +94,7 @@ by the public FOSSGIS OSRM router (`routing.openstreetmap.de`, foot or bike prof
 `apps/mobile/src/contexts/activity-log/infrastructure/osm-route-estimator.ts`). Only the gap's two
 endpoints are sent, never a whole track. Estimates are stored in `log_gap_routes`, drawn dashed,
 counted in distance with a "≈", and **never claim turf**: a `GapRoute` is "display + distance only"
-(`apps/mobile/src/contexts/activity-log/domain/gap-route.ts`); Territory claims cells from the
+(`packages/core/src/contexts/activity-log/domain/gap-route.ts`); Territory claims cells from the
 recorded Segments only.
 
 **Rationale:** A straight line across a gap draws fake streets and fake turf. Street routing gives a
@@ -176,9 +176,9 @@ design, not a swap.
 **Status:** Accepted.
 
 **Decision:** Turf Cells are H3 res 11 hexagons (~50 m across), with res 9 for zoomed-out
-aggregation (`apps/mobile/src/contexts/territory/infrastructure/h3-cell-grid.ts`), behind
-Territory's `CellGrid` port so the domain never sees h3-js. h3-js is loaded through a Hermes-safe
-loader (`territory/infrastructure/h3.ts`).
+aggregation (`packages/core/src/h3/h3-cell-grid.ts`), behind Territory's `CellGrid` port so the
+domain never sees h3-js. h3-js is loaded through a Hermes-safe loader
+(`packages/core/src/h3/h3.ts`).
 
 **Rationale:** ~50 m is street-sized: a walk down a street claims a corridor of cells, and a
 neighbour street is a different cell. Hexagons have uniform neighbours, so corridors look even. The
@@ -308,7 +308,7 @@ heatmap or blur. No Google Maps key.
 
 **Decision:** One user per device, data on the device. Turf is a corridor of cells along the
 recorded track plus a glow; closed loops don't claim the area inside (cells come from points along
-each Segment, `apps/mobile/src/contexts/territory/domain/claim.ts`).
+each Segment, `packages/core/src/contexts/territory/domain/claim.ts`).
 
 **Rationale:** "Every street you cover" is the product promise; filling a loop would claim streets
 you never walked.
@@ -326,6 +326,25 @@ you never walked.
 
 **Rationale:** The glow — the reason to open the map — only reads on a dark basemap.
 
+---
+
+## The whole app is dark, like the website (2026-10-20)
+
+**Status:** Accepted. Extends "Why the Turf Map is always dark".
+
+**Decision:** The app always uses the brand's dark theme (`userInterfaceStyle: "dark"` in
+`apps/mobile/app.json`, so `useColorScheme()` reports `dark` and `usePalette()` returns `DARK`). The
+Record map uses `MAP_STYLE_DARK` and draws turf exactly as the Turf Map does (`TURF_STYLE`).
+
+**Rationale:** Founder request: the app should look like the homepage, which is dark only
+(`cssVariables('dark')`), and the Record map should show turf in the same colours as the Turf Map.
+The `LIGHT` theme stays in `@cityturfer/brand` for Storybook and a possible light mode later.
+
+**Consequence:** `app.json` is native config, so this changes the runtime fingerprint: it ships in a
+new build, not over the air. Two traps: `expo-splash-screen` resets iOS to `Automatic` whenever its
+config has a `dark` block (so the splash has none; it was identical anyway), and Android only
+honours `userInterfaceStyle` with `expo-system-ui` installed.
+
 **Trade-off:** One screen ignores the user's theme.
 
 ---
@@ -335,7 +354,7 @@ you never walked.
 **Status:** Accepted.
 
 **Decision:** Claimed cells never fade or get lost. Strength depends only on the number of visits:
-`strength = 1 − exp(−visits / 3)` (`apps/mobile/src/contexts/territory/domain/strength.ts`,
+`strength = 1 − exp(−visits / 3)` (`packages/core/src/contexts/territory/domain/strength.ts`,
 identical in `apps/mobile/tools/turf-preview.mjs`). Deleting an activity is the only way turf
 shrinks.
 

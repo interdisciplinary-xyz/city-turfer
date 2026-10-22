@@ -1,15 +1,3 @@
-// Public API of the Achievements context: pure evaluation over Activity Log and Territory facts.
-export {
-  type Achievement,
-  type AchievementId,
-  type AchievementInput,
-  evaluateAchievements,
-} from './domain/achievements';
-export { type AchievementsSummary, summarizeAchievements } from './domain/achievements-summary';
-export {
-  evaluateOnboarding,
-  type OnboardingFacts,
-  type OnboardingProgress,
-  type OnboardingStep,
-  type OnboardingStepId,
-} from './domain/onboarding';
+// Re-export shim: the Achievements evaluation lives in @cityturfer/core
+// (packages/core/src/contexts/achievements). The onboarding dismissal flag and the cards stay here.
+export * from '@cityturfer/core/achievements';

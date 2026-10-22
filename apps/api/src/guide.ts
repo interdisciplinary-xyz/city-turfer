@@ -9,8 +9,9 @@ import { PROBLEM_CODES } from './errors';
 const gettingStarted = `## Getting started
 
 - **Base URL:** pick a server above. Locally, \`pnpm --filter @cityturfer/api dev\` runs the API on port 8787 and \`pnpm run web:dev\` serves this page at https://cityturfer.local/swagger with the API under \`/api\`.
-- **Status:** \`GET /v1/health\` is live. Every other route is designed but **planned**: its summary starts with \`[planned]\`, it carries \`x-cityturfer-status: planned\` and answers \`501\` once auth and validation pass.
-- **Auth:** send \`Authorization: Bearer <token>\` (button **Authorize**). Any token passes the placeholder today; Better Auth replaces it. A missing token answers \`401\` *before* the input is validated.
+- **Status:** the one-way **backup** (phone → server) is live: health, \`/v1/me\`, consents, activity upload/read/delete, track, gap routes, the changes feed and the Home City. The rest is designed but **planned**: its summary starts with \`[planned]\`, it carries \`x-cityturfer-status: planned\` and answers \`501\` once auth and validation pass. Live data routes answer \`503 storage.unavailable\` when the server has no database.
+- **Auth:** send \`Authorization: Bearer <device token>\` (button **Authorize**). Tokens are random secrets minted per user (\`pnpm --filter @cityturfer/api run token:new -- <userId>\`); the server stores only their SHA-256. A stopgap until Better Auth. A missing token answers \`401\` *before* the input is validated. Locally, \`dev-token\` works for user \`admin\` when \`API_TOKENS\` is not set.
+- **Consent:** activity and Home City writes need \`PUT /v1/me/consents/cloud-sync\` with \`granted: true\` first (else \`403 consent.required\`); Apple Health activities also \`apple-health-in-cloud-sync\`.
 - **Headers you send:** \`Content-Type: application/json\`; \`Content-Encoding: gzip\` for long tracks; \`If-Match\` to change an existing activity; \`CityTurfer-Client: ios/0.8.0+123\` (old clients may get \`426 client.too-old\`).
 - **Headers you get:** \`X-Request-Id\` on every answer (quote it when reporting a problem), \`ETag\` on activities, \`Location\` on 201/202, \`Retry-After\` and \`RateLimit\` on 429.
 - **Limits:** request and response bodies ≤ 4.5 MB (Vercel); ≤ 40,000 points per track; gzip bodies inflate to ≤ 16 MB.`;
@@ -44,7 +45,7 @@ ${Object.entries(PROBLEM_CODES)
 
 const conventions = `## Units and formats
 
-JSON in camelCase. SI units with a suffix (\`distanceM\`, \`movingS\`, \`areaKm2\`). Timestamps ISO 8601 UTC; an activity may carry its IANA \`timeZone\` for display — the server derives nothing from local time. Coordinates \`[lon, lat]\` (GeoJSON order); bounding boxes \`[west, south, east, north]\`. Track points \`[lon, lat, t, segment, altitudeM]\`. Turf cells are H3 indexes (resolution 11).`;
+JSON in camelCase. SI units with a suffix (\`distanceM\`, \`movingS\`, \`areaKm2\`). Timestamps ISO 8601 UTC; an activity may carry its IANA \`timeZone\` for display — the server derives nothing from local time. Coordinates \`[lon, lat]\` (GeoJSON order); bounding boxes \`[west, south, east, north]\`. Track points \`[lon, lat, t, segment, altitudeM]\`. \`trackHash\` = SHA-256 hex of \`JSON.stringify(track.points)\` (no whitespace, ECMAScript number formatting, upload order); the server computes it, so sending it is optional. Turf cells are H3 indexes (resolution 11).`;
 
 const privacy = `## Privacy
 

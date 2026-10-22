@@ -1,6 +1,6 @@
 {
   "name": "@cityturfer/mobile",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": true,
   "main": "index.ts",
   "scripts": {
@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@cityturfer/brand": "workspace:*",
+    "@cityturfer/core": "workspace:*",
     "@cityturfer/ui": "workspace:*",
     "@kingstinct/react-native-healthkit": "16.2.0",
     "@maplibre/maplibre-react-native": "^11.5.0",
@@ -38,9 +39,9 @@
     "expo-sqlite": "~57.0.4",
     "expo-status-bar": "~57.0.1",
     "expo-symbols": "^57.0.3",
+    "expo-system-ui": "~57.0.4",
     "expo-task-manager": "~57.0.21",
     "expo-updates": "~57.0.26",
-    "h3-js": "^4.5.0",
     "react": "19.2.3",
     "react-native": "0.86.3",
     "react-native-nitro-modules": "^0.37.1",

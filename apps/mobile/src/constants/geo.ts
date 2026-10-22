@@ -1,2 +1,2 @@
-/** Mean Earth radius (IUGG); must match tools/lib/geo.mjs. */
-export const EARTH_RADIUS_M = 6371008.8;
+// Re-export shim: geodesy constants live in @cityturfer/core (packages/core).
+export { EARTH_RADIUS_M } from '@cityturfer/core/constants';

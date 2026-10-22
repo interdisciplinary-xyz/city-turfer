@@ -1,5 +1,5 @@
 // Reference turf formula. Pinned by tools/fixtures/turf-vectors.json and mirrored by
-// src/contexts/territory/domain/strength.ts (both assert against the same vectors).
+// packages/core/src/contexts/territory/domain/strength.ts (both assert against the same vectors).
 
 export const TURF_SATURATION_K = 3;
 export const TIER_BOUNDS = { glowing: 0.33, strong: 0.66, blazing: 0.9 };
