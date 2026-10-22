@@ -11,6 +11,7 @@ import { useOnboarding } from '@/contexts/achievements/ui/use-onboarding';
 import { activityStats } from '@/contexts/activity-log/ui/activity-stats';
 import { useActivities } from '@/contexts/activity-log/ui/hooks';
 import { RecentActivities } from '@/contexts/activity-log/ui/recent-activities';
+import { RestoreCard } from '@/contexts/cloud-backup/ui/restore-card';
 import { LiveSessionBanner } from '@/contexts/recording/ui/live-session-banner';
 import { useLiveSession } from '@/contexts/recording/ui/use-live-session';
 import { useTurfSummary } from '@/contexts/territory/ui/hooks';
@@ -84,6 +85,7 @@ export default function DashboardScreen() {
               : ' '}
         </Text>
       </View>
+      <RestoreCard />
       {onboarding.progress && (
         <OnboardingCard
           progress={onboarding.progress}

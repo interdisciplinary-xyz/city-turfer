@@ -1,5 +1,11 @@
 import type { Container } from '@/composition-root';
-import type { DeleteAccountResult, StartSignInResult, User, VerifySignInResult } from '@/contexts/identity';
+import type {
+  DeleteAccountResult,
+  IdentityApi,
+  StartSignInResult,
+  User,
+  VerifySignInResult,
+} from '@/contexts/identity';
 
 export type AuthState =
   { status: 'loading' } | { status: 'signed-out' } | { status: 'signed-in'; user: User; container: Container };
@@ -19,4 +25,8 @@ export interface AppContextValue {
   signOut(): Promise<'ok' | 'recording-in-progress'>;
   /** Deletes the account on the server; `keepData` false also deletes this phone's copy. */
   deleteAccount(keepData: boolean): Promise<Exclude<DeleteAccountResult, { kind: 'deleted' }> | { kind: 'ok' }>;
+  /** "Export my data": the server emails a download link. */
+  requestDataExport(): Promise<ExportRequestResult>;
 }
+
+export type ExportRequestResult = Awaited<ReturnType<IdentityApi['requestDataExport']['execute']>>;

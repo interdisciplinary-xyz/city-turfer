@@ -36,7 +36,7 @@ Me drawer, and the screens pushed from them. Format adapted from empatalk's `FEA
 > | SQLite schema         | `apps/mobile/src/platform/migrations.ts`                                 |
 
 Today: <!-- probe:achievements -->12<!-- /probe --> achievements,
-<!-- probe:e2e-flows -->13<!-- /probe --> Maestro flows, <!-- probe:migrations -->8<!-- /probe -->
+<!-- probe:e2e-flows -->13<!-- /probe --> Maestro flows, <!-- probe:migrations -->11<!-- /probe -->
 
 migrations.
 
@@ -109,16 +109,26 @@ The Me tab doesn't open a screen: it slides in a drawer from the right with **Pr
 - **Achievements** (`apps/mobile/src/app/achievements.tsx`): every achievement with progress and an
   "n of m unlocked" count; unlocked ones in the strong-tier colour. Evaluated on the fly from
   activity and turf facts (nothing stored).
-- **Account** (`apps/mobile/src/app/account.tsx`): email, sign-in method ("Demo account"), sign out
-  (blocked with an alert while a recording is in progress).
+- **Sign in** (`apps/mobile/src/app/sign-in.tsx`): email first; the local profiles
+  (`admin@cityturfer.com`, `demo@cityturfer.com`) then ask for their password, any other email gets
+  a 6-digit code (`textContentType oneTimeCode`). The first real sign-in on a phone whose `admin`
+  profile has activities asks whether to use that history with the account (no copy).
+- **Account** (`apps/mobile/src/app/account.tsx`): email, sign-in method, backup state; Sign out
+  (blocked while recording; with unsynced backup changes: Back up now / Sign out anyway / Cancel);
+  for accounts also Export my data (the server emails a link) and Delete account (warning, then keep
+  or delete this phone's data).
+- **Restore** (`cloud-backup/ui/restore-card.tsx`, Home): offered when a signed-in account's profile
+  has no activities and the backup has some; progress "Restoring n of m…", resumable.
 - **Info** (`apps/mobile/src/app/info.tsx`): app version and OTA update id/channel, "Check for
   updates", a data note, the **Apple Health** card (iOS: connect, import and save switches, last
   import, Import now, Disconnect; `health-sync/ui/apple-health-card.tsx`), the **Cloud backup** card
-  (`cloud-backup/ui/cloud-backup-card.tsx`: paste the device token, "Back up to CityTurfer cloud"
-  consent switch, "Include Apple Health workouts" on iOS, "Backed up N of M activities · last run
-  …", errors in plain words, Back up now, a server URL override for testing), **Seed demo history**
-  (90 days around the current location, `apps/mobile/src/dev/demo-history.ts`) and, on iOS, **Add
-  sample workouts to Apple Health** (`apps/mobile/src/dev/health-seed.ts`).
+  (`cloud-backup/ui/cloud-backup-card.tsx`: "Back up to CityTurfer cloud" consent switch (off asks
+  first: it erases the server copy), "Include Apple Health workouts" on iOS, "Backed up N of M
+  activities · last run …", errors in plain words, Back up now; the demo profile never backs up), in
+  Developer tools the device token and a server URL override for testing
+  (`cloud-backup/ui/backup-developer-card.tsx`), **Seed demo history** (90 days around the current
+  location, `apps/mobile/src/dev/demo-history.ts`) and, on iOS, **Add sample workouts to Apple
+  Health** (`apps/mobile/src/dev/health-seed.ts`).
 - **Your city** (`apps/mobile/src/app/city.tsx` → `territory/ui/city-picker.tsx`): choose the Home
   City from a bundled catalogue (23 Polish, 15 European cities); search ignores accents ("krakow"
   finds Kraków); the current city is ticked; "Clear <city>". Stored per user (`ter_home_city`); its

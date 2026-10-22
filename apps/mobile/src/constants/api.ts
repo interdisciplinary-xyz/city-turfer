@@ -2,9 +2,9 @@
  * CityTurfer HTTP API (apps/api) used by Cloud Backup.
  *
  * PLACEHOLDER: the preview deployment of scope/v0.8.0. Set this to the deployed API URL before a
- * release (an OTA update is enough: it is plain JS). A phone can override it in Info › Cloud backup
- * for local testing. Never put a token here: the device token is pasted in the app and kept in
- * expo-secure-store.
+ * release (an OTA update is enough: it is plain JS). Sign-in uses it too. A phone can override the
+ * backup server in Info › Developer tools for local testing. Never put a token here: tokens live in
+ * expo-secure-store (the signed-in account's, or a device token pasted in Developer tools).
  */
 export const API_BASE_URL = 'https://city-turfer-api-git-scope-v080-micha-dopieralskis-projects.vercel.app';
 

@@ -3,9 +3,11 @@ appId: com.turftrack.poc
 - tapOn: { id: 'sign-in-email' }
 - eraseText: 60
 - inputText: ${EMAIL}
-# The keyboard's Next key moves focus to the password field. Tapping it instead is flaky: the form
-# shifts up while the keyboard opens, so the tap can land on the email field.
+# The keyboard's Next key submits the email; a local profile (admin, demo) then asks for its
+# password, which gets the focus. Wait for it, then tap it (the keyboard is already up by now).
 - pressKey: Enter
+- extendedWaitUntil: { visible: { id: 'sign-in-password' }, timeout: 10000 }
+- tapOn: { id: 'sign-in-password' }
 - eraseText: 60
 - inputText: ${PASSWORD}
 # Submit via the keyboard's Go key (the button sits under the keyboard).

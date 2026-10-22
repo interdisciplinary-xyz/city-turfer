@@ -68,6 +68,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return 'ok';
       },
       startSignIn: (email) => identity.startSignIn.execute(email),
+      requestDataExport: () => identity.requestDataExport.execute(),
       async verifyCode(email, code) {
         const r = await identity.verifyCode.execute(email, code);
         if (r.kind !== 'signed-in') {

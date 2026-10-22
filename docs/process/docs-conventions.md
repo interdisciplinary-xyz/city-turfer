@@ -104,7 +104,7 @@ Bounded contexts: <!-- probe:contexts -->7<!-- /probe -->
 - `e2e-flows`: `flowsOrder` entries in `apps/mobile/e2e/config.yaml`
   (<!-- probe:e2e-flows -->13<!-- /probe -->)
 - `migrations`: `version:` entries in `apps/mobile/src/platform/migrations.ts`
-  (<!-- probe:migrations -->8<!-- /probe -->)
+  (<!-- probe:migrations -->11<!-- /probe -->)
 - `docs`: markdown files under `docs/` (<!-- probe:docs -->40<!-- /probe -->)
 - `api-operations`: HTTP operations in `apps/api/openapi.json`
   (<!-- probe:api-operations -->22<!-- /probe -->)

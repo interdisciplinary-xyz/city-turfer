@@ -7,17 +7,26 @@ export const CLOUD_BACKUP_PITCH =
 
 export const BACKUP_SWITCH_LABEL = 'Back up to CityTurfer cloud';
 
-export const BACKUP_PRIVACY = 'Your routes are stored on our server in the EU. Turn this off any time.';
+export const BACKUP_PRIVACY =
+  'Your routes are stored on our server in the EU. Turning this off deletes that copy; nothing on this phone.';
+
+export const OFF_CONFIRM_TITLE = 'Turn off cloud backup?';
+export const OFF_CONFIRM_TEXT =
+  'The copy of your activities on our server will be deleted. Everything stays on this phone, and you can turn backup on again any time.';
 
 export const HEALTH_SWITCH_LABEL = 'Include Apple Health workouts';
 
-export const HEALTH_NOTE = 'Off: workouts imported from Apple Health stay on this phone.';
+export const HEALTH_NOTE = 'Off: workouts imported from Apple Health stay on this phone (and leave the server).';
 
 export const TOKEN_LABEL = 'Device token';
 export const TOKEN_PLACEHOLDER = 'Paste your device token';
 export const TOKEN_SAVED = 'Device token saved on this phone.';
 
 export const SERVER_LABEL = 'Server (for testing)';
+
+export const DEV_BACKUP_TITLE = 'Backup: device token and server';
+export const DEV_BACKUP_NOTE =
+  'For testing. Signing in with your email replaces the device token; another server starts the backup afresh.';
 
 export const ERROR_TITLE = 'Cloud backup';
 

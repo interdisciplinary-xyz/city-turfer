@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useApp, useContainer } from '@/ui-kit/app-context';
 
+import type { RestoreOffer, RestoreProgress, RestoreResult } from '../application/restore';
 import type { BackupCommandResult, BackupStatus } from '../contract';
 
 /** Cloud backup status, switches, token and "Back up now", for the Info screen card. `status` is null while loading. */
@@ -83,4 +84,55 @@ export function useCloudBackup() {
   );
 
   return { status, setEnabled, setHealthIncluded, saveToken, removeToken, saveServerUrl, backUpNow };
+}
+
+/**
+ * "Restore from your backup": the offer (asked once per container: it reads the server's manifest),
+ * the running restore's progress and its result.
+ */
+export function useRestore() {
+  const c = useContainer();
+  const [offer, setOffer] = useState<RestoreOffer | null>(null);
+  const [progress, setProgress] = useState<RestoreProgress | null>(null);
+  const [result, setResult] = useState<RestoreResult | null>(null);
+  const [running, setRunning] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    c.cloudBackup.restoreOffer
+      .execute()
+      .then((o) => live && setOffer(o))
+      .catch(() => live && setOffer({ kind: 'none' }));
+    return () => {
+      live = false;
+    };
+  }, [c]);
+
+  const start = useCallback(async () => {
+    setRunning(true);
+    setResult(null);
+    try {
+      const r = await c.cloudBackup.restore.execute(setProgress);
+      await c.dispatcher.dispatchPending(); // claims turf for what arrived
+      setResult(r);
+      if (r.kind === 'done') {
+        setOffer({ kind: 'none' });
+        void c.syncHealth(); // Apple Health import waited for the restore
+      }
+      return r;
+    } catch {
+      const failed: RestoreResult = { kind: 'paused', reason: 'server', done: 0, total: 0 };
+      setResult(failed);
+      return failed;
+    } finally {
+      setRunning(false);
+    }
+  }, [c]);
+
+  const dismiss = useCallback(() => {
+    setOffer({ kind: 'none' });
+    setResult(null);
+  }, []);
+
+  return { offer, progress, result, running, start, dismiss };
 }
