@@ -18,6 +18,12 @@
   margin: 0;
   padding: 0;
 }
+/* Links take the bar's colour, not the host page's link style (pink on the site, browser blue on
+   Storybook). `[href]` keeps this at (0,2,0): above `.brand a`, below the later `hover:` utility. */
+.font-mono [href] {
+  color: inherit;
+  text-decoration: none;
+}
 .font-mono svg {
   display: inline-block;
   vertical-align: middle;
