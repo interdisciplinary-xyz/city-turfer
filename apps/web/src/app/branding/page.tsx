@@ -6,12 +6,12 @@ import {
   cssVariables,
   DARK,
   FONT_SIZE,
-  LABEL_TRACKING,
   LIGHT,
   MIN_CONTRAST,
   NAME,
   ON_ACCENT,
   ON_TIER,
+  ON_TYPE_COLOR,
   PRIVACY_LINE,
   PROMO,
   RADIUS,
@@ -34,6 +34,8 @@ import { displayFont, numericFont } from '../fonts';
 import { BrandNav } from './brand-nav';
 import {
   ACTIVITY_LABEL,
+  ALTERNATIVES_CHECK,
+  ANDROID_CHECK,
   ASSETS,
   AUDIENCES,
   BRANDING_DESCRIPTION,
@@ -61,6 +63,7 @@ import {
   POSITIONING_CHECK,
   PRIVACY_LINE_CHECK,
   RENDER_COMMAND,
+  SCALE_SAMPLE,
   SECTIONS,
   TIER_MEANING,
   TYPE_RULES,
@@ -90,7 +93,7 @@ export default function BrandingPage() {
         <header className='brand-hero'>
           <div className='brand-wrap'>
             <p className='brand-kicker'>{BRANDING_TITLE}</p>
-            <Image src={wordmark} alt={NAME} width={420} height={132} priority className='brand-hero-wordmark' />
+            <Image src={wordmark} alt={NAME} width={420} height={73} priority className='brand-hero-wordmark' />
             <p className='brand-tagline'>{TAGLINES[0]}</p>
             <p className='brand-lede'>{PROMO}</p>
           </div>
@@ -101,6 +104,7 @@ export default function BrandingPage() {
           <Section id='positioning' title='Positioning' note='Draft for founder review'>
             <p className='brand-statement'>{POSITIONING}</p>
             <Check check={POSITIONING_CHECK} />
+            <Check check={ALTERNATIVES_CHECK} />
             <div className='brand-table-scroll'>
               <table className='brand-table'>
                 <thead>
@@ -163,6 +167,7 @@ export default function BrandingPage() {
               </div>
             </div>
             <p className='brand-muted'>{ICP_CONTEXT}</p>
+            <Check check={ANDROID_CHECK} />
 
             <h3>Segments to test</h3>
             <p className='brand-muted'>Recruit interviewees from these; don’t build for them yet.</p>
@@ -299,7 +304,7 @@ export default function BrandingPage() {
                   name={ACTIVITY_LABEL[type]}
                   token={type === 'cycle' ? 'ride' : type}
                   hex={TYPE_COLOR[type]}
-                  on={DARK.bg}
+                  on={ON_TYPE_COLOR[type]}
                 />
               ))}
             </div>
@@ -327,23 +332,20 @@ export default function BrandingPage() {
             </div>
             <h3>Type scale</h3>
             <div className='brand-card'>
-              {Object.entries(FONT_SIZE).map(([key, size]) => (
+              {(Object.keys(FONT_SIZE) as (keyof typeof FONT_SIZE)[]).map((key) => (
                 <div key={key} className='brand-scale-row'>
                   <span className='brand-label'>
-                    {key} · {size}
+                    {key} · {FONT_SIZE[key]}
                   </span>
-                  <span
-                    className={key === 'label' ? 'brand-label' : 'brand-scale-sample'}
-                    style={{ fontSize: `min(${size}px, 11vw)` }}
-                  >
-                    {key === 'label' ? 'TURF STRENGTH' : NAME}
+                  <span className={SCALE_SAMPLE[key].className} style={{ fontSize: `min(${FONT_SIZE[key]}px, 11vw)` }}>
+                    {SCALE_SAMPLE[key].text}
                   </span>
                 </div>
               ))}
             </div>
             <ul className='brand-rules'>
               {TYPE_RULES.map((rule) => (
-                <li key={rule}>{rule.replace('0.8', String(LABEL_TRACKING))}</li>
+                <li key={rule}>{rule}</li>
               ))}
             </ul>
           </Section>
@@ -545,7 +547,10 @@ function Swatch({
     <div className='brand-swatch'>
       <div className='brand-swatch-chip' style={{ background: hex, color: on }}>
         <span className='brand-swatch-name'>{name}</span>
-        <span className='brand-num'>{contrastRatio(on, hex).toFixed(1)}:1</span>
+        <span className='brand-num'>
+          {contrastRatio(on, hex).toFixed(1)}:1
+          {contrastRatio(on, hex) < MIN_CONTRAST.text ? ' · fails AA' : ''}
+        </span>
       </div>
       <div className='brand-swatch-meta'>
         <code>{hex}</code>

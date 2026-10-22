@@ -79,6 +79,7 @@
 
 .brand-tagline {
   font-family: var(--display);
+  letter-spacing: -0.02em;
   font-weight: normal;
   font-synthesis: none;
   font-size: clamp(26px, 5vw, 40px);
@@ -111,8 +112,8 @@
   display: flex;
   gap: var(--space-sm);
   overflow-x: auto;
-  padding-top: 10px;
-  padding-bottom: 10px;
+  padding-top: var(--space-sm);
+  padding-bottom: var(--space-sm);
   scrollbar-width: none;
 }
 .brand-nav-inner::-webkit-scrollbar {
@@ -121,7 +122,7 @@
 .brand-nav a {
   flex: none;
   white-space: nowrap;
-  padding: 6px 12px;
+  padding: var(--space-xs) var(--space-md);
   border: 1px solid var(--border);
   border-radius: var(--radius-full);
   color: var(--text);
@@ -134,8 +135,7 @@
 }
 .brand-nav a[aria-current] {
   border-color: var(--glow);
-  background: var(--glow);
-  color: var(--on-accent);
+  color: var(--glow);
 }
 
 /* ---------- Sections ---------- */
@@ -147,6 +147,7 @@
 }
 .brand-section h2 {
   font-family: var(--display);
+  letter-spacing: -0.02em;
   font-weight: normal;
   font-synthesis: none;
   font-size: clamp(24px, 4vw, 32px);
@@ -214,11 +215,10 @@
 .brand-no {
   color: var(--muted);
   margin-top: var(--space-sm) !important;
-  text-decoration: line-through;
-  text-decoration-color: var(--danger);
 }
 .brand-pillar-name {
   font-family: var(--display);
+  letter-spacing: -0.02em;
   font-synthesis: none;
   margin-bottom: var(--space-sm) !important;
   color: var(--blazing);
@@ -238,6 +238,7 @@
 }
 .brand-tagline-item {
   font-family: var(--display);
+  letter-spacing: -0.02em;
   font-synthesis: none;
   font-size: clamp(18px, 3vw, 24px);
   line-height: 1.2;
@@ -349,7 +350,7 @@
 .brand-ramp {
   height: 56px;
   border-radius: var(--radius-control);
-  background: linear-gradient(90deg, var(--ramp-stops));
+  background: linear-gradient(to top right, var(--ramp-stops));
   margin-bottom: var(--space-lg);
 }
 .brand-swatch {
@@ -368,6 +369,7 @@
 }
 .brand-swatch-name {
   font-family: var(--display);
+  letter-spacing: -0.02em;
   font-synthesis: none;
   font-size: var(--font-lead);
 }
@@ -442,6 +444,7 @@
 }
 .brand-scale-sample {
   font-family: var(--display);
+  letter-spacing: -0.02em;
   font-synthesis: none;
   line-height: 1.1;
   white-space: nowrap;
@@ -501,6 +504,8 @@
 .brand-icp-name.brand-icp-name {
   margin: var(--space-xs) 0 var(--space-sm);
   font-family: var(--display);
+  letter-spacing: -0.02em;
+  font-weight: normal;
   font-synthesis: none;
   font-size: clamp(20px, 4vw, 28px);
   line-height: 1.2;

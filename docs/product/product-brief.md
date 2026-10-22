@@ -111,15 +111,15 @@ overlay" from the PoC plan's M7.
 
 ## 6. What we promise vs what's true
 
-| Promise (where)                                | Reality                                                                                                                                         | Action                                                      |
-| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| "Download for Android" (website)               | Sideloaded APK; Android has run on the emulator only, background recording never field-tested on a phone (PoC Q1 open)                          | Field-test on a real phone, or label the download "preview" |
-| App Store (website)                            | Disabled "Coming soon". iOS runs only on the founder's iPhone via free Apple ID (re-sign every ~7 days); no TestFlight                          | Developer account decision (`NOTEBOOK.md` RELEASE)          |
-| Accounts (implied)                             | Mock sign-in, one shared demo account; sign-in screen says "Proof of concept · demo account only", website doesn't                              | Decide: no login vs Sign in with Apple                      |
-| EN + PL (website, PL browsers redirected)      | The app is English-only, metric only                                                                                                            | App i18n, or say "English app" on `/pl`                     |
-| "Your routes stay on your phone." (brand)      | True for storage. Exceptions: map tiles load from OpenFreeMap; optional gap estimation sends gap endpoints (not near start/end) to OSM's router | Disclosed in-app (Info); add to a privacy policy            |
-| Privacy policy                                 | None, on site or in app. Required before the App Store (HealthKit)                                                                              | Write one                                                   |
-| Store subtitle "Own its streets" (brand skill) | Tagline says "Own your streets"                                                                                                                 | Pick one                                                    |
+| Promise (where)                                | Reality                                                                                                                                          | Action                                                                   |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| "Download for Android" (website)               | Sideloaded APK; Android has run on the emulator only, background recording never field-tested on a phone (PoC Q1 open)                           | Field-test on a real phone, or label the download "preview"              |
+| App Store (website)                            | Disabled "Coming soon". iOS runs only on the founder's iPhone via free Apple ID (re-sign every ~7 days); no TestFlight                           | Developer account decision (`NOTEBOOK.md` RELEASE)                       |
+| Accounts (implied)                             | Since #112 (v0.9.0, on scope): sign-in with an emailed code creates an account; admin and demo profiles remain; no way in without an account yet | Decide whether a way in without an account (decision B1) ships in v0.9.0 |
+| EN + PL (website, PL browsers redirected)      | The app is English-only, metric only                                                                                                             | App i18n, or say "English app" on `/pl`                                  |
+| "Your routes stay on your phone." (brand)      | True for storage. Exceptions: map tiles load from OpenFreeMap; optional gap estimation sends gap endpoints (not near start/end) to OSM's router  | Disclosed in-app (Info); add to a privacy policy                         |
+| Privacy policy                                 | None, on site or in app. Required before the App Store (HealthKit)                                                                               | Write one                                                                |
+| Store subtitle "Own its streets" (brand skill) | Tagline says "Own your streets"                                                                                                                  | Pick one                                                                 |
 
 ## 7. Success criteria
 

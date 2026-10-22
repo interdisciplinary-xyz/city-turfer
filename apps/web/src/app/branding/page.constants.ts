@@ -1,4 +1,4 @@
-import type { BrandActivityType, TierName } from '@cityturfer/brand';
+import { type BrandActivityType, FONT_SIZE, LABEL_TRACKING, type TierName, TURF_LEGEND_TITLE } from '@cityturfer/brand';
 
 /**
  * Words on the /branding page. The values (colours, type, spacing, copy lines) come from
@@ -35,15 +35,21 @@ export const POSITIONING =
  */
 export type FactCheck = { line: string; today: string; proposal: string };
 const WHAT_LEAVES_THE_PHONE =
-  'Since v0.8.0, opt-in Cloud backup (off by default) uploads tracks to the CityTurfer API. Map tiles load from OpenFreeMap, and GPS-gap estimates send the gap’s two end points to the OpenStreetMap router unless switched off in Info.';
+  'Since v0.8.0, opt-in Cloud backup (off by default) uploads tracks to the CityTurfer API. Map tiles load from OpenFreeMap, and GPS-gap estimates send the gap’s two end points to the OpenStreetMap router unless switched off in Info. Apple Health imports are uploaded only with a second, separate backup switch.';
 export const POSITIONING_CHECK: FactCheck = {
   line: '“And your routes never leave your phone.”',
   today: WHAT_LEAVES_THE_PHONE,
   proposal: '“And your routes stay on your phone unless you choose to back them up.”',
 };
+export const ALTERNATIVES_CHECK: FactCheck = {
+  line: 'Alternatives named',
+  today:
+    'The closest alternatives aren’t named: private lifetime maps (MoveMap imports Apple Health routes; Fog of World and Fogbreaker reveal streets for good). Against them, privacy and permanence aren’t unique (docs/product/market-landscape.md).',
+  proposal: 'Name private lifetime maps too, and lead with what only CityTurfer does: the glow when you come back.',
+};
 export const PRIVACY_LINE_CHECK: FactCheck = {
   line: 'Privacy line',
-  today: `${WHAT_LEAVES_THE_PHONE} Backup accounts (sign-in by e-mailed code) are in review (#112).`,
+  today: `${WHAT_LEAVES_THE_PHONE} Since v0.9.0 (on scope, not released), anyone other than the demo and admin profiles signs in with an emailed code: the email address goes to the CityTurfer API and the code is sent by Brevo. There’s no way in without an account yet (#112, merged 2026-10-22).`,
   proposal:
     'Keep the line for local-only use and add “Backup is optional and off until you turn it on” wherever backup appears. Brand-designer drafts, founder approves; then change PRIVACY_LINE in @cityturfer/brand.',
 };
@@ -51,7 +57,8 @@ export const PILLAR_CHECK: FactCheck = {
   line: '“Local-first, no tracking.”',
   today:
     'In a GPS tracker, “no tracking” reads as a contradiction. What’s meant is no analytics and no ads; routes are recorded on purpose.',
-  proposal: '“Local-first. No analytics, no ads, no account needed.”',
+  proposal:
+    '“Local-first. No analytics, no ads.” Add “no account needed” only once there is a way in without an account (decision B1).',
 };
 
 export type Audience = { name: string; want: string; lead: string };
@@ -98,11 +105,11 @@ export const ICP_PRIMARY = {
     },
     {
       label: 'Uses today',
-      text: 'Apple Fitness or Strava: a list of workouts (Strava’s personal heatmap is paid). Nothing rewards a repeated dog walk.',
+      text: 'Apple Fitness, Strava or Garmin Connect: a list of workouts (Strava’s personal heatmap is paid). Nothing rewards a repeated dog walk.',
     },
     {
       label: 'Why CityTurfer',
-      text: 'Apple Health import shows years of turf on day one. Coming back counts, so home streets blaze. Turf never decays and no one takes it. No account needed; routes stay on the phone unless they turn on backup.',
+      text: 'Apple Health import shows years of turf on day one. Coming back counts, so home streets blaze. Turf never decays and no one takes it. Routes stay on the phone unless they turn on backup. (Planned, not built: using the app without an account. Today a new user signs in with an emailed code, which creates a CityTurfer account.)',
     },
     {
       label: 'What puts them off',
@@ -114,7 +121,7 @@ export const ICP_PRIMARY = {
     },
     {
       label: 'Would pay',
-      text: 'Once, like Fog of World (~$30) or MoveMap ($24.99 lifetime), not a subscription. Assumption A7.',
+      text: 'Once, like Fog of World (~$30) or MoveMap ($24.99 lifetime), not a subscription. Assumption A7, untested; cloud backup now costs money to run, which a one-off price has to cover.',
     },
   ] satisfies IcpField[],
 };
@@ -135,11 +142,18 @@ export const ICP_NOT_FIT: readonly string[] = [
 export const ICP_CONTEXT =
   'Context (dated desk research): iOS is ~36 % of mobile in Poland (StatCounter, Sept 2026), so this profile reaches about a third of the market until Android is proven. Walking became Strava’s #2 activity in 2025; cycling is Poland’s most common sport (GUS 2025).';
 
+export const ANDROID_CHECK: FactCheck = {
+  line: '“Download for Android” (website)',
+  today:
+    'The website’s main call to action is an Android APK, while this profile is iPhone-first and Android recording hasn’t been checked on a real phone (docs/product/product-brief.md, assumption A3).',
+  proposal: 'Decide whether the site leads with the waitlist until iOS TestFlight exists.',
+};
+
 export type IcpSegment = { name: string; who: string; gap: string };
 export const ICP_TEST_SEGMENTS: readonly IcpSegment[] = [
   {
     name: '#everystreet completionist',
-    who: 'Runner or rider on CityStrides, Wandrer or Squadrats who wants to finish every street of a city. Pays ~$40/yr today; hurt by Strava closing its API (2024).',
+    who: 'Runner on CityStrides, or rider on Wandrer or Squadrats, who wants to finish every street of a city. Pays ~$40–50/yr today; hurt by Strava’s API restrictions (Nov 2024).',
     gap: 'Needs a street-completion %, which we don’t have: what 100 % city coverage means is still open.',
   },
   {
@@ -169,17 +183,18 @@ export const ICP_TESTS: readonly IcpTest[] = [
     id: 'A1',
     claim: 'Glow on return is a reason to go out again',
     test: '2–3 week diary study, 8 testers',
-    bar: '≥ 5/8 name turf or glow as a reason',
+    bar: '≥ 5/8 mention turf or glow as a reason to go out',
   },
   {
     id: 'A6',
     claim: 'Walkers are the best-fit segment',
     test: 'Waitlist question “Walk, run or ride?” and interviews',
-    bar: 'Walkers ≥ 40 % of sign-ups',
+    bar: 'Walkers ≥ 40 % of sign-ups and most “very disappointed” answers',
   },
   {
     id: 'A5',
-    claim: '“No account, routes on your phone” wins choices',
+    claim:
+      '“Routes on your phone, no account” wins choices (needs a way in without an account before the test is honest)',
     test: 'Website headline variants: privacy vs glow',
     bar: 'Privacy variant sign-ups ≥ glow variant',
   },
@@ -265,8 +280,21 @@ export const FONTS: readonly FontSpec[] = [
 export const TYPE_RULES: readonly string[] = [
   'The weight is part of each Archivo font: never add font-weight or bold, or Android falls back to the system font.',
   'Numbers always use tabular figures, so live stats don’t jitter.',
-  'Labels are uppercase system text with 0.8 px tracking.',
+  `Labels are uppercase system text, ${FONT_SIZE.label}–${FONT_SIZE.caption} px, weight 600–700, with ${LABEL_TRACKING} px tracking.`,
+  'Archivo Expanded is wide: use it sparingly, track it −2% to −4%, and check long Polish lines at 320–375 px.',
 ];
+
+/** One sample per type size, set in the face that uses it (display, numbers or the system font). */
+export type ScaleSample = { text: string; className: string };
+export const SCALE_SAMPLE: Record<keyof typeof FONT_SIZE, ScaleSample> = {
+  label: { text: TURF_LEGEND_TITLE, className: 'brand-label' },
+  caption: { text: 'Every street you cover becomes yours.', className: 'brand-scale-body' },
+  unit: { text: 'Every street you cover becomes yours.', className: 'brand-scale-body' },
+  body: { text: 'Every street you cover becomes yours.', className: 'brand-scale-body' },
+  lead: { text: 'Every street you cover becomes yours.', className: 'brand-scale-body' },
+  stat: { text: '12.48 km', className: 'brand-num' },
+  hero: { text: 'Own your streets', className: 'brand-scale-sample' },
+};
 
 export const VISUAL_LANGUAGE: readonly Pillar[] = [
   {
@@ -316,7 +344,11 @@ export const CONTRAST_FIXES_NOTE =
 
 export type BrandAsset = { name: string; where: string; note: string };
 export const ASSETS: readonly BrandAsset[] = [
-  { name: 'Mark, wordmark, monochrome', where: 'packages/brand/svg/', note: 'Outlined SVG sources' },
+  {
+    name: 'Mark, adaptive foreground, monochrome, wordmarks (dark and light)',
+    where: 'packages/brand/svg/',
+    note: 'SVG sources; wordmarks are outlined by packages/brand/scripts/outline-wordmark.py',
+  },
   { name: 'App icon and splash', where: 'apps/mobile/assets/brand/out/', note: 'Native: ship only with a reinstall' },
   {
     name: 'Social image 1200×630',
