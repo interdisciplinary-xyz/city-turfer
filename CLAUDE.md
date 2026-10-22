@@ -11,8 +11,10 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
   background location)
 - **Navigation**: expo-router (file-based, `apps/mobile/src/app/`)
 - **Auth**: **Mock** for the PoC: `MockAuthGateway` behind the `AuthGateway` port, single account
-  `admin@cityturfer.com` / `admin1234`, session in `expo-secure-store`; one SQLite DB per user. No
-  Firebase.
+  `admin@cityturfer.com` / `admin1234`, plus `demo@cityturfer.com` / `demo1234` for screenshots
+  (first sign-in fills it with Gdańsk demo data: `apps/mobile/src/dev/gdansk-demo.ts`, routes from
+  `apps/mobile/tools/gen-gdansk-routes.mjs`); session in `expo-secure-store`; one SQLite DB per
+  user. No Firebase.
 - **GPS**: `expo-location` + `expo-task-manager` (background updates, Android foreground service)
 - **Maps**: `@maplibre/maplibre-react-native` + OpenFreeMap vector tiles (keyless); dark style on
   the Turf Map

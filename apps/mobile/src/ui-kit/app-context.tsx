@@ -3,6 +3,7 @@ import { AppState } from 'react-native';
 
 import { backgroundActivitySession, type Container, getContainer, identity, resetContainer } from '@/composition-root';
 import type { User } from '@/contexts/identity';
+import { prepareDemoAccount } from '@/dev/gdansk-demo';
 
 import type { AppContextValue, AuthState } from './app-context.constants';
 
@@ -19,6 +20,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     await container.recording.recover.execute().catch(() => undefined);
     setAuth({ status: 'signed-in', user, container });
+    // Demo account only: fills in Gdańsk demo data on first use; screens refresh as it lands.
+    void prepareDemoAccount(user, container).catch(() => undefined);
   }, []);
 
   useEffect(() => {

@@ -8,21 +8,23 @@ import {
 } from '@cityturfer/core/identity/ports';
 
 /**
- * PoC-only authentication (docs/poc-plan.md §4.0, §9). Exactly one account.
+ * PoC-only authentication (docs/poc-plan.md §4.0, §9). Two fixed accounts:
+ * the admin, and a demo account whose first sign-in fills its own database
+ * with Gdańsk demo data for screenshots (src/dev/gdansk-demo.ts).
  * The credentials live in this file only; replace this adapter with a real
  * provider by adding another AuthGateway and wiring it in the composition root.
  */
-const MOCK_EMAIL = 'admin@cityturfer.com';
-const MOCK_PASSWORD = 'admin1234';
-const ADMIN: User = { id: userId('admin'), email: MOCK_EMAIL, displayName: 'Admin' };
+const ACCOUNTS: readonly { password: string; user: User }[] = [
+  { password: 'admin1234', user: { id: userId('admin'), email: 'admin@cityturfer.com', displayName: 'Admin' } },
+  { password: 'demo1234', user: { id: userId('demo'), email: 'demo@cityturfer.com', displayName: 'Ola' } },
+];
 
 export class MockAuthGateway implements AuthGateway {
   async signIn(email: Email, password: string): Promise<SignInOutcome> {
-    return email.value === MOCK_EMAIL && password === MOCK_PASSWORD
-      ? { kind: 'signed-in', user: ADMIN }
-      : { kind: 'invalid-credentials' };
+    const account = ACCOUNTS.find((a) => a.user.email === email.value && a.password === password);
+    return account ? { kind: 'signed-in', user: account.user } : { kind: 'invalid-credentials' };
   }
   async userById(id: UserId): Promise<User | null> {
-    return id === ADMIN.id ? ADMIN : null;
+    return ACCOUNTS.find((a) => a.user.id === id)?.user ?? null;
   }
 }
