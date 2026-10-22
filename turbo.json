@@ -4,7 +4,7 @@
     "typecheck": { "dependsOn": ["^typecheck"], "outputs": [] },
     "lint": { "outputs": [] },
     "arch": { "outputs": [] },
-    "test:unit": { "outputs": [] },
+    "test:unit": { "outputs": [], "env": ["PAYLOAD_TEST_DATABASE_URL"] },
     "build": {
       "dependsOn": ["typecheck"],
       "outputs": [".next/**", "!.next/cache/**", "out/**", "storybook-static/**", "dist/**"]

@@ -44,6 +44,14 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
   (`/en`, `/pl`; copy in `apps/web/messages/*.json`, no CMS). Light theme (`SITE_SCHEME` in
   `@cityturfer/brand`, also Swagger and Storybook); the app and the Turf Map stay dark
   (`docs/decisions/brand-light-theme-2026-10-22.md`)
+- **Admin** (scaffold, not deployed): Payload CMS 3.91 on Next 16 in `apps/admin` (same next/react
+  pins as apps/web). Payload holds only staff accounts, in its **own** Postgres database
+  (`PAYLOAD_DATABASE_URL`, never the API's), schema via committed migrations (`push: false`);
+  GraphQL off, every access rule of its collections explicit, no document locks, public first-user
+  form and forgot-password closed (staff come from `staff:create`); missing env fails closed. User
+  data only through the API's audited `/internal/admin` routes (not built). Local login without MFA:
+  not deployable until decision AD3 (`docs/plans/admin-portal-2026-10-22.md`, with the
+  portals-planning change)
 - **Storage**: `expo-sqlite`, local-first; the phone stays the source of truth. Optional one-way
   cloud backup to `apps/api` (`apps/mobile/src/contexts/cloud-backup`), only after the user's
   consent (Info › Cloud backup); device token in the secure store
@@ -99,6 +107,7 @@ apps/mobile/                         the Expo app (package @cityturfer/mobile); 
   e2e/                               Maestro flows
   tools/                             mobile dev tools (GPX generator, stats oracle, simulator GPS playback, turf preview)
 apps/web/                            Next.js landing page (@cityturfer/web): static export (out/), hosted on Vercel
+apps/admin/                          @cityturfer/admin: staff admin portal (Payload CMS on Next), own database, staff accounts only
 apps/storybook/                      @cityturfer/storybook: one Storybook for @cityturfer/ui (react-native-web) and apps/web pieces
 apps/api/                            @cityturfer/api: HTTP API (Hono on Vercel), /v1 routes over the app's use cases, OpenAPI + Swagger
 packages/core/                       @cityturfer/core: shared kernel, core constants, domain + application of territory,
@@ -156,7 +165,7 @@ pnpm start                       # Metro for an installed dev build (= expo star
 pnpm ios | pnpm android          # build and install a dev build (expo run:*)
 pnpm run typecheck               # tsc in every workspace (turbo)
 pnpm test                        # dependency rules (depcruise) + Jest + tool tests (turbo)
-pnpm run build                   # web static export (apps/web/out) via turbo
+pnpm run build                   # web static export (apps/web/out), admin and API builds via turbo
 pnpm run web:dev                 # landing page at https://cityturfer.local (portless + server.mjs, dev toolbar)
 pnpm --filter @cityturfer/api dev                       # API on :8787 (PGlite + token dev-token without env)
 pnpm --filter @cityturfer/api run db:generate           # SQL migration from apps/api/src/db/schema.ts (commit apps/api/drizzle/)
@@ -166,9 +175,13 @@ pnpm start:dev                   # web:dev, building Storybook first if storyboo
 pnpm cache:clean                 # delete node_modules, .turbo, .next, out, .expo (then pnpm install)
 pnpm --filter @cityturfer/storybook dev     # Storybook at http://localhost:6006 (app components + website pieces)
 pnpm --filter @cityturfer/storybook build   # static Storybook in apps/storybook/storybook-static
+#   …also served by `pnpm run web:dev` at https://cityturfer.local/storybook (rebuild to refresh)
 pnpm --filter @cityturfer/api dev           # API on http://localhost:8787 (Swagger at /swagger); web:dev proxies /api/* to it
 pnpm --filter @cityturfer/api run openapi   # regenerate apps/api/openapi.json after changing routes (a test checks it)
-#   …also served by `pnpm run web:dev` at https://cityturfer.local/storybook (rebuild to refresh)
+pnpm --filter @cityturfer/admin dev         # admin at https://admin.cityturfer.local (needs PAYLOAD_DATABASE_URL, PAYLOAD_SECRET, ADMIN_URL: apps/admin/.env.example)
+pnpm --filter @cityturfer/admin migrate     # apply admin's Payload migrations (migrate:create after a collection change)
+pnpm --filter @cityturfer/admin generate    # payload-types.ts + importMap.js after a config change (ci:quality checks they are current)
+read -s STAFF_PASSWORD && export STAFF_PASSWORD && pnpm --filter @cityturfer/admin staff:create -- --email <e> --roles staff-admin   # a staff account
 pnpm -C apps/mobile run android:build     # Android APK on EAS (docs/operations/android-release.md)
 pnpm -C apps/mobile exec expo install <pkg>                     # add a native dependency to the app
 # Local quirks: watchman is disabled (broken Homebrew install) in jest + metro config; pnpm with
