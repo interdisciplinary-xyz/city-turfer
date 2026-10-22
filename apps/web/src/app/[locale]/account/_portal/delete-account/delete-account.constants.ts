@@ -8,7 +8,12 @@ export type DeleteAccountProps = {
   initialOpen?: boolean;
 };
 
-/** Typed confirmation: ignores case and surrounding spaces, nothing else. */
+/** Upper case without accents, so "usun" on a keyboard without Polish letters matches "USUŃ". */
+function fold(text: string): string {
+  return text.trim().normalize('NFD').replace(/\p{M}/gu, '').toLocaleUpperCase();
+}
+
+/** Typed confirmation: ignores case, accents and surrounding spaces, nothing else. */
 export function confirmationMatches(typed: string, word: string): boolean {
-  return typed.trim().toLocaleUpperCase() === word.toLocaleUpperCase();
+  return fold(typed) === fold(word);
 }

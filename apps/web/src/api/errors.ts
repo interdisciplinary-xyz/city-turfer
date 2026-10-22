@@ -76,6 +76,14 @@ export class PortalError extends Error {
   get retryable(): boolean {
     return RETRYABLE.has(this.code);
   }
+
+  /**
+   * The backup can't be reached right now (no answer, gateway, or storage resting): the "check
+   * your connection" notice fits. Any other error (429, 500, …) shows its own message instead.
+   */
+  get unreachable(): boolean {
+    return RETRYABLE.has(this.code);
+  }
 }
 
 export function isPortalError(value: unknown): value is PortalError {

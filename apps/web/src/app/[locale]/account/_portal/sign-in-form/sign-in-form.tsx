@@ -9,7 +9,18 @@ import { ErrorMessage } from '../error-message';
 import { describeWait } from '../format';
 import { Notice } from '../notice';
 import { useHydrated } from '../use-hydrated';
-import { CODE_LENGTH, sanitizeCode, type SignInFormProps, type SignInStep } from './sign-in-form.constants';
+import {
+  CODE_LENGTH,
+  INITIAL_RATE_LIMIT_STATE,
+  onAttempt,
+  onBlockEnded,
+  onFailure,
+  type RateLimitState,
+  sanitizeCode,
+  type SignInAction,
+  type SignInFormProps,
+  type SignInStep,
+} from './sign-in-form.constants';
 import { useCountdown } from './use-countdown';
 
 function asPortalError(error: unknown): PortalError {
@@ -19,7 +30,8 @@ function asPortalError(error: unknown): PortalError {
 /**
  * Sign-in by e-mailed code, in two steps on one page. After the e-mail step the copy is the same
  * whether or not the address has an account (no account enumeration). One numeric field takes
- * the code, typed or pasted; a 429 shows a countdown from `Retry-After`. Nothing is stored: the
+ * the code, typed or pasted; a 429 shows a countdown from `Retry-After` and blocks only what was
+ * refused (asking for a code, or signing in), then says it can be tried again. Nothing is stored: the
  * e-mail lives in this component's state only, and the session is the API's HttpOnly cookie.
  */
 export function SignInForm({
@@ -37,12 +49,15 @@ export function SignInForm({
   const [code, setCode] = useState('');
   const [sharedComputer, setSharedComputer] = useState(false);
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<PortalError | null>(null);
+  const [limits, setLimits] = useState<RateLimitState>(INITIAL_RATE_LIMIT_STATE);
   const [incomplete, setIncomplete] = useState(false);
   const [resent, setResent] = useState(false);
-  const [blockedUntil, setBlockedUntil] = useState<number | null>(null);
-  const secondsLeft = useCountdown(blockedUntil);
-  const blocked = secondsLeft > 0;
+  const codeLeft = useCountdown(limits.blocks.code);
+  const signInLeft = useCountdown(limits.blocks['sign-in']);
+  const left: Record<SignInAction, number> = { code: codeLeft, 'sign-in': signInLeft };
+  const codeBlocked = left.code > 0;
+  const signInBlocked = left['sign-in'] > 0;
+  const error = limits.failure?.error ?? null;
   const hydrated = useHydrated();
   const emailRef = useRef<HTMLInputElement>(null);
   const codeRef = useRef<HTMLInputElement>(null);
@@ -57,17 +72,30 @@ export function SignInForm({
     (step === 'code' ? codeRef : emailRef).current?.focus();
   }, [step]);
 
-  function fail(raw: unknown) {
-    const portalError = asPortalError(raw);
-    setError(portalError);
-    if (portalError.retryAfterSeconds !== null) {
-      setBlockedUntil(Date.now() + portalError.retryAfterSeconds * 1000);
+  // A block ran out: lift it and swap its "too many tries" alert for "you can try again".
+  const codeEnded = limits.blocks.code !== null && left.code === 0;
+  const signInEnded = limits.blocks['sign-in'] !== null && left['sign-in'] === 0;
+  useEffect(() => {
+    if (codeEnded) {
+      setLimits((state) => onBlockEnded(state, 'code'));
     }
+    if (signInEnded) {
+      setLimits((state) => onBlockEnded(state, 'sign-in'));
+    }
+  }, [codeEnded, signInEnded]);
+
+  function fail(action: SignInAction, raw: unknown) {
+    const portalError = asPortalError(raw);
+    setLimits((state) => onFailure(state, action, portalError, Date.now()));
+  }
+
+  function attempt() {
+    setLimits(onAttempt);
   }
 
   async function sendCode(again: boolean) {
     setPending(true);
-    setError(null);
+    attempt();
     setResent(false);
     try {
       await onRequestCode(email.trim());
@@ -77,7 +105,7 @@ export function SignInForm({
         setStep('code');
       }
     } catch (raw) {
-      fail(raw);
+      fail('code', raw);
     } finally {
       setPending(false);
     }
@@ -97,7 +125,7 @@ export function SignInForm({
     }
     setIncomplete(false);
     setPending(true);
-    setError(null);
+    attempt();
     setResent(false);
     try {
       await onSignIn({ email: email.trim(), code, sharedComputer });
@@ -105,19 +133,21 @@ export function SignInForm({
     } catch (raw) {
       setPending(false);
       setCode('');
-      fail(raw);
+      fail('sign-in', raw);
     }
   }
 
   function chooseOtherEmail() {
     setStep('email');
     setCode('');
-    setError(null);
+    attempt();
     setResent(false);
     setIncomplete(false);
   }
 
-  const wait = blocked ? describeWait(secondsLeft) : null;
+  // The live wait belongs to the alert on screen: the action that was refused.
+  const waitSeconds = limits.failure ? left[limits.failure.action] : 0;
+  const wait = waitSeconds > 0 ? describeWait(waitSeconds) : null;
 
   return (
     <div className='portal-sign-in'>
@@ -153,7 +183,7 @@ export function SignInForm({
           <button
             className='portal-button portal-button-primary'
             type='submit'
-            disabled={!hydrated || pending || blocked}
+            disabled={!hydrated || pending || codeBlocked}
           >
             {pending ? t('sendingCode') : t('sendCode')}
           </button>
@@ -202,7 +232,7 @@ export function SignInForm({
           <button
             className='portal-button portal-button-primary'
             type='submit'
-            disabled={!hydrated || pending || blocked}
+            disabled={!hydrated || pending || signInBlocked}
           >
             {pending ? t('signingIn') : t('submit')}
           </button>
@@ -211,7 +241,7 @@ export function SignInForm({
               className='portal-button portal-button-quiet'
               type='button'
               onClick={() => void sendCode(true)}
-              disabled={!hydrated || pending || blocked}
+              disabled={!hydrated || pending || codeBlocked}
             >
               {t('resend')}
             </button>
@@ -235,6 +265,11 @@ export function SignInForm({
       {error ? <ErrorMessage error={error} hideWait={error.retryAfterSeconds !== null} /> : null}
       {/* Counts down visually; the alert above already said "too many tries", so this isn't live. */}
       {wait ? <p className='portal-wait'>{tc(wait.key, { count: wait.count })}</p> : null}
+      {limits.canRetry ? (
+        <p className='portal-hint' role='status'>
+          {t('canRetry')}
+        </p>
+      ) : null}
       <p id={`${id}-cookie`} className='portal-fineprint'>
         {t('cookie')}
       </p>

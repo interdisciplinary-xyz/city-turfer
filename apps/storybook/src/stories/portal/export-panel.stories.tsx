@@ -20,5 +20,6 @@ export const Requesting: Story = { args: { pending: true } };
 export const Pending: Story = { args: { job: exportJob('pending') } };
 export const Sent: Story = { args: { job: exportJob('ready') } };
 export const Failed: Story = { args: { job: exportJob('failed') } };
+export const Expired: Story = { args: { job: exportJob('expired') } };
 export const OncePerDay: Story = { name: 'Once a day (429)', args: { error: ERRORS.exportDaily } };
 export const NoEmail: Story = { args: { email: null, error: null } };

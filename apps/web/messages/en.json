@@ -73,7 +73,8 @@
     },
     "gate": {
       "checking": "Opening your backup…",
-      "leaving": "Taking you to sign in…"
+      "leaving": "Taking you to sign in…",
+      "refreshFailed": "Couldn't refresh just now, so this may be a little out of date."
     },
     "unreachable": {
       "title": "Can't reach your backup right now",
@@ -97,11 +98,12 @@
       "resend": "Send the code again",
       "resent": "Sent again. Check your inbox and spam folder.",
       "otherEmail": "Use a different e-mail",
+      "canRetry": "You can try again now.",
       "cookie": "Signing in sets one cookie that keeps you signed in, and nothing else. No trackers.",
       "notice": {
         "signed-out": "You're signed out. Everything is still on your phone.",
         "expired": "Your session ended. Sign in again to carry on.",
-        "deleted": "Your account and the copy here are erased. Everything is still on your phone."
+        "deleted": "Your account and its backup here are erased. Copies in our database backups are deleted after a short time. Everything is still on your phone."
       }
     },
     "privacy": {
@@ -111,14 +113,14 @@
         "title": "Your account",
         "email": "E-mail",
         "noEmail": "No e-mail on this account",
-        "since": "Backup account since {date}"
+        "since": "Account created {date}"
       },
       "backup": {
         "title": "Backup",
-        "on": "Backup is on since {date}.",
+        "on": "Backup has been on since {date}.",
         "never": "Your turf lives on your phone. Nothing is backed up yet.",
         "withdrawn": "You turned backup off on {date}, so we erased the copy here. Everything is still on your phone.",
-        "healthOn": "Apple Health workouts are included since {date}.",
+        "healthOn": "Apple Health workouts have been included since {date}.",
         "healthOff": "Apple Health workouts stay on your phone. Your turf here may look smaller.",
         "policy": "Privacy policy version {version}",
         "changeInApp": "To change these choices, open the app: Info › Cloud backup."
@@ -130,6 +132,8 @@
         "city": "Your city, if you chose one.",
         "consents": "Your backup choices above, with the date you made each one.",
         "devices": "When each device signed in and was last used. No IP addresses, device names or locations.",
+        "deletions": "For each activity you deleted, its id and when, so it isn't backed up again. No route.",
+        "rateLimits": "For about a day, a scrambled form of your e-mail and IP address, to stop people guessing sign-in codes.",
         "nothingElse": "No analytics, no trackers, no advertising."
       },
       "devices": {
@@ -144,9 +148,9 @@
         "signOutOne": "Sign out",
         "signOutOneLabel": "Sign out {client}, signed in {date}",
         "signOutOthers": "Sign out everywhere else",
-        "signOutOthersHint": "Signs out every other browser and your phones. Your phones stop backing up until you sign in again in the app. Nothing on them is deleted.",
+        "signOutOthersHint": "Ends the sign-in on every other browser and phone. Those phones stop backing up until you sign in again in the app; nothing on them is deleted.",
         "signOutAll": "Sign out everywhere, including here",
-        "signOutAllHint": "Signs out this browser, every other browser and your phones. Nothing on your phones is deleted.",
+        "signOutAllHint": "Ends the sign-in here, on every other browser and on your phones. Your phones stop backing up until you sign in again in the app; nothing on them is deleted.",
         "confirmOthers": "Yes, sign out everywhere else",
         "confirmAll": "Yes, sign out everywhere",
         "working": "Signing out…",
@@ -161,15 +165,17 @@
         "pending": "We're putting it together. The link goes to {email} in a few minutes.",
         "ready": "Sent. Look for the e-mail at {email}; the link works until {date}.",
         "failed": "That didn't work and nothing was sent. Ask again.",
-        "expired": "That link has expired. You can ask for a new copy tomorrow."
+        "expired": "That link has expired. Ask for a new copy."
       },
       "delete": {
         "title": "Delete your account",
-        "lede": "Erases your account and everything backed up here: activities, routes, your city and your choices. Your phones are signed out.",
+        "lede": "Erases your account and everything backed up here: activities, routes, your city and your choices. Copies in our database backups are deleted after a short time. Your phones stop backing up until you sign in again; nothing on them is deleted.",
         "phone": "Everything is still on your phone. To back up again later, turn backup on in the app.",
         "start": "Delete my account…",
         "confirmLabel": "Type {word} to confirm",
         "confirmWord": "DELETE",
+        "confirmHint": "The button turns on once you've typed {word}.",
+        "confirmMismatch": "That isn't {word} yet. Upper or lower case both work.",
         "confirm": "Delete my account for good",
         "deleting": "Deleting…"
       }

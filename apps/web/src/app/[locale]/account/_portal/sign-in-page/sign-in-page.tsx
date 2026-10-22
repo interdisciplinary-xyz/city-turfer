@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { useRequestCode, useSignIn } from '@/api/hooks';
-import { parseSignInReason, PORTAL_ROOT, safeNextPath, SIGN_IN_SEGMENT, type SignInReason } from '@/api/next-path';
+import { parseSignInReason, safeNextPath, signInHref, type SignInReason } from '@/api/next-path';
 
 import { PortalFrame } from '../portal-frame';
 import { SignInForm } from '../sign-in-form';
@@ -27,7 +27,7 @@ export function SignInPage({ locale }: SignInPageProps) {
   }, []);
 
   return (
-    <PortalFrame locale={locale} path={`${PORTAL_ROOT}${SIGN_IN_SEGMENT}`}>
+    <PortalFrame locale={locale} path={signInHref(locale, { next, reason })}>
       <SignInForm
         reason={reason}
         onRequestCode={(email) => requestCode.mutateAsync(email)}

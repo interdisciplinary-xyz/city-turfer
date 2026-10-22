@@ -1,11 +1,23 @@
 import { describe, expect, it } from 'vitest';
 
+import en from '../../../messages/en.json';
+import pl from '../../../messages/pl.json';
 import { backupState } from '../../app/[locale]/account/_portal/backup-status/backup-status.constants';
 import { confirmationMatches } from '../../app/[locale]/account/_portal/delete-account/delete-account.constants';
 import { sortSessions } from '../../app/[locale]/account/_portal/devices-panel/devices-panel.constants';
+import { canRequestExport } from '../../app/[locale]/account/_portal/export-panel/export-panel.constants';
 import { describeWait } from '../../app/[locale]/account/_portal/format';
 import { sanitizeCode } from '../../app/[locale]/account/_portal/sign-in-form/sign-in-form.constants';
-import type { AuthSession, Consent } from '../schema';
+import { EXPORT_POLL_MS, exportPollInterval } from '../hooks';
+import type { AuthSession, Consent, DataExportJob } from '../schema';
+
+const job = (status: DataExportJob['status']): DataExportJob => ({
+  id: 'exp_test',
+  status,
+  requestedAt: '2026-10-22T09:00:00Z',
+  readyAt: null,
+  expiresAt: null,
+});
 
 const consent = (purpose: Consent['purpose'], granted: boolean, at: string): Consent => ({
   purpose,
@@ -51,10 +63,42 @@ it('sanitizeCode keeps up to six digits of typed or pasted text', () => {
   expect(sanitizeCode('abc')).toBe('');
 });
 
-it('confirmationMatches ignores case and spaces only', () => {
+it('confirmationMatches ignores case, accents and spaces only', () => {
   expect(confirmationMatches(' delete ', 'DELETE')).toBe(true);
   expect(confirmationMatches('usuń', 'USUŃ')).toBe(true);
+  expect(confirmationMatches('usun', 'USUŃ')).toBe(true);
+  expect(confirmationMatches('USUŃ', 'USUN')).toBe(true);
+  expect(confirmationMatches('usuwam', 'USUWAM')).toBe(true);
+  expect(confirmationMatches(' Usuwam ', 'USUWAM')).toBe(true);
+  expect(confirmationMatches('usuwa', 'USUWAM')).toBe(false);
   expect(confirmationMatches('DELET', 'DELETE')).toBe(false);
+});
+
+it('the Polish confirmation word needs no Polish letters', () => {
+  expect(pl.portal.privacy.delete.confirmWord).toMatch(/^[A-Z]+$/);
+  expect(en.portal.privacy.delete.confirmWord).toMatch(/^[A-Z]+$/);
+});
+
+it('canRequestExport: before asking, and after a failed or expired export', () => {
+  expect(canRequestExport(null)).toBe(true);
+  expect(canRequestExport(job('failed'))).toBe(true);
+  expect(canRequestExport(job('expired'))).toBe(true);
+  expect(canRequestExport(job('pending'))).toBe(false);
+  expect(canRequestExport(job('ready'))).toBe(false);
+  expect(canRequestExport(job('downloaded'))).toBe(false);
+});
+
+describe('exportPollInterval', () => {
+  it('polls while pending', () => {
+    expect(exportPollInterval({ status: 'success', data: { status: 'pending' } })).toBe(EXPORT_POLL_MS);
+  });
+  it('stops once the export is settled', () => {
+    expect(exportPollInterval({ status: 'success', data: { status: 'ready' } })).toBe(false);
+    expect(exportPollInterval({ status: 'pending' })).toBe(false);
+  });
+  it('stops on an error, even with an older pending answer', () => {
+    expect(exportPollInterval({ status: 'error', data: { status: 'pending' } })).toBe(false);
+  });
 });
 
 it('describeWait picks a readable unit', () => {

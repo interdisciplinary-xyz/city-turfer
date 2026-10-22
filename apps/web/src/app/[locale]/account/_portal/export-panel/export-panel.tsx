@@ -6,7 +6,7 @@ import { useId } from 'react';
 import { ErrorMessage } from '../error-message';
 import { formatDateTime } from '../format';
 import { Notice } from '../notice';
-import type { ExportPanelProps } from './export-panel.constants';
+import { canRequestExport, type ExportPanelProps } from './export-panel.constants';
 
 /**
  * "Get a copy" (GDPR access and portability): asks the API to e-mail a download link. The link is
@@ -16,7 +16,8 @@ export function ExportPanel({ email, locale, job, onRequest, pending, error }: E
   const t = useTranslations('portal.privacy.export');
   const id = useId();
   const to = email ?? '';
-  const canAskAgain = job === null || job.status === 'failed';
+  // Failed and expired exports don't count against one a day; a 429 explains any wait left.
+  const canAskAgain = canRequestExport(job);
   return (
     <section className='portal-card' aria-labelledby={id}>
       <h2 id={id} className='portal-card-title'>

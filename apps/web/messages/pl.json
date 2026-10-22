@@ -73,7 +73,8 @@
     },
     "gate": {
       "checking": "Otwieramy Twoją kopię…",
-      "leaving": "Przechodzimy do logowania…"
+      "leaving": "Przechodzimy do logowania…",
+      "refreshFailed": "Nie udało się teraz odświeżyć, więc to może być trochę nieaktualne."
     },
     "unreachable": {
       "title": "Nie możemy teraz połączyć się z Twoją kopią",
@@ -97,11 +98,12 @@
       "resend": "Wyślij kod ponownie",
       "resent": "Wysłane ponownie. Sprawdź skrzynkę i folder spam.",
       "otherEmail": "Użyj innego adresu",
-      "cookie": "Logowanie zapisuje jedno ciasteczko, które utrzymuje Cię zalogowanym, i nic więcej. Żadnych trackerów.",
+      "canRetry": "Możesz spróbować ponownie.",
+      "cookie": "Logowanie zapisuje tylko jedno ciasteczko: to, które podtrzymuje Twoją sesję. Żadnych narzędzi śledzących.",
       "notice": {
         "signed-out": "Wylogowano. Wszystko nadal jest na Twoim telefonie.",
         "expired": "Sesja wygasła. Zaloguj się ponownie, aby kontynuować.",
-        "deleted": "Twoje konto i kopia w chmurze zostały usunięte. Wszystko nadal jest na Twoim telefonie."
+        "deleted": "Twoje konto i jego kopia w chmurze zostały usunięte. Kopie w kopiach bezpieczeństwa naszej bazy usuwamy po krótkim czasie. Wszystko nadal jest na Twoim telefonie."
       }
     },
     "privacy": {
@@ -111,7 +113,7 @@
         "title": "Twoje konto",
         "email": "E-mail",
         "noEmail": "To konto nie ma adresu e-mail",
-        "since": "Konto kopii zapasowej od {date}"
+        "since": "Konto założone {date}"
       },
       "backup": {
         "title": "Kopia zapasowa",
@@ -121,16 +123,18 @@
         "healthOn": "Treningi z Apple Health są w kopii od {date}.",
         "healthOff": "Treningi z Apple Health zostają na Twoim telefonie. Twój turf może tu wyglądać na mniejszy.",
         "policy": "Wersja polityki prywatności {version}",
-        "changeInApp": "Aby zmienić te ustawienia, otwórz aplikację: Info › Kopia w chmurze."
+        "changeInApp": "Aby zmienić te ustawienia, otwórz aplikację: Info › Cloud backup."
       },
       "stored": {
         "title": "Co przechowujemy",
         "email": "Twój adres e-mail, aby wysyłać Ci kody logowania.",
         "activities": "Spacery, biegi i przejażdżki, które zapisał Twój telefon: kiedy się odbyły, ich statystyki i trasa zapisana przez GPS. Trasy często zaczynają się w domu.",
         "city": "Twoje miasto, jeśli je wybrano.",
-        "consents": "Twoje wybory dotyczące kopii zapasowej (powyżej) i datę każdego z nich.",
+        "consents": "Twoje wybory dotyczące kopii zapasowej (powyżej) wraz z datą każdego z nich.",
         "devices": "Kiedy każde urządzenie się zalogowało i kiedy było ostatnio używane. Bez adresów IP, nazw urządzeń i lokalizacji.",
-        "nothingElse": "Żadnej analityki, trackerów ani reklam."
+        "deletions": "Dla każdej usuniętej aktywności jej identyfikator i datę usunięcia, żeby nie wróciła do kopii. Bez trasy.",
+        "rateLimits": "Przez około dobę zaszyfrowaną postać Twojego adresu e-mail i IP, aby nikt nie zgadywał kodów logowania.",
+        "nothingElse": "Żadnej analityki, narzędzi śledzących ani reklam."
       },
       "devices": {
         "title": "Zalogowane urządzenia",
@@ -139,14 +143,14 @@
         "browser": "Przeglądarka",
         "current": "Ta przeglądarka",
         "signedIn": "Zalogowano {date}",
-        "lastUsed": "Ostatnio używane {date}",
+        "lastUsed": "Ostatnio użyto {date}",
         "expires": "Na razie zalogowane do {date}",
         "signOutOne": "Wyloguj",
         "signOutOneLabel": "Wyloguj: {client}, zalogowano {date}",
         "signOutOthers": "Wyloguj wszędzie indziej",
-        "signOutOthersHint": "Wylogowuje wszystkie inne przeglądarki i Twoje telefony. Telefony przestaną zapisywać kopię, dopóki nie zalogujesz się ponownie w aplikacji. Nic z nich nie zostanie usunięte.",
+        "signOutOthersHint": "Kończy logowanie we wszystkich innych przeglądarkach i na telefonach. Telefony przestaną robić kopię, dopóki nie zalogujesz się ponownie w aplikacji; nic na nich nie zostanie usunięte.",
         "signOutAll": "Wyloguj wszędzie, także tutaj",
-        "signOutAllHint": "Wylogowuje tę przeglądarkę, wszystkie inne i Twoje telefony. Nic z telefonów nie zostanie usunięte.",
+        "signOutAllHint": "Kończy logowanie tutaj, we wszystkich innych przeglądarkach i na Twoich telefonach. Telefony przestaną robić kopię, dopóki nie zalogujesz się ponownie w aplikacji; nic na nich nie zostanie usunięte.",
         "confirmOthers": "Tak, wyloguj wszędzie indziej",
         "confirmAll": "Tak, wyloguj wszędzie",
         "working": "Wylogowywanie…",
@@ -161,15 +165,17 @@
         "pending": "Przygotowujemy ją. Link trafi na adres {email} w ciągu kilku minut.",
         "ready": "Wysłane. Szukaj wiadomości na {email}; link działa do {date}.",
         "failed": "Nie udało się i nic nie zostało wysłane. Poproś ponownie.",
-        "expired": "Ten link wygasł. O nową kopię możesz poprosić jutro."
+        "expired": "Ten link wygasł. Poproś o nową kopię."
       },
       "delete": {
         "title": "Usuń konto",
-        "lede": "Usuwa Twoje konto i wszystko z kopii w chmurze: aktywności, trasy, Twoje miasto i Twoje wybory. Telefony zostaną wylogowane.",
+        "lede": "Usuwa Twoje konto i wszystko z kopii w chmurze: aktywności, trasy, Twoje miasto i Twoje wybory. Kopie w kopiach bezpieczeństwa naszej bazy usuwamy po krótkim czasie. Telefony przestaną robić kopię, dopóki nie zalogujesz się ponownie; nic na nich nie zostanie usunięte.",
         "phone": "Wszystko nadal jest na Twoim telefonie. Aby później znów zapisywać kopię, włącz ją w aplikacji.",
         "start": "Usuń moje konto…",
         "confirmLabel": "Wpisz {word}, aby potwierdzić",
-        "confirmWord": "USUŃ",
+        "confirmWord": "USUWAM",
+        "confirmHint": "Przycisk włączy się, gdy wpiszesz {word}.",
+        "confirmMismatch": "To jeszcze nie {word}. Wielkość liter nie ma znaczenia.",
         "confirm": "Usuń moje konto na zawsze",
         "deleting": "Usuwanie…"
       }

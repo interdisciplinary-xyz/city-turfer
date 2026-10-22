@@ -11,3 +11,8 @@ export type ExportPanelProps = {
   pending: boolean;
   error: PortalError | null;
 };
+
+/** The request button shows before asking, and after a `failed` or `expired` export (they don't count). */
+export function canRequestExport(job: DataExportJob | null): boolean {
+  return job === null || job.status === 'failed' || job.status === 'expired';
+}

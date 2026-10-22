@@ -33,6 +33,23 @@ export const RateLimited: Story = {
   parameters: { docs: { description: { story: 'Send the code: the API answers 429 with Retry-After 45 s.' } } },
 };
 
+export const ResendRateLimited: Story = {
+  name: 'Resend rate limited (Sign in stays on)',
+  args: {
+    initialStep: 'code',
+    initialEmail: 'walker@e2e.cityturfer.test',
+    onRequestCode: after(300, ERRORS.rateLimited),
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Send the code again: the API answers 429. Only send/resend wait; the code already mailed can still be used.',
+      },
+    },
+  },
+};
+
 export const AfterSignOut: Story = { args: { reason: 'signed-out' } };
 
 export const SessionEnded: Story = { args: { reason: 'expired' } };

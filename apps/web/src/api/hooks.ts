@@ -8,8 +8,20 @@ import { deleteAccountMutation, revokeSessionsMutation, SESSIONS_KEY, signOutMut
 import type { PortalError } from './errors';
 import { PortalApiContext, type PortalApiContextValue } from './provider.constants';
 
-/** Polls an export while it is being built, for at most this long (ms) per page visit. */
+/**
+ * How often (ms) to re-read an export while its status is `pending`. An interval, with no cap: it
+ * stops when the status changes or a read fails. Today `POST /v1/me/exports` builds the zip within
+ * the request and answers `ready`, `failed` or `expired`, so this only runs if the API ever queues.
+ */
 export const EXPORT_POLL_MS = 3_000;
+
+/** The `refetchInterval` of an export: poll while `pending`, never after an error. */
+export function exportPollInterval(state: { status: string; data?: { status: string } }): number | false {
+  if (state.status === 'error') {
+    return false;
+  }
+  return state.data?.status === 'pending' ? EXPORT_POLL_MS : false;
+}
 
 export const QUERY_KEYS = {
   me: ['me'],
@@ -56,7 +68,7 @@ export function useExportStatus(exportId: string | null) {
     queryKey: QUERY_KEYS.export(exportId ?? ''),
     queryFn: () => api.exportStatus(exportId ?? ''),
     enabled: exportId !== null,
-    refetchInterval: (query) => (query.state.data?.status === 'pending' ? EXPORT_POLL_MS : false),
+    refetchInterval: (query) => exportPollInterval(query.state),
   });
 }
 

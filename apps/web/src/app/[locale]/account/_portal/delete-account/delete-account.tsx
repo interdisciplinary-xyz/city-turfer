@@ -22,6 +22,8 @@ export function DeleteAccount({ onDelete, pending, error, initialOpen = false }:
   const opened = useRef(initialOpen);
   const word = t('confirmWord');
   const matches = confirmationMatches(typed, word);
+  // Something typed that isn't the word: say why the button stays off.
+  const mismatch = typed.trim() !== '' && !matches;
 
   useEffect(() => {
     if (open && !opened.current) {
@@ -66,9 +68,14 @@ export function DeleteAccount({ onDelete, pending, error, initialOpen = false }:
             autoComplete='off'
             autoCapitalize='characters'
             spellCheck={false}
+            aria-describedby={`${id}-confirm-hint`}
+            aria-invalid={mismatch ? true : undefined}
             value={typed}
             onChange={(event) => setTyped(event.target.value)}
           />
+          <p id={`${id}-confirm-hint`} className='portal-hint'>
+            {mismatch ? t('confirmMismatch', { word }) : t('confirmHint', { word })}
+          </p>
           <div className='portal-row'>
             <button className='portal-button portal-button-danger' type='submit' disabled={!matches || pending}>
               {pending ? t('deleting') : t('confirm')}

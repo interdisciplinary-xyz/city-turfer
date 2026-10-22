@@ -48,6 +48,17 @@ export function signInUrl(
   locale: string,
   { next, reason }: { next?: string | null; reason?: SignInReason | null } = {}
 ): string {
+  return `/${locale}${signInHref(locale, { next, reason })}`;
+}
+
+/**
+ * The sign-in page below the locale, with the validated `next` and reason: what the language
+ * links of the sign-in page point at, so switching language keeps both.
+ */
+export function signInHref(
+  locale: string,
+  { next, reason }: { next?: string | null; reason?: SignInReason | null } = {}
+): string {
   const params = new URLSearchParams();
   if (next) {
     const safe = safeNextPath(next, locale);
@@ -59,7 +70,8 @@ export function signInUrl(
     params.set('reason', reason);
   }
   const query = params.toString();
-  return query ? `${signInPage(locale)}?${query}` : signInPage(locale);
+  const page = `${PORTAL_ROOT}${SIGN_IN_SEGMENT}`;
+  return query ? `${page}?${query}` : page;
 }
 
 export function parseSignInReason(raw: string | null | undefined): SignInReason | null {

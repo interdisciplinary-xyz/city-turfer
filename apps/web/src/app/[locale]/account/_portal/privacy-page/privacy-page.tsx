@@ -45,6 +45,8 @@ export function PrivacyPage({ locale }: PrivacyPageProps) {
     return null;
   }
   const user = me.data;
+  // A 401 is on its way to sign-in; anything else is said where the backup choices would be.
+  const consentsError = consents.isError && consents.error.code !== 'signed-out' ? consents.error : null;
   const job = exportStatus.data ?? requestExport.data ?? null;
   // An older API without the sessions routes (404 / 501): show "not available", not an error.
   const sessionsMissing = sessions.isError && (sessions.error.status === 404 || sessions.error.status === 501);
@@ -64,9 +66,10 @@ export function PrivacyPage({ locale }: PrivacyPageProps) {
       <AccountSummary user={user} locale={locale} />
 
       {consents.isSuccess ? <BackupStatus consents={consents.data.items} locale={locale} /> : null}
-      {consents.isError && consents.error.code !== 'signed-out' ? (
+      {consentsError?.unreachable ? (
         <Unreachable onRetry={() => void consents.refetch()} retrying={consents.isFetching} />
       ) : null}
+      {consentsError && !consentsError.unreachable ? <ErrorMessage error={consentsError} /> : null}
 
       <WhatWeStore />
 
@@ -87,8 +90,15 @@ export function PrivacyPage({ locale }: PrivacyPageProps) {
         sessions={sessions.data?.sessions ?? null}
         loading={sessions.isPending}
         locale={locale}
-        onRevoke={(id) => revokeSession.mutate(id)}
-        onRevokeScope={(scope) => revokeSessions.mutate(scope)}
+        // Each starts by dropping the other's old error, so a stale alert doesn't outlive a success.
+        onRevoke={(id) => {
+          revokeSessions.reset();
+          revokeSession.mutate(id);
+        }}
+        onRevokeScope={(scope) => {
+          revokeSession.reset();
+          revokeSessions.mutate(scope);
+        }}
         pending={pendingDevices}
         error={revokeError ?? revokeSessions.error ?? (sessions.isError && !sessionsMissing ? sessions.error : null)}
       />
@@ -98,7 +108,6 @@ export function PrivacyPage({ locale }: PrivacyPageProps) {
         pending={deleteAccount.isPending || deleteAccount.isSuccess}
         error={deleteAccount.error}
       />
-      {consents.isError && consents.error.code === 'generic' ? <ErrorMessage error={consents.error} /> : null}
     </div>
   );
 }
