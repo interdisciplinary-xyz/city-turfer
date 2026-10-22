@@ -82,8 +82,21 @@ function metres(a: GeoPoint, b: GeoPoint): number {
   return Math.hypot(x, y) * 6_371_008.8;
 }
 
-/** Import four months of Gdańsk activities (idempotent per day) and set Gdańsk as Home City. */
-export async function seedGdanskDemo(c: Container, onProgress?: (done: number, total: number) => void) {
+/** A planned demo activity's id: its place in the plan, the same on every day (resumable). */
+const demoActivityId = (index: number) => `${DEMO_PREFIX}gdansk-n${index}`;
+/** Ids from before the plan was resumable: `demo-gdansk-<start ms>` (depended on the day). */
+const LEGACY_ID = /^demo-gdansk-\d+$/;
+
+interface PlannedActivity {
+  id: string;
+  route: DemoRoute;
+  start: number;
+  seed: number;
+  reverse: boolean;
+}
+
+/** The four months of activities, ending yesterday. Which ones, and their ids, never change. */
+function planDemo(today: number): PlannedActivity[] {
   const rand = mulberry32(54);
   const total = WEIGHTS.reduce((a, b) => a + b, 0);
   const pick = () => {
@@ -95,9 +108,7 @@ export async function seedGdanskDemo(c: Container, onProgress?: (done: number, t
     }
     return ROUTES[0];
   };
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const plan: { route: DemoRoute; start: number; seed: number; reverse: boolean }[] = [];
+  const plan: PlannedActivity[] = [];
   for (let d = DAYS; d >= 1; d--) {
     if (d > 1 && rand() > PER_WEEK / 7) {
       continue; // always keep yesterday, so the dashboard has something fresh
@@ -105,31 +116,72 @@ export async function seedGdanskDemo(c: Container, onProgress?: (done: number, t
     const route = pick();
     const hour = route.type === 'cycle' ? 9 + Math.floor(rand() * 8) : 6 + Math.floor(rand() * 14);
     plan.push({
+      id: demoActivityId(plan.length),
       route,
-      start: today.getTime() - d * 86_400_000 + hour * 3_600_000 + Math.floor(rand() * 60) * 60_000,
+      start: today - d * 86_400_000 + hour * 3_600_000 + Math.floor(rand() * 60) * 60_000,
       seed: Math.floor(rand() * 1e9),
       reverse: rand() < 0.4,
     });
   }
-  await c.territory.chooseHomeCity.execute(CITY_ID);
-  let done = 0;
-  for (const p of plan) {
+  return plan;
+}
+
+/** Every activity id in the profile (a few hundred at most on the demo account). */
+async function activityIds(c: Container): Promise<string[]> {
+  const ids: string[] = [];
+  let before: number | undefined;
+  for (;;) {
+    const page = await c.activityLog.list.execute(200, before);
+    if (page.length === 0) {
+      return ids;
+    }
+    ids.push(...page.map((a) => a.id));
+    before = page[page.length - 1].startedAt;
+  }
+}
+
+/**
+ * Import four months of Gdańsk activities and set Gdańsk as Home City. Resumable: an interrupted
+ * seed picks up where it stopped (stable ids; the ones already there are skipped), on any day.
+ * Returns how many activities it imported.
+ */
+export async function seedGdanskDemo(c: Container, onProgress?: (done: number, total: number) => void) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const plan = planDemo(today.getTime());
+  const existing = await activityIds(c);
+  // A half-filled seed from before ids were stable: start over rather than duplicate it.
+  const legacy = existing.filter((id) => LEGACY_ID.test(id));
+  for (const id of legacy) {
+    await c.activityLog.remove.execute(id);
+  }
+  const have = new Set(existing);
+  const missing = plan.filter((p) => !have.has(p.id));
+  if ((await c.territory.homeCity.execute())?.id !== CITY_ID) {
+    await c.territory.chooseHomeCity.execute(CITY_ID);
+  }
+  let done = plan.length - missing.length;
+  for (const p of missing) {
     const path = p.reverse ? [...p.route.path].reverse() : p.route.path;
     const points = trackAlongPath(path, p.route.type, p.start, p.seed);
-    await c.activityLog.importActivity.execute({ id: `${DEMO_PREFIX}gdansk-${p.start}`, type: p.route.type, points });
+    await c.activityLog.importActivity.execute({ id: p.id, type: p.route.type, points });
     onProgress?.(++done, plan.length);
   }
   await c.dispatcher.dispatchPending();
-  return plan.length;
+  return missing.length;
 }
 
-/** Called after every sign-in: fills the demo account the first time it is used. */
+/**
+ * Called after every sign-in: fills the demo account the first time it is used, and finishes a
+ * fill that was interrupted (app killed during the first sign-in).
+ */
 export async function prepareDemoAccount(user: User, c: Container): Promise<void> {
   if (user.id !== DEMO_USER_ID) {
     return;
   }
-  const [home, latest] = await Promise.all([c.territory.homeCity.execute(), c.activityLog.list.execute(1)]);
-  if (home?.id === CITY_ID && latest.length > 0) {
+  // The last planned activity is imported last: there, the fill finished.
+  const plan = planDemo(0);
+  if ((await c.activityLog.detail.execute(plan[plan.length - 1].id)) !== null) {
     return;
   }
   await seedGdanskDemo(c);
