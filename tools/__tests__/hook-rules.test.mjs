@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import { newestScope } from '../harness/git-context.mjs';
 import {
+  allowedBases,
   bashFindings,
   brandHexFindings,
   contentAfter,
@@ -14,6 +15,7 @@ import {
   importSpecifiers,
   protectedFileFindings,
   remindersFor,
+  shellCommands,
 } from '../harness/hook-rules.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -86,6 +88,27 @@ test('domain and shared kernel stay free of frameworks and outer layers', () => 
     dependencyFindings('apps/mobile/src/shared-kernel/geo.ts', '', "import x from 'expo-crypto';").length,
     1
   );
+});
+
+test('domain stays free of native modules (HealthKit, Nitro, scoped react-native packages)', () => {
+  const dom = 'apps/mobile/src/contexts/health-sync/domain/workout.ts';
+  for (const spec of [
+    '@kingstinct/react-native-healthkit',
+    'react-native-nitro-modules',
+    '@react-native-async-storage/async-storage',
+  ]) {
+    assert.deepEqual(rules(dependencyFindings(dom, '', `import x from '${spec}';`)), ['dependency-rule'], spec);
+  }
+  // false positives: the infrastructure adapter may use HealthKit; look-alike names are fine
+  assert.deepEqual(
+    dependencyFindings(
+      'apps/mobile/src/contexts/health-sync/infrastructure/healthkit-store.ts',
+      '',
+      "import x from '@kingstinct/react-native-healthkit';"
+    ),
+    []
+  );
+  assert.deepEqual(dependencyFindings(dom, '', "import x from '@cityturfer/core/shared-kernel';"), []);
 });
 
 test('only flags imports the edit introduces, and skips tests', () => {
@@ -182,6 +205,9 @@ test('reminders fire for parity-sensitive files', () => {
   const ids = (p) => remindersFor(p).map((r) => r.id);
   assert.deepEqual(ids('apps/mobile/src/contexts/territory/domain/turf-strength.ts'), ['turf-parity']);
   assert.deepEqual(ids('apps/mobile/src/shared-kernel/geo.ts'), ['geo-parity']);
+  assert.deepEqual(ids('packages/core/src/contexts/territory/domain/strength.ts'), ['turf-parity']);
+  assert.deepEqual(ids('packages/core/src/shared-kernel/track-analyzer.ts'), ['geo-parity']);
+  assert.deepEqual(ids('packages/core/src/shared-kernel/__tests__/geo.test.ts'), []);
   assert.deepEqual(ids('apps/mobile/app.json'), ['fingerprint']);
   assert.deepEqual(ids('packages/ui/src/button.tsx'), ['fingerprint']);
   assert.deepEqual(ids('apps/mobile/src/platform/migrations.ts'), ['migration']);
@@ -277,6 +303,153 @@ test('expected PR base per branch type and newest scope', () => {
   assert.equal(newestScope([]), undefined);
 });
 
+test('shell parsing: quotes, heredocs, operators, redirections and wrappers', () => {
+  assert.deepEqual(shellCommands(`git commit -m "a; git push origin main" && echo 'x | y'`), [
+    ['git', 'commit', '-m', 'a; git push origin main'],
+    ['echo', 'x | y'],
+  ]);
+  assert.deepEqual(shellCommands('git push origin feat/x 2>&1 | tail -5 > /tmp/out'), [
+    ['git', 'push', 'origin', 'feat/x'],
+    ['tail', '-5'],
+  ]);
+  assert.deepEqual(shellCommands(`(cd apps && FOO=1 command git status)`), [
+    ['cd', 'apps'],
+    ['git', 'status'],
+  ]);
+  assert.deepEqual(shellCommands(`bash -c "git push origin main"`), [['git', 'push', 'origin', 'main']]);
+  const body = `gh pr create --body "$(cat <<'EOF'\nUse "--base main" here (see #1\nEOF\n)" --base scope/v0.9.0`;
+  const [cmd] = shellCommands(body);
+  assert.equal(cmd.at(-1), 'scope/v0.9.0');
+  assert.equal(cmd.length, 7);
+  assert.deepEqual(shellCommands(`git commit -F- <<'EOF'\nfix: x; git push origin main\nEOF\ngit status`), [
+    ['git', 'commit', '-F-'],
+    ['git', 'status'],
+  ]);
+});
+
+test('wrappers and global options do not hide a push to main', () => {
+  for (const cmd of [
+    'git -c core.hooksPath=/dev/null push origin main',
+    'git -C apps/mobile --no-pager push origin main',
+    '(git push origin main)',
+    'bash -c "git push origin main"',
+    "sh -lc 'cd x && git push origin main'",
+    'command git push origin main',
+    'env GIT_TRACE=1 git push origin main',
+    'eval "git push origin main"',
+    '/usr/bin/git push origin main',
+  ]) {
+    assert.deepEqual(rules(bashFindings(cmd, CTX)), ['push-main'], cmd);
+  }
+  // false positives: the words only appear as data
+  assert.deepEqual(bashFindings('git commit -m "never git push origin main"', CTX), []);
+  assert.deepEqual(bashFindings('echo "git push origin main" > notes.txt', CTX), []);
+  assert.deepEqual(bashFindings('grep -rn "git push origin main" docs', CTX), []);
+});
+
+test('no-verify: flag clusters count, the commit message does not; push --no-verify is denied', () => {
+  assert.deepEqual(rules(bashFindings('git commit -nm "x"', CTX)), ['no-verify']);
+  assert.deepEqual(rules(bashFindings('git commit -anm "x"', CTX)), ['no-verify']);
+  assert.deepEqual(rules(bashFindings('git push --no-verify origin feat/territory', CTX)), ['no-verify']);
+  assert.deepEqual(bashFindings('git commit -m "handle the -n flag"', CTX), []);
+  assert.deepEqual(bashFindings('git commit -m "--no-verify is denied now"', CTX), []);
+  assert.deepEqual(bashFindings('git commit -mnote', CTX), []);
+  assert.deepEqual(bashFindings('git commit -am "x" --author "n <n@x>"', CTX), []);
+  assert.deepEqual(bashFindings('git push -n origin feat/territory', CTX), []); // -n is --dry-run for push
+});
+
+test('integration branches are never deleted, locally or on the remote', () => {
+  assert.deepEqual(rules(bashFindings('git push origin --delete scope/v0.8.0', CTX)), ['delete-branch']);
+  assert.deepEqual(rules(bashFindings('git push origin -d release/v0.8.0', CTX)), ['delete-branch']);
+  assert.deepEqual(rules(bashFindings('git push origin :release/v0.8.0', CTX)), ['delete-branch']);
+  assert.deepEqual(rules(bashFindings('git push origin :main', CTX)), ['delete-branch']);
+  assert.deepEqual(rules(bashFindings('git branch -D scope/v0.8.0', CTX)), ['delete-branch']);
+  assert.deepEqual(rules(bashFindings('git branch --delete main', CTX)), ['delete-branch']);
+  // false positives: feature branches, remote-tracking refs, listing
+  assert.deepEqual(bashFindings('git push origin --delete feat/old', CTX), []);
+  assert.deepEqual(bashFindings('git push origin :feat/old', CTX), []);
+  assert.deepEqual(bashFindings('git branch -D feat/old', CTX), []);
+  assert.deepEqual(bashFindings('git branch -dr origin/scope/v0.7.0', CTX), []);
+  assert.deepEqual(bashFindings('git branch --list "scope/*"', CTX), []);
+});
+
+test('the release runs only in release.yml', () => {
+  for (const cmd of [
+    'pnpm run release',
+    'pnpm release',
+    'pnpm -w run release -- --release-as 0.9.0',
+    'npm run release',
+    'yarn release',
+    'npx commit-and-tag-version',
+    'pnpm exec commit-and-tag-version --release-as minor',
+    'node_modules/.bin/commit-and-tag-version',
+  ]) {
+    assert.deepEqual(rules(bashFindings(cmd, CTX)), ['release'], cmd);
+  }
+  // false positives
+  assert.deepEqual(bashFindings('pnpm run release -- --dry-run', CTX), []);
+  assert.deepEqual(bashFindings('npx commit-and-tag-version --dry-run', CTX), []);
+  assert.deepEqual(bashFindings('grep commit-and-tag-version package.json', CTX), []);
+  assert.deepEqual(bashFindings('pnpm run release:notes', CTX), []);
+  assert.deepEqual(bashFindings('git log release/v0.8.0', CTX), []);
+});
+
+test('gh pr: --fill, gh pr edit, and options inside the body', () => {
+  assert.deepEqual(rules(bashFindings('gh pr create --fill --base scope/v0.8.0', CTX)), ['pr-title']);
+  assert.deepEqual(
+    bashFindings('gh pr create --fill --title "city-turfer - feat/territory" --base scope/v0.8.0', CTX),
+    []
+  );
+  assert.deepEqual(
+    bashFindings(
+      'gh pr create --title "city-turfer - feat/territory" --body "see --base main" --base scope/v0.8.0',
+      CTX
+    ),
+    []
+  );
+  assert.deepEqual(rules(bashFindings('gh pr edit --base main', CTX)), ['pr-base']);
+  assert.deepEqual(rules(bashFindings('gh pr edit --title "turf overlay"', CTX)), ['pr-title']);
+  assert.deepEqual(bashFindings('gh pr edit --title "city-turfer - feat/territory"', CTX), []);
+  assert.deepEqual(rules(bashFindings('gh pr edit 101 --title "Turf"', CTX)), ['pr-title']);
+  assert.deepEqual(bashFindings('gh pr edit 101 --title "city-turfer - feat/other"', CTX), []);
+  assert.deepEqual(
+    bashFindings('gh pr edit 101 --base scope/v0.8.0', CTX).map((f) => f.decision),
+    ['ask']
+  );
+  assert.deepEqual(bashFindings('gh pr edit 101 --add-label docs', CTX), []);
+  assert.deepEqual(bashFindings('gh pr view 101 --json title', CTX), []);
+});
+
+test('fix/ after promotion may target release; release and hotfix merge back down', () => {
+  const fix = { branch: 'fix/gps-drop', activeScope: 'scope/v0.9.0' };
+  assert.deepEqual(
+    bashFindings('gh pr create --base release/v0.8.0 --title "city-turfer - fix/gps-drop" --body x', fix),
+    []
+  );
+  assert.deepEqual(
+    bashFindings('gh pr create --base scope/v0.9.0 --title "city-turfer - fix/gps-drop" --body x', fix),
+    []
+  );
+  assert.deepEqual(rules(bashFindings('gh pr create --base main --title "city-turfer - fix/gps-drop" --body x', fix)), [
+    'pr-base',
+  ]);
+  assert.deepEqual(
+    rules(
+      bashFindings('gh pr create --base release/v0.8.0 --title "city-turfer - feat/x" --body x', { branch: 'feat/x' })
+    ),
+    ['pr-base']
+  );
+  assert.deepEqual(allowedBases('release/v0.8.0'), ['main', 'scope/vX.Y.Z']);
+  assert.deepEqual(allowedBases('hotfix/crash'), ['main', 'release/vX.Y.Z', 'scope/vX.Y.Z']);
+  assert.deepEqual(expectedBase('fix/gps-drop', 'scope/v0.9.0'), ['scope/v0.9.0']);
+});
+
+test('device data: copies ask, device listings do not', () => {
+  assert.deepEqual(rules(bashFindings('idevicebackup2 backup /tmp/b', CTX)), ['device-data']);
+  assert.deepEqual(bashFindings('idevice_id -l', CTX), []);
+  assert.deepEqual(bashFindings('ideviceinfo -k DeviceName', CTX), []);
+});
+
 // --- the hook scripts end to end ------------------------------------------
 
 function runHook(script, payload) {
@@ -312,4 +485,7 @@ test('pre-bash hook denies pushing to main and ignores unrelated commands', () =
   const out = runHook('pre-bash.mjs', { tool_name: 'Bash', tool_input: { command: 'git push origin main' } });
   assert.equal(out.hookSpecificOutput.permissionDecision, 'deny');
   assert.equal(runHook('pre-bash.mjs', { tool_name: 'Bash', tool_input: { command: 'pnpm test' } }), null);
+  const release = runHook('pre-bash.mjs', { tool_name: 'Bash', tool_input: { command: 'pnpm run release' } });
+  assert.equal(release.hookSpecificOutput.permissionDecision, 'deny');
+  assert.match(release.hookSpecificOutput.permissionDecisionReason, /\[release\]/);
 });

@@ -79,7 +79,7 @@ const MOBILE_SRC = 'apps/mobile/src/';
 const IS_TEST = /(^|\/)(__tests__|test-support)\/|\.test\.tsx?$/;
 
 const FRAMEWORKS_DOMAIN =
-  /^(react|react-native|expo[^/]*|zustand|h3-js|@maplibre\/[^/]+|better-sqlite3|@cityturfer\/ui)(\/|$)/;
+  /^(react|react-native|react-native-nitro-modules|@kingstinct\/react-native-healthkit|@[^/]+\/react-native-[^/]+|@react-native[^/]*\/[^/]+|expo[^/]*|zustand|h3-js|@maplibre\/[^/]+|better-sqlite3|@cityturfer\/ui)(\/|$)/;
 const FRAMEWORKS_APPLICATION = /^(react|react-native|expo[^/]*|h3-js|@maplibre\/[^/]+|@cityturfer\/ui)(\/|$)/;
 
 /** Import specifiers in a TS/JS source (static, re-export, side-effect, dynamic, require). */
@@ -233,14 +233,14 @@ export const REMINDERS = [
   {
     id: 'turf-parity',
     test: (p) =>
-      /^apps\/mobile\/src\/contexts\/territory\/domain\/.*strength/i.test(p) ||
+      /^(apps\/mobile|packages\/core)\/src\/contexts\/territory\/domain\/.*strength/i.test(p) ||
       p === 'apps/mobile/tools/turf-preview.mjs',
     message:
-      'Turf strength formula and defaults must stay identical in apps/mobile/src/contexts/territory/domain and apps/mobile/tools/turf-preview.mjs, pinned by apps/mobile/tools/fixtures/turf-vectors.json. Update all three together.',
+      'Turf strength formula and defaults must stay identical in packages/core/src/contexts/territory/domain and apps/mobile/tools/turf-preview.mjs, pinned by apps/mobile/tools/fixtures/turf-vectors.json. Update all three together.',
   },
   {
     id: 'geo-parity',
-    test: (p) => /^apps\/mobile\/src\/shared-kernel\//.test(p) && !IS_TEST.test(p),
+    test: (p) => /^(apps\/mobile|packages\/core)\/src\/shared-kernel\//.test(p) && !IS_TEST.test(p),
     message:
       'Shared-kernel maths is SI units and must match apps/mobile/tools/lib/geo.mjs (the oracle used by route-stats.mjs). If a formula changed, change the oracle and its tests too (route-metrics skill).',
   },
@@ -279,27 +279,292 @@ export function remindersFor(relPath) {
 }
 
 // ---------------------------------------------------------------------------
-// Bash: git / gh policy (docs/process/release-manager.md)
+// Bash: shell parsing (enough of it for the policy below)
 // ---------------------------------------------------------------------------
 
 const PROTECTED = /^(main|release\/v\d+\.\d+\.\d+|scope\/v\d+\.\d+\.\d+)$/;
 
-/** Split a shell line into simple commands (on &&, ||, ;, |, newlines). Naive about quotes. */
+/**
+ * Split a shell line into simple commands, each a list of words with quotes removed. Understands
+ * '…', "…", backslash escapes, $(…) with heredocs inside (a multi-line PR body stays one word),
+ * the operators && || ; | & and newlines, subshell parentheses and `{ …; }` groups. Not a full
+ * shell: no globbing, no expansion of variables (they stay literal).
+ * @returns {string[][]}
+ */
+export function shellCommands(line) {
+  const commands = [];
+  let words = [];
+  let word = null;
+  let dropNextWord = false; // the target of a redirection (`> file`) is not an argument
+  const pendingHeredocs = [];
+  const endWord = () => {
+    if (word !== null) {
+      if (dropNextWord) {
+        dropNextWord = false;
+      } else {
+        words.push(word);
+      }
+      word = null;
+    }
+  };
+  const endCommand = () => {
+    endWord();
+    if (words.length) {
+      commands.push(words);
+    }
+    words = [];
+  };
+  /** Index just after the `)` closing a `$(` that starts at `from` (the char after `$(`). */
+  const skipSubstitution = (from) => {
+    let depth = 1;
+    let j = from;
+    const heredocs = [];
+    while (j < line.length && depth > 0) {
+      const c = line[j];
+      if (c === '\\') {
+        j += 2;
+        continue;
+      }
+      if (c === "'") {
+        const close = line.indexOf("'", j + 1);
+        j = close < 0 ? line.length : close + 1;
+        continue;
+      }
+      if (c === '"') {
+        j += 1;
+        while (j < line.length && line[j] !== '"') {
+          j += line[j] === '\\' ? 2 : 1;
+        }
+        j += 1;
+        continue;
+      }
+      const here = line.slice(j).match(/^<<-?\s*(['"]?)([\w-]+)\1/);
+      if (here) {
+        heredocs.push(here[2]);
+        j += here[0].length;
+        continue;
+      }
+      if (c === '\n' && heredocs.length) {
+        // skip each heredoc body up to its delimiter line
+        for (const delim of heredocs.splice(0)) {
+          const re = new RegExp(`\\n[ \\t]*${delim}[ \\t]*(?=\\n|$)`, 'g');
+          re.lastIndex = j;
+          const m = re.exec(line);
+          j = m ? m.index + m[0].length : line.length;
+        }
+        continue;
+      }
+      if (c === '(') {
+        depth += 1;
+      } else if (c === ')') {
+        depth -= 1;
+      }
+      j += 1;
+    }
+    return j;
+  };
+
+  let i = 0;
+  while (i < line.length) {
+    const c = line[i];
+    if (c === '\n' && pendingHeredocs.length) {
+      // a top-level heredoc body (e.g. `git commit -F- <<EOF`): its text is data, not commands
+      endCommand();
+      for (const delim of pendingHeredocs.splice(0)) {
+        const re = new RegExp(`\\n[ \\t]*${delim}[ \\t]*(?=\\n|$)`, 'g');
+        re.lastIndex = i;
+        const m = re.exec(line);
+        i = m ? m.index + m[0].length : line.length;
+      }
+      continue;
+    }
+    if (c === '\\' && i + 1 < line.length) {
+      if (line[i + 1] !== '\n') {
+        word = (word ?? '') + line[i + 1];
+      }
+      i += 2;
+      continue;
+    }
+    if (c === "'") {
+      const close = line.indexOf("'", i + 1);
+      word = (word ?? '') + line.slice(i + 1, close < 0 ? line.length : close);
+      i = close < 0 ? line.length : close + 1;
+      continue;
+    }
+    if (c === '"') {
+      let j = i + 1;
+      let text = '';
+      while (j < line.length && line[j] !== '"') {
+        if (line[j] === '\\' && j + 1 < line.length) {
+          text += line[j + 1];
+          j += 2;
+        } else if (line.startsWith('$(', j)) {
+          const end = skipSubstitution(j + 2);
+          text += line.slice(j, end);
+          j = end;
+        } else {
+          text += line[j];
+          j += 1;
+        }
+      }
+      word = (word ?? '') + text;
+      i = j + 1;
+      continue;
+    }
+    if (line.startsWith('$(', i)) {
+      const end = skipSubstitution(i + 2);
+      word = (word ?? '') + line.slice(i, end);
+      i = end;
+      continue;
+    }
+    const here = word === null && line.slice(i).match(/^<<-?\s*(['"]?)([\w-]+)\1/);
+    if (here) {
+      pendingHeredocs.push(here[2]);
+      i += here[0].length;
+      continue;
+    }
+    const redirect = word === null && line.slice(i).match(/^(?:\d*(?:>>?|<)(&\d+|&-)?|&>>?)/);
+    if (redirect) {
+      dropNextWord = !redirect[1];
+      i += redirect[0].length;
+      continue;
+    }
+    const op = line.slice(i).match(/^(&&|\|\||[;|&\n()])/);
+    if (op) {
+      endCommand();
+      i += op[0].length;
+      continue;
+    }
+    if (/\s/.test(c)) {
+      endWord();
+      i += 1;
+      continue;
+    }
+    if (c === '#' && word === null) {
+      // comment to end of line
+      const nl = line.indexOf('\n', i);
+      i = nl < 0 ? line.length : nl;
+      continue;
+    }
+    word = (word ?? '') + c;
+    i += 1;
+  }
+  endCommand();
+
+  // Unwrap: env assignments, `command`/`exec`/`env`/`sudo`/`nohup`/`time`, `{` groups, and
+  // `bash -c '…'` / `eval '…'` (their string is parsed as commands of its own).
+  const out = [];
+  for (let w of commands) {
+    for (;;) {
+      while (w.length && (/^[A-Za-z_]\w*=/.test(w[0]) || ['{', '}', '!'].includes(w[0]))) {
+        w = w.slice(1);
+      }
+      if (w.length && ['command', 'exec', 'env', 'sudo', 'nohup', 'time'].includes(w[0])) {
+        w = w.slice(1);
+        while (w.length && w[0].startsWith('-')) {
+          w = w.slice(1); // wrapper options (`env -i`, `time -p`)
+        }
+        continue;
+      }
+      break;
+    }
+    if (!w.length) {
+      continue;
+    }
+    const shell = /^(?:.*\/)?(?:ba|z|da)?sh$/.test(w[0]);
+    const cFlag = shell ? w.findIndex((x, k) => k > 0 && /^-[a-z]*c[a-z]*$/.test(x)) : -1;
+    if (cFlag > 0 && w[cFlag + 1] !== undefined) {
+      out.push(...shellCommands(w[cFlag + 1]));
+      continue;
+    }
+    if (w[0] === 'eval' && w.length > 1) {
+      out.push(...shellCommands(w.slice(1).join(' ')));
+      continue;
+    }
+    out.push(w);
+  }
+  return out;
+}
+
+/** @deprecated kept for callers that only need the command strings */
 export function simpleCommands(line) {
-  return line
-    .split(/&&|\|\||;|\||\n/)
-    .map((s) => s.trim())
-    .filter(Boolean);
+  return shellCommands(line).map((w) => w.join(' '));
 }
 
-/** Value of a CLI option given as `--opt value`, `--opt=value` or a short `-o value`. */
-function option(cmd, long, short) {
-  const re = new RegExp(`(?:--${long}${short ? `|-${short}` : ''})(?:=|\\s+)(?:"([^"]*)"|'([^']*)'|(\\S+))`);
-  const m = cmd.match(re);
-  return m ? (m[1] ?? m[2] ?? m[3]) : null;
+/** `git` subcommand and its arguments, past global options (-C dir, -c k=v, --no-pager …). */
+function gitCall(words) {
+  if (!/^(?:.*\/)?git$/.test(words[0] ?? '')) {
+    return null;
+  }
+  let k = 1;
+  while (k < words.length && words[k].startsWith('-')) {
+    k += ['-C', '-c', '--git-dir', '--work-tree', '--namespace', '--exec-path'].includes(words[k]) ? 2 : 1;
+  }
+  return k < words.length ? { sub: words[k], args: words.slice(k + 1) } : null;
 }
 
-/** The PR base a head branch must target, or null if the head is not a policy branch. */
+/** Positional arguments and flags, skipping the values of the given value-taking options. */
+function splitArgs(args, valueOptions) {
+  const positional = [];
+  const flags = [];
+  for (let k = 0; k < args.length; k++) {
+    const a = args[k];
+    if (a === '--') {
+      positional.push(...args.slice(k + 1));
+      break;
+    }
+    if (a.startsWith('-') && a !== '-') {
+      flags.push(a);
+      if (valueOptions.includes(a)) {
+        k += 1;
+      }
+    } else {
+      positional.push(a);
+    }
+  }
+  return { positional, flags };
+}
+
+/** True when `flags` hold the long option or a short cluster (`-uf`) containing the letter. */
+function hasFlag(flags, long, short, stopAt = '') {
+  return flags.some((f) => {
+    if (f === long || f.startsWith(`${long}=`)) {
+      return true;
+    }
+    if (!short || !/^-[A-Za-z]+$/.test(f)) {
+      return false;
+    }
+    for (const ch of f.slice(1)) {
+      if (ch === short) {
+        return true;
+      }
+      if (stopAt.includes(ch)) {
+        return false; // the rest of the cluster is this option's value (`-mnote`)
+      }
+    }
+    return false;
+  });
+}
+
+/** Value of `--long v`, `--long=v`, `-s v` in a word list (quotes already removed). */
+function optionValue(words, long, short) {
+  for (let k = 0; k < words.length; k++) {
+    const w = words[k];
+    if (w === long || (short && w === short)) {
+      return words[k + 1] ?? '';
+    }
+    if (w.startsWith(`${long}=`)) {
+      return w.slice(long.length + 1);
+    }
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Bash: git / gh policy (docs/process/release-manager.md)
+// ---------------------------------------------------------------------------
+
+/** The PR base a head branch normally targets (what session-start announces), or null. */
 export function expectedBase(head, activeScope) {
   if (/^(feat|fix|chore|test|docs|refactor|perf|ci)\//.test(head)) {
     return activeScope ? [activeScope] : ['scope/vX.Y.Z'];
@@ -315,6 +580,58 @@ export function expectedBase(head, activeScope) {
 }
 
 /**
+ * Every base the policy allows for a head: the expected one plus the exceptions in
+ * release-manager.md (rules 7–8): fix/ after promotion → release/*; merging release and hotfix
+ * branches back down. Patterns `scope/vX.Y.Z` and `release/vX.Y.Z` match any version.
+ */
+export function allowedBases(head, activeScope) {
+  const base = expectedBase(head, activeScope);
+  if (!base) {
+    return null;
+  }
+  if (/^fix\//.test(head)) {
+    return [...base, 'release/vX.Y.Z'];
+  }
+  if (/^release\//.test(head)) {
+    return [...base, 'scope/vX.Y.Z'];
+  }
+  if (/^hotfix\//.test(head)) {
+    return [...base, 'release/vX.Y.Z', 'scope/vX.Y.Z'];
+  }
+  return base;
+}
+
+function baseMatches(allowed, base) {
+  return allowed.some(
+    (a) =>
+      a === base ||
+      (a === 'scope/vX.Y.Z' && /^scope\/v\d+\.\d+\.\d+$/.test(base)) ||
+      (a === 'release/vX.Y.Z' && /^release\/v\d+\.\d+\.\d+$/.test(base))
+  );
+}
+
+const COMMIT_VALUE_OPTIONS = [
+  '-m',
+  '-F',
+  '-c',
+  '-C',
+  '-t',
+  '--message',
+  '--file',
+  '--template',
+  '--reuse-message',
+  '--reedit-message',
+  '--author',
+  '--date',
+  '--trailer',
+  '--cleanup',
+  '--fixup',
+  '--squash',
+];
+const PUSH_VALUE_OPTIONS = ['-o', '--push-option', '--repo', '--receive-pack', '--exec'];
+const RELEASE_DRY_RUN = (words) => words.includes('--dry-run');
+
+/**
  * @param {string} line  the Bash command
  * @param {{ branch?: string, activeScope?: string }} ctx  current branch and newest scope/vX.Y.Z
  * @returns {{ decision: 'deny' | 'ask', rule: string, message: string }[]}
@@ -324,30 +641,56 @@ export function bashFindings(line, ctx = {}) {
   const deny = (rule, message) => out.push({ decision: 'deny', rule, message });
   const ask = (rule, message) => out.push({ decision: 'ask', rule, message });
 
-  for (const cmd of simpleCommands(line)) {
-    const git = cmd.match(/^(?:\S+=\S+\s+)*git(?:\s+-C\s+\S+)?\s+(\S+)(.*)$/);
-    const gh = cmd.match(/^(?:\S+=\S+\s+)*gh\s+(\S+)\s+(\S+)(.*)$/);
+  for (const words of shellCommands(line)) {
+    const git = gitCall(words);
 
-    if (git?.[1] === 'commit' && /(^|\s)(--no-verify|-n)(\s|$)/.test(git[2])) {
-      deny(
-        'no-verify',
-        'git commit --no-verify skips the secret-file guard (personal location data) and commitlint. Fix the failing hook instead.'
-      );
+    if (git?.sub === 'commit') {
+      const { flags } = splitArgs(git.args, COMMIT_VALUE_OPTIONS);
+      if (hasFlag(flags, '--no-verify', 'n', 'mFcCt')) {
+        deny(
+          'no-verify',
+          'git commit --no-verify skips the secret-file guard (personal location data) and commitlint. Fix the failing hook instead.'
+        );
+      }
     }
 
-    if (git?.[1] === 'push') {
-      const args = git[2]
-        .trim()
-        .split(/\s+/)
-        .filter((a) => a && !a.startsWith('-'));
-      const refs = args
-        .slice(1)
-        .map((r) => r.replace(/^\+/, '').split(':').pop())
-        .map((r) => (r === 'HEAD' && ctx.branch ? ctx.branch : r.replace(/^refs\/heads\//, '')));
-      const targets = refs.length ? refs : ctx.branch ? [ctx.branch] : [];
+    if (git?.sub === 'push') {
+      const { positional, flags } = splitArgs(git.args, PUSH_VALUE_OPTIONS);
+      const refspecs = positional.slice(1);
+      const deleting = hasFlag(flags, '--delete', 'd');
       const force =
-        /(^|\s)(--force|-f|--force-with-lease(=\S+)?)(\s|$)/.test(git[2]) ||
-        args.slice(1).some((r) => r.startsWith('+'));
+        hasFlag(flags, '--force', 'f') ||
+        hasFlag(flags, '--force-with-lease') ||
+        refspecs.some((r) => r.startsWith('+'));
+      const toBranch = (r) => {
+        const name = r === 'HEAD' && ctx.branch ? ctx.branch : r.replace(/^refs\/heads\//, '');
+        return name;
+      };
+      const deleted = [];
+      const targets = [];
+      for (const r of refspecs.map((x) => x.replace(/^\+/, ''))) {
+        const dst = toBranch(r.includes(':') ? r.split(':').pop() : r);
+        if (deleting || r.startsWith(':')) {
+          deleted.push(dst);
+        } else {
+          targets.push(dst);
+        }
+      }
+      if (!refspecs.length && ctx.branch && !deleting) {
+        targets.push(ctx.branch);
+      }
+      if (hasFlag(flags, '--no-verify')) {
+        deny(
+          'no-verify',
+          'git push --no-verify skips the pre-push gate (types, dependency rules, unit tests). Run it, or ask the user to push docs-only changes themselves.'
+        );
+      }
+      if (deleted.some((t) => PROTECTED.test(t))) {
+        deny(
+          'delete-branch',
+          `Deleting ${deleted.filter((t) => PROTECTED.test(t)).join(', ')} on the remote removes an integration branch. Only feature branches may be deleted.`
+        );
+      }
       if (targets.includes('main')) {
         deny(
           'push-main',
@@ -361,11 +704,23 @@ export function bashFindings(line, ctx = {}) {
       }
     }
 
-    if (git?.[1] === 'tag') {
-      const rest = git[2].trim();
+    if (git?.sub === 'branch') {
+      const { positional, flags } = splitArgs(git.args, ['-u', '--set-upstream-to', '--format', '--sort']);
+      const deleting = hasFlag(flags, '--delete', 'd') || hasFlag(flags, '-D', 'D');
+      const remoteTracking = hasFlag(flags, '--remotes', 'r');
+      const hit = positional.filter((b) => PROTECTED.test(b));
+      if (deleting && !remoteTracking && hit.length) {
+        deny('delete-branch', `Deleting the local ${hit.join(', ')} loses the integration branch; keep it.`);
+      }
+    }
+
+    if (git?.sub === 'tag') {
+      const rest = git.args;
       const listing =
-        rest === '' ||
-        /^(-l|--list|-n\d*|--contains|--points-at|--merged|--no-merged|--sort|-v|--verify)(\s|=|$)/.test(rest);
+        rest.length === 0 ||
+        /^(-l|--list|-n\d*|--contains|--no-contains|--points-at|--merged|--no-merged|--sort|-v|--verify|--column|--format)(=|$)/.test(
+          rest[0]
+        );
       if (!listing) {
         deny(
           'tag',
@@ -374,46 +729,127 @@ export function bashFindings(line, ctx = {}) {
       }
     }
 
-    if (git?.[1] === 'reset' && /--hard/.test(git[2])) {
+    if (git?.sub === 'reset' && git.args.includes('--hard')) {
       ask('reset-hard', 'git reset --hard discards uncommitted work. Confirm nothing in the working tree is needed.');
     }
 
-    if (gh?.[1] === 'pr' && gh[2] === 'merge') {
-      ask(
-        'pr-merge',
-        "PR merges are the founder's call (merge commits, never squash; main only by hand). Confirm this merge."
-      );
-      if (/(^|\s)(--squash|-s|--rebase|-r)(\s|$)/.test(gh[3])) {
+    // Release tooling: commit-and-tag-version writes CHANGELOG.md, bumps versions and tags.
+    const runner = words[0];
+    const isPm = ['pnpm', 'npm', 'yarn', 'bun'].includes(runner);
+    if (isPm && !RELEASE_DRY_RUN(words)) {
+      let k = 1;
+      while (k < words.length && words[k].startsWith('-')) {
+        k += ['-C', '--dir', '--filter', '-F', '--prefix', '--cwd'].includes(words[k]) ? 2 : 1;
+      }
+      if (['run', 'run-script', 'exec', 'dlx', 'x'].includes(words[k])) {
+        k += 1;
+      }
+      if (words[k] === 'release' || words[k] === 'commit-and-tag-version') {
         deny(
-          'merge-style',
-          'Use merge commits (--merge), never squash or rebase: the changelog is built from the conventional commits.'
+          'release',
+          'The release (commit-and-tag-version: version bump, CHANGELOG.md, tag) runs only in release.yml on merge to main. Never run it locally; `--dry-run` is fine.'
         );
       }
     }
+    if (
+      !isPm &&
+      !RELEASE_DRY_RUN(words) &&
+      (/^(?:.*\/)?commit-and-tag-version$/.test(runner) ||
+        (['npx', 'bunx'].includes(runner) &&
+          words.find((w, k) => k > 0 && !w.startsWith('-')) === 'commit-and-tag-version'))
+    ) {
+      deny(
+        'release',
+        'The release (commit-and-tag-version: version bump, CHANGELOG.md, tag) runs only in release.yml on merge to main. Never run it locally; `--dry-run` is fine.'
+      );
+    }
 
-    if (gh?.[1] === 'pr' && gh[2] === 'create') {
-      // Options may follow a multi-line --body heredoc, so read them from the whole command line.
-      const args = line.slice(line.indexOf('gh pr create'));
-      const head = option(args, 'head', 'H') ?? ctx.branch;
-      const base = option(args, 'base', 'B');
-      const title = option(args, 'title', 't');
-      if (head && title !== null && title !== `city-turfer - ${head}`) {
-        deny('pr-title', `PR title must be exactly "city-turfer - ${head}" (got "${title}").`);
+    // gh pr …
+    if (words[0] === 'gh' && words[1] === 'pr') {
+      const action = words[2];
+      const args = words.slice(3);
+
+      if (action === 'merge') {
+        ask(
+          'pr-merge',
+          "PR merges are the founder's call (merge commits, never squash; main only by hand). Confirm this merge."
+        );
+        if (args.some((a) => ['--squash', '-s', '--rebase', '-r'].includes(a))) {
+          deny(
+            'merge-style',
+            'Use merge commits (--merge), never squash or rebase: the changelog is built from the conventional commits.'
+          );
+        }
       }
-      const allowed = head ? expectedBase(head, ctx.activeScope) : null;
-      if (allowed && !base) {
-        deny('pr-base', `Pass --base explicitly: ${head} must target ${allowed.join(' or ')}.`);
-      } else if (
-        allowed &&
-        base &&
-        !allowed.includes(base) &&
-        !(allowed[0] === 'scope/vX.Y.Z' && /^scope\//.test(base))
-      ) {
-        deny('pr-base', `${head} must target ${allowed.join(' or ')}, not ${base} (feat → scope → release → main).`);
+
+      if (action === 'create' || action === 'edit') {
+        let head;
+        if (action === 'create') {
+          head = optionValue(args, '--head', '-H') ?? ctx.branch;
+        } else {
+          const { positional } = splitArgs(args, [
+            '--title',
+            '-t',
+            '--body',
+            '-b',
+            '--body-file',
+            '-F',
+            '--base',
+            '-B',
+            '--add-label',
+            '--remove-label',
+            '--add-reviewer',
+            '--remove-reviewer',
+            '--add-assignee',
+            '--remove-assignee',
+            '--milestone',
+            '-m',
+            '--add-project',
+            '--remove-project',
+            '--repo',
+            '-R',
+          ]);
+          const target = positional[0];
+          head = target === undefined ? ctx.branch : /^\d+$|^https?:/.test(target) ? undefined : target;
+        }
+        const base = optionValue(args, '--base', '-B');
+        const title = optionValue(args, '--title', '-t');
+        const fill = args.some((a) => /^(--fill|--fill-first|--fill-verbose|-f)$/.test(a));
+
+        if (title !== null) {
+          if (head && title !== `city-turfer - ${head}`) {
+            deny('pr-title', `PR title must be exactly "city-turfer - ${head}" (got "${title}").`);
+          } else if (!head && !/^city-turfer - \S+$/.test(title)) {
+            deny('pr-title', `PR title must be "city-turfer - <head branch>" (got "${title}").`);
+          }
+        } else if (action === 'create' && fill) {
+          deny(
+            'pr-title',
+            `--fill takes the title from a commit; pass --title "city-turfer - ${head ?? '<branch>'}" as well.`
+          );
+        }
+
+        const allowed = head ? allowedBases(head, ctx.activeScope) : null;
+        if (action === 'create' && allowed && !base) {
+          deny(
+            'pr-base',
+            `Pass --base explicitly: ${head} must target ${expectedBase(head, ctx.activeScope).join(' or ')}.`
+          );
+        } else if (base !== null && allowed && !baseMatches(allowed, base)) {
+          deny('pr-base', `${head} must target ${allowed.join(' or ')}, not ${base} (feat → scope → release → main).`);
+        } else if (action === 'edit' && base !== null && !head) {
+          ask('pr-base', `Changing the base of a PR to ${base}: confirm it follows feat → scope → release → main.`);
+        }
       }
     }
 
-    if (/^(?:\S+=\S+\s+)*xcrun\s+devicectl\b.*\bcopy\s+from\b/.test(cmd) || /^(?:\S+=\S+\s+)*idevice\w*/.test(cmd)) {
+    // Device data: copying off a physical iPhone. Listing devices or reading their name is fine.
+    const isDeviceCopy =
+      (words[0] === 'xcrun' &&
+        words[1] === 'devicectl' &&
+        words.some((w, k) => w === 'copy' && words[k + 1] === 'from')) ||
+      (/^idevice\w*$/.test(words[0] ?? '') && !['idevice_id', 'ideviceinfo', 'idevicename'].includes(words[0]));
+    if (isDeviceCopy) {
       ask(
         'device-data',
         "This copies data off a physical iPhone. App data holds the user's real location history: ask first, keep it outside the repo and delete it after use."
