@@ -54,7 +54,7 @@ async function manifest(api: ApiClient) {
 /** The manifest's Activities this phone lacks: not on it, and not deleted on it (see missingOnPhone). */
 async function missing(d: CloudBackupDeps, manifestItems: readonly RestoreItem[]): Promise<RestoreItem[]> {
   const onPhone = new Set((await d.activities.timeline()).map((a) => a.id));
-  const known = new Set((await d.repo.backups()).map((b) => b.activityId));
+  const known = new Set([...(await d.repo.backups()).map((b) => b.activityId), ...(await d.repo.deletedHereIds())]);
   return missingOnPhone(manifestItems, onPhone, known);
 }
 

@@ -279,6 +279,11 @@ const MIGRATIONS: { version: number; sql: string }[] = [
       CREATE TABLE cb_restore_declined (
         activity_id TEXT PRIMARY KEY
       );
+      -- Cloud Backup: Activities deleted on this phone, kept across account switches (which clear
+      -- cb_activities), so a restore never brings one back. Ids only.
+      CREATE TABLE cb_deleted_here (
+        activity_id TEXT PRIMARY KEY
+      );
     `,
   },
 ];

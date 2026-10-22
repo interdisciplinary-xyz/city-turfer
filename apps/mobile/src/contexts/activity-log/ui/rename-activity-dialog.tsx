@@ -60,7 +60,7 @@ export function RenameActivityDialog({ visible, name, onClose, onSave }: RenameA
   const message = problem ? NAME_PROBLEM_TEXT[problem] : failed ? RENAME_FAILED : null;
 
   return (
-    <Modal visible={visible} transparent animationType='fade' onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType='fade' onRequestClose={saving ? undefined : onClose}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.fill}>
         <Pressable
           style={s.backdrop}
@@ -132,7 +132,7 @@ const s = StyleSheet.create({
   backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.35)' }, // as the Me drawer
   center: { flex: 1, justifyContent: 'center', padding: SPACE.lg },
   card: { gap: SPACE.md },
-  h2: { fontSize: 17, fontWeight: FONT_WEIGHT.heavy },
+  h2: { fontSize: FONT_SIZE.lead, fontWeight: FONT_WEIGHT.heavy },
   input: {
     fontSize: FONT_SIZE.body,
     borderRadius: RADIUS.control,

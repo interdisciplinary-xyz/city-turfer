@@ -167,6 +167,9 @@ export interface BackupRepository {
   /** Server Activities not to offer again ("Not now", or skipped by a restore). */
   declinedRestoreIds(): Promise<string[]>;
   declineRestore(activityIds: readonly string[]): Promise<void>;
+  /** Activities deleted on this phone (ids only; kept across account switches): never restored. */
+  deletedHereIds(): Promise<string[]>;
+  rememberDeletedHere(activityId: string): Promise<void>;
 }
 
 /** Port: Activity Log's archive query (its public API, adapted in wiring). */

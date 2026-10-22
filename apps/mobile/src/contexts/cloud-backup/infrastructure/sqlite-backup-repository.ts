@@ -327,6 +327,15 @@ export class SqliteBackupRepository implements BackupRepository {
     });
   }
 
+  async deletedHereIds(): Promise<string[]> {
+    const rows = await this.db.all<{ id: string }>('SELECT activity_id AS id FROM cb_deleted_here');
+    return rows.map((r) => r.id);
+  }
+
+  async rememberDeletedHere(activityId: string): Promise<void> {
+    await this.db.run('INSERT OR IGNORE INTO cb_deleted_here (activity_id) VALUES (?)', [activityId]);
+  }
+
   async declinedRestoreIds(): Promise<string[]> {
     const rows = await this.db.all<{ id: string }>('SELECT activity_id AS id FROM cb_restore_declined');
     return rows.map((r) => r.id);

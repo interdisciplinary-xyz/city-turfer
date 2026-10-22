@@ -12,7 +12,7 @@ const digest = (s: string) => createHash('sha256').update(s).digest();
 
 /** Constant time: both sides are hashed to 32 bytes first, so neither length nor content leaks. */
 export function bearerMatches(header: string | undefined, secret: string): boolean {
-  const match = /^Bearer\s+(\S+)$/i.exec(header ?? '');
+  const match = /^\s*Bearer\s+(\S+)\s*$/i.exec(header ?? '');
   return timingSafeEqual(digest(match?.[1] ?? ''), digest(secret)) && !!match;
 }
 
