@@ -50,7 +50,7 @@ export function summarizeUpload(input: {
     resumedSegments: input.resumedSegments,
     origin: input.source === 'recording' ? 'recording' : 'import',
   });
-  activity.rename(input.name);
+  activity.rename(input.name, input.now);
   const s = activity.toState();
   return {
     name: s.name,
@@ -91,7 +91,10 @@ export function renamed(a: ActivityRecord, name: string): string {
     bbox: a.summary.bbox,
     preview: a.summary.preview,
     resumedSegments: a.resumedSegments,
+    timeZone: a.timeZone,
+    renamedAt: a.renamedAt,
   });
-  activity.rename(name);
+  // Only the cleaned name is used; the rename time comes from the request.
+  activity.rename(name, a.renamedAt ?? 0);
   return activity.toState().name;
 }
