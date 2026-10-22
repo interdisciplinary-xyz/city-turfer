@@ -133,8 +133,9 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   `API_TOKENS` and `DATABASE_URL` the token `dev-token` is user `admin` (never against Neon).
 - **Env (Vercel):** `DATABASE_URL` (Neon pooled), optional `DATABASE_URL_UNPOOLED` (migrations),
   `BETTER_AUTH_SECRET`, `BREVO_API_KEY`, `MAIL_FROM`, `API_PUBLIC_URL`, `API_TOKENS`;
-  `AUTH_FIXED_CODE` on previews only (production refuses to boot with it, or without the others:
-  `checkProductionEnv` in `apps/api/src/wiring.ts`). Runbook: `docs/operations/api-deploy.md`.
+  `AUTH_FIXED_CODE` on previews only, and only for `@e2e.cityturfer.test` addresses (production
+  refuses to boot with it, or without the others: `checkProductionEnv` in `apps/api/src/wiring.ts`).
+  Runbook: `docs/operations/api-deploy.md`.
 - **Codes locally:** the dev server prints them (ConsoleMailer); tests read them from MemoryMailer
   (`h.signIn(email)` in `apps/api/src/__tests__/support.ts`). `auth:adopt -- <userId> <email>` gives
   an existing data user an e-mail sign-in.

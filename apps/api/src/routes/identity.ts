@@ -18,7 +18,11 @@ const RATE_LIMITED = {
   },
 } as const;
 
-/** The caller's IP as Vercel reports it (`x-real-ip`, else the first `x-forwarded-for`). Never logged. */
+/**
+ * The caller's IP as Vercel reports it (`x-real-ip`, else the first `x-forwarded-for`; Vercel sets
+ * both). Never logged. Without either header (the local dev server) every caller shares the
+ * `unknown` bucket of the per-IP limits — fine locally; on Vercel the header is always present.
+ */
 function clientIp(c: Context<AppEnv>): string {
   return c.req.header('x-real-ip')?.trim() || c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
 }

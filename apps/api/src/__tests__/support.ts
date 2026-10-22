@@ -56,7 +56,7 @@ export const TEST_AUTH_SECRET = 'test-secret-test-secret-test-secret-0123';
  * The app on an empty, migrated in-memory Postgres (PGlite), with a controllable clock, device
  * tokens and sign-in by e-mailed code (Better Auth; codes land in `mailer`).
  */
-export async function backupApp(options: { fixedCode?: string } = {}) {
+export async function backupApp(options: { fixedCode?: string; mailer?: MemoryMailer } = {}) {
   shared ??= createPgliteDb();
   const { db } = await shared;
   await emptyTables(db);
@@ -64,7 +64,7 @@ export async function backupApp(options: { fixedCode?: string } = {}) {
   const close = async () => undefined;
   const store = new DrizzleBackupStore(db);
   const clock = { t: Date.parse('2026-10-20T08:00:00Z'), now: () => clock.t };
-  const mailer = new MemoryMailer();
+  const mailer = options.mailer ?? new MemoryMailer();
   const auth = createAuth({
     db,
     secret: TEST_AUTH_SECRET,
@@ -72,7 +72,7 @@ export async function backupApp(options: { fixedCode?: string } = {}) {
     mailer,
     fixedCode: options.fixedCode ?? null,
   });
-  const identity = new IdentityService(auth, new PostgresRateLimiter(db), TEST_AUTH_SECRET, clock, silentLog);
+  const identity = new IdentityService(auth, new PostgresRateLimiter(db), TEST_AUTH_SECRET, clock);
   const app = createApp(
     defaultDeps({
       auth: compositeVerifier(deviceTokenAuth(parseApiTokens(API_TOKENS).entries), identity.verifier),

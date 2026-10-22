@@ -28,9 +28,20 @@ export interface AuthConfig {
   /** Public base URL of the API (Better Auth wants one; no callbacks are used). */
   baseURL: string;
   mailer: Mailer;
-  /** AUTH_FIXED_CODE: every code is this one (outside production only; the wiring refuses it there). */
+  /**
+   * AUTH_FIXED_CODE: the code for addresses at TEST_EMAIL_DOMAIN only (outside production; the
+   * wiring refuses it there). Real addresses always get random codes, so a preview or a local server
+   * that points at a real database cannot be used to sign in as anyone.
+   */
   fixedCode?: string | null;
+  /** Called when the mailer throws (Better Auth swallows it): no address or code is passed. */
+  onMailError?: () => void;
 }
+
+/** Reserved for Maestro and local tests: `.test` is never a real TLD (RFC 2606). */
+export const TEST_EMAIL_DOMAIN = 'e2e.cityturfer.test';
+
+export const isTestEmail = (email: string) => email.toLowerCase().endsWith(`@${TEST_EMAIL_DOMAIN}`);
 
 export function createAuth(config: AuthConfig) {
   return betterAuth({
@@ -62,8 +73,17 @@ export function createAuth(config: AuthConfig) {
         expiresIn: CODE_TTL_S,
         allowedAttempts: 3,
         storeOTP: 'hashed',
-        generateOTP: () => config.fixedCode ?? undefined,
-        sendVerificationOTP: ({ email, otp }) => config.mailer.send(signInCodeMail(email, otp)),
+        generateOTP: ({ email }) => (config.fixedCode && isTestEmail(email) ? config.fixedCode : undefined),
+        sendVerificationOTP: async ({ email, otp }) => {
+          if (isTestEmail(email)) {
+            return; // Nobody reads mail at the reserved test domain.
+          }
+          try {
+            await config.mailer.send(signInCodeMail(email, otp));
+          } catch {
+            config.onMailError?.();
+          }
+        },
       }),
     ],
   });

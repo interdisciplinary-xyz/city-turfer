@@ -2,7 +2,7 @@ import { createHmac } from 'node:crypto';
 
 import { AppError } from '../backup/app-error';
 import type { Clock } from '../backup/use-cases';
-import type { ApiLog, AuthVerifier, Principal } from '../deps';
+import type { AuthVerifier, Principal } from '../deps';
 import type { Auth } from './better-auth';
 import { AUTH_LIMITS, type Limit, type RateLimiter } from './rate-limit';
 
@@ -16,21 +16,16 @@ export class IdentityService {
     private readonly auth: Auth,
     private readonly limiter: RateLimiter,
     private readonly secret: string,
-    private readonly clock: Clock,
-    private readonly log: ApiLog
+    private readonly clock: Clock
   ) {}
 
   /** RequestSignInCode: always "accepted" (unknown e-mails too: the account is made on sign-in). */
   async requestCode(email: string, ip: string): Promise<void> {
     await this.limit('codes:ip', ip, AUTH_LIMITS.codesPerIp);
     await this.limit('codes:email', email, AUTH_LIMITS.codesPerEmail);
-    try {
-      await this.auth.api.sendVerificationOTP({ body: { email, type: 'sign-in' } });
-    } catch {
-      // A mail provider failure must not tell the caller anything (or leak the address in a log):
-      // the phone shows "check your inbox" and the user can ask again.
-      this.log.event?.({ msg: 'auth.code-not-sent' });
-    }
+    // A mail failure is logged (without the address) by createAuth's onMailError and answers 202
+    // all the same: the phone shows "check your inbox" and the user can ask again.
+    await this.auth.api.sendVerificationOTP({ body: { email, type: 'sign-in' } });
   }
 
   /** SignIn: exchanges a code for a bearer session; creates the account on the first sign-in. */

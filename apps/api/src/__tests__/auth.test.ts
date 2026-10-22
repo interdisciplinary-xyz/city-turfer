@@ -1,10 +1,13 @@
 import { sql } from 'drizzle-orm';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { PostgresRateLimiter } from '../db/rate-limits';
 import { adopt } from '../identity/adopt';
+import { createAuth } from '../identity/better-auth';
 import { BrevoMailer, parseMailFrom } from '../identity/mailer';
+import { IdentityService } from '../identity/use-cases';
 import { checkProductionEnv, ConfigError, productionDeps } from '../wiring';
-import { backupApp, closeSharedDb, codeIn, TOKENS } from './support';
+import { backupApp, closeSharedDb, codeIn, TEST_AUTH_SECRET, TOKENS } from './support';
 
 type Harness = Awaited<ReturnType<typeof backupApp>>;
 let h: Harness;
@@ -104,14 +107,41 @@ describe('sign-in with an e-mailed code', () => {
     expect((await signIn('s10@example.com', '123456')).status).toBe(429);
   });
 
-  it('accepts AUTH_FIXED_CODE for any e-mail when configured', async () => {
+  it('accepts AUTH_FIXED_CODE only for the reserved test domain; real addresses get random codes', async () => {
     const fixed = await backupApp({ fixedCode: '000000' });
-    await fixed.call('POST', '/v1/auth/codes', { token: null, body: { email: 'maestro@example.com' } });
-    const res = await fixed.call('POST', '/v1/auth/sign-in', {
-      token: null,
-      body: { email: 'maestro@example.com', code: '000000' },
+    const tryFixed = async (email: string) => {
+      await fixed.call('POST', '/v1/auth/codes', { token: null, body: { email } });
+      return fixed.call('POST', '/v1/auth/sign-in', { token: null, body: { email, code: '000000' } });
+    };
+    expect((await tryFixed('maestro@e2e.cityturfer.test')).status).toBe(200);
+    expect(fixed.mailer.lastTo('maestro@e2e.cityturfer.test')).toBeUndefined();
+    // The adopted founder (or any real address) cannot be signed in with the fixed code.
+    const real = await tryFixed('founder@example.com');
+    expect(real.status).toBe(401);
+    expect(codeIn(fixed.mailer.lastTo('founder@example.com')?.text)).toMatch(/^\d{6}$/);
+  });
+
+  it('limits sign-ins to 10 per e-mail per 10 minutes, across IPs', async () => {
+    for (let i = 0; i < 10; i++) {
+      expect((await signIn(EMAIL, '123456', { 'X-Real-IP': `198.51.100.${i}` })).status).toBe(401);
+    }
+    const limited = await signIn(EMAIL, '123456', { 'X-Real-IP': '198.51.100.99' });
+    expect(limited.status).toBe(429);
+    expect(await limited.json()).toMatchObject({ code: 'auth.rate-limited' });
+  });
+
+  it('answers 202 and logs a no-PII event when the mailer fails', async () => {
+    const events: Record<string, unknown>[] = [];
+    const auth = createAuth({
+      db: h.db,
+      secret: TEST_AUTH_SECRET,
+      baseURL: 'http://localhost:8787',
+      mailer: { send: () => Promise.reject(new Error('down')) },
+      onMailError: () => events.push({ msg: 'auth.code-not-sent' }),
     });
-    expect(res.status).toBe(200);
+    const service = new IdentityService(auth, new PostgresRateLimiter(h.db), TEST_AUTH_SECRET, h.clock);
+    await expect(service.requestCode(EMAIL, '203.0.113.50')).resolves.toBeUndefined();
+    expect(events).toEqual([{ msg: 'auth.code-not-sent' }]);
   });
 });
 

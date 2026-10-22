@@ -6,7 +6,8 @@
 // - With API_TOKENS: those device tokens. Without API_TOKENS and DATABASE_URL: one dev token,
 //   `dev-token`, for user `admin` on PGlite only (src/index.ts, the Vercel entry, has no fallback).
 // - Sign-in codes are printed here (ConsoleMailer), never e-mailed. On PGlite a dev
-//   BETTER_AUTH_SECRET is used when none is set; AUTH_FIXED_CODE=000000 makes every code 000000.
+//   BETTER_AUTH_SECRET is used when none is set; AUTH_FIXED_CODE=000000 is the code for
+//   addresses @e2e.cityturfer.test only.
 import { createHash } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';

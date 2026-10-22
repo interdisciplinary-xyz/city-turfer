@@ -26,23 +26,24 @@ Design: `docs/decisions/api-sync-2026-10-20.md` and
 
 ## Environment variables (Production and Preview)
 
-| Name                    | Where                | Value                                                                                                                      |
-| ----------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`          | Production, Preview  | Neon **pooled** connection string (Frankfurt). Missing → data routes answer 503.                                           |
-| `DATABASE_URL_UNPOOLED` | your shell           | Neon direct connection string; used only by `db:migrate` and `auth:adopt` (optional).                                      |
-| `BETTER_AUTH_SECRET`    | Production, Preview  | ≥ 32 random characters (`openssl rand -base64 48`), different per environment. Turns on sign-in; required in prod.         |
-| `BREVO_API_KEY`         | Production (Preview) | Brevo transactional e-mail key (EU account). Required in prod; without it a preview sends no mail.                         |
-| `MAIL_FROM`             | Production (Preview) | `CityTurfer <hello@your-domain>`, a sender verified in Brevo (SPF/DKIM on the domain). Required in prod.                   |
-| `API_PUBLIC_URL`        | Production, Preview  | Public `https://…` base URL of this API (export links in e-mails). Required in prod.                                       |
-| `AUTH_FIXED_CODE`       | Preview only         | Six digits (e.g. `000000`): every sign-in code is this one, for Maestro. **Never in Production: the function won't boot.** |
-| `API_TOKENS`            | Production           | JSON object `{"<sha256 hex>": "<userId>"}` (or `{"userId", "email", "displayName"}`); device tokens, one more release.     |
+| Name                    | Where                | Value                                                                                                                                                                               |
+| ----------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`          | Production, Preview  | Neon **pooled** connection string (Frankfurt). Missing → data routes answer 503.                                                                                                    |
+| `DATABASE_URL_UNPOOLED` | your shell           | Neon direct connection string; used only by `db:migrate` and `auth:adopt` (optional).                                                                                               |
+| `BETTER_AUTH_SECRET`    | Production, Preview  | ≥ 32 random characters (`openssl rand -base64 48`), different per environment. Turns on sign-in; required in prod.                                                                  |
+| `BREVO_API_KEY`         | Production (Preview) | Brevo transactional e-mail key (EU account). Required in prod; without it a preview sends no mail.                                                                                  |
+| `MAIL_FROM`             | Production (Preview) | `CityTurfer <hello@your-domain>`, a sender verified in Brevo (SPF/DKIM on the domain). Required in prod.                                                                            |
+| `API_PUBLIC_URL`        | Production, Preview  | Public `https://…` base URL of this API (export links in e-mails). Required in prod.                                                                                                |
+| `AUTH_FIXED_CODE`       | Preview only         | Six digits (e.g. `000000`): the code for addresses `@e2e.cityturfer.test` only (Maestro); real addresses always get random codes. **Never in Production: the function won't boot.** |
+| `API_TOKENS`            | Production           | JSON object `{"<sha256 hex>": "<userId>"}` (or `{"userId", "email", "displayName"}`); device tokens, one more release.                                                              |
 
 `VERCEL_ENV=production` (set by Vercel) is what "production" means for the boot guard: a missing
 `BETTER_AUTH_SECRET`, `BREVO_API_KEY`, `MAIL_FROM` or `API_PUBLIC_URL`, or any `AUTH_FIXED_CODE`,
 fails the function at start instead of running half-configured. Rotating `BETTER_AUTH_SECRET` signs
 everyone out and resets the rate-limit windows.
 
-Preview deployments should get their own Neon branch, never the production database. The local dev
+**Preview deployments MUST use their own Neon branch, never the production database** (a preview has
+test settings such as `AUTH_FIXED_CODE`; data, sessions and exports must not mix). The local dev
 server (`apps/api/src/server.ts`) adds the `dev-token` for user `admin` only when neither
 `API_TOKENS` nor `DATABASE_URL` is set, so it never reaches a Neon database.
 

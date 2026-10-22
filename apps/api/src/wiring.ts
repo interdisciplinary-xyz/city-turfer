@@ -18,7 +18,8 @@ import { LOCAL_API_PORT } from './spec';
  * - `BETTER_AUTH_SECRET` (≥ 32 characters): turns on sign-in with e-mailed codes.
  * - `BREVO_API_KEY` + `MAIL_FROM` (`CityTurfer <hello@…>`): sends the codes and export links.
  * - `API_PUBLIC_URL`: the API's public base URL (export links in e-mails).
- * - `AUTH_FIXED_CODE`: every code is this one — never in production (boot fails).
+ * - `AUTH_FIXED_CODE`: the code for `@e2e.cityturfer.test` addresses only —
+ *   never in production (boot fails); real addresses always get random codes.
  * Production = `VERCEL_ENV=production`: missing secrets fail the boot instead of degrading.
  * Nothing secret is logged: only whether each is configured.
  */
@@ -77,7 +78,7 @@ function mailerOf(env: NodeJS.ProcessEnv, override?: Mailer): Mailer {
     return override;
   }
   const from = env.MAIL_FROM ? parseMailFrom(env.MAIL_FROM) : null;
-  // Without Brevo a deployed preview sends nothing (codes only via AUTH_FIXED_CODE): it never logs them.
+  // Without Brevo a deployed preview sends nothing (only test-domain sign-ins work): it never logs them.
   return env.BREVO_API_KEY && from ? new BrevoMailer(env.BREVO_API_KEY, from) : nullMailer;
 }
 
@@ -95,11 +96,17 @@ export function productionDeps(env: NodeJS.ProcessEnv, overrides: WiringOverride
   const identity =
     db && secret
       ? new IdentityService(
-          createAuth({ db, secret, baseURL: publicUrlOf(env), mailer, fixedCode }),
+          createAuth({
+            db,
+            secret,
+            baseURL: publicUrlOf(env),
+            mailer,
+            fixedCode,
+            onMailError: () => base.log.event?.({ msg: 'auth.code-not-sent' }),
+          }),
           new PostgresRateLimiter(db),
           secret,
-          base.clock,
-          base.log
+          base.clock
         )
       : null;
   process.stdout.write(
