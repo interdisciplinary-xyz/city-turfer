@@ -4,6 +4,7 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { useRef } from 'react';
 
+import { PAGE_LOADED_CLASS, PAGE_LOADED_EVENT } from '../page-loader/page-loader.constants';
 import { EASE, type HeroMotionProps } from './hero-motion.constants';
 
 gsap.registerPlugin(useGSAP);
@@ -36,7 +37,14 @@ export function HeroMotion({ className, children }: HeroMotionProps) {
             return;
           }
 
-          const tl = gsap.timeline({ defaults: { ease: EASE } });
+          // Paused until the page loader fades out, so the entrance is not played underneath it.
+          const tl = gsap.timeline({ paused: true, defaults: { ease: EASE } });
+          const play = () => tl.play();
+          if (html.classList.contains(PAGE_LOADED_CLASS)) {
+            play();
+          } else {
+            window.addEventListener(PAGE_LOADED_EVENT, play, { once: true });
+          }
           tl.fromTo(
             '[data-anim="mark"]',
             { autoAlpha: 0, scale: 0.7, rotate: -10 },
@@ -72,12 +80,13 @@ export function HeroMotion({ className, children }: HeroMotionProps) {
             yoyo: true,
           });
 
+          const stopWaiting = () => window.removeEventListener(PAGE_LOADED_EVENT, play);
           if (!tilt || !root.current) {
-            return;
+            return stopWaiting;
           }
           const screens = root.current.querySelector<HTMLElement>('[data-anim-group="screens"]');
           if (!screens) {
-            return;
+            return stopWaiting;
           }
           gsap.set(screens, { transformPerspective: 1200 });
           const toY = gsap.quickTo(screens, 'rotationY', { duration: 0.8, ease: 'power3.out' });
@@ -95,6 +104,7 @@ export function HeroMotion({ className, children }: HeroMotionProps) {
           window.addEventListener('pointermove', onMove);
           document.addEventListener('pointerleave', onLeave);
           return () => {
+            stopWaiting();
             window.removeEventListener('pointermove', onMove);
             document.removeEventListener('pointerleave', onLeave);
           };

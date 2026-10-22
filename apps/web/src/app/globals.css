@@ -12,6 +12,7 @@
   --radius: var(--radius-panel);
   --gutter: var(--space-lg);
   --max: 1080px;
+  --header-h: 56px;
   color-scheme: dark;
   /* next/font sets --face-*; the brand variables from cssVariables() are the fallback stack. The
      weight is baked into each font, so never bold them (font-synthesis: none). */
@@ -21,6 +22,73 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  scroll-padding-top: var(--header-h);
+}
+
+/* In-page links (header "Join the waitlist" → #waitlist) glide instead of jumping; off for reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Page loader (page-loader): covers the page from the first paint, fades out when <html> gets
+   `loaded`. Safety net: if the boot script never runs, the `page-loader-out` animation hides it
+   after 4 s anyway, so it can never get stuck. */
+.page-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  animation: page-loader-out 0.4s ease-out 4s forwards;
+  transition:
+    opacity 0.4s ease-out,
+    visibility 0s linear 0.4s;
+}
+
+.page-loader-mark {
+  width: 72px;
+  height: 72px;
+  border-radius: 23%;
+  box-shadow: 0 0 48px color-mix(in srgb, var(--glow) 35%, transparent);
+  animation: page-loader-glow 1.6s ease-in-out infinite alternate;
+}
+
+.loaded .page-loader {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+@keyframes page-loader-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+/* Calm glow, never a spin: turf brightening, like the hero. */
+@keyframes page-loader-glow {
+  from {
+    opacity: 0.7;
+    box-shadow: 0 0 24px color-mix(in srgb, var(--glow) 20%, transparent);
+  }
+  to {
+    opacity: 1;
+    box-shadow: 0 0 64px color-mix(in srgb, var(--glow) 45%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-loader {
+    transition: none;
+  }
+  .page-loader-mark {
+    animation: none;
+  }
 }
 
 body {
@@ -63,22 +131,140 @@ img {
   z-index: 10;
 }
 
+/* ---------- App header ---------- */
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  transition:
+    background-color 200ms ease-out,
+    border-color 200ms ease-out;
+}
+
+.app-header[data-scrolled] {
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-bottom-color: var(--border);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .app-header[data-scrolled] {
+    background: var(--bg);
+  }
+}
+
+/* Full page width, unlike .wrap: 48px side padding from tablet width up, the usual gutter on phones. */
+.app-header-inner.wrap {
+  max-width: none;
+}
+
+@media (min-width: 600px) {
+  .app-header-inner.wrap {
+    padding: 0 48px;
+  }
+}
+
+.app-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  height: var(--header-h);
+}
+
+/* The logo only shows once the hero's own lockup has left the screen. */
+.app-header-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 200ms ease-out,
+    visibility 200ms;
+}
+
+.app-header[data-scrolled] .app-header-home {
+  opacity: 1;
+  visibility: visible;
+}
+
+.app-header-home:focus-visible,
+.app-header-link:focus-visible {
+  outline: 2px solid var(--glow);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.app-header-mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 23%;
+}
+
+.app-header-wordmark {
+  display: none;
+  height: 20px;
+  width: auto;
+}
+
+.app-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl);
+  margin-left: auto;
+}
+
+.app-header-link {
+  display: none;
+  color: var(--muted);
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+}
+
+.app-header-link:hover,
+.app-header-link:focus-visible {
+  color: var(--text);
+}
+
+@media (min-width: 600px) {
+  .app-header-link {
+    display: inline;
+  }
+}
+
+@media (min-width: 960px) {
+  .app-header-mark {
+    width: 32px;
+    height: 32px;
+  }
+  .app-header-wordmark {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-header,
+  .app-header-home {
+    transition: none;
+  }
+}
+
 /* ---------- Hero ---------- */
 
 .hero {
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  min-height: 100svh;
+  min-height: calc(100vh - var(--header-h));
+  min-height: calc(100svh - var(--header-h));
   padding: 16px 0 40px;
   isolation: isolate;
-}
-
-.hero-bar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 24px;
 }
 
 /* The hero fills the screen; its content sits in the vertical middle of the space under the bar. */
@@ -143,8 +329,11 @@ img {
 }
 
 @media (min-width: 960px) {
+  :root {
+    --header-h: 64px;
+  }
   .hero {
-    padding: 24px 0 40px;
+    padding: 16px 0 40px;
   }
   .hero-grid {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
@@ -493,10 +682,7 @@ h1 {
    headline is visible without scrolling. */
 @media (max-height: 520px) and (orientation: landscape) {
   .hero {
-    padding-top: 8px;
-  }
-  .hero-bar {
-    margin-bottom: 8px;
+    padding-top: 0;
   }
   .mark {
     width: 64px;

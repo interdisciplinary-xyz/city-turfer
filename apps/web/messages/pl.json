@@ -4,6 +4,10 @@
     "description": "Chodź, biegaj albo jeździj na rowerze — każda ulica, którą pokonasz, staje się Twoim turfem. Wracaj i patrz, jak świeci coraz jaśniej.",
     "ogAlt": "CityTurfer: świecące trasy na ciemnej mapie miasta i hasło „Surfuj po mieście. Ulice są Twoje”."
   },
+  "header": {
+    "home": "CityTurfer, strona główna",
+    "waitlist": "Zapisz się"
+  },
   "hero": {
     "skip": "Przejdź do treści",
     "taglineLead": "Surfuj po mieście.",
