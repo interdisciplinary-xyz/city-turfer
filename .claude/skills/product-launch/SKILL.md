@@ -1,14 +1,9 @@
 ---
 name: product-launch
-description:
-  Getting CityTurfer from a founder's-phone PoC to TestFlight, Google Play and the App Store — the
-  launch-readiness checklist (developer accounts, D-U-N-S, DSA trader status, removing the mock
-  login, privacy policy and terms, privacy manifest, App Privacy label and Play Data safety,
-  background-location and foreground-service declarations, HealthKit 5.1.3), GDPR for location data,
-  store listings and ASO in PL/EN, beta programmes, release notes, rating prompts and what to do in
-  the first weeks after launch. Use when someone asks "can we ship to the App Store", "what blocks
-  launch", "TestFlight", "Play closed test", "privacy policy", "privacy label", "store listing",
-  "release notes", or plans a beta or launch.
+description: >-
+  Use for "can we ship to the App Store", "what blocks launch", TestFlight, Play closed test,
+  privacy policy, privacy label, store listing, release notes, or planning a beta or launch: the
+  launch-readiness checklist, store rules, GDPR for location data, and the first weeks after.
 ---
 
 # Product launch
@@ -17,12 +12,19 @@ The checklist and its live status are in `docs/product/launch-readiness.md`. Thi
 work it. Store and privacy rules change often: before acting on an item, re-open its source and
 update the doc's `verified:` date only for what you re-checked.
 
+Covers: developer accounts, D-U-N-S, DSA trader status, removing the mock login, privacy policy and
+terms, privacy manifest, App Privacy label and Play Data safety, background-location and
+foreground-service declarations, HealthKit (App Review 5.1.3), GDPR for location data, PL/EN store
+listings and ASO, beta programmes, release notes and rating prompts.
+
 ## Principles
 
 - **The privacy promise is stricter than the law.** "Your routes stay on your phone" must stay true
   in the policy, the App Privacy label and the Data safety form. List every flow that leaves the
-  phone (the doc's table); if a new feature adds one, the policy and labels change in the same
-  version.
+  phone (the doc's table) — including the opt-in cloud backup to our EU API
+  (`apps/mobile/src/contexts/cloud-backup`; `docs/decisions/api-sync-2026-10-20.md`,
+  `docs/decisions/api-device-tokens-2026-10-20.md`) and its "Include Apple Health workouts" switch;
+  if a new feature adds one, the policy and labels change in the same version.
 - **Declare honestly, even when it costs the "Data Not Collected" badge.** If an external service
   logs coordinates (gap routing does), either declare it or remove the flow.
 - **Location is high-risk personal data** (not automatically Article 9, but routes can reveal
@@ -36,12 +38,16 @@ update the doc's `verified:` date only for what you re-checked.
 
 1. Accounts: D-U-N-S → Apple and Google **organization** accounts → DSA trader status. Long lead
    time; start first.
-2. Product changes that are launch blockers: remove the mock login (local-only, no accounts), make
-   the app useful with location denied, add a prominent background-location disclosure before the OS
-   prompt (Play requirement), decide gap routing (opt-in, self-host, or confirmed terms). These are
-   features: spec them (the `product-strategy` pitch) and build them with the `add-feature` skill.
+2. Product changes that are launch blockers: replace the mock login (local-only stays a full mode
+   with no account; any account or backup is opt-in), make the app useful with location denied, add
+   a prominent background-location disclosure before the OS prompt (Play requirement), decide gap
+   routing (opt-in, self-host, or confirmed terms). These are features: spec them (the
+   `product-strategy` pitch) and build them with the `add-feature` skill.
 3. Paperwork: privacy policy and terms (PL + EN) on the website; privacy manifest in
-   `apps/mobile/app.json`; decision record on Health data and device backup.
+   `apps/mobile/app.json`; Health data and cloud backup as decided in
+   `docs/decisions/api-sync-2026-10-20.md` (D2: Health only with a separate opt-in) and
+   `docs/decisions/api-device-tokens-2026-10-20.md` (T5 consents); re-check before writing the
+   policy.
 4. Beta: TestFlight external group; Play closed test. Recruit from the waitlist; brief testers with
    what to try and how to send feedback (the `product-discovery` skill for what to ask).
 5. Listings: PL + EN; Health & Fitness; first screenshots show the glowing Turf Map; copy from the

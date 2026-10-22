@@ -7,6 +7,6 @@ export interface HomeCityRepository {
   homeCityId(): Promise<string | null>;
   /** The last choice (a cleared one has `cityId: null`) and when it was made; null if never chosen. */
   homeCityChoice(): Promise<HomeCityChoice | null>;
-  /** Atomic: saves the choice (null clears it) and appends the event to the outbox. */
-  saveHomeCity(cityId: string | null, event: DomainEvent, now: number): Promise<void>;
+  /** Atomic: saves the choice (null clears it) made at `chosenAt` and appends the event to the outbox. */
+  saveHomeCity(cityId: string | null, event: DomainEvent, chosenAt: number): Promise<void>;
 }

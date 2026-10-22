@@ -6,10 +6,11 @@ import { secureHeaders } from 'hono/secure-headers';
 import { AppError } from './backup/app-error';
 import { type ApiDeps, type AppEnv, defaultDeps } from './deps';
 import { isProblemCode } from './errors';
-import { inflateGzip, limitBody, logRequests } from './middleware';
-import { problem } from './problem';
+import { describeError, inflateGzip, limitBody, logRequests } from './middleware';
+import { MAX_FIELD_ERRORS, problem } from './problem';
 import { registerActivities } from './routes/activities';
 import { registerIdentity } from './routes/identity';
+import { registerInternal } from './routes/internal';
 import { registerPlatform } from './routes/platform';
 import { registerPrivacy } from './routes/privacy';
 import { registerSync } from './routes/sync';
@@ -26,15 +27,21 @@ import { OPENAPI_CONFIG, SPEC_PATH, SWAGGER_UI_OPTIONS } from './spec';
 export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
   const app = new OpenAPIHono<AppEnv>({
     // Invalid input → 400 problem with JSON pointers. Never echo the input: it may hold coordinates.
+    // At most MAX_FIELD_ERRORS pointers: a 40,000-point track with a bad column must not answer megabytes.
     defaultHook: (result, c) => {
       if (!result.success) {
-        const errors = result.error.issues.map((i) => ({
+        const issues = result.error.issues;
+        const errors = issues.slice(0, MAX_FIELD_ERRORS).map((i) => ({
           pointer: `/${i.path.map((p) => String(p).replaceAll('~', '~0').replaceAll('/', '~1')).join('/')}`,
           code: i.code,
         }));
-        return problem(c, 'invalid-request', `Check: ${[...new Set(errors.map((e) => e.pointer))].join(', ')}.`, {
-          errors,
-        });
+        const more = issues.length > errors.length ? ` (${issues.length - errors.length} more)` : '';
+        return problem(
+          c,
+          'invalid-request',
+          `Check: ${[...new Set(errors.map((e) => e.pointer))].join(', ')}${more}.`,
+          { errors }
+        );
       }
       return undefined;
     },
@@ -54,7 +61,7 @@ export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
     type: 'http',
     scheme: 'bearer',
     description:
-      'Device token: a random secret minted with `pnpm --filter @cityturfer/api run token:new -- <userId>`; the server knows only its SHA-256 (env `API_TOKENS`). A stopgap until Better Auth.',
+      'A session token from `POST /v1/auth/sign-in` (e-mailed code, about 60 days, sliding), or — for one more release — a device token minted with `pnpm --filter @cityturfer/api run token:new -- <userId>` (the server knows only its SHA-256, env `API_TOKENS`).',
   });
   registerHeaders(app.openAPIRegistry);
 
@@ -64,6 +71,7 @@ export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
   registerSync(app);
   registerActivities(app);
   registerTerritory(app);
+  registerInternal(app);
 
   app.doc31(SPEC_PATH, OPENAPI_CONFIG);
   app.get('/swagger', swaggerUI({ url: SPEC_PATH, title: 'CityTurfer API', ...SWAGGER_UI_OPTIONS }));
@@ -71,7 +79,8 @@ export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
   app.notFound((c) => problem(c, 'not-found'));
   app.onError((err, c) => {
     // A use case's refusal (AppError) or a broken domain rule (DomainError from @cityturfer/core)
-    // carries a catalogue code: answer it, e.g. 403/410/412/422. Anything else is a 500 that says nothing.
+    // carries a catalogue code: answer it, e.g. 403/410/412/422. Anything else is a 500 that says
+    // nothing to the caller and logs one sanitised line (describeError: no message, no data).
     if (err instanceof AppError) {
       return problem(c, err.code, undefined, { headers: err.headers });
     }
@@ -79,6 +88,13 @@ export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
     if (err.name === 'DomainError' && isProblemCode(code)) {
       return problem(c, code);
     }
+    c.var.deps.log.event?.({
+      msg: 'request.error',
+      requestId: c.var.requestId,
+      method: c.req.method,
+      route: c.req.routePath,
+      ...describeError(err),
+    });
     return problem(c, 'internal');
   });
   return app;

@@ -29,6 +29,14 @@ describe('SignIn', () => {
     expect(sessions.value()).toBe('admin');
   });
 
+  it('signs the Gdańsk demo account in with its own user id (own database)', async () => {
+    const { api, sessions } = setup();
+    const r = await api.signIn.execute('demo@cityturfer.com', 'demo1234');
+    expect(r).toEqual({ kind: 'signed-in', user: expect.objectContaining({ id: 'demo', displayName: 'Ola' }) });
+    expect(sessions.value()).toBe('demo');
+    expect(await api.signIn.execute('demo@cityturfer.com', 'admin1234')).toEqual({ kind: 'invalid-credentials' });
+  });
+
   it('trims and lower-cases the email', async () => {
     const { api } = setup();
     expect((await api.signIn.execute('  Admin@CityTurfer.COM ', 'admin1234')).kind).toBe('signed-in');

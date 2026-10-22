@@ -5,7 +5,7 @@ const ctx = '^src/contexts/([^/]+)/';
 const notTests = '(__tests__|test-support)/';
 // Frameworks, native modules, SQLite drivers, UI packages and the apps: never in core.
 const platform =
-  '(^|/)node_modules/(react|react-native|react-native-[^/]+|expo[^/]*|@expo|@maplibre|@kingstinct|better-sqlite3|@cityturfer/(ui|brand))/|(^|/)packages/(ui|brand)/|(^|/)apps/';
+  '(^|/)node_modules/(react|react-native|react-native-[^/]+|react-native-nitro-modules|expo[^/]*|@expo|@maplibre|@kingstinct|@kingstinct/react-native-healthkit|@[^/]+/react-native-[^/]+|@react-native[^/]*/[^/]+|better-sqlite3|@cityturfer/(ui|brand))/|(^|/)packages/(ui|brand)/|(^|/)apps/';
 module.exports = {
   forbidden: [
     {

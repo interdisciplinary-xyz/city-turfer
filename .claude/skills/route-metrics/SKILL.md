@@ -1,44 +1,55 @@
 ---
 name: route-metrics
-description:
-  Formulas and conventions for CityTurfer activity statistics — haversine distance, elapsed vs
-  moving time, pace (min/km) vs speed (km/h) per activity type, km splits, elevation gain with
-  smoothing and hysteresis, calories (MET), and route simplification (Douglas–Peucker) for map
-  rendering. Use when writing or changing anything in packages/core/src/shared-kernel/
-  (track-analyzer, geo, track; the app's apps/mobile/src/shared-kernel is a re-export shim), when
-  stats look wrong ("distance too long", "pace jumps", "elevation gain is huge"), or when adding a
-  new stat.
+description: >-
+  Use when stats look wrong ("distance too long", "pace jumps", "elevation gain is huge"), when
+  adding a stat, or when changing packages/core/src/shared-kernel/ (track-analyzer, geo, track):
+  distance, moving time, pace/speed, splits, elevation, simplification.
 ---
 
-> **Where the code lives** (see `docs/poc-plan.md`): the maths is in `@cityturfer/core`
-> (`packages/core/src/shared-kernel/`, re-exported by the app's `@/shared-kernel`) — `analyzeTrack`,
-> `elevationGain` and `simplify` in `packages/core/src/shared-kernel/track-analyzer.ts`, haversine
-> `distanceM` in `packages/core/src/shared-kernel/geo.ts`, segments and `splitAtGaps` in
-> `packages/core/src/shared-kernel/track.ts`. Display formatting is in
+> **Where the code lives**: the maths is in `@cityturfer/core` (`packages/core/src/shared-kernel/`,
+> re-exported by the app's `@/shared-kernel` shim) — `analyzeTrack`, `elevationGain` and `simplify`
+> in `packages/core/src/shared-kernel/track-analyzer.ts`, haversine `distanceM`, `interpolate` and
+> `boundingBoxOf` in `packages/core/src/shared-kernel/geo.ts`, `TrackPoint`, `trackFromPoints` and
+> `splitAtGaps` in `packages/core/src/shared-kernel/track.ts`. Per-type thresholds
+> (`MOVING_SPEED_MPS`, `ELEV_HYSTERESIS_M`, `MAX_FIX_GAP_MS`) are in
+> `packages/core/src/constants/tracking.ts`. The Activity summary is derived in
+> `packages/core/src/contexts/activity-log/domain/activity.ts`. Display formatting is in
 > `apps/mobile/src/ui-kit/format.ts`.
 
 # Route metrics
 
 All of the metrics code in `packages/core/src/shared-kernel/` is **pure TypeScript with no React or
-Expo imports**, uses SI units (m, s, m/s), and has unit tests. The reference implementation is
+Expo imports**, uses SI units (m, s, m/s), and is tested. The reference implementation is
 `apps/mobile/tools/lib/geo.mjs` and `apps/mobile/tools/route-stats.mjs`. The app's output must match
-it within tolerance on the fixtures in `apps/mobile/tools/fixtures/`.
+it within tolerance on the fixtures in `apps/mobile/tools/fixtures/`
+(`apps/mobile/src/shared-kernel/__tests__/oracle-parity.test.ts` drives a `RecordingSession` with
+the fixtures and compares).
 
-## Definitions
+## Definitions (built)
 
-- **distance**: Sum of haversine distances between consecutive _accepted_ points **within the same
-  segment**. Never connect the last point before a pause to the first point after it if the gap
-  exceeds 100 m: that's a jump, not movement.
-- **elapsed time**: `ended_at − started_at` (wall clock).
-- **moving time**: Sum of `dt` between consecutive points where speed ≥ the profile's moving
-  threshold and the session is not paused.
-- **pace**: `moving_time / (distance / 1000)` → s/km. Shown as `m:ss /km` for walk and run.
+- **segment**: a run of Track Points that may be joined by a line. A new segment starts on every
+  manual Resume and after a gap of more than `MAX_FIX_GAP_MS` (45 s) without fixes (Recording does
+  this live; `splitAtGaps` re-applies it to stored or imported tracks).
+- **distance**: sum of haversine distances between consecutive _accepted_ points **within the same
+  segment**. Never across a segment boundary: that's a jump, not movement. (Activity Log can add a
+  separately stored, street-routed _estimate_ for gaps: `estimated_m`, display only, never turf.)
+- **elapsed time**: for an Activity, `endedAt − startedAt` (wall clock, set in `activity.ts`
+  `derive`). `analyzeTrack`'s own `elapsedS` is last point − first point; the Activity overrides it.
+- **moving time**: sum of `dt` between consecutive points of a segment where the implied speed ≥ the
+  type's `MOVING_SPEED_MPS` (walk 0.5, run 1.0, cycle 1.5 m/s). Paused time has no points, so it
+  never counts.
+- **pace**: `moving_time / (distance / 1000)` → s/km. Shown as `m:ss /km` for walk and run
+  (`usesPace(type)`).
 - **speed**: `distance / moving_time` → m/s, shown as km/h for cycle.
-- **current pace/speed**: Rolling window over the last 30 s (walk/run) or 10 s (cycle). Never
+- **splits**: for every whole km, the moving time spent in that km (`{ km, seconds }`). Today a
+  split closes at the first point past the boundary; interpolating the crossing time between the two
+  straddling points is a planned refinement.
+- **elevation gain**: see below. Elevation loss is not computed.
+
+Planned, not built:
+
+- **current pace/speed**: rolling window over the last 30 s (walk/run) or 10 s (cycle). Never
   instantaneous: it jumps around.
-- **splits**: For every whole km, the moving time spent in that km. Interpolate the crossing time
-  between the two points that straddle the boundary.
-- **elevation gain/loss**: See below.
 - **calories**: `MET × weight_kg × moving_hours`. MET: walk 3.5, run `≈ 1.0 × km/h` (clamp 6–16),
   cycle 4 + 0.5 × max(0, km/h − 10), clamp ≤ 16. Show only when the user has entered a weight.
 
@@ -49,39 +60,44 @@ You can see it in the fixtures:
 `node apps/mobile/tools/gen-route.mjs --type run --km 5 --format json` reports a true gain of ~63 m,
 while `route-stats.mjs` on the same GPX reads ~200 m.
 
-In order of preference:
+Built (`elevationGain`): per segment, a 5-point moving average, then hysteresis. A climb counts only
+once altitude has moved ≥ `ELEV_HYSTERESIS_M` (3 m walk/run, 5 m cycle) from the last reference
+point. Segments with fewer than 5 altitudes are skipped; no altitude at all → `null`.
 
-1. **Barometer** (`expo-sensors` `Barometer`; iOS also reports `relativeAltitude`): use its relative
-   changes for gain/loss and GPS only as an absolute offset. Record the pressure per point when it's
-   available.
-2. **GPS with smoothing**: 5-point moving average, then hysteresis. Count a climb only once altitude
-   has moved ≥ `elevHysteresis` (3 m walk/run, 5 m cycle) from the last reference point. Ignore
-   points with `altitudeAccuracy > 15` when that field is available.
-3. Later: correct with a DEM service. Out of scope for v1.
+Planned, in order of preference:
+
+1. **Barometer** (`expo-sensors` `Barometer`; iOS also reports `relativeAltitude`): relative changes
+   for gain/loss, GPS only as an absolute offset; store pressure per point (needs a migration).
+2. Ignore points with `altitudeAccuracy > 15` (`Fix` doesn't carry that field yet).
+3. Correct with a DEM service.
 
 Label elevation as approximate in the UI unless it came from the barometer.
 
 ## Simplification for display
 
-A 2-hour ride at 1 Hz has 7,200 points, too many for a smooth `<Polyline>`. Use Douglas–Peucker with
-an epsilon of ~3 m (computed in local metres via an equirectangular projection around the route's
-centroid) for the detail map, and ~15 m for history-list thumbnails. **Never simplify the stored
-data.** Simplify only at render time, and memoise the result.
+A 2-hour ride at 1 Hz has 7,200 points, too many to draw smoothly. `simplify(points, epsilonM)` is
+Douglas–Peucker in local metres (equirectangular projection around the first point's latitude).
+**Never simplify the stored data.**
 
-## Formatting (apps/mobile/src/ui-kit/format.ts)
+- Built: the Activity `preview` (ε = 15 m, coordinates rounded to 5 decimals) is computed once when
+  the Activity is saved and returned by `list()`; the Turf Map draws every track from it.
+- Planned: route thumbnails in the history list (from `preview`) and a finer (~3 m) simplification
+  for the activity detail map, memoised at render time.
 
-- Distance: `< 1 km` → `850 m`; otherwise `5.24 km` (2 decimals under 100 km).
-- Duration: `m:ss` under an hour, `h:mm:ss` from one hour up.
-- Pace: `5:20 /km`; `—` when distance < 50 m (pace isn't meaningful yet).
-- Units come from a setting (metric/imperial). Convert only in format functions.
+## Formatting (`apps/mobile/src/ui-kit/format.ts`)
+
+- Distance: `< 1 km` → `850 m`; otherwise `5.24 km` (`formatDistance`, `distanceText`).
+- Duration: `m:ss` under an hour, `h:mm:ss` from one hour up (`formatDuration`).
+- Pace: `5:20 /km`; `—` when distance < 50 m (`formatPaceOrSpeed`, `formatSpeedNow`).
+- Metric only today. A metric/imperial setting is planned; convert only in format functions.
 
 ## Testing checklist for a metrics change
 
 ```bash
 node apps/mobile/tools/gen-route.mjs --type run --km 5 --outliers 4 --pause 90 --format json > /tmp/run.json  # has truth.*
-node apps/mobile/tools/route-stats.mjs apps/mobile/tools/fixtures/run-5k-outliers-pause.gpx --json                         # oracle
+node apps/mobile/tools/route-stats.mjs apps/mobile/tools/fixtures/run-5k-outliers-pause.gpx --json          # oracle
 pnpm -C apps/mobile exec jest src/shared-kernel     # oracle parity (drives RecordingSession)
-pnpm --filter @cityturfer/core test:unit            # Activity Log domain + use cases, Territory
+pnpm --filter @cityturfer/core run test:unit        # Activity Log domain + use cases, Territory
 ```
 
 Each metric function needs tests for: an empty input, a single point, two identical points, a

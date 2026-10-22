@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Docs audit: falsifiable signals about whether the docs still tell the truth.
-// Conventions: docs/process/docs-conventions.md. Plain Node, no dependencies
-// beyond Prettier (used only to format the generated index).
+// Conventions: docs/process/docs-conventions.md. Plain Node plus `yaml` (frontmatter, parsed the
+// way Claude Code and other YAML readers do) and Prettier (only to format the generated index).
 //
 //   pnpm run audit:docs                       signals for every doc
 //   pnpm run audit:docs -- --doc <path>       one file only
@@ -16,6 +16,8 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { parse as parseYaml } from 'yaml';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const argv = process.argv.slice(2);
@@ -121,10 +123,11 @@ function listFiles(dir) {
   const out = [];
   const walk = (d) => {
     for (const name of readdirSync(join(ROOT, d))) {
-      if (name === 'node_modules' || name === '.git') {
+      const p = join(d, name);
+      // agent worktrees are whole repo copies (gigabytes): never walk into them
+      if (name === 'node_modules' || name === '.git' || p === join('.claude', 'worktrees')) {
         continue;
       }
-      const p = join(d, name);
       if (isDir(p)) {
         walk(p);
       } else {
@@ -143,7 +146,7 @@ function scannedFiles() {
   const files = [
     ...md(listFiles('docs')),
     ...['README.md', 'CLAUDE.md'].filter((f) => existsSync(join(ROOT, f))),
-    ...md(listFiles('.claude')).filter((f) => !f.startsWith('.claude/worktrees/')),
+    ...md(listFiles('.claude')),
   ];
   return docFilter ? files.filter((f) => f === relative(ROOT, resolve(docFilter))) : files;
 }
@@ -153,20 +156,67 @@ function scannedFiles() {
 // ---------------------------------------------------------------------------
 
 /**
- * Minimal YAML frontmatter reader: `key: value` and `key: [a, b]`, including the
- * indented continuation lines Prettier writes when it wraps a long value.
+ * The YAML frontmatter as `{ key: string | string[] }`, or null without one. Parsed with a real
+ * YAML parser so folded (`>-`) and literal (`|`) block scalars, quoting and lists read the way
+ * Claude Code reads them. Invalid YAML falls back to a lenient line reader (so the other checks
+ * still run) and is reported by `frontmatterError()`.
  */
 export function parseFrontmatter(text) {
+  const raw = frontmatterBlock(text);
+  if (raw === null) {
+    return null;
+  }
+  let parsed;
+  try {
+    parsed = parseYaml(raw);
+  } catch {
+    return lenientFrontmatter(raw);
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return {};
+  }
+  const data = {};
+  for (const [key, value] of Object.entries(parsed)) {
+    if (Array.isArray(value)) {
+      data[key] = value.map((v) => String(v));
+    } else if (value === null || value === undefined) {
+      data[key] = '';
+    } else if (typeof value === 'object') {
+      data[key] = value; // a mapping: callers that expect a string report it
+    } else {
+      data[key] = String(value);
+    }
+  }
+  return data;
+}
+
+/** Why the frontmatter is not valid YAML, or null when it is (or there is none). */
+export function frontmatterError(text) {
+  const raw = frontmatterBlock(text);
+  if (raw === null) {
+    return null;
+  }
+  try {
+    parseYaml(raw);
+    return null;
+  } catch (e) {
+    return String(e.message).split('\n')[0];
+  }
+}
+
+function frontmatterBlock(text) {
   if (!text.startsWith('---\n')) {
     return null;
   }
   const end = text.indexOf('\n---', 4);
-  if (end < 0) {
-    return null;
-  }
+  return end < 0 ? null : text.slice(4, end);
+}
+
+/** `key: value` and `key: [a, b]` lines, with indented continuation lines folded in. */
+function lenientFrontmatter(raw) {
   const data = {};
   const lines = [];
-  for (const line of text.slice(4, end).split('\n')) {
+  for (const line of raw.split('\n')) {
     if (/^\s+\S/.test(line) && lines.length) {
       lines[lines.length - 1] += ` ${line.trim()}`;
     } else {
@@ -178,15 +228,15 @@ export function parseFrontmatter(text) {
     if (!m) {
       continue;
     }
-    const [, key, raw] = m;
-    if (raw.startsWith('[') && raw.endsWith(']')) {
-      data[key] = raw
+    const [, key, value] = m;
+    if (value.startsWith('[') && value.endsWith(']')) {
+      data[key] = value
         .slice(1, -1)
         .split(',')
-        .map((s) => s.trim())
+        .map((x) => x.trim())
         .filter(Boolean);
     } else {
-      data[key] = raw.replace(/^['"]|['"]$/g, '');
+      data[key] = value.replace(/^(>|\|)[-+]?\s*/, '').replace(/^['"]|['"]$/g, '');
     }
   }
   return data;
@@ -251,11 +301,18 @@ function pathExists(p) {
 }
 
 let ignoredCache = null;
+/**
+ * Git-ignored paths (build outputs like apps/web/out, caches) are known, not dead: they only exist
+ * after a build. A missing path is checked as a file and as a directory, since patterns such as
+ * `out/` only match directories.
+ */
 function isGitIgnored(p) {
   ignoredCache ??= new Map();
   if (!ignoredCache.has(p)) {
+    const bare = p.replace(/\/+$/, '');
+    // exit 0 when at least one of the two spellings is ignored, 1 when neither is
     try {
-      execFileSync('git', ['check-ignore', '-q', p], { cwd: ROOT, stdio: 'ignore' });
+      execFileSync('git', ['check-ignore', bare, `${bare}/`], { cwd: ROOT, stdio: 'ignore' });
       ignoredCache.set(p, true);
     } catch {
       ignoredCache.set(p, false);
@@ -294,6 +351,10 @@ function checkFrontmatter(file, text, fm) {
   if (!fm) {
     add('error', file, 1, 'frontmatter', 'missing frontmatter (status, verified, owner, scope, summary)');
     return;
+  }
+  const yamlError = frontmatterError(text);
+  if (yamlError) {
+    add('error', file, 1, 'frontmatter', `frontmatter is not valid YAML (${yamlError}); quote the value or use \`>-\``);
   }
   for (const key of REQUIRED_KEYS) {
     if (fm[key] === undefined || fm[key] === '') {

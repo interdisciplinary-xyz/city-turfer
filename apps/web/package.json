@@ -1,12 +1,13 @@
 {
   "name": "@cityturfer/web",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": true,
   "description": "CityTurfer landing page: a static showcase (Next.js static export, hosted on Vercel)",
   "scripts": {
     "dev": "portless run --lan --name cityturfer -- node server.mjs",
     "build": "next build",
     "start": "npx --yes serve@14 out",
+    "test:unit": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test tools/__tests__/*.test.mjs",
     "typecheck": "next typegen && tsc --noEmit",
     "lint": "eslint src tools next.config.ts server.mjs"
   },

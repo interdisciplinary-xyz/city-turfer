@@ -1,22 +1,20 @@
 ---
 name: product-discovery
-description:
-  How CityTurfer learns what to build without analytics — Mom Test / Jobs-to-be-Done interview
-  scripts, the evidence log, the Opportunity Solution Tree, assumption mapping and cheap tests (fake
-  doors on the website, concierge, diary studies), the small-n Sean Ellis PMF survey, and
-  privacy-safe measurement (no coordinates, opt-in, user-initiated). Use when planning or
-  synthesising tester interviews or feedback, deciding whether an idea is worth building, writing a
-  survey, designing an experiment, asking "do people want this?", "is this PMF?", "what did we
-  learn?", or before any feature whose value is a guess.
+description: >-
+  Use for "do people want this?", "is this PMF?", "what did we learn?", planning or synthesising
+  tester interviews, writing a survey or experiment, or before building a feature whose value is a
+  guess: interviews, evidence log, assumption map, cheap tests and privacy-safe measurement.
 ---
 
 # Product discovery
 
-Discovery decides **what** to build; delivery (the `add-feature` skill) builds it right. CityTurfer
-is pre-PMF, solo-founder, local-first and has **no analytics by design**, so conversations with
-people and skin-in-the-game tests _are_ the data system. The live state of discovery is
-`docs/product/discovery-board.md`: evidence log, assumption map and opportunity tree. Read it first;
-update it after every learning.
+Discovery decides **what** to build; delivery (the `add-feature` skill) builds it right. Methods
+covered: Mom Test / Jobs-to-be-Done interviews, the Opportunity Solution Tree, assumption mapping,
+cheap tests (website fake doors, concierge, diary studies), the small-n Sean Ellis PMF survey and
+privacy-safe measurement. CityTurfer is pre-PMF, solo-founder, local-first and has **no analytics by
+design**, so conversations with people and skin-in-the-game tests _are_ the data system. The live
+state of discovery is `docs/product/discovery-board.md`: evidence log, assumption map and
+opportunity tree. Read it first; update it after every learning.
 
 ## Hard rules
 

@@ -203,8 +203,11 @@ expo-task-mgr ─────▶ │  RECORDING  │ ───(outbox)───�
   `identity/infrastructure/mock-auth-gateway.ts`. Nothing outside it knows they exist. A real
   provider (Firebase, Supabase, Auth0…) later means a new adapter plus a line in the composition
   root.
-- **Not for production**: the mock gateway is selected only when `EXPO_PUBLIC_AUTH_MODE=mock` (the
-  default for the PoC). A store or production build must fail at startup if it's still in mock mode.
+- **Local profiles in every build** (superseded rule): the PoC once refused to start a production
+  build in mock mode (`EXPO_PUBLIC_AUTH_MODE`). Founder decision B6
+  (`docs/plans/backend-plan-2026-10-22.md`) replaced it: the local `admin` and `demo` profiles keep
+  working in every build, `demo` never talks to the API, and real accounts sign in with an email
+  code against the API. There is no auth-mode switch any more.
 
 ### 4.1 Recording context
 

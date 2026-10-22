@@ -1,0 +1,21 @@
+# Renaming an activity: an empty name is refused, a new one shows in the title and in History.
+appId: com.turftrack.poc
+tags: [history]
+---
+- runFlow: subflows/launch.yaml
+- tapOn: { id: 'tab-dashboard' }
+- tapOn: { id: 'dashboard-see-all-activities' }
+- tapOn: { id: 'history-item-0' }
+- extendedWaitUntil: { visible: { id: 'rename-activity' }, timeout: 15000 }
+- scrollUntilVisible: { element: { id: 'rename-activity' } }
+- tapOn: { id: 'rename-activity' }
+- assertVisible: { id: 'rename-dialog' }
+- eraseText: 120
+- assertVisible: 'Give it a name.'
+- inputText: 'Riverside loop'
+- tapOn: { id: 'rename-save' }
+- assertNotVisible: { id: 'rename-dialog' }
+- assertVisible: 'Riverside loop'
+- runFlow: subflows/back.yaml
+- assertVisible: 'Riverside loop'
+- runFlow: subflows/back.yaml

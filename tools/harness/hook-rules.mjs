@@ -79,7 +79,7 @@ const MOBILE_SRC = 'apps/mobile/src/';
 const IS_TEST = /(^|\/)(__tests__|test-support)\/|\.test\.tsx?$/;
 
 const FRAMEWORKS_DOMAIN =
-  /^(react|react-native|expo[^/]*|zustand|h3-js|@maplibre\/[^/]+|better-sqlite3|@cityturfer\/ui)(\/|$)/;
+  /^(react|react-native|react-native-nitro-modules|@kingstinct\/react-native-healthkit|@[^/]+\/react-native-[^/]+|@react-native[^/]*\/[^/]+|expo[^/]*|zustand|h3-js|@maplibre\/[^/]+|better-sqlite3|@cityturfer\/ui)(\/|$)/;
 const FRAMEWORKS_APPLICATION = /^(react|react-native|expo[^/]*|h3-js|@maplibre\/[^/]+|@cityturfer\/ui)(\/|$)/;
 
 /** Import specifiers in a TS/JS source (static, re-export, side-effect, dynamic, require). */
@@ -233,14 +233,14 @@ export const REMINDERS = [
   {
     id: 'turf-parity',
     test: (p) =>
-      /^apps\/mobile\/src\/contexts\/territory\/domain\/.*strength/i.test(p) ||
+      /^(apps\/mobile|packages\/core)\/src\/contexts\/territory\/domain\/.*strength/i.test(p) ||
       p === 'apps/mobile/tools/turf-preview.mjs',
     message:
-      'Turf strength formula and defaults must stay identical in apps/mobile/src/contexts/territory/domain and apps/mobile/tools/turf-preview.mjs, pinned by apps/mobile/tools/fixtures/turf-vectors.json. Update all three together.',
+      'Turf strength formula and defaults must stay identical in packages/core/src/contexts/territory/domain and apps/mobile/tools/turf-preview.mjs, pinned by apps/mobile/tools/fixtures/turf-vectors.json. Update all three together.',
   },
   {
     id: 'geo-parity',
-    test: (p) => /^apps\/mobile\/src\/shared-kernel\//.test(p) && !IS_TEST.test(p),
+    test: (p) => /^(apps\/mobile|packages\/core)\/src\/shared-kernel\//.test(p) && !IS_TEST.test(p),
     message:
       'Shared-kernel maths is SI units and must match apps/mobile/tools/lib/geo.mjs (the oracle used by route-stats.mjs). If a formula changed, change the oracle and its tests too (route-metrics skill).',
   },
@@ -279,27 +279,309 @@ export function remindersFor(relPath) {
 }
 
 // ---------------------------------------------------------------------------
-// Bash: git / gh policy (docs/process/release-manager.md)
+// Bash: shell parsing (enough of it for the policy below)
 // ---------------------------------------------------------------------------
 
 const PROTECTED = /^(main|release\/v\d+\.\d+\.\d+|scope\/v\d+\.\d+\.\d+)$/;
 
-/** Split a shell line into simple commands (on &&, ||, ;, |, newlines). Naive about quotes. */
+/**
+ * Split a shell line into simple commands, each a list of words with quotes removed. Understands
+ * '…', "…", backslash escapes, $(…) with heredocs inside (a multi-line PR body stays one word),
+ * the operators && || ; | & and newlines, subshell parentheses and `{ …; }` groups. Not a full
+ * shell: no globbing, no expansion of variables (they stay literal).
+ * @returns {string[][]}
+ */
+export function shellCommands(line) {
+  return parseShell(line).commands;
+}
+
+/**
+ * Commands plus the redirections between them. `redirects` holds `{ op, target }` for every `>`,
+ * `>>`, `&>` or `<` with a file target (`2>&1` has none), including those inside `bash -c '…'`.
+ * @returns {{ commands: string[][], redirects: { op: string, target: string }[] }}
+ */
+export function parseShell(line) {
+  const commands = [];
+  const redirects = [];
+  let redirectOp = '';
+  let words = [];
+  let word = null;
+  let dropNextWord = false; // the target of a redirection (`> file`) is not an argument
+  const pendingHeredocs = [];
+  const endWord = () => {
+    if (word !== null) {
+      if (dropNextWord) {
+        dropNextWord = false;
+        redirects.push({ op: redirectOp, target: word });
+      } else {
+        words.push(word);
+      }
+      word = null;
+    }
+  };
+  const endCommand = () => {
+    endWord();
+    if (words.length) {
+      commands.push(words);
+    }
+    words = [];
+  };
+  /** Index just after the `)` closing a `$(` that starts at `from` (the char after `$(`). */
+  const skipSubstitution = (from) => {
+    let depth = 1;
+    let j = from;
+    const heredocs = [];
+    while (j < line.length && depth > 0) {
+      const c = line[j];
+      if (c === '\\') {
+        j += 2;
+        continue;
+      }
+      if (c === "'") {
+        const close = line.indexOf("'", j + 1);
+        j = close < 0 ? line.length : close + 1;
+        continue;
+      }
+      if (c === '"') {
+        j += 1;
+        while (j < line.length && line[j] !== '"') {
+          j += line[j] === '\\' ? 2 : 1;
+        }
+        j += 1;
+        continue;
+      }
+      const here = line.slice(j).match(/^<<-?\s*(['"]?)([\w-]+)\1/);
+      if (here) {
+        heredocs.push(here[2]);
+        j += here[0].length;
+        continue;
+      }
+      if (c === '\n' && heredocs.length) {
+        // skip each heredoc body up to its delimiter line
+        for (const delim of heredocs.splice(0)) {
+          const re = new RegExp(`\\n[ \\t]*${delim}[ \\t]*(?=\\n|$)`, 'g');
+          re.lastIndex = j;
+          const m = re.exec(line);
+          j = m ? m.index + m[0].length : line.length;
+        }
+        continue;
+      }
+      if (c === '(') {
+        depth += 1;
+      } else if (c === ')') {
+        depth -= 1;
+      }
+      j += 1;
+    }
+    return j;
+  };
+
+  let i = 0;
+  while (i < line.length) {
+    const c = line[i];
+    if (c === '\n' && pendingHeredocs.length) {
+      // a top-level heredoc body (e.g. `git commit -F- <<EOF`): its text is data, not commands
+      endCommand();
+      for (const delim of pendingHeredocs.splice(0)) {
+        const re = new RegExp(`\\n[ \\t]*${delim}[ \\t]*(?=\\n|$)`, 'g');
+        re.lastIndex = i;
+        const m = re.exec(line);
+        i = m ? m.index + m[0].length : line.length;
+      }
+      continue;
+    }
+    if (c === '\\' && i + 1 < line.length) {
+      if (line[i + 1] !== '\n') {
+        word = (word ?? '') + line[i + 1];
+      }
+      i += 2;
+      continue;
+    }
+    if (c === "'") {
+      const close = line.indexOf("'", i + 1);
+      word = (word ?? '') + line.slice(i + 1, close < 0 ? line.length : close);
+      i = close < 0 ? line.length : close + 1;
+      continue;
+    }
+    if (c === '"') {
+      let j = i + 1;
+      let text = '';
+      while (j < line.length && line[j] !== '"') {
+        if (line[j] === '\\' && j + 1 < line.length) {
+          text += line[j + 1];
+          j += 2;
+        } else if (line.startsWith('$(', j)) {
+          const end = skipSubstitution(j + 2);
+          text += line.slice(j, end);
+          j = end;
+        } else {
+          text += line[j];
+          j += 1;
+        }
+      }
+      word = (word ?? '') + text;
+      i = j + 1;
+      continue;
+    }
+    if (line.startsWith('$(', i)) {
+      const end = skipSubstitution(i + 2);
+      word = (word ?? '') + line.slice(i, end);
+      i = end;
+      continue;
+    }
+    const here = word === null && line.slice(i).match(/^<<-?\s*(['"]?)([\w-]+)\1/);
+    if (here) {
+      pendingHeredocs.push(here[2]);
+      i += here[0].length;
+      continue;
+    }
+    const redirect = word === null && line.slice(i).match(/^(?:\d*(?:>>?|<)(&\d+|&-)?|&>>?)/);
+    if (redirect) {
+      dropNextWord = !redirect[1];
+      redirectOp = redirect[0];
+      i += redirect[0].length;
+      continue;
+    }
+    const op = line.slice(i).match(/^(&&|\|\||[;|&\n()])/);
+    if (op) {
+      endCommand();
+      i += op[0].length;
+      continue;
+    }
+    if (/\s/.test(c)) {
+      endWord();
+      i += 1;
+      continue;
+    }
+    if (c === '#' && word === null) {
+      // comment to end of line
+      const nl = line.indexOf('\n', i);
+      i = nl < 0 ? line.length : nl;
+      continue;
+    }
+    word = (word ?? '') + c;
+    i += 1;
+  }
+  endCommand();
+
+  // Unwrap: env assignments, `command`/`exec`/`env`/`sudo`/`nohup`/`time`, `{` groups, and
+  // `bash -c '…'` / `eval '…'` (their string is parsed as commands of its own).
+  const out = [];
+  for (let w of commands) {
+    for (;;) {
+      while (w.length && (/^[A-Za-z_]\w*=/.test(w[0]) || ['{', '}', '!'].includes(w[0]))) {
+        w = w.slice(1);
+      }
+      if (w.length && ['command', 'exec', 'env', 'sudo', 'nohup', 'time'].includes(w[0])) {
+        w = w.slice(1);
+        while (w.length && w[0].startsWith('-')) {
+          w = w.slice(1); // wrapper options (`env -i`, `time -p`)
+        }
+        continue;
+      }
+      break;
+    }
+    if (!w.length) {
+      continue;
+    }
+    const shell = /^(?:.*\/)?(?:ba|z|da)?sh$/.test(w[0]);
+    const cFlag = shell ? w.findIndex((x, k) => k > 0 && /^-[a-z]*c[a-z]*$/.test(x)) : -1;
+    const inner =
+      cFlag > 0 && w[cFlag + 1] !== undefined
+        ? w[cFlag + 1]
+        : w[0] === 'eval' && w.length > 1
+          ? w.slice(1).join(' ')
+          : null;
+    if (inner !== null) {
+      const parsed = parseShell(inner);
+      out.push(...parsed.commands);
+      redirects.push(...parsed.redirects);
+      continue;
+    }
+    out.push(w);
+  }
+  return { commands: out, redirects };
+}
+
+/** @deprecated kept for callers that only need the command strings */
 export function simpleCommands(line) {
-  return line
-    .split(/&&|\|\||;|\||\n/)
-    .map((s) => s.trim())
-    .filter(Boolean);
+  return shellCommands(line).map((w) => w.join(' '));
 }
 
-/** Value of a CLI option given as `--opt value`, `--opt=value` or a short `-o value`. */
-function option(cmd, long, short) {
-  const re = new RegExp(`(?:--${long}${short ? `|-${short}` : ''})(?:=|\\s+)(?:"([^"]*)"|'([^']*)'|(\\S+))`);
-  const m = cmd.match(re);
-  return m ? (m[1] ?? m[2] ?? m[3]) : null;
+/** `git` subcommand and its arguments, past global options (-C dir, -c k=v, --no-pager …). */
+function gitCall(words) {
+  if (!/^(?:.*\/)?git$/.test(words[0] ?? '')) {
+    return null;
+  }
+  let k = 1;
+  while (k < words.length && words[k].startsWith('-')) {
+    k += ['-C', '-c', '--git-dir', '--work-tree', '--namespace', '--exec-path'].includes(words[k]) ? 2 : 1;
+  }
+  return k < words.length ? { sub: words[k], args: words.slice(k + 1) } : null;
 }
 
-/** The PR base a head branch must target, or null if the head is not a policy branch. */
+/** Positional arguments and flags, skipping the values of the given value-taking options. */
+function splitArgs(args, valueOptions) {
+  const positional = [];
+  const flags = [];
+  for (let k = 0; k < args.length; k++) {
+    const a = args[k];
+    if (a === '--') {
+      positional.push(...args.slice(k + 1));
+      break;
+    }
+    if (a.startsWith('-') && a !== '-') {
+      flags.push(a);
+      if (valueOptions.includes(a)) {
+        k += 1;
+      }
+    } else {
+      positional.push(a);
+    }
+  }
+  return { positional, flags };
+}
+
+/** True when `flags` hold the long option or a short cluster (`-uf`) containing the letter. */
+function hasFlag(flags, long, short, stopAt = '') {
+  return flags.some((f) => {
+    if (f === long || f.startsWith(`${long}=`)) {
+      return true;
+    }
+    if (!short || !/^-[A-Za-z]+$/.test(f)) {
+      return false;
+    }
+    for (const ch of f.slice(1)) {
+      if (ch === short) {
+        return true;
+      }
+      if (stopAt.includes(ch)) {
+        return false; // the rest of the cluster is this option's value (`-mnote`)
+      }
+    }
+    return false;
+  });
+}
+
+/** Value of `--long v`, `--long=v`, `-s v` in a word list (quotes already removed). */
+function optionValue(words, long, short) {
+  for (let k = 0; k < words.length; k++) {
+    const w = words[k];
+    if (w === long || (short && w === short)) {
+      return words[k + 1] ?? '';
+    }
+    if (w.startsWith(`${long}=`)) {
+      return w.slice(long.length + 1);
+    }
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Bash: git / gh policy (docs/process/release-manager.md)
+// ---------------------------------------------------------------------------
+
+/** The PR base a head branch normally targets (what session-start announces), or null. */
 export function expectedBase(head, activeScope) {
   if (/^(feat|fix|chore|test|docs|refactor|perf|ci)\//.test(head)) {
     return activeScope ? [activeScope] : ['scope/vX.Y.Z'];
@@ -315,6 +597,58 @@ export function expectedBase(head, activeScope) {
 }
 
 /**
+ * Every base the policy allows for a head: the expected one plus the exceptions in
+ * release-manager.md (rules 7–8): fix/ after promotion → release/*; merging release and hotfix
+ * branches back down. Patterns `scope/vX.Y.Z` and `release/vX.Y.Z` match any version.
+ */
+export function allowedBases(head, activeScope) {
+  const base = expectedBase(head, activeScope);
+  if (!base) {
+    return null;
+  }
+  if (/^fix\//.test(head)) {
+    return [...base, 'release/vX.Y.Z'];
+  }
+  if (/^release\//.test(head)) {
+    return [...base, 'scope/vX.Y.Z'];
+  }
+  if (/^hotfix\//.test(head)) {
+    return [...base, 'release/vX.Y.Z', 'scope/vX.Y.Z'];
+  }
+  return base;
+}
+
+function baseMatches(allowed, base) {
+  return allowed.some(
+    (a) =>
+      a === base ||
+      (a === 'scope/vX.Y.Z' && /^scope\/v\d+\.\d+\.\d+$/.test(base)) ||
+      (a === 'release/vX.Y.Z' && /^release\/v\d+\.\d+\.\d+$/.test(base))
+  );
+}
+
+const COMMIT_VALUE_OPTIONS = [
+  '-m',
+  '-F',
+  '-c',
+  '-C',
+  '-t',
+  '--message',
+  '--file',
+  '--template',
+  '--reuse-message',
+  '--reedit-message',
+  '--author',
+  '--date',
+  '--trailer',
+  '--cleanup',
+  '--fixup',
+  '--squash',
+];
+const PUSH_VALUE_OPTIONS = ['-o', '--push-option', '--repo', '--receive-pack', '--exec'];
+const RELEASE_DRY_RUN = (words) => words.includes('--dry-run');
+
+/**
  * @param {string} line  the Bash command
  * @param {{ branch?: string, activeScope?: string }} ctx  current branch and newest scope/vX.Y.Z
  * @returns {{ decision: 'deny' | 'ask', rule: string, message: string }[]}
@@ -324,30 +658,56 @@ export function bashFindings(line, ctx = {}) {
   const deny = (rule, message) => out.push({ decision: 'deny', rule, message });
   const ask = (rule, message) => out.push({ decision: 'ask', rule, message });
 
-  for (const cmd of simpleCommands(line)) {
-    const git = cmd.match(/^(?:\S+=\S+\s+)*git(?:\s+-C\s+\S+)?\s+(\S+)(.*)$/);
-    const gh = cmd.match(/^(?:\S+=\S+\s+)*gh\s+(\S+)\s+(\S+)(.*)$/);
+  for (const words of shellCommands(line)) {
+    const git = gitCall(words);
 
-    if (git?.[1] === 'commit' && /(^|\s)(--no-verify|-n)(\s|$)/.test(git[2])) {
-      deny(
-        'no-verify',
-        'git commit --no-verify skips the secret-file guard (personal location data) and commitlint. Fix the failing hook instead.'
-      );
+    if (git?.sub === 'commit') {
+      const { flags } = splitArgs(git.args, COMMIT_VALUE_OPTIONS);
+      if (hasFlag(flags, '--no-verify', 'n', 'mFcCt')) {
+        deny(
+          'no-verify',
+          'git commit --no-verify skips the secret-file guard (personal location data) and commitlint. Fix the failing hook instead.'
+        );
+      }
     }
 
-    if (git?.[1] === 'push') {
-      const args = git[2]
-        .trim()
-        .split(/\s+/)
-        .filter((a) => a && !a.startsWith('-'));
-      const refs = args
-        .slice(1)
-        .map((r) => r.replace(/^\+/, '').split(':').pop())
-        .map((r) => (r === 'HEAD' && ctx.branch ? ctx.branch : r.replace(/^refs\/heads\//, '')));
-      const targets = refs.length ? refs : ctx.branch ? [ctx.branch] : [];
+    if (git?.sub === 'push') {
+      const { positional, flags } = splitArgs(git.args, PUSH_VALUE_OPTIONS);
+      const refspecs = positional.slice(1);
+      const deleting = hasFlag(flags, '--delete', 'd');
       const force =
-        /(^|\s)(--force|-f|--force-with-lease(=\S+)?)(\s|$)/.test(git[2]) ||
-        args.slice(1).some((r) => r.startsWith('+'));
+        hasFlag(flags, '--force', 'f') ||
+        hasFlag(flags, '--force-with-lease') ||
+        refspecs.some((r) => r.startsWith('+'));
+      const toBranch = (r) => {
+        const name = r === 'HEAD' && ctx.branch ? ctx.branch : r.replace(/^refs\/heads\//, '');
+        return name;
+      };
+      const deleted = [];
+      const targets = [];
+      for (const r of refspecs.map((x) => x.replace(/^\+/, ''))) {
+        const dst = toBranch(r.includes(':') ? r.split(':').pop() : r);
+        if (deleting || r.startsWith(':')) {
+          deleted.push(dst);
+        } else {
+          targets.push(dst);
+        }
+      }
+      if (!refspecs.length && ctx.branch && !deleting) {
+        targets.push(ctx.branch);
+      }
+      if (hasFlag(flags, '--no-verify')) {
+        deny(
+          'no-verify',
+          'git push --no-verify skips the pre-push gate (types, dependency rules, unit tests). Run it, or ask the user to push docs-only changes themselves.'
+        );
+      }
+      if (deleted.some((t) => PROTECTED.test(t))) {
+        deny(
+          'delete-branch',
+          `Deleting ${deleted.filter((t) => PROTECTED.test(t)).join(', ')} on the remote removes an integration branch. Only feature branches may be deleted.`
+        );
+      }
       if (targets.includes('main')) {
         deny(
           'push-main',
@@ -361,11 +721,23 @@ export function bashFindings(line, ctx = {}) {
       }
     }
 
-    if (git?.[1] === 'tag') {
-      const rest = git[2].trim();
+    if (git?.sub === 'branch') {
+      const { positional, flags } = splitArgs(git.args, ['-u', '--set-upstream-to', '--format', '--sort']);
+      const deleting = hasFlag(flags, '--delete', 'd') || hasFlag(flags, '-D', 'D');
+      const remoteTracking = hasFlag(flags, '--remotes', 'r');
+      const hit = positional.filter((b) => PROTECTED.test(b));
+      if (deleting && !remoteTracking && hit.length) {
+        deny('delete-branch', `Deleting the local ${hit.join(', ')} loses the integration branch; keep it.`);
+      }
+    }
+
+    if (git?.sub === 'tag') {
+      const rest = git.args;
       const listing =
-        rest === '' ||
-        /^(-l|--list|-n\d*|--contains|--points-at|--merged|--no-merged|--sort|-v|--verify)(\s|=|$)/.test(rest);
+        rest.length === 0 ||
+        /^(-l|--list|-n\d*|--contains|--no-contains|--points-at|--merged|--no-merged|--sort|-v|--verify|--column|--format)(=|$)/.test(
+          rest[0]
+        );
       if (!listing) {
         deny(
           'tag',
@@ -374,46 +746,127 @@ export function bashFindings(line, ctx = {}) {
       }
     }
 
-    if (git?.[1] === 'reset' && /--hard/.test(git[2])) {
+    if (git?.sub === 'reset' && git.args.includes('--hard')) {
       ask('reset-hard', 'git reset --hard discards uncommitted work. Confirm nothing in the working tree is needed.');
     }
 
-    if (gh?.[1] === 'pr' && gh[2] === 'merge') {
-      ask(
-        'pr-merge',
-        "PR merges are the founder's call (merge commits, never squash; main only by hand). Confirm this merge."
-      );
-      if (/(^|\s)(--squash|-s|--rebase|-r)(\s|$)/.test(gh[3])) {
+    // Release tooling: commit-and-tag-version writes CHANGELOG.md, bumps versions and tags.
+    const runner = words[0];
+    const isPm = ['pnpm', 'npm', 'yarn', 'bun'].includes(runner);
+    if (isPm && !RELEASE_DRY_RUN(words)) {
+      let k = 1;
+      while (k < words.length && words[k].startsWith('-')) {
+        k += ['-C', '--dir', '--filter', '-F', '--prefix', '--cwd'].includes(words[k]) ? 2 : 1;
+      }
+      if (['run', 'run-script', 'exec', 'dlx', 'x'].includes(words[k])) {
+        k += 1;
+      }
+      if (words[k] === 'release' || words[k] === 'commit-and-tag-version') {
         deny(
-          'merge-style',
-          'Use merge commits (--merge), never squash or rebase: the changelog is built from the conventional commits.'
+          'release',
+          'The release (commit-and-tag-version: version bump, CHANGELOG.md, tag) runs only in release.yml on merge to main. Never run it locally; `--dry-run` is fine.'
         );
       }
     }
+    if (
+      !isPm &&
+      !RELEASE_DRY_RUN(words) &&
+      (/^(?:.*\/)?commit-and-tag-version$/.test(runner) ||
+        (['npx', 'bunx'].includes(runner) &&
+          words.find((w, k) => k > 0 && !w.startsWith('-')) === 'commit-and-tag-version'))
+    ) {
+      deny(
+        'release',
+        'The release (commit-and-tag-version: version bump, CHANGELOG.md, tag) runs only in release.yml on merge to main. Never run it locally; `--dry-run` is fine.'
+      );
+    }
 
-    if (gh?.[1] === 'pr' && gh[2] === 'create') {
-      // Options may follow a multi-line --body heredoc, so read them from the whole command line.
-      const args = line.slice(line.indexOf('gh pr create'));
-      const head = option(args, 'head', 'H') ?? ctx.branch;
-      const base = option(args, 'base', 'B');
-      const title = option(args, 'title', 't');
-      if (head && title !== null && title !== `city-turfer - ${head}`) {
-        deny('pr-title', `PR title must be exactly "city-turfer - ${head}" (got "${title}").`);
+    // gh pr …
+    if (words[0] === 'gh' && words[1] === 'pr') {
+      const action = words[2];
+      const args = words.slice(3);
+
+      if (action === 'merge') {
+        ask(
+          'pr-merge',
+          "PR merges are the founder's call (merge commits, never squash; main only by hand). Confirm this merge."
+        );
+        if (args.some((a) => ['--squash', '-s', '--rebase', '-r'].includes(a))) {
+          deny(
+            'merge-style',
+            'Use merge commits (--merge), never squash or rebase: the changelog is built from the conventional commits.'
+          );
+        }
       }
-      const allowed = head ? expectedBase(head, ctx.activeScope) : null;
-      if (allowed && !base) {
-        deny('pr-base', `Pass --base explicitly: ${head} must target ${allowed.join(' or ')}.`);
-      } else if (
-        allowed &&
-        base &&
-        !allowed.includes(base) &&
-        !(allowed[0] === 'scope/vX.Y.Z' && /^scope\//.test(base))
-      ) {
-        deny('pr-base', `${head} must target ${allowed.join(' or ')}, not ${base} (feat → scope → release → main).`);
+
+      if (action === 'create' || action === 'edit') {
+        let head;
+        if (action === 'create') {
+          head = optionValue(args, '--head', '-H') ?? ctx.branch;
+        } else {
+          const { positional } = splitArgs(args, [
+            '--title',
+            '-t',
+            '--body',
+            '-b',
+            '--body-file',
+            '-F',
+            '--base',
+            '-B',
+            '--add-label',
+            '--remove-label',
+            '--add-reviewer',
+            '--remove-reviewer',
+            '--add-assignee',
+            '--remove-assignee',
+            '--milestone',
+            '-m',
+            '--add-project',
+            '--remove-project',
+            '--repo',
+            '-R',
+          ]);
+          const target = positional[0];
+          head = target === undefined ? ctx.branch : /^\d+$|^https?:/.test(target) ? undefined : target;
+        }
+        const base = optionValue(args, '--base', '-B');
+        const title = optionValue(args, '--title', '-t');
+        const fill = args.some((a) => /^(--fill|--fill-first|--fill-verbose|-f)$/.test(a));
+
+        if (title !== null) {
+          if (head && title !== `city-turfer - ${head}`) {
+            deny('pr-title', `PR title must be exactly "city-turfer - ${head}" (got "${title}").`);
+          } else if (!head && !/^city-turfer - \S+$/.test(title)) {
+            deny('pr-title', `PR title must be "city-turfer - <head branch>" (got "${title}").`);
+          }
+        } else if (action === 'create' && fill) {
+          deny(
+            'pr-title',
+            `--fill takes the title from a commit; pass --title "city-turfer - ${head ?? '<branch>'}" as well.`
+          );
+        }
+
+        const allowed = head ? allowedBases(head, ctx.activeScope) : null;
+        if (action === 'create' && allowed && !base) {
+          deny(
+            'pr-base',
+            `Pass --base explicitly: ${head} must target ${expectedBase(head, ctx.activeScope).join(' or ')}.`
+          );
+        } else if (base !== null && allowed && !baseMatches(allowed, base)) {
+          deny('pr-base', `${head} must target ${allowed.join(' or ')}, not ${base} (feat → scope → release → main).`);
+        } else if (action === 'edit' && base !== null && !head) {
+          ask('pr-base', `Changing the base of a PR to ${base}: confirm it follows feat → scope → release → main.`);
+        }
       }
     }
 
-    if (/^(?:\S+=\S+\s+)*xcrun\s+devicectl\b.*\bcopy\s+from\b/.test(cmd) || /^(?:\S+=\S+\s+)*idevice\w*/.test(cmd)) {
+    // Device data: copying off a physical iPhone. Listing devices or reading their name is fine.
+    const isDeviceCopy =
+      (words[0] === 'xcrun' &&
+        words[1] === 'devicectl' &&
+        words.some((w, k) => w === 'copy' && words[k + 1] === 'from')) ||
+      (/^idevice\w*$/.test(words[0] ?? '') && !['idevice_id', 'ideviceinfo', 'idevicename'].includes(words[0]));
+    if (isDeviceCopy) {
       ask(
         'device-data',
         "This copies data off a physical iPhone. App data holds the user's real location history: ask first, keep it outside the repo and delete it after use."
@@ -421,4 +874,321 @@ export function bashFindings(line, ctx = {}) {
     }
   }
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// Agent-scoped guards: read-only Bash (mobile-reviewer, rn-architect) and an edit allowlist
+// (product-manager). Wired through `hooks:` in the agent's frontmatter, so they bind only while
+// that agent runs. A prompt that says "read-only" is a request; this is the enforcement.
+// ---------------------------------------------------------------------------
+
+/** Commands that only read. Anything not listed is denied, so the list errs on the safe side. */
+const READ_ONLY_COMMANDS = new Set(
+  (
+    'ls cat head tail wc grep egrep fgrep rg jq diff cmp cut tr nl column file stat du df pwd echo printf true ' +
+    'false wait which type basename dirname realpath readlink test [ cd date comm paste fold od strings shasum ' +
+    'sha256sum md5 tree'
+  ).split(' ')
+);
+const GIT_READ_ONLY = new Set(
+  (
+    'diff log show status blame grep ls-files ls-tree rev-parse rev-list merge-base describe shortlog cat-file ' +
+    'for-each-ref name-rev show-ref fetch whatchanged range-diff check-ignore check-attr merge-tree'
+  ).split(' ')
+);
+const DEV_NULL = /^\/dev\/(null|stdout|stderr)$/;
+/** pnpm scripts that rewrite tracked files, install, release or start long-running servers. */
+const PNPM_WRITE_SCRIPT =
+  /^(format|openapi|cache:clean|release.*|ios|android|start(:.*)?|web:dev|dev|install|i|add|remove|rm|update|up|upgrade|dlx|create|link|unlink|patch.*|import|prune|publish|pack|setup)$|fix|write/;
+const WRITE_ARG = /^(--fix|--write(?!-tree).*|--update.*|--out(put)?(=.*)?|--in-place.*)$/;
+/** Temp folders: a read-only agent may park command output there (it never reaches the repo). */
+const TEMP_PATH = /^(\/private)?\/tmp\/|^\/var\/folders\/|^\$\{?TMPDIR\}?\//;
+/** Shell keywords that prefix a command (`do cat x`) or carry none (`done`). */
+const SHELL_KEYWORDS = new Set(['do', 'then', 'else', 'elif', 'if', 'while', 'until', '!']);
+const SHELL_ENDS = new Set(['done', 'fi', 'esac', ']]']);
+const PNPM_EXEC_READ_ONLY = new Set([
+  'tsc',
+  'jest',
+  'vitest',
+  'eslint',
+  'depcruise',
+  'turbo',
+  'expo-updates',
+  'prettier',
+  'redocly',
+]);
+
+/** `pnpm exec <bin> …` / `npx <bin> …`: only checkers, never in a mode that rewrites files. */
+function execReason(bin, rest) {
+  if (!PNPM_EXEC_READ_ONLY.has(bin)) {
+    return `\`${bin}\` is not on the read-only exec list`;
+  }
+  if (bin === 'prettier' && !rest.includes('--check')) {
+    return '`prettier` without `--check` rewrites files';
+  }
+  if ((bin === 'jest' || bin === 'vitest') && rest.some((a) => /^(-u|--updateSnapshot|--update)$/.test(a))) {
+    return `\`${bin} -u\` rewrites snapshots`;
+  }
+  if (bin === 'turbo' && rest.some((t) => PNPM_WRITE_SCRIPT.test(t))) {
+    return '`turbo run` of a task that writes files';
+  }
+  if (bin === 'expo-updates' && rest[0] !== 'fingerprint:generate') {
+    return '`expo-updates` other than `fingerprint:generate`';
+  }
+  return null;
+}
+
+/** Bodies of `$(…)` and backtick substitutions in raw shell text (not inside single quotes). */
+function substitutions(text) {
+  const out = [];
+  let quote = '';
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '\\') {
+      i += 1;
+    } else if (quote === "'") {
+      quote = c === "'" ? '' : quote;
+    } else if (c === "'" && !quote) {
+      quote = "'";
+    } else if (c === '"') {
+      quote = quote === '"' ? '' : '"';
+    } else if (text.startsWith('$(', i) && !text.startsWith('$((', i)) {
+      let depth = 1;
+      let j = i + 2;
+      while (j < text.length && depth > 0) {
+        depth += text[j] === '(' ? 1 : text[j] === ')' ? -1 : 0;
+        j += 1;
+      }
+      out.push(text.slice(i + 2, depth === 0 ? j - 1 : j));
+      i = j - 1;
+    } else if (c === '`') {
+      const close = text.indexOf('`', i + 1);
+      out.push(text.slice(i + 1, close < 0 ? text.length : close));
+      i = close < 0 ? text.length : close;
+    }
+  }
+  return out;
+}
+
+/** The program text of `sed`/`awk`: the values of `-e` (sed), else the first positional argument. */
+function scripts(args, scriptFlag) {
+  const values = args.flatMap((a, k) => (a === scriptFlag && scriptFlag === '-e' ? [args[k + 1] ?? ''] : []));
+  if (values.length) {
+    return values;
+  }
+  for (let k = 0; k < args.length; k++) {
+    if (args[k] === '-f' || args[k] === '-v' || args[k] === '-F') {
+      k += 1;
+    } else if (!args[k].startsWith('-')) {
+      return [args[k]];
+    }
+  }
+  return [];
+}
+
+/** Why one simple command is not read-only, or null when it is. */
+function writeReason(words) {
+  while (words.length && SHELL_KEYWORDS.has(words[0])) {
+    words = words.slice(1);
+  }
+  if (!words.length || SHELL_ENDS.has(words[0]) || /^\w+\)$/.test(words[0])) {
+    return null;
+  }
+  const [cmd, ...args] = words;
+  const name = cmd.replace(/^.*\//, '');
+  if (name === 'for' || name === 'case') {
+    return null; // `for f in a b` / `case x in`: the words are data; substitutions are checked separately
+  }
+  if (name === 'timeout') {
+    let k = 0;
+    while (k < args.length && args[k].startsWith('-')) {
+      k += 1;
+    }
+    return args.length > k + 1 ? writeReason(args.slice(k + 1)) : null;
+  }
+  if (name === 'npx') {
+    const rest = args.filter((a) => !/^(--yes|-y|--no-install|--no)$/.test(a));
+    return execReason(rest[0] ?? '', rest.slice(1));
+  }
+  if (name === 'curl') {
+    const method = optionValue(args, '--request', '-X');
+    const bad = args.find((a) => /^(-d|--data.*|-F|--form.*|-T|--upload-file|-o|-O|--remote-name.*|--json)$/.test(a));
+    return bad || (method && !/^(get|head)$/i.test(method)) ? '`curl` that sends data or writes a file' : null;
+  }
+  if (name === 'plutil') {
+    return args.some((a) => /^(-p|-lint)$/.test(a)) ? null : '`plutil` other than `-p`/`-lint` can rewrite a plist';
+  }
+  if (name === 'xcrun') {
+    return args[0] === 'simctl' && ['list', 'get_app_container'].includes(args[1])
+      ? null
+      : '`xcrun` other than `simctl list|get_app_container`';
+  }
+  if (name === '[[') {
+    return null;
+  }
+  if (args.some((a) => WRITE_ARG.test(a))) {
+    return `\`${args.find((a) => WRITE_ARG.test(a))}\` writes files`;
+  }
+  if (name === 'git') {
+    const git = gitCall(words);
+    if (!git) {
+      return null;
+    }
+    const { sub, args: a } = git;
+    const listing = (ok) => (ok ? null : `\`git ${sub}\` with these arguments can change the repo`);
+    if (GIT_READ_ONLY.has(sub)) {
+      return null;
+    }
+    if (sub === 'branch') {
+      const { positional, flags } = splitArgs(a, []);
+      const lists = flags.some((f) =>
+        /^(-l|--list|-a|-r|--all|--remotes|--contains|--merged|--no-merged|--points-at|--show-current|-v|-vv|--sort=.*|--format=.*)$/.test(
+          f
+        )
+      );
+      return listing(
+        !flags.some((f) =>
+          /^(-[dDmMcCu]|--delete|--move|--copy|--set-upstream-to.*|--unset-upstream|--edit-description|-f|--force)$/.test(
+            f
+          )
+        ) &&
+          (positional.length === 0 || lists)
+      );
+    }
+    if (sub === 'worktree' || sub === 'stash') {
+      return listing(['list', 'show'].includes(a[0]));
+    }
+    if (sub === 'remote') {
+      return listing(a.length === 0 || ['-v', 'show', 'get-url'].includes(a[0]));
+    }
+    if (sub === 'config') {
+      return listing(a.some((x) => /^(--get.*|--list|-l)$/.test(x)));
+    }
+    if (sub === 'tag') {
+      return listing(a.length === 0 || a.some((x) => /^(-l|--list|--contains|--points-at)$/.test(x)));
+    }
+    return `\`git ${sub}\` is not a read-only git command`;
+  }
+  if (name === 'gh') {
+    const [group, action] = args;
+    if (
+      ['pr', 'issue', 'run', 'repo', 'release'].includes(group) &&
+      ['view', 'diff', 'checks', 'list', 'status'].includes(action)
+    ) {
+      return null;
+    }
+    if (group === 'api') {
+      const method = optionValue(args, '--method', '-X');
+      const sends = args.some((x) => /^(-f|-F|--field|--raw-field|--input)$/.test(x));
+      return (method === null || /^get$/i.test(method)) && !sends ? null : '`gh api` with a write method or fields';
+    }
+    return `\`gh ${args.slice(0, 2).join(' ')}\` is not a read-only gh command`;
+  }
+  if (name === 'pnpm' || name === 'npm') {
+    let k = 0;
+    while (k < args.length && args[k].startsWith('-')) {
+      k += ['-C', '--dir', '--filter', '-F'].includes(args[k]) ? 2 : 1;
+    }
+    const sub = args[k] ?? '';
+    if (sub === 'exec') {
+      return execReason(args[k + 1] ?? '', args.slice(k + 2));
+    }
+    const script = sub === 'run' ? (args[k + 1] ?? '') : sub;
+    return PNPM_WRITE_SCRIPT.test(script) || !script
+      ? `\`pnpm ${sub}${sub === 'run' ? ` ${script}` : ''}\` writes, installs or starts something`
+      : null;
+  }
+  if (name === 'node') {
+    if (args[0] === '--test') {
+      return null;
+    }
+    if (args.some((x) => /^(-e|-p|--eval|--print|--input-type.*)$/.test(x))) {
+      return '`node -e` runs arbitrary code';
+    }
+    return /^(\.\/)?(tools|apps\/[^/]+\/tools)\/[\w./-]+\.m?js$/.test(args[0] ?? '')
+      ? null
+      : 'only `node --test` and repo tools under tools/ are allowed';
+  }
+  if (name === 'find') {
+    const bad = args.find((x) => /^-(delete|exec|execdir|ok|okdir|fprint.*|fls)$/.test(x));
+    return bad ? `\`find ${bad}\` changes files or runs commands` : null;
+  }
+  if (name === 'sed') {
+    if (args.some((x) => /^(-i.*|--in-place.*|-[a-zA-Z]*i[a-zA-Z]*)$/.test(x))) {
+      return '`sed -i` edits files in place';
+    }
+    return scripts(args, '-e').some((x) => /(^|[;{}\n]\s*|\/[gpI0-9]*)[wW]\s*\S/.test(x))
+      ? '`sed` script with a `w` command writes a file'
+      : null;
+  }
+  if (name === 'awk') {
+    return scripts(args, '-f').some((x) => /system\s*\(|\bprintf?\b[^;}]*>>?\s*["$A-Za-z_]|\|\s*"|getline/.test(x))
+      ? '`awk` script that writes or runs commands'
+      : null;
+  }
+  if (name === 'sort') {
+    return args.some((x) => /^(-o.*|--output.*)$/.test(x)) ? '`sort -o` writes a file' : null;
+  }
+  if (name === 'uniq') {
+    return args.filter((x) => !x.startsWith('-')).length > 1 ? '`uniq in out` writes a file' : null;
+  }
+  if (name === 'xargs') {
+    let k = 0;
+    while (k < args.length && args[k].startsWith('-')) {
+      k += /^-[nILPdsEa]$/.test(args[k]) ? 2 : 1;
+    }
+    return args.length > k ? writeReason(args.slice(k)) : null;
+  }
+  return READ_ONLY_COMMANDS.has(name) ? null : `\`${name}\` is not on the read-only list`;
+}
+
+/**
+ * Findings for a Bash command run by a read-only agent: anything that could write a file, change
+ * git state or run arbitrary code. Unknown commands are denied (allowlist).
+ * @returns {{ decision: 'deny', rule: string, message: string }[]}
+ */
+export function readOnlyBashFindings(line) {
+  const out = [];
+  const seen = new Set();
+  const deny = (message) => {
+    if (!seen.has(message)) {
+      seen.add(message);
+      out.push({ decision: 'deny', rule: 'read-only-agent', message });
+    }
+  };
+  const visit = (text, depth) => {
+    const { commands, redirects } = parseShell(text);
+    for (const r of redirects) {
+      if (r.op.includes('>') && !DEV_NULL.test(r.target) && !TEMP_PATH.test(r.target)) {
+        deny(`redirect \`${r.op} ${r.target}\` writes a file`);
+      }
+    }
+    for (const words of commands) {
+      const reason = writeReason(words);
+      if (reason) {
+        deny(reason);
+      }
+    }
+    for (const inner of substitutions(text)) {
+      if (depth < 4) {
+        visit(inner, depth + 1);
+      }
+    }
+  };
+  visit(line, 0);
+  return out.map((f) => ({
+    ...f,
+    message: `${f.message}. This agent is read-only: report the finding or the command for the main session to run (READ_ONLY_COMMANDS in tools/harness/hook-rules.mjs; widen it there, with a test, only for a command that cannot write).`,
+  }));
+}
+
+/**
+ * Whether an agent with an edit allowlist may write `relPath` (repo-relative, forward slashes).
+ * A prefix ending in `/` matches a folder; anything else must match the whole path.
+ */
+export function editAllowed(relPath, allowed) {
+  if (!relPath || relPath.startsWith('..') || relPath.startsWith('/')) {
+    return false;
+  }
+  return allowed.some((p) => (p.endsWith('/') ? relPath.startsWith(p) : relPath === p));
 }

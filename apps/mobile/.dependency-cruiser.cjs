@@ -12,7 +12,7 @@ module.exports = {
       comment: 'Domain and shared kernel: no frameworks, no infrastructure, no outer layers.',
       from: { path: '^src/(shared-kernel|contexts/[^/]+/domain)/', pathNot: notTests },
       to: {
-        path: '^((\\.\\./)*node_modules/(react|react-native|expo[^/]*|zustand|h3-js|@maplibre|better-sqlite3|@cityturfer/ui)/|(\\.\\./)*packages/ui/|@cityturfer/ui$|(\\.\\./)*packages/core/src/h3/|src/(platform|composition-root|wiring|app|ui-kit)|src/contexts/[^/]+/(application|infrastructure|ui)/)',
+        path: '^((\\.\\./)*node_modules/(react|react-native|react-native-nitro-modules|@kingstinct/react-native-healthkit|@[^/]+/react-native-[^/]+|@react-native[^/]*|expo[^/]*|zustand|h3-js|@maplibre|better-sqlite3|@cityturfer/ui)/|(\\.\\./)*packages/ui/|@cityturfer/ui$|(\\.\\./)*packages/core/src/h3/|src/(platform|composition-root|wiring|app|ui-kit)|src/contexts/[^/]+/(application|infrastructure|ui)/)',
       },
     },
     {
@@ -79,6 +79,20 @@ module.exports = {
       comment: "An adapter implements its own context's ports, never another context's.",
       from: { path: ctx },
       to: { path: coreSrc + 'contexts/([^/]+)/ports\\.ts$', pathNot: coreSrc + 'contexts/$1/ports\\.ts$' },
+    },
+    {
+      name: 'background-task-stays-offline',
+      severity: 'error',
+      comment:
+        'The background location task (and its batch handler) never talks to the server or reads account tokens: no Cloud Backup, no Identity network or keychain code, no fetch clients. It reaches the rest only through getContainer().',
+      from: { path: '^src/contexts/recording/infrastructure/(background-task|location-batch-handler)\\.ts$' },
+      to: {
+        path: [
+          '^src/contexts/cloud-backup/',
+          '^src/contexts/identity/infrastructure/(api-auth-gateway|secure-store-credential-store)\\.ts$',
+          '^src/contexts/[^/]+/infrastructure/(fetch-|api-|osm-)',
+        ],
+      },
     },
     { name: 'no-circular', severity: 'error', from: {}, to: { circular: true } },
   ],

@@ -256,9 +256,10 @@ background recording work?) gets answered first, not last.
 **Status:** Accepted. Email updated 2026-10-17 (see the first entry).
 
 **Decision:** `MockAuthGateway` behind the `AuthGateway` port, one account, session in
-`expo-secure-store`. No Firebase. Data stays on the device, one database per user. The app refuses
-to start with mock auth when `EXPO_PUBLIC_APP_ENV` is `production`
-(`apps/mobile/src/composition-root.ts`).
+`expo-secure-store`. No Firebase. Data stays on the device, one database per user. Superseded in
+part on 2026-10-22 (decision B6, `docs/plans/backend-plan-2026-10-22.md`): the mock `admin` and
+`demo` profiles stay in every build, next to real accounts by e-mailed code; the production start
+guard was removed.
 
 **Rationale:** Auth is a generic subdomain; the PoC is about recording and turf. The port means a
 real provider later is one adapter.
@@ -325,6 +326,25 @@ you never walked.
 `apps/mobile/src/contexts/territory/ui/turf-map-view.tsx`). Other screens follow the system theme.
 
 **Rationale:** The glow — the reason to open the map — only reads on a dark basemap.
+
+---
+
+## The whole app is dark, like the website (2026-10-20)
+
+**Status:** Accepted. Extends "Why the Turf Map is always dark".
+
+**Decision:** The app always uses the brand's dark theme (`userInterfaceStyle: "dark"` in
+`apps/mobile/app.json`, so `useColorScheme()` reports `dark` and `usePalette()` returns `DARK`). The
+Record map uses `MAP_STYLE_DARK` and draws turf exactly as the Turf Map does (`TURF_STYLE`).
+
+**Rationale:** Founder request: the app should look like the homepage, which is dark only
+(`cssVariables('dark')`), and the Record map should show turf in the same colours as the Turf Map.
+The `LIGHT` theme stays in `@cityturfer/brand` for Storybook and a possible light mode later.
+
+**Consequence:** `app.json` is native config, so this changes the runtime fingerprint: it ships in a
+new build, not over the air. Two traps: `expo-splash-screen` resets iOS to `Automatic` whenever its
+config has a `dark` block (so the splash has none; it was identical anyway), and Android only
+honours `userInterfaceStyle` with `expo-system-ui` installed.
 
 **Trade-off:** One screen ignores the user's theme.
 

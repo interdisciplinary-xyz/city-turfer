@@ -1,8 +1,16 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { AppState } from 'react-native';
 
-import { backgroundActivitySession, type Container, getContainer, identity, resetContainer } from '@/composition-root';
+import {
+  backgroundActivitySession,
+  type Container,
+  deleteProfileData,
+  getContainer,
+  identity,
+  resetContainer,
+} from '@/composition-root';
 import type { User } from '@/contexts/identity';
+import { prepareDemoAccount } from '@/dev/gdansk-demo';
 
 import type { AppContextValue, AuthState } from './app-context.constants';
 
@@ -19,6 +27,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     await container.recording.recover.execute().catch(() => undefined);
     setAuth({ status: 'signed-in', user, container });
+    // Demo account only: fills in Gdańsk demo data on first use; screens refresh as it lands.
+    void prepareDemoAccount(user, container).catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -51,8 +61,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
       dataVersion,
       async signIn(email, password) {
         const r = await identity.signIn.execute(email, password);
+        if (r.kind === 'linked-to-account') {
+          return 'linked-to-account';
+        }
         if (r.kind !== 'signed-in') {
           return 'invalid';
+        }
+        await enter(r.user);
+        return 'ok';
+      },
+      startSignIn: (email) => identity.startSignIn.execute(email),
+      requestDataExport: () => identity.requestDataExport.execute(),
+      async verifyCode(email, code) {
+        const r = await identity.verifyCode.execute(email, code);
+        if (r.kind !== 'signed-in') {
+          return r;
+        }
+        await enter(r.user);
+        return { kind: 'ok' };
+      },
+      async chooseHistory(useThisPhonesHistory) {
+        const r = await identity.chooseHistory.execute(useThisPhonesHistory);
+        if (r.kind !== 'signed-in') {
+          return 'no-pending';
         }
         await enter(r.user);
         return 'ok';
@@ -65,6 +96,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
         await resetContainer();
         setAuth({ status: 'signed-out' });
         return 'ok';
+      },
+      async deleteAccount(keepData) {
+        const r = await identity.deleteAccount.execute(keepData);
+        if (r.kind !== 'deleted') {
+          return r;
+        }
+        // The account is gone: always signed out here, whichever profile held its data.
+        await resetContainer();
+        if (!keepData && r.profileId) {
+          await deleteProfileData(r.profileId).catch(() => undefined);
+        }
+        setAuth({ status: 'signed-out' });
+        return { kind: 'ok' };
       },
     }),
     [auth, dataVersion, enter]

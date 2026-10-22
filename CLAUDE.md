@@ -11,8 +11,10 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
   background location)
 - **Navigation**: expo-router (file-based, `apps/mobile/src/app/`)
 - **Auth**: **Mock** for the PoC: `MockAuthGateway` behind the `AuthGateway` port, single account
-  `admin@cityturfer.com` / `admin1234`, session in `expo-secure-store`; one SQLite DB per user. No
-  Firebase.
+  `admin@cityturfer.com` / `admin1234`, plus `demo@cityturfer.com` / `demo1234` for screenshots
+  (first sign-in fills it with Gdańsk demo data: `apps/mobile/src/dev/gdansk-demo.ts`, routes from
+  `apps/mobile/tools/gen-gdansk-routes.mjs`); session in `expo-secure-store`; one SQLite DB per
+  user. No Firebase.
 - **GPS**: `expo-location` + `expo-task-manager` (background updates, Android foreground service)
 - **Maps**: `@maplibre/maplibre-react-native` + OpenFreeMap vector tiles (keyless); dark style on
   the Turf Map
@@ -157,6 +159,8 @@ pnpm --filter @cityturfer/api dev                       # API on :8787 (PGlite +
 pnpm --filter @cityturfer/api run db:generate           # SQL migration from apps/api/src/db/schema.ts (commit apps/api/drizzle/)
 DATABASE_URL=… pnpm --filter @cityturfer/api run db:migrate   # apply migrations to Neon (docs/operations/api-deploy.md)
 pnpm --filter @cityturfer/api run token:new -- <userId>       # device token + API_TOKENS entry (stopgap auth)
+pnpm start:dev                   # web:dev, building Storybook first if storybook-static is missing
+pnpm cache:clean                 # delete node_modules, .turbo, .next, out, .expo (then pnpm install)
 pnpm --filter @cityturfer/storybook dev     # Storybook at http://localhost:6006 (app components + website pieces)
 pnpm --filter @cityturfer/storybook build   # static Storybook in apps/storybook/storybook-static
 pnpm --filter @cityturfer/api dev           # API on http://localhost:8787 (Swagger at /swagger); web:dev proxies /api/* to it

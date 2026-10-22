@@ -3,6 +3,7 @@ import { ThemeProvider } from '@cityturfer/ui';
 import { NextIntlClientProvider } from 'next-intl';
 import { type CSSProperties, useLayoutEffect } from 'react';
 
+import { PAGE_LOADED_CLASS, PAGE_LOADED_EVENT } from '../../../web/src/app/[locale]/page-loader/page-loader.constants';
 import { type FrameProps, MESSAGES } from './frame.constants';
 
 /**
@@ -10,7 +11,7 @@ import { type FrameProps, MESSAGES } from './frame.constants';
  * CSS variables on <html> (as apps/web's layout sets them), and the website's messages for the
  * chosen language.
  */
-export function Frame({ scheme, locale, web, children }: FrameProps) {
+export function Frame({ scheme, locale, web, pageLoaded = true, children }: FrameProps) {
   const effective = web ? 'dark' : scheme;
 
   useLayoutEffect(() => {
@@ -22,6 +23,18 @@ export function Frame({ scheme, locale, web, children }: FrameProps) {
     root.lang = locale;
     document.body.style.background = THEMES[effective].bg;
   }, [effective, locale]);
+
+  // Storybook never runs the site's LOADER_BOOT_SCRIPT; without this the hero stays paused and hidden.
+  useLayoutEffect(() => {
+    // pageLoaded false: leave the class alone, the story (PageLoader) owns it.
+    if (!web || !pageLoaded) {
+      return;
+    }
+    const root = document.documentElement;
+    root.classList.add(PAGE_LOADED_CLASS);
+    window.dispatchEvent(new Event(PAGE_LOADED_EVENT));
+    return () => root.classList.remove(PAGE_LOADED_CLASS);
+  }, [web, pageLoaded]);
 
   const style: CSSProperties = { background: THEMES[effective].bg, color: THEMES[effective].text, padding: 16 };
   return (

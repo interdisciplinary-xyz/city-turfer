@@ -1,12 +1,9 @@
 ---
 name: product-knowledge
-description:
-  What CityTurfer is as a product — vision, who it's for, the core loop (record → turf → glow → come
-  back), what a user can actually do today, what the website and store copy promise, what's next,
-  and the open product questions. Explains where each kind of product truth lives and how to verify
-  it against code. Use when someone asks "what does the app do", "what should we build next", "is
-  this on the roadmap", "does the app really do X", when scoping a version, writing a PRD or spec,
-  preparing a demo, store listing or tester brief, or before changing anything a user will notice.
+description: >-
+  Use for "what does the app do", "does it really do X", "is this on the roadmap", "what should we
+  build next", scoping a version, writing a spec, demo, store listing or tester brief: what
+  CityTurfer is, who it's for, and where product truth lives in code and docs.
 ---
 
 # Product knowledge
@@ -25,7 +22,7 @@ it, where the other sources are, and how to keep them honest.
 | What we've learned from people         | `docs/product/discovery-board.md` (evidence log, assumptions, interview queue) |
 | Competitors, pricing, market facts     | `docs/product/market-landscape.md` (dated snapshot; re-check before quoting)   |
 | What blocks a public launch            | `docs/product/launch-readiness.md`                                             |
-| What's next, per version               | `NOTEBOOK.md` at the repo root (the backlog, one block per version)            |
+| What's next, per version               | Newest `scope/v*` branch + `docs/sessions/`; `NOTEBOOK.md` if it has the block |
 | What shipped when, and why             | `docs/sessions/` (one log per version), `CHANGELOG.md`, `docs/decisions/`      |
 | Vocabulary, PoC questions Q1–Q5, risks | `docs/poc-plan.md` §1, §2, §8 (historical: vocabulary still holds)             |
 | Name, taglines, voice, privacy line    | `packages/brand/src/copy.ts`, the `brand-system` skill                         |
@@ -43,8 +40,8 @@ it, where the other sources are, and how to keep them honest.
 2. Check the specific claim in code (table above). A product answer that names a feature should cite
    the screen or use case that implements it.
 3. Say what state it's in: **shipped** (on `main`), **on scope** (merged into the open
-   `scope/vX.Y.Z`), **in progress** (a feature branch), **planned** (`NOTEBOOK.md`) or **not
-   planned** (the brief's non-goals). "The code exists" is not "shipped": check the branch.
+   `scope/vX.Y.Z`), **in progress** (a feature branch), **planned** (`NOTEBOOK.md`, session log) or
+   **not planned** (the brief's non-goals). "The code exists" is not "shipped": check the branch.
 4. Say where it's verified: unit tests, Simulator, emulator, or a real device. Background tracking
    and Apple Health only count as working when checked on a device (`mobile-testing` skill).
 5. Use the user's words from the brief's vocabulary table: _ride_ (code says `cycle`), _turf_,
@@ -59,18 +56,21 @@ it, where the other sources are, and how to keep them honest.
 
 ## How to scope a version or write a spec
 
-- Start from the version block in `NOTEBOOK.md`. Name the user-visible outcome first, then the
-  items. One outcome per version beats a grab-bag.
+- Start from the newest `scope/vX.Y.Z` branch and its session log in `docs/sessions/`, plus the
+  version's block in `NOTEBOOK.md` if there is one (if not, say the backlog lags and propose the
+  block to the founder). Name the user-visible outcome first, then the items. One outcome per
+  version beats a grab-bag.
 - Check each item against the brief's **non-goals** and **open questions**. If an item depends on an
   open question (e.g. "what does 100 % city coverage mean"), the decision comes first; write it as a
   decision record in `docs/decisions/<topic>-YYYY-MM-DD.md`.
 - Every spec states: the user and situation, what they see before and after, the copy, empty and
-  error states, privacy impact (coordinates and Health data never leave the phone unless the brief
-  says otherwise), how it is verified, and how we'll know it worked.
+  error states, privacy impact (coordinates and Health data leave the phone only through the opt-in
+  cloud backup, `apps/mobile/src/contexts/cloud-backup`; say if the spec changes that), how it is
+  verified, and how we'll know it worked.
 - Hand the spec to `rn-architect` for the technical plan (the `add-feature` skill), and copy and
   look to `brand-designer`.
-- Live specs go in a `plans/` folder under docs (create it with the first one), product direction in
-  `docs/product/`, both with docs frontmatter (`docs/process/docs-conventions.md`).
+- Live specs go in `docs/plans/`, product direction in `docs/product/`, both with docs frontmatter
+  (`docs/process/docs-conventions.md`).
 
 ## Keeping the brief honest
 

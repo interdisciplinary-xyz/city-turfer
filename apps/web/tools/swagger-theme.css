@@ -819,3 +819,154 @@ a {
     scroll-behavior: auto !important;
   }
 }
+
+/* ---- Table of contents (swagger-toc.mjs) --------------------------------------------- */
+/* Wide screens: a sticky column on the left. Narrow: a folded "Contents" box above the page. */
+.ct-layout {
+  max-width: 1760px;
+  margin: 0 auto;
+}
+.ct-toc {
+  padding: var(--space-lg) var(--space-xl) 0;
+  font-size: var(--font-caption);
+}
+.ct-toc-details {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--card);
+}
+.ct-toc-summary {
+  padding: var(--space-md) var(--space-lg);
+  cursor: pointer;
+  color: var(--muted);
+  font-size: var(--font-label);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+.ct-toc-summary:focus-visible {
+  outline: none;
+  box-shadow: var(--ct-focus);
+  border-radius: var(--radius-control);
+}
+.ct-toc-list,
+.ct-toc-sub {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ct-toc-list {
+  padding: 0 var(--space-sm) var(--space-md);
+}
+.ct-toc-sub {
+  margin: 0 0 var(--space-xs) var(--space-md);
+  padding-left: var(--space-sm);
+  border-left: 1px solid var(--border);
+}
+.ct-toc-link {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-decoration: none;
+  line-height: 1.35;
+}
+.ct-toc-list > .ct-toc-item > .ct-toc-link {
+  margin-top: var(--space-xs);
+  font-weight: var(--font-weight-semibold);
+}
+.ct-toc-sub .ct-toc-link {
+  color: var(--muted);
+}
+.ct-toc-link:hover {
+  background: var(--border);
+  color: var(--text);
+}
+.ct-toc-link:focus-visible {
+  outline: none;
+  box-shadow: var(--ct-focus);
+}
+.ct-toc-link[aria-current='true'] {
+  background: var(--border);
+  color: var(--text);
+  box-shadow: inset 2px 0 0 var(--glow);
+}
+/* On the --border highlight the coloured method labels fall under 4.5:1 (POST 4.05:1): plain text. */
+.ct-toc-link:hover .ct-toc-method,
+.ct-toc-link[aria-current='true'] .ct-toc-method {
+  color: var(--text);
+}
+.ct-toc-count {
+  color: var(--muted);
+  font-family: var(--font-family-numeric);
+  font-variant-numeric: tabular-nums;
+  font-weight: normal;
+}
+.ct-toc-method {
+  flex: none;
+  min-width: 3.4em;
+  font-family: var(--ct-mono);
+  font-size: 0.72rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+}
+.ct-toc-method-post {
+  color: var(--glow);
+}
+.ct-toc-method-put {
+  color: var(--strong);
+}
+/* Faint violet alone is too dark as text on the dark background. */
+.ct-toc-method-patch {
+  color: color-mix(in srgb, var(--faint) 55%, var(--text));
+}
+.ct-toc-method-delete {
+  color: var(--danger);
+}
+.ct-toc-path {
+  min-width: 0;
+  font-family: var(--ct-mono);
+  font-size: 0.78rem;
+}
+
+@media (min-width: 1100px) {
+  .ct-layout {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    align-items: start;
+  }
+  .ct-toc {
+    position: sticky;
+    top: 0;
+    max-height: 100vh;
+    overflow-y: auto;
+    /* Bottom room for the dev toolbar, which sits fixed over the page's foot. */
+    padding: var(--space-xxxl) 0 96px var(--space-xl);
+    scrollbar-width: thin;
+  }
+  .ct-toc-details {
+    border: 0;
+    background: transparent;
+  }
+  /* Always open beside the page: the toggle is only for narrow screens. */
+  .ct-toc-summary {
+    padding: 0 var(--space-sm) var(--space-sm);
+    pointer-events: none;
+    list-style: none;
+  }
+  .ct-toc-summary::-webkit-details-marker {
+    display: none;
+  }
+  .ct-toc-list {
+    padding: 0;
+  }
+}
+
+/* The guide (info.description), moved below the schemas by the GuideLast plugin. */
+.swagger-ui .ct-guide {
+  margin-top: 48px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}

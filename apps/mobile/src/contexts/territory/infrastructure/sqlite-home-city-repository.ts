@@ -22,14 +22,14 @@ export class SqliteHomeCityRepository implements HomeCityRepository {
     return r ? { cityId: r.city_id, chosenAt: r.chosen_at } : null;
   }
 
-  async saveHomeCity(cityId: string | null, event: DomainEvent, now: number): Promise<void> {
+  async saveHomeCity(cityId: string | null, event: DomainEvent, chosenAt: number): Promise<void> {
     await this.db.transaction(async (tx) => {
       await tx.run(
         `INSERT INTO ter_home_city (id, city_id, chosen_at) VALUES (1, ?, ?)
          ON CONFLICT(id) DO UPDATE SET city_id = excluded.city_id, chosen_at = excluded.chosen_at`,
-        [cityId, now]
+        [cityId, chosenAt]
       );
-      await appendToOutbox(tx, [event], now);
+      await appendToOutbox(tx, [event], event.at);
     });
   }
 }

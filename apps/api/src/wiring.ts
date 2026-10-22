@@ -1,21 +1,166 @@
 import { deviceTokenAuth, parseApiTokens } from './auth/device-tokens';
+import { DrizzleExportStore, PostgresFileStorage } from './db/exports';
 import { createNeonDb } from './db/neon';
-import { DrizzleBackupStore } from './db/store';
+import { PostgresRateLimiter } from './db/rate-limits';
+import { DrizzleRetentionStore } from './db/retention';
+import { type Db, DrizzleBackupStore } from './db/store';
 import { type ApiDeps, defaultDeps, jsonLineLog } from './deps';
+import { createAuth } from './identity/better-auth';
+import { BrevoMailer, type Mailer, nullMailer, parseMailFrom } from './identity/mailer';
+import { compositeVerifier, IdentityService } from './identity/use-cases';
+import { RetentionService } from './privacy/retention';
+import { ExportService } from './privacy/use-cases';
+import { LOCAL_API_PORT } from './spec';
 
 /**
- * Production wiring from environment variables (Vercel → Settings → Environment Variables):
- * - `API_TOKENS`: JSON object sha256(token) hex → userId (device tokens; missing → every token 401).
- * - `DATABASE_URL`: Neon pooled connection string (missing → live data routes answer 503).
- * Nothing secret is logged: only whether each is configured and how many token entries were skipped.
+ * Production wiring from environment variables (Vercel → Settings → Environment Variables;
+ * runbook: docs/operations/api-deploy.md):
+ * - `DATABASE_URL`: Neon pooled connection string (required in production; elsewhere missing →
+ *   live data routes answer 503).
+ * - `API_TOKENS`: JSON object sha256(token) hex → userId (device tokens, one more release).
+ * - `BETTER_AUTH_SECRET` (≥ 32 characters): turns on sign-in with e-mailed codes.
+ * - `BREVO_API_KEY` + `MAIL_FROM` (`CityTurfer <hello@…>`): sends the codes and export links.
+ * - `API_PUBLIC_URL`: the API's public base URL (export links in e-mails).
+ * - `CRON_SECRET` (≥ 16 characters): Vercel Cron's bearer for `GET /internal/cron/retention`
+ *   (without it the route answers 404).
+ * - `AUTH_FIXED_CODE`: the code for `@e2e.cityturfer.test` addresses only —
+ *   never in production (boot fails); real addresses always get random codes.
+ * Production = `VERCEL_ENV=production`: missing secrets fail the boot instead of degrading.
+ * Nothing secret is logged: only whether each is configured.
  */
-export function productionDeps(env: NodeJS.ProcessEnv): ApiDeps {
-  const tokens = parseApiTokens(env.API_TOKENS);
-  if (tokens.skipped > 0 || tokens.entries.length === 0) {
-    process.stdout.write(
-      `${JSON.stringify({ msg: 'config', apiTokens: tokens.entries.length, apiTokensSkipped: tokens.skipped })}\n`
-    );
+
+export class ConfigError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ConfigError';
   }
-  const store = env.DATABASE_URL ? new DrizzleBackupStore(createNeonDb(env.DATABASE_URL).db) : null;
-  return defaultDeps({ auth: deviceTokenAuth(tokens.entries), log: jsonLineLog, store });
+}
+
+export interface WiringOverrides {
+  /** A database other than DATABASE_URL (the local server's PGlite). */
+  db?: Db;
+  /** The local server's console mailer. */
+  mailer?: Mailer;
+}
+
+export function isProduction(env: NodeJS.ProcessEnv): boolean {
+  return env.VERCEL_ENV === 'production';
+}
+
+/** Refuses to boot production with missing or unsafe settings (names only, never values). */
+export function checkProductionEnv(env: NodeJS.ProcessEnv): void {
+  if (!isProduction(env)) {
+    return;
+  }
+  const problems: string[] = [];
+  if (!env.DATABASE_URL) {
+    problems.push('DATABASE_URL is required');
+  }
+  if (!cronSecretOf(env)) {
+    problems.push(`CRON_SECRET (at least ${MIN_CRON_SECRET_LENGTH} characters) is required`);
+  }
+  if (env.AUTH_FIXED_CODE) {
+    problems.push('AUTH_FIXED_CODE must not be set in production');
+  }
+  if (!env.BETTER_AUTH_SECRET || env.BETTER_AUTH_SECRET.length < 32) {
+    problems.push('BETTER_AUTH_SECRET (at least 32 characters) is required');
+  }
+  if (!env.BREVO_API_KEY) {
+    problems.push('BREVO_API_KEY is required');
+  }
+  if (!env.MAIL_FROM || !parseMailFrom(env.MAIL_FROM)) {
+    problems.push('MAIL_FROM ("Name <address>") is required');
+  }
+  if (!env.API_PUBLIC_URL?.startsWith('https://')) {
+    problems.push('API_PUBLIC_URL (https://…) is required');
+  }
+  if (problems.length > 0) {
+    throw new ConfigError(`Production configuration: ${problems.join('; ')}.`);
+  }
+}
+
+/** The shortest CRON_SECRET accepted (Vercel suggests a random string of 16+ characters). */
+export const MIN_CRON_SECRET_LENGTH = 16;
+
+/** CRON_SECRET when it is long enough, else null (the cron route then answers 404). */
+export function cronSecretOf(env: NodeJS.ProcessEnv): string | null {
+  const secret = env.CRON_SECRET?.trim();
+  return secret && secret.length >= MIN_CRON_SECRET_LENGTH ? secret : null;
+}
+
+/** The API's public base URL, without a trailing slash. */
+export function publicUrlOf(env: NodeJS.ProcessEnv): string {
+  return (env.API_PUBLIC_URL || `http://localhost:${LOCAL_API_PORT}`).replace(/\/+$/, '');
+}
+
+function mailerOf(env: NodeJS.ProcessEnv, override?: Mailer): Mailer {
+  if (override) {
+    return override;
+  }
+  const from = env.MAIL_FROM ? parseMailFrom(env.MAIL_FROM) : null;
+  // Without Brevo a deployed preview sends nothing (only test-domain sign-ins work): it never logs them.
+  return env.BREVO_API_KEY && from ? new BrevoMailer(env.BREVO_API_KEY, from) : nullMailer;
+}
+
+export function productionDeps(env: NodeJS.ProcessEnv, overrides: WiringOverrides = {}): ApiDeps {
+  checkProductionEnv(env);
+  const tokens = parseApiTokens(env.API_TOKENS);
+  const db = overrides.db ?? (env.DATABASE_URL ? createNeonDb(env.DATABASE_URL).db : null);
+  const secret = env.BETTER_AUTH_SECRET && env.BETTER_AUTH_SECRET.length >= 32 ? env.BETTER_AUTH_SECRET : null;
+  const fixedCode = isProduction(env) ? null : env.AUTH_FIXED_CODE?.trim() || null;
+  if (fixedCode && !/^\d{6}$/.test(fixedCode)) {
+    throw new ConfigError('AUTH_FIXED_CODE must be six digits.');
+  }
+  const base = defaultDeps({ log: jsonLineLog });
+  const mailer = mailerOf(env, overrides.mailer);
+  const identity =
+    db && secret
+      ? new IdentityService(
+          createAuth({
+            db,
+            secret,
+            baseURL: publicUrlOf(env),
+            mailer,
+            fixedCode,
+            onMailError: () => base.log.event?.({ msg: 'auth.code-not-sent' }),
+          }),
+          new PostgresRateLimiter(db),
+          secret,
+          base.clock
+        )
+      : null;
+  process.stdout.write(
+    `${JSON.stringify({
+      msg: 'config',
+      database: !!db,
+      signIn: !!identity,
+      mail: mailer !== nullMailer,
+      fixedCode: !!fixedCode,
+      cron: !!cronSecretOf(env),
+      apiTokens: tokens.entries.length,
+      apiTokensSkipped: tokens.skipped,
+    })}\n`
+  );
+  const devices = deviceTokenAuth(tokens.entries);
+  const store = db ? new DrizzleBackupStore(db) : null;
+  return {
+    ...base,
+    auth: identity ? compositeVerifier(devices, identity.verifier) : devices,
+    store,
+    identity,
+    exports:
+      db && store
+        ? new ExportService(
+            store,
+            new DrizzleExportStore(db),
+            new PostgresFileStorage(db),
+            mailer,
+            base.clock,
+            publicUrlOf(env),
+            base.log
+          )
+        : null,
+    retention: db ? new RetentionService(new DrizzleRetentionStore(db), base.clock, base.log) : null,
+    cronSecret: cronSecretOf(env),
+  };
 }
