@@ -22,7 +22,7 @@ export const PORTAL_COPY_MARKER = 'sharedComputerHint';
 /** GSAP's own banner and warnings. */
 export const GSAP_MARKERS = ['GreenSock', 'gsap.registerPlugin'];
 
-const CHUNK = /\/_next\/static\/chunks\/[A-Za-z0-9_~.-]+?\.(?:js|css)/g;
+const CHUNK = /\/_next\/static\/(?:immutable\/)?chunks\/[A-Za-z0-9_~.-]+?\.(?:js|css)/g;
 
 /** Every chunk a page references, in its HTML (script tags, preloads and the inline RSC payload). */
 export function chunksOf(html) {
@@ -82,6 +82,9 @@ export function checkExport(outDir, { locales = ['en', 'pl'], nextDir = path.joi
     if (html.includes('/api/v1')) {
       findings.push(`${locale}.html mentions /api/v1`);
     }
+    if (chunksOf(html).length === 0) {
+      findings.push(`${rel(file)} references no chunks: the check would see nothing`);
+    }
     for (const ref of chunksOf(html)) {
       const body = chunk(ref);
       for (const marker of PORTAL_MARKERS) {
@@ -101,6 +104,9 @@ export function checkExport(outDir, { locales = ['en', 'pl'], nextDir = path.joi
     const html = read(file);
     if (!/<meta name="robots" content="noindex, nofollow"\s*\/?>/.test(html)) {
       findings.push(`${rel(file)} is not noindex, nofollow`);
+    }
+    if (chunksOf(html).length === 0) {
+      findings.push(`${rel(file)} references no chunks: the check would see nothing`);
     }
     for (const ref of chunksOf(html)) {
       const body = chunk(ref);
@@ -127,9 +133,12 @@ export function checkExport(outDir, { locales = ['en', 'pl'], nextDir = path.joi
     findings.push(
       `diagnostics: first scripts ${scripts.join(', ') || 'none'}; out/_next files ${layout.join(', ') || 'none'}`
     );
-    const chunkDir = [path.join(outDir, '_next/static/chunks'), path.join(nextDir, 'static/chunks')].find((dir) =>
-      existsSync(dir)
-    );
+    const chunkDir = [
+      path.join(outDir, '_next/static/immutable/chunks'),
+      path.join(outDir, '_next/static/chunks'),
+      path.join(nextDir, 'static/immutable/chunks'),
+      path.join(nextDir, 'static/chunks'),
+    ].find((dir) => existsSync(dir));
     const holders = chunkDir
       ? walk(chunkDir)
           .filter((file) => file.endsWith('.js') && read(file).includes(PORTAL_MARKERS[0]))

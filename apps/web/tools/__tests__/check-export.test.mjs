@@ -96,3 +96,15 @@ test('a chunk found nowhere is a finding, not an empty file', () => {
     assert.match(findings, /chunk \/_next\/static\/chunks\/portal\.js not found/);
   });
 });
+
+test('chunksOf also finds immutable chunks (Vercel build)', () => {
+  const html = '<script src="/_next/static/immutable/chunks/a.js"></script>';
+  assert.deepEqual(chunksOf(html), ['/_next/static/immutable/chunks/a.js']);
+});
+
+test('a page that references no chunks is a finding', () => {
+  withExport({}, (dir) => {
+    writeFileSync(path.join(dir, 'en.html'), '<p>no scripts</p>');
+    assert.match(checkExport(dir).join('\n'), /en\.html references no chunks/);
+  });
+});
