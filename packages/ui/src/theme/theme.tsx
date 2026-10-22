@@ -7,8 +7,9 @@ import type { ThemeProviderProps } from './theme.constants';
 const SchemeOverride = createContext<ColorScheme | undefined>(undefined);
 
 /**
- * Optional: forces a colour scheme for everything below it. The app doesn't need it (components
- * follow the device setting); Storybook wraps every story in it for its light/dark toggle.
+ * Optional: forces a colour scheme for everything below it. The app doesn't need it (it is dark
+ * only, and components follow the device setting); Storybook wraps every story in it with
+ * SITE_SCHEME (light), and map panels inside a light page force dark.
  */
 export function ThemeProvider({ scheme, children }: ThemeProviderProps) {
   return <SchemeOverride.Provider value={scheme}>{children}</SchemeOverride.Provider>;
@@ -21,7 +22,7 @@ export function useScheme(): ColorScheme {
   return forced ?? (device === 'dark' ? 'dark' : 'light');
 }
 
-/** Theme colours (bg, card, text, muted, border, danger) for the scheme in effect. */
+/** Theme colours (`Palette`: base roles plus the text/graphic variants) for the scheme in effect. */
 export function usePalette(): Palette {
   return THEMES[useScheme()];
 }

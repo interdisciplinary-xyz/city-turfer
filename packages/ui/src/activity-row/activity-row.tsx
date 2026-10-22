@@ -1,9 +1,9 @@
-import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT, RADIUS, SPACE, TYPE_COLOR } from '@cityturfer/brand';
+import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT, RADIUS, SPACE } from '@cityturfer/brand';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Badge, tint } from '../badge/badge';
 import { usePalette } from '../theme/theme';
-import type { ActivityRowProps } from './activity-row.constants';
+import { type ActivityRowProps, TYPE_GRAPHIC_KEY } from './activity-row.constants';
 
 /** One activity in a list (History, Dashboard): type badge, name and date, distance and pace. */
 export function ActivityRow({
@@ -27,7 +27,7 @@ export function ActivityRow({
       accessibilityLabel={accessibilityLabel}
       style={[s.row, { backgroundColor: p.card, borderColor: p.border }]}
     >
-      <Badge glyph={icon ? undefined : glyph} tint={tint(TYPE_COLOR[type])}>
+      <Badge glyph={icon ? undefined : glyph} tint={tint(p[TYPE_GRAPHIC_KEY[type]])}>
         {icon}
       </Badge>
       <View style={s.main}>
