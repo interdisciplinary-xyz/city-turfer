@@ -4,15 +4,10 @@
 // Without DATABASE_URL it works on the local dev server's PGlite (apps/api/.data/pglite; stop the
 // dev server first). Refuses when the e-mail already belongs to another account. Prints no
 // connection details.
-import { mkdirSync } from 'node:fs';
-import path from 'node:path';
-
 import { z } from 'zod';
 
-import { createNeonDb } from '../src/db/neon';
-import { createPgliteDb } from '../src/db/pglite';
-import type { Db } from '../src/db/store';
 import { adopt, type AdoptResult } from '../src/identity/adopt';
+import { openDb } from './open-db';
 
 const [userId, rawEmail] = process.argv.slice(2).filter((a) => a !== '--');
 const email = rawEmail?.trim().toLowerCase();
@@ -21,16 +16,7 @@ if (!userId || !/^[A-Za-z0-9_-]{1,64}$/.test(userId) || !email || !z.email().saf
   process.exit(1);
 }
 
-const url = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
-let db: Db;
-let close: () => Promise<void>;
-if (url) {
-  ({ db, close } = createNeonDb(url));
-} else {
-  const dataDir = path.join(import.meta.dirname, '..', '.data', 'pglite');
-  mkdirSync(dataDir, { recursive: true });
-  ({ db, close } = await createPgliteDb(dataDir));
-}
+const { db, close } = await openDb();
 try {
   const result = await adopt(db, userId, email);
   const messages: Record<AdoptResult, string> = {
