@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { after, before, test } from 'node:test';
 
-import { apiPath, swaggerHtml, swaggerTarget, withSwagger } from '../../apps/web/tools/swagger-route.mjs';
+import { apiPath, brandCss, swaggerHtml, swaggerTarget, withSwagger } from '../../apps/web/tools/swagger-route.mjs';
 
 const DIST = path.resolve('/srv/swagger-ui-dist');
 
@@ -27,6 +27,28 @@ test('leaves other paths alone and refuses to leave the dist folder', () => {
   assert.equal(swaggerTarget(DIST, '/swagger/%E0%A4%A'), null);
 });
 
+test('maps the brand stylesheet and brand fonts and logos, nothing else from the brand package', () => {
+  assert.deepEqual(swaggerTarget(DIST, '/swagger/brand.css'), { kind: 'theme' });
+  assert.deepEqual(swaggerTarget(DIST, '/swagger/brand/svg/mark.svg'), { kind: 'brand', file: 'svg/mark.svg' });
+  assert.deepEqual(swaggerTarget(DIST, '/swagger/brand/fonts/Archivo-ExtraBold.woff2'), {
+    kind: 'brand',
+    file: 'fonts/Archivo-ExtraBold.woff2',
+  });
+  // Anything else under /brand/ is not a brand file (it falls through to swagger-ui-dist).
+  assert.notEqual(swaggerTarget(DIST, '/swagger/brand/src/index.ts')?.kind, 'brand');
+  assert.notEqual(swaggerTarget(DIST, '/swagger/brand/fonts/..%2f..%2fpackage.json')?.kind, 'brand');
+});
+
+test('the brand stylesheet puts the tokens on :root and the brand fonts in @font-face', () => {
+  const css = brandCss(
+    { variables: { '--bg': 'black', '--glow': 'pink' }, fontFamily: { display: 'Display-Black' } },
+    'body { background: var(--bg); }'
+  );
+  assert.match(css, /:root \{\n {2}--bg: black;\n {2}--glow: pink;\n\}/);
+  assert.match(css, /font-family: 'Display-Black';\n {2}src: url\('\.\/brand\/fonts\/Display-Black\.woff2'\)/);
+  assert.match(css, /body \{ background: var\(--bg\); \}$/);
+});
+
 test('strips /api from proxied paths, keeping the query', () => {
   assert.equal(apiPath('/api/v1/health'), '/v1/health');
   assert.equal(apiPath('/api/v1/turf/cells?zoom=13'), '/v1/turf/cells?zoom=13');
@@ -43,6 +65,9 @@ test('the page loads Swagger UI with the spec next to it', () => {
   // routes are visible through their x-cityturfer-status extension.
   assert.match(html, /showExtensions: true/);
   assert.match(html, /docExpansion: 'list'/);
+  // Brand look: the stylesheet after Swagger UI's own, and the wordmark header.
+  assert.ok(html.indexOf('./brand.css') > html.indexOf('./swagger-ui.css'));
+  assert.match(html, /src="\.\/brand\/svg\/wordmark\.svg"/);
 });
 
 let dist;
@@ -60,6 +85,8 @@ before(async () => {
   await mkdir(dist, { recursive: true });
   await writeFile(path.join(dist, 'swagger-ui.css'), 'body{}');
   await writeFile(path.join(dist, 'openapi.json'), '{"openapi":"3.1.0"}');
+  await mkdir(path.join(dist, 'brand/svg'), { recursive: true });
+  await writeFile(path.join(dist, 'brand/svg/mark.svg'), '<svg/>');
 
   api = createServer((req, res) => {
     let body = '';
@@ -75,7 +102,14 @@ before(async () => {
     res.writeHead(200);
     res.end('next');
   };
-  site = createServer(withSwagger(next, { distRoot: dist, specFile: path.join(dist, 'openapi.json'), apiUrl }));
+  site = createServer(
+    withSwagger(next, {
+      distRoot: dist,
+      specFile: path.join(dist, 'openapi.json'),
+      apiUrl,
+      brand: { root: path.join(dist, 'brand'), variables: { '--bg': 'black' }, fontFamily: {} },
+    })
+  );
   siteUrl = await listen(site);
   // A site whose API isn't running (nothing listens on port 9).
   downSite = createServer(
@@ -103,6 +137,16 @@ test('redirects /swagger to /swagger/ and serves the page, spec and assets', asy
 
   const css = await fetch(`${siteUrl}/swagger/swagger-ui.css`);
   assert.match(css.headers.get('content-type'), /text\/css/);
+
+  const theme = await fetch(`${siteUrl}/swagger/brand.css`);
+  assert.match(theme.headers.get('content-type'), /text\/css/);
+  const themeCss = await theme.text();
+  assert.match(themeCss, /--bg: black;/);
+  assert.match(themeCss, /\.swagger-ui \.opblock/);
+
+  const logo = await fetch(`${siteUrl}/swagger/brand/svg/mark.svg`);
+  assert.match(logo.headers.get('content-type'), /image\/svg\+xml/);
+  assert.equal((await fetch(`${siteUrl}/swagger/brand/svg/missing.svg`)).status, 404);
 });
 
 test('proxies /api to the API with method, path, query and body', async () => {
