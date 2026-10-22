@@ -41,4 +41,14 @@ export type {
   StartSignInResult,
   VerifySignInResult,
 } from './application/use-cases';
+export {
+  type AccountFieldError,
+  accountFieldError,
+  DISPLAY_NAME_MAX,
+  displayName,
+  newEmail,
+  newPassword,
+  PASSWORD_MAX,
+  PASSWORD_MIN,
+} from './domain/account-fields';
 export { isLocalOnlyProfile, type User } from './domain/user';

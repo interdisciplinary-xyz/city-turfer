@@ -131,6 +131,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 
 `docs/decisions/` — Full write-ups of single decisions.
 
+- ✅ [`decisions/account-settings-2026-10-22.md`](decisions/account-settings-2026-10-22.md): Account
+  settings (contract 0.5.0) — change name, e-mail and an optional password; codes stay the default
+  sign-in and the recovery path; a fresh code to the current address before any sensitive change;
+  other sessions signed out and a security mail after an e-mail or password change
 - ✅ [`decisions/api-2026-10-20.md`](decisions/api-2026-10-20.md): v0.8.0 HTTP API — apps/api (Hono
   on Vercel, Frankfurt) exposing the app's existing use cases as /v1 routes, contract-first with zod
   → OpenAPI 3.1, documented with Swagger UI at cityturfer.local/swagger; the core logic now lives in
@@ -174,6 +178,11 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 
 `docs/plans/` — Plans for work not shipped yet.
 
+- ✅ [`plans/account-settings-2026-10-22.md`](plans/account-settings-2026-10-22.md): A complete
+  Account tab on the phone and on the web portal — change name, e-mail and password — over one set
+  of API routes and one set of rules in core; passwords as an optional second sign-in method beside
+  e-mailed codes (reverses A1, needs a decision), step-up codes, security mails, tests at every
+  layer
 - 🚧 [`plans/backend-plan-2026-10-22.md`](plans/backend-plan-2026-10-22.md): Plan for the first
   back-end release (opt-in backup, real accounts, restore to a new phone, delete account, export) —
   founder decisions of 2026-10-22, what feat/backend-sync built, and what is left before testers can
