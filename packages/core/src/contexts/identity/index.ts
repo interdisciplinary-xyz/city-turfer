@@ -5,6 +5,7 @@ import {
   DeleteAccount,
   GetCurrentUser,
   type IdentityDeps,
+  PendingSignIn,
   RequestDataExport,
   SignIn,
   SignOut,
@@ -13,13 +14,14 @@ import {
 } from './application/use-cases';
 
 export function createIdentityApi(deps: IdentityDeps, isRecording: () => Promise<boolean>) {
+  const pending = new PendingSignIn();
   return {
     /** Local profiles (mock admin, demo): email + password. */
     signIn: new SignIn(deps),
     /** Accounts: email → one-time code → (maybe) choose this phone's history. */
     startSignIn: new StartSignIn(deps),
-    verifyCode: new VerifySignInCode(deps),
-    chooseHistory: new ChooseHistory(deps),
+    verifyCode: new VerifySignInCode(deps, pending),
+    chooseHistory: new ChooseHistory(deps, pending),
     signOut: new SignOut(deps, isRecording),
     deleteAccount: new DeleteAccount(deps, isRecording),
     requestDataExport: new RequestDataExport(deps),

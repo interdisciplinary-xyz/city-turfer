@@ -161,6 +161,7 @@ describe('signing in with an email code', () => {
       email: 'founder@example.com',
     });
     expect(t.session()).toBeNull(); // nobody signed in until the Turfer answers
+    expect(t.credentials()).toBeNull(); // nor is the token kept before that
     expect(await t.api.chooseHistory.execute(true)).toMatchObject({
       kind: 'signed-in',
       user: { id: 'admin', accountId: 'u1' },
@@ -177,6 +178,11 @@ describe('signing in with an email code', () => {
     expect(await t.api.verifyCode.execute('founder@example.com', '000000')).toMatchObject({ user: { id: 'admin' } });
     await t.api.signOut.execute();
     expect(await t.api.verifyCode.execute('other@example.com', '000000')).toMatchObject({ user: { id: 'a-u2' } });
+  });
+
+  it('without a pending sign-in there is nothing to choose', async () => {
+    const t = setup({ adminHasHistory: true });
+    expect(await t.api.chooseHistory.execute(true)).toEqual({ kind: 'no-pending' });
   });
 
   it('no keeps the local history apart: the account gets a profile of its own', async () => {
@@ -233,6 +239,16 @@ describe('signing out and deleting the account', () => {
     expect(await t.api.verifyCode.execute('ola@example.com', '000000')).toMatchObject({
       user: { id: 'a-u1', accountId: 'u2' },
     });
+  });
+
+  it('delete answered 401 (session expired) changes nothing here and keeps the data', async () => {
+    const t = setup();
+    await t.api.verifyCode.execute('ola@example.com', '000000');
+    t.gateway.fail = { kind: 'auth' };
+    expect(await t.api.deleteAccount.execute(false)).toEqual({ kind: 'auth' });
+    expect(t.session()).toBe('a-u1');
+    expect(t.credentials()).not.toBeNull();
+    expect(t.profiles()?.entries).toHaveLength(1);
   });
 
   it('delete without keeping data forgets the profile; never during a recording', async () => {

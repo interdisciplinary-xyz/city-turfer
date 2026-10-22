@@ -1,10 +1,11 @@
 import { DomainError } from '../../../shared-kernel';
-import { type Account, type AccountProfileEntry, AccountProfiles, ADOPTABLE_PROFILE } from '../domain/account-profiles';
+import { type AccountProfileEntry, AccountProfiles, ADOPTABLE_PROFILE } from '../domain/account-profiles';
 import { type Email, email as parseEmail, type User, type UserId, userId } from '../domain/user';
 import type {
   AccountFailure,
   AccountGateway,
   AccountProfileStore,
+  AccountSession,
   AuthGateway,
   CredentialStore,
   ProfileHistory,
@@ -49,15 +50,25 @@ async function loadProfiles(a: AccountDeps): Promise<AccountProfiles> {
   return state ? AccountProfiles.rehydrate(state) : AccountProfiles.empty();
 }
 
-/** Links the account to the profile, remembers it, and signs that profile in. */
+/**
+ * A verified session waiting for the "use this phone's history?" answer. In memory only: the token
+ * reaches the keychain once a profile is chosen (killed meanwhile: sign in again).
+ */
+export class PendingSignIn {
+  session: AccountSession | null = null;
+}
+
+/** Keeps the session, links the account to the profile, remembers it, and signs that profile in. */
 async function enterProfile(
   d: IdentityDeps,
   a: AccountDeps,
   profiles: AccountProfiles,
-  account: Account,
+  session: AccountSession,
   profileId: UserId
 ): Promise<User> {
+  const account = session.account;
   profiles.link(account, profileId);
+  await a.credentials.save(session);
   await a.profiles.write(profiles.toState());
   await d.sessions.write(profileId);
   return userOf(profiles.current!);
@@ -123,7 +134,10 @@ export type VerifySignInResult =
  * history is unclaimed, asks first.
  */
 export class VerifySignInCode {
-  constructor(private readonly d: IdentityDeps) {}
+  constructor(
+    private readonly d: IdentityDeps,
+    private readonly pending: PendingSignIn
+  ) {}
   async execute(rawEmail: string, rawCode: string): Promise<VerifySignInResult> {
     const a = this.d.accounts;
     if (!a) {
@@ -142,15 +156,16 @@ export class VerifySignInCode {
       return r;
     }
     const { account } = r.session;
-    await a.credentials.save(r.session);
+    this.pending.session = null;
     const profiles = await loadProfiles(a);
     const placement = profiles.knownProfile(account)
       ? profiles.placementFor(account, false)
       : profiles.placementFor(account, await a.history.hasActivities(userId(ADOPTABLE_PROFILE)));
     if (placement.kind === 'ask') {
+      this.pending.session = r.session;
       return { kind: 'choose-history', email: account.email };
     }
-    return { kind: 'signed-in', user: await enterProfile(this.d, a, profiles, account, placement.profileId) };
+    return { kind: 'signed-in', user: await enterProfile(this.d, a, profiles, r.session, placement.profileId) };
   }
 }
 
@@ -159,16 +174,20 @@ export class VerifySignInCode {
  * history (no copy: the same database), no gives the account a profile of its own.
  */
 export class ChooseHistory {
-  constructor(private readonly d: IdentityDeps) {}
+  constructor(
+    private readonly d: IdentityDeps,
+    private readonly pending: PendingSignIn
+  ) {}
   async execute(useThisPhonesHistory: boolean): Promise<{ kind: 'signed-in'; user: User } | { kind: 'no-pending' }> {
     const a = this.d.accounts;
-    const session = a ? await a.credentials.read() : null;
+    const session = this.pending.session;
     if (!a || !session) {
       return { kind: 'no-pending' };
     }
+    this.pending.session = null;
     const profiles = await loadProfiles(a);
     const profileId = profiles.chosenProfile(session.account, useThisPhonesHistory);
-    return { kind: 'signed-in', user: await enterProfile(this.d, a, profiles, session.account, profileId) };
+    return { kind: 'signed-in', user: await enterProfile(this.d, a, profiles, session, profileId) };
   }
 }
 
@@ -270,10 +289,11 @@ export class DeleteAccount {
       return { kind: 'recording-in-progress' };
     }
     const r = await a.gateway.deleteAccount(session.token);
-    if (r.kind !== 'deleted' && r.kind !== 'auth') {
-      return r; // offline or failed: nothing changed here, try again
+    if (r.kind !== 'deleted') {
+      // Offline, failed, or 401 (the session expired: sign in again first). Nothing changes here,
+      // and this phone's data is never deleted on an answer that doesn't say the account is gone.
+      return r;
     }
-    // 401: the account (or this session) is already gone on the server: forget it here too.
     const profiles = await loadProfiles(a);
     const profileId = profiles.profileOf(session.account.id);
     profiles.accountDeleted(session.account.id, keepData);
