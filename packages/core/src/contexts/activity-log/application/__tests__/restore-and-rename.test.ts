@@ -1,5 +1,6 @@
 import { DomainError, type TrackPoint } from '../../../../shared-kernel';
 import type { ActivityArchive } from '../../contract';
+import { activityNameProblem } from '../../domain/activity';
 import { InMemoryActivityRepository } from '../../test-support/in-memory-activity-repository';
 import {
   ActivityArchiveQuery,
@@ -103,6 +104,17 @@ describe('RenameActivity', () => {
     expect(t.activities.events).toEqual([]);
     await expect(new RenameActivity(t.deps).execute('a', '   ')).rejects.toThrow(DomainError);
     await expect(new RenameActivity(t.deps).execute('a', 'x'.repeat(81))).rejects.toThrow('activity.invalid-name');
+  });
+
+  it('says why a name is refused, by the same rule the rename applies (for the rename form)', async () => {
+    expect(activityNameProblem('   ')).toBe('empty');
+    expect(activityNameProblem('x'.repeat(81))).toBe('too-long');
+    expect(activityNameProblem(` ${'x'.repeat(80)} `)).toBeNull(); // trimmed first
+    expect(activityNameProblem('Hill repeats')).toBeNull();
+    const t = setup();
+    await new ImportActivity(t.deps).execute({ id: 'a', type: 'walk', points: line(T0, 3) });
+    await new RenameActivity(t.deps).execute('a', ` ${'y'.repeat(80)} `);
+    expect((await t.activities.get('a'))!.toState().name).toBe('y'.repeat(80));
   });
 });
 

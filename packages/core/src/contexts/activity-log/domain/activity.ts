@@ -46,14 +46,26 @@ export interface ActivityState {
 
 type ActivityEvent = ActivityRecorded | ActivityDeleted | ActivityTrackCorrected | ActivityRenamed;
 
-const MAX_NAME_LENGTH = 80;
+/** Longest Activity name, in UTF-16 code units after trimming (the server checks the same). */
+export const ACTIVITY_NAME_MAX_LENGTH = 80;
+
+/**
+ * What is wrong with a proposed Activity name, or null when it is fine: names are trimmed, and must
+ * be 1–80 characters. Exposed so a rename form can say why before it calls RenameActivity.
+ */
+export function activityNameProblem(name: string): 'empty' | 'too-long' | null {
+  const trimmed = name.trim();
+  if (!trimmed) {
+    return 'empty';
+  }
+  return trimmed.length > ACTIVITY_NAME_MAX_LENGTH ? 'too-long' : null;
+}
 
 function validName(name: string): string {
-  const trimmed = name.trim();
-  if (!trimmed || trimmed.length > MAX_NAME_LENGTH) {
+  if (activityNameProblem(name) != null) {
     throw new DomainError('activity.invalid-name');
   }
-  return trimmed;
+  return name.trim();
 }
 
 /** An IANA zone as reported by the phone (1–64 characters), or null. */

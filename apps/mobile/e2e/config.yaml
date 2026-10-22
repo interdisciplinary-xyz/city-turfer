@@ -12,6 +12,7 @@ executionOrder:
     - 05-history-detail
     - 06-turf-map
     - 07-delete-activity
+    - 14-rename-activity
     - 09-me-menu
     - 10-dashboard
     - 11-apple-health
