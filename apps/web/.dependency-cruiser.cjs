@@ -1,6 +1,7 @@
-// The public/portal boundary of apps/web (`web-portal` skill): marketing code (the landing page,
-// the root and shared layouts, i18n) never reaches the portal, its API client or its libraries, so
-// a signed-out visitor never downloads them. Runs in `pnpm test` / `turbo run arch`.
+// The public/portal boundary of apps/web (docs/decisions/web-portal-2026-10-22.md): marketing code
+// (the landing page, the root and shared layouts, i18n) never reaches the portal, its API client or
+// its libraries, so a signed-out visitor never downloads them. Runs in `pnpm test` / `turbo run arch`.
+// Negative control: tools/__tests__/dependency-cruiser.test.mjs.
 const portal = '^src/app/\\[locale\\]/account/';
 const portalLibraries = '(^|/)node_modules/(@tanstack/[^/]+|openapi-fetch|maplibre-gl)/';
 const notPortal = '^src/(app/\\[locale\\]/account/|api/)';
@@ -45,9 +46,16 @@ module.exports = {
     {
       name: 'portal-no-gsap',
       severity: 'error',
-      comment: 'No GSAP or hero motion on portal pages (web-portal skill).',
+      comment: 'No GSAP or hero motion on portal pages (docs/decisions/web-portal-2026-10-22.md).',
       from: { path: notPortal },
       to: { path: '(^|/)node_modules/(gsap|@gsap/[^/]+)/|^src/app/\\[locale\\]/hero-motion/hero-motion\\.tsx$' },
+    },
+    {
+      name: 'not-to-unresolvable',
+      severity: 'error',
+      comment: 'Every import resolves: an unresolved one (a workspace package, a typo) slips past the rules above.',
+      from: {},
+      to: { couldNotResolve: true },
     },
     { name: 'no-circular', severity: 'error', from: {}, to: { circular: true } },
   ],
@@ -55,6 +63,9 @@ module.exports = {
     doNotFollow: { path: 'node_modules' },
     tsConfig: { fileName: 'tsconfig.json' },
     tsPreCompilationDeps: true,
+    // Resolve workspace packages through package.json "exports" (@cityturfer/brand,
+    // @interdisciplinary/dev-toolbar/<entry>, @cityturfer/core/h3), as apps/mobile does.
+    enhancedResolveOptions: { exportsFields: ['exports'], conditionNames: ['import', 'require', 'node', 'default'] },
     exclude: { path: '(^|/)__tests__/|\\.test\\.ts$' },
   },
 };

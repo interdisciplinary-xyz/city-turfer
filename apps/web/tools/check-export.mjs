@@ -1,12 +1,15 @@
 #!/usr/bin/env node
-// Checks the static export (apps/web/out) keeps the public/portal boundary (`web-portal` skill):
+// Checks the static export (apps/web/out) keeps the public/portal boundary
+// (docs/decisions/web-portal-2026-10-22.md):
 // - the landing pages (/en, /pl) load no chunk with the API client, TanStack Query, openapi-fetch,
-//   maplibre-gl or portal code, carry no portal copy and no /api/v1 call;
+//   maplibre-gl or portal code, carry no portal copy and no /api/v1 call (in the HTML, a chunk or
+//   the RSC payloads the language switcher fetches: <locale>.txt, <locale>/__next.*.txt);
 // - every portal page is noindex, nofollow and loads no GSAP chunk;
 // - the sitemap lists no portal page.
 // Runs after every `next build` (package.json "build"); exits 1 with the findings.
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 /** Strings that only the portal's bundles contain (also checked to be present there: a positive control). */
 export const PORTAL_MARKERS = [
@@ -22,11 +25,20 @@ export const PORTAL_COPY_MARKER = 'sharedComputerHint';
 /** GSAP's own banner and warnings. */
 export const GSAP_MARKERS = ['GreenSock', 'gsap.registerPlugin'];
 
-const CHUNK = /\/_next\/static\/(?:immutable\/)?chunks\/[A-Za-z0-9_~.-]+?\.(?:js|css)/g;
+// Flat (Turbopack) and nested, percent-encoded (webpack: app/%5Blocale%5D/page-….js) chunk paths.
+const CHUNK = /\/_next\/static\/(?:immutable\/)?chunks\/[^"'\s\\)]+?\.(?:js|css)/g;
 
 /** Every chunk a page references, in its HTML (script tags, preloads and the inline RSC payload). */
 export function chunksOf(html) {
   return [...new Set(html.match(CHUNK) ?? [])];
+}
+
+function decoded(ref) {
+  try {
+    return decodeURIComponent(ref);
+  } catch {
+    return ref;
+  }
 }
 
 function walk(dir) {
@@ -48,6 +60,20 @@ export function portalPages(outDir, locales) {
   });
 }
 
+/** The landing page's soft-navigation RSC payloads: out/<locale>.txt and out/<locale>/__next.*.txt. */
+export function landingPayloads(outDir, locale) {
+  const top = path.join(outDir, `${locale}.txt`);
+  const below = path.join(outDir, locale);
+  return [
+    ...(existsSync(top) ? [top] : []),
+    ...(existsSync(below)
+      ? readdirSync(below)
+          .filter((name) => /^__next\..*\.txt$/.test(name))
+          .map((name) => path.join(below, name))
+      : []),
+  ];
+}
+
 /** Returns a list of findings (empty = the boundary holds). */
 export function checkExport(outDir, { locales = ['en', 'pl'], nextDir = path.join(outDir, '..', '.next') } = {}) {
   const findings = [];
@@ -55,8 +81,10 @@ export function checkExport(outDir, { locales = ['en', 'pl'], nextDir = path.joi
   const missing = new Set();
   // A chunk is read from the export, else from Next's build folder (Vercel's build step can move
   // out/_next away). A chunk found in neither is a finding: reading it as empty would pass silently.
+  // The URL is percent-encoded (%5Blocale%5D); the file on disk is not ([locale]).
   const chunk = (ref) => {
-    const candidates = [path.join(outDir, ref), path.join(nextDir, ref.replace(/^\/_next\//, ''))];
+    const refs = [...new Set([ref, decoded(ref)])];
+    const candidates = refs.flatMap((r) => [path.join(outDir, r), path.join(nextDir, r.replace(/^\/_next\//, ''))]);
     const file = candidates.find((candidate) => existsSync(candidate));
     if (!file) {
       if (!missing.has(ref)) {
@@ -82,6 +110,15 @@ export function checkExport(outDir, { locales = ['en', 'pl'], nextDir = path.joi
     if (html.includes('/api/v1')) {
       findings.push(`${locale}.html mentions /api/v1`);
     }
+    for (const payload of landingPayloads(outDir, locale)) {
+      const text = read(payload);
+      if (text.includes(PORTAL_COPY_MARKER)) {
+        findings.push(`${rel(payload)} carries portal copy`);
+      }
+      if (text.includes('/api/v1')) {
+        findings.push(`${rel(payload)} mentions /api/v1`);
+      }
+    }
     if (chunksOf(html).length === 0) {
       findings.push(`${rel(file)} references no chunks: the check would see nothing`);
     }
@@ -91,6 +128,9 @@ export function checkExport(outDir, { locales = ['en', 'pl'], nextDir = path.joi
         if (body.includes(marker)) {
           findings.push(`${locale}.html loads ${ref}, which contains portal code (${marker})`);
         }
+      }
+      if (body.includes('/api/v1')) {
+        findings.push(`${locale}.html loads ${ref}, which mentions /api/v1`);
       }
     }
   }
@@ -157,7 +197,14 @@ export function checkExport(outDir, { locales = ['en', 'pl'], nextDir = path.joi
   return findings;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+/** True when Node runs this file as the script. Compares real paths as file URLs: argv[1] is neither
+ * realpath'd nor percent-encoded, so a symlinked checkout or a path with a space would otherwise
+ * skip the check and exit 0 (tools/__tests__/check-export.test.mjs spawns it both ways). */
+function isMain() {
+  return Boolean(process.argv[1]) && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href;
+}
+
+if (isMain()) {
   const outDir = path.resolve(import.meta.dirname, '../out');
   const findings = checkExport(outDir);
   if (findings.length > 0) {
