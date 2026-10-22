@@ -36,6 +36,7 @@ export type {
   AccountDeps,
   DeleteAccountResult,
   IdentityDeps,
+  SignInResult,
   SignOutResult,
   StartSignInResult,
   VerifySignInResult,

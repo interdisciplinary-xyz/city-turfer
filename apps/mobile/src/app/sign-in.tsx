@@ -93,8 +93,11 @@ export default function SignIn() {
 
   const submitPassword = () =>
     busyWhile(async () => {
-      if ((await signIn(email, password)) === 'invalid') {
+      const r = await signIn(email, password);
+      if (r === 'invalid') {
         setError('Wrong email or password.');
+      } else if (r === 'linked-to-account') {
+        setError('This phone’s history now belongs to your CityTurfer account. Sign in with that account’s email.');
       }
     });
 

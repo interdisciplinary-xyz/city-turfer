@@ -61,6 +61,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       dataVersion,
       async signIn(email, password) {
         const r = await identity.signIn.execute(email, password);
+        if (r.kind === 'linked-to-account') {
+          return 'linked-to-account';
+        }
         if (r.kind !== 'signed-in') {
           return 'invalid';
         }
@@ -99,8 +102,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (r.kind !== 'deleted') {
           return r;
         }
+        // The account is gone: always signed out here, whichever profile held its data.
         await resetContainer();
-        if (!keepData) {
+        if (!keepData && r.profileId) {
           await deleteProfileData(r.profileId).catch(() => undefined);
         }
         setAuth({ status: 'signed-out' });

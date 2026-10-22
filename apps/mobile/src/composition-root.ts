@@ -64,16 +64,26 @@ async function profileHasActivities(profileId: string): Promise<boolean> {
     const c = await current.promise.catch(() => null);
     return c ? (await c.activityLog.list.execute(1)).length > 0 : false;
   }
-  const db = await openExpoDatabase(databaseName(profileId)).catch(() => null);
+  // expo-sqlite has no "does it exist" nor read-only open, and expo-file-system is not a dependency
+  // of the app (adding it changes the runtime fingerprint). So: open, and if the file holds no
+  // tables at all it was never used (this probe just created it): delete it again, so asking
+  // leaves no empty database behind.
+  const name = databaseName(profileId);
+  const db = await openExpoDatabase(name).catch(() => null);
   if (!db) {
     return false;
   }
+  let unused = false;
   try {
-    return (await db.first<{ n: number }>('SELECT COUNT(*) AS n FROM log_activities'))!.n > 0;
+    unused = (await db.first<{ n: number }>('SELECT COUNT(*) AS n FROM sqlite_master'))!.n === 0;
+    return !unused && (await db.first<{ n: number }>('SELECT COUNT(*) AS n FROM log_activities'))!.n > 0;
   } catch {
-    return false; // never opened before: no tables
+    return false; // not migrated that far: no activities
   } finally {
     await db.close().catch(() => undefined);
+    if (unused) {
+      await deleteExpoDatabase(name).catch(() => undefined);
+    }
   }
 }
 

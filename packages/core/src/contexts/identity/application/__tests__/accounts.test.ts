@@ -13,10 +13,16 @@ import type {
 
 const ADMIN: User = { id: userId('admin'), email: 'admin@cityturfer.com', displayName: 'Admin' };
 
+const DEMO: User = { id: userId('demo'), email: 'demo@cityturfer.com', displayName: 'Ola' };
+
 const localAuth: AuthGateway = {
   signIn: async (e, p) =>
-    e.value === ADMIN.email && p === 'admin1234' ? { kind: 'signed-in', user: ADMIN } : { kind: 'invalid-credentials' },
-  userById: async (id) => (id === 'admin' ? ADMIN : null),
+    e.value === ADMIN.email && p === 'admin1234'
+      ? { kind: 'signed-in', user: ADMIN }
+      : e.value === DEMO.email && p === 'demo1234'
+        ? { kind: 'signed-in', user: DEMO }
+        : { kind: 'invalid-credentials' },
+  userById: async (id) => (id === 'admin' ? ADMIN : id === 'demo' ? DEMO : null),
   hasLocalAccount: (e) => e.value === ADMIN.email || e.value === 'demo@cityturfer.com',
 };
 
@@ -71,10 +77,10 @@ class FakeAccounts implements AccountGateway {
   }
 }
 
-function setup(opts: { adminHasHistory?: boolean } = {}) {
+function setup(opts: { adminHasHistory?: boolean; profiles?: ReturnType<AccountProfiles['toState']> } = {}) {
   let session: UserId | null = null;
   let credentials: AccountSession | null = null;
-  let profiles: ReturnType<AccountProfiles['toState']> | null = null;
+  let profiles: ReturnType<AccountProfiles['toState']> | null = opts.profiles ?? null;
   let recording = false;
   const sessions: SessionStore = {
     read: async () => session,
@@ -118,6 +124,8 @@ function setup(opts: { adminHasHistory?: boolean } = {}) {
     credentials: () => credentials,
     profiles: () => profiles,
     setRecording: (r: boolean) => void (recording = r),
+    /** Simulates a lost write of the profile map (e.g. the keychain failed mid sign-in). */
+    forgetProfiles: () => void (profiles = null),
   };
 }
 
@@ -210,6 +218,58 @@ describe('signing in with an email code', () => {
   });
 });
 
+describe('the mock password after an account adopted the local history', () => {
+  async function adopted() {
+    const t = setup({ adminHasHistory: true });
+    await t.api.verifyCode.execute('founder@example.com', '000000');
+    await t.api.chooseHistory.execute(true);
+    await t.api.signOut.execute();
+    return t;
+  }
+
+  it('no longer opens the adopted profile: only the account’s own sign-in does', async () => {
+    const t = await adopted();
+    expect(await t.api.signIn.execute('admin@cityturfer.com', 'admin1234')).toEqual({ kind: 'linked-to-account' });
+    expect(t.session()).toBeNull();
+    expect(await t.api.currentUser.execute()).toBeNull();
+    expect(await t.api.verifyCode.execute('founder@example.com', '000000')).toMatchObject({
+      kind: 'signed-in',
+      user: { id: 'admin', accountId: 'u1' },
+    });
+  });
+
+  it('nor once the account is deleted with its data kept here; deleting the data frees it again', async () => {
+    const t = await adopted();
+    await t.api.verifyCode.execute('founder@example.com', '000000');
+    await t.api.deleteAccount.execute(true);
+    expect(await t.api.signIn.execute('admin@cityturfer.com', 'admin1234')).toEqual({ kind: 'linked-to-account' });
+
+    const u = await adopted();
+    await u.api.verifyCode.execute('founder@example.com', '000000');
+    expect(await u.api.deleteAccount.execute(false)).toEqual({ kind: 'deleted', profileId: 'admin' });
+    expect(await u.api.signIn.execute('admin@cityturfer.com', 'admin1234')).toMatchObject({ kind: 'signed-in' });
+  });
+
+  it('keeps the demo account and a wrong password as they were', async () => {
+    const t = await adopted();
+    expect(await t.api.signIn.execute('demo@cityturfer.com', 'demo1234')).toMatchObject({
+      kind: 'signed-in',
+      user: { id: 'demo' },
+    });
+    expect(t.session()).toBe('demo');
+    await t.api.signOut.execute();
+    expect(await t.api.signIn.execute('admin@cityturfer.com', 'nope')).toEqual({ kind: 'invalid-credentials' });
+  });
+
+  it('“Keep apart” leaves the admin password working', async () => {
+    const t = setup({ adminHasHistory: true });
+    await t.api.verifyCode.execute('ola@example.com', '000000');
+    await t.api.chooseHistory.execute(false);
+    await t.api.signOut.execute();
+    expect(await t.api.signIn.execute('admin@cityturfer.com', 'admin1234')).toMatchObject({ kind: 'signed-in' });
+  });
+});
+
 describe('signing out and deleting the account', () => {
   it('sign-out revokes the session (offline: still signs out) and forgets the token', async () => {
     const t = setup();
@@ -260,6 +320,26 @@ describe('signing out and deleting the account', () => {
     expect(await t.api.deleteAccount.execute(false)).toEqual({ kind: 'deleted', profileId: 'a-u1' });
     expect(t.profiles()?.entries).toEqual([]);
     expect(await t.api.verifyCode.execute('ola@example.com', '000000')).toMatchObject({ user: { id: 'a-u2' } });
+  });
+
+  it('delete with no profile entry for the account still signs out and names the signed-in profile', async () => {
+    const t = setup();
+    await t.api.verifyCode.execute('ola@example.com', '000000');
+    t.forgetProfiles();
+    expect(await t.api.deleteAccount.execute(false)).toEqual({ kind: 'deleted', profileId: 'a-u1' });
+    expect(t.gateway.deleted).toHaveLength(1);
+    expect(t.session()).toBeNull();
+    expect(t.credentials()).toBeNull();
+  });
+
+  it('delete never names a local-only or another account’s profile as the one to forget', () => {
+    const p = AccountProfiles.empty();
+    p.link({ id: 'u1', email: 'a@b.cd' }, userId('admin'));
+    expect(p.profileForDeletion('u1', userId('demo'))).toBe('admin');
+    expect(p.profileForDeletion('u2', userId('admin'))).toBeNull();
+    expect(p.profileForDeletion('u2', userId('demo'))).toBeNull();
+    expect(p.profileForDeletion('u2', null)).toBeNull();
+    expect(p.profileForDeletion('u2', userId('a-u2'))).toBe('a-u2');
   });
 
   it('export: asks the server to email a link; needs an account', async () => {
