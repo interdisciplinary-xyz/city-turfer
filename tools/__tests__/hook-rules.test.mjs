@@ -332,7 +332,7 @@ test('shell parsing: quotes, heredocs, operators, redirections and wrappers', ()
 
 test('wrappers and global options do not hide a push to main', () => {
   for (const cmd of [
-    'git -c core.hooksPath=/dev/null push origin main',
+    'git -c color.ui=never push origin main',
     'git -C apps/mobile --no-pager push origin main',
     '(git push origin main)',
     'bash -c "git push origin main"',
@@ -376,6 +376,37 @@ test('no-verify: flag clusters count, the commit message does not; push --no-ver
   assert.deepEqual(bashFindings('git commit -mnote', CTX), []);
   assert.deepEqual(bashFindings('git commit -am "x" --author "n <n@x>"', CTX), []);
   assert.deepEqual(bashFindings('git push -n origin feat/territory', CTX), []); // -n is --dry-run for push
+});
+
+test('no-verify: HUSKY=0 and core.hooksPath switch the hooks off too', () => {
+  for (const cmd of [
+    'HUSKY=0 git commit -m x',
+    'HUSKY=0 git push origin feat/territory',
+    'env HUSKY=0 git merge scope/v0.8.0',
+    'export HUSKY=0; git commit -m x',
+    'export HUSKY=0 && git commit -m x',
+    'bash -c "HUSKY=0 git commit -m x"',
+    'git -c core.hooksPath=/dev/null commit -m x',
+    'git -c core.hookspath= push origin feat/territory',
+    'git --config-env=core.hooksPath=EMPTY commit -m x',
+    'GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null git commit -m x',
+    'git config core.hooksPath /dev/null',
+    'git config --unset core.hooksPath',
+    'git config set core.hooksPath /tmp/none',
+  ]) {
+    assert.deepEqual(rules(bashFindings(cmd, CTX)), ['no-verify'], cmd);
+  }
+  assert.deepEqual(rules(bashFindings('git -c core.hooksPath=/dev/null push origin main', CTX)), [
+    'no-verify',
+    'push-main',
+  ]);
+  // false positives: other env and config, reading hooksPath, HUSKY on other commands
+  assert.deepEqual(bashFindings('HUSKY=1 git commit -m x', CTX), []);
+  assert.deepEqual(bashFindings('GIT_TRACE=1 git commit -m "HUSKY=0 is denied"', CTX), []);
+  assert.deepEqual(bashFindings('git -c user.name=x commit -m x', CTX), []);
+  assert.deepEqual(bashFindings('git config core.hooksPath', CTX), []);
+  assert.deepEqual(bashFindings('git config --get core.hooksPath', CTX), []);
+  assert.deepEqual(bashFindings('HUSKY=0 pnpm install', CTX), []);
 });
 
 test('integration branches are never deleted, locally or on the remote', () => {

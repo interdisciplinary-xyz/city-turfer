@@ -316,7 +316,8 @@ const WRAPPERS = {
 /**
  * Commands plus the redirections between them. `redirects` holds `{ op, target }` for every `>`,
  * `>>`, `&>` or `<` with a file target (`2>&1` has none), including those inside `bash -c '…'`.
- * @returns {{ commands: string[][], redirects: { op: string, target: string }[] }}
+ * `assignments` holds every `NAME=value` the line sets (prefix, `env` or `export`).
+ * @returns {{ commands: string[][], redirects: { op: string, target: string }[], assignments: string[] }}
  */
 export function parseShell(line) {
   const commands = [];
@@ -486,9 +487,16 @@ export function parseShell(line) {
   // command (`command`/`exec`/`env`/`sudo`/`nohup`/`time`/`timeout`/`nice`/`xargs`), `{` groups,
   // and `bash -c '…'` / `eval '…'` (their string is parsed as commands of its own).
   const out = [];
+  const assignments = [];
   for (let w of commands) {
+    if (['export', 'declare', 'typeset', 'readonly'].includes(w[0])) {
+      assignments.push(...w.slice(1).filter((x) => /^[A-Za-z_]\w*=/.test(x)));
+    }
     for (;;) {
       while (w.length && (/^[A-Za-z_]\w*=/.test(w[0]) || UNWRAP_KEYWORDS.has(w[0]))) {
+        if (/^[A-Za-z_]\w*=/.test(w[0])) {
+          assignments.push(w[0]); // `HUSKY=0 git commit` still matters to the no-verify rule
+        }
         w = w.slice(1);
       }
       const wrapper = WRAPPERS[w[0]?.replace(/^.*\//, '')];
@@ -519,11 +527,12 @@ export function parseShell(line) {
       const parsed = parseShell(inner);
       out.push(...parsed.commands);
       redirects.push(...parsed.redirects);
+      assignments.push(...parsed.assignments);
       continue;
     }
     out.push(w);
   }
-  return { commands: out, redirects };
+  return { commands: out, redirects, assignments };
 }
 
 /** @deprecated kept for callers that only need the command strings */
@@ -537,10 +546,16 @@ function gitCall(words) {
     return null;
   }
   let k = 1;
+  const config = [];
   while (k < words.length && words[k].startsWith('-')) {
+    if (words[k] === '-c') {
+      config.push(words[k + 1] ?? '');
+    } else if (words[k].startsWith('--config-env=')) {
+      config.push(words[k].slice('--config-env='.length));
+    }
     k += ['-C', '-c', '--git-dir', '--work-tree', '--namespace', '--exec-path'].includes(words[k]) ? 2 : 1;
   }
-  return k < words.length ? { sub: words[k], args: words.slice(k + 1) } : null;
+  return k < words.length ? { sub: words[k], args: words.slice(k + 1), config } : null;
 }
 
 /** Positional arguments and flags, skipping the values of the given value-taking options. */
@@ -668,6 +683,23 @@ const COMMIT_VALUE_OPTIONS = [
   '--fixup',
   '--squash',
 ];
+/** Env settings that switch the git hooks off (husky's `HUSKY=0`, a config override of hooksPath). */
+const HOOKS_OFF_ENV = /^HUSKY=0$|^GIT_CONFIG_KEY_\d+=core\.hookspath$|^GIT_CONFIG_PARAMETERS=.*core\.hookspath/i;
+
+/** `git config …` that writes or unsets core.hooksPath (reading it is fine). */
+function configSetsHooksPath(args) {
+  const key = args.findIndex((a) => /^core\.hookspath$/i.test(a));
+  if (key < 0) {
+    return false;
+  }
+  if (args.some((a) => /^(--get.*|-l|--list|--show-.*)$/.test(a)) || ['get', 'list'].includes(args[0])) {
+    return false;
+  }
+  const writesByFlag = args.some((a) => /^--(unset|unset-all|add|replace-all)$/.test(a));
+  const value = args.slice(key + 1).some((a) => !a.startsWith('-'));
+  return writesByFlag || value || ['set', 'unset'].includes(args[0]);
+}
+
 const PUSH_VALUE_OPTIONS = ['-o', '--push-option', '--repo', '--receive-pack', '--exec'];
 const RELEASE_DRY_RUN = (words) => words.includes('--dry-run');
 
@@ -681,8 +713,27 @@ export function bashFindings(line, ctx = {}) {
   const deny = (rule, message) => out.push({ decision: 'deny', rule, message });
   const ask = (rule, message) => out.push({ decision: 'ask', rule, message });
 
-  for (const words of shellCommands(line)) {
+  const { commands, assignments } = parseShell(line);
+  const hooksOffByEnv = assignments.some((a) => HOOKS_OFF_ENV.test(a));
+  for (const words of commands) {
     const git = gitCall(words);
+
+    // Hooks turned off without --no-verify: HUSKY=0, `-c core.hooksPath=…`, GIT_CONFIG_* env.
+    if (
+      ['commit', 'push', 'merge'].includes(git?.sub) &&
+      (hooksOffByEnv || git.config.some((c) => /^core\.hookspath=/i.test(c)))
+    ) {
+      deny(
+        'no-verify',
+        `HUSKY=0 or core.hooksPath on git ${git.sub} turns off the git hooks (secret-file guard, commitlint, pre-push gate) just like --no-verify. Fix the failing hook instead.`
+      );
+    }
+    if (git?.sub === 'config' && configSetsHooksPath(git.args)) {
+      deny(
+        'no-verify',
+        'Changing core.hooksPath turns off the husky hooks for every later commit and push. Leave it as husky set it (`pnpm install` runs `husky`).'
+      );
+    }
 
     if (git?.sub === 'commit') {
       const { flags } = splitArgs(git.args, COMMIT_VALUE_OPTIONS);
