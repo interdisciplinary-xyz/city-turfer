@@ -19,7 +19,8 @@ const config: StorybookConfig = {
   staticDirs: [
     '../../web/public',
     { from: '../../../packages/brand/svg', to: '/brand' },
-    // Archivo woff2 files for the @font-face rules in preview-head.html.
+    // Brand woff2 files (Big Shoulders Display, Barlow Semi Condensed, Barlow) for the @font-face
+    // rules in preview-head.html and manager-head.html.
     { from: '../../../packages/brand/fonts', to: '/fonts' },
   ],
   core: { disableTelemetry: true },
