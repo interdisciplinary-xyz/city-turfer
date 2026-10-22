@@ -46,6 +46,9 @@ export const ERROR_TEXT: Record<BackupErrorCode, string> = {
   'not-available': 'The demo account stays on this phone: it is never backed up.',
 };
 
+/** "Back up now" while a restore is bringing the backup back: the run waits for it. */
+export const WAITING_FOR_RESTORE = 'Restoring your backup first. Backing up carries on once it has finished.';
+
 /** Domain error codes of the card's actions, in plain words. */
 export const ACTION_ERRORS: Record<string, string> = {
   'backup.invalid-token': "That doesn't look like a device token. Paste it again.",

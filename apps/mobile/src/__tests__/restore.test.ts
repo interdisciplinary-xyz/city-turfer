@@ -321,8 +321,8 @@ describe('Restore from the cloud backup', () => {
     expect(a.server.calls('deleteActivity')).toEqual([]);
   });
 
-  it('backup waits while a restore is interrupted, and never deletes what is still to restore', async () => {
-    const { a } = await backedUpPhoneA();
+  it('an interrupted restore never holds up backups, and they never delete what is still to restore', async () => {
+    const { a, c: phoneA } = await backedUpPhoneA();
     const { b, c } = await newPhone(a);
     let copies = 0;
     a.server.onRequest = (r) => {
@@ -334,11 +334,30 @@ describe('Restore from the cloud backup', () => {
     a.server.onRequest = null;
     const relaunched = await b.container();
     await relaunched.cloudBackup.enable.execute();
-    expect(await relaunched.cloudBackup.run.execute()).toEqual({ kind: 'skipped', reason: 'busy' });
+    // A walk recorded before the restore is resumed (the Turfer said "Not now" to the offer).
+    await relaunched.add('rec-new', walk(14));
+    expect(await relaunched.cloudBackup.restoreOffer.execute()).toMatchObject({ kind: 'resume' });
+    const uploads = a.server.uploads().length;
+    expect(await relaunched.cloudBackup.run.execute()).toMatchObject({ kind: 'done', report: { error: null } });
+    expect(a.server.uploads().slice(uploads)).toEqual(['rec-new']);
     expect(a.server.calls('deleteActivity')).toEqual([]);
     expect(await relaunched.cloudBackup.restore.execute()).toMatchObject({ kind: 'done' });
+    await relaunched.dispatcher.dispatchPending();
     await relaunched.cloudBackup.run.execute();
     expect(a.server.calls('deleteActivity')).toEqual([]);
+    expect(a.server.uploads().slice(uploads)).toEqual(['rec-new']); // nothing restored goes back up
+    const ids = (await relaunched.activityLog.list.execute(100)).map((x) => x.id).sort();
+    expect(ids).toEqual([...(await snapshot(phoneA)).activities.map((x) => x.id), 'rec-new'].sort());
+  });
+
+  it('backup skips as busy only while a restore is running right now', async () => {
+    const { a } = await backedUpPhoneA();
+    const { c } = await newPhone(a);
+    await c.cloudBackup.enable.execute();
+    const restoring = c.cloudBackup.restore.execute();
+    expect(await c.cloudBackup.run.execute()).toEqual({ kind: 'skipped', reason: 'busy' });
+    expect(await restoring).toMatchObject({ kind: 'done', restored: 4 });
+    expect(await c.cloudBackup.run.execute()).toMatchObject({ kind: 'done', report: { error: null } });
   });
 
   it('a Home City this version does not know is skipped; the restore still finishes', async () => {

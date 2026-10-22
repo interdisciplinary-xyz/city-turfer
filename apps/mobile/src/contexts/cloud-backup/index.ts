@@ -14,7 +14,7 @@ import {
 } from './application/settings-use-cases';
 
 export function createCloudBackupApi(deps: CloudBackupDeps) {
-  // Backup runs wait while a restore runs (or one was interrupted); a restore waits for a run.
+  // Backup runs wait while a restore runs (not while one is interrupted); a restore waits for a run.
   // eslint-disable-next-line prefer-const -- assigned below: the two wait for each other
   let run: RunBackup;
   const restore = new RestoreFromBackup(deps, () => run.whenIdle());

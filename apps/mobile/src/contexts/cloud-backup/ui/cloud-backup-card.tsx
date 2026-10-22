@@ -22,6 +22,7 @@ import {
   OFF_CONFIRM_TEXT,
   OFF_CONFIRM_TITLE,
   OFF_PENDING,
+  WAITING_FOR_RESTORE,
 } from './cloud-backup-card.constants';
 import { describeProgress } from './format';
 import { useCloudBackup, useRestore } from './hooks';
@@ -153,7 +154,14 @@ export function CloudBackupCard() {
           textColor={p.text}
           busy={status.running}
           disabled={busy}
-          onPress={() => run(() => backUpNow())}
+          onPress={() =>
+            run(async () => {
+              const r = await backUpNow();
+              if (r?.kind === 'skipped' && r.reason === 'busy') {
+                setNotice(WAITING_FOR_RESTORE);
+              }
+            })
+          }
         />
       )}
 
