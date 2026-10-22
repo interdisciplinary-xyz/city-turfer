@@ -57,7 +57,8 @@ export interface UserWriter extends UserReader {
   /**
    * Erases the server copy without leaving tombstones or feed entries: `apple-health` removes the
    * Apple Health activities (`hk-…` or source `apple-health`) with their tracks and gap routes;
-   * `all` removes every activity, track, gap route, tombstone and the Home City. Either way the
+   * `all` removes every activity, track, gap route and the Home City. Existing tombstones stay (ids
+   * and times, no location data: delete wins across a withdrawal, D5). Either way the
    * user's stored export files go and their exports expire (they copy that data). Returns how many
    * activities went.
    */

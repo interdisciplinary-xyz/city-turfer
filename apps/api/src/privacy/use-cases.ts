@@ -25,6 +25,13 @@ import type { ExportRecord, ExportStore, FileStorage } from './ports';
 export const EXPORT_TTL_MS = 24 * 60 * 60_000;
 /** Bigger zips fail (`failed`) rather than outgrow a function's memory (years of daily runs). */
 export const MAX_EXPORT_BYTES = 50_000_000;
+/**
+ * How long a `pending` export may hold the 24 h slot before it counts as killed (function timeout
+ * or crash: its catch never ran). Longer than any Vercel function may run — 300 s by default with
+ * Fluid compute, 800 s at most on Pro (vercel.json sets no `maxDuration`) — so a live build is
+ * never declared stale.
+ */
+export const EXPORT_PENDING_LEASE_MS = 15 * 60_000;
 /** Activities read per page (tracks and gap routes in one query each). */
 const PAGE = 50;
 
@@ -55,13 +62,16 @@ export class ExportService {
     private readonly mailer: Mailer,
     private readonly clock: Clock,
     private readonly publicUrl: string,
-    private readonly log: ApiLog
+    private readonly log: ApiLog,
+    /** MAX_EXPORT_BYTES; smaller in tests. */
+    private readonly maxBytes = MAX_EXPORT_BYTES
   ) {}
 
   /**
    * RequestDataExport: 429 within 24 h of the last export that did not fail, 422 without an e-mail.
    * Any failure (build, size, storage, mail) leaves the export `failed`, its file deleted, and the
-   * user free to ask again at once.
+   * user free to ask again at once; a build killed mid-way (timeout) frees the slot once its
+   * `pending` row is older than EXPORT_PENDING_LEASE_MS.
    */
   async request(userId: string): Promise<ExportRecord> {
     const now = this.clock.now();
@@ -81,9 +91,15 @@ export class ExportService {
       fileKey: null,
       byteSize: null,
     };
-    const reservation = await this.exports.reserve(userId, pending, EXPORT_TTL_MS);
+    const reservation = await this.exports.reserve(userId, pending, {
+      windowMs: EXPORT_TTL_MS,
+      leaseMs: EXPORT_PENDING_LEASE_MS,
+    });
     if (!reservation.reserved) {
-      const retryAfterS = Math.max(1, Math.ceil((reservation.last.requestedAt + EXPORT_TTL_MS - now) / 1000));
+      const { last } = reservation;
+      // A pending build frees the slot when it fails or its lease ends, whichever comes first.
+      const freeAt = last.requestedAt + (last.status === 'pending' ? EXPORT_PENDING_LEASE_MS : EXPORT_TTL_MS);
+      const retryAfterS = Math.max(1, Math.ceil((freeAt - now) / 1000));
       throw new AppError('rate-limited', { 'Retry-After': String(retryAfterS) });
     }
     const fileKey = `exports/${userId}/${id}.zip`;
@@ -136,7 +152,12 @@ export class ExportService {
   /**
    * Everything the server holds for the user, paged through the changes feed (PAGE activities, one
    * query for their tracks and one for their gap routes), streamed into the zip: memory holds the
-   * compressed output plus one page. Throws past MAX_EXPORT_BYTES.
+   * compressed output plus one page. Throws past `maxBytes`, counted as the bytes are produced.
+   *
+   * Entry order matters: fflate emits entries in the order they were added and queues the output
+   * of later entries until the earlier ones end. So the GPX files go first, each ended at once, and
+   * `data.json` — written across the whole loop — is deflated into its own buffer (counted too)
+   * and added last.
    */
   private async buildZip(userId: string, now: number): Promise<Uint8Array> {
     const reader = this.store.read(userId);
@@ -153,17 +174,28 @@ export class ExportService {
       size += chunk.byteLength;
       chunks.push(chunk);
     });
+    // GPX and JSON compress ~10×; level 6 is fflate's default balance of time and size.
+    const json = new ZipDeflate('data.json', { level: 6 });
+    const jsonChunks: Uint8Array<ArrayBuffer>[] = [];
+    let jsonSize = 0;
+    let jsonEnded = false;
+    json.ondata = (err, chunk, final) => {
+      if (err) {
+        zipError = err;
+        return;
+      }
+      jsonSize += chunk.byteLength;
+      jsonChunks.push(chunk);
+      jsonEnded = final;
+    };
     const check = () => {
       if (zipError) {
         throw zipError;
       }
-      if (size > MAX_EXPORT_BYTES) {
+      if (size + jsonSize > this.maxBytes) {
         throw new Error('export too large');
       }
     };
-    // GPX and JSON compress ~10×; level 6 is fflate's default balance of time and size.
-    const json = new ZipDeflate('data.json', { level: 6 });
-    zip.add(json);
     const head = {
       format: 'cityturfer-export',
       version: 1,
@@ -229,6 +261,17 @@ export class ExportService {
       after = page.at(-1)!.seq;
     }
     json.push(strToU8(`],"tombstones":${JSON.stringify(tombstones)},"homeCity":${JSON.stringify(homeCity)}}`), true);
+    check();
+    if (!jsonEnded) {
+      throw new Error('data.json did not end');
+    }
+    // data.json is complete (its crc and size are set): add it last and hand fflate its deflated
+    // bytes, which then count once, in `size`.
+    zip.add(json);
+    const emit = json.ondata!;
+    const deflated = jsonChunks.splice(0);
+    jsonSize = 0;
+    deflated.forEach((chunk, i) => emit(null, chunk, i === deflated.length - 1));
     zip.end();
     check();
     const out = new Uint8Array(size);

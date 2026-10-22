@@ -6,6 +6,8 @@ import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createApp } from '../app';
 import { trackHashOf } from '../backup/hashing';
+import type { BackupStore, UserWriter } from '../backup/ports';
+import { BackupService } from '../backup/use-cases';
 import { defaultDeps, silentLog } from '../deps';
 import { backupApp, closeSharedDb, TOKENS, track, upload } from './support';
 
@@ -98,7 +100,7 @@ describe('consents', () => {
   const withdraw = (purpose: string) =>
     h.call('PUT', `/v1/me/consents/${purpose}`, { body: { granted: false, policyVersion: '2026-10' } });
 
-  it('withdrawing cloud-sync erases the server copy without tombstones; the account stays', async () => {
+  it('withdrawing cloud-sync erases the server copy without new tombstones; the account stays', async () => {
     await grant();
     await put('a1', upload());
     await put('a2', upload());
@@ -109,17 +111,94 @@ describe('consents', () => {
 
     expect((await withdraw('cloud-sync')).status).toBe(200);
     expect((await h.call('GET', '/v1/activities/a1')).status).toBe(404);
-    expect((await (await h.call('GET', '/v1/sync/changes')).json()).changes).toEqual([]);
-    // No tombstone: the old cursor shows nothing new either.
+    // Only the earlier delete is left (an id and a time, no location data).
+    const all = await (await h.call('GET', '/v1/sync/changes')).json();
+    expect(all.changes).toMatchObject([{ type: 'activity.deleted', activityId: 'a2' }]);
+    expect(all.changes).toHaveLength(1);
+    // No new tombstone for what the withdrawal erased: the old cursor shows nothing new.
     const since = await (await h.call('GET', `/v1/sync/changes?cursor=${before.nextCursor}`)).json();
     expect(since.changes).toEqual([]);
     expect(await (await h.call('GET', '/v1/turf/home-city')).json()).toEqual({ city: null, chosenAt: null });
     expect((await h.call('GET', '/v1/me')).status).toBe(200);
 
-    // Backup on again: the same ids upload as new (the old delete is forgotten too).
+    // Backup on again: erased ids upload as new, but delete still wins (D5) — a phone still
+    // holding the deleted activity gets 410 instead of bringing it back.
     await grant();
     expect((await put('a1', upload())).status).toBe(201);
-    expect((await put('a2', upload())).status).toBe(201);
+    const deleted = await put('a2', upload());
+    expect(deleted.status).toBe(410);
+    expect(await deleted.json()).toMatchObject({ code: 'activity.deleted' });
+  });
+
+  it('erases tombstones only with the account', async () => {
+    await grant();
+    await put('a1', upload());
+    await h.call('DELETE', '/v1/activities/a1');
+    await withdraw('cloud-sync');
+    const count = async () =>
+      (
+        (await h.db.execute(sql`SELECT count(*)::int AS n FROM tombstones`)) as unknown as {
+          rows: { n: number }[];
+        }
+      ).rows[0].n;
+    expect(await count()).toBe(1);
+    await h.call('DELETE', '/v1/me');
+    expect(await count()).toBe(0);
+  });
+
+  it('reads consent only after taking the user lock (a withdrawal erases under that lock)', async () => {
+    await grant();
+    await grant(TOKENS.admin, 'apple-health-in-cloud-sync');
+    await put('a1', upload());
+    // Record the order of the transaction's calls in every write use case.
+    const calls: string[] = [];
+    const service = new BackupService(
+      Object.assign(Object.create(h.store) as BackupStore, {
+        write: <T>(userId: string, fn: (tx: UserWriter) => Promise<T>) =>
+          h.store.write(userId, (tx) =>
+            fn(
+              new Proxy(tx, {
+                get(target, prop, receiver) {
+                  const value: unknown = Reflect.get(target, prop, receiver);
+                  if (typeof value !== 'function') {
+                    return value;
+                  }
+                  return (...args: unknown[]) => {
+                    calls.push(String(prop));
+                    return (value as (...a: unknown[]) => unknown).apply(target, args);
+                  };
+                },
+              })
+            )
+          ),
+      }),
+      h.clock
+    );
+    const lockedBeforeConsent = () => {
+      const lock = calls.indexOf('lock');
+      const consent = calls.indexOf('consents');
+      calls.length = 0;
+      return lock !== -1 && consent !== -1 && lock < consent;
+    };
+    const points = track();
+    const input = {
+      type: 'run' as const,
+      name: 'Morning run',
+      source: 'apple-health' as const,
+      startedAt: points[0][2],
+      endedAt: points.at(-1)![2],
+      timeZone: 'Europe/Warsaw',
+      resumedSegments: null,
+      points,
+    };
+    await service.upload('admin', 'hk-1', input, undefined);
+    expect(lockedBeforeConsent()).toBe(true);
+    await service.rename('admin', 'a1', { name: 'Evening run', renamedAt: h.clock.now() }, undefined);
+    expect(lockedBeforeConsent()).toBe(true);
+    await service.saveGapRoutes('admin', 'a1', { checkedAt: h.clock.now(), routes: [] });
+    expect(lockedBeforeConsent()).toBe(true);
+    await service.chooseHomeCity('admin', { cityId: 'pl-warsaw', chosenAt: h.clock.now() });
+    expect(lockedBeforeConsent()).toBe(true);
   });
 
   it('withdrawing a consent deletes stored export files and expires their links in the same go', async () => {

@@ -177,7 +177,7 @@ export function registerPrivacy(app: OpenAPIHono<AppEnv>): void {
       operationId: 'setConsent',
       summary: 'Give or withdraw a consent',
       description:
-        'Records the decision with the policy version and the server time (use case GiveOrWithdrawConsent). Without `cloud-sync` granted, activity and Home City writes answer `403 consent.required`. **Withdrawing deletes the server copy only** (never anything on a phone), at once and without tombstones or feed entries: `cloud-sync` → every activity with its track and gap routes, every tombstone and the Home City (the account and consents stay; turning backup on again re-uploads everything); `apple-health-in-cloud-sync` → every Apple Health (`hk-…`) activity. Deleting the account is `DELETE /v1/me`.',
+        'Records the decision with the policy version and the server time (use case GiveOrWithdrawConsent). Without `cloud-sync` granted, activity and Home City writes answer `403 consent.required`. **Withdrawing deletes the server copy only** (never anything on a phone), at once and without new tombstones or feed entries: `cloud-sync` → every activity with its track and gap routes and the Home City (the account, consents and existing tombstones stay — ids and times only, no location data — so turning backup on again re-uploads everything but what was deleted, which still answers `410`); `apple-health-in-cloud-sync` → every Apple Health (`hk-…`) activity. Deleting the account is `DELETE /v1/me`.',
       request: { params: ConsentPurposeParam, body: { required: true, content: json(SetConsentBody) } },
       responses: {
         200: { description: 'Recorded.', content: json(ConsentList) },
