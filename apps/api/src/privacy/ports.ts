@@ -26,12 +26,17 @@ export interface ExportStore {
     record: ExportRecord,
     limits: { windowMs: number; leaseMs: number }
   ): Promise<{ reserved: true } | { reserved: false; last: ExportRecord }>;
-  /** The pending export is ready: its file, size, expiry and the SHA-256 of its link key. */
+  /**
+   * The pending export is ready: its file, size, expiry and the SHA-256 of its link key. Only a row
+   * still `pending` is updated; `false` when it was not (a consent withdrawal expired it, or the
+   * lease sweep failed it, while the zip was built): the caller must then delete the file and send
+   * no link.
+   */
   complete(
     userId: string,
     id: string,
     done: { readyAt: number; expiresAt: number; fileKey: string; byteSize: number; keyHash: string }
-  ): Promise<void>;
+  ): Promise<boolean>;
   /** Nothing was delivered: `failed` (does not count against the 24 h window). */
   fail(userId: string, id: string): Promise<void>;
   get(userId: string, id: string): Promise<ExportRecord | null>;

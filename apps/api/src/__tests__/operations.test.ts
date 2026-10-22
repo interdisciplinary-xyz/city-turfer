@@ -114,7 +114,7 @@ describe(`GET ${RETENTION_CRON_PATH}`, () => {
       { id: 'v-live', identifier: 'sign-in-otp-b@example.com', value: 'x', expiresAt: at(30 * 24 * HOUR) },
     ]);
     await h.db.insert(rateLimits).values([
-      { key: 'rl-old', windowStartedAt: at(-2 * HOUR), hits: 3 },
+      { key: 'rl-old', windowStartedAt: at(-26 * HOUR), hits: 3 },
       { key: 'rl-live', windowStartedAt: at(-60_000), hits: 1 },
     ]);
 

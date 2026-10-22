@@ -66,7 +66,9 @@ export class DrizzleExportStore implements ExportStore {
     id: string,
     d: { readyAt: number; expiresAt: number; fileKey: string; byteSize: number; keyHash: string }
   ) {
-    await this.db
+    // Only a still-pending export: a consent withdrawal (eraseBackup) or the lease sweep may have
+    // moved it on while the zip was being built, and must not be undone.
+    const done = await this.db
       .update(dataExports)
       .set({
         status: 'ready',
@@ -76,7 +78,9 @@ export class DrizzleExportStore implements ExportStore {
         byteSize: d.byteSize,
         keyHash: d.keyHash,
       })
-      .where(mine(userId, id));
+      .where(and(mine(userId, id), eq(dataExports.status, 'pending')))
+      .returning({ id: dataExports.id });
+    return done.length > 0;
   }
 
   async fail(userId: string, id: string) {

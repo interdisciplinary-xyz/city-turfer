@@ -54,7 +54,7 @@ describe('sign-in with an e-mailed code', () => {
     expect((await signIn(EMAIL, code)).status).toBe(401);
   });
 
-  it('stores only a hash of the code', async () => {
+  it('never stores the code in plain text', async () => {
     await requestCode(EMAIL);
     const code = codeIn(h.mailer.lastTo(EMAIL)?.text);
     const rows = await h.db.execute(sql`SELECT value FROM auth_verifications`);
@@ -76,23 +76,77 @@ describe('sign-in with an e-mailed code', () => {
     expect((await signIn('nobody@example.com', '123456')).status).toBe(401);
   });
 
+  it('mails the same code again while it is valid, so asking for codes cannot void the one in use', async () => {
+    expect((await requestCode(EMAIL)).status).toBe(202);
+    const code = codeIn(h.mailer.lastTo(EMAIL)?.text);
+    // A stranger asks again at once, from another IP: one mail per address per minute.
+    const soon = await requestCode(EMAIL, { 'X-Real-IP': '198.51.100.66' });
+    expect(soon.status).toBe(429);
+    expect(Number(soon.headers.get('retry-after'))).toBeLessThanOrEqual(60);
+    expect(h.mailer.sent).toHaveLength(1);
+
+    h.clock.t += 61_000;
+    expect((await requestCode(EMAIL, { 'X-Real-IP': '198.51.100.66' })).status).toBe(202);
+    expect(h.mailer.sent).toHaveLength(2);
+    expect(codeIn(h.mailer.lastTo(EMAIL)?.text)).toBe(code);
+    expect((await signIn(EMAIL, code)).status).toBe(200);
+  });
+
+  it('mails a new code once the old one is burnt', async () => {
+    await requestCode(EMAIL);
+    const code = codeIn(h.mailer.lastTo(EMAIL)?.text);
+    const wrong = code === '000000' ? '111111' : '000000';
+    for (let i = 0; i < 3; i++) {
+      expect((await signIn(EMAIL, wrong)).status).toBe(401);
+    }
+    h.clock.t += 61_000;
+    await requestCode(EMAIL);
+    const next = codeIn(h.mailer.lastTo(EMAIL)?.text);
+    // A fresh code (with 3 tries of its own) replaced the burnt one, which no longer works.
+    expect((await signIn(EMAIL, next)).status).toBe(200);
+  });
+
+  it('reads a code sealed under another secret as no code (a rotation fails closed, no 500)', async () => {
+    const { codeCipher } = await import('../identity/better-auth');
+    const sealed = await codeCipher(TEST_AUTH_SECRET).encrypt('123456');
+    expect(sealed).not.toContain('123456');
+    expect(await codeCipher(TEST_AUTH_SECRET).decrypt(sealed)).toBe('123456');
+    expect(await codeCipher('z'.repeat(48)).decrypt(sealed)).toBe('');
+    expect(await codeCipher(TEST_AUTH_SECRET).decrypt('not-a-sealed-code')).toBe('');
+
+    // End to end: a code pending across a rotation is a wrong code, and a new request mails a new one.
+    await requestCode(EMAIL);
+    const old = codeIn(h.mailer.lastTo(EMAIL)?.text);
+    const rotated = new IdentityService(
+      createAuth({ db: h.db, secret: 'z'.repeat(48), baseURL: 'http://localhost:8787', mailer: h.mailer }),
+      new PostgresRateLimiter(h.db),
+      'z'.repeat(48),
+      h.clock
+    );
+    await expect(rotated.signIn(EMAIL, old, '203.0.113.7')).rejects.toMatchObject({ code: 'auth.invalid-code' });
+    await rotated.requestCode(EMAIL, '203.0.113.7');
+    const fresh = codeIn(h.mailer.lastTo(EMAIL)?.text);
+    await expect(rotated.signIn(EMAIL, fresh, '203.0.113.7')).resolves.toMatchObject({ user: { email: EMAIL } });
+  });
+
   it('rejects an invalid e-mail with 400', async () => {
     expect((await requestCode('not-an-email')).status).toBe(400);
   });
 
-  it('limits codes to 3 per e-mail and 10 per IP per 10 minutes (429 + Retry-After)', async () => {
+  it('limits codes to 3 per e-mail and 30 per IP per 10 minutes (429 + Retry-After)', async () => {
     for (let i = 0; i < 3; i++) {
       expect((await requestCode(EMAIL)).status).toBe(202);
+      h.clock.t += 61_000;
     }
     const limited = await requestCode(EMAIL);
     expect(limited.status).toBe(429);
     expect(await limited.json()).toMatchObject({ code: 'auth.rate-limited' });
     expect(Number(limited.headers.get('retry-after'))).toBeGreaterThan(0);
 
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 26; i++) {
       expect((await requestCode(`u${i}@example.com`)).status).toBe(202);
     }
-    // Ten hits from this IP so far (4 + 6): the eleventh is refused, another IP is not.
+    // Thirty hits from this IP so far (4 + 26): the next one is refused, another IP is not.
     expect((await requestCode('late@example.com')).status).toBe(429);
     expect((await requestCode('late@example.com', { 'X-Real-IP': '198.51.100.1' })).status).toBe(202);
 
@@ -100,11 +154,68 @@ describe('sign-in with an e-mailed code', () => {
     expect((await requestCode(EMAIL)).status).toBe(202);
   });
 
-  it('limits sign-ins to 10 per IP per 10 minutes', async () => {
-    for (let i = 0; i < 10; i++) {
+  it('limits failed sign-ins to 20 per IP per 10 minutes; successful ones do not count', async () => {
+    for (let i = 0; i < 25; i++) {
+      expect(await h.signIn(`ok${i}@example.com`)).toEqual(expect.any(String));
+    }
+    for (let i = 0; i < 20; i++) {
       expect((await signIn(`s${i}@example.com`, '123456')).status).toBe(401);
     }
-    expect((await signIn('s10@example.com', '123456')).status).toBe(429);
+    const limited = await signIn('s20@example.com', '123456');
+    expect(limited.status).toBe(429);
+    expect(Number(limited.headers.get('retry-after'))).toBeGreaterThan(0);
+    // The limit refuses without counting: once the window ends the IP may try again.
+    h.clock.t += 10 * 60_000 + 1000;
+    expect((await signIn('s21@example.com', '123456')).status).toBe(401);
+  });
+
+  it('counts an IPv6 /64 as one IP, and an IPv4-mapped address as its IPv4', async () => {
+    for (let i = 0; i < 20; i++) {
+      expect((await signIn(`v${i}@example.com`, '123456', { 'X-Real-IP': `2001:db8:1:2::${i + 1}` })).status).toBe(401);
+    }
+    expect((await signIn('v20@example.com', '123456', { 'X-Real-IP': '2001:db8:1:2:ffff::9' })).status).toBe(429);
+    expect((await signIn('v20@example.com', '123456', { 'X-Real-IP': '2001:db8:1:3::1' })).status).toBe(401);
+
+    for (let i = 0; i < 20; i++) {
+      expect((await signIn(`m${i}@example.com`, '123456', { 'X-Real-IP': '::ffff:198.51.100.40' })).status).toBe(401);
+    }
+    expect((await signIn('m20@example.com', '123456', { 'X-Real-IP': '198.51.100.40' })).status).toBe(429);
+  });
+
+  it('cuts off a slow brute force: 10 failed sign-ins per address per day, across codes and IPs', async () => {
+    const wrongFor = (code: string) => (code === '000000' ? '111111' : '000000');
+    let failures = 0;
+    for (let round = 0; failures < 10; round++) {
+      expect((await requestCode(EMAIL, { 'X-Real-IP': `198.51.100.${round}` })).status).toBe(202);
+      const code = codeIn(h.mailer.lastTo(EMAIL)?.text);
+      for (let i = 0; i < 3 && failures < 10; i++, failures++) {
+        const res = await signIn(EMAIL, wrongFor(code), { 'X-Real-IP': `198.51.100.${round}` });
+        expect(res.status).toBe(401);
+      }
+      // Past every 10-minute window: only the daily cap is left to stop it.
+      h.clock.t += 11 * 60_000;
+    }
+    expect((await requestCode(EMAIL, { 'X-Real-IP': '203.0.113.99' })).status).toBe(202);
+    const code = codeIn(h.mailer.lastTo(EMAIL)?.text);
+    // Even the right code is refused now, without burning it.
+    const limited = await signIn(EMAIL, code, { 'X-Real-IP': '203.0.113.99' });
+    expect(limited.status).toBe(429);
+    expect(Number(limited.headers.get('retry-after'))).toBeGreaterThan(20 * 3600);
+
+    h.clock.t += 24 * 3600_000;
+    expect((await signIn(EMAIL, code, { 'X-Real-IP': '203.0.113.99' })).status).toBe(200);
+  });
+
+  it('caps codes at 10 per address per day', async () => {
+    for (let i = 0; i < 10; i++) {
+      expect((await requestCode(EMAIL, { 'X-Real-IP': `198.51.100.${i}` })).status).toBe(202);
+      h.clock.t += 11 * 60_000;
+    }
+    const limited = await requestCode(EMAIL, { 'X-Real-IP': '203.0.113.99' });
+    expect(limited.status).toBe(429);
+    expect(await limited.json()).toMatchObject({ code: 'auth.rate-limited' });
+    h.clock.t += 24 * 3600_000;
+    expect((await requestCode(EMAIL)).status).toBe(202);
   });
 
   it('accepts AUTH_FIXED_CODE only for the reserved test domain; real addresses get random codes', async () => {
@@ -155,6 +266,23 @@ describe('sessions', () => {
     expect((await h.call('GET', '/v1/me', { token: TOKENS.admin })).status).toBe(200);
   });
 
+  it('accepts only the signed token: not the raw one in auth_sessions, not after a secret rotation', async () => {
+    const token = await h.signIn(EMAIL);
+    const rows = await h.db.execute(sql`SELECT token FROM auth_sessions`);
+    const [{ token: stored }] = (rows as unknown as { rows: { token: string }[] }).rows;
+    expect(token.startsWith(`${stored}.`)).toBe(true);
+    expect((await h.call('GET', '/v1/me', { token: stored })).status).toBe(401);
+
+    const rotated = new IdentityService(
+      createAuth({ db: h.db, secret: 'y'.repeat(48), baseURL: 'http://localhost:8787', mailer: h.mailer }),
+      new PostgresRateLimiter(h.db),
+      'y'.repeat(48),
+      h.clock
+    );
+    expect(await rotated.verifier.verify(token)).toBeNull();
+    expect(await h.identity.verifier.verify(token)).toMatchObject({ kind: 'session', sessionToken: stored });
+  });
+
   it('keeps device tokens working next to sessions, each with its own data', async () => {
     const token = await h.signIn(EMAIL);
     const body = { granted: true, policyVersion: '2026-10' };
@@ -165,6 +293,7 @@ describe('sessions', () => {
 
   it('a second sign-in with the same e-mail is the same account', async () => {
     const first = await h.signIn(EMAIL);
+    h.clock.t += 61_000;
     const second = await h.signIn(EMAIL, '198.51.100.9');
     const id = async (token: string) => (await (await h.call('GET', '/v1/me', { token })).json()).id;
     expect(await id(first)).toBe(await id(second));
