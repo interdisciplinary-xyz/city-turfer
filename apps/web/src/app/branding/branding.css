@@ -97,13 +97,30 @@
   margin: 0;
 }
 
+/* Sticky section bar: sits under the hero, then pins to the top while reading. */
 .brand-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: color-mix(in srgb, var(--bg) 95%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.brand-nav-inner {
   display: flex;
-  flex-wrap: wrap;
   gap: var(--space-sm);
-  margin-top: var(--space-xxxl);
+  overflow-x: auto;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  scrollbar-width: none;
+}
+.brand-nav-inner::-webkit-scrollbar {
+  display: none;
 }
 .brand-nav a {
+  flex: none;
+  white-space: nowrap;
   padding: 6px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-full);
@@ -115,12 +132,18 @@
 .brand-nav a:focus-visible {
   border-color: var(--glow);
 }
+.brand-nav a[aria-current] {
+  border-color: var(--glow);
+  background: var(--glow);
+  color: var(--on-accent);
+}
 
 /* ---------- Sections ---------- */
 
 .brand-section {
   padding: 56px 0 8px;
-  scroll-margin-top: var(--space-lg);
+  /* Clear the sticky section bar when jumping to an anchor. */
+  scroll-margin-top: 56px;
 }
 .brand-section h2 {
   font-family: var(--display);
@@ -468,4 +491,64 @@
 }
 .brand main {
   padding-bottom: 96px;
+}
+
+/* Ideal customer profile */
+.brand-icp {
+  margin-bottom: var(--space-xl);
+  border-color: var(--glow);
+}
+.brand-icp-name.brand-icp-name {
+  margin: var(--space-xs) 0 var(--space-sm);
+  font-family: var(--display);
+  font-synthesis: none;
+  font-size: clamp(20px, 4vw, 28px);
+  line-height: 1.2;
+  color: var(--blazing);
+}
+.brand-icp-job {
+  margin: var(--space-xl) 0;
+  padding-left: var(--space-lg);
+  border-left: 3px solid var(--glow);
+}
+.brand-icp-job p {
+  margin-top: var(--space-xs);
+  font-size: var(--font-lead);
+  max-width: 70ch;
+}
+.brand-icp-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-lg) var(--space-xl);
+  margin: 0;
+}
+.brand-icp-fields dd {
+  margin: var(--space-xs) 0 0;
+}
+.brand .brand-icp-not li::before {
+  background: var(--muted);
+}
+.brand-card .brand-rules {
+  margin-top: 0;
+}
+.brand-card .brand-icp-gap {
+  margin-top: var(--space-md);
+  color: var(--muted);
+}
+
+/* Fact check: a brand line the product no longer matches exactly */
+.brand-check {
+  display: grid;
+  gap: var(--space-xs);
+  margin: var(--space-xl) 0;
+  padding: var(--space-lg) var(--space-xl);
+  border: 1px dashed var(--strong);
+  border-radius: var(--radius-card);
+  max-width: 80ch;
+}
+.brand-check p {
+  margin: 0;
+}
+.brand-check .brand-label {
+  color: var(--strong);
 }
