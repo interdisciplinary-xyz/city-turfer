@@ -43,6 +43,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`product/discovery-board.md`](product/discovery-board.md): The live state of product discovery
   — evidence log, assumption map, opportunity tree and the interview queue; every product claim
   cites an id from here
+- 🚧 [`product/icp.md`](product/icp.md): Ideal customer profile (hypothesis) — the primary Turfer to
+  win first, two segments to test, who it isn't for yet, fit signals and the assumptions that would
+  prove or kill it
 - ✅ [`product/launch-readiness.md`](product/launch-readiness.md): What stands between CityTurfer
   and a public App Store / Google Play launch — store, privacy and legal blockers in order, with
   today's status and sources (research 2026-10-20)

@@ -77,8 +77,8 @@ https://docs.expo.dev/llms.txt. Say which you checked.
 3. `pnpm -C apps/mobile exec expo-updates fingerprint:generate --platform ios` before and after: say
    whether it ships over the air.
 4. **Look at it:** on the booted Simulator run the flow (`apps/mobile/e2e/run.sh <flow>`) or take a
-   screenshot (`xcrun simctl io booted screenshot <path>`), read the image and describe what you
-   saw.
+   screenshot (`xcrun simctl io booted screenshot <path>`; the app is dark only), read the image and
+   describe what you saw.
 
 Never report a map or screen change as working from type checks and tests alone: look at a
 screenshot, and say what only a device can show (smoothness on long histories, real GPS).

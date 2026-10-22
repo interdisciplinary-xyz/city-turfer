@@ -21,7 +21,7 @@ import {
  * `process.env.NODE_ENV === 'development'` branch, so a production build drops it, together with
  * the package and its CSS.
  */
-export const DevToolbarWithApp = ({ locale }: DevToolbarWithAppProps) => (
+export const DevToolbarWithApp = ({ locale = routing.defaultLocale }: DevToolbarWithAppProps) => (
   <DevToolbar
     user={null}
     brandLabel={NAME}

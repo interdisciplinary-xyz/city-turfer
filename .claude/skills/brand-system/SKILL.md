@@ -193,8 +193,8 @@ reinstall, then publish OTA updates for the new runtime.
 1. Name spelled CityTurfer; internal terms not leaking into copy.
 2. Colours from tokens; accent = `glow`; Ramp direction correct.
 3. Numbers tabular and concrete; no guilt or casino language.
-4. Built for dark (`DARK` via `usePalette()`, never a hard-coded scheme); shared components also
-   render in Storybook's light theme.
+4. Designed for dark: the app and website are dark only from v0.9.0 (`DARK` via `usePalette()`,
+   never a hard-coded scheme); `LIGHT` is only checked in Storybook.
 5. Type: Archivo only for display and numbers, via `FONT_FAMILY`, never with `fontWeight`.
 6. New colour pairs meet the contrast minimums (or are knowingly listed in `KNOWN_FAILURES`).
 7. Copy fits all three audiences and the personality: confident, playful, outdoorsy, private.

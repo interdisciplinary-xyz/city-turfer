@@ -101,7 +101,7 @@ The repo is a pnpm + Turborepo monorepo
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `apps/mobile/`            | The Expo app (`@cityturfer/mobile`): app code, native module, config plugins, Maestro flows, mobile dev tools     |
 | `apps/api/`               | HTTP API (`@cityturfer/api`): Hono on Vercel (`fra1`), `/v1` routes, generated `openapi.json`, Postgres backup    |
-| `apps/web/`               | Landing page (`@cityturfer/web`): Next.js static export on Vercel, English + Polish, waitlist, `/branding`        |
+| `apps/web/`               | Landing page (`@cityturfer/web`): Next.js static export on Vercel, English + Polish, waitlist                     |
 | `apps/storybook/`         | One Storybook (`@cityturfer/storybook`) for `@cityturfer/ui` and website pieces                                   |
 | `packages/core/`          | `@cityturfer/core`: shared kernel and the domain + use cases shared by the app and the API                        |
 | `packages/brand/`         | `@cityturfer/brand`: design tokens (turf strength ramp, themes, type), copy, logo SVGs, Archivo fonts             |
