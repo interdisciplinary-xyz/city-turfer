@@ -27,6 +27,10 @@ test('leaves other paths alone and refuses to leave the dist folder', () => {
   assert.equal(swaggerTarget(DIST, '/swagger/%E0%A4%A'), null);
 });
 
+test('maps the table of contents script', () => {
+  assert.deepEqual(swaggerTarget(DIST, '/swagger/ct-toc.mjs'), { kind: 'toc' });
+});
+
 test('strips /api from proxied paths, keeping the query', () => {
   assert.equal(apiPath('/api/v1/health'), '/v1/health');
   assert.equal(apiPath('/api/v1/turf/cells?zoom=13'), '/v1/turf/cells?zoom=13');
@@ -43,6 +47,10 @@ test('the page loads Swagger UI with the spec next to it', () => {
   // routes are visible through their x-cityturfer-status extension.
   assert.match(html, /showExtensions: true/);
   assert.match(html, /docExpansion: 'list'/);
+  // Table of contents: an empty nav beside Swagger UI, filled by ./ct-toc.mjs once the spec is in.
+  assert.match(html, /<nav id="ct-toc"/);
+  assert.match(html, /<script type="module" src="\.\/ct-toc\.mjs"><\/script>/);
+  assert.match(html, /onComplete:/);
 });
 
 let dist;
@@ -103,6 +111,10 @@ test('redirects /swagger to /swagger/ and serves the page, spec and assets', asy
 
   const css = await fetch(`${siteUrl}/swagger/swagger-ui.css`);
   assert.match(css.headers.get('content-type'), /text\/css/);
+
+  const toc = await fetch(`${siteUrl}/swagger/ct-toc.mjs`);
+  assert.match(toc.headers.get('content-type'), /text\/javascript/);
+  assert.match(await toc.text(), /export function tocEntries/);
 });
 
 test('proxies /api to the API with method, path, query and body', async () => {
