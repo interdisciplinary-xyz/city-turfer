@@ -116,7 +116,8 @@ describe('Restore from the cloud backup', () => {
       kind: 'done',
       restored: 4,
       skipped: 0,
-      backupOn: true, // the server's consents turned backup on here too
+      backupOn: true, // the server's consent turned backup on here too
+      healthOffered: false,
     });
     expect(a.server.calls('consents')).toHaveLength(1);
     expect(await c.cloudBackup.status.execute()).toMatchObject({ enabled: true, healthIncluded: false });
@@ -164,7 +165,13 @@ describe('Restore from the cloud backup', () => {
     await c.dispatcher.dispatchPending();
 
     expect(await c.cloudBackup.restoreOffer.execute()).toEqual({ kind: 'available', count: 3 });
-    expect(await c.cloudBackup.restore.execute()).toEqual({ kind: 'done', restored: 3, skipped: 0, backupOn: true });
+    expect(await c.cloudBackup.restore.execute()).toEqual({
+      kind: 'done',
+      restored: 3,
+      skipped: 0,
+      backupOn: true,
+      healthOffered: false,
+    });
     await c.dispatcher.dispatchPending();
     const ids = (await c.activityLog.list.execute(100)).map((x) => x.id).sort();
     expect(ids).toEqual(['rec-a', 'rec-b', 'rec-c', 'rec-mine']);
@@ -185,7 +192,13 @@ describe('Restore from the cloud backup', () => {
 
     // Restoring again (the always-available action) changes nothing and duplicates nothing.
     const copies = a.server.calls('activityCopy').length;
-    expect(await c.cloudBackup.restore.execute()).toEqual({ kind: 'done', restored: 0, skipped: 0, backupOn: true });
+    expect(await c.cloudBackup.restore.execute()).toEqual({
+      kind: 'done',
+      restored: 0,
+      skipped: 0,
+      backupOn: true,
+      healthOffered: false,
+    });
     expect(a.server.calls('activityCopy')).toHaveLength(copies);
     expect(await b.db.first('SELECT COUNT(*) AS n FROM log_activities')).toEqual({ n: 4 });
   });
@@ -251,19 +264,29 @@ describe('Restore from the cloud backup', () => {
     expect(await c.cloudBackup.restore.execute()).toMatchObject({ kind: 'done', restored: 5 });
   });
 
-  it('turns backup and the Apple Health option on to match the server’s consents', async () => {
+  it('turns backup on to match the server’s consent, but leaves Apple Health off on this phone', async () => {
     const { a, c: phoneA } = await backedUpPhoneA();
     expect(await phoneA.cloudBackup.includeHealth.execute(true)).toEqual({ kind: 'ok' });
     const { c } = await newPhone(a);
-    expect(await c.cloudBackup.restore.execute()).toMatchObject({ kind: 'done', backupOn: true });
-    expect(await c.cloudBackup.status.execute()).toMatchObject({ enabled: true, healthIncluded: true });
+    expect(await c.cloudBackup.restore.execute()).toMatchObject({ kind: 'done', backupOn: true, healthOffered: true });
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ enabled: true, healthIncluded: false });
+    // An Apple Health import on the new phone stays here until the Turfer turns the option on.
+    await c.add('hk-new', walk(13));
+    await c.cloudBackup.run.execute();
+    expect(a.server.activities.has('hk-new')).toBe(false);
+    expect(a.server.consents.get('apple-health-in-cloud-sync')).toMatchObject({ granted: true }); // phone A's choice
   });
 
   it('leaves backup off when the consents can’t be read; turning it on then works', async () => {
     const { a } = await backedUpPhoneA();
     const { c } = await newPhone(a);
     a.server.failNext('consents', { kind: 'offline' });
-    expect(await c.cloudBackup.restore.execute()).toMatchObject({ kind: 'done', restored: 4, backupOn: false });
+    expect(await c.cloudBackup.restore.execute()).toMatchObject({
+      kind: 'done',
+      restored: 4,
+      backupOn: false,
+      healthOffered: false,
+    });
     expect(await c.cloudBackup.status.execute()).toMatchObject({ enabled: false });
     expect(await c.cloudBackup.enable.execute()).toEqual({ kind: 'ok' });
   });

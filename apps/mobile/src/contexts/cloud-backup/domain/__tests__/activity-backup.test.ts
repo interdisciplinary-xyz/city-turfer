@@ -165,27 +165,20 @@ describe('BackupSettings', () => {
     expect(s.withdrawalsPending).toEqual(['apple-health-in-cloud-sync']);
   });
 
-  it('after a restore, the server consents turn backup and Apple Health on; a pending withdrawal wins', () => {
+  it('after a restore, the server consent turns backup on (never Apple Health); a pending withdrawal wins', () => {
     const s = BackupSettings.initial();
-    expect(s.adoptServerConsents({ cloudSync: false, health: true })).toBe(false);
+    expect(s.adoptServerConsents({ cloudSync: false })).toBe(false);
     expect(s.toState()).toMatchObject({ enabled: false, healthIncluded: false });
-    expect(s.adoptServerConsents({ cloudSync: true, health: true })).toBe(true);
-    expect(s.toState()).toMatchObject({ enabled: true, healthIncluded: true, backfilledAt: null });
-    expect(s.adoptServerConsents({ cloudSync: false, health: false })).toBe(false); // never turns off
+    expect(s.adoptServerConsents({ cloudSync: true })).toBe(true);
+    expect(s.toState()).toMatchObject({ enabled: true, healthIncluded: false, backfilledAt: null });
+    expect(s.adoptServerConsents({ cloudSync: false })).toBe(false); // never turns off
     expect(s.enabled).toBe(true);
 
     const off = BackupSettings.initial();
     off.enable();
     off.disable(); // withdrawn here, the server hasn't heard yet
-    expect(off.adoptServerConsents({ cloudSync: true, health: true })).toBe(false);
+    expect(off.adoptServerConsents({ cloudSync: true })).toBe(false);
     expect(off.enabled).toBe(false);
-
-    const noHealth = BackupSettings.initial();
-    noHealth.enable();
-    noHealth.includeHealth(true);
-    noHealth.includeHealth(false);
-    expect(noHealth.adoptServerConsents({ cloudSync: true, health: true })).toBe(false);
-    expect(noHealth.healthIncluded).toBe(false);
   });
 
   it('Apple Health needs backup on; turning it on compares again', () => {

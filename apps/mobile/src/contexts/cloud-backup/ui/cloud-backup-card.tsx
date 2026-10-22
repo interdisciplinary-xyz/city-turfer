@@ -84,7 +84,7 @@ export function CloudBackupCard() {
     }
   };
 
-  const restoreMessage = describeRestoreResult(restore.result);
+  const restoreMessage = describeRestoreResult(restore.result, { health: Platform.OS === 'ios' });
   const error = notice ?? (status.enabled && status.lastError ? ERROR_TEXT[status.lastError] : null);
 
   return (

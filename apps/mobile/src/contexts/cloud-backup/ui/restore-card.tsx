@@ -1,6 +1,6 @@
 import { FONT_SIZE, FONT_WEIGHT, SPACE } from '@cityturfer/brand';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { ACCENT } from '@/constants/colors';
 import { Button, Card } from '@/ui-kit/components';
@@ -26,7 +26,7 @@ export function RestoreCard() {
   const { offer, progress, result, running, start, dismiss, turnOnBackup } = useRestore();
   const [enabling, setEnabling] = useState(false);
   const [enableError, setEnableError] = useState<string | null>(null);
-  const message = describeResult(result);
+  const message = describeResult(result, { health: Platform.OS === 'ios' });
   const offered = offer && offer.kind !== 'none' ? offer : null;
   if (!offered && !message) {
     return null;

@@ -107,23 +107,17 @@ export class BackupSettings {
   }
 
   /**
-   * After a restore: the server's consents for this account (read with GET /v1/me/consents) turn
-   * backup (and the Apple Health option) on here too, so a new phone carries on backing up. Only
-   * ever turns things on; a withdrawal made on this phone that the server has not heard about yet
-   * wins over the server's older "granted". Returns whether anything changed.
+   * After a restore: the account's backup consent on the server (read with GET /v1/me/consents)
+   * turns backup on here too, so a new phone carries on backing up. Only ever turns it on; a
+   * withdrawal made on this phone that the server has not heard about yet wins over the server's
+   * older "granted". Apple Health is never adopted: it stays off on this phone until the Turfer
+   * turns it on here (decision 2026-10-22, docs/decisions/apple-health-2026-10-18.md). Returns
+   * whether anything changed.
    */
-  adoptServerConsents(granted: { cloudSync: boolean; health: boolean }): boolean {
+  adoptServerConsents(granted: { cloudSync: boolean }): boolean {
     const before = this.state;
     if (granted.cloudSync && !this.state.enabled && !this.state.withdrawalsPending.includes('cloud-sync')) {
       this.enable();
-    }
-    if (
-      granted.health &&
-      this.state.enabled &&
-      !this.state.healthIncluded &&
-      !this.state.withdrawalsPending.includes('apple-health-in-cloud-sync')
-    ) {
-      this.includeHealth(true);
     }
     return this.state !== before;
   }
