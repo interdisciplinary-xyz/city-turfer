@@ -41,9 +41,12 @@ describe('sign-in with an e-mailed code', () => {
     const session = await signed.json();
     expect(session).toEqual({
       token: expect.any(String),
+      client: 'phone',
       expiresAt: expect.any(String),
+      absoluteExpiresAt: null,
       user: { id: expect.any(String), email: EMAIL },
     });
+    expect(signed.headers.get('set-cookie')).toBeNull();
     const days = (Date.parse(session.expiresAt) - Date.now()) / 86_400_000;
     expect(days).toBeGreaterThan(59);
     expect(days).toBeLessThan(61);

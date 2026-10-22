@@ -5,9 +5,10 @@
  */
 export const PROBLEM_CODES = {
   'invalid-request': { status: 400, title: 'Invalid request' },
-  'auth.missing': { status: 401, title: 'Missing bearer token' },
+  'auth.missing': { status: 401, title: 'Missing bearer token or session cookie' },
   'auth.invalid': { status: 401, title: 'Invalid or expired token' },
   'auth.invalid-code': { status: 401, title: 'Wrong or expired code: ask for a new one' },
+  'auth.csrf': { status: 403, title: 'Cross-site request refused: send it from the CityTurfer website' },
   'consent.required': { status: 403, title: 'Give the cloud-sync consent first' },
   'not-found': { status: 404, title: 'Not found' },
   'activity.deleted': { status: 410, title: 'Activity was deleted' },

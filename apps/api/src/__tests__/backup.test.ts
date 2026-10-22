@@ -55,7 +55,7 @@ describe('auth', () => {
     const noDb = createApp(
       defaultDeps({
         log: silentLog,
-        auth: { verify: () => Promise.resolve({ userId: 'admin', verified: true }) },
+        auth: { verify: () => Promise.resolve({ realm: 'user', userId: 'admin', verified: true }) },
       })
     );
     const res = await noDb.request('/v1/me', { headers: { Authorization: 'Bearer x' } });

@@ -59,7 +59,11 @@ export const INVALID = { 400: problemResponse('Invalid input.', 'invalid-request
 
 /** Responses every authenticated route can give (auth runs before validation). */
 export const AUTH_ERRORS = {
-  401: problemResponse('Missing or invalid bearer token; checked before the input.', 'auth.missing', 'auth.invalid'),
+  401: problemResponse(
+    'Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it.',
+    'auth.missing',
+    'auth.invalid'
+  ),
   429: {
     ...problemResponse('Too many requests: wait `Retry-After` seconds.', 'rate-limited'),
     headers: {
@@ -74,8 +78,15 @@ export const notFound = (what: string) => ({
   404: problemResponse(`No ${what} with this id for this user.`, 'not-found'),
 });
 
-/** Bearer token: a Better Auth session (e-mailed code) or, for one more release, a device token (API_TOKENS). */
-export const BEARER_AUTH = [{ bearerAuth: [] }];
+/**
+ * Who may call a protected route: a bearer token (a phone's Better Auth session or, for one more
+ * release, a device token) or the website's session cookie. Either one suffices.
+ */
+export const CALLER_AUTH: Record<string, string[]>[] = [{ bearerAuth: [] }, { cookieAuth: [] }];
+
+/** 403 of every protected route that changes something, when called with the cookie. */
+export const CSRF_REFUSED_DESCRIPTION =
+  'With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`).';
 
 /** Spec extension marking routes that are declared but not built yet. */
 export const PLANNED = { 'x-cityturfer-status': 'planned' } as const;

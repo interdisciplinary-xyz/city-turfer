@@ -161,12 +161,19 @@ export const authUsers = pgTable('auth_users', {
   updatedAt: ts('updated_at').notNull().defaultNow(),
 });
 
-/** A signed-in phone: the bearer token is `token` (sliding expiry). No IP or user agent is stored. */
+/**
+ * A signed-in phone (bearer token) or browser (cookie): `token` signed is the credential, `id` the
+ * opaque id the sessions list shows. `expires_at` slides; a browser session never outlives
+ * `absolute_expires_at` (null for phones). No IP or user agent is stored: Better Auth gets no
+ * request headers, so `ip_address` and `user_agent` stay empty.
+ */
 export const authSessions = pgTable(
   'auth_sessions',
   {
     id: text('id').primaryKey(),
     expiresAt: ts('expires_at').notNull(),
+    client: text('client').notNull().default('phone'),
+    absoluteExpiresAt: ts('absolute_expires_at'),
     token: text('token').notNull().unique(),
     createdAt: ts('created_at').notNull().defaultNow(),
     updatedAt: ts('updated_at').notNull().defaultNow(),

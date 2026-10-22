@@ -41,17 +41,18 @@ Design: `docs/decisions/api-sync-2026-10-20.md` and
 
 ## Environment variables (Production and Preview)
 
-| Name                    | Where                | Value                                                                                                                                                                               |
-| ----------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`          | Production, Preview  | Neon **pooled** connection string (Frankfurt). Required in prod; on a preview, missing → data routes answer 503.                                                                    |
-| `DATABASE_URL_UNPOOLED` | your shell           | Neon direct connection string; used only by `db:migrate` and `auth:adopt` (optional).                                                                                               |
-| `BETTER_AUTH_SECRET`    | Production, Preview  | ≥ 32 random characters (`openssl rand -base64 48`), different per environment. Turns on sign-in; required in prod.                                                                  |
-| `BREVO_API_KEY`         | Production (Preview) | Brevo transactional e-mail key (EU account). Required in prod; without it a preview sends no mail.                                                                                  |
-| `MAIL_FROM`             | Production (Preview) | `CityTurfer <hello@your-domain>`, a sender verified in Brevo (SPF/DKIM on the domain). Required in prod.                                                                            |
-| `API_PUBLIC_URL`        | Production, Preview  | Public `https://…` base URL of this API (export links in e-mails). Required in prod.                                                                                                |
-| `AUTH_FIXED_CODE`       | Preview only         | Six digits (e.g. `000000`): the code for addresses `@e2e.cityturfer.test` only (Maestro); real addresses always get random codes. **Never in Production: the function won't boot.** |
-| `CRON_SECRET`           | Production           | ≥ 16 random characters (`openssl rand -hex 32`). Vercel Cron sends it as `Authorization: Bearer …` to the retention route. Required in prod; without it the route is a 404.         |
-| `API_TOKENS`            | Production           | JSON object `{"<sha256 hex>": "<userId>"}` (or `{"userId", "email", "displayName"}`); device tokens, one more release.                                                              |
+| Name                    | Where                | Value                                                                                                                                                                                                                                                                                                               |
+| ----------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`          | Production, Preview  | Neon **pooled** connection string (Frankfurt). Required in prod; on a preview, missing → data routes answer 503.                                                                                                                                                                                                    |
+| `DATABASE_URL_UNPOOLED` | your shell           | Neon direct connection string; used only by `db:migrate` and `auth:adopt` (optional).                                                                                                                                                                                                                               |
+| `BETTER_AUTH_SECRET`    | Production, Preview  | ≥ 32 random characters (`openssl rand -base64 48`), different per environment. Turns on sign-in; required in prod.                                                                                                                                                                                                  |
+| `BREVO_API_KEY`         | Production (Preview) | Brevo transactional e-mail key (EU account). Required in prod; without it a preview sends no mail.                                                                                                                                                                                                                  |
+| `MAIL_FROM`             | Production (Preview) | `CityTurfer <hello@your-domain>`, a sender verified in Brevo (SPF/DKIM on the domain). Required in prod.                                                                                                                                                                                                            |
+| `API_PUBLIC_URL`        | Production, Preview  | Public `https://…` base URL of this API (export links in e-mails). Required in prod.                                                                                                                                                                                                                                |
+| `AUTH_FIXED_CODE`       | Preview only         | Six digits (e.g. `000000`): the code for addresses `@e2e.cityturfer.test` only (Maestro); real addresses always get random codes. **Never in Production: the function won't boot.**                                                                                                                                 |
+| `CRON_SECRET`           | Production           | ≥ 16 random characters (`openssl rand -hex 32`). Vercel Cron sends it as `Authorization: Bearer …` to the retention route. Required in prod; without it the route is a 404.                                                                                                                                         |
+| `API_TOKENS`            | Production           | JSON object `{"<sha256 hex>": "<userId>"}` (or `{"userId", "email", "displayName"}`); device tokens, one more release.                                                                                                                                                                                              |
+| `WEB_ORIGIN`            | Production, Preview  | The website's origin, `https://…` without a path (production: the site's domain; a preview: that web preview's URL). Browser sign-in and cookie writes must come from it. Unset on Vercel → browser sessions off (phones unaffected); malformed → boot fails. Off Vercel it defaults to `https://cityturfer.local`. |
 
 `VERCEL_ENV=production` (set by Vercel) is what "production" means for the boot guard: a missing
 `DATABASE_URL`, `CRON_SECRET`, `BETTER_AUTH_SECRET`, `BREVO_API_KEY`, `MAIL_FROM` or
@@ -61,12 +62,14 @@ never their values).
 
 **Revoking sessions.** A session is a row in `auth_sessions`; the bearer token the phone holds is
 that row's token signed with `BETTER_AUTH_SECRET` (`<token>.<HMAC>`), and only the signed form is
-accepted (`bearer({ requireSignature: true })`). To sign one user out everywhere, delete their rows
-(`DELETE FROM auth_sessions WHERE user_id = '<userId>'`); to sign everyone out, delete all rows.
-Rotating `BETTER_AUTH_SECRET` also invalidates every token (their signatures no longer match), and
-it resets the rate-limit windows and voids pending sign-in codes (they are encrypted with it); after
-a suspected leak of the secret or the database, do both. Follow-up, not done: session tokens are
-still stored in plain text, so a database dump together with the secret is enough to take over
+accepted (`bearer({ requireSignature: true })`). A website session is the same kind of row with
+`client = 'browser'`, delivered as the `__Secure-ct_session` cookie instead; users revoke their own
+sessions in the portal (`DELETE /v1/auth/sessions…`). To sign one user out everywhere, delete their
+rows (`DELETE FROM auth_sessions WHERE user_id = '<userId>'`); to sign everyone out, delete all
+rows. Rotating `BETTER_AUTH_SECRET` also invalidates every token (their signatures no longer match),
+and it resets the rate-limit windows and voids pending sign-in codes (they are encrypted with it);
+after a suspected leak of the secret or the database, do both. Follow-up, not done: session tokens
+are still stored in plain text, so a database dump together with the secret is enough to take over
 sessions; storing a hash of the token needs Better Auth support or our own session lookup.
 
 **Preview deployments MUST use their own Neon branch, never the production database** (a preview has
@@ -82,6 +85,7 @@ server (`apps/api/src/server.ts`) adds the `dev-token` for user `admin` only whe
 | `0001_activity_renamed_at` | 0.4.0    | `activities.renamed_at` (rename, last write wins) |
 | `0002_auth`                | 0.4.0    | Better Auth `auth_*` tables, `rate_limits`        |
 | `0003_exports`             | 0.4.0    | `data_exports`, `stored_files` (export zips)      |
+| `0004_browser_sessions`    | 0.5.0    | `auth_sessions.client`, `absolute_expires_at`     |
 
 Migrations are SQL files in `apps/api/drizzle/`, generated from `apps/api/src/db/schema.ts` with
 `pnpm --filter @cityturfer/api run db:generate` and committed. Apply them to the production database
@@ -101,6 +105,29 @@ Safe to re-run: applied migrations are recorded in `drizzle.__drizzle_migrations
 one transaction. Keep migrations additive (add, backfill, then remove in a later release) so the
 running version keeps working while the next one rolls out. They are not run in the Vercel build:
 every preview build would migrate the database it points at.
+
+## Website sessions: checks on a preview (before production)
+
+The web portal reaches the API through the website's rewrite `/api/v1/*` → this API's `/v1/*`
+(`apps/web/vercel.json`); the browser holds an `HttpOnly` cookie on the website's host. Local runs
+cannot prove the Vercel hops, so on a preview pair (web preview + API preview, own Neon branch,
+`WEB_ORIGIN` = the web preview's URL, migration `0004` applied) check, in Chrome and Safari:
+
+1. **Cookie:** sign in on `/en/account`; DevTools shows `__Secure-ct_session` on the website's host,
+   `Path=/api/v1`, `HttpOnly`, `Secure`, `SameSite=Strict`, no `Domain`; page requests outside
+   `/api/v1` don't carry it; sign-out removes it.
+2. **CSRF headers pass through:** writes (sign-out, consents) answer 204/200, not `403 auth.csrf`
+   (the rewrite must keep `Origin` and `Sec-Fetch-Site`).
+3. **Client IP:** the API's per-IP sign-in limits need the visitor's IP. Temporarily compare what
+   the API sees (`x-vercel-forwarded-for`, `x-real-ip`, `x-forwarded-for`, read by `clientIp` in
+   `apps/api/src/routes/identity.ts` in that order) with your public IP — through a throwaway
+   preview-only log line or a debugger, never committed and never in production logs. If it is a
+   Vercel address, all web users share one bucket (20 failed sign-ins / 30 codes per 10 minutes):
+   record it and decide on a trusted-hop header or Vercel Firewall rules before launch.
+4. **No edge caching:** personal answers carry `Cache-Control: private, no-store` and
+   `x-vercel-cache` is absent or `MISS`.
+5. **Sign out everywhere** (`scope=all`) signs the phone out; the phone shows its sign-in screen and
+   keeps its data (device check).
 
 ## Accounts: adopting the existing `admin` data
 

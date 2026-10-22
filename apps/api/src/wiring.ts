@@ -4,7 +4,7 @@ import { createNeonDb } from './db/neon';
 import { PostgresRateLimiter } from './db/rate-limits';
 import { DrizzleRetentionStore } from './db/retention';
 import { type Db, DrizzleBackupStore } from './db/store';
-import { type ApiDeps, defaultDeps, jsonLineLog } from './deps';
+import { type ApiDeps, defaultDeps, DEV_WEB_ORIGIN, jsonLineLog } from './deps';
 import { createAuth } from './identity/better-auth';
 import { BrevoMailer, type Mailer, nullMailer, parseMailFrom } from './identity/mailer';
 import { compositeVerifier, IdentityService } from './identity/use-cases';
@@ -25,6 +25,9 @@ import { LOCAL_API_PORT } from './spec';
  *   (without it the route answers 404).
  * - `AUTH_FIXED_CODE`: the code for `@e2e.cityturfer.test` addresses only —
  *   never in production (boot fails); real addresses always get random codes.
+ * - `WEB_ORIGIN` (`https://…`, no path): the website whose `/api/v1/*` rewrite reaches this API.
+ *   Browser sign-in and cookie writes must come from it (CSRF guard). Off Vercel it defaults to
+ *   https://cityturfer.local; on Vercel, unset → browser sessions are off (phones unaffected).
  * Production = `VERCEL_ENV=production`: missing secrets fail the boot instead of degrading.
  * Nothing secret is logged: only whether each is configured.
  */
@@ -88,6 +91,28 @@ export function cronSecretOf(env: NodeJS.ProcessEnv): string | null {
   return secret && secret.length >= MIN_CRON_SECRET_LENGTH ? secret : null;
 }
 
+/**
+ * WEB_ORIGIN as an origin (`https://host[:port]`), or the local site off Vercel, or null (browser
+ * sessions off). A value that is not a bare https origin fails the boot: a typo would otherwise
+ * refuse every browser silently.
+ */
+export function webOriginOf(env: NodeJS.ProcessEnv): string | null {
+  const raw = env.WEB_ORIGIN?.trim();
+  if (!raw) {
+    return env.VERCEL_ENV ? null : DEV_WEB_ORIGIN;
+  }
+  let url: URL | null = null;
+  try {
+    url = new URL(raw);
+  } catch {
+    url = null;
+  }
+  if (!url || url.protocol !== 'https:' || url.origin !== raw.replace(/\/+$/, '')) {
+    throw new ConfigError('WEB_ORIGIN must be an https origin without a path, e.g. https://example.com.');
+  }
+  return url.origin;
+}
+
 /** The API's public base URL, without a trailing slash. */
 export function publicUrlOf(env: NodeJS.ProcessEnv): string {
   return (env.API_PUBLIC_URL || `http://localhost:${LOCAL_API_PORT}`).replace(/\/+$/, '');
@@ -111,6 +136,7 @@ export function productionDeps(env: NodeJS.ProcessEnv, overrides: WiringOverride
   if (fixedCode && !/^\d{6}$/.test(fixedCode)) {
     throw new ConfigError('AUTH_FIXED_CODE must be six digits.');
   }
+  const webOrigin = webOriginOf(env);
   const base = defaultDeps({ log: jsonLineLog });
   const mailer = mailerOf(env, overrides.mailer);
   const identity =
@@ -137,6 +163,7 @@ export function productionDeps(env: NodeJS.ProcessEnv, overrides: WiringOverride
       mail: mailer !== nullMailer,
       fixedCode: !!fixedCode,
       cron: !!cronSecretOf(env),
+      webOrigin: !!webOrigin,
       apiTokens: tokens.entries.length,
       apiTokensSkipped: tokens.skipped,
     })}\n`
@@ -162,5 +189,6 @@ export function productionDeps(env: NodeJS.ProcessEnv, overrides: WiringOverride
         : null,
     retention: db ? new RetentionService(new DrizzleRetentionStore(db), base.clock, base.log) : null,
     cronSecret: cronSecretOf(env),
+    webOrigin,
   };
 }

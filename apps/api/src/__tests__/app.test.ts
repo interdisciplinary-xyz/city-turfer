@@ -19,6 +19,9 @@ const LIVE = new Set([
   'requestSignInCode',
   'signIn',
   'signOut',
+  'listSessions',
+  'revokeSession',
+  'revokeSessions',
   'getMe',
   'deleteMe',
   'requestDataExport',
@@ -227,7 +230,7 @@ describe('OpenAPI document', () => {
 
   it('is OpenAPI 3.1 with every route of the decision record', () => {
     expect(doc.openapi).toBe('3.1.0');
-    expect(ops).toHaveLength(24);
+    expect(ops).toHaveLength(27);
   });
 
   it('gives every operation a unique id and a bounded-context tag', () => {
@@ -238,10 +241,10 @@ describe('OpenAPI document', () => {
     }
   });
 
-  it('requires bearer auth everywhere except the public routes', () => {
+  it('requires bearer or cookie auth everywhere except the public routes', () => {
     for (const o of ops) {
       const id = o.op.operationId!;
-      expect([id, o.op.security]).toEqual([id, PUBLIC.has(id) ? [] : [{ bearerAuth: [] }]]);
+      expect([id, o.op.security]).toEqual([id, PUBLIC.has(id) ? [] : [{ bearerAuth: [] }, { cookieAuth: [] }]]);
     }
   });
 
