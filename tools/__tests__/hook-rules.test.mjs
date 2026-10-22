@@ -234,6 +234,25 @@ test('git push: never to main, no force-push to integration branches', () => {
   assert.deepEqual(rules(bashFindings('pnpm test && git push origin main', CTX)), ['push-main']);
 });
 
+test('git push --all, --branches, --mirror and glob refspecs count as pushing main', () => {
+  for (const cmd of [
+    'git push --mirror origin',
+    'git push --mirror',
+    'git push origin --all --force',
+    'git push --all origin',
+    'git push --all -u origin',
+    'git push --branches origin',
+    'git push --mirr origin',
+    "git push origin 'refs/heads/*:refs/heads/*'",
+    'git push origin +refs/heads/*:refs/heads/*',
+  ]) {
+    assert.deepEqual(rules(bashFindings(cmd, CTX)), ['push-main'], cmd);
+  }
+  // false positives: one named branch, other options
+  assert.deepEqual(bashFindings('git push --atomic origin feat/territory', CTX), []);
+  assert.deepEqual(bashFindings('git push -u origin feat/all-the-things', CTX), []);
+});
+
 test('git commit --no-verify and hand-made tags are denied', () => {
   assert.deepEqual(rules(bashFindings('git commit --no-verify -m "x"', CTX)), ['no-verify']);
   assert.deepEqual(rules(bashFindings('git commit -n -m "x"', CTX)), ['no-verify']);

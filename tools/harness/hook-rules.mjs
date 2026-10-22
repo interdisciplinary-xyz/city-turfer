@@ -790,7 +790,19 @@ export function bashFindings(line, ctx = {}) {
           `Deleting ${deleted.filter((t) => PROTECTED.test(t)).join(', ')} on the remote removes an integration branch. Only feature branches may be deleted.`
         );
       }
-      if (targets.includes('main')) {
+      // `--all`/`--branches` push every local branch, `--mirror` also force-rewrites and prunes the
+      // remote; a glob refspec (`refs/heads/*`) matches main as well.
+      const everyBranch =
+        hasFlag(flags, '--all') ||
+        hasFlag(flags, '--branches') ||
+        hasFlag(flags, '--mirror') ||
+        refspecs.some((r) => r.includes('*'));
+      if (everyBranch) {
+        deny(
+          'push-main',
+          'git push --all, --branches, --mirror or a glob refspec pushes every branch, main and the integration branches included (--mirror also deletes remote branches). Push the one branch by name.'
+        );
+      } else if (targets.includes('main')) {
         deny(
           'push-main',
           'Never push to main. main only moves by the founder merging a release/vX.Y.Z PR (docs/process/release-manager.md).'
