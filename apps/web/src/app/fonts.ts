@@ -34,3 +34,12 @@ export const bodyFont = localFont({
   preload: true,
   fallback: ['-apple-system', 'BlinkMacSystemFont', 'Roboto', 'Arial', 'sans-serif'],
 });
+
+/** The hero tagline: Barlow Semi Condensed Black Italic, sentence case (TAGLINE_FONT_FAMILY). */
+export const taglineFont = localFont({
+  src: '../../../../packages/brand/fonts/BarlowSemiCondensed-BlackItalic.woff2',
+  variable: '--face-tagline',
+  display: 'swap',
+  preload: true,
+  fallback: ['-apple-system', 'BlinkMacSystemFont', 'Roboto', 'Arial', 'sans-serif'],
+});

@@ -10,6 +10,7 @@ import {
   RADIUS,
   SITE_SCHEME,
   SPACE,
+  TAGLINE_FONT_FAMILY,
   THEMES,
   TIER_ORDER,
 } from '../tokens';
@@ -133,6 +134,7 @@ describe('cssVariables', () => {
     expect(cssVariables('dark')['--font-family-display']).toMatch(/^'BigShouldersDisplay-Black', -apple-system/);
     expect(cssVariables('dark')['--font-family-numeric']).toMatch(/^'BarlowSemiCondensed-ExtraBold', /);
     expect(cssVariables('dark')['--font-family-body']).toMatch(/^'Barlow', -apple-system/);
+    expect(cssVariables('dark')['--font-family-tagline']).toMatch(/^'BarlowSemiCondensed-BlackItalic', /);
     expect(cssVariables('light')).toMatchObject({ '--display-case': 'uppercase', '--display-tracking': '0.4px' });
   });
 
@@ -202,6 +204,10 @@ describe('brand fonts', () => {
       expect(existsSync(join(fonts, `${name}.ttf`))).toBe(true);
       expect(existsSync(join(fonts, `${name}.woff2`))).toBe(true);
     }
+  });
+
+  it('ships the website tagline face', () => {
+    expect(existsSync(join(fonts, `${TAGLINE_FONT_FAMILY}.woff2`))).toBe(true);
   });
 
   it('ships the four website body weights', () => {

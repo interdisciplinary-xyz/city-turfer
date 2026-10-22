@@ -56,6 +56,12 @@ export const DISPLAY_TRACKING = 0.4;
  */
 export const BODY_FONT_FAMILY = 'Barlow';
 
+/**
+ * Website tagline face: Barlow Semi Condensed Black Italic, sentence case, for the hero line "Surf
+ * your city. Own your streets." and other taglines (social image, /branding). Web only.
+ */
+export const TAGLINE_FONT_FAMILY = 'BarlowSemiCondensed-BlackItalic';
+
 /** System font stack the website falls back to (and the app uses for body text). */
 export const SYSTEM_FONT_STACK =
   "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
@@ -133,6 +139,7 @@ export function cssVariables(scheme: ColorScheme): CssVariables {
     '--font-family-display': `'${FONT_FAMILY.display}', ${SYSTEM_FONT_STACK}`,
     '--font-family-numeric': `'${FONT_FAMILY.numeric}', ${SYSTEM_FONT_STACK}`,
     '--font-family-body': `'${BODY_FONT_FAMILY}', ${SYSTEM_FONT_STACK}`,
+    '--font-family-tagline': `'${TAGLINE_FONT_FAMILY}', ${SYSTEM_FONT_STACK}`,
     '--display-case': DISPLAY_CASE,
     '--display-tracking': `${DISPLAY_TRACKING}px`,
   };

@@ -51,7 +51,8 @@ visibly), **Yours alone** (local-first, no tracking).
 ## Typography: Archivo
 
 > **Superseded (2026-10-22):** the brand type is now Big Shoulders Display + Barlow ("Street
-> Plate"), `docs/decisions/brand-typography-2026-10-22.md`. The wordmark stays outlined Archivo.
+> Plate"), `docs/decisions/brand-typography-2026-10-22.md`. The wordmark is redrawn in Big Shoulders
+> Display too.
 
 Decision: **Archivo** (Omnibus-Type, SIL Open Font License) for display and numbers; system fonts
 (SF Pro, Roboto) for body text and labels.
