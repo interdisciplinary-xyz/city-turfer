@@ -1,6 +1,6 @@
 {
   "name": "@cityturfer/brand",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "private": true,
   "description": "CityTurfer brand: colour and type tokens (the turf strength ramp, Archivo), name and copy, logo SVGs, fonts, social and store templates. Plain TS + assets, no React.",
   "exports": {
