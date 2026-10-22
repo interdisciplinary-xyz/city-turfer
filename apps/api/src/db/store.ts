@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, like, lt, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, inArray, like, lt, notInArray, or, sql } from 'drizzle-orm';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 
 import type {
@@ -21,8 +21,10 @@ import {
   authUsers,
   authVerifications,
   consents,
+  dataExports,
   gapRoutes,
   homeCities,
+  storedFiles,
   tombstones,
   users,
 } from './schema';
@@ -136,6 +138,28 @@ class UserScope implements UserWriter {
     return row ? { checkedAt: row.checkedAt.getTime(), routes: row.routes } : null;
   }
 
+  async tracksOf(ids: readonly string[]): Promise<Map<string, CompactPoint[]>> {
+    if (ids.length === 0) {
+      return new Map();
+    }
+    const rows = await this.db
+      .select({ id: activityTracks.activityId, points: activityTracks.points })
+      .from(activityTracks)
+      .where(and(eq(activityTracks.userId, this.userId), inArray(activityTracks.activityId, [...ids])));
+    return new Map(rows.map((r) => [r.id, r.points]));
+  }
+
+  async gapRoutesOf(ids: readonly string[]): Promise<Map<string, GapRoutesRecord>> {
+    if (ids.length === 0) {
+      return new Map();
+    }
+    const rows = await this.db
+      .select()
+      .from(gapRoutes)
+      .where(and(eq(gapRoutes.userId, this.userId), inArray(gapRoutes.activityId, [...ids])));
+    return new Map(rows.map((r) => [r.activityId, { checkedAt: r.checkedAt.getTime(), routes: r.routes }]));
+  }
+
   async homeCity(): Promise<HomeCityRecord | null> {
     const [row] = await this.db.select().from(homeCities).where(eq(homeCities.userId, this.userId));
     return row
@@ -214,6 +238,9 @@ class UserScope implements UserWriter {
   }
 
   async lock(): Promise<void> {
+    // The middleware caches users it has seen per instance; after an erasure elsewhere the row may
+    // be gone: re-create it (empty account) instead of failing on the foreign keys.
+    await this.db.insert(users).values({ id: this.userId }).onConflictDoNothing();
     await this.db.select({ id: users.id }).from(users).where(eq(users.id, this.userId)).for('update');
   }
 
@@ -298,6 +325,13 @@ class UserScope implements UserWriter {
       await this.db.delete(tombstones).where(eq(tombstones.userId, this.userId));
       await this.db.delete(homeCities).where(eq(homeCities.userId, this.userId));
     }
+    // Export zips hold copies of the same data: delete them and expire their links, in this
+    // transaction (Postgres FileStorage; a Blob adapter will need its own delete).
+    await this.db.delete(storedFiles).where(eq(storedFiles.ownerId, this.userId));
+    await this.db
+      .update(dataExports)
+      .set({ status: 'expired', fileKey: null })
+      .where(and(eq(dataExports.userId, this.userId), notInArray(dataExports.status, ['failed', 'expired'])));
     return gone.length;
   }
 

@@ -1,6 +1,7 @@
 /** Privacy ports: export jobs and the file storage their zips live in. */
 
-export type ExportStatus = 'ready' | 'downloaded' | 'expired' | 'failed';
+/** `downloaded` = ready and fetched at least once; it still works until `expiresAt`. */
+export type ExportStatus = 'pending' | 'ready' | 'downloaded' | 'expired' | 'failed';
 
 export interface ExportRecord {
   id: string;
@@ -14,15 +15,28 @@ export interface ExportRecord {
 }
 
 export interface ExportStore {
-  /** The user's newest export that did not fail, or null. */
-  latest(userId: string): Promise<ExportRecord | null>;
-  get(userId: string, id: string): Promise<ExportRecord | null>;
-  insert(userId: string, record: ExportRecord, keyHash: string | null): Promise<void>;
   /**
-   * Claims a download once: marks the export with this key hash downloaded (if it is ready and not
-   * expired at `now`) and returns it with its owner; `gone` when it exists but was used or expired.
+   * Reserves an export under the user's row lock (no two requests race the 24 h rule): `reserved`
+   * after inserting `pending`, else the newest export still counting against the window.
    */
-  claim(keyHash: string, now: number): Promise<{ userId: string; export: ExportRecord } | 'gone' | null>;
+  reserve(
+    userId: string,
+    record: ExportRecord,
+    windowMs: number
+  ): Promise<{ reserved: true } | { reserved: false; last: ExportRecord }>;
+  /** The pending export is ready: its file, size, expiry and the SHA-256 of its link key. */
+  complete(
+    userId: string,
+    id: string,
+    done: { readyAt: number; expiresAt: number; fileKey: string; byteSize: number; keyHash: string }
+  ): Promise<void>;
+  /** Nothing was delivered: `failed` (does not count against the 24 h window). */
+  fail(userId: string, id: string): Promise<void>;
+  get(userId: string, id: string): Promise<ExportRecord | null>;
+  /** The export whose link key has this hash, with its owner. */
+  byKeyHash(keyHash: string): Promise<{ userId: string; export: ExportRecord } | null>;
+  /** Records the first download (later ones keep the first time). */
+  markDownloaded(userId: string, id: string, at: number): Promise<void>;
 }
 
 /** Port: opaque files (Postgres `bytea` now, Vercel Blob later). Owner rows cascade on erasure. */

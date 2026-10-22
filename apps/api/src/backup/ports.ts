@@ -18,6 +18,10 @@ export interface UserReader {
   tombstone(id: string): Promise<TombstoneRecord | null>;
   track(id: string): Promise<CompactPoint[] | null>;
   gapRoutes(id: string): Promise<GapRoutesRecord | null>;
+  /** Tracks of several activities in one query (export). */
+  tracksOf(ids: readonly string[]): Promise<Map<string, CompactPoint[]>>;
+  /** Gap routes of several activities in one query (export). */
+  gapRoutesOf(ids: readonly string[]): Promise<Map<string, GapRoutesRecord>>;
   homeCity(): Promise<HomeCityRecord | null>;
   /** Newest first by (startedAt, id); `before` is the last item of the previous page. */
   listActivities(q: {
@@ -33,7 +37,10 @@ export interface UserReader {
 
 /** One transaction scoped to one user. */
 export interface UserWriter extends UserReader {
-  /** Locks the user's row until commit: all writes of one user are serialised (no lost updates). */
+  /**
+   * Locks the user's row until commit: all writes of one user are serialised (no lost updates).
+   * Re-creates a missing row (a device-token user erased on another function instance).
+   */
   lock(): Promise<void>;
   /** Next change seq of this user (after `lock`). */
   nextSeq(): Promise<number>;
@@ -50,7 +57,8 @@ export interface UserWriter extends UserReader {
   /**
    * Erases the server copy without leaving tombstones or feed entries: `apple-health` removes the
    * Apple Health activities (`hk-…` or source `apple-health`) with their tracks and gap routes;
-   * `all` removes every activity, track, gap route, tombstone and the Home City. Returns how many
+   * `all` removes every activity, track, gap route, tombstone and the Home City. Either way the
+   * user's stored export files go and their exports expire (they copy that data). Returns how many
    * activities went.
    */
   eraseBackup(scope: 'apple-health' | 'all'): Promise<number>;

@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
 
+import { sql } from 'drizzle-orm';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createApp } from '../app';
@@ -119,6 +120,27 @@ describe('consents', () => {
     await grant();
     expect((await put('a1', upload())).status).toBe(201);
     expect((await put('a2', upload())).status).toBe(201);
+  });
+
+  it('withdrawing a consent deletes stored export files and expires their links in the same go', async () => {
+    await grant();
+    await put('a1', upload());
+    await h.call('POST', '/v1/me/exports');
+    const link = /(\/v1\/exports\/[A-Za-z0-9_-]+)/.exec(h.mailer.lastTo('admin@cityturfer.com')!.text)![1];
+    expect((await h.call('GET', link, { token: null })).status).toBe(200);
+
+    await withdraw('cloud-sync');
+    const count = async (table: string) =>
+      (
+        (await h.db.execute(sql.raw(`SELECT count(*)::int AS n FROM "${table}"`))) as unknown as {
+          rows: { n: number }[];
+        }
+      ).rows[0].n;
+    expect(await count('stored_files')).toBe(0);
+    expect((await h.call('GET', link, { token: null })).status).toBe(410);
+    // The expired export no longer blocks a new one (after backing up again).
+    await grant();
+    expect((await h.call('POST', '/v1/me/exports')).status).toBe(202);
   });
 
   it('withdrawing apple-health-in-cloud-sync erases only the Apple Health activities', async () => {
@@ -463,6 +485,18 @@ describe('Home City', () => {
     const unknown = await choose('xx-nowhere', '2026-10-19T10:00:00Z');
     expect(unknown.status).toBe(422);
     expect(await unknown.json()).toMatchObject({ code: 'home-city.unknown' });
+  });
+});
+
+describe('a user erased on another function instance', () => {
+  it('re-creates the account row on the next write instead of failing', async () => {
+    await grant();
+    expect((await put('a1', upload())).status).toBe(201);
+    // Another instance erased the user; this one still has it in its cache.
+    await h.db.execute(sql`DELETE FROM users WHERE id = 'admin'`);
+    expect((await put('a2', upload())).status).toBe(403);
+    expect((await grant()).status).toBe(200);
+    expect((await put('a2', upload())).status).toBe(201);
   });
 });
 

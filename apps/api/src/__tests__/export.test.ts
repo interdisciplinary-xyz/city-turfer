@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import { strFromU8, unzipSync } from 'fflate';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { MemoryMailer } from '../identity/mailer';
 import { backupApp, closeSharedDb, TOKENS, track, upload } from './support';
 
 type Harness = Awaited<ReturnType<typeof backupApp>>;
@@ -34,7 +35,7 @@ function linkPath(): string {
 }
 
 describe('data export', () => {
-  it('builds a zip with data.json and GPX, e-mails a one-time link, and serves it once', async () => {
+  it('builds a zip with data.json and GPX, e-mails a link, and serves it until it expires', async () => {
     const res = await h.call('POST', '/v1/me/exports');
     expect(res.status).toBe(202);
     const job = await res.json();
@@ -64,13 +65,11 @@ describe('data export', () => {
     expect(gpx.match(/<trkseg>/g)).toHaveLength(2);
     expect(gpx.match(/<trkpt /g)).toHaveLength(10);
 
+    // Repeatable until it expires (mail scanners, broken downloads); the status says it was fetched.
     const again = await h.call('GET', linkPath(), { token: null });
-    expect(again.status).toBe(410);
-    expect(await again.json()).toMatchObject({ code: 'export.gone' });
+    expect(again.status).toBe(200);
+    expect(unzipSync(new Uint8Array(await again.arrayBuffer()))['data.json']).toBeDefined();
     expect(await (await h.call('GET', `/v1/me/exports/${job.id}`)).json()).toMatchObject({ status: 'downloaded' });
-    // The file is gone from storage once served.
-    const left = await h.db.execute(sql`SELECT count(*)::int AS n FROM stored_files`);
-    expect((left as unknown as { rows: { n: number }[] }).rows[0].n).toBe(0);
   });
 
   it('allows one export per 24 hours (429 + Retry-After)', async () => {
@@ -96,6 +95,38 @@ describe('data export', () => {
     const noEmail = await h.call('POST', '/v1/me/exports', { token: TOKENS.other });
     expect(noEmail.status).toBe(422);
     expect(await noEmail.json()).toMatchObject({ code: 'export.no-email' });
+  });
+
+  it('serves the zip again after a broken (partial) download', async () => {
+    await h.call('POST', '/v1/me/exports');
+    const first = await h.call('GET', linkPath(), { token: null });
+    const reader = first.body!.getReader();
+    await reader.read();
+    await reader.cancel();
+    const retry = await h.call('GET', linkPath(), { token: null });
+    expect(retry.status).toBe(200);
+    expect(Object.keys(unzipSync(new Uint8Array(await retry.arrayBuffer())))).toContain('data.json');
+  });
+
+  it('marks the export failed and deletes its file when the e-mail cannot be sent; a retry is allowed', async () => {
+    const failing = new MemoryMailer();
+    failing.send = () => Promise.reject(new Error('mail down'));
+    const f = await backupApp({ mailer: failing });
+    await f.call('PUT', '/v1/me/consents/cloud-sync', { body: { granted: true, policyVersion: '2026-10' } });
+    await f.call('PUT', '/v1/activities/run-1', { body: upload() });
+    const res = await f.call('POST', '/v1/me/exports');
+    expect(res.status).toBe(202);
+    const job = await res.json();
+    expect(job.status).toBe('failed');
+    expect(await (await f.call('GET', `/v1/me/exports/${job.id}`)).json()).toMatchObject({ status: 'failed' });
+    const left = await f.db.execute(sql`SELECT count(*)::int AS n FROM stored_files`);
+    expect((left as unknown as { rows: { n: number }[] }).rows[0].n).toBe(0);
+    expect((await f.call('POST', '/v1/me/exports')).status).toBe(202);
+  });
+
+  it('lets only one of two concurrent requests through (row lock)', async () => {
+    const [a, b] = await Promise.all([h.call('POST', '/v1/me/exports'), h.call('POST', '/v1/me/exports')]);
+    expect([a.status, b.status].sort()).toEqual([202, 429]);
   });
 
   it('is erased with the account', async () => {

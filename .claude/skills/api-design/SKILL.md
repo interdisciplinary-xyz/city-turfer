@@ -106,10 +106,12 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   one transaction: `eraseAccount` in `apps/api/src/db/store.ts`) must cover every table, tombstones,
   consents and the `auth_*` rows included. A new table hangs off `users` with `ON DELETE CASCADE`
   (or is deleted in `eraseAccount`) — `apps/api/src/__tests__/erase.test.ts` counts the rows.
-- **Export** (`apps/api/src/privacy/`): `POST /v1/me/exports` builds the zip (fflate; `data.json` +
-  GPX 1.1 per activity) in the request, stores it behind the `FileStorage` port (Postgres `bytea`,
-  `apps/api/src/db/exports.ts`; Vercel Blob later) and e-mails a one-time 24 h link
-  `GET /v1/exports/{key}` (public; only the key's SHA-256 is stored; streamed). One per 24 h.
+- **Export** (`apps/api/src/privacy/`): `POST /v1/me/exports` reserves a `pending` row under the
+  user lock (one per 24 h), streams the zip into fflate (`data.json` + GPX 1.1 per activity, ≤ 50
+  MB), stores it behind the `FileStorage` port (Postgres `bytea`, `apps/api/src/db/exports.ts`;
+  Vercel Blob later) and e-mails a link `GET /v1/exports/{key}` (public; only the key's SHA-256 is
+  stored; repeatable until it expires after 24 h; streamed). Failures leave `failed` and no file.
+  Consent withdrawal deletes export files too.
 - **Never** log request bodies, coordinates, track points, cell ids or Home City; log route, status,
   duration and user id only. No coordinates in error `detail`.
 - **OpenAPI examples** use public landmarks (Warsaw Old Town, 21.0122 / 52.2297) and made-up ids,

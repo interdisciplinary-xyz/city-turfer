@@ -354,12 +354,13 @@
           "status": {
             "type": "string",
             "enum": [
+              "pending",
               "ready",
               "downloaded",
               "expired",
               "failed"
             ],
-            "description": "`ready`: the link was e-mailed; `downloaded`: used (links work once); `expired`: 24 h passed; `failed`: nothing was sent, ask again.",
+            "description": "`pending`: being built; `ready`: the link was e-mailed; `downloaded`: fetched at least once (still works until `expiresAt`); `expired`: 24 h passed, or a consent was withdrawn; `failed`: nothing was sent, ask again at once.",
             "example": "ready"
           },
           "requestedAt": {
@@ -382,7 +383,7 @@
             ],
             "format": "date-time",
             "example": "2026-10-19T07:12:00Z",
-            "description": "The e-mailed link stops working then (24 h)."
+            "description": "The e-mailed link works until then (24 h)."
           }
         },
         "required": [
@@ -392,7 +393,7 @@
           "readyAt",
           "expiresAt"
         ],
-        "description": "An export of everything the server holds for the account: a zip with `data.json` (account, consents, activities with tracks and gap routes, tombstones, Home City) and one GPX 1.1 file per activity. The download link is only in the e-mail."
+        "description": "An export of everything the server holds for the account: a zip with `data.json` (account, consents, activities with tracks and gap routes, tombstones, Home City) and one GPX 1.1 file per activity. The download link is only in the e-mail and works until `expiresAt`."
       },
       "ConsentList": {
         "type": "object",
@@ -1997,7 +1998,7 @@
         ],
         "operationId": "requestDataExport",
         "summary": "E-mail me an export of all my data",
-        "description": "Builds a zip of everything the server holds for the account — `data.json` (account, consents, activities with tracks and gap routes, tombstones, Home City) and one GPX 1.1 per activity — and e-mails a one-time download link valid 24 h (use case RequestDataExport; GDPR art. 15 and 20). The link is only in the e-mail: the phone cannot save files. One export per 24 hours (`429` with `Retry-After`); an account without an e-mail (device token) gets `422 export.no-email`. `status: failed` means nothing was sent: ask again.",
+        "description": "Builds a zip of everything the server holds for the account — `data.json` (account, consents, activities with tracks and gap routes, tombstones, Home City) and one GPX 1.1 per activity — and e-mails a download link valid 24 h (use case RequestDataExport; GDPR art. 15 and 20). The link is only in the e-mail: the phone cannot save files. One export per 24 hours (`429` with `Retry-After`; a `failed` one does not count); an account without an e-mail (device token) gets `422 export.no-email`. `status: failed` means nothing was sent: ask again. Withdrawing a consent deletes the zip and expires the link.",
         "security": [
           {
             "bearerAuth": []
@@ -2300,7 +2301,7 @@
         "operationId": "downloadDataExport",
         "security": [],
         "summary": "Download an export (the e-mailed link)",
-        "description": "Public: the unguessable key in the path is the credential (use case DownloadDataExport). Works **once**, within 24 h of the e-mail; then `410 export.gone`. The zip is streamed (`Cache-Control: no-store`).",
+        "description": "Public: the unguessable key in the path is the credential (use case DownloadDataExport). Works **as often as needed until it expires** (24 h; mail scanners may fetch it first, and a broken download can be retried), then `410 export.gone`. The zip is streamed in chunks (`Cache-Control: no-store`).",
         "parameters": [
           {
             "schema": {
@@ -2370,7 +2371,7 @@
             }
           },
           "410": {
-            "description": "Already downloaded, or older than 24 h. Codes: `export.gone`.",
+            "description": "Older than 24 h, or a consent was withdrawn. Codes: `export.gone`.",
             "content": {
               "application/problem+json": {
                 "examples": {

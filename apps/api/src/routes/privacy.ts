@@ -66,7 +66,7 @@ export function registerPrivacy(app: OpenAPIHono<AppEnv>): void {
       operationId: 'requestDataExport',
       summary: 'E-mail me an export of all my data',
       description:
-        'Builds a zip of everything the server holds for the account — `data.json` (account, consents, activities with tracks and gap routes, tombstones, Home City) and one GPX 1.1 per activity — and e-mails a one-time download link valid 24 h (use case RequestDataExport; GDPR art. 15 and 20). The link is only in the e-mail: the phone cannot save files. One export per 24 hours (`429` with `Retry-After`); an account without an e-mail (device token) gets `422 export.no-email`. `status: failed` means nothing was sent: ask again.',
+        'Builds a zip of everything the server holds for the account — `data.json` (account, consents, activities with tracks and gap routes, tombstones, Home City) and one GPX 1.1 per activity — and e-mails a download link valid 24 h (use case RequestDataExport; GDPR art. 15 and 20). The link is only in the e-mail: the phone cannot save files. One export per 24 hours (`429` with `Retry-After`; a `failed` one does not count); an account without an e-mail (device token) gets `422 export.no-email`. `status: failed` means nothing was sent: ask again. Withdrawing a consent deletes the zip and expires the link.',
       responses: {
         202: { description: 'Export built and e-mailed.', headers: LOCATION_HEADER, content: json(DataExportJob) },
         ...AUTH_ERRORS,
@@ -115,7 +115,7 @@ export function registerPrivacy(app: OpenAPIHono<AppEnv>): void {
       security: [],
       summary: 'Download an export (the e-mailed link)',
       description:
-        'Public: the unguessable key in the path is the credential (use case DownloadDataExport). Works **once**, within 24 h of the e-mail; then `410 export.gone`. The zip is streamed (`Cache-Control: no-store`).',
+        'Public: the unguessable key in the path is the credential (use case DownloadDataExport). Works **as often as needed until it expires** (24 h; mail scanners may fetch it first, and a broken download can be retried), then `410 export.gone`. The zip is streamed in chunks (`Cache-Control: no-store`).',
       request: { params: DownloadKeyParam },
       responses: {
         200: {
@@ -124,7 +124,7 @@ export function registerPrivacy(app: OpenAPIHono<AppEnv>): void {
         },
         ...INVALID,
         ...notFound('export'),
-        410: problemResponse('Already downloaded, or older than 24 h.', 'export.gone'),
+        410: problemResponse('Older than 24 h, or a consent was withdrawn.', 'export.gone'),
         ...UNAVAILABLE,
       },
     },
@@ -137,10 +137,10 @@ export function registerPrivacy(app: OpenAPIHono<AppEnv>): void {
       const file = await exports.download(key);
       c.header('Content-Type', 'application/zip');
       c.header('Content-Disposition', `attachment; filename="${file.fileName}"`);
-      c.header('Content-Length', String(file.bytes.byteLength));
       c.header('Cache-Control', 'no-store');
       c.header('Referrer-Policy', 'no-referrer');
-      // Streamed in chunks: a buffered Vercel response is capped at 4.5 MB.
+      // Streamed in chunks, without Content-Length: a buffered Vercel response is capped at 4.5 MB.
+      // Whether a streamed one passes that cap is unverified until a deploy (runbook).
       return stream(c, async (out) => {
         for (let at = 0; at < file.bytes.byteLength; at += CHUNK) {
           await out.write(file.bytes.subarray(at, at + CHUNK));

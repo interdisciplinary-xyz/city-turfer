@@ -62,15 +62,29 @@ for Neon's restore window (to be stated with the plan).
 
 ## Data export
 
-`POST /v1/me/exports` → `202 { id, status, requestedAt, readyAt, expiresAt }` + `Location`. The
-server builds the zip in the request (paging the changes feed: `data.json` with account, consents,
-activities with tracks and gap routes, tombstones and the Home City; one GPX 1.1 per activity, one
-`<trkseg>` per segment), stores it behind the `FileStorage` port (`stored_files`, Postgres `bytea`,
-24 h; Vercel Blob later) and e-mails a link `GET /v1/exports/{key}`: public, 32 random bytes, only
-its SHA-256 stored, works **once** within 24 h (then 410 `export.gone`), streamed in 256 KiB chunks
-with `Cache-Control: no-store`. One export per 24 h (429 `rate-limited`, `Retry-After`); no e-mail
-on the account → 422 `export.no-email`. `GET /v1/me/exports/{id}` reports `ready`, `downloaded`,
-`expired` or `failed`. Zips above 200 MB fail rather than exhaust a function.
+`POST /v1/me/exports` → `202 { id, status, requestedAt, readyAt, expiresAt }` + `Location`. A
+`pending` row is reserved under the user's row lock (two concurrent requests cannot both pass the
+one-per-24-h rule; `429 rate-limited` with `Retry-After`; `failed` and `expired` exports do not
+count). The zip is built in the request by paging the changes feed (50 activities per page, their
+tracks and gap routes in one query each) and streamed into fflate, so memory holds the compressed
+output plus one page; above **50 MB** it fails. Contents: `data.json` (account, consents, activities
+with tracks and gap routes, tombstones, Home City; no indentation) and one GPX 1.1 per activity, one
+`<trkseg>` per segment. It is stored behind the `FileStorage` port (`stored_files`, Postgres
+`bytea`, 24 h; Vercel Blob later) and a link `GET /v1/exports/{key}` is e-mailed (32 random bytes,
+only the SHA-256 stored). No e-mail on the account → `422 export.no-email`.
+
+**The link works repeatedly until it expires (24 h)**, not once: mail link scanners fetch links
+before people do, and a broken download must be retryable. `GET /v1/me/exports/{id}` reports
+`pending`, `ready`, `downloaded` (fetched at least once, still valid), `expired` or `failed`.
+Expired files are purged on the next export request. If building, storing or mailing fails, the
+export is `failed`, its file deleted, and the user may ask again at once. Withdrawing a consent
+deletes the user's export files and expires their links in the same transaction (they copy the
+withdrawn data).
+
+The download streams 256 KiB chunks without `Content-Length`. **Unverified until a deploy:** that
+Vercel lets a streamed response exceed its 4.5 MB buffered-response cap. Duration: Fluid compute's
+default (300 s) covers the build; `vercel.json` sets no `functions` pattern because a wrong pattern
+for the bundled entry fails the build — add `maxDuration` once a deploy shows the entry path.
 
 Why e-mail: the phone cannot save files without new native modules (`expo-file-system`,
 `expo-sharing`), and the release must stay OTA.
