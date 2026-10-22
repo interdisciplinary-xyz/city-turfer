@@ -1,10 +1,12 @@
 // Run with `node --experimental-strip-types --test` (the constants are TypeScript).
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 import {
   INERT_ROOT_SCRIPT,
   LOADER_BOOT_SCRIPT,
+  LOADER_CSS_FALLBACK_S,
   LOADER_MAX_MS,
   PAGE_LOADED_CLASS,
   PAGE_LOADED_EVENT,
@@ -121,4 +123,12 @@ test('inert script: does nothing without the boot script or after the page loade
   late.timers[0].fn();
   late.run(INERT_ROOT_SCRIPT);
   assert.equal(late.root.inert, false);
+});
+
+test('CSS fallback delay matches LOADER_CSS_FALLBACK_S and is longer than the cap', () => {
+  const css = readFileSync(new URL('../../src/app/globals.css', import.meta.url), 'utf8');
+  const match = css.match(/animation:\s*page-loader-out\s+[\d.]+s\s+ease-out\s+([\d.]+)s\s+forwards/);
+  assert.ok(match, 'page-loader-out animation not found');
+  assert.equal(Number(match[1]), LOADER_CSS_FALLBACK_S);
+  assert.ok(LOADER_CSS_FALLBACK_S * 1000 > LOADER_MAX_MS);
 });

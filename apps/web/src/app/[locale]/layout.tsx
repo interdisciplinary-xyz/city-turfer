@@ -97,7 +97,7 @@ export default async function LocaleLayout({
         <PageLoader />
         {/* next-intl's Link (language switcher) is a client component and reads the locale from
             this provider. */}
-        <div id={PAGE_ROOT_ID}>
+        <div id={PAGE_ROOT_ID} suppressHydrationWarning>
           {/* Content is inert while the loader covers it; the boot script lifts that (and it is never
               set once the page has loaded or if the boot script is missing). */}
           <script dangerouslySetInnerHTML={{ __html: INERT_ROOT_SCRIPT }} />

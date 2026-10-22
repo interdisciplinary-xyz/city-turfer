@@ -26,13 +26,14 @@ export function Frame({ scheme, locale, web, pageLoaded = true, children }: Fram
 
   // Storybook never runs the site's LOADER_BOOT_SCRIPT; without this the hero stays paused and hidden.
   useLayoutEffect(() => {
-    const root = document.documentElement;
+    // pageLoaded false: leave the class alone, the story (PageLoader) owns it.
     if (!web || !pageLoaded) {
-      root.classList.remove(PAGE_LOADED_CLASS);
       return;
     }
+    const root = document.documentElement;
     root.classList.add(PAGE_LOADED_CLASS);
     window.dispatchEvent(new Event(PAGE_LOADED_EVENT));
+    return () => root.classList.remove(PAGE_LOADED_CLASS);
   }, [web, pageLoaded]);
 
   const style: CSSProperties = { background: THEMES[effective].bg, color: THEMES[effective].text, padding: 16 };
