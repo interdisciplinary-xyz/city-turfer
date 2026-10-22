@@ -74,7 +74,7 @@ export const notFound = (what: string) => ({
   404: problemResponse(`No ${what} with this id for this user.`, 'not-found'),
 });
 
-/** Bearer device token (API_TOKENS; Better Auth later). */
+/** Bearer token: a Better Auth session (e-mailed code) or, for one more release, a device token (API_TOKENS). */
 export const BEARER_AUTH = [{ bearerAuth: [] }];
 
 /** Spec extension marking routes that are declared but not built yet. */

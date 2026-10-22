@@ -21,7 +21,8 @@ import type { CompactPoint, StoredGapRoute, StoredSummary } from '../backup/mode
  * (`pnpm --filter @cityturfer/api run db:generate`) into apps/api/drizzle/ and committed.
  *
  * Personal data: activities (times, preview), tracks, gap routes and the Home City. Tombstones keep
- * only (user, id, deletedAt). Erasure (`DELETE /v1/me`, planned) must cover every table here.
+ * only (user, id, deletedAt). Erasure (`DELETE /v1/me` and `user:delete`: `eraseAccount` in
+ * ./store.ts) covers every table here; a new table hangs off `users` with ON DELETE CASCADE.
  */
 
 const ts = (name: string) => timestamp(name, { withTimezone: true, mode: 'date' });
