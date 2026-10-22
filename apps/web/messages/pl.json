@@ -49,5 +49,157 @@
     "sent": "Prawie gotowe — sprawdź skrzynkę i potwierdź adres e-mail, aby dołączyć do listy.",
     "failed": "Nie udało się wysłać. Sprawdź połączenie i spróbuj ponownie.",
     "privacy": "{controller} przechowuje Twój e-mail w Brevo (UE) wyłącznie po to, by poinformować Cię o starcie CityTurfer. Najpierw potwierdzasz go e-mailem. Aby go usunąć, napisz na {contactEmail}."
+  },
+  "portal": {
+    "meta": {
+      "title": "Twoja kopia zapasowa — CityTurfer",
+      "signInTitle": "Zaloguj się — CityTurfer"
+    },
+    "header": {
+      "home": "Strona CityTurfer",
+      "signOut": "Wyloguj się",
+      "signingOut": "Wylogowywanie…"
+    },
+    "common": {
+      "skip": "Przejdź do treści",
+      "backedUpCopy": "Widzisz tu kopię, którą Twój telefon zapisał w chmurze. Oryginał jest na telefonie.",
+      "phoneUntouched": "Wylogowanie tutaj nie zmienia niczego na telefonie.",
+      "retry": "Spróbuj ponownie",
+      "requestId": "Numer zgłoszenia: {id}",
+      "waitSeconds": "Spróbuj ponownie za {count, plural, one {# sekundę} few {# sekundy} many {# sekund} other {# sekundy}}.",
+      "waitMinutes": "Spróbuj ponownie za {count, plural, one {# minutę} few {# minuty} many {# minut} other {# minuty}}.",
+      "waitHours": "Spróbuj ponownie za {count, plural, one {# godzinę} few {# godziny} many {# godzin} other {# godziny}}.",
+      "cancel": "Anuluj"
+    },
+    "gate": {
+      "checking": "Otwieramy Twoją kopię…",
+      "leaving": "Przechodzimy do logowania…"
+    },
+    "unreachable": {
+      "title": "Nie możemy teraz połączyć się z Twoją kopią",
+      "body": "Twój turf na telefonie jest bezpieczny. Sprawdź połączenie i spróbuj ponownie."
+    },
+    "signIn": {
+      "title": "Zaloguj się, aby zobaczyć swoją kopię",
+      "lede": "Pokazuje kopię, którą zapisał Twój telefon. Użyj adresu e-mail, którym logujesz się w aplikacji.",
+      "emailLabel": "Adres e-mail",
+      "emailPlaceholder": "ty@przyklad.pl",
+      "sendCode": "Wyślij mi kod",
+      "sendingCode": "Wysyłanie…",
+      "codeSent": "Jeśli na adres {email} można wysłać wiadomość, właśnie idzie do Ciebie 6-cyfrowy kod. Działa przez 10 minut.",
+      "codeLabel": "6-cyfrowy kod",
+      "codeHint": "Z wiadomości, którą przed chwilą wysłaliśmy. Możesz go wkleić.",
+      "codeIncomplete": "Wpisz wszystkie 6 cyfr kodu.",
+      "sharedComputer": "To jest wspólny komputer",
+      "sharedComputerHint": "Wylogujemy Cię po zamknięciu przeglądarki, najpóźniej po 8 godzinach.",
+      "submit": "Zaloguj się",
+      "signingIn": "Logowanie…",
+      "resend": "Wyślij kod ponownie",
+      "resent": "Wysłane ponownie. Sprawdź skrzynkę i folder spam.",
+      "otherEmail": "Użyj innego adresu",
+      "cookie": "Logowanie zapisuje jedno ciasteczko, które utrzymuje Cię zalogowanym, i nic więcej. Żadnych trackerów.",
+      "notice": {
+        "signed-out": "Wylogowano. Wszystko nadal jest na Twoim telefonie.",
+        "expired": "Sesja wygasła. Zaloguj się ponownie, aby kontynuować.",
+        "deleted": "Twoje konto i kopia w chmurze zostały usunięte. Wszystko nadal jest na Twoim telefonie."
+      }
+    },
+    "privacy": {
+      "title": "Prywatność i dane",
+      "lede": "Co dla Ciebie przechowujemy i jak to zabrać albo usunąć.",
+      "account": {
+        "title": "Twoje konto",
+        "email": "E-mail",
+        "noEmail": "To konto nie ma adresu e-mail",
+        "since": "Konto kopii zapasowej od {date}"
+      },
+      "backup": {
+        "title": "Kopia zapasowa",
+        "on": "Kopia zapasowa jest włączona od {date}.",
+        "never": "Twój turf jest na Twoim telefonie. Nic nie zostało jeszcze zapisane w chmurze.",
+        "withdrawn": "Wyłączono kopię zapasową {date}, więc usunęliśmy kopię w chmurze. Wszystko nadal jest na Twoim telefonie.",
+        "healthOn": "Treningi z Apple Health są w kopii od {date}.",
+        "healthOff": "Treningi z Apple Health zostają na Twoim telefonie. Twój turf może tu wyglądać na mniejszy.",
+        "policy": "Wersja polityki prywatności {version}",
+        "changeInApp": "Aby zmienić te ustawienia, otwórz aplikację: Info › Kopia w chmurze."
+      },
+      "stored": {
+        "title": "Co przechowujemy",
+        "email": "Twój adres e-mail, aby wysyłać Ci kody logowania.",
+        "activities": "Spacery, biegi i przejażdżki, które zapisał Twój telefon: kiedy się odbyły, ich statystyki i trasa zapisana przez GPS. Trasy często zaczynają się w domu.",
+        "city": "Twoje miasto, jeśli je wybrano.",
+        "consents": "Twoje wybory dotyczące kopii zapasowej (powyżej) i datę każdego z nich.",
+        "devices": "Kiedy każde urządzenie się zalogowało i kiedy było ostatnio używane. Bez adresów IP, nazw urządzeń i lokalizacji.",
+        "nothingElse": "Żadnej analityki, trackerów ani reklam."
+      },
+      "devices": {
+        "title": "Zalogowane urządzenia",
+        "lede": "Każdy telefon i każda przeglądarka zalogowane na Twoje konto.",
+        "phone": "Telefon",
+        "browser": "Przeglądarka",
+        "current": "Ta przeglądarka",
+        "signedIn": "Zalogowano {date}",
+        "lastUsed": "Ostatnio używane {date}",
+        "expires": "Na razie zalogowane do {date}",
+        "signOutOne": "Wyloguj",
+        "signOutOneLabel": "Wyloguj: {client}, zalogowano {date}",
+        "signOutOthers": "Wyloguj wszędzie indziej",
+        "signOutOthersHint": "Wylogowuje wszystkie inne przeglądarki i Twoje telefony. Telefony przestaną zapisywać kopię, dopóki nie zalogujesz się ponownie w aplikacji. Nic z nich nie zostanie usunięte.",
+        "signOutAll": "Wyloguj wszędzie, także tutaj",
+        "signOutAllHint": "Wylogowuje tę przeglądarkę, wszystkie inne i Twoje telefony. Nic z telefonów nie zostanie usunięte.",
+        "confirmOthers": "Tak, wyloguj wszędzie indziej",
+        "confirmAll": "Tak, wyloguj wszędzie",
+        "working": "Wylogowywanie…",
+        "none": "Zalogowana jest tylko ta przeglądarka.",
+        "unavailable": "Lista urządzeń nie jest jeszcze dostępna."
+      },
+      "export": {
+        "title": "Pobierz kopię",
+        "lede": "Wyślemy Ci e-mailem link do pliku zip ze wszystkim, co przechowujemy: kontem, Twoimi wyborami i każdą aktywnością z kopii w formacie GPX. Link działa przez 24 godziny.",
+        "request": "Wyślij mi kopię",
+        "requesting": "Wysyłanie prośby…",
+        "pending": "Przygotowujemy ją. Link trafi na adres {email} w ciągu kilku minut.",
+        "ready": "Wysłane. Szukaj wiadomości na {email}; link działa do {date}.",
+        "failed": "Nie udało się i nic nie zostało wysłane. Poproś ponownie.",
+        "expired": "Ten link wygasł. O nową kopię możesz poprosić jutro."
+      },
+      "delete": {
+        "title": "Usuń konto",
+        "lede": "Usuwa Twoje konto i wszystko z kopii w chmurze: aktywności, trasy, Twoje miasto i Twoje wybory. Telefony zostaną wylogowane.",
+        "phone": "Wszystko nadal jest na Twoim telefonie. Aby później znów zapisywać kopię, włącz ją w aplikacji.",
+        "start": "Usuń moje konto…",
+        "confirmLabel": "Wpisz {word}, aby potwierdzić",
+        "confirmWord": "USUŃ",
+        "confirm": "Usuń moje konto na zawsze",
+        "deleting": "Usuwanie…"
+      }
+    },
+    "errors": {
+      "generic": "Coś poszło nie tak po naszej stronie. Spróbuj ponownie za chwilę.",
+      "unreachable": "Nie możemy teraz połączyć się z Twoją kopią. Twój turf na telefonie jest bezpieczny.",
+      "signed-out": "Sesja wygasła. Zaloguj się ponownie.",
+      "invalid-request": "Coś tu się nie zgadza. Sprawdź i spróbuj ponownie.",
+      "auth": {
+        "invalid-code": "Ten kod jest błędny albo wygasł. Sprawdź najnowszą wiadomość albo wyślij nowy kod.",
+        "rate-limited": "Na razie za dużo prób.",
+        "csrf": "Dla Twojego bezpieczeństwa przyjmujemy to tylko ze strony CityTurfer. Odśwież stronę i spróbuj ponownie."
+      },
+      "rate-limited": "Na razie za dużo zapytań.",
+      "consent": {
+        "required": "Kopia zapasowa jest wyłączona dla tego konta, więc nic tu nie ma."
+      },
+      "not-found": "Nie znaleziono.",
+      "activity": {
+        "deleted": "Ta aktywność została usunięta na telefonie."
+      },
+      "export": {
+        "gone": "Ten link do pobrania wygasł. Poproś o nową kopię.",
+        "no-email": "To konto nie ma adresu e-mail, więc nie możemy wysłać Ci kopii.",
+        "rate-limited": "O kopię możesz prosić raz dziennie."
+      },
+      "storage": {
+        "unavailable": "Twoja kopia chwilowo odpoczywa. Twój turf na telefonie jest bezpieczny. Spróbuj za chwilę."
+      }
+    }
   }
 }

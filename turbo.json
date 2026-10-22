@@ -5,6 +5,7 @@
     "lint": { "outputs": [] },
     "arch": { "outputs": [] },
     "test:unit": { "outputs": [] },
+    "@cityturfer/web#test:unit": { "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/apps/api/openapi.json"], "outputs": [] },
     "build": {
       "dependsOn": ["typecheck"],
       "outputs": [".next/**", "!.next/cache/**", "out/**", "storybook-static/**", "dist/**"]

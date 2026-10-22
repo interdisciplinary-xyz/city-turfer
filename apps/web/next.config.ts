@@ -1,6 +1,8 @@
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
+import pkg from './package.json' with { type: 'json' };
+
 const DEFAULT_PAGE_EXTENSIONS = ['tsx', 'ts', 'jsx', 'js'];
 
 // Static showcase: no server code, no cookies, no third-party scripts. `next build` writes out/.
@@ -14,6 +16,8 @@ const config: NextConfig = {
   images: { unoptimized: true },
   transpilePackages: ['@cityturfer/brand', '@interdisciplinary/dev-toolbar'],
   reactStrictMode: true,
+  // The portal's API client sends `CityTurfer-Client: web/<version>` (src/api/client.ts).
+  env: { CITYTURFER_WEB_VERSION: pkg.version },
   poweredByHeader: false,
   // Dev only: the portless URL (`pnpm run web:dev` -> https://cityturfer.local), incl. worktree subdomains.
   allowedDevOrigins: ['cityturfer.local', '*.cityturfer.local'],

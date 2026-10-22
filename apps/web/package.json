@@ -5,19 +5,23 @@
   "description": "CityTurfer landing page: a static showcase (Next.js static export, hosted on Vercel)",
   "scripts": {
     "dev": "portless run --lan --name cityturfer -- node server.mjs",
-    "build": "next build",
+    "build": "next build && node tools/check-export.mjs",
     "start": "npx --yes serve@14 out",
-    "test:unit": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test tools/__tests__/*.test.mjs",
+    "test:unit": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test tools/__tests__/*.test.mjs && vitest run",
+    "arch": "depcruise src --config .dependency-cruiser.cjs",
     "typecheck": "next typegen && tsc --noEmit",
-    "lint": "eslint src tools next.config.ts server.mjs"
+    "lint": "eslint src tools next.config.ts server.mjs",
+    "api:types": "openapi-typescript ../api/openapi.json -o src/api/schema.gen.ts && prettier --write src/api/schema.gen.ts"
   },
   "dependencies": {
     "@cityturfer/brand": "workspace:*",
     "@gsap/react": "^2.1.2",
     "@interdisciplinary/dev-toolbar": "workspace:*",
+    "@tanstack/react-query": "^5.104.5",
     "gsap": "^3.15.0",
     "next": "16.4.2",
     "next-intl": "^4.14.9",
+    "openapi-fetch": "^0.17.0",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
@@ -28,16 +32,19 @@
     "@types/node": "^22.15.0",
     "@types/react": "~19.2.2",
     "@types/react-dom": "~19.2.2",
+    "dependency-cruiser": "^18.6.0",
     "esbuild": "^0.28.2",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.5",
     "globals": "^16.5.0",
     "lucide-react": "^0.462.0",
+    "openapi-typescript": "^7.13.0",
     "portless": "^0.12.0",
     "postcss": "^8.5.30",
     "swagger-ui-dist": "^5.34.0",
     "tailwindcss": "^3.4.19",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.12"
   }
 }

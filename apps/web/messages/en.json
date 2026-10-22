@@ -49,5 +49,157 @@
     "sent": "Almost there — check your inbox and confirm your email to join the waitlist.",
     "failed": "That didn't go through. Check your connection and try again.",
     "privacy": "{controller} stores your email with Brevo (EU) only to tell you about CityTurfer's launch. You confirm by email first. To have it deleted, write to {contactEmail}."
+  },
+  "portal": {
+    "meta": {
+      "title": "Your backup — CityTurfer",
+      "signInTitle": "Sign in — CityTurfer"
+    },
+    "header": {
+      "home": "CityTurfer website",
+      "signOut": "Sign out",
+      "signingOut": "Signing out…"
+    },
+    "common": {
+      "skip": "Skip to content",
+      "backedUpCopy": "This shows the copy you backed up from your phone. Your phone is the original.",
+      "phoneUntouched": "Signing out here doesn't touch your phone.",
+      "retry": "Try again",
+      "requestId": "Reference: {id}",
+      "waitSeconds": "Try again in {count, plural, one {# second} other {# seconds}}.",
+      "waitMinutes": "Try again in {count, plural, one {# minute} other {# minutes}}.",
+      "waitHours": "Try again in {count, plural, one {# hour} other {# hours}}.",
+      "cancel": "Cancel"
+    },
+    "gate": {
+      "checking": "Opening your backup…",
+      "leaving": "Taking you to sign in…"
+    },
+    "unreachable": {
+      "title": "Can't reach your backup right now",
+      "body": "Your turf on the phone is fine. Check your connection, then try again."
+    },
+    "signIn": {
+      "title": "Sign in to see your backup",
+      "lede": "Shows the copy you backed up from your phone. Use the e-mail you signed in with in the app.",
+      "emailLabel": "E-mail address",
+      "emailPlaceholder": "you@example.com",
+      "sendCode": "E-mail me a code",
+      "sendingCode": "Sending…",
+      "codeSent": "If {email} can receive e-mail, a 6-digit code is on its way. It works for 10 minutes.",
+      "codeLabel": "6-digit code",
+      "codeHint": "From the e-mail we just sent. You can paste it.",
+      "codeIncomplete": "Enter all 6 digits of the code.",
+      "sharedComputer": "This is a shared computer",
+      "sharedComputerHint": "Signs you out when you close the browser, and after 8 hours at most.",
+      "submit": "Sign in",
+      "signingIn": "Signing in…",
+      "resend": "Send the code again",
+      "resent": "Sent again. Check your inbox and spam folder.",
+      "otherEmail": "Use a different e-mail",
+      "cookie": "Signing in sets one cookie that keeps you signed in, and nothing else. No trackers.",
+      "notice": {
+        "signed-out": "You're signed out. Everything is still on your phone.",
+        "expired": "Your session ended. Sign in again to carry on.",
+        "deleted": "Your account and the copy here are erased. Everything is still on your phone."
+      }
+    },
+    "privacy": {
+      "title": "Privacy & data",
+      "lede": "What we hold for you, and how to take it with you or erase it.",
+      "account": {
+        "title": "Your account",
+        "email": "E-mail",
+        "noEmail": "No e-mail on this account",
+        "since": "Backup account since {date}"
+      },
+      "backup": {
+        "title": "Backup",
+        "on": "Backup is on since {date}.",
+        "never": "Your turf lives on your phone. Nothing is backed up yet.",
+        "withdrawn": "You turned backup off on {date}, so we erased the copy here. Everything is still on your phone.",
+        "healthOn": "Apple Health workouts are included since {date}.",
+        "healthOff": "Apple Health workouts stay on your phone. Your turf here may look smaller.",
+        "policy": "Privacy policy version {version}",
+        "changeInApp": "To change these choices, open the app: Info › Cloud backup."
+      },
+      "stored": {
+        "title": "What we store",
+        "email": "Your e-mail address, to send you sign-in codes.",
+        "activities": "The walks, runs and rides your phone backed up: when they happened, their stats and the route GPS recorded. Routes often start at home.",
+        "city": "Your city, if you chose one.",
+        "consents": "Your backup choices above, with the date you made each one.",
+        "devices": "When each device signed in and was last used. No IP addresses, device names or locations.",
+        "nothingElse": "No analytics, no trackers, no advertising."
+      },
+      "devices": {
+        "title": "Signed-in devices",
+        "lede": "Every phone and browser that is signed in to your account.",
+        "phone": "Phone",
+        "browser": "Browser",
+        "current": "This browser",
+        "signedIn": "Signed in {date}",
+        "lastUsed": "Last used {date}",
+        "expires": "Signed in until {date}, for now",
+        "signOutOne": "Sign out",
+        "signOutOneLabel": "Sign out {client}, signed in {date}",
+        "signOutOthers": "Sign out everywhere else",
+        "signOutOthersHint": "Signs out every other browser and your phones. Your phones stop backing up until you sign in again in the app. Nothing on them is deleted.",
+        "signOutAll": "Sign out everywhere, including here",
+        "signOutAllHint": "Signs out this browser, every other browser and your phones. Nothing on your phones is deleted.",
+        "confirmOthers": "Yes, sign out everywhere else",
+        "confirmAll": "Yes, sign out everywhere",
+        "working": "Signing out…",
+        "none": "Only this browser is signed in.",
+        "unavailable": "The list of devices isn't available yet."
+      },
+      "export": {
+        "title": "Get a copy",
+        "lede": "We e-mail you a link to a zip with everything we hold: your account, your choices, and every backed-up activity as GPX. The link works for 24 hours.",
+        "request": "E-mail me a copy",
+        "requesting": "Asking…",
+        "pending": "We're putting it together. The link goes to {email} in a few minutes.",
+        "ready": "Sent. Look for the e-mail at {email}; the link works until {date}.",
+        "failed": "That didn't work and nothing was sent. Ask again.",
+        "expired": "That link has expired. You can ask for a new copy tomorrow."
+      },
+      "delete": {
+        "title": "Delete your account",
+        "lede": "Erases your account and everything backed up here: activities, routes, your city and your choices. Your phones are signed out.",
+        "phone": "Everything is still on your phone. To back up again later, turn backup on in the app.",
+        "start": "Delete my account…",
+        "confirmLabel": "Type {word} to confirm",
+        "confirmWord": "DELETE",
+        "confirm": "Delete my account for good",
+        "deleting": "Deleting…"
+      }
+    },
+    "errors": {
+      "generic": "Something went wrong on our side. Try again in a moment.",
+      "unreachable": "Can't reach your backup right now. Your turf on the phone is fine.",
+      "signed-out": "Your session ended. Sign in again.",
+      "invalid-request": "That doesn't look right. Check it and try again.",
+      "auth": {
+        "invalid-code": "That code is wrong or has expired. Check the latest e-mail, or send a new code.",
+        "rate-limited": "Too many tries for now.",
+        "csrf": "For your safety we only accept this from the CityTurfer website. Reload the page and try again."
+      },
+      "rate-limited": "Too many requests for now.",
+      "consent": {
+        "required": "Backup is off for this account, so there's nothing here."
+      },
+      "not-found": "Not found.",
+      "activity": {
+        "deleted": "This activity was deleted on your phone."
+      },
+      "export": {
+        "gone": "That download link has expired. Ask for a new copy.",
+        "no-email": "This account has no e-mail, so we can't send you a copy.",
+        "rate-limited": "You can ask for one copy a day."
+      },
+      "storage": {
+        "unavailable": "Your backup is resting for a moment. Your turf on the phone is fine. Try again soon."
+      }
+    }
   }
 }

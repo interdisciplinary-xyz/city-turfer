@@ -9,6 +9,9 @@ export const routing = defineRouting({
   locales: ['en', 'pl'],
   defaultLocale: 'en',
   localePrefix: 'always',
+  // No NEXT_LOCALE cookie when the visitor switches language: the site sets no cookies (nothing
+  // reads it anyway: the static export has no middleware), and the portal's only cookie is the session.
+  localeCookie: false,
 });
 
 export type Locale = (typeof routing.locales)[number];
