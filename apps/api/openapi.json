@@ -391,7 +391,7 @@
             "type": "string",
             "format": "date-time",
             "example": "2026-10-19T07:12:00Z",
-            "description": "Last use, to the day: a session records its use at most once a day."
+            "description": "Last use, to the day: a session records its use at most once a day (also once its expiry can no longer move). A shared-computer session (8 hours) shows when it signed in."
           },
           "expiresAt": {
             "type": "string",

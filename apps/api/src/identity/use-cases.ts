@@ -6,6 +6,7 @@ import type { AuthVerifier, Credential, Principal, SessionClient } from '../deps
 import { type Auth, BROWSER_SESSION, SESSION_TTL_S, SESSION_UPDATE_AGE_S } from './better-auth';
 import { ipBucket } from './ip-bucket';
 import { AUTH_LIMITS, type Limit, type RateLimiter } from './rate-limit';
+import type { SessionStore } from './session-store';
 
 /** How a new session should live: a phone, a browser, or a browser on a shared computer. */
 export interface SignInOptions {
@@ -58,7 +59,8 @@ export class IdentityService {
     private readonly auth: Auth,
     private readonly limiter: RateLimiter,
     private readonly secret: string,
-    private readonly clock: Clock
+    private readonly clock: Clock,
+    private readonly sessions: SessionStore
   ) {}
 
   /** RequestSignInCode: always "accepted" (unknown e-mails too: the account is made on sign-in). */
@@ -143,55 +145,25 @@ export class IdentityService {
 
   /** ListSessions: the user's live sessions (phones and browsers), most recently used first. */
   async listSessions(userId: string, currentSessionId: string | undefined): Promise<SessionView[]> {
-    const now = this.clock.now();
-    const ctx = await this.auth.$context;
-    const rows = (await ctx.internalAdapter.listSessions(userId)) as StoredSession[];
-    return rows
-      .map((r) => ({
-        id: r.id,
-        client: clientOf(r.client),
-        createdAt: time(r.createdAt) ?? 0,
-        lastActiveAt: time(r.updatedAt) ?? 0,
-        expiresAt: time(r.expiresAt) ?? 0,
-        absoluteExpiresAt: time(r.absoluteExpiresAt),
-        current: r.id === currentSessionId,
-      }))
-      .filter((r) => r.expiresAt > now && (r.absoluteExpiresAt === null || r.absoluteExpiresAt > now))
-      .sort((a, b) => b.lastActiveAt - a.lastActiveAt || a.id.localeCompare(b.id))
-      .map((r) => ({
-        id: r.id,
-        client: r.client,
-        createdAt: r.createdAt,
-        lastActiveAt: r.lastActiveAt,
-        expiresAt: r.expiresAt,
-        current: r.current,
-      }));
+    const rows = await this.sessions.listLive(userId, this.clock.now());
+    return rows.map((r) => ({
+      id: r.id,
+      client: clientOf(r.client),
+      createdAt: r.createdAt,
+      lastActiveAt: r.updatedAt,
+      expiresAt: r.expiresAt,
+      current: r.id === currentSessionId,
+    }));
   }
 
-  /** RevokeSession: signs out one of the user's own sessions; false when it is not theirs or gone. */
-  async revokeSession(userId: string, sessionId: string): Promise<boolean> {
-    const ctx = await this.auth.$context;
-    const rows = (await ctx.internalAdapter.listSessions(userId)) as StoredSession[];
-    const found = rows.find((r) => r.id === sessionId && r.userId === userId);
-    if (!found) {
-      return false;
-    }
-    await ctx.internalAdapter.deleteSession(found.token);
-    return true;
+  /** RevokeSession: signs out one of the user's own live sessions; false when it is not theirs or gone. */
+  revokeSession(userId: string, sessionId: string): Promise<boolean> {
+    return this.sessions.revokeLive(userId, sessionId, this.clock.now());
   }
 
   /** RevokeSessions: every session of the user (`all`, phones included) or all but the current one. */
   async revokeSessions(userId: string, scope: RevokeScope, currentSessionId: string | undefined): Promise<void> {
-    const ctx = await this.auth.$context;
-    if (scope === 'all' || !currentSessionId) {
-      await ctx.internalAdapter.deleteUserSessions(userId);
-      return;
-    }
-    const rows = (await ctx.internalAdapter.listSessions(userId)) as StoredSession[];
-    const others = rows.filter((r) => r.id !== currentSessionId && r.userId === userId).map((r) => r.token);
-    if (others.length > 0) {
-      await ctx.internalAdapter.deleteSessions(others);
-    }
+    await this.sessions.revokeAll(userId, scope === 'all' ? undefined : currentSessionId);
   }
 
   /**
@@ -211,15 +183,15 @@ export class IdentityService {
         await ctx.internalAdapter.deleteSession(s.sessionToken);
         return null;
       }
+      // At most once per `updateAgeMs`: record the use (`lastActiveAt`) and slide the expiry. Once the
+      // expiry is at its cap the use is still recorded, so the list keeps a true "last used".
       const { ttlMs, updateAgeMs } = SLIDING[s.client];
-      if (s.expiresAt - ttlMs + updateAgeMs <= now) {
+      if (s.expiresAt - ttlMs + updateAgeMs <= now && now - s.updatedAt >= updateAgeMs) {
         const next = Math.min(now + ttlMs, s.absoluteExpiresAt ?? Number.POSITIVE_INFINITY);
-        if (next > s.expiresAt) {
-          await ctx.internalAdapter.updateSession(s.sessionToken, {
-            expiresAt: new Date(next),
-            updatedAt: new Date(now),
-          });
-        }
+        await ctx.internalAdapter.updateSession(s.sessionToken, {
+          ...(next > s.expiresAt ? { expiresAt: new Date(next) } : {}),
+          updatedAt: new Date(now),
+        });
       }
       return {
         realm: 'user',
@@ -240,6 +212,7 @@ export class IdentityService {
     email: string;
     expiresAt: number;
     absoluteExpiresAt: number | null;
+    updatedAt: number;
     sessionToken: string;
     sessionId: string;
     client: SessionClient;
@@ -253,6 +226,7 @@ export class IdentityService {
       email: found.user.email,
       expiresAt: new Date(found.session.expiresAt).getTime(),
       absoluteExpiresAt: time(found.session.absoluteExpiresAt),
+      updatedAt: new Date(found.session.updatedAt).getTime(),
       sessionToken: found.session.token,
       sessionId: found.session.id,
       client: clientOf(found.session.client),
@@ -277,18 +251,6 @@ export class IdentityService {
   private key(scope: string, subject: string): string {
     return `${scope}:${createHmac('sha256', this.secret).update(subject).digest('base64url')}`;
   }
-}
-
-/** A row of `auth_sessions` as Better Auth's adapter reads it (our two columns included). */
-interface StoredSession {
-  id: string;
-  token: string;
-  userId: string;
-  client?: string | null;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-  expiresAt: Date | string;
-  absoluteExpiresAt?: Date | string | null;
 }
 
 /** Rows from before migration 0004 have the column default, `phone`; anything else is a browser. */

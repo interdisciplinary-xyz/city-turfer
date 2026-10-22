@@ -2,6 +2,7 @@ import type { OpenAPIHono, z } from '@hono/zod-openapi';
 import type { Context } from 'hono';
 import { setCookie } from 'hono/cookie';
 
+import { clientIp as clientIpOf } from '../client-ip';
 import type { AppEnv } from '../deps';
 import { BROWSER_SESSION } from '../identity/better-auth';
 import { clearSessionCookie, isFromWebsite } from '../middleware';
@@ -31,17 +32,9 @@ const RATE_LIMITED = {
   },
 } as const;
 
-/**
- * The caller's IP as Vercel reports it, for the per-IP sign-in limits; never logged or stored.
- * `x-vercel-forwarded-for` first: Vercel sets it, and unlike `x-forwarded-for` a proxy in front of
- * the function cannot replace it (the website's `/api/v1/*` rewrite is such a hop; whether the
- * visitor's IP survives it is checked on a preview, docs/operations/api-deploy.md). Then
- * `x-real-ip`, then the first `x-forwarded-for`. IdentityService buckets it (IPv6 by /64). Without
- * any (the local dev server) every caller shares the `unknown` bucket — fine locally.
- */
+/** The caller's IP for the per-IP limits (src/client-ip.ts: which forwarded header is trusted). */
 export function clientIp(c: Context<AppEnv>): string {
-  const first = (name: string) => c.req.header(name)?.split(',')[0]?.trim();
-  return first('x-vercel-forwarded-for') || first('x-real-ip') || first('x-forwarded-for') || 'unknown';
+  return clientIpOf((name) => c.req.header(name), c.var.deps.webEdgeSecret);
 }
 
 const CSRF = { 403: problemResponse('`client: "browser"` from outside the website.', 'auth.csrf') } as const;

@@ -97,7 +97,8 @@ export const SignedInDevice = z
     client: SessionClient,
     createdAt: IsoDateTime.openapi({ description: 'When it signed in.' }),
     lastActiveAt: IsoDateTime.openapi({
-      description: 'Last use, to the day: a session records its use at most once a day.',
+      description:
+        'Last use, to the day: a session records its use at most once a day (also once its expiry can no longer move). A shared-computer session (8 hours) shows when it signed in.',
     }),
     expiresAt: IsoDateTime.openapi({ description: 'When it signs out by itself unless used again.' }),
     current: z.boolean().openapi({ description: 'The session of this request.' }),

@@ -626,7 +626,7 @@ export interface components {
       createdAt: string;
       /**
        * Format: date-time
-       * @description Last use, to the day: a session records its use at most once a day.
+       * @description Last use, to the day: a session records its use at most once a day (also once its expiry can no longer move). A shared-computer session (8 hours) shows when it signed in.
        * @example 2026-10-19T07:12:00Z
        */
       lastActiveAt: string;

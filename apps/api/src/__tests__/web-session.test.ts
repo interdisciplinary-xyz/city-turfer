@@ -386,6 +386,78 @@ describe('signed-in devices', () => {
   });
 });
 
+describe('signed-in devices past Better Auth defaults', () => {
+  /** Extra phone sessions written straight into auth_sessions (Better Auth's listSessions stops at 100). */
+  async function extraSessions(userId: string, n: number, expiresAt: number, prefix = 'extra') {
+    for (let i = 0; i < n; i++) {
+      const at = new Date(h.clock.t - (i + 1) * 60_000).toISOString();
+      await h.db.execute(sql`
+        INSERT INTO auth_sessions (id, token, user_id, client, created_at, updated_at, expires_at)
+        VALUES (${`${prefix}-${i}`}, ${`${prefix}-token-${i}`}, ${userId}, 'phone', ${at}::timestamptz,
+                ${at}::timestamptz, ${new Date(expiresAt).toISOString()}::timestamptz)`);
+    }
+  }
+  const userIdOf = async (email: string) =>
+    (await rows(sql`SELECT id FROM auth_users WHERE email = ${email}`))[0].id as string;
+
+  it('lists all live sessions (over 100), newest use first, and leaves expired rows out', async () => {
+    const { cookie } = await browserSignIn('ania@example.com');
+    const userId = await userIdOf('ania@example.com');
+    await extraSessions(userId, 110, h.clock.t + DAY);
+    await extraSessions(userId, 3, h.clock.t - 1, 'expired');
+    const { sessions } = await (await withCookie('GET', '/v1/auth/sessions', cookie)).json();
+    expect(sessions).toHaveLength(111);
+    expect(sessions[0].current).toBe(true);
+    const used = sessions.map((s: { lastActiveAt: string }) => Date.parse(s.lastActiveAt));
+    expect(used).toEqual([...used].sort((a: number, b: number) => b - a));
+    expect(sessions.some((s: { id: string }) => s.id.startsWith('expired'))).toBe(false);
+  });
+
+  it('signs out every other session, however many', async () => {
+    const { cookie } = await browserSignIn('ania@example.com');
+    const userId = await userIdOf('ania@example.com');
+    await extraSessions(userId, 150, h.clock.t + DAY);
+    const other = await h.signIn('bartek@example.com');
+    expect((await withCookie('DELETE', '/v1/auth/sessions?scope=others', cookie, { headers: WEB })).status).toBe(204);
+    const left = await rows(sql`SELECT id FROM auth_sessions WHERE user_id = ${userId}`);
+    expect(left).toHaveLength(1);
+    expect((await withCookie('GET', '/v1/me', cookie)).status).toBe(200);
+    expect((await h.call('GET', '/v1/me', { token: other })).status).toBe(200);
+  });
+
+  it('revokes a session beyond the first 100, and answers 404 for an expired one', async () => {
+    const { cookie } = await browserSignIn('ania@example.com');
+    const userId = await userIdOf('ania@example.com');
+    await extraSessions(userId, 120, h.clock.t + DAY);
+    await extraSessions(userId, 1, h.clock.t - 1, 'expired');
+    expect((await withCookie('DELETE', '/v1/auth/sessions/extra-119', cookie, { headers: WEB })).status).toBe(204);
+    expect(await rows(sql`SELECT id FROM auth_sessions WHERE id = 'extra-119'`)).toHaveLength(0);
+    expect((await withCookie('DELETE', '/v1/auth/sessions/expired-0', cookie, { headers: WEB })).status).toBe(404);
+  });
+
+  it('keeps lastActiveAt current once the expiry is at its 30-day cap (at most once a day)', async () => {
+    const { cookie } = await browserSignIn('ania@example.com');
+    const me = () => withCookie('GET', '/v1/me', cookie);
+    const lastActive = async () =>
+      Date.parse(
+        (await (await withCookie('GET', '/v1/auth/sessions', cookie)).json()).sessions[0].lastActiveAt as string
+      );
+    for (let day = 0; day < 20; day++) {
+      advance(DAY);
+      expect((await me()).status).toBe(200);
+    }
+    // Day 20: the expiry hit the cap on day 16; the use is still recorded.
+    expect(await lastActive()).toBe(h.clock.t);
+    const recorded = h.clock.t;
+    advance(HOUR);
+    expect((await me()).status).toBe(200);
+    expect(await lastActive()).toBe(recorded); // not again within the day
+    advance(DAY);
+    expect((await me()).status).toBe(200);
+    expect(await lastActive()).toBe(h.clock.t);
+  });
+});
+
 describe('sign-out and erasure from the browser', () => {
   it('signing out revokes the session and clears the cookie', async () => {
     const phoneToken = await h.signIn('ania@example.com');
@@ -425,21 +497,62 @@ describe('caching default', () => {
 });
 
 describe('client IP for the sign-in limits', () => {
-  it('prefers x-vercel-forwarded-for over x-real-ip and x-forwarded-for', async () => {
-    const signIn = (i: number) =>
-      h.call('POST', '/v1/auth/sign-in', {
+  const EDGE = 'e'.repeat(64);
+  /** 21 failed sign-ins from fresh addresses; `headers(i)` says where each claims to come from. */
+  async function failedSignIns(headers: (i: number) => Record<string, string>): Promise<number[]> {
+    const statuses: number[] = [];
+    for (let i = 0; i <= 20; i++) {
+      const res = await h.call('POST', '/v1/auth/sign-in', {
         token: null,
         body: { email: `s${i}@example.com`, code: '123456' },
-        headers: {
-          'X-Vercel-Forwarded-For': '198.51.100.20',
-          'X-Real-IP': `203.0.113.${i}`,
-          'X-Forwarded-For': `192.0.2.${i}, 10.0.0.1`,
-        },
+        headers: headers(i),
       });
-    for (let i = 0; i < 20; i++) {
-      expect((await signIn(i)).status).toBe(401);
+      statuses.push(res.status);
     }
-    expect((await signIn(20)).status).toBe(429);
+    return statuses;
+  }
+  const limited = [...Array<number>(20).fill(401), 429];
+
+  it('a direct caller cannot pick a fresh bucket with a forged x-vercel-forwarded-for', async () => {
+    const statuses = await failedSignIns((i) => ({
+      'X-Vercel-Forwarded-For': `198.51.100.${i}`,
+      'X-Forwarded-For': '203.0.113.7',
+    }));
+    expect(statuses).toEqual(limited);
+  });
+
+  it('nor with a forged x-vercel-forwarded-for and a wrong edge header', async () => {
+    h = await backupApp({ webEdgeSecret: EDGE });
+    vi.setSystemTime(h.clock.t);
+    const statuses = await failedSignIns((i) => ({
+      'CityTurfer-Edge': 'guess',
+      'X-Vercel-Forwarded-For': `198.51.100.${i}`,
+      'X-Forwarded-For': '203.0.113.7',
+    }));
+    expect(statuses).toEqual(limited);
+  });
+
+  it('nor by prepending to x-forwarded-for: the last entry counts', async () => {
+    const statuses = await failedSignIns((i) => ({ 'X-Forwarded-For': `198.51.100.${i}, 203.0.113.7` }));
+    expect(statuses).toEqual(limited);
+  });
+
+  it('buckets by x-real-ip alone, and by x-forwarded-for alone', async () => {
+    expect(await failedSignIns(() => ({ 'X-Real-IP': '203.0.113.8' }))).toEqual(limited);
+    advance(11 * 60_000); // a new 10-minute window
+    expect(await failedSignIns(() => ({ 'X-Forwarded-For': '203.0.113.9' }))).toEqual(limited);
+  });
+
+  it('through the website (edge secret): the visitor in x-vercel-forwarded-for, not the shared hop', async () => {
+    h = await backupApp({ webEdgeSecret: EDGE });
+    vi.setSystemTime(h.clock.t);
+    const statuses = await failedSignIns((i) => ({
+      'CityTurfer-Edge': EDGE,
+      'X-Vercel-Forwarded-For': `198.51.100.${i}`,
+      'X-Real-IP': '192.0.2.1',
+      'X-Forwarded-For': '192.0.2.1',
+    }));
+    expect(statuses).toEqual(Array<number>(21).fill(401));
   });
 });
 

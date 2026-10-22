@@ -1,8 +1,10 @@
 import { deviceTokenAuth, parseApiTokens } from './auth/device-tokens';
+import { MIN_WEB_EDGE_SECRET_LENGTH } from './client-ip';
 import { DrizzleExportStore, PostgresFileStorage } from './db/exports';
 import { createNeonDb } from './db/neon';
 import { PostgresRateLimiter } from './db/rate-limits';
 import { DrizzleRetentionStore } from './db/retention';
+import { DrizzleSessionStore } from './db/sessions';
 import { type Db, DrizzleBackupStore } from './db/store';
 import { type ApiDeps, defaultDeps, DEV_WEB_ORIGIN, jsonLineLog } from './deps';
 import { createAuth } from './identity/better-auth';
@@ -28,6 +30,10 @@ import { LOCAL_API_PORT } from './spec';
  * - `WEB_ORIGIN` (`https://…`, no path): the website whose `/api/v1/*` rewrite reaches this API.
  *   Browser sign-in and cookie writes must come from it (CSRF guard). Off Vercel it defaults to
  *   https://cityturfer.local; on Vercel, unset → browser sessions are off (phones unaffected).
+ * - `WEB_EDGE_SECRET` (≥ 32 characters): the same value as on the website's Vercel project, whose
+ *   `/api/v1/*` route sends it in the `cityturfer-edge` header; only then is the visitor's
+ *   `x-vercel-forwarded-for` trusted for the per-IP sign-in limits (src/client-ip.ts). Required in
+ *   production when WEB_ORIGIN is set.
  * Production = `VERCEL_ENV=production`: missing secrets fail the boot instead of degrading.
  * Nothing secret is logged: only whether each is configured.
  */
@@ -77,6 +83,9 @@ export function checkProductionEnv(env: NodeJS.ProcessEnv): void {
   if (!env.API_PUBLIC_URL?.startsWith('https://')) {
     problems.push('API_PUBLIC_URL (https://…) is required');
   }
+  if (env.WEB_ORIGIN?.trim() && !webEdgeSecretOf(env)) {
+    problems.push(`WEB_EDGE_SECRET (at least ${MIN_WEB_EDGE_SECRET_LENGTH} characters) is required with WEB_ORIGIN`);
+  }
   if (problems.length > 0) {
     throw new ConfigError(`Production configuration: ${problems.join('; ')}.`);
   }
@@ -111,6 +120,15 @@ export function webOriginOf(env: NodeJS.ProcessEnv): string | null {
     throw new ConfigError('WEB_ORIGIN must be an https origin without a path, e.g. https://example.com.');
   }
   return url.origin;
+}
+
+/**
+ * WEB_EDGE_SECRET when it is long enough, else null: then `x-vercel-forwarded-for` is never trusted
+ * and website visitors are bucketed by whatever address reaches the API (src/client-ip.ts).
+ */
+export function webEdgeSecretOf(env: NodeJS.ProcessEnv): string | null {
+  const secret = env.WEB_EDGE_SECRET?.trim();
+  return secret && secret.length >= MIN_WEB_EDGE_SECRET_LENGTH ? secret : null;
 }
 
 /** The API's public base URL, without a trailing slash. */
@@ -152,7 +170,8 @@ export function productionDeps(env: NodeJS.ProcessEnv, overrides: WiringOverride
           }),
           new PostgresRateLimiter(db),
           secret,
-          base.clock
+          base.clock,
+          new DrizzleSessionStore(db)
         )
       : null;
   process.stdout.write(
@@ -164,6 +183,7 @@ export function productionDeps(env: NodeJS.ProcessEnv, overrides: WiringOverride
       fixedCode: !!fixedCode,
       cron: !!cronSecretOf(env),
       webOrigin: !!webOrigin,
+      webEdge: !!webEdgeSecretOf(env),
       apiTokens: tokens.entries.length,
       apiTokensSkipped: tokens.skipped,
     })}\n`
@@ -190,5 +210,6 @@ export function productionDeps(env: NodeJS.ProcessEnv, overrides: WiringOverride
     retention: db ? new RetentionService(new DrizzleRetentionStore(db), base.clock, base.log) : null,
     cronSecret: cronSecretOf(env),
     webOrigin,
+    webEdgeSecret: webEdgeSecretOf(env),
   };
 }

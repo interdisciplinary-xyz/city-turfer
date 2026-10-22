@@ -84,6 +84,12 @@ export interface ApiDeps {
    * something must come from it (CSRF guard). Null → browser sign-in and cookie writes answer 403.
    */
   webOrigin: string | null;
+  /**
+   * `WEB_EDGE_SECRET`: the website's `/api/v1/*` route sends it in the `cityturfer-edge` header, so
+   * only those requests may name the visitor's IP in `x-vercel-forwarded-for` (src/client-ip.ts).
+   * Null → that header is never trusted (direct callers, local runs).
+   */
+  webEdgeSecret: string | null;
 }
 
 /** The local website (`pnpm run web:dev`): WEB_ORIGIN off Vercel when it is not set. */
@@ -115,6 +121,7 @@ export function defaultDeps(overrides: Partial<ApiDeps> = {}): ApiDeps {
     retention: null,
     cronSecret: null,
     webOrigin: DEV_WEB_ORIGIN,
+    webEdgeSecret: null,
     ...overrides,
   };
 }

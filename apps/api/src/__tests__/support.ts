@@ -8,6 +8,7 @@ import { DrizzleExportStore, PostgresFileStorage } from '../db/exports';
 import { createPgliteDb } from '../db/pglite';
 import { PostgresRateLimiter } from '../db/rate-limits';
 import { DrizzleRetentionStore } from '../db/retention';
+import { DrizzleSessionStore } from '../db/sessions';
 import { DrizzleBackupStore } from '../db/store';
 import { type ApiLog, defaultDeps, silentLog } from '../deps';
 import { createAuth } from '../identity/better-auth';
@@ -62,7 +63,13 @@ export const TEST_CRON_SECRET = 'test-cron-secret-0123456789';
  * tokens and sign-in by e-mailed code (Better Auth; codes land in `mailer`).
  */
 export async function backupApp(
-  options: { fixedCode?: string; mailer?: MemoryMailer; log?: ApiLog; cronSecret?: string | null } = {}
+  options: {
+    fixedCode?: string;
+    mailer?: MemoryMailer;
+    log?: ApiLog;
+    cronSecret?: string | null;
+    webEdgeSecret?: string | null;
+  } = {}
 ) {
   shared ??= createPgliteDb();
   const { db } = await shared;
@@ -79,7 +86,13 @@ export async function backupApp(
     mailer,
     fixedCode: options.fixedCode ?? null,
   });
-  const identity = new IdentityService(auth, new PostgresRateLimiter(db), TEST_AUTH_SECRET, clock);
+  const identity = new IdentityService(
+    auth,
+    new PostgresRateLimiter(db),
+    TEST_AUTH_SECRET,
+    clock,
+    new DrizzleSessionStore(db)
+  );
   const log = options.log ?? silentLog;
   const app = createApp(
     defaultDeps({
@@ -99,6 +112,7 @@ export async function backupApp(
       ),
       retention: new RetentionService(new DrizzleRetentionStore(db), clock, log),
       cronSecret: options.cronSecret === undefined ? TEST_CRON_SECRET : options.cronSecret,
+      webEdgeSecret: options.webEdgeSecret ?? null,
     })
   );
   const call = (

@@ -20,10 +20,19 @@
       "permanent": false
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/v1/:path*",
-      "destination": "https://city-turfer-api.vercel.app/v1/:path*"
+      "src": "^/api/v1/(.*)$",
+      "dest": "https://city-turfer-api.vercel.app/v1/$1",
+      "transforms": [
+        {
+          "type": "request.headers",
+          "op": "set",
+          "target": { "key": "cityturfer-edge" },
+          "args": "$WEB_EDGE_SECRET",
+          "env": ["WEB_EDGE_SECRET"]
+        }
+      ]
     }
   ],
   "headers": [
