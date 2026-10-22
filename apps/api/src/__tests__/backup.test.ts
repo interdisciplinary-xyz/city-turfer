@@ -44,11 +44,23 @@ describe('auth', () => {
     expect(await admin.json()).toEqual({
       id: 'admin',
       email: 'admin@cityturfer.com',
+      name: 'Admin',
       displayName: 'Admin',
+      hasPassword: false,
+      passwordChangedAt: null,
       createdAt,
     });
+    // No name: `name` is null, the deprecated `displayName` still falls back to the id (old phones).
     const other = await h.call('GET', '/v1/me', { token: TOKENS.other });
-    expect(await other.json()).toEqual({ id: 'other', email: null, displayName: 'other', createdAt });
+    expect(await other.json()).toEqual({
+      id: 'other',
+      email: null,
+      name: null,
+      displayName: 'other',
+      hasPassword: false,
+      passwordChangedAt: null,
+      createdAt,
+    });
   });
 
   it('answers live data routes 503 storage.unavailable without a database', async () => {

@@ -22,7 +22,7 @@ export function AppHeader({ locale, waitlist, waitlistHref = '#waitlist', lockup
       logo={
         <>
           <Image className='app-header-mark' src={mark} alt='' width={32} height={32} />
-          <Image className='app-header-wordmark' src={wordmark} alt='' width={115} height={20} />
+          <Image className='app-header-wordmark' src={wordmark} alt='' width={93} height={20} />
         </>
       }
       waitlist={waitlist ? { href: waitlistHref, label: t('waitlist'), shortLabel: t('waitlistShort') } : null}

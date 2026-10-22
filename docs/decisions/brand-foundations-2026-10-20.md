@@ -5,8 +5,9 @@ owner: founder
 scope: [packages/brand, apps/mobile/tools/brand, apps/web/src/app, .claude/skills/brand-system]
 summary:
   Brand foundations (positioning for three audiences, personality, pillars), Archivo as the brand
-  typeface everywhere, visual language beyond colour, WCAG contrast rules with the open palette
-  fixes, and the asset set (outlined wordmarks, social image, store screenshots)
+  typeface (superseded by brand-typography-2026-10-22), visual language beyond colour, WCAG contrast
+  rules with the open palette fixes, and the asset set (outlined wordmarks, social image, store
+  screenshots)
 ---
 
 # Brand foundations (v0.8.0)
@@ -48,6 +49,10 @@ Brand pillars: **Your streets** (ownership is permanent), **The glow** (repetiti
 visibly), **Yours alone** (local-first, no tracking).
 
 ## Typography: Archivo
+
+> **Superseded (2026-10-22):** the brand type is now Big Shoulders Display + Barlow ("Street
+> Plate"), `docs/decisions/brand-typography-2026-10-22.md`. The wordmark is redrawn in Big Shoulders
+> Display too.
 
 Decision: **Archivo** (Omnibus-Type, SIL Open Font License) for display and numbers; system fonts
 (SF Pro, Roboto) for body text and labels.

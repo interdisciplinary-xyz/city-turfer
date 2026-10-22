@@ -42,11 +42,26 @@ if [[ $# -eq 0 || "$1" == "01-auth" ]]; then
   xcrun simctl keychain "$DEVICE" reset >/dev/null 2>&1 || true
 fi
 
+# Flows tagged `account` need the API dev server (AUTH_FIXED_CODE) and a bundle that points at it.
+API_URL="${E2E_API_URL:-http://127.0.0.1:8787}"
+AUTH_FIXED_CODE="${AUTH_FIXED_CODE:-000000}"
+EXCLUDE=()
+if ! curl -fs "$API_URL/v1/health" >/dev/null 2>&1 && ! curl -s -o /dev/null "$API_URL/"; then
+  if [[ $# -gt 0 && "$1" == "15-account-settings" ]]; then
+    echo "The API is not answering at $API_URL. Start it: AUTH_FIXED_CODE=$AUTH_FIXED_CODE pnpm --filter @cityturfer/api dev" >&2
+    echo "and start Metro with EXPO_PUBLIC_API_URL=http://127.0.0.1:8787 (docs/quality/e2e.md)." >&2
+    exit 1
+  fi
+  echo "WARNING: API not answering at $API_URL; skipping flows tagged 'account' (15-account-settings NOT run)." >&2
+  EXCLUDE=(--exclude-tags=account)
+fi
+
 OUT="e2e-results/$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$OUT"
 TARGET="e2e"
 [[ $# -gt 0 ]] && TARGET="e2e/$1.yaml"
 "$MAESTRO" --device "$DEVICE" test "$TARGET" \
   $( [[ "$TARGET" == "e2e" ]] && echo "--config e2e/config.yaml" ) \
-  -e DEV_URL="$DEV_URL" \
+  -e DEV_URL="$DEV_URL" -e AUTH_FIXED_CODE="$AUTH_FIXED_CODE" \
+  ${EXCLUDE[@]+"${EXCLUDE[@]}"} \
   --format junit --output "$OUT/report.xml" --test-output-dir "$OUT"

@@ -1,0 +1,21 @@
+# Sign in by e-mailed code (AUTH_FIXED_CODE works for @e2e.cityturfer.test addresses only).
+# Env: EMAIL, AUTH_FIXED_CODE. Leaves the first code request time in output.codeAt.
+appId: com.turftrack.poc
+---
+- tapOn: { id: 'sign-in-email' }
+- eraseText: 80
+- inputText: ${EMAIL}
+- evalScript: ${output.codeAt = Date.now()}
+- pressKey: Enter
+- extendedWaitUntil: { visible: { id: 'sign-in-code' }, timeout: 15000 }
+- tapOn: { id: 'sign-in-code' }
+- inputText: ${AUTH_FIXED_CODE}
+# The number pad has no Go key: hide it and tap Sign in.
+- hideKeyboard
+- tapOn: { id: 'sign-in-verify' }
+# A phone with history asks whether the account may use it; keep it apart. A fresh phone goes straight in.
+- extendedWaitUntil: { visible: 'Keep apart|Hello, .*', timeout: 20000 }
+- runFlow:
+    when: { visible: 'Keep apart' }
+    commands: [{ tapOn: 'Keep apart' }]
+- extendedWaitUntil: { visible: { id: 'dashboard-greeting' }, timeout: 20000 }

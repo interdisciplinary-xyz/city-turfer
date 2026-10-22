@@ -3,7 +3,8 @@ name: brand-system
 description: >-
   "is this on-brand?", user-facing copy, choosing a colour or font, restyling a screen, app icon,
   splash, store listing or screenshots, social image. CityTurfer name, voice, colour tokens (turf
-  Ramp), Archivo, logo, WCAG contrast and rendering assets with render-assets.mjs.
+  Ramp), typefaces (Big Shoulders Display, Barlow), logo, WCAG contrast and rendering assets with
+  render-assets.mjs.
 ---
 
 # CityTurfer brand system
@@ -105,27 +106,36 @@ Gradient **Ramp** = `faint → glow → strong → blazing`, always running from
 (movement "up" into white-hot). Never use the ramp for errors; errors use `danger`. Tokens live in
 `packages/brand/src/colors.ts`; `apps/mobile/src/constants/colors.ts` re-exports `ACCENT`, `DARK`,
 `LIGHT`, `ON_ACCENT`, `ON_LIGHT`, `ON_TIER`, `ON_TYPE_COLOR`, `RAMP`, `TIER_COLOR`, `TYPE_COLOR` and
-`FONT_FAMILY` (never add a token there); `usePalette()` comes from `@cityturfer/ui`, re-exported by
-`apps/mobile/src/ui-kit/theme.ts`. Reference those, never hard-code hex in components or native
-config written from TS (e.g. the Android tracking notification's `notificationColor` takes
-`ACCENT`). Spacing (`SPACE`), radii (`RADIUS`), type (`FONT_SIZE`, `FONT_WEIGHT`, `LABEL_TRACKING`)
-and the tier order (`TIER_ORDER`) live in `packages/brand/src/tokens.ts`; tier names users see
-(`TIER_LABEL`: Faint, Glowing, Strong, Blazing) in `copy.ts`. The website gets every token as a CSS
-variable from `cssVariables(SITE_SCHEME)` (`--bg`, `--card`, `--accent-text`, `--walk-graphic`,
-`--space-lg`, `--radius-panel`, `--font-hero`, `--font-weight-black`, `--label-tracking`…).
-Components and Storybook: the `design-system` skill.
+`FONT_FAMILY`, `DISPLAY_CASE`, `DISPLAY_TRACKING` (never add a token there); `usePalette()` comes
+from `@cityturfer/ui`, re-exported by `apps/mobile/src/ui-kit/theme.ts`. Reference those, never
+hard-code hex in components or native config written from TS (e.g. the Android tracking
+notification's `notificationColor` takes `ACCENT`). Spacing (`SPACE`), radii (`RADIUS`), type
+(`FONT_SIZE`, `FONT_WEIGHT`, `LABEL_TRACKING`) and the tier order (`TIER_ORDER`) live in
+`packages/brand/src/tokens.ts`; tier names users see (`TIER_LABEL`: Faint, Glowing, Strong, Blazing)
+in `copy.ts`. The website gets every token as a CSS variable from `cssVariables(SITE_SCHEME)`
+(`--bg`, `--card`, `--accent-text`, `--walk-graphic`, `--space-lg`, `--radius-panel`, `--font-hero`,
+`--font-weight-black`, `--label-tracking`…). Components and Storybook: the `design-system` skill.
 
 ## Typography
 
-**Archivo** (SIL OFL) for display and numbers, system fonts (SF Pro, Roboto) for body and labels.
-Files in `packages/brand/fonts/` (cut by `packages/brand/scripts/make-fonts.py`), names in
-`FONT_FAMILY` (`packages/brand/src/tokens.ts`), web variables `--font-family-display`,
-`--font-family-numeric`, `--font-family-body`.
+**Street Plate** (`docs/decisions/brand-typography-2026-10-22.md`): Big Shoulders Display for
+headings, Barlow Semi Condensed for numbers, Barlow for body text on the web; the app's body and
+labels stay on the system font (SF Pro, Roboto). All SIL OFL. Files in `packages/brand/fonts/` (cut
+by `packages/brand/scripts/make-fonts.py`), names in `FONT_FAMILY` and `BODY_FONT_FAMILY`
+(`packages/brand/src/tokens.ts`), web variables `--font-family-display`, `--font-family-numeric`,
+`--font-family-body`, `--display-case`, `--display-tracking`.
 
-- Display (`FONT_FAMILY.display`, Archivo Expanded Black): wordmark, hero, screen titles. Wide: use
-  sparingly, letter-spacing −2% to −4%, check long Polish lines at 320–375 px.
-- Numbers (`FONT_FAMILY.numeric`, Archivo ExtraBold): distances, times, areas, with tabular figures
-  (`fontVariant: ['tabular-nums']` / `font-variant-numeric: tabular-nums`).
+- Display (`FONT_FAMILY.display`, Big Shoulders Display Black): hero, screen and section titles.
+  Always in capitals (`DISPLAY_CASE`) with `DISPLAY_TRACKING` (0.4), never negative tracking; it is
+  condensed, so set it about a quarter larger than a regular face and keep line height near 0.92.
+- Numbers (`FONT_FAMILY.numeric`, Barlow Semi Condensed ExtraBold): distances, times, areas, with
+  tabular figures (`fontVariant: ['tabular-nums']` / `font-variant-numeric: tabular-nums`).
+- Body (web only): Barlow 400/500/600/700 (`BODY_FONT_FAMILY`), self-hosted; never bundled in the
+  app.
+- Tagline (web only): Barlow Semi Condensed Black Italic (`TAGLINE_FONT_FAMILY`,
+  `--font-family-tagline`), sentence case, for "Surf your city. Own your streets." in the hero, on
+  /branding and in the social image. Its slant sets it apart from the upright capitals of the
+  wordmark and headings.
 - The weight is part of each font: never add `fontWeight` (Android falls back to the system font)
   and on the web use `font-weight: normal` + `font-synthesis: none`.
 - Labels: 12–13 pt system font, weight 600–700, uppercase, letter-spacing `LABEL_TRACKING` (0.8).
@@ -137,12 +147,13 @@ Files in `packages/brand/fonts/` (cut by `packages/brand/scripts/make-fonts.py`)
 - **Mark** (`packages/brand/svg/mark.svg`): a claimed turf cell (hexagon, `glow` outline) with a
   street riding through it like a wave, coloured with the Ramp and ending in a white-hot "you are
   here" point at the crest. Faint city grid inside the cell.
-- **Wordmark**: outlined Archivo Expanded, "City" Medium + "Turfer" Black.
-  `packages/brand/svg/wordmark-light.svg` on light surfaces, so the website, Swagger and Storybook
-  ("City" `night`, "Turfer" faint → glow, the part of the Ramp that holds on white);
-  `packages/brand/svg/wordmark.svg` on night surfaces: the app, splash and any map panel, also
-  inside a light page ("City" `blazing`, "Turfer" in the Ramp). Both are generated by
-  `packages/brand/scripts/outline-wordmark.py`: never edit them by hand.
+- **Wordmark**: outlined Big Shoulders Display in capitals, "CITY" + "TURFER", both Black (the
+  colour change keeps the two words apart; in running text the name is still spelled CityTurfer).
+  Its proportions are 894 × 192 (about 4.7 : 1). `packages/brand/svg/wordmark-light.svg` on light
+  surfaces, so the website, Swagger and Storybook ("CITY" `night`, "TURFER" faint → glow, the part
+  of the Ramp that holds on white); `packages/brand/svg/wordmark.svg` on night surfaces: the app,
+  splash and any map panel, also inside a light page ("CITY" `blazing`, "TURFER" in the Ramp). Both
+  are generated by `packages/brand/scripts/outline-wordmark.py`: never edit them by hand.
 - Clear space ≥ ½ hexagon side around the mark. Don't recolour the hexagon, rotate the mark, put it
   on busy photos, or add drop shadows.
 - Android themed icon: `packages/brand/svg/mark-monochrome.svg` (single colour, no glow). Adaptive
@@ -223,6 +234,7 @@ reinstall, then publish OTA updates for the new runtime.
    (`cssVariables(SITE_SCHEME)`, never a named scheme); the app and every map are dark (`DARK` via
    `usePalette()`, maps on a night panel). The Ramp and `blazing` are never text on light, nor are
    the raw `glow` and activity fills: use `accentText`, `strongText`, `<type>Text`.
-5. Type: Archivo only for display and numbers, via `FONT_FAMILY`, never with `fontWeight`.
+5. Type: brand faces only through `FONT_FAMILY` / the `--font-family-*` variables, never with
+   `fontWeight`; display text in capitals (`DISPLAY_CASE`).
 6. New colour pairs meet the contrast minimums (or are knowingly listed in `KNOWN_FAILURES`).
 7. Copy fits all three audiences and the personality: confident, playful, outdoorsy, private.

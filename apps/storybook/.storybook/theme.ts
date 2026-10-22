@@ -1,14 +1,14 @@
-import { ACCENT, SITE_SCHEME, THEMES } from '@cityturfer/brand';
+import { ACCENT, BODY_FONT_FAMILY, SITE_SCHEME, SYSTEM_FONT_STACK, THEMES } from '@cityturfer/brand';
 import { create } from 'storybook/theming';
 
-/** Same stack as the website (apps/web/src/app/globals.css). */
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, 'Helvetica Neue', Arial, sans-serif";
+/** The website's body face (Barlow, @font-face in manager-head.html and preview-head.html), system fallback. */
+const FONT = `'${BODY_FONT_FAMILY}', ${SYSTEM_FONT_STACK}`;
 
 /** The website's scheme (light): Storybook's own UI matches the pages it documents. */
 const SITE = THEMES[SITE_SCHEME];
 
 /**
- * Sidebar logo: the brand mark plus the light wordmark ("City" in night ink, "Turfer" in the faint →
+ * Sidebar logo: the brand mark plus the light wordmark ("CITY" in night ink, "TURFER" in the faint →
  * glow part of the Ramp; blazing never sits on light), as HTML because Storybook shows
  * `brandTitle` as markup when there is no `brandImage`. Relative paths, so it also works under
  * https://cityturfer.local/storybook.

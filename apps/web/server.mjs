@@ -48,6 +48,7 @@ const handler = devNode
           apiUrl: process.env.API_URL,
           webRoot: process.cwd(),
           brandDir: path.join(process.cwd(), '../../packages/brand/svg'),
+          fontsDir: path.join(process.cwd(), '../../packages/brand/fonts'),
           // Same rule as the site's toolbar: only requests from this machine.
           isLocal: devNode.isLocalClient,
         }

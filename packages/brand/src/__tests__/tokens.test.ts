@@ -1,5 +1,19 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { ACCENT, DARK, LIGHT, ON_ACCENT, ON_LIGHT, ON_TIER, RAMP, TIER_COLOR, TYPE_COLOR } from '../colors';
-import { cssVariables, FONT_SIZE, RADIUS, SITE_SCHEME, SPACE, THEMES, TIER_ORDER } from '../tokens';
+import {
+  BODY_FONT_FAMILY,
+  cssVariables,
+  FONT_FAMILY,
+  FONT_SIZE,
+  RADIUS,
+  SITE_SCHEME,
+  SPACE,
+  TAGLINE_FONT_FAMILY,
+  THEMES,
+  TIER_ORDER,
+} from '../tokens';
 
 /** The colours the app (always dark) reads at runtime: a change here reaches phones over OTA. */
 const PINNED_DARK = {
@@ -117,8 +131,11 @@ describe('cssVariables', () => {
       '--font-weight-medium': '500',
       '--label-tracking': '0.8px',
     });
-    expect(cssVariables('dark')['--font-family-display']).toMatch(/^'ArchivoExpanded-Black', -apple-system/);
-    expect(cssVariables('dark')['--font-family-numeric']).toMatch(/^'Archivo-ExtraBold', /);
+    expect(cssVariables('dark')['--font-family-display']).toMatch(/^'BigShouldersDisplay-Black', -apple-system/);
+    expect(cssVariables('dark')['--font-family-numeric']).toMatch(/^'BarlowSemiCondensed-ExtraBold', /);
+    expect(cssVariables('dark')['--font-family-body']).toMatch(/^'Barlow', -apple-system/);
+    expect(cssVariables('dark')['--font-family-tagline']).toMatch(/^'BarlowSemiCondensed-BlackItalic', /);
+    expect(cssVariables('light')).toMatchObject({ '--display-case': 'uppercase', '--display-tracking': '0.4px' });
   });
 
   it('keeps every dark variable the website and Swagger used before the light theme', () => {
@@ -174,6 +191,28 @@ describe('cssVariables', () => {
     for (const [name, value] of Object.entries(cssVariables('light'))) {
       expect(name).toMatch(/^--[a-z]+(-[a-z]+)*$/);
       expect(value).not.toBe('');
+    }
+  });
+});
+
+describe('brand fonts', () => {
+  // The app bundles <name>.ttf (expo-font plugin) and the web loads <name>.woff2, by PostScript name.
+  const fonts = join(__dirname, '..', '..', 'fonts');
+
+  it('ships every FONT_FAMILY font for the app and the web', () => {
+    for (const name of Object.values(FONT_FAMILY)) {
+      expect(existsSync(join(fonts, `${name}.ttf`))).toBe(true);
+      expect(existsSync(join(fonts, `${name}.woff2`))).toBe(true);
+    }
+  });
+
+  it('ships the website tagline face', () => {
+    expect(existsSync(join(fonts, `${TAGLINE_FONT_FAMILY}.woff2`))).toBe(true);
+  });
+
+  it('ships the four website body weights', () => {
+    for (const weight of ['Regular', 'Medium', 'SemiBold', 'Bold']) {
+      expect(existsSync(join(fonts, `${BODY_FONT_FAMILY}-${weight}.woff2`))).toBe(true);
     }
   });
 });
