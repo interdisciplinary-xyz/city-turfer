@@ -1,5 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 
+import { CORE_VERSION } from '../backup/summary';
 import type { AppEnv } from '../deps';
 import { Health } from '../schemas/platform';
 import { API_VERSION } from '../spec';
@@ -26,7 +27,7 @@ export function registerPlatform(app: OpenAPIHono<AppEnv>): void {
     async (c) => {
       const { store } = c.var.deps;
       const database = !store ? 'not-configured' : (await withTimeout(store.ping(), 3000)) ? 'ok' : 'unreachable';
-      return c.json({ status: 'ok' as const, version: API_VERSION, database }, 200);
+      return c.json({ status: 'ok' as const, version: API_VERSION, coreVersion: CORE_VERSION, database }, 200);
     }
   );
 }

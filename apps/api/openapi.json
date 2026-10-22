@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "CityTurfer API",
-    "version": "0.3.0",
-    "description": "The CityTurfer HTTP API: the app's use cases over HTTP, to back up and sync a local-first phone and, later, other clients.\n\n## Getting started\n\n- **Base URL:** pick a server above. Locally, `pnpm --filter @cityturfer/api dev` runs the API on port 8787 and `pnpm run web:dev` serves this page at https://cityturfer.local/swagger with the API under `/api`.\n- **Status:** the one-way **backup** (phone → server) is live: health, `/v1/me`, consents, activity upload/read/delete, track, gap routes, the changes feed and the Home City. The rest is designed but **planned**: its summary starts with `[planned]`, it carries `x-cityturfer-status: planned` and answers `501` once auth and validation pass. Live data routes answer `503 storage.unavailable` when the server has no database.\n- **Auth:** send `Authorization: Bearer <device token>` (button **Authorize**). Tokens are random secrets minted per user (`pnpm --filter @cityturfer/api run token:new -- <userId>`); the server stores only their SHA-256. A stopgap until Better Auth. A missing token answers `401` *before* the input is validated. Locally, `dev-token` works for user `admin` when `API_TOKENS` is not set.\n- **Consent:** activity and Home City writes need `PUT /v1/me/consents/cloud-sync` with `granted: true` first (else `403 consent.required`); Apple Health activities also `apple-health-in-cloud-sync`.\n- **Headers you send:** `Content-Type: application/json`; `Content-Encoding: gzip` for long tracks; `If-Match` to change an existing activity; `CityTurfer-Client: ios/0.8.0+123` (old clients may get `426 client.too-old`).\n- **Headers you get:** `X-Request-Id` on every answer (quote it when reporting a problem), `ETag` on activities, `Location` on 201/202, `Retry-After` and `RateLimit` on 429.\n- **Limits:** request and response bodies ≤ 4.5 MB (Vercel); ≤ 40,000 points per track; gzip bodies inflate to ≤ 16 MB.\n\n## Sync flow (phone ↔ server)\n\nThe phone is local-first and authoritative for what it recorded; the server stores activities with their tracks and recomputes everything derived (summaries, turf). Writes are keyed by ids the phone mints, so every request can be retried.\n\n**First upload of an existing history**\n1. `PUT /v1/me/consents/cloud-sync` (and `apple-health-in-cloud-sync` to include Apple Health imports).\n2. `GET /v1/sync/changes` without a cursor, every page: what the server already has (the manifest).\n3. For each local activity, oldest first (never `demo-…`): absent → `PUT /v1/activities/{id}`; same `trackHash` → done; different → `PUT` with `If-Match`; tombstoned → delete it locally.\n4. `PUT /v1/activities/{id}/gap-routes` where the phone estimated gaps; `PUT /v1/turf/home-city`.\n5. Keep the last `nextCursor`.\n\n**Every day after**\n- **Push** from the outbox: recorded → `PUT`; track corrected → `PUT` + `If-Match`; renamed → `PATCH`; deleted → `DELETE`; gaps estimated → `PUT …/gap-routes`; Home City → `PUT /v1/turf/home-city`.\n- **Pull** on launch and foreground: `GET /v1/sync/changes?cursor=…` while `hasMore`; fetch `GET /v1/activities/{id}/track` (with `If-None-Match`) only when `trackHash` is new; apply tombstones by deleting locally. Pull **before** importing from Apple Health, so a workout recorded on another phone is not imported twice.\n\n**Conflicts:** same content → `200` (replay). Stale `If-Match` → `412`: pull, re-apply, retry. Different content without `If-Match` → `428`. Deleted id → `410 activity.deleted`: delete wins. Renames and the Home City: last write wins. Invalid cursor → `410 sync.cursor-expired`: start again without one.\n\n## Errors\n\nEvery error is `application/problem+json` (RFC 9457) with a stable `code`. `detail` is for people and never repeats input values; a `400` lists JSON pointers in `errors[]`.\n\n| code | status | meaning |\n| --- | --- | --- |\n| `invalid-request` | 400 | Invalid request |\n| `auth.missing` | 401 | Missing bearer token |\n| `auth.invalid` | 401 | Invalid or expired token |\n| `consent.required` | 403 | Give the cloud-sync consent first |\n| `not-found` | 404 | Not found |\n| `activity.deleted` | 410 | Activity was deleted |\n| `sync.cursor-expired` | 410 | Sync cursor expired: sync again without a cursor |\n| `precondition-failed` | 412 | The resource changed since your version |\n| `payload-too-large` | 413 | Request body too large |\n| `unsupported-media-type` | 415 | Unsupported content type or encoding |\n| `activity.track-too-short` | 422 | A track needs at least two points |\n| `activity.ends-before-start` | 422 | The activity ends before it starts |\n| `activity.invalid-name` | 422 | Names are 1 to 80 characters |\n| `activity.track-hash-mismatch` | 422 | trackHash does not match the track |\n| `claim.in-future` | 422 | The activity starts in the future |\n| `home-city.unknown` | 422 | Not a catalogue city |\n| `client.too-old` | 426 | Update the app to sync |\n| `precondition-required` | 428 | Send If-Match to change an existing resource |\n| `rate-limited` | 429 | Too many requests |\n| `internal` | 500 | Something went wrong |\n| `not-implemented` | 501 | Not implemented yet |\n| `storage.unavailable` | 503 | Storage is not available: retry later |\n\n## Units and formats\n\nJSON in camelCase. SI units with a suffix (`distanceM`, `movingS`, `areaKm2`). Timestamps ISO 8601 UTC; an activity may carry its IANA `timeZone` for display — the server derives nothing from local time. Coordinates `[lon, lat]` (GeoJSON order); bounding boxes `[west, south, east, north]`. Track points `[lon, lat, t, segment, altitudeM]`. `trackHash` = SHA-256 hex of `JSON.stringify(track.points)` (no whitespace, ECMAScript number formatting, upload order); the server computes it, so sending it is optional. Turf cells are H3 indexes (resolution 11).\n\n## Privacy\n\nGPS tracks, turf cells and the Home City are personal data. Cloud sync needs the `cloud-sync` consent; everything can be exported (`POST /v1/me/exports`) and erased (`DELETE /v1/me`). Nothing of it is logged: logs hold the route pattern, status, duration, request id and user id. Examples on this page use public landmarks (Warsaw Old Town).",
+    "version": "0.4.0",
+    "description": "The CityTurfer HTTP API: the app's use cases over HTTP, to back up and sync a local-first phone and, later, other clients.\n\n## Getting started\n\n- **Base URL:** pick a server above. Locally, `pnpm --filter @cityturfer/api dev` runs the API on port 8787 and `pnpm run web:dev` serves this page at https://cityturfer.local/swagger with the API under `/api`.\n- **Status:** the one-way **backup** (phone → server) is live: health, `/v1/me`, consents, activity upload/read/delete, track, gap routes, the changes feed and the Home City. The rest is designed but **planned**: its summary starts with `[planned]`, it carries `x-cityturfer-status: planned` and answers `501` once auth and validation pass. Live data routes answer `503 storage.unavailable` when the server has no database.\n- **Auth:** send `Authorization: Bearer <device token>` (button **Authorize**). Tokens are random secrets minted per user (`pnpm --filter @cityturfer/api run token:new -- <userId>`); the server stores only their SHA-256. A stopgap until Better Auth. A missing token answers `401` *before* the input is validated. Locally, `dev-token` works for user `admin` when `API_TOKENS` is not set.\n- **Consent:** activity and Home City writes need `PUT /v1/me/consents/cloud-sync` with `granted: true` first (else `403 consent.required`); Apple Health activities also `apple-health-in-cloud-sync`.\n- **Headers you send:** `Content-Type: application/json`; `Content-Encoding: gzip` for long tracks; `If-Match` to change an existing activity; `CityTurfer-Client: ios/0.8.0+123` (old clients may get `426 client.too-old`).\n- **Headers you get:** `X-Request-Id` on every answer (quote it when reporting a problem), `ETag` on activities, `Location` on 201/202, `Retry-After` and `RateLimit` on 429.\n- **Limits:** request and response bodies ≤ 4.5 MB (Vercel); ≤ 40,000 points per track; gzip bodies inflate to ≤ 16 MB.\n\n## Sync flow (phone ↔ server)\n\nThe phone is local-first and authoritative for what it recorded; the server stores activities with their tracks and recomputes everything derived (summaries, turf). Writes are keyed by ids the phone mints, so every request can be retried.\n\n**First upload of an existing history**\n1. `PUT /v1/me/consents/cloud-sync` (and `apple-health-in-cloud-sync` to include Apple Health imports).\n2. `GET /v1/sync/changes` without a cursor, every page: what the server already has (the manifest).\n3. For each local activity, oldest first (never `demo-…`): absent → `PUT /v1/activities/{id}`; same `trackHash` → done; different → `PUT` with `If-Match`; tombstoned → delete it locally.\n4. `PUT /v1/activities/{id}/gap-routes` once the phone checked the gaps (an empty list when there are none); `PUT /v1/turf/home-city`.\n5. Keep the last `nextCursor`.\n\n**Restore to a new phone**\n1. Sign in; `GET /v1/sync/changes` without a cursor while `hasMore` (entries carry ids, names, versions and `trackHash`, no geometry; a page ends at `limit` or about 1 MB).\n2. Per activity: `GET /v1/activities/{id}` (summary, gap routes, `gapsCheckedAt`) and `GET /v1/activities/{id}/track`. Store them as restored: never upload them back.\n3. Apply tombstones and the Home City; keep the last `nextCursor`.\n\n**Every day after**\n- **Push** from the outbox: recorded → `PUT`; track corrected → `PUT` + `If-Match`; renamed → `PATCH`; deleted → `DELETE`; gaps estimated → `PUT …/gap-routes`; Home City → `PUT /v1/turf/home-city`.\n- **Pull** on launch and foreground: `GET /v1/sync/changes?cursor=…` while `hasMore`; fetch `GET /v1/activities/{id}/track` (with `If-None-Match`) only when `trackHash` is new; apply tombstones by deleting locally. Pull **before** importing from Apple Health, so a workout recorded on another phone is not imported twice.\n\n**Conflicts:** same content → `200` (replay). Stale `If-Match` → `412`: pull, re-apply, retry. Different content without `If-Match` → `428`. Deleted id → `410 activity.deleted`: delete wins. Renames and the Home City: last write wins. Invalid cursor → `410 sync.cursor-expired`: start again without one.\n\n## Errors\n\nEvery error is `application/problem+json` (RFC 9457) with a stable `code`. `detail` is for people and never repeats input values; a `400` lists JSON pointers in `errors[]`.\n\n| code | status | meaning |\n| --- | --- | --- |\n| `invalid-request` | 400 | Invalid request |\n| `auth.missing` | 401 | Missing bearer token |\n| `auth.invalid` | 401 | Invalid or expired token |\n| `consent.required` | 403 | Give the cloud-sync consent first |\n| `not-found` | 404 | Not found |\n| `activity.deleted` | 410 | Activity was deleted |\n| `sync.cursor-expired` | 410 | Sync cursor expired: sync again without a cursor |\n| `precondition-failed` | 412 | The resource changed since your version |\n| `payload-too-large` | 413 | Request body too large |\n| `unsupported-media-type` | 415 | Unsupported content type or encoding |\n| `activity.track-too-short` | 422 | A track needs at least two points |\n| `activity.ends-before-start` | 422 | The activity ends before it starts |\n| `activity.invalid-name` | 422 | Names are 1 to 80 characters |\n| `activity.track-hash-mismatch` | 422 | trackHash does not match the track |\n| `activity.source-mismatch` | 422 | source does not match the id (hk-… is apple-health) |\n| `home-city.unknown` | 422 | Not a catalogue city |\n| `client.too-old` | 426 | Update the app to sync |\n| `precondition-required` | 428 | Send If-Match to change an existing resource |\n| `rate-limited` | 429 | Too many requests |\n| `internal` | 500 | Something went wrong |\n| `not-implemented` | 501 | Not implemented yet |\n| `storage.unavailable` | 503 | Storage is not available: retry later |\n\n## Units and formats\n\nJSON in camelCase. SI units with a suffix (`distanceM`, `movingS`, `areaKm2`). Timestamps ISO 8601 UTC; an activity may carry its IANA `timeZone` for display — the server derives nothing from local time. Coordinates `[lon, lat]` (GeoJSON order); bounding boxes `[west, south, east, north]`. Track points `[lon, lat, t, segment, altitudeM]`. `trackHash` = SHA-256 hex of `JSON.stringify(track.points)` (no whitespace, ECMAScript number formatting, upload order); the server computes it, so sending it is optional. Turf cells are H3 indexes (resolution 11).\n\n## Privacy\n\nGPS tracks, turf cells and the Home City are personal data. Cloud sync needs the `cloud-sync` consent; everything can be exported (`POST /v1/me/exports`) and erased (`DELETE /v1/me`). Nothing of it is logged: logs hold the route pattern, status, duration, request id and user id. Examples on this page use public landmarks (Warsaw Old Town).",
     "license": {
       "name": "Proprietary",
       "identifier": "LicenseRef-Proprietary"
@@ -106,7 +106,13 @@
           },
           "version": {
             "type": "string",
-            "example": "0.3.0"
+            "description": "Version of the API contract.",
+            "example": "0.4.0"
+          },
+          "coreVersion": {
+            "type": "string",
+            "description": "Version of `@cityturfer/core` the server computes summaries with.",
+            "example": "0.9.0"
           },
           "database": {
             "type": "string",
@@ -122,6 +128,7 @@
         "required": [
           "status",
           "version",
+          "coreVersion",
           "database"
         ]
       },
@@ -202,7 +209,8 @@
             "items": {
               "$ref": "#/components/schemas/FieldError"
             },
-            "description": "Only on 400 `invalid-request`: which fields are invalid."
+            "maxItems": 20,
+            "description": "Only on 400 `invalid-request`: which fields are invalid (the first 20)."
           }
         },
         "required": [
@@ -229,7 +237,7 @@
           "activity.ends-before-start",
           "activity.invalid-name",
           "activity.track-hash-mismatch",
-          "claim.in-future",
+          "activity.source-mismatch",
           "home-city.unknown",
           "client.too-old",
           "precondition-required",
@@ -444,7 +452,7 @@
           },
           "hasMore": {
             "type": "boolean",
-            "description": "True: ask again now with `nextCursor`.",
+            "description": "True: ask again now with `nextCursor`. A page ends at `limit` changes or about 1 MB.",
             "example": false
           }
         },
@@ -491,7 +499,7 @@
             "description": "When the server recorded the change."
           },
           "activity": {
-            "$ref": "#/components/schemas/ActivitySummary"
+            "$ref": "#/components/schemas/ActivityFeedEntry"
           }
         },
         "required": [
@@ -500,6 +508,171 @@
           "activity"
         ],
         "description": "Created or changed (track, name, gap routes). Download the track only when `activity.trackHash` differs from yours."
+      },
+      "ActivityFeedEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "3f9c2a64-5d1e-4b8e-9a51-0c7d2e6f1b20"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ActivityType"
+          },
+          "source": {
+            "$ref": "#/components/schemas/ActivitySource"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "As in the app (1–80 characters).",
+            "example": "Morning run"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Grows by one with every change; the `ETag` is `\"v<version>\"`.",
+            "example": 3
+          },
+          "trackHash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "Canonical track hash: SHA-256 (lowercase hex) of the UTF-8 bytes of `JSON.stringify(track.points)` — no whitespace, points `[lon, lat, t, segment, altitudeM | null]` in upload order, numbers in ECMAScript shortest round-trip form (what `JSON.stringify` writes). The server computes it; a hash the client sends must match (422 `activity.track-hash-mismatch`). Tells other devices whether to download the track again.",
+            "example": "9f2b6c1d4e8a7b3c5d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "source",
+          "name",
+          "startedAt",
+          "version",
+          "trackHash",
+          "updatedAt"
+        ],
+        "description": "An activity in the changes feed: no preview or numbers (pages stay small). Fetch `GET /v1/activities/{id}` and, when `trackHash` is new, `GET /v1/activities/{id}/track`."
+      },
+      "ActivityType": {
+        "type": "string",
+        "enum": [
+          "walk",
+          "run",
+          "cycle"
+        ],
+        "example": "run"
+      },
+      "ActivitySource": {
+        "type": "string",
+        "enum": [
+          "recording",
+          "apple-health",
+          "import"
+        ],
+        "description": "`recording`: a finished Recording Session; `apple-health`: imported from Apple Health (`hk-…` id, needs the `apple-health-in-cloud-sync` consent); `import`: any other import. Demo history (`demo-…`) is never uploaded.",
+        "example": "recording"
+      },
+      "ActivityTombstone": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "activity.deleted"
+            ]
+          },
+          "changedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z",
+            "description": "When the server recorded the change."
+          },
+          "activityId": {
+            "type": "string",
+            "example": "3f9c2a64-5d1e-4b8e-9a51-0c7d2e6f1b20"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z"
+          }
+        },
+        "required": [
+          "type",
+          "changedAt",
+          "activityId",
+          "deletedAt"
+        ],
+        "description": "Deleted: delete it locally and never upload it again (it would answer 410)."
+      },
+      "HomeCityChanged": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "home-city.chosen"
+            ]
+          },
+          "changedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z",
+            "description": "When the server recorded the change."
+          },
+          "cityId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "pl-warsaw"
+          },
+          "chosenAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z"
+          }
+        },
+        "required": [
+          "type",
+          "changedAt",
+          "cityId",
+          "chosenAt"
+        ],
+        "description": "Apply when `chosenAt` is newer than yours (last write wins)."
+      },
+      "ActivityList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivitySummary"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Pass as `cursor` for the next page; null at the end."
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
       },
       "ActivitySummary": {
         "type": "object",
@@ -622,25 +795,6 @@
           "coreVersion"
         ]
       },
-      "ActivityType": {
-        "type": "string",
-        "enum": [
-          "walk",
-          "run",
-          "cycle"
-        ],
-        "example": "run"
-      },
-      "ActivitySource": {
-        "type": "string",
-        "enum": [
-          "recording",
-          "apple-health",
-          "import"
-        ],
-        "description": "`recording`: a finished Recording Session; `apple-health`: imported from Apple Health (`hk-…` id, needs the `apple-health-in-cloud-sync` consent); `import`: any other import. Demo history (`demo-…`) is never uploaded.",
-        "example": "recording"
-      },
       "LonLat": {
         "type": "array",
         "prefixItems": [
@@ -659,97 +813,6 @@
         "example": [
           21.0122,
           52.2297
-        ]
-      },
-      "ActivityTombstone": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "activity.deleted"
-            ]
-          },
-          "changedAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-10-19T07:12:00Z",
-            "description": "When the server recorded the change."
-          },
-          "activityId": {
-            "type": "string",
-            "example": "3f9c2a64-5d1e-4b8e-9a51-0c7d2e6f1b20"
-          },
-          "deletedAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-10-19T07:12:00Z"
-          }
-        },
-        "required": [
-          "type",
-          "changedAt",
-          "activityId",
-          "deletedAt"
-        ],
-        "description": "Deleted: delete it locally and never upload it again (it would answer 410)."
-      },
-      "HomeCityChanged": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "home-city.chosen"
-            ]
-          },
-          "changedAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-10-19T07:12:00Z",
-            "description": "When the server recorded the change."
-          },
-          "cityId": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "example": "pl-warsaw"
-          },
-          "chosenAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-10-19T07:12:00Z"
-          }
-        },
-        "required": [
-          "type",
-          "changedAt",
-          "cityId",
-          "chosenAt"
-        ],
-        "description": "Apply when `chosenAt` is newer than yours (last write wins)."
-      },
-      "ActivityList": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ActivitySummary"
-            }
-          },
-          "nextCursor": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Pass as `cursor` for the next page; null at the end."
-          }
-        },
-        "required": [
-          "items",
-          "nextCursor"
         ]
       },
       "ActivityUpload": {
@@ -928,13 +991,23 @@
                 "items": {
                   "$ref": "#/components/schemas/GapRoute"
                 }
+              },
+              "gapsCheckedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "example": "2026-10-19T07:12:00Z",
+                "description": "When the phone last checked the GPS gaps (`PUT …/gap-routes`, an empty list included); null when never checked or since the track changed. A restoring phone that sees a time here does not estimate the gaps again."
               }
             },
             "required": [
               "bbox",
               "splits",
               "resumedSegments",
-              "gapRoutes"
+              "gapRoutes",
+              "gapsCheckedAt"
             ]
           }
         ]
@@ -1052,7 +1125,7 @@
             "type": "string",
             "format": "date-time",
             "example": "2026-10-19T07:12:00Z",
-            "description": "When the phone estimated them."
+            "description": "When the phone checked the gaps (`gapsCheckedAt`)."
           },
           "routes": {
             "type": "array",
@@ -1066,7 +1139,7 @@
           "checkedAt",
           "routes"
         ],
-        "description": "Replaces every gap route of the activity (empty: none found)."
+        "description": "Replaces every gap route of the activity; an empty list means checked, no gaps."
       },
       "TurfSummary": {
         "type": "object",
@@ -2340,7 +2413,7 @@
         ],
         "operationId": "listChanges",
         "summary": "Changes since a cursor",
-        "description": "Upserts, tombstones and Home City choices in server order since `cursor` (use case ListChanges). Without a cursor it lists everything the server holds for the user — the manifest a phone compares with its own history on the first upload. Each activity, tombstone and the Home City appears once, at its latest change.\n\nPull on launch, on foreground and after pushing; repeat while `hasMore`. Changes made by the calling device come back too: apply them idempotently (same `version` → nothing to do).",
+        "description": "Upserts, tombstones and Home City choices in server order since `cursor` (use case ListChanges). Without a cursor it lists everything the server holds for the user — the manifest a phone compares with its own history on the first upload. Each activity, tombstone and the Home City appears once, at its latest change. Activity entries carry no geometry: a page ends at `limit` changes or about 1 MB, whichever comes first.\n\nPull on launch, on foreground and after pushing; repeat while `hasMore`. Changes made by the calling device come back too: apply them idempotently (same `version` → nothing to do).\n\n**Restore to a new phone:** page from no cursor (the manifest), then for each activity `GET /v1/activities/{id}` and `GET /v1/activities/{id}/track`; apply tombstones and the Home City.",
         "security": [
           {
             "bearerAuth": []
@@ -2685,7 +2758,7 @@
         ],
         "operationId": "uploadActivity",
         "summary": "Upload or replace a finished activity",
-        "description": "Stores the activity with its track under the id the phone minted (use cases ImportActivity and, for a corrected track, CorrectTrack). The server recomputes distance, time and splits from the track with the shared core and computes the canonical `trackHash` (a hash the client sends must match). Needs the `cloud-sync` consent (Apple Health activities also `apple-health-in-cloud-sync`).\n\n- **New id** → `201` with `ETag` and `Location`.\n- **Same content again** (same track, name and fields) → `200`, unchanged: replays are safe.\n- **Different content** → send `If-Match` with the current `ETag`: `200` and version + 1; a stale one → `412`, none → `428` (both carry the current `ETag`). A new track drops the stored gap routes: send them again.\n- **Deleted id** → `410 activity.deleted`: delete the activity locally too.\n\nBodies are limited to 4.5 MB: send long tracks with `Content-Encoding: gzip`.",
+        "description": "Stores the activity with its track under the id the phone minted (use cases ImportActivity and, for a corrected track, CorrectTrack). The server recomputes distance, time and splits from the track with the shared core and computes the canonical `trackHash` (a hash the client sends must match). Needs the `cloud-sync` consent (Apple Health activities also `apple-health-in-cloud-sync`).\n\n- **New id** → `201` with `ETag` and `Location`.\n- **Same content again** (same track, name and fields) → `200`, unchanged: replays are safe.\n- **Different content** → send `If-Match` with the current `ETag`: `200` and version + 1; a stale one → `412`, none → `428` (both carry the current `ETag`). A new track drops the stored gap routes: send them again.\n- **Deleted id** → `410 activity.deleted`: delete the activity locally too.\n\n`source` must match the id: `hk-…` ids are `apple-health` and only they may be (else `422 activity.source-mismatch`).\n\nBodies are limited to 4.5 MB: send long tracks with `Content-Encoding: gzip`.",
         "security": [
           {
             "bearerAuth": []
@@ -2918,7 +2991,7 @@
             }
           },
           "422": {
-            "description": "A domain rule was broken. Codes: `activity.track-too-short`, `activity.ends-before-start`, `activity.invalid-name`, `activity.track-hash-mismatch`, `claim.in-future`.",
+            "description": "A domain rule was broken. Codes: `activity.track-too-short`, `activity.ends-before-start`, `activity.invalid-name`, `activity.track-hash-mismatch`, `activity.source-mismatch`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -2958,13 +3031,13 @@
                       "code": "activity.track-hash-mismatch"
                     }
                   },
-                  "claim.in-future": {
-                    "summary": "claim.in-future",
+                  "activity.source-mismatch": {
+                    "summary": "activity.source-mismatch",
                     "value": {
-                      "type": "https://cityturfer.app/problems/claim.in-future",
-                      "title": "The activity starts in the future",
+                      "type": "https://cityturfer.app/problems/activity.source-mismatch",
+                      "title": "source does not match the id (hk-… is apple-health)",
                       "status": 422,
-                      "code": "claim.in-future"
+                      "code": "activity.source-mismatch"
                     }
                   }
                 },
@@ -3056,7 +3129,7 @@
         ],
         "operationId": "getActivity",
         "summary": "Activity detail",
-        "description": "Summary, bounding box, km splits and gap routes (use case GetActivityDetail).",
+        "description": "Summary, bounding box, km splits, gap routes and when the gaps were checked (use case GetActivityDetail).",
         "security": [
           {
             "bearerAuth": []
@@ -3845,7 +3918,7 @@
         ],
         "operationId": "saveGapRoutes",
         "summary": "Save the estimated gap routes",
-        "description": "Replaces the street routes the phone estimated across GPS gaps (use case SaveGapRoutes; decision D3). Display only: they add to distance and moving time and are drawn dashed, never claimed as turf. Idempotent; version + 1 when they changed. Needs the `cloud-sync` consent.",
+        "description": "Replaces the street routes the phone estimated across GPS gaps (use case SaveGapRoutes; decision D3) and records that the gaps were checked (`gapsCheckedAt` in the detail). Send an **empty** `routes` list when the phone checked and found no gaps. Display only: they add to distance and moving time and are drawn dashed, never claimed as turf. Idempotent; version + 1 when they changed or the activity had not been checked yet. Needs the `cloud-sync` consent.",
         "security": [
           {
             "bearerAuth": []

@@ -7,7 +7,7 @@ import { AppError } from './backup/app-error';
 import { type ApiDeps, type AppEnv, defaultDeps } from './deps';
 import { isProblemCode } from './errors';
 import { inflateGzip, limitBody, logRequests } from './middleware';
-import { problem } from './problem';
+import { MAX_FIELD_ERRORS, problem } from './problem';
 import { registerActivities } from './routes/activities';
 import { registerIdentity } from './routes/identity';
 import { registerPlatform } from './routes/platform';
@@ -26,15 +26,21 @@ import { OPENAPI_CONFIG, SPEC_PATH, SWAGGER_UI_OPTIONS } from './spec';
 export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
   const app = new OpenAPIHono<AppEnv>({
     // Invalid input → 400 problem with JSON pointers. Never echo the input: it may hold coordinates.
+    // At most MAX_FIELD_ERRORS pointers: a 40,000-point track with a bad column must not answer megabytes.
     defaultHook: (result, c) => {
       if (!result.success) {
-        const errors = result.error.issues.map((i) => ({
+        const issues = result.error.issues;
+        const errors = issues.slice(0, MAX_FIELD_ERRORS).map((i) => ({
           pointer: `/${i.path.map((p) => String(p).replaceAll('~', '~0').replaceAll('/', '~1')).join('/')}`,
           code: i.code,
         }));
-        return problem(c, 'invalid-request', `Check: ${[...new Set(errors.map((e) => e.pointer))].join(', ')}.`, {
-          errors,
-        });
+        const more = issues.length > errors.length ? ` (${issues.length - errors.length} more)` : '';
+        return problem(
+          c,
+          'invalid-request',
+          `Check: ${[...new Set(errors.map((e) => e.pointer))].join(', ')}${more}.`,
+          { errors }
+        );
       }
       return undefined;
     },

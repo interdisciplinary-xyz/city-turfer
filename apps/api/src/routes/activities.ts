@@ -82,6 +82,8 @@ export function registerActivities(app: OpenAPIHono<AppEnv>): void {
         '- **Different content** → send `If-Match` with the current `ETag`: `200` and version + 1; a stale one → `412`, none → `428` (both carry the current `ETag`). A new track drops the stored gap routes: send them again.',
         '- **Deleted id** → `410 activity.deleted`: delete the activity locally too.',
         '',
+        '`source` must match the id: `hk-…` ids are `apple-health` and only they may be (else `422 activity.source-mismatch`).',
+        '',
         'Bodies are limited to 4.5 MB: send long tracks with `Content-Encoding: gzip`.',
       ].join('\n'),
       request: {
@@ -109,7 +111,7 @@ export function registerActivities(app: OpenAPIHono<AppEnv>): void {
           'activity.ends-before-start',
           'activity.invalid-name',
           'activity.track-hash-mismatch',
-          'claim.in-future'
+          'activity.source-mismatch'
         ),
         428: problemResponse('The activity exists with different content: send `If-Match`.', 'precondition-required'),
       },
@@ -150,7 +152,8 @@ export function registerActivities(app: OpenAPIHono<AppEnv>): void {
       tags: TAG,
       operationId: 'getActivity',
       summary: 'Activity detail',
-      description: 'Summary, bounding box, km splits and gap routes (use case GetActivityDetail).',
+      description:
+        'Summary, bounding box, km splits, gap routes and when the gaps were checked (use case GetActivityDetail).',
       request: { params: ActivityIdParam },
       responses: {
         200: { description: 'The activity.', headers: ETAG_HEADER, content: json(ActivityDetail) },
@@ -268,7 +271,7 @@ export function registerActivities(app: OpenAPIHono<AppEnv>): void {
       operationId: 'saveGapRoutes',
       summary: 'Save the estimated gap routes',
       description:
-        'Replaces the street routes the phone estimated across GPS gaps (use case SaveGapRoutes; decision D3). Display only: they add to distance and moving time and are drawn dashed, never claimed as turf. Idempotent; version + 1 when they changed. Needs the `cloud-sync` consent.',
+        'Replaces the street routes the phone estimated across GPS gaps (use case SaveGapRoutes; decision D3) and records that the gaps were checked (`gapsCheckedAt` in the detail). Send an **empty** `routes` list when the phone checked and found no gaps. Display only: they add to distance and moving time and are drawn dashed, never claimed as turf. Idempotent; version + 1 when they changed or the activity had not been checked yet. Needs the `cloud-sync` consent.',
       request: {
         params: ActivityIdParam,
         body: { required: true, content: json(GapRoutesUpload) },

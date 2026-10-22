@@ -56,7 +56,12 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
 - **Sync:** Activities carry `version`, `trackHash` and an `ETag` (`"v<version>"`). Replacing an
   existing Activity with different content needs `If-Match` (412 stale, 428 missing); a deleted id
   answers **410 `activity.deleted`** (tombstones, delete wins). `GET /v1/sync/changes` is the one
-  feed of upserts, tombstones and the Home City; without a cursor it is the full manifest.
+  feed of upserts, tombstones and the Home City; without a cursor it is the full manifest. Feed
+  entries carry no geometry (no `preview`) and a page stops at `limit` or ~1 MB (`MAX_PAGE_BYTES`);
+  restore = manifest, then detail + track per activity (test:
+  `apps/api/src/__tests__/restore.test.ts`). `source` is derived from the id (`hk-…` ⇒
+  `apple-health`, 422 `activity.source-mismatch`). `PUT …/gap-routes` with an empty list sets
+  `gapsCheckedAt` ("checked, no gaps").
 - **JSON:** camelCase. Units are SI with a suffix, like the domain: `distanceM`, `movingS`,
   `areaKm2` only where the domain already uses km². Timestamps are **ISO 8601 UTC strings**
   (`startedAt: "2026-10-19T07:12:00Z"`, `z.iso.datetime()`); an Activity may carry its IANA
@@ -70,7 +75,7 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   `{ changes, nextCursor, hasMore }`).
 - **Errors:** `application/problem+json` (RFC 9457): `type`, `title`, `status`, `detail`, our `code`
   from the catalogue in `apps/api/src/errors.ts` (domain codes like `home-city.unknown` included),
-  and for 400 an `errors[]` of JSON pointers — never input values.
+  and for 400 an `errors[]` of JSON pointers (at most 20) — never input values.
 - **Headers:** `X-Request-Id` on every answer; `CityTurfer-Client` (426 `client.too-old`);
   `Retry-After` + `RateLimit` on 429; `Location` on 201/202.
 - **Auth:** `bearerAuth` (HTTP bearer). Every route needs it except `GET /v1/health`,
@@ -111,7 +116,7 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
 
 - **Local:** `pnpm --filter @cityturfer/api dev` (port 8787; `PORT=8788 …` for another). Without
   `DATABASE_URL` it uses PGlite in `apps/api/.data/` (gitignored, migrated on start); without
-  `API_TOKENS` the token `dev-token` is user `admin`.
+  `API_TOKENS` and `DATABASE_URL` the token `dev-token` is user `admin` (never against Neon).
 - **Env (Vercel):** `DATABASE_URL` (Neon pooled), optional `DATABASE_URL_UNPOOLED` (migrations),
   `API_TOKENS`. Runbook: `docs/operations/api-deploy.md`.
 - **Schema change:** edit `apps/api/src/db/schema.ts` (`user_id` first in every key), then

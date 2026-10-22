@@ -3,8 +3,8 @@
 //
 // - With DATABASE_URL: the Neon database it names. Without: PGlite persisted in apps/api/.data/
 //   (gitignored), migrated on start.
-// - With API_TOKENS: those device tokens. Without: one dev token, `dev-token`, for user `admin`
-//   (local only: src/index.ts, the Vercel entry, has no such fallback).
+// - With API_TOKENS: those device tokens. Without API_TOKENS and DATABASE_URL: one dev token,
+//   `dev-token`, for user `admin` on PGlite only (src/index.ts, the Vercel entry, has no fallback).
 import { createHash } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
@@ -20,7 +20,9 @@ import { productionDeps } from './wiring';
 const DEV_TOKEN = 'dev-token';
 
 const env = { ...process.env };
-if (!env.API_TOKENS) {
+// The dev token only ever reaches the local PGlite database, never one DATABASE_URL names (Neon).
+const devToken = !env.API_TOKENS && !env.DATABASE_URL;
+if (devToken) {
   env.API_TOKENS = JSON.stringify({ [createHash('sha256').update(DEV_TOKEN).digest('hex')]: 'admin' });
 }
 const deps = productionDeps(env);
@@ -35,7 +37,7 @@ const port = Number(process.env.PORT ?? LOCAL_API_PORT);
 serve({ fetch: createApp(deps).fetch, port }, (info) => {
   const notes = [
     env.DATABASE_URL ? 'database: DATABASE_URL' : 'database: PGlite in apps/api/.data',
-    process.env.API_TOKENS ? 'tokens: API_TOKENS' : `token: Bearer ${DEV_TOKEN} (user admin)`,
+    devToken ? `token: Bearer ${DEV_TOKEN} (user admin)` : env.API_TOKENS ? 'tokens: API_TOKENS' : 'no device tokens',
   ];
   process.stdout.write(`CityTurfer API on http://localhost:${info.port} (docs: /swagger; ${notes.join('; ')})\n`);
 });

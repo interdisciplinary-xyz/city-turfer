@@ -90,6 +90,16 @@ describe('consents', () => {
     expect((await h.call('GET', '/v1/activities/a1')).status).toBe(200);
   });
 
+  it('derives the source from the id: hk-… is apple-health, nothing else is (422)', async () => {
+    await grant();
+    await grant(TOKENS.admin, 'apple-health-in-cloud-sync');
+    const disguised = await put('hk-2', upload({ source: 'recording' }));
+    expect(disguised.status).toBe(422);
+    expect(await disguised.json()).toMatchObject({ code: 'activity.source-mismatch' });
+    expect((await put('run-9', upload({ source: 'apple-health' }))).status).toBe(422);
+    expect((await put('imp-1', upload({ source: 'import' }))).status).toBe(201);
+  });
+
   it('needs apple-health-in-cloud-sync for Apple Health activities', async () => {
     await grant();
     expect((await put('hk-1', upload({ source: 'apple-health' }))).status).toBe(403);
@@ -279,6 +289,23 @@ describe('gap routes', () => {
 
   it('answers 404 for an unknown activity', async () => {
     expect((await h.call('PUT', '/v1/activities/nope/gap-routes', { body: routes })).status).toBe(404);
+  });
+
+  it('records an empty list as checked (gapsCheckedAt), once; a new track clears it', async () => {
+    expect((await (await h.call('GET', '/v1/activities/run-1')).json()).gapsCheckedAt).toBeNull();
+    const none = { checkedAt: '2026-10-19T08:00:00Z', routes: [] };
+    const res = await h.call('PUT', '/v1/activities/run-1/gap-routes', { body: none });
+    expect(res.headers.get('etag')).toBe('"v2"');
+    const replay = await h.call('PUT', '/v1/activities/run-1/gap-routes', { body: none });
+    expect(replay.headers.get('etag')).toBe('"v2"');
+    const detail = await (await h.call('GET', '/v1/activities/run-1')).json();
+    expect(detail).toMatchObject({ gapsCheckedAt: '2026-10-19T08:00:00.000Z', gapRoutes: [], estimatedDistanceM: 0 });
+
+    const longer = { points: track(41) };
+    await put('run-1', upload({ track: longer, endedAt: new Date(longer.points[40][2]).toISOString() }), {
+      'If-Match': '"v2"',
+    });
+    expect((await (await h.call('GET', '/v1/activities/run-1')).json()).gapsCheckedAt).toBeNull();
   });
 });
 

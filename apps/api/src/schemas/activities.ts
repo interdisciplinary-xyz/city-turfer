@@ -145,7 +145,26 @@ export const ActivityDetail = ActivitySummary.extend({
     .nullable()
     .openapi({ description: 'Segments that began with a manual Resume; null when unknown.' }),
   gapRoutes: z.array(GapRoute),
+  gapsCheckedAt: IsoDateTime.nullable().openapi({
+    description:
+      'When the phone last checked the GPS gaps (`PUT …/gap-routes`, an empty list included); null when never checked or since the track changed. A restoring phone that sees a time here does not estimate the gaps again.',
+  }),
 }).openapi('ActivityDetail');
+
+/** What the changes feed carries per activity: enough to plan a restore or a pull, no geometry. */
+export const ActivityFeedEntry = ActivitySummary.pick({
+  id: true,
+  type: true,
+  source: true,
+  name: true,
+  startedAt: true,
+  version: true,
+  trackHash: true,
+  updatedAt: true,
+}).openapi('ActivityFeedEntry', {
+  description:
+    'An activity in the changes feed: no preview or numbers (pages stay small). Fetch `GET /v1/activities/{id}` and, when `trackHash` is new, `GET /v1/activities/{id}/track`.',
+});
 
 /** Upload of a finished activity. The server recomputes the summary and claims turf from the track. */
 export const ActivityUpload = z
@@ -176,7 +195,9 @@ export const ActivityRename = z.object({ name: ActivityName }).openapi('Activity
 
 export const GapRoutesUpload = z
   .object({
-    checkedAt: IsoDateTime.openapi({ description: 'When the phone estimated them.' }),
+    checkedAt: IsoDateTime.openapi({ description: 'When the phone checked the gaps (`gapsCheckedAt`).' }),
     routes: z.array(GapRoute).max(200),
   })
-  .openapi('GapRoutesUpload', { description: 'Replaces every gap route of the activity (empty: none found).' });
+  .openapi('GapRoutesUpload', {
+    description: 'Replaces every gap route of the activity; an empty list means checked, no gaps.',
+  });

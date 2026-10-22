@@ -107,6 +107,9 @@ export class BackupService {
     ifMatch: string | undefined
   ): Promise<{ created: boolean; activity: ActivityRecord }> {
     const now = this.clock.now();
+    if (input.source !== sourceOf(id, input.source)) {
+      throw new AppError('activity.source-mismatch');
+    }
     const trackHash = trackHashOf(input.points);
     if (input.trackHash !== undefined && input.trackHash !== trackHash) {
       throw new AppError('activity.track-hash-mismatch');
@@ -184,7 +187,11 @@ export class BackupService {
     });
   }
 
-  /** SaveGapRoutes: replaces the phone's estimates (display only); version + 1 when they changed. */
+  /**
+   * SaveGapRoutes: replaces the phone's estimates (display only) and records that the activity's
+   * gaps were checked (`gapsCheckedAt`; an empty list = checked, no gaps). Version + 1 when the
+   * routes changed or the activity had not been checked yet; a replay changes nothing.
+   */
   async saveGapRoutes(
     userId: string,
     id: string,
@@ -195,7 +202,7 @@ export class BackupService {
       await tx.lock();
       const existing = await existingActivity(tx, id);
       const current = await tx.gapRoutes(id);
-      if (sameRoutes(current?.routes ?? [], input.routes)) {
+      if (current && sameRoutes(current.routes, input.routes)) {
         return existing;
       }
       const totals = gapTotals(input.routes);
@@ -207,7 +214,7 @@ export class BackupService {
         updatedAt: this.clock.now(),
         changeSeq: await tx.nextSeq(),
       };
-      await tx.putGapRoutes(id, input.routes.length > 0 ? input : null);
+      await tx.putGapRoutes(id, input);
       await tx.updateActivity(record);
       return record;
     });
@@ -248,10 +255,15 @@ export class BackupService {
 
   // ------------------------------------------------------------------ Sync
 
-  /** ListChanges: upserts, tombstones and the Home City above the cursor; no cursor = everything. */
+  /**
+   * ListChanges: upserts, tombstones and the Home City above the cursor; no cursor = everything. A
+   * page ends after `limit` changes or once `budget.maxBytes` (as measured by `budget.sizeOf`, the
+   * route's JSON) would be exceeded — at least one change per page.
+   */
   async changes(
     userId: string,
-    q: { cursor?: string; limit: number }
+    q: { cursor?: string; limit: number },
+    budget?: { maxBytes: number; sizeOf: (change: ChangeRecord) => number }
   ): Promise<{ changes: ChangeRecord[]; nextCursor: string; hasMore: boolean }> {
     const reader = this.store.read(userId);
     let after = 0;
@@ -263,11 +275,19 @@ export class BackupService {
       after = position.seq;
     }
     const rows = await reader.changesSince(after, q.limit + 1);
-    const changes = rows.slice(0, q.limit);
+    let changes = rows.slice(0, q.limit);
+    if (budget) {
+      let bytes = 0;
+      const fit = changes.findIndex((change, i) => {
+        bytes += budget.sizeOf(change);
+        return i > 0 && bytes > budget.maxBytes;
+      });
+      changes = fit === -1 ? changes : changes.slice(0, fit);
+    }
     return {
       changes,
       nextCursor: encodeCursor({ seq: changes.at(-1)?.seq ?? after }),
-      hasMore: rows.length > q.limit,
+      hasMore: rows.length > changes.length,
     };
   }
 
@@ -294,6 +314,21 @@ export class BackupService {
       return next;
     });
   }
+}
+
+/** Apple Health imports are the `hk-…` ids; nothing else may claim to come from Apple Health. */
+const APPLE_HEALTH_ID = /^hk-/;
+
+/**
+ * The source an upload must carry, derived from its id: `hk-…` ⇒ `apple-health` (so the Apple
+ * Health consent cannot be skipped by mislabelling), any other id ⇒ what was sent unless that is
+ * `apple-health`. A mismatch is 422 `activity.source-mismatch`.
+ */
+export function sourceOf(id: string, sent: ActivitySourceName): ActivitySourceName | null {
+  if (APPLE_HEALTH_ID.test(id)) {
+    return 'apple-health';
+  }
+  return sent === 'apple-health' ? null : sent;
 }
 
 /** Equal gap routes, whatever the key order (jsonb does not keep it). */

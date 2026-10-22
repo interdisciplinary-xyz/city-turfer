@@ -32,7 +32,9 @@ Design: `docs/decisions/api-sync-2026-10-20.md` and
 | `DATABASE_URL_UNPOOLED` | Neon direct connection string; used only by `db:migrate` (optional).                           |
 | `API_TOKENS`            | JSON object `{"<sha256 hex>": "<userId>"}` (or `{"userId", "email", "displayName"}` as value). |
 
-Preview deployments should get their own Neon branch, never the production database.
+Preview deployments should get their own Neon branch, never the production database. The local dev
+server (`apps/api/src/server.ts`) adds the `dev-token` for user `admin` only when neither
+`API_TOKENS` nor `DATABASE_URL` is set, so it never reaches a Neon database.
 
 ## Migrations
 
@@ -64,8 +66,8 @@ only hashes and never logs tokens.
 
 ## Check
 
-- `GET /v1/health` → `{"status":"ok","version":"0.3.0","database":"ok"}` (`not-configured` without
-  `DATABASE_URL`, `unreachable` when Neon does not answer).
+- `GET /v1/health` → `{"status":"ok","version":"0.4.0","coreVersion":"0.9.0","database":"ok"}`
+  (`not-configured` without `DATABASE_URL`, `unreachable` when Neon does not answer).
 - `GET /v1/me` with `Authorization: Bearer <token>` → the user; 401 `auth.invalid` when the hash is
   not in `API_TOKENS`.
 - Swagger at `/swagger` on the deployment ("Authorize" with the token).

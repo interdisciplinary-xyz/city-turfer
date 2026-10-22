@@ -18,7 +18,7 @@ export const PROBLEM_CODES = {
   'activity.ends-before-start': { status: 422, title: 'The activity ends before it starts' },
   'activity.invalid-name': { status: 422, title: 'Names are 1 to 80 characters' },
   'activity.track-hash-mismatch': { status: 422, title: 'trackHash does not match the track' },
-  'claim.in-future': { status: 422, title: 'The activity starts in the future' },
+  'activity.source-mismatch': { status: 422, title: 'source does not match the id (hk-… is apple-health)' },
   'home-city.unknown': { status: 422, title: 'Not a catalogue city' },
   'client.too-old': { status: 426, title: 'Update the app to sync' },
   'precondition-required': { status: 428, title: 'Send If-Match to change an existing resource' },

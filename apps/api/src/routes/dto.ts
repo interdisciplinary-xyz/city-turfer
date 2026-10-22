@@ -51,6 +51,19 @@ export const activityDetailDto = (a: ActivityRecord, gapRoutes: GapRoutesRecord 
   splits: a.summary.splits,
   resumedSegments: a.resumedSegments,
   gapRoutes: gapRoutes?.routes ?? [],
+  gapsCheckedAt: gapRoutes ? iso(gapRoutes.checkedAt) : null,
+});
+
+/** The feed's view of an activity: no preview or numbers. */
+export const activityFeedDto = (a: ActivityRecord) => ({
+  id: a.id,
+  type: a.type,
+  source: a.source,
+  name: a.name,
+  startedAt: iso(a.startedAt),
+  version: a.version,
+  trackHash: a.trackHash,
+  updatedAt: iso(a.updatedAt),
 });
 
 export const homeCityDto = (h: HomeCityRecord | null) => ({
@@ -64,7 +77,7 @@ export function changeDto(change: ChangeRecord) {
       return {
         type: 'activity.upserted' as const,
         changedAt: iso(change.activity.updatedAt),
-        activity: activitySummaryDto(change.activity),
+        activity: activityFeedDto(change.activity),
       };
     case 'tombstone':
       return {

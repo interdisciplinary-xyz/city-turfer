@@ -24,8 +24,13 @@ The phone is local-first and authoritative for what it recorded; the server stor
 1. \`PUT /v1/me/consents/cloud-sync\` (and \`apple-health-in-cloud-sync\` to include Apple Health imports).
 2. \`GET /v1/sync/changes\` without a cursor, every page: what the server already has (the manifest).
 3. For each local activity, oldest first (never \`demo-…\`): absent → \`PUT /v1/activities/{id}\`; same \`trackHash\` → done; different → \`PUT\` with \`If-Match\`; tombstoned → delete it locally.
-4. \`PUT /v1/activities/{id}/gap-routes\` where the phone estimated gaps; \`PUT /v1/turf/home-city\`.
+4. \`PUT /v1/activities/{id}/gap-routes\` once the phone checked the gaps (an empty list when there are none); \`PUT /v1/turf/home-city\`.
 5. Keep the last \`nextCursor\`.
+
+**Restore to a new phone**
+1. Sign in; \`GET /v1/sync/changes\` without a cursor while \`hasMore\` (entries carry ids, names, versions and \`trackHash\`, no geometry; a page ends at \`limit\` or about 1 MB).
+2. Per activity: \`GET /v1/activities/{id}\` (summary, gap routes, \`gapsCheckedAt\`) and \`GET /v1/activities/{id}/track\`. Store them as restored: never upload them back.
+3. Apply tombstones and the Home City; keep the last \`nextCursor\`.
 
 **Every day after**
 - **Push** from the outbox: recorded → \`PUT\`; track corrected → \`PUT\` + \`If-Match\`; renamed → \`PATCH\`; deleted → \`DELETE\`; gaps estimated → \`PUT …/gap-routes\`; Home City → \`PUT /v1/turf/home-city\`.

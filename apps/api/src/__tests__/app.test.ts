@@ -60,7 +60,12 @@ describe('routes', () => {
   it('answers health without auth', async () => {
     const res = await app.request('/v1/health');
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ status: 'ok', version: API_VERSION, database: 'not-configured' });
+    expect(await res.json()).toEqual({
+      status: 'ok',
+      version: API_VERSION,
+      coreVersion: expect.stringMatching(/^\d+\.\d+\.\d+$/),
+      database: 'not-configured',
+    });
   });
 
   it('answers planned routes with a 501 problem', async () => {
@@ -156,6 +161,18 @@ describe('platform middleware', () => {
     const res = await strict.request('/v1/me', { headers: AUTH });
     expect(res.status).toBe(401);
     expect(await res.json()).toMatchObject({ code: 'auth.invalid' });
+  });
+
+  it('lists at most 20 invalid fields', async () => {
+    const points = Array.from({ length: 100 }, (_, i) => [21.0122, 52.2297, 1760857920000 + i, 0, 'x']);
+    const res = await upload(
+      { ...LIVE_AUTH, 'Content-Type': 'application/json' },
+      JSON.stringify({ type: 'run', track: { points } })
+    );
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.errors).toHaveLength(20);
+    expect(body.detail).toContain('more');
   });
 
   it('lists invalid fields as JSON pointers', async () => {

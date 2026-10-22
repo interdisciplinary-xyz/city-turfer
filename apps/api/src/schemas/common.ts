@@ -32,8 +32,9 @@ export const Problem = z
     code: ProblemCodeSchema,
     errors: z
       .array(FieldError)
+      .max(20)
       .optional()
-      .openapi({ description: 'Only on 400 `invalid-request`: which fields are invalid.' }),
+      .openapi({ description: 'Only on 400 `invalid-request`: which fields are invalid (the first 20).' }),
   })
   .openapi('Problem');
 
