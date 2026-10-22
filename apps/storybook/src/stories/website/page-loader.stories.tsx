@@ -2,13 +2,15 @@ import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { useLayoutEffect } from 'react';
 
 import { PageLoader } from '@/app/[locale]/page-loader';
-import { PAGE_LOADED_CLASS } from '@/app/[locale]/page-loader/page-loader.constants';
+import { LOADER_ACTIVE_CLASS, PAGE_LOADED_CLASS } from '@/app/[locale]/page-loader/page-loader.constants';
 
-/** The overlay, with `loaded` on <html> toggled as the site's boot script does. */
+/** The overlay, with `loader-active` (slow page) and `loaded` on <html> set as the site's boot script does. */
 function PageLoaderDemo({ loaded }: { loaded: boolean }) {
   useLayoutEffect(() => {
-    document.documentElement.classList.toggle(PAGE_LOADED_CLASS, loaded);
-    return () => document.documentElement.classList.remove(PAGE_LOADED_CLASS);
+    const html = document.documentElement;
+    html.classList.add(LOADER_ACTIVE_CLASS);
+    html.classList.toggle(PAGE_LOADED_CLASS, loaded);
+    return () => html.classList.remove(LOADER_ACTIVE_CLASS, PAGE_LOADED_CLASS);
   }, [loaded]);
   return <PageLoader />;
 }
@@ -24,7 +26,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Full-page overlay shown from the first paint until the document is parsed and the fonts are ready (1.5 s at most). It covers the whole viewport, so on the Docs page it covers the docs. Toggle `loaded` to see the fade-out.',
+          'Full-page overlay for slow loads: the boot script shows it only if the page and fonts are not ready after about 180 ms (never with reduced motion or on back/forward), and releases the page after 1.5 s at most. It covers the whole viewport, so on the Docs page it covers the docs. Toggle `loaded` to see the fade-out.',
       },
     },
   },
