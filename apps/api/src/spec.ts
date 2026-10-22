@@ -59,7 +59,7 @@ export const OPENAPI_CONFIG = {
     {
       name: 'Sync',
       description:
-        'The one feed every device pulls: activity upserts, tombstones and the Home City since a cursor. Uploads go to the Activity Log. See **Sync flow** above.',
+        'The one feed every device pulls: activity upserts, tombstones and the Home City since a cursor. Uploads go to the Activity Log. See **Sync flow** below.',
     },
     {
       name: 'Activity Log',
