@@ -8,9 +8,10 @@
     "build": "next build && node tools/check-export.mjs",
     "start": "npx --yes serve@14 out",
     "test:unit": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test tools/__tests__/*.test.mjs && vitest run",
-    "arch": "depcruise src --config .dependency-cruiser.cjs",
+    "test:e2e": "playwright test",
+    "arch": "depcruise src server.mjs next.config.ts --config .dependency-cruiser.cjs",
     "typecheck": "next typegen && tsc --noEmit",
-    "lint": "eslint src tools next.config.ts server.mjs",
+    "lint": "eslint src tools e2e playwright.config.ts next.config.ts server.mjs",
     "api:types": "openapi-typescript ../api/openapi.json -o src/api/schema.gen.ts && prettier --write src/api/schema.gen.ts"
   },
   "dependencies": {
@@ -26,9 +27,11 @@
     "react-dom": "19.2.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@cityturfer/config": "workspace:*",
     "@interdisciplinary/eslint-config": "workspace:*",
     "@next/eslint-plugin-next": "^16.4.2",
+    "@playwright/test": "^1.64.1",
     "@types/node": "^22.15.0",
     "@types/react": "~19.2.2",
     "@types/react-dom": "~19.2.2",

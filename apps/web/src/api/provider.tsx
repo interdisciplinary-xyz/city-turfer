@@ -6,7 +6,7 @@ import { type ReactNode, useEffect, useState } from 'react';
 
 import { createPortalClient } from './client';
 import { isPortalError } from './errors';
-import { signInUrl } from './next-path';
+import { createLeave, leaveOnUnauthorized, reloadOnRestore } from './leave';
 import { portalApi } from './portal-api';
 import { MAX_READ_RETRIES, PortalApiContext, type PortalApiContextValue, STALE_MS } from './provider.constants';
 
@@ -27,33 +27,15 @@ export function PortalApiProvider({ children }: { children: ReactNode }) {
         mutations: { retry: false },
       },
     });
-    let leaving = false;
-    const leave: PortalApiContextValue['leave'] = (reason, { returnHere = false } = {}) => {
-      if (leaving) {
-        return;
-      }
-      leaving = true;
-      void queryClient.cancelQueries();
-      queryClient.clear();
-      const next = returnHere ? window.location.pathname : null;
-      window.location.replace(signInUrl(locale, { next, reason }));
-    };
-    // "Your session ended" only when there was one; a first visit (`auth.missing`) gets no notice.
-    const client = createPortalClient({
-      onUnauthorized: (code) => leave(code === 'auth.invalid' ? 'expired' : null, { returnHere: true }),
-    });
+    const leave = createLeave({ queryClient, locale, location: () => window.location });
+    const client = createPortalClient({ onUnauthorized: leaveOnUnauthorized(leave) });
     return { api: portalApi(client), queryClient, leave };
   });
 
   // A page restored from the back/forward cache still holds what it rendered: reload it, so the
   // session gate asks the API again (after a sign-out that ends on the sign-in page).
   useEffect(() => {
-    const onPageShow = (event: PageTransitionEvent) => {
-      if (event.persisted) {
-        value.queryClient.clear();
-        window.location.reload();
-      }
-    };
+    const onPageShow = reloadOnRestore({ queryClient: value.queryClient, location: window.location });
     window.addEventListener('pageshow', onPageShow);
     return () => window.removeEventListener('pageshow', onPageShow);
   }, [value]);
