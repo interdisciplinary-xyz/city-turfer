@@ -56,7 +56,18 @@ import {
  * from the tokens. Outside `[locale]/` (English only, like the brand docs), so it renders its own
  * document; noindex and not in the sitemap. Linked from the dev toolbar.
  */
-export default function BrandingPage() {
+export default async function BrandingPage() {
+  // Dev toolbar, same guard as [locale]/layout.tsx: development build + this machine only, dynamic
+  // imports inside the NODE_ENV branch so nothing reaches the static export.
+  let devToolbar: ReactNode = null;
+  if (process.env.NODE_ENV === 'development') {
+    const { shouldRenderDevToolbar } = await import('@interdisciplinary/dev-toolbar/next');
+    if (await shouldRenderDevToolbar()) {
+      const { DevToolbarWithApp } = await import('../dev-toolbar-with-app');
+      devToolbar = <DevToolbarWithApp />;
+    }
+  }
+
   return (
     <html
       lang='en'
@@ -365,6 +376,7 @@ export default function BrandingPage() {
             </p>
           </Section>
         </main>
+        {devToolbar}
       </body>
     </html>
   );
