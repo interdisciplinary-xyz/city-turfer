@@ -2,12 +2,13 @@
 # accepted), use and remove the account password. Needs the API with AUTH_FIXED_CODE and an app
 # bundle built with EXPO_PUBLIC_API_URL pointing at it (run.sh checks; docs/quality/e2e.md).
 #
-# Codes: the API allows 1 code a minute and 3 per 10 minutes per address, and counts sign-in,
-# step-up and new-address codes alike. So the flow uses a fresh pair of addresses per run (nothing to
-# clean up, no leftover buckets) and spreads the codes: address A gets the sign-in and the e-mail
-# step-up code (2); address B, the new address, gets its confirm code, the set-password step-up and
-# the remove-password step-up (3). Before every code request it waits out the minute
-# (subflows/wait-for-code-bucket.js), about 3 minutes in all.
+# Codes: sign-in and new-address codes share the address's buckets (1 a minute, 3 per 10 minutes);
+# step-up codes have their own one-a-minute bucket per user, shared with no address bucket. The flow
+# uses a fresh pair of addresses per run (nothing to clean up, no leftover buckets): A gets the
+# sign-in code, B (the new address) gets the new-address code and is then signed in with the account
+# password, so no address bucket is reached twice. Only the three step-up codes (change e-mail, set
+# password, remove password) share a bucket, so the flow waits out the minute before the second and
+# third (subflows/wait-for-code-bucket.js, from the step-up request time); about 2 minutes in all.
 appId: com.turftrack.poc
 tags: [account]
 env:
@@ -35,9 +36,8 @@ env:
 - runFlow: subflows/open-account.yaml
 - assertVisible: { id: 'account-name-row' }
 - assertVisible: { id: 'account-email-row' }
-- assertVisible: { id: 'account-password-row' }
-- copyTextFrom: { id: 'account-password-row' }
-- evalScript: ${output.passwordRowBefore = maestro.copiedText}
+# The row reads "Checking…" (and is disabled) until GET /v1/me answers: wait for the loaded text.
+- extendedWaitUntil: { visible: { id: 'account-password-row', text: '.*Not set.*' }, timeout: 15000 }
 - tapOn: { id: 'account-name-row' }
 - tapOn: { id: 'account-name-input' }
 - eraseText: 80
@@ -57,7 +57,7 @@ env:
 - runFlow: subflows/back.yaml
 - runFlow: subflows/open-account.yaml
 - tapOn: { id: 'account-email-row' }
-- runScript: subflows/wait-for-code-bucket.js
+# First step-up code of the run: no wait (A's sign-in code is in another bucket).
 - evalScript: ${output.codeAt = Date.now()}
 - tapOn: { id: 'account-email-send-code' }
 - extendedWaitUntil: { visible: { id: 'account-email-current-code' }, timeout: 15000 }
@@ -69,7 +69,7 @@ env:
 - extendedWaitUntil: { visible: { id: 'account-email-new' }, timeout: 10000 }
 - tapOn: { id: 'account-email-new' }
 - inputText: ${output.emailB}
-- evalScript: ${output.codeAt = Date.now()}
+# B's new-address code is B's first code (address buckets), so it needs no wait either.
 - pressKey: Enter
 - extendedWaitUntil: { visible: { id: 'account-email-new-code' }, timeout: 15000 }
 - assertNotVisible: { id: 'account-email-error' }
@@ -85,6 +85,7 @@ env:
 
 # --- 3. Set an account password: the breached one is refused, a good one accepted (same code) ---
 - tapOn: { id: 'account-password-row' }
+# Second step-up code of this user: wait out the step-up minute.
 - runScript: subflows/wait-for-code-bucket.js
 - evalScript: ${output.codeAt = Date.now()}
 - tapOn: { id: 'account-password-send-code' }
@@ -105,9 +106,8 @@ env:
 - takeScreenshot: 15-password-set
 - tapOn: { id: 'account-password-done' }
 - extendedWaitUntil: { visible: { id: 'account-overview' }, timeout: 10000 }
-- copyTextFrom: { id: 'account-password-row' }
-- evalScript: ${output.passwordRowSet = maestro.copiedText}
-- assertTrue: ${output.passwordRowSet != output.passwordRowBefore}
+- extendedWaitUntil:
+    { visible: { id: 'account-password-row', text: '(?!.*Not set)(?!.*Checking).*Set.*' }, timeout: 15000 }
 
 # --- 4. Sign out and back in with the account password (no code, B's budget untouched) ---
 - tapOn: { id: 'sign-out' }
@@ -116,11 +116,15 @@ env:
 - runFlow: { file: subflows/sign-in.yaml, env: { EMAIL: '${output.emailB}', PASSWORD: 'e2e-walk-the-city-2026' } }
 - extendedWaitUntil: { visible: { id: 'dashboard-greeting' }, timeout: 20000 }
 
-# --- 5. Remove the password: the row goes back to what it was before it was set ---
+# --- 5. Remove the password: the row is back to Not set ---
 - runFlow: subflows/open-account.yaml
+# Wait for the loaded row: while it reads "Checking…" it is disabled and a tap does nothing.
+- extendedWaitUntil:
+    { visible: { id: 'account-password-row', text: '(?!.*Not set)(?!.*Checking).*Set.*' }, timeout: 15000 }
 - tapOn: { id: 'account-password-row' }
 # The change/remove choice is a native alert: no testIDs, so match its button text.
 - tapOn: 'Remove password'
+# Third step-up code: wait out the minute since the set-password one.
 - runScript: subflows/wait-for-code-bucket.js
 - evalScript: ${output.codeAt = Date.now()}
 - tapOn: { id: 'account-password-send-code' }
@@ -134,7 +138,5 @@ env:
 - takeScreenshot: 15-password-removed
 - tapOn: { id: 'account-password-done' }
 - extendedWaitUntil: { visible: { id: 'account-overview' }, timeout: 10000 }
-- copyTextFrom: { id: 'account-password-row' }
-- evalScript: ${output.passwordRowAfter = maestro.copiedText}
-- assertTrue: ${output.passwordRowAfter == output.passwordRowBefore}
+- extendedWaitUntil: { visible: { id: 'account-password-row', text: '.*Not set.*' }, timeout: 15000 }
 # The flow ends signed in to this account; 08-sign-out ends the session.
