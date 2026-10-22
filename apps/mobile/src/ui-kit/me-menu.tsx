@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ACCENT, FONT_FAMILY, ON_ACCENT } from '@/constants/colors';
+import { ACCENT, DISPLAY_CASE, DISPLAY_TRACKING, FONT_FAMILY, ON_ACCENT } from '@/constants/colors';
 
 import { useApp } from './app-context';
 import { shownName } from './format';
@@ -231,8 +231,14 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 8,
   },
-  initial: { color: ON_ACCENT, fontSize: 28, fontFamily: FONT_FAMILY.display },
-  name: { fontSize: 20, fontFamily: FONT_FAMILY.display, letterSpacing: -0.5 },
+  initial: { color: ON_ACCENT, fontSize: 28, fontFamily: FONT_FAMILY.display, textTransform: DISPLAY_CASE },
+  name: {
+    fontSize: 25,
+    lineHeight: 28,
+    fontFamily: FONT_FAMILY.display,
+    textTransform: DISPLAY_CASE,
+    letterSpacing: DISPLAY_TRACKING,
+  },
   list: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 8 },
   item: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 20, paddingVertical: 16 },
   itemLabel: { flex: 1, fontSize: 17, fontWeight: '600' },

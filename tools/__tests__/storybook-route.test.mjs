@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { after, before, test } from 'node:test';
 
-import { contentTypeOf, storybookFile, withStorybook } from '../../apps/web/tools/storybook-route.mjs';
+import { contentTypeOf, storybookFile, withAppHeader, withStorybook } from '../../apps/web/tools/storybook-route.mjs';
 
 const ROOT = path.resolve('/srv/storybook-static');
 
@@ -85,4 +85,43 @@ test('says how to build Storybook when the build is missing', async () => {
   assert.match(await res.text(), /pnpm -C apps\/storybook run build/);
   await new Promise((resolve) => s.close(resolve));
   await rm(empty, { recursive: true, force: true });
+});
+
+test('puts the site header above Storybook, for every request; the toolbar only for this machine', async () => {
+  const shell = await mkdtemp(path.join(tmpdir(), 'sb-header-'));
+  await writeFile(path.join(shell, 'index.html'), '<html><head></head><body><div id="root"></div></body></html>');
+  const s = createServer(
+    withStorybook(() => undefined, shell, {
+      isLocal: (req) => req.headers['x-test-local'] === '1',
+      loadAppHeader: async () => ({ js: 'window.header=1', css: '.app-header{}' }),
+      loadToolbar: async () => ({ js: '', css: '' }),
+    })
+  );
+  await new Promise((resolve) => s.listen(0, '127.0.0.1', resolve));
+  const at = `http://127.0.0.1:${s.address().port}`;
+
+  const remote = await (await fetch(`${at}/storybook/`)).text();
+  assert.match(
+    remote,
+    /<body><div id="app-header-root"><\/div><script src="\.\/__app-header\.js"><\/script><div id="root">/
+  );
+  assert.match(remote, /__app-header\.css/);
+  assert.doesNotMatch(remote, /toolbar/);
+  const local = await (await fetch(`${at}/storybook/`, { headers: { 'x-test-local': '1' } })).text();
+  assert.match(local, /app-header-root/);
+  assert.match(local, /dev-toolbar-root/);
+
+  const js = await fetch(`${at}/storybook/__app-header.js`);
+  assert.match(js.headers.get('content-type'), /javascript/);
+  assert.equal(await js.text(), 'window.header=1');
+  assert.equal(await (await fetch(`${at}/storybook/__app-header.css`)).text(), '.app-header{}');
+
+  await new Promise((resolve) => s.close(resolve));
+  await rm(shell, { recursive: true, force: true });
+});
+
+test('Storybook UI is pinned below the header', () => {
+  const html = withAppHeader('<html><head></head><body class="sb"><div id="root"></div></body></html>');
+  assert.match(html, /#root \{ position: fixed; inset: var\(--header-h\) 0 0 0; \}/);
+  assert.match(html, /<body class="sb"><div id="app-header-root">/);
 });

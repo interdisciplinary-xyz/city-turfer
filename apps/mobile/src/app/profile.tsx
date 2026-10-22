@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { ACCENT, FONT_FAMILY, ON_ACCENT } from '@/constants/colors';
+import { ACCENT, DISPLAY_CASE, DISPLAY_TRACKING, FONT_FAMILY, ON_ACCENT } from '@/constants/colors';
 import { evaluateAchievements } from '@/contexts/achievements';
 import { useActivities } from '@/contexts/activity-log/ui/hooks';
 import { useTurfSummary } from '@/contexts/territory/ui/hooks';
@@ -74,8 +74,14 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 6,
   },
-  initial: { color: ON_ACCENT, fontSize: 34, fontFamily: FONT_FAMILY.display },
-  name: { fontSize: 24, fontFamily: FONT_FAMILY.display, letterSpacing: -0.5 },
+  initial: { color: ON_ACCENT, fontSize: 34, fontFamily: FONT_FAMILY.display, textTransform: DISPLAY_CASE },
+  name: {
+    fontSize: 30,
+    lineHeight: 34,
+    fontFamily: FONT_FAMILY.display,
+    textTransform: DISPLAY_CASE,
+    letterSpacing: DISPLAY_TRACKING,
+  },
   link: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   linkText: { fontSize: 17, fontWeight: '800' },
 });

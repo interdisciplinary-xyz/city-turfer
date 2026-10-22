@@ -2,7 +2,7 @@
   "name": "@cityturfer/brand",
   "version": "0.10.0",
   "private": true,
-  "description": "CityTurfer brand: colour and type tokens (the turf strength ramp, Archivo), name and copy, logo SVGs, fonts, social and store templates. Plain TS + assets, no React.",
+  "description": "CityTurfer brand: colour and type tokens (the turf strength ramp, Big Shoulders Display + Barlow), name and copy, logo SVGs, fonts, social and store templates. Plain TS + assets, no React.",
   "exports": {
     ".": "./src/index.ts",
     "./svg/*": "./svg/*",
