@@ -4,7 +4,7 @@
  * Values come from the screens as they were in v0.4.0, so adopting a token never changes a pixel.
  * Plain values only (`design-system` skill).
  */
-import { ACCENT, DARK, LIGHT, ON_ACCENT, ON_TIER, ON_TYPE_COLOR, RAMP, TIER_COLOR, TYPE_COLOR } from './colors';
+import { ACCENT, DARK, LIGHT, ON_TYPE_COLOR, type Palette, RAMP, TIER_COLOR, TYPE_COLOR } from './colors';
 
 /** Spacing scale in points (app) and CSS pixels (web). */
 export const SPACE = { xxs: 2, xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 } as const;
@@ -55,8 +55,14 @@ export const TIER_ORDER = ['faint', 'glowing', 'strong', 'blazing'] as const;
 export type TierName = (typeof TIER_ORDER)[number];
 
 export type ColorScheme = 'light' | 'dark';
-export type Palette = typeof LIGHT;
 export const THEMES: Record<ColorScheme, Palette> = { light: LIGHT, dark: DARK };
+
+/**
+ * The one place that says which theme the website, Swagger and Storybook use: light, with no theme
+ * switch. The app and every map panel stay dark (`DARK`) whatever this says.
+ * `docs/decisions/brand-light-theme-2026-10-22.md`.
+ */
+export const SITE_SCHEME: ColorScheme = 'light';
 
 /** A CSS custom property name and its value. */
 export type CssVariables = Record<`--${string}`, string>;
@@ -72,7 +78,9 @@ function scale(prefix: string, values: Record<string, number>, unit: string): Cs
 /**
  * Every token as CSS custom properties for one colour scheme. The website sets these on `<html>`,
  * so its CSS never hard-codes a brand hex. Brand colours keep their brand names (`--glow`,
- * `--strong`, `--walk`, `--ride`…); theme colours are semantic (`--bg`, `--card`, `--text`…).
+ * `--strong`, `--walk`, `--ride`…) and are the same in both schemes; theme colours are semantic
+ * (`--bg`, `--card`, `--text`…, `--accent-text`, `--walk-text`, `--ride-graphic`…). On a light
+ * surface draw brand colours through the `-text` / `-graphic` variants, never the raw fill.
  */
 export function cssVariables(scheme: ColorScheme): CssVariables {
   const theme = THEMES[scheme];
@@ -83,11 +91,20 @@ export function cssVariables(scheme: ColorScheme): CssVariables {
     '--muted': theme.muted,
     '--border': theme.border,
     '--danger': theme.danger,
+    '--accent-text': theme.accentText,
+    '--border-control': theme.borderControl,
+    '--strong-text': theme.strongText,
+    '--walk-text': theme.walkText,
+    '--run-text': theme.runText,
+    '--ride-text': theme.cycleText,
+    '--walk-graphic': theme.walkGraphic,
+    '--run-graphic': theme.runGraphic,
+    '--ride-graphic': theme.cycleGraphic,
     '--accent': ACCENT,
-    '--on-accent': ON_ACCENT,
+    '--on-accent': theme.onAccent,
     '--faint': TIER_COLOR.faint,
     '--glow': TIER_COLOR.glowing,
-    '--on-glow': ON_TIER.glowing,
+    '--on-glow': theme.onAccent,
     '--strong': TIER_COLOR.strong,
     '--blazing': TIER_COLOR.blazing,
     '--walk': TYPE_COLOR.walk,

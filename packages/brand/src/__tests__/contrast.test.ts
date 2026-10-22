@@ -23,8 +23,28 @@ const PAIRS: Pair[] = [
       { name: `${scheme} danger on ${surface}`, fg: theme.danger, bg: theme[surface], min: MIN_CONTRAST.text },
     ]);
   }),
+  // Light-theme variants of the brand colours (the website, Swagger, Storybook).
+  ...(['bg', 'card'] as const).flatMap((surface) => [
+    { name: `light accent-text on ${surface}`, fg: LIGHT.accentText, bg: LIGHT[surface], min: MIN_CONTRAST.text },
+    { name: `light strong-text on ${surface}`, fg: LIGHT.strongText, bg: LIGHT[surface], min: MIN_CONTRAST.text },
+    { name: `light walk-text on ${surface}`, fg: LIGHT.walkText, bg: LIGHT[surface], min: MIN_CONTRAST.text },
+    { name: `light run-text on ${surface}`, fg: LIGHT.runText, bg: LIGHT[surface], min: MIN_CONTRAST.text },
+    { name: `light ride-text on ${surface}`, fg: LIGHT.cycleText, bg: LIGHT[surface], min: MIN_CONTRAST.text },
+    { name: `light walk-graphic on ${surface}`, fg: LIGHT.walkGraphic, bg: LIGHT[surface], min: MIN_CONTRAST.ui },
+    { name: `light run-graphic on ${surface}`, fg: LIGHT.runGraphic, bg: LIGHT[surface], min: MIN_CONTRAST.ui },
+    { name: `light ride-graphic on ${surface}`, fg: LIGHT.cycleGraphic, bg: LIGHT[surface], min: MIN_CONTRAST.ui },
+    { name: `light border-control on ${surface}`, fg: LIGHT.borderControl, bg: LIGHT[surface], min: MIN_CONTRAST.ui },
+  ]),
+  // Dark equivalents of the new keys (the app does not read them yet; they must hold if it does).
+  ...(['bg', 'card'] as const).map((surface) => ({
+    name: `dark border-control on ${surface}`,
+    fg: DARK.borderControl,
+    bg: DARK[surface],
+    min: MIN_CONTRAST.ui,
+  })),
   // Labels drawn on brand fills.
   { name: 'on-accent text on accent', fg: ON_ACCENT, bg: ACCENT, min: MIN_CONTRAST.text },
+  { name: 'light on-accent text on accent', fg: LIGHT.onAccent, bg: ACCENT, min: MIN_CONTRAST.text },
   // Destructive buttons (Hold to finish): the accent label on the theme's danger fill.
   ...(['light', 'dark'] as const).map((scheme) => ({
     name: `on-accent text on ${scheme} danger`,
@@ -70,13 +90,12 @@ const PAIRS: Pair[] = [
  * Remove a line once its fix lands: the test fails while a fixed pair is still listed here.
  */
 const KNOWN_FAILURES = new Set([
-  'on-accent text on accent', // white on glow 3.5:1: buttons need night text or a deeper accent
+  'on-accent text on accent', // white on glow 3.5:1 in the app (dark); the light theme uses LIGHT.onAccent (night)
   'on-tier text on glowing', // same pair as the accent
-  'on-accent text on light danger', // 3.9:1: white label on the danger button
   'on-accent text on dark danger', // 2.9:1: the dark danger is tuned for text on night, not as a fill
-  'light danger on bg', // 3.7:1: needs a darker red on light
-  'light danger on card', // 3.9:1
-  'accent text on light bg', // 3.3:1: links on light need a deeper pink
+  // Raw brand fills on light surfaces: the light theme draws them through LIGHT.accentText,
+  // LIGHT.<type>Text and LIGHT.<type>Graphic instead (checked above).
+  'accent text on light bg', // 3.3:1
   'accent text on light card', // 3.5:1
   'walk graphic on light bg', // activity colours are tuned for dark maps (1.8–2.4:1 on light)
   'walk graphic on light card',
