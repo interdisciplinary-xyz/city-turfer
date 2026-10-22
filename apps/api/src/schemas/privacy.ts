@@ -60,13 +60,3 @@ export const DataExportJob = z
     expiresAt: IsoDateTime.nullable().openapi({ description: 'The link stops working 24 h after it is ready.' }),
   })
   .openapi('DataExportJob');
-
-export const ErasureJob = z
-  .object({
-    status: z.literal('scheduled'),
-    requestedAt: IsoDateTime,
-  })
-  .openapi('ErasureJob', {
-    description:
-      'Sessions are revoked at once; rows and stored files follow. Database backups keep data for the provider’s restore window.',
-  });

@@ -342,27 +342,6 @@
           "createdAt"
         ]
       },
-      "ErasureJob": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "scheduled"
-            ]
-          },
-          "requestedAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-10-19T07:12:00Z"
-          }
-        },
-        "required": [
-          "status",
-          "requestedAt"
-        ],
-        "description": "Sessions are revoked at once; rows and stored files follow. Database backups keep data for the provider’s restore window."
-      },
       "DataExportJob": {
         "type": "object",
         "properties": {
@@ -1920,24 +1899,16 @@
           "Privacy"
         ],
         "operationId": "deleteMe",
-        "summary": "[planned] Delete my account and data",
-        "description": "Erases the user and every row they own — activities, tracks, gap routes, turf, tombstones, consents, exports (use case EraseAccount; GDPR art. 17, App Store account deletion). Sessions end at once; the rest is a job. The phone keeps its own copy.",
+        "summary": "Delete my account and data",
+        "description": "Erases the account and every row it owns, in one transaction — activities, tracks, gap routes, tombstones, the Home City, consents, exports, the sign-in account with every session and pending code (use case EraseAccount; GDPR art. 17, App Store account deletion). Afterwards the session token answers `401`. The phone keeps its own copy. A device token (`API_TOKENS`) still authenticates until it is removed from the configuration: its next request starts an empty account. Database backups keep the rows for the provider’s restore window.",
         "security": [
           {
             "bearerAuth": []
           }
         ],
-        "x-cityturfer-status": "planned",
         "responses": {
-          "202": {
-            "description": "Erasure scheduled.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErasureJob"
-                }
-              }
-            }
+          "204": {
+            "description": "Erased (or nothing to erase)."
           },
           "401": {
             "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
@@ -2001,18 +1972,18 @@
               }
             }
           },
-          "501": {
-            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
+          "503": {
+            "description": "No database configured or reachable: retry later. Codes: `storage.unavailable`.",
             "content": {
               "application/problem+json": {
                 "examples": {
-                  "not-implemented": {
-                    "summary": "not-implemented",
+                  "storage.unavailable": {
+                    "summary": "storage.unavailable",
                     "value": {
-                      "type": "https://cityturfer.app/problems/not-implemented",
-                      "title": "Not implemented yet",
-                      "status": 501,
-                      "code": "not-implemented"
+                      "type": "https://cityturfer.app/problems/storage.unavailable",
+                      "title": "Storage is not available: retry later",
+                      "status": 503,
+                      "code": "storage.unavailable"
                     }
                   }
                 },

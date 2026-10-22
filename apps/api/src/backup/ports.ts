@@ -60,6 +60,11 @@ export interface UserWriter extends UserReader {
 export interface BackupStore {
   read(userId: string): UserReader;
   write<T>(userId: string, fn: (tx: UserWriter) => Promise<T>): Promise<T>;
+  /**
+   * EraseAccount: deletes every row of the user in one transaction — data, consents, tombstones,
+   * the Home City, exports, the Better Auth user with its sessions and pending codes. Idempotent.
+   */
+  eraseAccount(userId: string): Promise<void>;
   /** Creates the user on first sight; fills a missing email or display name. */
   ensureUser(user: UserRecord): Promise<void>;
   /** True when the database answers. */

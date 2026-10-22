@@ -77,6 +77,11 @@ export class BackupService {
     return (await this.store.read(userId).user()) ?? { id: userId, email: null, displayName: null };
   }
 
+  /** EraseAccount (GDPR art. 17): every row of the user, at once. Phones keep their own copies. */
+  eraseAccount(userId: string): Promise<void> {
+    return this.store.eraseAccount(userId);
+  }
+
   consents(userId: string): Promise<ConsentRecord[]> {
     return this.store.read(userId).consents();
   }

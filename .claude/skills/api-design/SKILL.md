@@ -102,8 +102,10 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
 
 - GPS tracks are personal data. The server may store full tracks (founder's decision, 2026-10-20),
   owned by the user, after an opt-in consent (`cloud-sync`; Apple Health imports need
-  `apple-health-in-cloud-sync`): exports (`POST /v1/me/exports`) and erasure (`DELETE /v1/me`) must
-  cover every table, tombstones and consents included.
+  `apple-health-in-cloud-sync`): exports (`POST /v1/me/exports`) and erasure (`DELETE /v1/me`, 204,
+  one transaction: `eraseAccount` in `apps/api/src/db/store.ts`) must cover every table, tombstones,
+  consents and the `auth_*` rows included. A new table hangs off `users` with `ON DELETE CASCADE`
+  (or is deleted in `eraseAccount`) — `apps/api/src/__tests__/erase.test.ts` counts the rows.
 - **Never** log request bodies, coordinates, track points, cell ids or Home City; log route, status,
   duration and user id only. No coordinates in error `detail`.
 - **OpenAPI examples** use public landmarks (Warsaw Old Town, 21.0122 / 52.2297) and made-up ids,

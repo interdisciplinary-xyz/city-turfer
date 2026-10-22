@@ -103,6 +103,11 @@ export const requireBearer: MiddlewareHandler<AppEnv> = async (c, next) => {
 /** Users already upserted by this function instance (one write per user per cold start). */
 const knownUsers = new WeakMap<object, Set<string>>();
 
+/** After an erasure: the next request of this user (a device token) creates the row again. */
+export function forgetUser(store: object, userId: string): void {
+  knownUsers.get(store)?.delete(userId);
+}
+
 /**
  * Route middleware for live data routes, after `requireBearer`: a verified principal (else 401),
  * a configured database (else 503 `storage.unavailable`), and the user row (created on first sight).

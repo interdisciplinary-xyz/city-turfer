@@ -15,7 +15,20 @@ import type {
   UserRecord,
 } from '../backup/model';
 import type { BackupStore, UserReader, UserWriter } from '../backup/ports';
-import { activities, activityTracks, consents, gapRoutes, homeCities, tombstones, users } from './schema';
+import {
+  activities,
+  activityTracks,
+  authUsers,
+  authVerifications,
+  consents,
+  gapRoutes,
+  homeCities,
+  tombstones,
+  users,
+} from './schema';
+
+/** A LIKE pattern matching `text` literally. */
+const likeEscaped = (text: string) => text.replace(/[\\%_]/g, (c) => `\\${c}`);
 
 /** A Drizzle Postgres database or transaction: Neon in production, PGlite in tests and dev. */
 export type Db = PgDatabase<PgQueryResultHKT>;
@@ -312,6 +325,21 @@ export class DrizzleBackupStore implements BackupStore {
 
   write<T>(userId: string, fn: (tx: UserWriter) => Promise<T>): Promise<T> {
     return this.db.transaction((tx) => fn(new UserScope(tx as unknown as Db, userId)));
+  }
+
+  async eraseAccount(userId: string): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      const [auth] = await tx.delete(authUsers).where(eq(authUsers.id, userId)).returning({ email: authUsers.email });
+      if (auth) {
+        // A pending code is keyed `<type>-otp-<email>` (Better Auth emailOTP).
+        await tx
+          .delete(authVerifications)
+          .where(like(authVerifications.identifier, `%-otp-${likeEscaped(auth.email)}`));
+      }
+      // Everything else hangs off users (ON DELETE CASCADE): consents, activities → tracks and gap
+      // routes, tombstones, the Home City, exports. Sessions went with auth_users.
+      await tx.delete(users).where(eq(users.id, userId));
+    });
   }
 
   async ensureUser(user: UserRecord): Promise<void> {

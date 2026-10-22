@@ -20,6 +20,7 @@ const LIVE = new Set([
   'signIn',
   'signOut',
   'getMe',
+  'deleteMe',
   'listConsents',
   'setConsent',
   'listChanges',

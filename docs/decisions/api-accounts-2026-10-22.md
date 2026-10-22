@@ -49,3 +49,13 @@ identifier of `auth_verifications`. Codes are stored as SHA-256. Rate-limit keys
 address or IP, deleted an hour after their window. Nothing logs an address, a code or a token; the
 local dev server prints codes to its own console only. A mail failure answers 202 and logs the event
 name only.
+
+## Account deletion
+
+`DELETE /v1/me` → `204`, synchronous: one transaction deletes `auth_users` (sessions and accounts
+cascade), the pending codes for the address, and `users`, from which consents, activities (tracks,
+gap routes), tombstones, the Home City and exports cascade. Afterwards the session token answers
+401; signing in with the same address starts a new, empty account. A device token still
+authenticates until it is removed from `API_TOKENS` (its next request starts an empty account).
+Rate-limit rows are HMAC-keyed and expire within about 70 minutes. Database backups keep the rows
+for Neon's restore window (to be stated with the plan).
