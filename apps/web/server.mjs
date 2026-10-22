@@ -8,8 +8,7 @@
 //
 // It also serves the design system's Storybook build at /storybook (tools/storybook-route.mjs), and
 // the API's Swagger docs at /swagger plus a proxy from /api/* to the API dev server
-// (tools/swagger-route.mjs), styled with the @cityturfer/brand tokens (loaded through jiti, since
-// the brand package is TypeScript source). Those pages, and /branding, answer only this machine, like the toolbar
+// (tools/swagger-route.mjs). Those pages, and /branding, answer only this machine, like the toolbar
 // (tools/local-only-route.mjs).
 import { readdirSync } from 'node:fs';
 import { createServer } from 'node:http';
@@ -38,9 +37,6 @@ const storybookBuild = path.join(process.cwd(), '../storybook/storybook-static')
 const locales = readdirSync(path.join(process.cwd(), 'messages'))
   .filter((file) => file.endsWith('.json'))
   .map((file) => file.slice(0, -'.json'.length));
-// Dev only: the brand tokens for the Swagger page.
-const brandEntry = dev ? createRequire(import.meta.url).resolve('@cityturfer/brand') : null;
-const brandTokens = brandEntry ? (await import('jiti')).createJiti(import.meta.url)(brandEntry) : null;
 const handler = devNode
   ? withLocalOnly(
       withSwagger(withStorybook(siteHandler, storybookBuild), {
@@ -48,11 +44,6 @@ const handler = devNode
         distRoot: path.dirname(createRequire(import.meta.url).resolve('swagger-ui-dist/package.json')),
         specFile: path.join(process.cwd(), '../api/openapi.json'),
         apiUrl: process.env.API_URL,
-        brand: {
-          root: path.resolve(path.dirname(brandEntry), '..'),
-          variables: brandTokens.cssVariables('dark'),
-          fontFamily: brandTokens.FONT_FAMILY,
-        },
       }),
       { isLocal: devNode.isLocalClient, locales }
     )
