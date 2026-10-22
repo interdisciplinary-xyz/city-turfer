@@ -12,7 +12,7 @@ import {
   LIVE_API,
   liveServer,
 } from '@/test-support/chain/chain-server';
-import { addActivity, notYet, phoneSnapshot } from '@/test-support/chain/scenario';
+import { addActivity, notYet, phoneSnapshot, turnBackupOn } from '@/test-support/chain/scenario';
 import { loadFixes } from '@/test-support/fixtures';
 
 jest.setTimeout(180_000);
@@ -21,10 +21,7 @@ const WALK = 'walk-2k.gpx';
 const RUN = 'run-5k-outliers-pause.gpx';
 const RIDE = 'cycle-20k.gpx';
 
-async function backupOn(p: ChainPhone) {
-  expect(await p.c.cloudBackup.enable.execute()).toEqual({ kind: 'ok' });
-  return p.c.cloudBackup.run.execute({ now: true });
-}
+const backupOn = (p: ChainPhone) => turnBackupOn(p.c);
 
 async function backUp(p: ChainPhone) {
   const r = await p.c.cloudBackup.run.execute({ now: true });
@@ -70,9 +67,8 @@ describe.each(CHAIN_SERVERS)('sync chain, phone → %s', (name, make) => {
     await addActivity(p.c, 'rec-run', 'run', RUN);
     await addActivity(p.c, 'rec-ride', 'cycle', RIDE);
 
-    const run = await backupOn(p);
-    expect(run).toMatchObject({ kind: 'done', report: { uploaded: 3, failed: 0, refused: 0, error: null } });
-    expect(await p.c.cloudBackup.status.execute()).toMatchObject({ backedUp: 3, total: 3 });
+    await backupOn(p);
+    expect(await p.c.cloudBackup.status.execute()).toMatchObject({ backedUp: 3, total: 3, lastError: null });
     await expectServerMatchesPhone(p, ['rec-walk', 'rec-run', 'rec-ride']);
     expect(await p.server.consents()).toMatchObject({ 'cloud-sync': true });
     await expectTurfMatches(name, 'S1 turf cells', p);
@@ -121,7 +117,8 @@ describe.each(CHAIN_SERVERS)('sync chain, phone → %s', (name, make) => {
     const p = await server.phone(account('s3'), 'phone');
     await addActivity(p.c, 'rec-walk', 'walk', WALK);
     await addActivity(p.c, 'rec-run', 'run', RUN);
-    expect(await backupOn(p)).toMatchObject({ kind: 'done', report: { uploaded: 2, failed: 0 } });
+    await backupOn(p);
+    expect(await p.c.cloudBackup.status.execute()).toMatchObject({ backedUp: 2, total: 2, lastError: null });
     expect(await p.server.isGone('rec-run')).toBe(false);
 
     await p.c.activityLog.rename.execute('rec-walk', 'Lunch loop');

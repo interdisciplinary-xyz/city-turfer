@@ -5,7 +5,7 @@
  * only; against an API without browser sessions every scenario reports pending.
  */
 import { type ChainPhone, type ChainServer, isPending, LIVE_API, liveServer } from '@/test-support/chain/chain-server';
-import { addActivity, notYet, phoneSnapshot } from '@/test-support/chain/scenario';
+import { addActivity, notYet, phoneSnapshot, turnBackupOn } from '@/test-support/chain/scenario';
 import { type WebPortal, webSignIn } from '@/test-support/chain/web-portal';
 
 jest.setTimeout(300_000);
@@ -22,12 +22,8 @@ async function phoneAndWeb(
 ): Promise<{ p: ChainPhone; web: WebPortal } | null> {
   const p = await server.phone(account, 'phone');
   await addActivity(p.c, 'rec-walk', 'walk', WALK);
-  expect(await p.c.cloudBackup.enable.execute()).toEqual({ kind: 'ok' });
-  // Turning backup on records the consent; the next run uploads (the app starts one at once).
-  expect(await p.c.cloudBackup.run.execute({ now: true })).toMatchObject({
-    kind: 'done',
-    report: { uploaded: 1, failed: 0 },
-  });
+  await turnBackupOn(p.c);
+  expect(await p.c.cloudBackup.status.execute()).toMatchObject({ backedUp: 1, total: 1, lastError: null });
   // A second code for the same address: waits out the one-a-minute limit, as a user would.
   const web = await webSignIn(LIVE_API!, p.address!);
   if (isPending(web)) {
@@ -73,12 +69,8 @@ describeLive('sync chain, phone ↔ web portal', () => {
     expect(await web.backupPanel()).toEqual({ backup: 'on', health: false });
     expect(await p.c.cloudBackup.disable.execute()).toEqual({ kind: 'ok' });
     expect(await web.backupPanel()).toMatchObject({ backup: 'withdrawn' });
-    expect(await p.c.cloudBackup.enable.execute()).toEqual({ kind: 'ok' });
-    // Turning backup on records the consent; the next run uploads (the app starts one at once).
-    expect(await p.c.cloudBackup.run.execute({ now: true })).toMatchObject({
-      kind: 'done',
-      report: { uploaded: 1, failed: 0 },
-    });
+    await turnBackupOn(p.c);
+    expect(await p.c.cloudBackup.status.execute()).toMatchObject({ backedUp: 1, total: 1, lastError: null });
     expect(await web.backupPanel()).toMatchObject({ backup: 'on' });
     expect(await p.server.activities()).toHaveLength(1);
 

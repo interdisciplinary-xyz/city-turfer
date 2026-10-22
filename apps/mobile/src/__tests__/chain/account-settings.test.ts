@@ -5,7 +5,7 @@
  * reports pending.
  */
 import { chainAddress, type ChainServer, LIVE_API, LIVE_CODE, liveServer } from '@/test-support/chain/chain-server';
-import { addActivity, notYet } from '@/test-support/chain/scenario';
+import { addActivity, notYet, turnBackupOn } from '@/test-support/chain/scenario';
 
 jest.setTimeout(300_000);
 
@@ -43,12 +43,8 @@ describeLive('sync chain, account settings from the phone', () => {
       return;
     }
     await addActivity(a.c, 'rec-walk', 'walk', WALK);
-    expect(await a.c.cloudBackup.enable.execute()).toEqual({ kind: 'ok' });
-    // Turning backup on records the consent; the next run uploads (the app starts one at once).
-    expect(await a.c.cloudBackup.run.execute({ now: true })).toMatchObject({
-      kind: 'done',
-      report: { uploaded: 1, failed: 0 },
-    });
+    await turnBackupOn(a.c);
+    expect(await a.c.cloudBackup.status.execute()).toMatchObject({ backedUp: 1, total: 1, lastError: null });
     const b = await server.phone('a2', 'phone-b');
     expect(await b.server.signedIn()).toBe(true);
 
@@ -78,12 +74,8 @@ describeLive('sync chain, account settings from the phone', () => {
       return;
     }
     await addActivity(a.c, 'rec-walk', 'walk', WALK);
-    expect(await a.c.cloudBackup.enable.execute()).toEqual({ kind: 'ok' });
-    // Turning backup on records the consent; the next run uploads (the app starts one at once).
-    expect(await a.c.cloudBackup.run.execute({ now: true })).toMatchObject({
-      kind: 'done',
-      report: { uploaded: 1, failed: 0 },
-    });
+    await turnBackupOn(a.c);
+    expect(await a.c.cloudBackup.status.execute()).toMatchObject({ backedUp: 1, total: 1, lastError: null });
     const b = await server.phone('a3', 'phone-b');
 
     expect(await a.account!.requestStepUpCode()).toBe(202);

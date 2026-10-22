@@ -21,6 +21,27 @@ export async function addActivity(c: Container, id: string, type: ActivityType, 
   await c.dispatcher.dispatchPending();
 }
 
+/**
+ * Turns backup on and runs it until nothing is in flight. The app may already be running one in the
+ * background (the outbox starts runs), so callers check the outcome on the server and in the
+ * backup status, not in this run's report.
+ */
+export async function turnBackupOn(c: Container): Promise<void> {
+  const on = await c.cloudBackup.enable.execute();
+  if (on.kind !== 'ok') {
+    throw new Error(`backup did not turn on: ${JSON.stringify(on)}`);
+  }
+  await settleBackup(c);
+}
+
+/** One backup run now, after and before waiting for any run already going. */
+export async function settleBackup(c: Container) {
+  await c.cloudBackup.run.whenIdle();
+  const r = await c.cloudBackup.run.execute({ now: true });
+  await c.cloudBackup.run.whenIdle();
+  return r;
+}
+
 /** Everything a server-side action must never change on the phone. */
 export async function phoneSnapshot(c: Container) {
   const list = await c.activityLog.list.execute(1000);
