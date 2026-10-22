@@ -42,6 +42,7 @@ const isNumber = (v: unknown): v is number => typeof v === 'number' && Number.is
 const ok = <T>(value: T): ApiResult<T> => ({ ok: true, value });
 const fail = <T>(failure: ApiFailure): ApiResult<T> => ({ ok: false, failure });
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
+const isConsentPurpose = (v: unknown): v is ConsentPurpose => v === 'cloud-sync' || v === 'apple-health-in-cloud-sync';
 
 /** `"v3"` (or W/"v3") → 3. */
 function versionOfEtag(etag: string | null): number | null {
@@ -213,6 +214,23 @@ class FetchApiClient implements ApiClient {
   async setConsent(purpose: ConsentPurpose, granted: boolean, policyVersion: string): Promise<ApiResult<void>> {
     const a = await this.request('PUT', `/v1/me/consents/${purpose}`, { body: { granted, policyVersion } });
     return a?.status === 200 || a?.status === 204 ? ok(undefined) : fail(failureOf(a));
+  }
+
+  async consents(): Promise<ApiResult<{ purpose: ConsentPurpose; granted: boolean }[]>> {
+    const a = await this.request('GET', '/v1/me/consents');
+    if (a?.status !== 200) {
+      return fail(failureOf(a));
+    }
+    if (!isObject(a.json) || !Array.isArray(a.json.items)) {
+      return fail({ kind: 'unavailable', reason: 'server' });
+    }
+    return ok(
+      (a.json.items as unknown[]).flatMap((c) =>
+        isObject(c) && isConsentPurpose(c.purpose) && typeof c.granted === 'boolean'
+          ? [{ purpose: c.purpose, granted: c.granted }]
+          : []
+      )
+    );
   }
 
   async changes(cursor: string | null): Promise<ApiResult<ChangesPage>> {

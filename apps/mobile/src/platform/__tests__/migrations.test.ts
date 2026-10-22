@@ -154,3 +154,14 @@ describe('migration v11 (restore from the cloud backup)', () => {
     await expect(db.run("UPDATE cb_restore SET status = 'paused'")).rejects.toThrow();
   });
 });
+
+describe('migration v12 (declined restore offers)', () => {
+  it('adds an empty table of activity ids, one row per id', async () => {
+    const db = openNodeDatabase();
+    await migrate(db, 11);
+    await migrate(db, 12);
+    expect(await db.first('SELECT COUNT(*) AS n FROM cb_restore_declined')).toEqual({ n: 0 });
+    await db.run("INSERT INTO cb_restore_declined (activity_id) VALUES ('rec-1')");
+    await expect(db.run("INSERT INTO cb_restore_declined (activity_id) VALUES ('rec-1')")).rejects.toThrow();
+  });
+});

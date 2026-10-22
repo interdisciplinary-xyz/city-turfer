@@ -90,6 +90,7 @@ const NO_CLOUD_BACKUP: CloudBackupAdapters = {
     return {
       me: offline,
       setConsent: offline,
+      consents: offline,
       changes: offline,
       putActivity: offline,
       activityVersion: offline,

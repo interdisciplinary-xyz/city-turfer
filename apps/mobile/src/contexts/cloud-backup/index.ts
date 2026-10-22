@@ -1,7 +1,7 @@
 // Public API of the Cloud Backup context: one-way backup of Activities to the CityTurfer API.
 import type { CloudBackupDeps } from './application/ports';
 import { QueueBackupChanges } from './application/queue-changes';
-import { GetRestoreOffer, RestoreFromBackup } from './application/restore';
+import { DismissRestoreOffer, GetRestoreOffer, RestoreFromBackup } from './application/restore';
 import { RunBackup } from './application/run-backup';
 import {
   DisableBackup,
@@ -19,6 +19,7 @@ export function createCloudBackupApi(deps: CloudBackupDeps) {
   let run: RunBackup;
   const restore = new RestoreFromBackup(deps, () => run.whenIdle());
   run = new RunBackup(deps, () => restore.isRunning);
+  const restoreOffer = new GetRestoreOffer(deps);
   return {
     status: new GetBackupStatus(deps, () => run.isRunning),
     saveToken: new SaveDeviceToken(deps),
@@ -28,7 +29,8 @@ export function createCloudBackupApi(deps: CloudBackupDeps) {
     disable: new DisableBackup(deps),
     includeHealth: new IncludeHealthWorkouts(deps, () => run.whenIdle()),
     run,
-    restoreOffer: new GetRestoreOffer(deps),
+    restoreOffer,
+    dismissRestore: new DismissRestoreOffer(deps, restoreOffer),
     restore,
     /** Outbox handlers (local only, never the network). */
     queue: new QueueBackupChanges(deps),

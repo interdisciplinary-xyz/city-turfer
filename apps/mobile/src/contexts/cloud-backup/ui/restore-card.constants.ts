@@ -2,14 +2,25 @@ import type { RestoreOffer, RestoreProgress, RestoreResult } from '../applicatio
 
 export const RESTORE_TITLE = 'Welcome back';
 
-/** "Your backup holds 42 activities. …" */
+/** "Your backup holds 42 activities that aren't on this phone. …" */
 export function describeOffer(offer: Extract<RestoreOffer, { kind: 'available' | 'resume' }>): string {
   if (offer.kind === 'resume') {
     return `Restoring your backup stopped at ${offer.done} of ${offer.total} activities. Carry on where it left off.`;
   }
   const n = offer.count;
-  return `Your backup holds ${n} ${n === 1 ? 'activity' : 'activities'}. Bring ${n === 1 ? 'it' : 'them'} onto this phone and your turf comes back with ${n === 1 ? 'it' : 'them'}.`;
+  const them = n === 1 ? 'it' : 'them';
+  return `Your backup holds ${n} ${n === 1 ? "activity that isn't" : "activities that aren't"} on this phone. Bring ${them} over and your turf comes back with ${them}. Nothing here is replaced.`;
 }
+
+/** The always-available action on the Cloud backup card. */
+export const RESTORE_ACTION = 'Restore from backup';
+export const RESTORE_ACTION_NOTE =
+  "Brings over anything in your backup that isn't on this phone. Nothing here is replaced or doubled.";
+
+/** After a restore that left backup off (its consents couldn't be read from the server). */
+export const BACKUP_OFF_AFTER_RESTORE =
+  'Cloud backup is off on this phone. Turn it on to keep new activities safe too.';
+export const TURN_ON_BACKUP = 'Turn on backup';
 
 export function describeProgress(p: RestoreProgress | null): string {
   return p && p.total > 0 ? `Restoring ${Math.min(p.done + 1, p.total)} of ${p.total}…` : 'Restoring…';
@@ -22,8 +33,11 @@ export function describeResult(r: RestoreResult | null): string | null {
   }
   switch (r.kind) {
     case 'done':
-      return r.skipped > 0
-        ? `Restored ${r.restored}. ${r.skipped} couldn't be read and stayed on the server.`
+      if (r.skipped > 0) {
+        return `Restored ${r.restored}. ${r.skipped} couldn't be read and stayed on the server.`;
+      }
+      return r.restored === 0
+        ? 'This phone already has everything in your backup.'
         : `Restored ${r.restored} ${r.restored === 1 ? 'activity' : 'activities'}.`;
     case 'paused':
       return {

@@ -24,7 +24,13 @@ import {
   OFF_PENDING,
 } from './cloud-backup-card.constants';
 import { describeProgress } from './format';
-import { useCloudBackup } from './hooks';
+import { useCloudBackup, useRestore } from './hooks';
+import {
+  describeProgress as describeRestoreProgress,
+  describeResult as describeRestoreResult,
+  RESTORE_ACTION,
+  RESTORE_ACTION_NOTE,
+} from './restore-card.constants';
 
 /** Turning backup off erases the server copy: ask first. */
 const confirmOff = (off: () => void) =>
@@ -44,7 +50,8 @@ const showError = (e: unknown) => {
  */
 export function CloudBackupCard() {
   const p = usePalette();
-  const { status, setEnabled, setHealthIncluded, backUpNow } = useCloudBackup();
+  const { status, refresh, setEnabled, setHealthIncluded, backUpNow } = useCloudBackup();
+  const restore = useRestore({ ask: false });
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -76,6 +83,7 @@ export function CloudBackupCard() {
     }
   };
 
+  const restoreMessage = describeRestoreResult(restore.result);
   const error = notice ?? (status.enabled && status.lastError ? ERROR_TEXT[status.lastError] : null);
 
   return (
@@ -147,6 +155,31 @@ export function CloudBackupCard() {
           disabled={busy}
           onPress={() => run(() => backUpNow())}
         />
+      )}
+
+      {status.hasToken && (
+        <>
+          <Text style={{ color: p.muted, fontSize: FONT_SIZE.caption }}>{RESTORE_ACTION_NOTE}</Text>
+          {restore.running && (
+            <Text testID='backup-restore-progress' style={{ color: p.text, fontSize: FONT_SIZE.caption }}>
+              {describeRestoreProgress(restore.progress)}
+            </Text>
+          )}
+          {!restore.running && restoreMessage && (
+            <Text testID='backup-restore-message' style={{ color: p.text, fontSize: FONT_SIZE.caption }}>
+              {restoreMessage}
+            </Text>
+          )}
+          <Button
+            testID='backup-restore'
+            label={RESTORE_ACTION}
+            color={p.border}
+            textColor={p.text}
+            busy={restore.running}
+            disabled={busy || status.running}
+            onPress={() => run(() => restore.start().then(refresh))}
+          />
+        </>
       )}
     </Card>
   );

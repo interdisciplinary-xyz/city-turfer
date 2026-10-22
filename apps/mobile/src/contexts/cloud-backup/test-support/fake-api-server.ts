@@ -172,6 +172,10 @@ export class FakeApiServer {
           }
           return ok(undefined);
         }),
+      consents: () =>
+        call('consents', {}, () =>
+          ok([...this.consents.entries()].map(([purpose, c]) => ({ purpose, granted: c.granted })))
+        ),
       changes: (cursor) =>
         call('changes', {}, () => {
           const all = [

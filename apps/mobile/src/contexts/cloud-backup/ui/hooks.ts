@@ -83,14 +83,15 @@ export function useCloudBackup() {
     [c, refresh]
   );
 
-  return { status, setEnabled, setHealthIncluded, saveToken, removeToken, saveServerUrl, backUpNow };
+  return { status, refresh, setEnabled, setHealthIncluded, saveToken, removeToken, saveServerUrl, backUpNow };
 }
 
 /**
- * "Restore from your backup": the offer (asked once per container: it reads the server's manifest),
- * the running restore's progress and its result.
+ * "Restore from your backup": the offer (asked once per container: it reads the server's manifest;
+ * `ask: false` skips it, for the always-available action on the Cloud backup card), the running
+ * restore's progress, its result, "Not now" and "Turn on backup" afterwards.
  */
-export function useRestore() {
+export function useRestore({ ask = true }: { ask?: boolean } = {}) {
   const c = useContainer();
   const [offer, setOffer] = useState<RestoreOffer | null>(null);
   const [progress, setProgress] = useState<RestoreProgress | null>(null);
@@ -98,6 +99,9 @@ export function useRestore() {
   const [running, setRunning] = useState(false);
 
   useEffect(() => {
+    if (!ask) {
+      return;
+    }
     let live = true;
     c.cloudBackup.restoreOffer
       .execute()
@@ -106,7 +110,7 @@ export function useRestore() {
     return () => {
       live = false;
     };
-  }, [c]);
+  }, [c, ask]);
 
   const start = useCallback(async () => {
     setRunning(true);
@@ -118,6 +122,9 @@ export function useRestore() {
       if (r.kind === 'done') {
         setOffer({ kind: 'none' });
         void c.syncHealth(); // Apple Health import waited for the restore
+        if (r.backupOn) {
+          void c.backUp(); // compares with the server: nothing to send for what just arrived
+        }
       }
       return r;
     } catch {
@@ -129,10 +136,23 @@ export function useRestore() {
     }
   }, [c]);
 
+  /** After a restore that left backup off (the server's consents couldn't be read): turn it on. */
+  const turnOnBackup = useCallback(async (): Promise<BackupCommandResult> => {
+    const r = await c.cloudBackup.enable.execute();
+    if (r.kind === 'ok') {
+      setResult((x) => (x?.kind === 'done' ? { ...x, backupOn: true } : x));
+      void c.backUp();
+    }
+    return r;
+  }, [c]);
+
   const dismiss = useCallback(() => {
+    if (offer?.kind === 'available') {
+      void c.cloudBackup.dismissRestore.execute().catch(() => undefined); // "Not now": not offered again
+    }
     setOffer({ kind: 'none' });
     setResult(null);
-  }, []);
+  }, [c, offer]);
 
-  return { offer, progress, result, running, start, dismiss };
+  return { offer, progress, result, running, start, dismiss, turnOnBackup };
 }

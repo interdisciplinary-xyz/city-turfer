@@ -106,6 +106,28 @@ export class BackupSettings {
     };
   }
 
+  /**
+   * After a restore: the server's consents for this account (read with GET /v1/me/consents) turn
+   * backup (and the Apple Health option) on here too, so a new phone carries on backing up. Only
+   * ever turns things on; a withdrawal made on this phone that the server has not heard about yet
+   * wins over the server's older "granted". Returns whether anything changed.
+   */
+  adoptServerConsents(granted: { cloudSync: boolean; health: boolean }): boolean {
+    const before = this.state;
+    if (granted.cloudSync && !this.state.enabled && !this.state.withdrawalsPending.includes('cloud-sync')) {
+      this.enable();
+    }
+    if (
+      granted.health &&
+      this.state.enabled &&
+      !this.state.healthIncluded &&
+      !this.state.withdrawalsPending.includes('apple-health-in-cloud-sync')
+    ) {
+      this.includeHealth(true);
+    }
+    return this.state !== before;
+  }
+
   /** Stops at once; the server is told (both consents withdrawn) now or on a later run. */
   disable(): void {
     this.state = {

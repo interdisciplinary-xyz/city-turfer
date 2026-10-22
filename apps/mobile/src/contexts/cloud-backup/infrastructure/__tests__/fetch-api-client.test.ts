@@ -217,6 +217,42 @@ describe('FetchApiClient: account, rename and restore copies (contract 0.4.0)', 
     });
   });
 
+  it('reads the consents, keeping only known purposes', async () => {
+    const answers = [
+      {
+        status: 200,
+        body: {
+          items: [
+            { purpose: 'cloud-sync', granted: true, policyVersion: '2026-10', at: '2026-10-19T07:12:00Z' },
+            {
+              purpose: 'apple-health-in-cloud-sync',
+              granted: false,
+              policyVersion: '2026-10',
+              at: '2026-10-19T07:13:00Z',
+            },
+            { purpose: 'marketing', granted: true },
+            { purpose: 'cloud-sync', granted: 'yes' },
+          ],
+        },
+      },
+      { status: 401 },
+      { status: 200, body: { nope: [] } },
+    ];
+    const { api, calls } = setup(() => answers.shift()!);
+    expect(await api.consents()).toEqual({
+      ok: true,
+      value: [
+        { purpose: 'cloud-sync', granted: true },
+        { purpose: 'apple-health-in-cloud-sync', granted: false },
+      ],
+    });
+    expect(calls[0].init.method).toBe('GET');
+    expect(calls[0].url).toBe('https://api.example.org/v1/me/consents');
+    expect(headers(calls[0]).Authorization).toBe('Bearer tok-123');
+    expect(await api.consents()).toEqual({ ok: false, failure: { kind: 'auth' } });
+    expect(await api.consents()).toEqual({ ok: false, failure: { kind: 'unavailable', reason: 'server' } });
+  });
+
   it('maps rename failures: 410 gone, 404 not found, 422 rejected with its code', async () => {
     const answers = [{ status: 410 }, { status: 404 }, { status: 422, body: { code: 'activity.invalid-name' } }];
     const { api } = setup(() => answers.shift()!);

@@ -57,6 +57,8 @@ export interface ApiClient {
   /** GET /v1/me: whose token this is. */
   me(): Promise<ApiResult<{ id: string }>>;
   setConsent(purpose: ConsentPurpose, granted: boolean, policyVersion: string): Promise<ApiResult<void>>;
+  /** GET /v1/me/consents: the latest decision per purpose (purposes never decided are absent). */
+  consents(): Promise<ApiResult<{ purpose: ConsentPurpose; granted: boolean }[]>>;
   /** GET /v1/sync/changes; `cursor` null: everything (the manifest). */
   changes(cursor: string | null): Promise<ApiResult<ChangesPage>>;
   /** PUT the Activity with its track; `ifMatchVersion` replaces that server version. */
@@ -149,6 +151,9 @@ export interface BackupRepository {
   restoreItemDone(activityId: string, change: (r: Restore) => void): Promise<Restore>;
   /** Atomic: the restore's state (e.g. finished) + settings (e.g. the Home City the server has). */
   saveRestore(change: (r: Restore, s: BackupSettings) => void): Promise<Restore>;
+  /** Server Activities not to offer again ("Not now", or skipped by a restore). */
+  declinedRestoreIds(): Promise<string[]>;
+  declineRestore(activityIds: readonly string[]): Promise<void>;
 }
 
 /** Port: Activity Log's archive query (its public API, adapted in wiring). */

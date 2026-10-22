@@ -66,3 +66,24 @@ export class Restore {
     this.state = { ...this.state, status: 'done', done: this.state.total };
   }
 }
+
+/**
+ * What a restore may bring back: the manifest's Activities this phone lacks. An Activity on the
+ * phone is skipped (never overwritten), and so is one the backup knows (`known`: it has a row for
+ * it) but the phone no longer has: that one was deleted here, and a restore must not undo a delete.
+ */
+export function missingOnPhone(
+  manifest: readonly RestoreItem[],
+  onPhone: ReadonlySet<string>,
+  known: ReadonlySet<string>
+): RestoreItem[] {
+  return manifest.filter((i) => !onPhone.has(i.activityId) && !known.has(i.activityId));
+}
+
+/**
+ * Whether to offer a restore of `missing`: only while something in it is new to the Turfer, i.e.
+ * not declined ("Not now") and not skipped by an earlier restore (content this version can't hold).
+ */
+export function worthOffering(missing: readonly RestoreItem[], declined: ReadonlySet<string>): boolean {
+  return missing.some((i) => !declined.has(i.activityId));
+}

@@ -115,7 +115,10 @@ describe('Restore from the cloud backup', () => {
       kind: 'done',
       restored: 4,
       skipped: 0,
+      backupOn: true, // the server's consents turned backup on here too
     });
+    expect(a.server.calls('consents')).toHaveLength(1);
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ enabled: true, healthIncluded: false });
     await c.dispatcher.dispatchPending();
     expect(progress.at(-1)).toBe(4);
 
@@ -142,14 +145,106 @@ describe('Restore from the cloud backup', () => {
     expect(await c.cloudBackup.restoreOffer.execute()).toEqual({ kind: 'none' });
   });
 
-  it('is not offered when the profile has activities of its own, or nothing is on the server', async () => {
-    const { a } = await backedUpPhoneA();
-    const { c } = await newPhone(a);
-    await c.add('rec-new', walk(20));
+  it('one walk recorded first, three on the server: offers the three, merges them, keeps the walk', async () => {
+    const a = phone({ account: ACCOUNT });
+    const phoneA = await a.container();
+    for (const [i, id] of ['rec-a', 'rec-b', 'rec-c'].entries()) {
+      await phoneA.add(id, walk(i + 1));
+    }
+    await phoneA.dispatcher.dispatchPending();
+    expect(await phoneA.cloudBackup.enable.execute()).toEqual({ kind: 'ok' });
+    await phoneA.cloudBackup.run.execute();
+    expect(a.server.activities.size).toBe(3);
+
+    const b = phone({ account: ACCOUNT, server: a.server, profile: NEW_PHONE_PROFILE });
+    const c = await b.container();
+    await c.add('rec-mine', walk(15)); // recorded on the new phone before restoring
+    await c.activityLog.rename.execute('rec-mine', 'First walk here');
+    await c.dispatcher.dispatchPending();
+
+    expect(await c.cloudBackup.restoreOffer.execute()).toEqual({ kind: 'available', count: 3 });
+    expect(await c.cloudBackup.restore.execute()).toEqual({ kind: 'done', restored: 3, skipped: 0, backupOn: true });
+    await c.dispatcher.dispatchPending();
+    const ids = (await c.activityLog.list.execute(100)).map((x) => x.id).sort();
+    expect(ids).toEqual(['rec-a', 'rec-b', 'rec-c', 'rec-mine']);
+    expect((await c.activityLog.detail.execute('rec-mine'))!.name).toBe('First walk here');
+    expect(
+      a.server
+        .calls('activityCopy')
+        .map((r) => r.id)
+        .sort()
+    ).toEqual(['rec-a', 'rec-b', 'rec-c']);
     expect(await c.cloudBackup.restoreOffer.execute()).toEqual({ kind: 'none' });
 
+    // Backup is on now: only the new phone's own walk goes up.
+    const uploads = a.server.uploads().length;
+    await c.cloudBackup.run.execute();
+    expect(a.server.uploads().slice(uploads)).toEqual(['rec-mine']);
+    expect(a.server.calls('deleteActivity')).toEqual([]);
+
+    // Restoring again (the always-available action) changes nothing and duplicates nothing.
+    const copies = a.server.calls('activityCopy').length;
+    expect(await c.cloudBackup.restore.execute()).toEqual({ kind: 'done', restored: 0, skipped: 0, backupOn: true });
+    expect(a.server.calls('activityCopy')).toHaveLength(copies);
+    expect(await b.db.first('SELECT COUNT(*) AS n FROM log_activities')).toEqual({ n: 4 });
+  });
+
+  it('is not offered when nothing is on the server, or everything already is on the phone', async () => {
     const empty = phone({ account: ACCOUNT, profile: NEW_PHONE_PROFILE });
     expect(await (await empty.container()).cloudBackup.restoreOffer.execute()).toEqual({ kind: 'none' });
+
+    const { a, c: phoneA } = await backedUpPhoneA();
+    expect(await phoneA.cloudBackup.restoreOffer.execute()).toEqual({ kind: 'none' }); // the phone that backed up
+    expect(a.server.activities.size).toBe(4);
+  });
+
+  it('never brings back an Activity deleted on this phone, even before the server heard of it', async () => {
+    const { a } = await backedUpPhoneA();
+    const { b, c } = await newPhone(a);
+    await c.cloudBackup.restore.execute();
+    await c.dispatcher.dispatchPending();
+    a.server.failNext('deleteActivity', { kind: 'offline' }, 10); // the delete can't reach the server
+    await c.activityLog.remove.execute('rec-run');
+    await c.dispatcher.dispatchPending();
+    await c.cloudBackup.run.execute();
+    expect(a.server.activities.has('rec-run')).toBe(true);
+
+    expect(await c.cloudBackup.restoreOffer.execute()).toEqual({ kind: 'none' });
+    expect(await c.cloudBackup.restore.execute()).toMatchObject({ kind: 'done', restored: 0 });
+    expect(await c.activityLog.detail.execute('rec-run')).toBeNull();
+    expect(await b.db.first('SELECT COUNT(*) AS n FROM log_activities')).toEqual({ n: 3 });
+  });
+
+  it('"Not now" hides the offer until the server holds something new', async () => {
+    const { a, c: phoneA } = await backedUpPhoneA();
+    const { b, c } = await newPhone(a);
+    expect(await c.cloudBackup.restoreOffer.execute()).toEqual({ kind: 'available', count: 4 });
+    await c.cloudBackup.dismissRestore.execute();
+    expect(await c.cloudBackup.restoreOffer.execute()).toEqual({ kind: 'none' });
+    expect(await (await b.container()).cloudBackup.restoreOffer.execute()).toEqual({ kind: 'none' }); // relaunch
+
+    const good = (await phoneA.activityLog.archive.of('rec-walk'))!;
+    a.server.seedCopy({ ...good, id: 'rec-later', startedAt: good.startedAt + DAY, endedAt: good.endedAt + DAY }, 1);
+    expect(await c.cloudBackup.restoreOffer.execute()).toEqual({ kind: 'available', count: 5 });
+    // The action still restores everything the phone lacks, declined or not.
+    expect(await c.cloudBackup.restore.execute()).toMatchObject({ kind: 'done', restored: 5 });
+  });
+
+  it('turns backup and the Apple Health option on to match the server’s consents', async () => {
+    const { a, c: phoneA } = await backedUpPhoneA();
+    expect(await phoneA.cloudBackup.includeHealth.execute(true)).toEqual({ kind: 'ok' });
+    const { c } = await newPhone(a);
+    expect(await c.cloudBackup.restore.execute()).toMatchObject({ kind: 'done', backupOn: true });
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ enabled: true, healthIncluded: true });
+  });
+
+  it('leaves backup off when the consents can’t be read; turning it on then works', async () => {
+    const { a } = await backedUpPhoneA();
+    const { c } = await newPhone(a);
+    a.server.failNext('consents', { kind: 'offline' });
+    expect(await c.cloudBackup.restore.execute()).toMatchObject({ kind: 'done', restored: 4, backupOn: false });
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ enabled: false });
+    expect(await c.cloudBackup.enable.execute()).toEqual({ kind: 'ok' });
   });
 
   it('a restore killed half-way resumes where it stopped, without duplicates', async () => {
@@ -185,6 +280,7 @@ describe('Restore from the cloud backup', () => {
     const { b, c } = await newPhone(a);
     expect(await c.cloudBackup.restore.execute()).toMatchObject({ kind: 'done', restored: 4, skipped: 1 });
     expect(await b.db.first("SELECT COUNT(*) AS n FROM cb_activities WHERE activity_id = 'rec-bad'")).toEqual({ n: 0 });
+    expect(await c.cloudBackup.restoreOffer.execute()).toEqual({ kind: 'none' }); // skipped: not offered again
     expect(await c.cloudBackup.enable.execute()).toEqual({ kind: 'ok' });
     await c.cloudBackup.run.execute();
     expect(a.server.calls('deleteActivity')).toEqual([]);

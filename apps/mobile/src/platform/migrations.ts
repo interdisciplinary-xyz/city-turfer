@@ -271,6 +271,16 @@ const MIGRATIONS: { version: number; sql: string }[] = [
       );
     `,
   },
+  {
+    version: 12,
+    sql: `
+      -- Cloud Backup: Activities on the server the Turfer said "Not now" to restoring (or that a
+      -- restore had to skip), so the restore offer only comes back for new ones. Ids only.
+      CREATE TABLE cb_restore_declined (
+        activity_id TEXT PRIMARY KEY
+      );
+    `,
+  },
 ];
 
 /** The newest schema version this build knows. */

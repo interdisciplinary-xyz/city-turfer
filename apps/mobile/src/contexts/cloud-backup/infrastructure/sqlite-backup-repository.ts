@@ -206,6 +206,7 @@ export class SqliteBackupRepository implements BackupRepository {
       const s = await readSettings(tx);
       if (s.useAccount(key)) {
         await tx.run('DELETE FROM cb_activities');
+        await tx.run('DELETE FROM cb_restore_declined');
       }
       await writeSettings(tx, s);
       return s;
@@ -323,6 +324,22 @@ export class SqliteBackupRepository implements BackupRepository {
       await writeRestore(tx, r);
       await writeSettings(tx, s);
       return r;
+    });
+  }
+
+  async declinedRestoreIds(): Promise<string[]> {
+    const rows = await this.db.all<{ id: string }>('SELECT activity_id AS id FROM cb_restore_declined');
+    return rows.map((r) => r.id);
+  }
+
+  async declineRestore(activityIds: readonly string[]): Promise<void> {
+    if (activityIds.length === 0) {
+      return;
+    }
+    await this.db.transaction(async (tx) => {
+      for (const id of activityIds) {
+        await tx.run('INSERT OR IGNORE INTO cb_restore_declined (activity_id) VALUES (?)', [id]);
+      }
     });
   }
 

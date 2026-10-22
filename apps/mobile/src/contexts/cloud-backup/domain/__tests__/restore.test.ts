@@ -1,4 +1,4 @@
-import { Restore } from '../restore';
+import { missingOnPhone, Restore, worthOffering } from '../restore';
 
 const item = (activityId: string, startedAt: number) => ({ activityId, startedAt, version: 1 });
 
@@ -20,5 +20,35 @@ describe('Restore', () => {
     r.finish(0);
     expect(r.toState()).toMatchObject({ status: 'done', done: 2 });
     expect(() => r.itemDone()).toThrow('restore.not-running');
+  });
+});
+
+describe('what a restore brings back', () => {
+  const manifest = [item('on-phone', 1), item('deleted-here', 2), item('new-1', 3), item('new-2', 4)];
+
+  it('only what the phone lacks and did not delete', () => {
+    const missing = missingOnPhone(
+      manifest,
+      new Set(['on-phone', 'local-only']),
+      new Set(['on-phone', 'deleted-here'])
+    );
+    expect(missing.map((i) => i.activityId)).toEqual(['new-1', 'new-2']);
+  });
+
+  it('is offered while something is not declined', () => {
+    const missing = [item('new-1', 3), item('new-2', 4)];
+    expect(worthOffering(missing, new Set())).toBe(true);
+    expect(worthOffering(missing, new Set(['new-1']))).toBe(true);
+    expect(worthOffering(missing, new Set(['new-1', 'new-2']))).toBe(false);
+    expect(worthOffering([], new Set())).toBe(false);
+  });
+
+  it('can start again after a finished restore (the always-available action)', () => {
+    const r = Restore.idle();
+    r.start([item('a', 1)], null, 1);
+    r.itemDone();
+    r.finish(0);
+    expect(r.start([item('b', 2)], null, 2).map((i) => i.activityId)).toEqual(['b']);
+    expect(r.toState()).toMatchObject({ status: 'running', total: 1, done: 0 });
   });
 });
