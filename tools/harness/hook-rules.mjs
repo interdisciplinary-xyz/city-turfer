@@ -609,7 +609,7 @@ function hasFlag(flags, long, short, stopAt = '') {
   });
 }
 
-/** Value of `--long v`, `--long=v`, `-s v` in a word list (quotes already removed). */
+/** Value of `--long v`, `--long=v`, `-s v` or `-svalue` in a word list (quotes already removed). */
 function optionValue(words, long, short) {
   for (let k = 0; k < words.length; k++) {
     const w = words[k];
@@ -619,9 +619,29 @@ function optionValue(words, long, short) {
     if (w.startsWith(`${long}=`)) {
       return w.slice(long.length + 1);
     }
+    if (short && /^-[A-Za-z]$/.test(short) && w.length > 2 && w.startsWith(short)) {
+      return w.slice(2); // attached short value (getopt, pflag and curl all accept `-XPOST`)
+    }
   }
   return null;
 }
+
+/**
+ * Value of short option `letter` at the end of a cluster of boolean letters (`-sXPOST`,
+ * `-iX DELETE`), or null. `bools` lists the letters that take no value.
+ */
+function clusterValue(words, letter, bools) {
+  const re = new RegExp(`^-[${bools}]*${letter}(.*)$`);
+  for (let k = 0; k < words.length; k++) {
+    const m = words[k].match(re);
+    if (m) {
+      return m[1] || (words[k + 1] ?? '');
+    }
+  }
+  return null;
+}
+/** curl's common boolean short options, which may precede -X/-d/-o in a cluster. */
+const CURL_BOOLS = 'sSiILkvfgqN46';
 
 // ---------------------------------------------------------------------------
 // Bash: git / gh policy (docs/process/release-manager.md)
@@ -1154,8 +1174,12 @@ function writeReason(words) {
     return execReason(rest[0] ?? '', rest.slice(1));
   }
   if (name === 'curl') {
-    const method = optionValue(args, '--request', '-X');
-    const bad = args.find((a) => /^(-d|--data.*|-F|--form.*|-T|--upload-file|-o|-O|--remote-name.*|--json)$/.test(a));
+    const method = optionValue(args, '--request', '-X') ?? clusterValue(args, 'X', CURL_BOOLS);
+    const bad = args.find(
+      (a) =>
+        new RegExp(`^-[${CURL_BOOLS}]*[dFToO]`).test(a) ||
+        /^--(data.*|form.*|upload-file|remote-name.*|json|output.*)(=|$)/.test(a)
+    );
     return bad || (method && !/^(get|head)$/i.test(method)) ? '`curl` that sends data or writes a file' : null;
   }
   if (name === 'plutil') {
@@ -1221,8 +1245,8 @@ function writeReason(words) {
       return null;
     }
     if (group === 'api') {
-      const method = optionValue(args, '--method', '-X');
-      const sends = args.some((x) => /^(-f|-F|--field|--raw-field|--input)$/.test(x));
+      const method = optionValue(args, '--method', '-X') ?? clusterValue(args, 'X', 'i');
+      const sends = args.some((x) => /^-i*[fF]/.test(x) || /^--(field|raw-field|input)(=|$)/.test(x));
       return (method === null || /^get$/i.test(method)) && !sends ? null : '`gh api` with a write method or fields';
     }
     return `\`gh ${args.slice(0, 2).join(' ')}\` is not a read-only gh command`;

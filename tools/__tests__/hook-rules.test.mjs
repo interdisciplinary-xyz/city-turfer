@@ -512,6 +512,12 @@ test('the release runs only in release.yml', () => {
   assert.deepEqual(bashFindings('git log release/v0.8.0', CTX), []);
 });
 
+test('gh pr: attached short values (-Bmain) are read like -B main', () => {
+  assert.deepEqual(rules(bashFindings('gh pr edit -Bmain', CTX)), ['pr-base']);
+  assert.deepEqual(rules(bashFindings('gh pr create -Bmain -t "city-turfer - feat/territory"', CTX)), ['pr-base']);
+  assert.deepEqual(bashFindings('gh pr create -Bscope/v0.8.0 -t "city-turfer - feat/territory"', CTX), []);
+});
+
 test('gh pr: --fill, gh pr edit, and options inside the body', () => {
   assert.deepEqual(rules(bashFindings('gh pr create --fill --base scope/v0.8.0', CTX)), ['pr-title']);
   assert.deepEqual(
@@ -659,6 +665,11 @@ test('read-only agents: inspection and test commands pass', () => {
     'node apps/mobile/tools/route-stats.mjs apps/mobile/tools/fixtures/run-5k.gpx --json',
     'gh pr view 115 --json files',
     'gh api repos/o/r/pulls/115/comments',
+    'gh api -XGET repos/o/r/pulls/115',
+    'gh api -i repos/o/r/pulls/115 --jq .title',
+    'curl -sSL https://api.github.com/repos/o/r',
+    'curl -sI -XHEAD https://cityturfer.local/',
+    'curl -fsSL -H "Accept: application/json" https://x',
     'git diff > /private/tmp/claude-501/x/scratchpad/review.patch',
     'for f in a.ts b.ts; do echo "== $f"; cat -n "$f"; done',
     "grep -rnoE '`[^`]*src/[^` ]*`' .claude | sort -u",
@@ -695,6 +706,20 @@ test('read-only agents: anything that writes, mutates git or runs code is denied
     "node -e \"require('fs').writeFileSync('x', '')\"",
     'gh pr comment 115 --body hi',
     'gh api -X POST repos/o/r/issues',
+    'gh api -XDELETE repos/o/r/git/refs/heads/x',
+    'gh api -iXPATCH repos/o/r/pulls/1',
+    'gh api --method=DELETE repos/o/r/git/refs/heads/x',
+    'gh api repos/o/r/issues -fbody=x',
+    'gh api repos/o/r/issues --field=title=x',
+    'gh api graphql --input=q.json',
+    'curl -XPOST https://x',
+    'curl -sXPOST https://x',
+    'curl -sSL -X DELETE https://x',
+    'curl --request=PUT https://x',
+    'curl -sd @body.json https://x',
+    'curl -d@body.json https://x',
+    'curl --data-raw=x https://x',
+    'curl -sSLo out.json https://x',
     'python3 fix.py',
     'npx jest -u',
     'for f in *.ts; do sed -i "" s/a/b/ "$f"; done',
