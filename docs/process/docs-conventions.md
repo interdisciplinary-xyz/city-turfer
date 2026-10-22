@@ -105,9 +105,9 @@ Bounded contexts: <!-- probe:contexts -->7<!-- /probe -->
   (<!-- probe:e2e-flows -->13<!-- /probe -->)
 - `migrations`: `version:` entries in `apps/mobile/src/platform/migrations.ts`
   (<!-- probe:migrations -->11<!-- /probe -->)
-- `docs`: markdown files under `docs/` (<!-- probe:docs -->40<!-- /probe -->)
+- `docs`: markdown files under `docs/` (<!-- probe:docs -->42<!-- /probe -->)
 - `api-operations`: HTTP operations in `apps/api/openapi.json`
-  (<!-- probe:api-operations -->22<!-- /probe -->)
+  (<!-- probe:api-operations -->24<!-- /probe -->)
 
 **If a number is not probed, don't write it.** Write the derivation instead ("one per file in
 `apps/mobile/e2e/`"). Numbers in session logs are fine: they are `historical` records of what was

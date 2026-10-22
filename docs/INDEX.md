@@ -63,8 +63,8 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`operations/android-release.md`](operations/android-release.md): Build the Android APK on EAS,
   publish it to the website download link, test it on an emulator
 - ✅ [`operations/api-deploy.md`](operations/api-deploy.md): Deploy the CityTurfer API — Vercel
-  project city-turfer-api (apps/api, fra1), Neon Postgres env vars, applying migrations, minting and
-  rotating device tokens, checking health
+  project city-turfer-api (apps/api, fra1), env vars (Neon, Better Auth, Brevo), applying
+  migrations, adopting the admin data, device tokens, checking health
 - ✅ [`operations/apple-health.md`](operations/apple-health.md): Install the Apple Health build on
   the iPhone and check import and export with real data
 - ❔ [`operations/observability.md`](operations/observability.md): _no frontmatter_
@@ -127,6 +127,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   on Vercel, Frankfurt) exposing the app's existing use cases as /v1 routes, contract-first with zod
   → OpenAPI 3.1, documented with Swagger UI at cityturfer.local/swagger; the core logic now lives in
   packages/core (phase 3 done). Its route table is superseded by api-sync-2026-10-20.md
+- ✅ [`decisions/api-accounts-2026-10-22.md`](decisions/api-accounts-2026-10-22.md): Real accounts
+  for backup and restore (contract 0.4.0) — sign-in with an e-mailed one-time code through Better
+  Auth behind our own routes, our own Postgres rate limits, device tokens for one more release,
+  auth:adopt for the existing admin data, production boot guards
 - ✅ [`decisions/api-device-tokens-2026-10-20.md`](decisions/api-device-tokens-2026-10-20.md):
   Stopgap for the first live backup — secret device tokens (API_TOKENS holds only SHA-256 hashes)
   instead of Better Auth, one-way backup phone → server on Neon Postgres via Drizzle, canonical
@@ -154,5 +158,14 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`decisions/monorepo-turborepo-2026-10-18.md`](decisions/monorepo-turborepo-2026-10-18.md):
   v0.3.0 moves the repo to a pnpm + Turborepo monorepo — apps/mobile (Expo), apps/web (Next.js
   landing page), packages/brand and packages/config — in three PRs
+
+## Live plans
+
+`docs/plans/` — Plans for work not shipped yet.
+
+- 🚧 [`plans/backend-plan-2026-10-22.md`](plans/backend-plan-2026-10-22.md): Plan for the first
+  back-end release (opt-in backup, real accounts, restore to a new phone, delete account, export) —
+  founder decisions of 2026-10-22, what feat/backend-sync built, and what is left before testers can
+  use it
 
 <!-- docs-index:end -->
