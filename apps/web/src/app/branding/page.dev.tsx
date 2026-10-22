@@ -6,12 +6,12 @@ import {
   cssVariables,
   DARK,
   FONT_SIZE,
-  LABEL_TRACKING,
   LIGHT,
   MIN_CONTRAST,
   NAME,
   ON_ACCENT,
   ON_TIER,
+  ON_TYPE_COLOR,
   PRIVACY_LINE,
   PROMO,
   RADIUS,
@@ -31,20 +31,39 @@ import Image, { type StaticImageData } from 'next/image';
 import type { CSSProperties, ReactNode } from 'react';
 
 import { displayFont, numericFont } from '../fonts';
+import { BrandNav } from './brand-nav';
 import {
   ACTIVITY_LABEL,
+  ALTERNATIVES_CHECK,
+  ANDROID_CHECK,
   ASSETS,
   AUDIENCES,
   BRANDING_DESCRIPTION,
   BRANDING_TITLE,
   CONTRAST_FIXES,
+  CONTRAST_FIXES_NOTE,
   DECISION_DOC_URL,
+  type FactCheck,
   FONTS,
+  ICP_CONTEXT,
+  ICP_DOC_URL,
+  ICP_FIT,
+  ICP_INTRO,
+  ICP_NOT_FIT,
+  ICP_NOT_NOW,
+  ICP_NOTE,
+  ICP_PRIMARY,
+  ICP_TEST_SEGMENTS,
+  ICP_TESTS,
   NAME_RULES,
   PERSONALITY,
+  PILLAR_CHECK,
   PILLARS,
   POSITIONING,
+  POSITIONING_CHECK,
+  PRIVACY_LINE_CHECK,
   RENDER_COMMAND,
+  SCALE_SAMPLE,
   SECTIONS,
   TIER_MEANING,
   TYPE_RULES,
@@ -85,22 +104,18 @@ export default async function BrandingPage() {
         <header className='brand-hero'>
           <div className='brand-wrap'>
             <p className='brand-kicker'>{BRANDING_TITLE}</p>
-            <Image src={wordmark} alt={NAME} width={420} height={132} priority className='brand-hero-wordmark' />
+            <Image src={wordmark} alt={NAME} width={420} height={73} priority className='brand-hero-wordmark' />
             <p className='brand-tagline'>{TAGLINES[0]}</p>
             <p className='brand-lede'>{PROMO}</p>
-            <nav className='brand-nav' aria-label='Sections'>
-              {SECTIONS.map((s) => (
-                <a key={s.id} href={`#${s.id}`}>
-                  {s.label}
-                </a>
-              ))}
-            </nav>
           </div>
         </header>
+        <BrandNav sections={SECTIONS} />
 
         <main className='brand-wrap'>
           <Section id='positioning' title='Positioning' note='Draft for founder review'>
             <p className='brand-statement'>{POSITIONING}</p>
+            <Check check={POSITIONING_CHECK} />
+            <Check check={ALTERNATIVES_CHECK} />
             <div className='brand-table-scroll'>
               <table className='brand-table'>
                 <thead>
@@ -121,6 +136,99 @@ export default async function BrandingPage() {
                 </tbody>
               </table>
             </div>
+          </Section>
+
+          <Section id='icp' title='Ideal customer profile' note={ICP_NOTE}>
+            <p className='brand-statement'>{ICP_INTRO}</p>
+
+            <article className='brand-card brand-icp'>
+              <span className='brand-label'>Primary</span>
+              <h3 className='brand-icp-name'>{ICP_PRIMARY.name}</h3>
+              <p>{ICP_PRIMARY.summary}</p>
+              <blockquote className='brand-icp-job'>
+                <span className='brand-label'>Job to be done</span>
+                <p className='brand-quote'>“{ICP_PRIMARY.job}”</p>
+              </blockquote>
+              <dl className='brand-icp-fields'>
+                {ICP_PRIMARY.fields.map((f) => (
+                  <div key={f.label}>
+                    <dt className='brand-label'>{f.label}</dt>
+                    <dd>{f.text}</dd>
+                  </div>
+                ))}
+              </dl>
+            </article>
+
+            <div className='brand-grid brand-grid-2'>
+              <div className='brand-card'>
+                <h3 className='brand-card-title'>Fit signals</h3>
+                <ul className='brand-rules'>
+                  {ICP_FIT.map((s) => (
+                    <li key={s}>{s}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className='brand-card'>
+                <h3 className='brand-card-title'>Not a fit</h3>
+                <ul className='brand-rules brand-icp-not'>
+                  {ICP_NOT_FIT.map((s) => (
+                    <li key={s}>{s}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <p className='brand-muted'>{ICP_CONTEXT}</p>
+            <Check check={ANDROID_CHECK} />
+
+            <h3>Segments to test</h3>
+            <p className='brand-muted'>Recruit interviewees from these; don’t build for them yet.</p>
+            <div className='brand-grid brand-grid-2'>
+              {ICP_TEST_SEGMENTS.map((seg) => (
+                <div key={seg.name} className='brand-card'>
+                  <h3 className='brand-card-title'>{seg.name}</h3>
+                  <p>{seg.who}</p>
+                  <p className='brand-icp-gap'>
+                    <span className='brand-label'>Gap</span> {seg.gap}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <h3>Not for now</h3>
+            <ul className='brand-rules'>
+              {ICP_NOT_NOW.map((n) => (
+                <li key={n.label}>
+                  <strong>{n.label}.</strong> {n.text}
+                </li>
+              ))}
+            </ul>
+
+            <h3>How we’ll know</h3>
+            <div className='brand-table-scroll'>
+              <table className='brand-table'>
+                <thead>
+                  <tr>
+                    <th>Assumption</th>
+                    <th>Test</th>
+                    <th>Pass bar</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ICP_TESTS.map((t) => (
+                    <tr key={t.id}>
+                      <td>
+                        <span className='brand-num'>{t.id}</span> {t.claim}
+                      </td>
+                      <td>{t.test}</td>
+                      <td>{t.bar}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className='brand-muted'>
+              Source: <a href={ICP_DOC_URL}>ideal customer profile</a> and the discovery board.
+            </p>
           </Section>
 
           <Section id='personality' title='Personality'>
@@ -145,6 +253,7 @@ export default async function BrandingPage() {
                 </div>
               ))}
             </div>
+            <Check check={PILLAR_CHECK} />
           </Section>
 
           <Section id='voice' title='Name & voice'>
@@ -160,6 +269,7 @@ export default async function BrandingPage() {
                 <span className='brand-tagline-item'>{PRIVACY_LINE}</span>
               </li>
             </ul>
+            <Check check={PRIVACY_LINE_CHECK} />
             <ul className='brand-rules'>
               {NAME_RULES.map((rule) => (
                 <li key={rule}>{rule}</li>
@@ -205,14 +315,14 @@ export default async function BrandingPage() {
                   name={ACTIVITY_LABEL[type]}
                   token={type === 'cycle' ? 'ride' : type}
                   hex={TYPE_COLOR[type]}
-                  on={DARK.bg}
+                  on={ON_TYPE_COLOR[type]}
                 />
               ))}
             </div>
             <h3>Themes</h3>
             <div className='brand-grid brand-grid-2'>
-              <ThemeCard name='Dark (Turf Map, website, splash)' theme={DARK} />
-              <ThemeCard name='Light' theme={LIGHT} />
+              <ThemeCard name='Dark (the whole app from v0.9.0, website, splash)' theme={DARK} />
+              <ThemeCard name='Light (Storybook; no app screen from v0.9.0)' theme={LIGHT} />
             </div>
           </Section>
 
@@ -233,23 +343,20 @@ export default async function BrandingPage() {
             </div>
             <h3>Type scale</h3>
             <div className='brand-card'>
-              {Object.entries(FONT_SIZE).map(([key, size]) => (
+              {(Object.keys(FONT_SIZE) as (keyof typeof FONT_SIZE)[]).map((key) => (
                 <div key={key} className='brand-scale-row'>
                   <span className='brand-label'>
-                    {key} · {size}
+                    {key} · {FONT_SIZE[key]}
                   </span>
-                  <span
-                    className={key === 'label' ? 'brand-label' : 'brand-scale-sample'}
-                    style={{ fontSize: `min(${size}px, 11vw)` }}
-                  >
-                    {key === 'label' ? 'TURF STRENGTH' : NAME}
+                  <span className={SCALE_SAMPLE[key].className} style={{ fontSize: `min(${FONT_SIZE[key]}px, 11vw)` }}>
+                    {SCALE_SAMPLE[key].text}
                   </span>
                 </div>
               ))}
             </div>
             <ul className='brand-rules'>
               {TYPE_RULES.map((rule) => (
-                <li key={rule}>{rule.replace('0.8', String(LABEL_TRACKING))}</li>
+                <li key={rule}>{rule}</li>
               ))}
             </ul>
           </Section>
@@ -331,6 +438,7 @@ export default async function BrandingPage() {
               </table>
             </div>
             <h3>Open fixes (not applied yet)</h3>
+            <p className='brand-muted'>{CONTRAST_FIXES_NOTE}</p>
             <div className='brand-table-scroll'>
               <table className='brand-table'>
                 <thead>
@@ -392,6 +500,20 @@ function Section({ id, title, note, children }: { id: string; title: string; not
   );
 }
 
+function Check({ check }: { check: FactCheck }) {
+  return (
+    <aside className='brand-check' aria-label='Fact check'>
+      <p>
+        <span className='brand-label'>Fact check · {check.line}</span>
+      </p>
+      <p>{check.today}</p>
+      <p>
+        <strong>Proposed:</strong> {check.proposal}
+      </p>
+    </aside>
+  );
+}
+
 function LogoTile({
   src,
   label,
@@ -437,7 +559,10 @@ function Swatch({
     <div className='brand-swatch'>
       <div className='brand-swatch-chip' style={{ background: hex, color: on }}>
         <span className='brand-swatch-name'>{name}</span>
-        <span className='brand-num'>{contrastRatio(on, hex).toFixed(1)}:1</span>
+        <span className='brand-num'>
+          {contrastRatio(on, hex).toFixed(1)}:1
+          {contrastRatio(on, hex) < MIN_CONTRAST.text ? ' · fails AA' : ''}
+        </span>
       </div>
       <div className='brand-swatch-meta'>
         <code>{hex}</code>
