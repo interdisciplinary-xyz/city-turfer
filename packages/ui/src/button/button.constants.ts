@@ -5,7 +5,7 @@ export type ButtonProps = {
   onPress: () => void;
   /** Fill colour; defaults to the accent (`glow`). */
   color?: string;
-  /** Label and spinner colour; defaults to the text colour drawn on the accent. */
+  /** Label and spinner colour; defaults to the palette's `onAccent` (white on dark, night on light). */
   textColor?: string;
   disabled?: boolean;
   /** Shows a spinner instead of the label and blocks presses. */
