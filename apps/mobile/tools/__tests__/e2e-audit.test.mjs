@@ -50,6 +50,12 @@ test('source testID matching handles templates', () => {
   assert.ok(!sourceHasTestId(ids, 'nope'));
 });
 
+test('source testID matching handles a conditional testID', () => {
+  const ids = collectSourceTestIds("<Button testID={removing ? 'pw-remove' : 'pw-save'} label='x' />");
+  assert.ok(sourceHasTestId(ids, 'pw-remove'));
+  assert.ok(sourceHasTestId(ids, 'pw-save'));
+});
+
 test('clean fixture passes; dotfiles and subflows are ignored', () => {
   const root = fixture({ flows: { '01-a': FLOW('auth'), '08-sign-out': FLOW('auth') } });
   assert.deepEqual(audit(root).errors, []);

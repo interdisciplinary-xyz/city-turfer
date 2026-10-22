@@ -1,0 +1,140 @@
+# Account tab against the live API dev server: rename, change e-mail, set (breached refused, then
+# accepted), use and remove the account password. Needs the API with AUTH_FIXED_CODE and an app
+# bundle built with EXPO_PUBLIC_API_URL pointing at it (run.sh checks; docs/quality/e2e.md).
+#
+# Codes: the API allows 1 code a minute and 3 per 10 minutes per address, and counts sign-in,
+# step-up and new-address codes alike. So the flow uses a fresh pair of addresses per run (nothing to
+# clean up, no leftover buckets) and spreads the codes: address A gets the sign-in and the e-mail
+# step-up code (2); address B, the new address, gets its confirm code, the set-password step-up and
+# the remove-password step-up (3). Before every code request it waits out the minute
+# (subflows/wait-for-code-bucket.js), about 3 minutes in all.
+appId: com.turftrack.poc
+tags: [account]
+env:
+  AUTH_FIXED_CODE: '000000'
+---
+- evalScript: ${output.stamp = Date.now()}
+- evalScript: ${output.emailA = 'acct-' + output.stamp + '-a@e2e.cityturfer.test'}
+- evalScript: ${output.emailB = 'acct-' + output.stamp + '-b@e2e.cityturfer.test'}
+- evalScript: ${output.name = 'Ada E2E ' + (output.stamp % 100000)}
+- evalScript: ${output.codeAt = 0}
+- runFlow: subflows/launch.yaml
+
+# --- Sign in to a CityTurfer account by code ---
+- runFlow:
+    when: { visible: { id: 'tab-me' } }
+    commands:
+      - tapOn: { id: 'tab-me' }
+      - tapOn: { id: 'me-menu-account' }
+      - tapOn: { id: 'sign-out' }
+- extendedWaitUntil: { visible: { id: 'sign-in-email' }, timeout: 10000 }
+- runFlow:
+    { file: subflows/sign-in-with-code.yaml, env: { EMAIL: '${output.emailA}', AUTH_FIXED_CODE: '${AUTH_FIXED_CODE}' } }
+
+# --- 1. Rename; the profile header shows the new name ---
+- runFlow: subflows/open-account.yaml
+- assertVisible: { id: 'account-name-row' }
+- assertVisible: { id: 'account-email-row' }
+- assertVisible: { id: 'account-password-row' }
+- copyTextFrom: { id: 'account-password-row' }
+- evalScript: ${output.passwordRowBefore = maestro.copiedText}
+- tapOn: { id: 'account-name-row' }
+- tapOn: { id: 'account-name-input' }
+- eraseText: 80
+- inputText: ${output.name}
+# Submit with the keyboard's Done key: the Save button sits under the keyboard.
+- pressKey: Enter
+- extendedWaitUntil: { visible: { id: 'account-overview' }, timeout: 15000 }
+- assertVisible: { id: 'account-name-row', text: '.*${output.name}.*' }
+- takeScreenshot: 15-account-renamed
+- runFlow: subflows/back.yaml
+- tapOn: { id: 'tab-me' }
+- tapOn: { id: 'me-drawer-header' }
+- assertVisible: { id: 'profile-name', text: '${output.name}' }
+- takeScreenshot: 15-profile-name
+
+# --- 2. Change the e-mail to the second address (A: step-up code; B: confirm code) ---
+- runFlow: subflows/back.yaml
+- runFlow: subflows/open-account.yaml
+- tapOn: { id: 'account-email-row' }
+- runScript: subflows/wait-for-code-bucket.js
+- evalScript: ${output.codeAt = Date.now()}
+- tapOn: { id: 'account-email-send-code' }
+- extendedWaitUntil: { visible: { id: 'account-email-current-code' }, timeout: 15000 }
+- assertNotVisible: { id: 'account-email-error' }
+- tapOn: { id: 'account-email-current-code' }
+- inputText: ${AUTH_FIXED_CODE}
+- hideKeyboard
+- tapOn: { id: 'account-email-current-continue' }
+- extendedWaitUntil: { visible: { id: 'account-email-new' }, timeout: 10000 }
+- tapOn: { id: 'account-email-new' }
+- inputText: ${output.emailB}
+- evalScript: ${output.codeAt = Date.now()}
+- pressKey: Enter
+- extendedWaitUntil: { visible: { id: 'account-email-new-code' }, timeout: 15000 }
+- assertNotVisible: { id: 'account-email-error' }
+- tapOn: { id: 'account-email-new-code' }
+- inputText: ${AUTH_FIXED_CODE}
+- hideKeyboard
+- tapOn: { id: 'account-email-confirm' }
+- extendedWaitUntil: { visible: { id: 'account-email-done' }, timeout: 15000 }
+- takeScreenshot: 15-email-changed
+- tapOn: { id: 'account-email-done' }
+- extendedWaitUntil: { visible: { id: 'account-overview' }, timeout: 10000 }
+- assertVisible: { id: 'account-email-row', text: '.*${output.emailB}.*' }
+
+# --- 3. Set an account password: the breached one is refused, a good one accepted (same code) ---
+- tapOn: { id: 'account-password-row' }
+- runScript: subflows/wait-for-code-bucket.js
+- evalScript: ${output.codeAt = Date.now()}
+- tapOn: { id: 'account-password-send-code' }
+- extendedWaitUntil: { visible: { id: 'account-password-code' }, timeout: 15000 }
+- assertNotVisible: { id: 'account-password-error' }
+- tapOn: { id: 'account-password-code' }
+- inputText: ${AUTH_FIXED_CODE}
+- tapOn: { id: 'account-password-new' }
+- inputText: 'password1234'
+- pressKey: Enter
+- extendedWaitUntil: { visible: { id: 'account-password-error' }, timeout: 15000 }
+- takeScreenshot: 15-password-breached
+- tapOn: { id: 'account-password-new' }
+- eraseText: 40
+- inputText: 'e2e-walk-the-city-2026'
+- pressKey: Enter
+- extendedWaitUntil: { visible: { id: 'account-password-done' }, timeout: 15000 }
+- takeScreenshot: 15-password-set
+- tapOn: { id: 'account-password-done' }
+- extendedWaitUntil: { visible: { id: 'account-overview' }, timeout: 10000 }
+- copyTextFrom: { id: 'account-password-row' }
+- evalScript: ${output.passwordRowSet = maestro.copiedText}
+- assertTrue: ${output.passwordRowSet != output.passwordRowBefore}
+
+# --- 4. Sign out and back in with the account password (no code, B's budget untouched) ---
+- tapOn: { id: 'sign-out' }
+- extendedWaitUntil: { visible: { id: 'sign-in-email' }, timeout: 10000 }
+- tapOn: { id: 'sign-in-use-password' }
+- runFlow: { file: subflows/sign-in.yaml, env: { EMAIL: '${output.emailB}', PASSWORD: 'e2e-walk-the-city-2026' } }
+- extendedWaitUntil: { visible: { id: 'dashboard-greeting' }, timeout: 20000 }
+
+# --- 5. Remove the password: the row goes back to what it was before it was set ---
+- runFlow: subflows/open-account.yaml
+- tapOn: { id: 'account-password-row' }
+# The change/remove choice is a native alert: no testIDs, so match its button text.
+- tapOn: 'Remove password'
+- runScript: subflows/wait-for-code-bucket.js
+- evalScript: ${output.codeAt = Date.now()}
+- tapOn: { id: 'account-password-send-code' }
+- extendedWaitUntil: { visible: { id: 'account-password-code' }, timeout: 15000 }
+- assertNotVisible: { id: 'account-password-error' }
+- tapOn: { id: 'account-password-code' }
+- inputText: ${AUTH_FIXED_CODE}
+- hideKeyboard
+- tapOn: { id: 'account-password-remove' }
+- extendedWaitUntil: { visible: { id: 'account-password-done' }, timeout: 15000 }
+- takeScreenshot: 15-password-removed
+- tapOn: { id: 'account-password-done' }
+- extendedWaitUntil: { visible: { id: 'account-overview' }, timeout: 10000 }
+- copyTextFrom: { id: 'account-password-row' }
+- evalScript: ${output.passwordRowAfter = maestro.copiedText}
+- assertTrue: ${output.passwordRowAfter == output.passwordRowBefore}
+# The flow ends signed in to this account; 08-sign-out ends the session.
