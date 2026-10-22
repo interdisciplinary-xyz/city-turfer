@@ -3,7 +3,11 @@ status: proposed
 verified: 2026-10-22
 owner: founder
 scope:
-  [docs/product, apps/web/src/app/branding/page.constants.ts, apps/web/src/app/branding/page.tsx]
+  [
+    docs/product,
+    apps/web/src/app/branding/page.constants.ts,
+    apps/web/src/app/branding/page.dev.tsx,
+  ]
 summary:
   Ideal customer profile (hypothesis) — the primary Turfer to win first, two segments to test, who
   it isn't for yet, fit signals and the assumptions that would prove or kill it

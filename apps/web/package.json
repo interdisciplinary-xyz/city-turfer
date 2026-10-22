@@ -5,7 +5,7 @@
   "description": "CityTurfer landing page: a static showcase (Next.js static export, hosted on Vercel)",
   "scripts": {
     "dev": "portless run --lan --name cityturfer -- node server.mjs",
-    "build": "next build && node tools/prune-local-only.mjs",
+    "build": "next build",
     "start": "npx --yes serve@14 out",
     "typecheck": "next typegen && tsc --noEmit",
     "lint": "eslint src tools next.config.ts server.mjs"

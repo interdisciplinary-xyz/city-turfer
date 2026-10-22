@@ -18,9 +18,9 @@ test('SECTIONS ids are unique', async () => {
   assert.equal(new Set(ids).size, ids.length);
 });
 
-test('every SECTIONS id is a <Section id> in page.tsx, and the other way round', async () => {
+test('every SECTIONS id is a <Section id> in page.dev.tsx, and the other way round', async () => {
   const ids = await sectionNavIds();
-  const page = await readFile(path.join(DIR, 'page.tsx'), 'utf8');
+  const page = await readFile(path.join(DIR, 'page.dev.tsx'), 'utf8');
   const rendered = [...page.matchAll(/<Section\s+id=['"]([^'"]+)['"]/g)].map((m) => m[1]);
   assert.deepEqual([...rendered].sort(), [...ids].sort());
 });

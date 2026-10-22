@@ -1,5 +1,5 @@
 /* /branding page. Colours and sizes are CSS variables from @cityturfer/brand (set on <html> by
-   page.tsx); never a hard-coded brand hex. Archivo comes from next/font (fonts.ts). */
+   page.dev.tsx); never a hard-coded brand hex. Archivo comes from next/font (fonts.ts). */
 
 *,
 *::before,
