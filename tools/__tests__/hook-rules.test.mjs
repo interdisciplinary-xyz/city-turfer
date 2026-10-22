@@ -341,11 +341,28 @@ test('wrappers and global options do not hide a push to main', () => {
     'env GIT_TRACE=1 git push origin main',
     'eval "git push origin main"',
     '/usr/bin/git push origin main',
+    // compound commands and wrappers that run the rest of the line
+    'if true; then git push origin main; fi',
+    'if false; then :; else git push origin main; fi',
+    'while true; do git push origin main; break; done',
+    'until false; do git push origin main; done',
+    'for r in origin; do git push "$r" main; done',
+    'timeout 120 git push origin main',
+    'timeout -s KILL -k 5 120 git push origin main',
+    'nice git push origin main',
+    'nice -n 5 git push origin main',
+    'xargs git push origin main',
+    'echo origin | xargs -I{} git push {} main',
+    'echo origin | xargs -n 1 git push origin main',
+    'sudo -u me git push origin main',
   ]) {
     assert.deepEqual(rules(bashFindings(cmd, CTX)), ['push-main'], cmd);
   }
   // false positives: the words only appear as data
   assert.deepEqual(bashFindings('git commit -m "never git push origin main"', CTX), []);
+  assert.deepEqual(bashFindings('git commit -m "then git push origin main"', CTX), []);
+  assert.deepEqual(bashFindings('timeout 120 git push origin feat/territory', CTX), []);
+  assert.deepEqual(bashFindings('if git diff --quiet; then echo clean; fi', CTX), []);
   assert.deepEqual(bashFindings('echo "git push origin main" > notes.txt', CTX), []);
   assert.deepEqual(bashFindings('grep -rn "git push origin main" docs', CTX), []);
 });
@@ -527,6 +544,8 @@ test('read-only agents: inspection and test commands pass', () => {
     "grep -rnoE '`[^`]*src/[^` ]*`' .claude | sort -u",
     'npx tsc --noEmit 2>&1 | tail -5; npm run test:arch & wait',
     'timeout 300 npx vitest run',
+    'find apps -name "*.ts" | xargs -n 20 grep -l useContainer',
+    'if git diff --quiet; then echo clean; else git diff --stat; fi',
   ]) {
     assert.deepEqual(readOnlyBashFindings(line), [], line);
   }
@@ -560,6 +579,9 @@ test('read-only agents: anything that writes, mutates git or runs code is denied
     'npx jest -u',
     'for f in *.ts; do sed -i "" s/a/b/ "$f"; done',
     'echo "$(git checkout main)"',
+    'if true; then rm -rf build; fi',
+    'nice -n 5 rm x',
+    'find . -name "*.orig" | xargs -n 1 rm',
   ]) {
     assert.ok(blocked(line), line);
   }

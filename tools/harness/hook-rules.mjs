@@ -295,6 +295,24 @@ export function shellCommands(line) {
   return parseShell(line).commands;
 }
 
+/** Words that start a compound command or a group and carry the real command after them. */
+const UNWRAP_KEYWORDS = new Set(['{', '}', '!', 'do', 'then', 'else', 'elif', 'if', 'while', 'until']);
+/**
+ * Commands that run the rest of their words as a command. `values`: their options that take a
+ * separate value; `operand`: a positional before the command (`timeout 120 git …`).
+ */
+const WRAPPERS = {
+  command: { values: /^$/ },
+  exec: { values: /^-a$/ },
+  env: { values: /^-[uCS]$/ },
+  sudo: { values: /^-[ugUCDhprt]$/ },
+  nohup: { values: /^$/ },
+  time: { values: /^-[fo]$/ },
+  timeout: { values: /^-[sk]$/, operand: true },
+  nice: { values: /^-n$/ },
+  xargs: { values: /^-[nILPdsEa]$|^--(max-args|max-lines|max-procs|delimiter|arg-file|eof|replace)$/ },
+};
+
 /**
  * Commands plus the redirections between them. `redirects` holds `{ op, target }` for every `>`,
  * `>>`, `&>` or `<` with a file target (`2>&1` has none), including those inside `bash -c '…'`.
@@ -464,18 +482,23 @@ export function parseShell(line) {
   }
   endCommand();
 
-  // Unwrap: env assignments, `command`/`exec`/`env`/`sudo`/`nohup`/`time`, `{` groups, and
-  // `bash -c '…'` / `eval '…'` (their string is parsed as commands of its own).
+  // Unwrap: env assignments, shell keywords (`then git push`), wrappers that run the rest as a
+  // command (`command`/`exec`/`env`/`sudo`/`nohup`/`time`/`timeout`/`nice`/`xargs`), `{` groups,
+  // and `bash -c '…'` / `eval '…'` (their string is parsed as commands of its own).
   const out = [];
   for (let w of commands) {
     for (;;) {
-      while (w.length && (/^[A-Za-z_]\w*=/.test(w[0]) || ['{', '}', '!'].includes(w[0]))) {
+      while (w.length && (/^[A-Za-z_]\w*=/.test(w[0]) || UNWRAP_KEYWORDS.has(w[0]))) {
         w = w.slice(1);
       }
-      if (w.length && ['command', 'exec', 'env', 'sudo', 'nohup', 'time'].includes(w[0])) {
+      const wrapper = WRAPPERS[w[0]?.replace(/^.*\//, '')];
+      if (w.length && wrapper) {
         w = w.slice(1);
-        while (w.length && w[0].startsWith('-')) {
-          w = w.slice(1); // wrapper options (`env -i`, `time -p`)
+        while (w.length && w[0].startsWith('-') && w[0] !== '-') {
+          w = w.slice(wrapper.values.test(w[0]) ? 2 : 1); // wrapper options (`env -i`, `nice -n 5`)
+        }
+        if (wrapper.operand && w.length) {
+          w = w.slice(1); // `timeout 120 …`: the duration
         }
         continue;
       }
@@ -903,8 +926,7 @@ const PNPM_WRITE_SCRIPT =
 const WRITE_ARG = /^(--fix|--write(?!-tree).*|--update.*|--out(put)?(=.*)?|--in-place.*)$/;
 /** Temp folders: a read-only agent may park command output there (it never reaches the repo). */
 const TEMP_PATH = /^(\/private)?\/tmp\/|^\/var\/folders\/|^\$\{?TMPDIR\}?\//;
-/** Shell keywords that prefix a command (`do cat x`) or carry none (`done`). */
-const SHELL_KEYWORDS = new Set(['do', 'then', 'else', 'elif', 'if', 'while', 'until', '!']);
+/** Shell keywords that carry no command (`done`); leading ones are unwrapped by parseShell. */
 const SHELL_ENDS = new Set(['done', 'fi', 'esac', ']]']);
 const PNPM_EXEC_READ_ONLY = new Set([
   'tsc',
@@ -988,9 +1010,6 @@ function scripts(args, scriptFlag) {
 
 /** Why one simple command is not read-only, or null when it is. */
 function writeReason(words) {
-  while (words.length && SHELL_KEYWORDS.has(words[0])) {
-    words = words.slice(1);
-  }
   if (!words.length || SHELL_ENDS.has(words[0]) || /^\w+\)$/.test(words[0])) {
     return null;
   }
@@ -998,13 +1017,6 @@ function writeReason(words) {
   const name = cmd.replace(/^.*\//, '');
   if (name === 'for' || name === 'case') {
     return null; // `for f in a b` / `case x in`: the words are data; substitutions are checked separately
-  }
-  if (name === 'timeout') {
-    let k = 0;
-    while (k < args.length && args[k].startsWith('-')) {
-      k += 1;
-    }
-    return args.length > k + 1 ? writeReason(args.slice(k + 1)) : null;
   }
   if (name === 'npx') {
     const rest = args.filter((a) => !/^(--yes|-y|--no-install|--no)$/.test(a));
@@ -1131,13 +1143,6 @@ function writeReason(words) {
   }
   if (name === 'uniq') {
     return args.filter((x) => !x.startsWith('-')).length > 1 ? '`uniq in out` writes a file' : null;
-  }
-  if (name === 'xargs') {
-    let k = 0;
-    while (k < args.length && args[k].startsWith('-')) {
-      k += /^-[nILPdsEa]$/.test(args[k]) ? 2 : 1;
-    }
-    return args.length > k ? writeReason(args.slice(k)) : null;
   }
   return READ_ONLY_COMMANDS.has(name) ? null : `\`${name}\` is not on the read-only list`;
 }
