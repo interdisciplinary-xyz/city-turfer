@@ -18,10 +18,15 @@ export interface AccountRows {
   signIn: string;
   /** "Try again" is offered (offline, or the server didn't answer). */
   retry: boolean;
+  /** "Try again" was tapped and the answer isn't back yet: it reads "Checking…" and is disabled. */
+  retrying: boolean;
 }
 
 /** What the editable rows say when the server can't be asked; null: it can (or is being asked). */
 function blockedValue(state: AccountSettingsState): string | null {
+  if ((state.status === 'offline' || state.status === 'failed') && state.retrying) {
+    return VALUE.checking;
+  }
   if (state.status === 'offline') {
     return VALUE.needsInternet;
   }
@@ -34,6 +39,8 @@ function blockedValue(state: AccountSettingsState): string | null {
 /**
  * Me › Account's rows from the signed-in user and the server's answer. An account's rows open only
  * once the server answered (online only, nothing queued); a local profile edits its name only.
+ * While a `ready` answer is being asked again, what depends on `hasPassword` (the password row and
+ * the sign-in methods) reads "Checking…" and the password row stays closed until the fresh answer.
  */
 export function accountRows(user: User, state: AccountSettingsState): AccountRows {
   const settings = state.status === 'ready' ? state.settings : null;
@@ -49,21 +56,25 @@ export function accountRows(user: User, state: AccountSettingsState): AccountRow
       password: { value: VALUE.createAccount, enabled: false },
       signIn: VALUE.localProfile,
       retry: false,
+      retrying: false,
     };
   }
-  const password = !account
-    ? VALUE.checking
-    : !account.hasPassword
-      ? VALUE.notSet
-      : account.passwordChangedAt
-        ? VALUE.setOn(formatDay(account.passwordChangedAt))
-        : VALUE.set;
+  const stale = state.status === 'ready' && state.refreshing === true;
+  const password =
+    !account || stale
+      ? VALUE.checking
+      : !account.hasPassword
+        ? VALUE.notSet
+        : account.passwordChangedAt
+          ? VALUE.setOn(formatDay(account.passwordChangedAt))
+          : VALUE.set;
   return {
     local,
     name: { value: blocked ?? name, enabled: account != null },
     email: { value: blocked ?? account?.email ?? user.email, enabled: account != null },
-    password: { value: blocked ?? password, enabled: account != null },
-    signIn: account?.hasPassword ? VALUE.codeAndPassword : VALUE.codeOnly,
+    password: { value: blocked ?? password, enabled: account != null && !stale },
+    signIn: stale ? VALUE.checking : account?.hasPassword ? VALUE.codeAndPassword : VALUE.codeOnly,
     retry: blocked != null,
+    retrying: (state.status === 'offline' || state.status === 'failed') && state.retrying === true,
   };
 }

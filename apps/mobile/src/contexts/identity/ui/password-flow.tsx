@@ -9,15 +9,10 @@ import { Button } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
 
 import { AccountField } from './account-field';
-import {
-  CODE_COPY,
-  FIELD_ERROR_TEXT,
-  INVALID_CODE,
-  PASSWORD_COPY,
-  type PasswordFlowProps,
-} from './account-settings.constants';
+import { CODE_COPY, FIELD_ERROR_TEXT, PASSWORD_COPY, type PasswordFlowProps } from './account-settings.constants';
 import { useAccountActions, useSubmit } from './hooks';
-import type { PasswordStep } from './password-flow.constants';
+import type { PasswordOutcome, PasswordStep } from './password-flow.constants';
+import { afterPasswordSave, afterPasswordStepUp, savePassword } from './password-steps';
 import { useAnnounce } from './use-announce';
 
 /** The shared rule for a draft password: null when it can be saved. */
@@ -32,7 +27,8 @@ function ruleOf(draft: string) {
 
 /**
  * Set, change or remove the optional account password. Each starts with a fresh code to the
- * current address (step-up); the code and the new password go to the server together.
+ * current address (step-up); the code and the new password go to the server together. `action`
+ * comes from the server's `hasPassword` (the screen decides it), never from the route alone.
  */
 export function PasswordFlow({ action, onDone }: PasswordFlowProps) {
   const p = usePalette();
@@ -52,38 +48,28 @@ export function PasswordFlow({ action, onDone }: PasswordFlowProps) {
   // Too short is what the hint already says; only a too-long password is an error while typing.
   const liveError = rule === 'password.too-long' ? FIELD_ERROR_TEXT[rule] : null;
 
-  const sendCode = () =>
-    run(async () => {
-      if (waiting) {
-        return null;
-      }
-      const r = await actions.requestStepUpCode();
-      if (r.kind !== 'sent') {
-        return refused(r);
-      }
+  /** Applies a use case's answer: the next step, an error, or a refusal. */
+  const apply = (o: PasswordOutcome): string | null => {
+    if (o.kind === 'refused') {
+      return refused(o.failure);
+    }
+    if (o.kind === 'error') {
+      return o.error;
+    }
+    if (o.clear === 'code') {
       setCode('');
-      setStep('code');
+    }
+    setStep(o.step);
+    if (o.step === 'code') {
       setTimeout(() => codeRef.current?.focus(), 50);
-    });
+    }
+    return o.error ?? null;
+  };
 
-  const save = () =>
-    run(async () => {
-      const r = removing ? await actions.removePassword(code) : await actions.setPassword(draft, code);
-      switch (r.kind) {
-        case 'saved':
-        case 'removed':
-          setStep('done');
-          return null;
-        case 'invalid-code':
-          return INVALID_CODE;
-        case 'breached':
-          return PASSWORD_COPY.breached;
-        case 'field-error':
-          return FIELD_ERROR_TEXT[r.code];
-        default:
-          return refused(r);
-      }
-    });
+  const sendCode = () =>
+    run(async () => (waiting ? null : apply(afterPasswordStepUp(await actions.requestStepUpCode()))));
+
+  const save = () => run(async () => apply(afterPasswordSave(await savePassword(actions, action, draft, code))));
 
   const text = (t: string, testID?: string) => (
     <Text testID={testID} style={[s.text, { color: p.text }]}>

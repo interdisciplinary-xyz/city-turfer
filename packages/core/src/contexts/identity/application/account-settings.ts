@@ -127,7 +127,9 @@ export class GetAccountSettings {
       return r;
     }
     await cacheName(this.d, p.at, r.me.name);
-    await followEmail(this.d, p.at, r.me.email);
+    // Best effort, like ConfirmEmailChange: the server answered, so a failed keychain write must not
+    // turn the whole screen into "Couldn't load". The next refresh follows the e-mail again.
+    await followEmail(this.d, p.at, r.me.email).catch(() => undefined);
     return {
       kind: 'account',
       email: r.me.email,

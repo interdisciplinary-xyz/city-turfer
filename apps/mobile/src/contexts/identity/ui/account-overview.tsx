@@ -5,8 +5,9 @@ import { Card } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
 
 import { accountRows } from './account-rows';
-import { type AccountOverviewProps, HINT, RETRY, ROW } from './account-settings.constants';
+import { type AccountOverviewProps, HINT, RETRY, ROW, VALUE } from './account-settings.constants';
 import { SettingsRow } from './settings-row';
+import { useAnnounce } from './use-announce';
 
 /**
  * Me › Account's rows: Name, Email, Account password, Sign-in, Data. Online-only rows are disabled
@@ -15,6 +16,9 @@ import { SettingsRow } from './settings-row';
 export function AccountOverview({ user, state, dataText, onName, onEmail, onPassword, onRetry }: AccountOverviewProps) {
   const p = usePalette();
   const rows = accountRows(user, state);
+  // "Try again" gives feedback: VoiceOver hears it's checking (TalkBack reads the live region).
+  useAnnounce(rows.retrying && VALUE.checking);
+  const retryLabel = rows.retrying ? VALUE.checking : RETRY;
 
   return (
     <Card testID='account-overview'>
@@ -50,12 +54,15 @@ export function AccountOverview({ user, state, dataText, onName, onEmail, onPass
         <Pressable
           testID='account-retry'
           accessibilityRole='button'
-          accessibilityLabel={RETRY}
+          accessibilityLabel={retryLabel}
+          accessibilityState={{ disabled: rows.retrying, busy: rows.retrying }}
+          accessibilityLiveRegion='polite'
+          disabled={rows.retrying}
           onPress={onRetry}
           hitSlop={SPACE.sm}
           style={s.retry}
         >
-          <Text style={[s.retryText, { color: p.accentText }]}>{RETRY}</Text>
+          <Text style={[s.retryText, { color: rows.retrying ? p.muted : p.accentText }]}>{retryLabel}</Text>
         </Pressable>
       )}
     </Card>

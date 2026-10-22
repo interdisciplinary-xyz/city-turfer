@@ -45,8 +45,8 @@ export default function AccountScreen() {
   /** Not set: straight to "Set"; set: change it or remove it. Each flow asks for a code first. */
   const onPassword = async () => {
     const s = settings.state;
-    if (s.status !== 'ready' || s.settings.kind !== 'account') {
-      return;
+    if (s.status !== 'ready' || s.refreshing || s.settings.kind !== 'account') {
+      return; // not answered yet, or asked again: `hasPassword` may be out of date
     }
     if (!s.settings.hasPassword) {
       router.push('/account-password?action=set');

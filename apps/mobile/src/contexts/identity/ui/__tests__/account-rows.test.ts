@@ -55,6 +55,29 @@ describe('Me › Account rows', () => {
     expect(r.retry).toBe(false);
   });
 
+  it('asked again after an answer (back from a flow): the password row waits for the fresh answer', () => {
+    const r = accountRows(account, {
+      status: 'ready',
+      refreshing: true,
+      settings: { kind: 'account', email: 'ola@example.com', name: 'Ola', hasPassword: true, passwordChangedAt: null },
+    });
+    expect(r.password).toEqual({ value: VALUE.checking, enabled: false });
+    expect(r.signIn).toBe(VALUE.checking);
+    expect(r.name.enabled).toBe(true);
+    expect(r.email.enabled).toBe(true);
+  });
+
+  it('"Try again" tapped: it reads Checking… until the answer, the rows too', () => {
+    const r = accountRows(account, { status: 'offline', retrying: true });
+    expect(r.retry).toBe(true);
+    expect(r.retrying).toBe(true);
+    expect(r.password).toEqual({ value: VALUE.checking, enabled: false });
+    expect(accountRows(account, { status: 'offline' }).retrying).toBe(false);
+    expect(accountRows(account, { status: 'failed', reason: 'unavailable', retrying: true }).email.value).toBe(
+      VALUE.checking
+    );
+  });
+
   it('signed out on the server: sign in again', () => {
     expect(accountRows(account, { status: 'failed', reason: 'auth' }).email.value).toBe(VALUE.signInAgain);
     expect(accountRows(account, { status: 'failed', reason: 'unavailable' }).email.value).toBe(VALUE.couldNotLoad);

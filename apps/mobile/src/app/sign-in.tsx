@@ -15,14 +15,20 @@ import {
 import { ACCENT, DARK } from '@/constants/colors';
 import type { AccountFailure } from '@/contexts/identity';
 import { waitText } from '@/contexts/identity/ui/account-settings.constants';
+import {
+  emailEditRestarts,
+  onEmailSubmit,
+  switchSignIn,
+  wrongPasswordText,
+} from '@/contexts/identity/ui/sign-in-steps';
+import type { SignInStep } from '@/contexts/identity/ui/sign-in-steps.constants';
+import { useAnnounce } from '@/contexts/identity/ui/use-announce';
 import { useApp } from '@/ui-kit/app-context';
 import { Button } from '@/ui-kit/components';
 import { useLightStatusBar } from '@/ui-kit/use-light-status-bar';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports -- Metro asset; the app has no *.png type declarations.
 const WORDMARK = require('../../assets/brand/out/wordmark.png');
-
-type Step = 'email' | 'password' | 'code';
 
 /** Why a request to the account server failed, in plain words. */
 function failureText(f: AccountFailure | { kind: 'accounts-unavailable' }): string {
@@ -60,7 +66,7 @@ const askHistory = () =>
 export default function SignIn() {
   useLightStatusBar();
   const { signInWithPassword, startSignIn, verifyCode, chooseHistory } = useApp();
-  const [step, setStep] = useState<Step>('email');
+  const [step, setStep] = useState<SignInStep>('email');
   /** The Turfer chose "Use a password instead" (not a local profile's own password step). */
   const [chosePassword, setChosePassword] = useState(false);
   const [email, setEmail] = useState('');
@@ -68,6 +74,9 @@ export default function SignIn() {
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // VoiceOver hears the error (TalkBack reads its live region).
+  useAnnounce(error);
+  const emailRef = useRef<TextInput>(null);
   const secondRef = useRef<TextInput>(null);
   // A ref, not the state: a second keyboard submit in the same frame must see the first one.
   const inFlight = useRef(false);
@@ -111,11 +120,7 @@ export default function SignIn() {
           setError('That took a while. Sign in again.');
         }
       } else if (r.kind === 'invalid-credentials') {
-        setError(
-          chosePassword
-            ? 'Wrong email or password. No account password yet? Sign in with an email code, then set one in Me › Account.'
-            : 'Wrong email or password.'
-        );
+        setError(wrongPasswordText(chosePassword));
       } else if (r.kind === 'linked-to-account') {
         setError('This phone’s history now belongs to your CityTurfer account. Sign in with that account’s email.');
       } else if (r.kind === 'invalid-email') {
@@ -126,13 +131,15 @@ export default function SignIn() {
     });
 
   const switchToPassword = (on: boolean) => {
-    setChosePassword(on);
-    setStep(on ? 'password' : 'email');
+    const next = switchSignIn(on, email);
+    setChosePassword(next.chosePassword);
+    setStep(next.step);
     setPassword('');
     setCode('');
     setError(null);
-    if (on) {
-      setTimeout(() => secondRef.current?.focus(), 50);
+    if (next.focus) {
+      // The email first while it's empty; the password field mounts with this render.
+      setTimeout(() => (next.focus === 'email' ? emailRef : secondRef).current?.focus(), 50);
     }
   };
 
@@ -156,7 +163,7 @@ export default function SignIn() {
 
   const editEmail = (text: string) => {
     setEmail(text);
-    if (step !== 'email' && !chosePassword) {
+    if (emailEditRestarts(step, chosePassword)) {
       setStep('email'); // another email: start again
       setPassword('');
       setCode('');
@@ -177,6 +184,7 @@ export default function SignIn() {
         />
         <Text style={s.tag}>{TAGLINE}</Text>
         <TextInput
+          ref={emailRef}
           testID='sign-in-email'
           style={s.input}
           placeholder='Email'
@@ -189,7 +197,9 @@ export default function SignIn() {
           textContentType='username'
           returnKeyType='next'
           submitBehavior='submit'
-          onSubmitEditing={chosePassword ? () => secondRef.current?.focus() : submitEmail}
+          onSubmitEditing={
+            onEmailSubmit(chosePassword) === 'focus-password' ? () => secondRef.current?.focus() : submitEmail
+          }
           value={email}
           onChangeText={editEmail}
         />
@@ -233,7 +243,7 @@ export default function SignIn() {
           </>
         )}
         {error && (
-          <Text testID='sign-in-error' style={s.error}>
+          <Text testID='sign-in-error' accessibilityLiveRegion='polite' style={s.error}>
             {error}
           </Text>
         )}

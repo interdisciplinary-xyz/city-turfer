@@ -7,17 +7,26 @@ import { usePalette } from '@/ui-kit/theme';
 import type { AccountFieldProps } from './account-settings.constants';
 import { useAnnounce } from './use-announce';
 
-/** A labelled text field with its error (announced) or hint underneath; `code` for the 6-digit codes. */
+/**
+ * A labelled text field with its error (announced) or hint underneath; `code` for the 6-digit codes.
+ * Screen readers hear the label and the note once, on the field itself (its label and hint): the
+ * visible label and note are hidden from the accessibility tree, and an error is announced when it
+ * appears.
+ */
 export const AccountField = forwardRef<TextInput, AccountFieldProps>(function AccountField(
   { label, testID, error, hint, code, ...input },
   ref
 ) {
   const p = usePalette();
-  useAnnounce(error);
+  useAnnounce(error, true);
   const note = error ?? hint ?? null;
   return (
     <View style={s.wrap}>
-      <Text style={[s.label, { color: p.muted }]} importantForAccessibility='no'>
+      <Text
+        style={[s.label, { color: p.muted }]}
+        accessibilityElementsHidden
+        importantForAccessibility='no-hide-descendants'
+      >
         {label}
       </Text>
       <TextInput
@@ -44,7 +53,8 @@ export const AccountField = forwardRef<TextInput, AccountFieldProps>(function Ac
       {note && (
         <Text
           testID={`${testID}-${error ? 'error' : 'hint'}`}
-          accessibilityLiveRegion={error ? 'polite' : 'none'}
+          accessibilityElementsHidden
+          importantForAccessibility='no-hide-descendants'
           style={[s.note, { color: error ? p.danger : p.muted }]}
         >
           {note}

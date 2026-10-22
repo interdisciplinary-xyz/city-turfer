@@ -2,34 +2,41 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { identity } from '@/composition-root';
-import type { AccountFailure, NotSignedIn, User } from '@/contexts/identity';
+import type { User } from '@/contexts/identity';
 import { useApp } from '@/ui-kit/app-context';
 
-import { type AccountSettingsState, COOLDOWN_CHECK_MS, failureText } from './account-settings.constants';
+import { type AccountRefusal, type AccountSettingsState, failureText } from './account-settings.constants';
+import { latestRequest, refreshAnswered, refreshStarted } from './account-settings-state';
+import { waitUntilAfter, watchCooldown } from './cooldown';
 
 /**
  * Me › Account: the account's name, email and password state, asked from the server each time the
- * screen comes into view (a local profile answers from the phone). Offline: `offline`.
+ * screen comes into view (a local profile answers from the phone). Offline: `offline`. While it
+ * asks again the last answer is marked stale (`refreshing` / `retrying`), and only the newest
+ * request's answer is used.
  */
 export function useAccountSettings() {
   const { updateUser } = useApp();
   const [state, setState] = useState<AccountSettingsState>({ status: 'loading' });
+  const [requests] = useState(latestRequest);
 
   const refresh = useCallback(async () => {
+    const id = requests.begin();
+    setState(refreshStarted);
     const r = await identity.accountSettings.execute().catch(() => ({ kind: 'unavailable' as const }));
-    if (r.kind === 'account' || r.kind === 'local') {
-      setState({ status: 'ready', settings: r });
+    if (!requests.isLatest(id)) {
+      return; // a newer request is on its way: its answer wins
+    }
+    const next = refreshAnswered(r);
+    setState(next);
+    if (next.status === 'ready') {
       // The name (or an email changed elsewhere) reaches the header, the menu and the dashboard.
       const user = await identity.currentUser.execute().catch(() => null);
-      if (user) {
+      if (user && requests.isLatest(id)) {
         updateUser(user);
       }
-    } else if (r.kind === 'offline') {
-      setState({ status: 'offline' });
-    } else {
-      setState({ status: 'failed', reason: r.kind });
     }
-  }, [updateUser]);
+  }, [requests, updateUser]);
 
   useFocusEffect(
     useCallback(() => {
@@ -78,27 +85,15 @@ export function useSubmit() {
   const [error, setError] = useState<string | null>(null);
   /** Epoch ms until which the server asked us to wait; 0: no wait. */
   const [waitUntil, setWaitUntil] = useState(0);
-  const [check, setCheck] = useState(0);
   // A ref, not the state: a second keyboard submit in the same frame must see the first one.
   const inFlight = useRef(false);
 
-  useEffect(() => {
-    if (!waitUntil) {
-      return;
-    }
-    const left = waitUntil - Date.now();
-    if (left <= 0) {
-      setWaitUntil(0);
-      return;
-    }
-    // Checked again at least every minute: timers don't run while the app is in the background.
-    const t = setTimeout(() => setCheck((n) => n + 1), Math.min(left, COOLDOWN_CHECK_MS));
-    return () => clearTimeout(t);
-  }, [waitUntil, check]);
+  useEffect(() => (waitUntil ? watchCooldown(waitUntil, () => setWaitUntil(0)) : undefined), [waitUntil]);
 
-  const refused = useCallback((f: AccountFailure | NotSignedIn | { kind: 'unavailable' }): string => {
-    if (f.kind === 'rate-limited' && f.retryAfterS && f.retryAfterS > 0) {
-      setWaitUntil(Date.now() + f.retryAfterS * 1000);
+  const refused = useCallback((f: AccountRefusal): string => {
+    const until = waitUntilAfter(f, Date.now());
+    if (until) {
+      setWaitUntil(until);
     }
     return failureText(f);
   }, []);

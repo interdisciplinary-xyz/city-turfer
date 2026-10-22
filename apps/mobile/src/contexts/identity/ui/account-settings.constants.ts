@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { TextInputProps } from 'react-native';
 
 import {
@@ -14,10 +15,36 @@ import {
 /** What Me › Account knows about the account right now. */
 export type AccountSettingsState =
   | { status: 'loading' }
-  | { status: 'ready'; settings: AccountSettings }
-  /** No connection: the editable rows show "Needs internet"; nothing is queued. */
-  | { status: 'offline' }
-  | { status: 'failed'; reason: Exclude<AccountFailure, { kind: 'offline' }>['kind'] | NotSignedIn['kind'] };
+  /**
+   * `refreshing`: asked again (the screen came back into view). What depends on `hasPassword` may
+   * be out of date (e.g. right after removing the password), so those rows wait for the answer.
+   */
+  | { status: 'ready'; settings: AccountSettings; refreshing?: boolean }
+  /** No connection: the editable rows show "Needs internet"; nothing is queued. `retrying`: asked again. */
+  | { status: 'offline'; retrying?: boolean }
+  | {
+      status: 'failed';
+      reason: Exclude<AccountFailure, { kind: 'offline' }>['kind'] | NotSignedIn['kind'];
+      retrying?: boolean;
+    };
+
+/** The server's answer for Me › Account, or `unavailable` when asking it threw. */
+export type AccountSettingsAnswer = AccountSettings | NotSignedIn | AccountFailure | { kind: 'unavailable' };
+
+/** A refused account request, worded by `failureText` (a rate limit may also start a wait). */
+export type AccountRefusal = AccountFailure | NotSignedIn | { kind: 'unavailable' };
+
+/**
+ * What a flow does with a use case's answer: go to a step (optionally clearing a code field, with
+ * an error to show there), stay and show an error, or word a refusal.
+ */
+export type FlowOutcome<Step extends string> =
+  | { kind: 'go'; step: Step; error?: string; sentTo?: string; clear?: 'code' | 'step-up-code' }
+  | { kind: 'error'; error: string }
+  | { kind: 'refused'; failure: AccountRefusal };
+
+/** The signed-in account's settings, once the server answered (the deep-linked flows need them). */
+export type AccountReady = Extract<AccountSettings, { kind: 'account' }>;
 
 export type PasswordAction = 'set' | 'change' | 'remove';
 
@@ -56,6 +83,11 @@ export type AccountFieldProps = Omit<TextInputProps, 'style'> & {
   code?: boolean;
 };
 
+export type AccountGateProps = {
+  /** Rendered once the server answered for a signed-in account (never for a local profile). */
+  children: (account: AccountReady) => ReactNode;
+};
+
 export type NameFormProps = { onDone: () => void };
 export type EmailChangeFlowProps = { onDone: () => void };
 export type PasswordFlowProps = { action: PasswordAction; onDone: () => void };
@@ -91,6 +123,13 @@ export const HINT = {
 } as const;
 
 export const RETRY = 'Try again';
+
+/** The account flows opened without an account to change (a local profile, or a deep link). */
+export const GATE_COPY = {
+  local: 'This is a local profile on this phone, so there’s no account email or password to change.',
+  noPassword: 'There’s no account password to remove. You sign in with an email code.',
+  back: 'Back',
+} as const;
 
 export const NAME_COPY = {
   label: 'Your name',

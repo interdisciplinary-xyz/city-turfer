@@ -16,7 +16,8 @@ import {
   FIELD_ERROR_TEXT,
   INVALID_CODE,
 } from './account-settings.constants';
-import type { EmailChangeStep } from './email-change-flow.constants';
+import type { EmailChangeStep, EmailOutcome } from './email-change-flow.constants';
+import { afterEmailChangeRequest, afterEmailConfirm, afterStepUpCode } from './email-change-steps';
 import { useAccountActions, useSubmit } from './hooks';
 import { useAnnounce } from './use-announce';
 
@@ -56,19 +57,31 @@ export function EmailChangeFlow({ onDone }: EmailChangeFlowProps) {
   const focusSoon = () => setTimeout(() => fieldRef.current?.focus(), 50);
   const problem = problemOf(draft, current, tried);
 
-  const sendStepUp = () =>
-    run(async () => {
-      if (waiting) {
-        return null;
-      }
-      const r = await actions.requestStepUpCode();
-      if (r.kind !== 'sent') {
-        return refused(r);
-      }
+  /** Applies a use case's answer: the next step (and what it clears), an error, or a refusal. */
+  const apply = (o: EmailOutcome): string | null => {
+    if (o.kind === 'refused') {
+      return refused(o.failure);
+    }
+    if (o.kind === 'error') {
+      return o.error;
+    }
+    if (o.clear === 'step-up-code') {
       setStepUpCode('');
-      setStep('current-code');
+    } else if (o.clear === 'code') {
+      setCode('');
+    }
+    if (o.sentTo) {
+      setSentTo(o.sentTo);
+    }
+    setStep(o.step);
+    if (o.step !== 'done') {
       focusSoon();
-    });
+    }
+    return o.error ?? null;
+  };
+
+  const sendStepUp = () =>
+    run(async () => (waiting ? null : apply(afterStepUpCode(await actions.requestStepUpCode()))));
 
   const toNewEmail = () => {
     if (!stepUpCode.trim()) {
@@ -86,42 +99,11 @@ export function EmailChangeFlow({ onDone }: EmailChangeFlowProps) {
       if (waiting || problemOf(draft, current, true)) {
         return null;
       }
-      const r = await actions.requestEmailChange(draft, stepUpCode);
-      switch (r.kind) {
-        case 'sent':
-          setSentTo(r.newEmail);
-          setCode('');
-          setStep('new-code');
-          focusSoon();
-          return null;
-        case 'invalid-code':
-          setStepUpCode('');
-          setStep('current-code');
-          return INVALID_CODE;
-        case 'field-error':
-          return FIELD_ERROR_TEXT[r.code];
-        default:
-          return refused(r);
-      }
+      return apply(afterEmailChangeRequest(await actions.requestEmailChange(draft, stepUpCode)));
     });
 
   const confirm = () =>
-    run(async () => {
-      const r = await actions.confirmEmailChange(sentTo, code);
-      switch (r.kind) {
-        case 'changed':
-          setStep('done');
-          return null;
-        case 'invalid-code':
-          return EMAIL_COPY.newInvalid(sentTo);
-        case 'email-taken':
-          return EMAIL_COPY.taken;
-        case 'field-error':
-          return FIELD_ERROR_TEXT[r.code];
-        default:
-          return refused(r);
-      }
-    });
+    run(async () => apply(afterEmailConfirm(await actions.confirmEmailChange(sentTo, code), sentTo)));
 
   const restart = () => {
     setStep('start');

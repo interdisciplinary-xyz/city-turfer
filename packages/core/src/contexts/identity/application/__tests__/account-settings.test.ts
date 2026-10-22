@@ -32,6 +32,17 @@ describe('Me › Account: what it shows', () => {
     expect(t.credentials()?.account.email).toBe('ola@new.example');
   });
 
+  it('an email changed elsewhere but the keychain refuses the write: still shown, followed next time', async () => {
+    const t = await signedIn();
+    t.gateway.accounts.get('u1')!.email = 'ola@new.example';
+    t.breakKeychain();
+    expect(await t.api.accountSettings.execute()).toMatchObject({ kind: 'account', email: 'ola@new.example' });
+    expect(t.credentials()?.account.email).toBe('ola@example.com');
+    t.breakKeychain(false);
+    await t.api.accountSettings.execute();
+    expect(t.credentials()?.account.email).toBe('ola@new.example');
+  });
+
   it('a sign-out while the server answers: the old session is not written back', async () => {
     const t = await signedIn();
     t.gateway.accounts.get('u1')!.email = 'ola@new.example';
