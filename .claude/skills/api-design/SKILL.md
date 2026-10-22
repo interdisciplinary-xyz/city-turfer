@@ -93,6 +93,18 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   `auth.invalid`. The user row is created on first sight. The placeholder verifier (spec generation,
   planned-route tests) marks callers unverified, which live routes refuse. Decision:
   `docs/decisions/api-accounts-2026-10-22.md`.
+- **Account settings (0.5.0):** `PATCH /v1/me` (name), step-up codes, e-mail change, optional
+  password (`AccountService` in `apps/api/src/identity/account.ts`, repository
+  `apps/api/src/db/accounts.ts`, codes in `codes.ts`, `BreachedPasswords` port in
+  `breached-passwords.ts`: HIBP on Vercel, a fake in tests and the dev server). Field rules come
+  from `@cityturfer/core/identity` (their codes are problem codes). Only session callers
+  (`accountCaller`; device tokens → 403 `identity.account-required`); the step-up check is in each
+  use case, never a middleware; step-up codes and wrong account codes are rate-limited per user id,
+  never in the address's sign-in buckets (a stranger can fill those). E-mail and password changes,
+  and removing the password, revoke every other session in the same transaction, and a sign-in that
+  raced one is re-checked and dropped. Password sign-in is the second body of
+  `POST /v1/auth/sign-in` (`auth.api.signInEmail`; every failure `401 auth.invalid-credentials`).
+  Decision: `docs/decisions/account-settings-2026-10-22.md`.
 - **Consent:** activity and Home City writes need `cloud-sync` granted (Apple Health activities also
   `apple-health-in-cloud-sync`), else 403 `consent.required`; `DELETE` never needs it. Withdrawing
   erases the server copy it covered (`eraseBackup`, no new tombstones): `cloud-sync` → everything

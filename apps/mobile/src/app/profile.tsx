@@ -9,7 +9,7 @@ import { useActivities } from '@/contexts/activity-log/ui/hooks';
 import { useTurfSummary } from '@/contexts/territory/ui/hooks';
 import { useApp } from '@/ui-kit/app-context';
 import { Card, Stat } from '@/ui-kit/components';
-import { formatArea, formatDistance } from '@/ui-kit/format';
+import { formatArea, formatDistance, shownName } from '@/ui-kit/format';
 import { usePalette } from '@/ui-kit/theme';
 
 export default function ProfileScreen() {
@@ -31,7 +31,7 @@ export default function ProfileScreen() {
     [activities, summary]
   );
   const unlocked = achievements.filter((a) => a.unlocked).length;
-  const name = user?.displayName ?? 'You';
+  const name = shownName(user);
 
   return (
     <ScrollView style={{ backgroundColor: p.bg }} contentContainerStyle={{ padding: SPACE.lg, gap: 14 }}>

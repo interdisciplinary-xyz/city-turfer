@@ -33,7 +33,8 @@ export default function DashboardScreen() {
   const p = usePalette();
   const insets = useSafeAreaInsets();
   const { auth } = useApp();
-  const name = auth.status === 'signed-in' ? auth.user.displayName : '';
+  // The chosen name; without one, a friendly "Turfer" (never an id or the email).
+  const name = auth.status === 'signed-in' ? auth.user.name || 'Turfer' : '';
   const activities = useActivities();
   const summary = useTurfSummary();
   const live = useLiveSession();

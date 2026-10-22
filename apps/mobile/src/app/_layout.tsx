@@ -62,6 +62,12 @@ function Gate() {
           options={{ headerShown: true, title: 'Achievements', headerBackTitle: 'Back' }}
         />
         <Stack.Screen name='account' options={{ headerShown: true, title: 'Account', headerBackTitle: 'Back' }} />
+        <Stack.Screen name='account-name' options={{ headerShown: true, title: 'Name', headerBackTitle: 'Back' }} />
+        <Stack.Screen name='account-email' options={{ headerShown: true, title: 'Email', headerBackTitle: 'Back' }} />
+        <Stack.Screen
+          name='account-password'
+          options={{ headerShown: true, title: 'Account password', headerBackTitle: 'Back' }}
+        />
         <Stack.Screen name='info' options={{ headerShown: true, title: 'Info', headerBackTitle: 'Back' }} />
         <Stack.Screen name='city' options={{ headerShown: true, title: 'Your city', headerBackTitle: 'Back' }} />
       </Stack.Protected>

@@ -16,7 +16,8 @@ via Brevo) for the first release with real accounts: opt-in backup, restore to a
 export and account deletion. This record replaces T1 of
 `docs/decisions/api-device-tokens-2026-10-20.md` (device tokens keep working for one release) and
 narrows D7 of `docs/decisions/api-sync-2026-10-20.md` (Sign in with Apple later). Operations:
-`docs/operations/api-deploy.md`.
+`docs/operations/api-deploy.md`. A1 is narrowed by `docs/decisions/account-settings-2026-10-22.md`
+(contract 0.5.0): codes stay the default, a Turfer may add a password.
 
 ## Decisions
 

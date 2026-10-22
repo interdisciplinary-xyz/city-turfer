@@ -15,6 +15,7 @@ import type {
   UserRecord,
 } from '../backup/model';
 import type { BackupStore, UserReader, UserWriter } from '../backup/ports';
+import { emailChangePrefix } from '../identity/codes';
 import {
   activities,
   activityTracks,
@@ -375,13 +376,18 @@ export class DrizzleBackupStore implements BackupStore {
     await this.db.transaction(async (tx) => {
       const [auth] = await tx.delete(authUsers).where(eq(authUsers.id, userId)).returning({ email: authUsers.email });
       if (auth) {
-        // A pending code is keyed `<type>-otp-<email>` (Better Auth emailOTP).
+        // A pending code is keyed `<type>-otp-<email>` (Better Auth emailOTP, step-up codes).
         await tx
           .delete(authVerifications)
           .where(like(authVerifications.identifier, `%-otp-${likeEscaped(auth.email)}`));
       }
+      // Pending codes for a new address are keyed by the user id (the address only as an HMAC).
+      await tx
+        .delete(authVerifications)
+        .where(like(authVerifications.identifier, `${likeEscaped(emailChangePrefix(userId))}%`));
       // Everything else hangs off users (ON DELETE CASCADE): consents, activities → tracks and gap
-      // routes, tombstones, the Home City, exports. Sessions went with auth_users.
+      // routes, tombstones, the Home City, exports. Sessions and the password (auth_accounts) went
+      // with auth_users.
       await tx.delete(users).where(eq(users.id, userId));
     });
   }

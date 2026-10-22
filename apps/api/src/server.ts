@@ -7,7 +7,8 @@
 //   `dev-token`, for user `admin` on PGlite only (src/index.ts, the Vercel entry, has no fallback).
 // - Sign-in codes are printed here (ConsoleMailer), never e-mailed. On PGlite a dev
 //   BETTER_AUTH_SECRET is used when none is set; AUTH_FIXED_CODE=000000 is the code for
-//   addresses @e2e.cityturfer.test only.
+//   addresses @e2e.cityturfer.test only (sign-in, step-up and new-address codes).
+// - The breached-password check is a fake (no network): `password1234` counts as breached.
 import { createHash } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
@@ -16,6 +17,7 @@ import { serve } from '@hono/node-server';
 
 import { createApp } from './app';
 import { createPgliteDb } from './db/pglite';
+import { FakeBreachedPasswords } from './identity/breached-passwords';
 import { consoleMailer } from './identity/mailer';
 import { LOCAL_API_PORT } from './spec';
 import { productionDeps } from './wiring';
@@ -40,7 +42,8 @@ if (local) {
   mkdirSync(dataDir, { recursive: true });
   ({ db } = await createPgliteDb(dataDir));
 }
-const deps = productionDeps(env, { db, mailer: consoleMailer });
+// No network for the breach check here: the fake refuses DEV_BREACHED_PASSWORDS only.
+const deps = productionDeps(env, { db, mailer: consoleMailer, breached: new FakeBreachedPasswords() });
 
 const port = Number(process.env.PORT ?? LOCAL_API_PORT);
 serve({ fetch: createApp(deps).fetch, port }, (info) => {

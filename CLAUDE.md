@@ -78,8 +78,8 @@ apps/mobile/                         the Expo app (package @cityturfer/mobile); 
   src/wiring.ts                      platform-independent wiring of all contexts (used by app + tests)
   src/dev/                           dev-only tools (demo history seeder)
   src/shared-kernel/index.ts         re-export shim of @cityturfer/core/shared-kernel
-  src/contexts/identity/             MockAuthGateway (PoC), session stores; domain + use cases in core
-    infrastructure/ index.ts (shim)                        (no ui/ layer)
+  src/contexts/identity/             MockAuthGateway (PoC), session stores, Account tab; domain + use cases in core
+    infrastructure/ ui/ index.ts (shim)
   src/contexts/recording/            CORE: RecordingSession aggregate, FixFilter, AutoPausePolicy, background task
     domain/ application/ infrastructure/ ui/ index.ts
   src/contexts/activity-log/         history, detail, SQLite repo, OSM gap router; domain + use cases in core

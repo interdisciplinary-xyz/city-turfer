@@ -9,6 +9,7 @@ import type {
   AuthGateway,
   CredentialStore,
   ProfileHistory,
+  ProfileNameStore,
   SessionStore,
   SignInOutcome,
 } from './ports';
@@ -25,9 +26,11 @@ export interface IdentityDeps {
   auth: AuthGateway;
   sessions: SessionStore;
   accounts?: AccountDeps;
+  /** Names shown on this phone (local profiles' own, accounts' cached). Omitted: no names kept here. */
+  names?: ProfileNameStore;
 }
 
-function emailOf(raw: string): Email | null {
+export function emailOf(raw: string): Email | null {
   try {
     return parseEmail(raw);
   } catch (e) {
@@ -38,14 +41,20 @@ function emailOf(raw: string): Email | null {
   }
 }
 
-const userOf = (e: AccountProfileEntry): User => ({
+export const userOf = (e: AccountProfileEntry): User => ({
   id: e.profileId,
   email: e.email,
   displayName: e.email.split('@')[0],
   accountId: e.accountId,
 });
 
-async function loadProfiles(a: AccountDeps): Promise<AccountProfiles> {
+/** The user with the name kept on this phone, when there is one (a failed read keeps the user as is). */
+export async function withName(d: IdentityDeps, user: User): Promise<User> {
+  const name = d.names ? await d.names.read(user.id).catch(() => undefined) : undefined;
+  return name === undefined ? user : { ...user, name };
+}
+
+export async function loadProfiles(a: AccountDeps): Promise<AccountProfiles> {
   const state = await a.profiles.read();
   return state ? AccountProfiles.rehydrate(state) : AccountProfiles.empty();
 }
@@ -71,7 +80,30 @@ async function enterProfile(
   await a.credentials.save(session);
   await a.profiles.write(profiles.toState());
   await d.sessions.write(profileId);
-  return userOf(profiles.current!);
+  return withName(d, userOf(profiles.current!));
+}
+
+/**
+ * A verified session (code or password): into the account's profile, or — on the first real
+ * sign-in on a phone whose local history is unclaimed — held in `pending` until the Turfer answers.
+ */
+async function placeSession(
+  d: IdentityDeps,
+  a: AccountDeps,
+  pending: PendingSignIn,
+  session: AccountSession
+): Promise<{ kind: 'signed-in'; user: User } | { kind: 'choose-history'; email: string }> {
+  const { account } = session;
+  pending.session = null;
+  const profiles = await loadProfiles(a);
+  const placement = profiles.knownProfile(account)
+    ? profiles.placementFor(account, false)
+    : profiles.placementFor(account, await a.history.hasActivities(userId(ADOPTABLE_PROFILE)));
+  if (placement.kind === 'ask') {
+    pending.session = session;
+    return { kind: 'choose-history', email: account.email };
+  }
+  return { kind: 'signed-in', user: await enterProfile(d, a, profiles, session, placement.profileId) };
 }
 
 export type SignInResult =
@@ -99,7 +131,7 @@ export class SignIn {
       return { kind: 'linked-to-account' };
     }
     await this.d.sessions.write(outcome.user.id);
-    return outcome;
+    return { kind: 'signed-in', user: await withName(this.d, outcome.user) };
   }
 }
 
@@ -165,20 +197,43 @@ export class VerifySignInCode {
       return { kind: 'invalid-code' };
     }
     const r = await a.gateway.verifyCode(parsed, code);
-    if (r.kind !== 'verified') {
-      return r;
+    return r.kind === 'verified' ? placeSession(this.d, a, this.pending, r.session) : r;
+  }
+}
+
+export type PasswordSignInResult =
+  | Exclude<VerifySignInResult, { kind: 'invalid-code' }>
+  | { kind: 'invalid-credentials' }
+  /** A local profile's email whose history an account has adopted (see SignIn). */
+  | { kind: 'linked-to-account' };
+
+/**
+ * Signing in with an account password instead of the e-mailed code. Goes on exactly like a
+ * verified code (same profile placement, same "use this phone's history?"). A local profile's
+ * email (mock admin, demo) signs in with its own password, as SignIn does.
+ */
+export class SignInWithPassword {
+  constructor(
+    private readonly d: IdentityDeps,
+    private readonly pending: PendingSignIn
+  ) {}
+  async execute(rawEmail: string, password: string): Promise<PasswordSignInResult> {
+    const parsed = emailOf(rawEmail);
+    if (!parsed) {
+      return { kind: 'invalid-email' };
     }
-    const { account } = r.session;
-    this.pending.session = null;
-    const profiles = await loadProfiles(a);
-    const placement = profiles.knownProfile(account)
-      ? profiles.placementFor(account, false)
-      : profiles.placementFor(account, await a.history.hasActivities(userId(ADOPTABLE_PROFILE)));
-    if (placement.kind === 'ask') {
-      this.pending.session = r.session;
-      return { kind: 'choose-history', email: account.email };
+    if (this.d.auth.hasLocalAccount?.(parsed)) {
+      return new SignIn(this.d).execute(rawEmail, password);
     }
-    return { kind: 'signed-in', user: await enterProfile(this.d, a, profiles, r.session, placement.profileId) };
+    const a = this.d.accounts;
+    if (!a) {
+      return { kind: 'accounts-unavailable' };
+    }
+    if (!password) {
+      return { kind: 'invalid-credentials' };
+    }
+    const r = await a.gateway.signInWithPassword(parsed, password);
+    return r.kind === 'verified' ? placeSession(this.d, a, this.pending, r.session) : r;
   }
 }
 
@@ -217,9 +272,10 @@ export class GetCurrentUser {
     }
     const current = this.d.accounts ? (await loadProfiles(this.d.accounts)).current : null;
     if (current?.profileId === id) {
-      return userOf(current);
+      return withName(this.d, userOf(current));
     }
-    return this.d.auth.userById(id);
+    const user = await this.d.auth.userById(id);
+    return user ? withName(this.d, user) : null;
   }
 }
 

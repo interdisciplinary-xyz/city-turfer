@@ -3,6 +3,7 @@ import { strFromU8, unzipSync } from 'fflate';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { BackupStore } from '../backup/ports';
+import { DrizzleAccountRepository } from '../db/accounts';
 import { DrizzleExportStore, PostgresFileStorage } from '../db/exports';
 import { silentLog } from '../deps';
 import { MemoryMailer } from '../identity/mailer';
@@ -54,7 +55,7 @@ describe('data export', () => {
     const files = unzipSync(new Uint8Array(await download.arrayBuffer()));
     const data = JSON.parse(strFromU8(files['data.json']));
     expect(data).toMatchObject({
-      account: { id: 'admin', email: EMAIL },
+      account: { id: 'admin', email: EMAIL, hasPassword: false, passwordChangedAt: null },
       consents: [{ purpose: 'cloud-sync', granted: true }],
       activities: [{ id: 'run-1', name: 'Old Town <loop> & back' }],
       tombstones: [{ activityId: 'run-2' }],
@@ -184,6 +185,7 @@ describe('data export', () => {
       h.clock,
       'http://localhost:8787',
       silentLog,
+      new DrizzleAccountRepository(h.db),
       5_000
     );
     expect(await service.request('admin')).toMatchObject({ status: 'failed' });
@@ -210,7 +212,8 @@ describe('data export', () => {
       mailer,
       h.clock,
       'http://localhost:8787',
-      silentLog
+      silentLog,
+      new DrizzleAccountRepository(h.db)
     );
     const job = await service.request('admin');
     expect(job.status).toBe('expired');

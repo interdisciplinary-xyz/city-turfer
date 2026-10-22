@@ -46,6 +46,12 @@ export interface ExportStore {
   markDownloaded(userId: string, id: string, at: number): Promise<void>;
 }
 
+/** Port: the account's password credential, for the export (never the hash). */
+export interface PasswordCredentials {
+  /** When the password was set or last changed, or null when the account has none. */
+  credential(userId: string): Promise<{ changedAt: number } | null>;
+}
+
 /** Port: opaque files (Postgres `bytea` now, Vercel Blob later). Owner rows cascade on erasure. */
 export interface FileStorage {
   put(key: string, bytes: Uint8Array, meta: { ownerId: string; contentType: string; expiresAt: number }): Promise<void>;

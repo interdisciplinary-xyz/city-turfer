@@ -62,3 +62,11 @@ export function formatDate(ms: number): string {
     minute: '2-digit',
   });
 }
+
+/** A calendar day, e.g. "22 Oct 2026" (in the phone's locale). */
+export function formatDay(ms: number): string {
+  return new Date(ms).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+/** The name to show for the signed-in Turfer: their chosen name, or "You" (never an id or an email). */
+export const shownName = (user: { name?: string | null } | null | undefined): string => user?.name || 'You';

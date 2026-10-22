@@ -1,5 +1,6 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 
+import { PASSWORD_MIN } from '@cityturfer/core/identity';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { betterAuth } from 'better-auth/minimal';
 import { bearer } from 'better-auth/plugins/bearer';
@@ -10,10 +11,11 @@ import type { Db } from '../db/store';
 import { type Mailer, signInCodeMail } from './mailer';
 
 /**
- * Better Auth for sign-in with an e-mailed one-time code (docs/decisions/api-accounts-2026-10-22.md).
+ * Better Auth for sign-in with an e-mailed one-time code (docs/decisions/api-accounts-2026-10-22.md)
+ * or an optional password (docs/decisions/account-settings-2026-10-22.md).
  * Used only through `auth.api.*` from our own zod-openapi routes (src/routes/identity.ts), never
  * `auth.handler`: the spec stays generated, errors stay problem+json, and Better Auth's own routes
- * (password, OAuth, …) are not reachable. Its rate limiter only runs inside `auth.handler`, so the
+ * (sign-up, password reset, OAuth, …) are not reachable. Its rate limiter only runs inside `auth.handler`, so the
  * limits live in IdentityService. No telemetry, no logger (its messages can hold e-mail addresses),
  * no IP or user agent on sessions.
  */
@@ -22,6 +24,8 @@ import { type Mailer, signInCodeMail } from './mailer';
 export const SESSION_TTL_S = 60 * 24 * 60 * 60;
 export const SESSION_UPDATE_AGE_S = 24 * 60 * 60;
 export const CODE_TTL_S = 10 * 60;
+/** The longest password body accepted, in UTF-16 units (128 code points are at most 256). */
+export const MAX_PASSWORD_UNITS = 1024;
 
 export interface AuthConfig {
   db: Db;
@@ -67,7 +71,17 @@ export function createAuth(config: AuthConfig) {
     session: { modelName: 'auth_sessions', expiresIn: SESSION_TTL_S, updateAge: SESSION_UPDATE_AGE_S },
     account: { modelName: 'auth_accounts' },
     verification: { modelName: 'auth_verifications' },
-    emailAndPassword: { enabled: false },
+    // Optional passwords beside codes (AC1): only `auth.api.signInEmail` and the scrypt hasher are
+    // used. Accounts are still created only by a code (no sign-up), and with `auth.handler` never
+    // mounted, Better Auth's own password routes (sign-up, reset, change) stay unreachable.
+    // Lengths are checked by the core rule (code points); these bounds are UTF-16 units, wide
+    // enough never to refuse a password the rule accepts.
+    emailAndPassword: {
+      enabled: true,
+      disableSignUp: true,
+      minPasswordLength: PASSWORD_MIN,
+      maxPasswordLength: MAX_PASSWORD_UNITS,
+    },
     rateLimit: { enabled: false },
     telemetry: { enabled: false },
     logger: { disabled: true },
