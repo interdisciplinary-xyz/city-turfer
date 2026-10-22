@@ -23,7 +23,10 @@ export const CODE_TTL_S = 10 * 60;
 
 export interface AuthConfig {
   db: Db;
-  /** BETTER_AUTH_SECRET: signs session cookies and keys the rate-limit HMACs (≥ 32 characters). */
+  /**
+   * BETTER_AUTH_SECRET: signs the bearer tokens and keys the rate-limit HMACs (≥ 32 characters).
+   * Rotating it signs everyone out and resets the rate-limit counters.
+   */
   secret: string;
   /** Public base URL of the API (Better Auth wants one; no callbacks are used). */
   baseURL: string;
@@ -67,7 +70,9 @@ export function createAuth(config: AuthConfig) {
     logger: { disabled: true },
     advanced: { ipAddress: { disableIpTracking: true } },
     plugins: [
-      bearer(),
+      // Only signed tokens (`<session token>.<HMAC>`, see IdentityService.signIn): the raw token in
+      // `auth_sessions` is not enough to sign in, and rotating BETTER_AUTH_SECRET revokes them all.
+      bearer({ requireSignature: true }),
       emailOTP({
         otpLength: 6,
         expiresIn: CODE_TTL_S,

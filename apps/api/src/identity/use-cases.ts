@@ -36,27 +36,31 @@ export class IdentityService {
   ): Promise<{ token: string; expiresAt: number; user: { id: string; email: string } }> {
     await this.limit('sign-in:ip', ip, AUTH_LIMITS.signInsPerIp);
     await this.limit('sign-in:email', email, AUTH_LIMITS.signInsPerEmail);
-    let signedIn: { token: string; user: { id: string; email: string } };
+    let signedIn: { headers: Headers; response: { user: { id: string; email: string } } };
     try {
-      signedIn = await this.auth.api.signInEmailOTP({ body: { email, otp: code } });
+      signedIn = await this.auth.api.signInEmailOTP({ body: { email, otp: code }, returnHeaders: true });
     } catch (error) {
       if (isClientError(error)) {
         throw new AppError('auth.invalid-code');
       }
       throw error;
     }
-    const session = await this.session(signedIn.token);
-    if (!session) {
+    // The bearer plugin's signed form of the session token (`<token>.<HMAC>`): the only form it
+    // accepts (requireSignature), so a copy of `auth_sessions` alone cannot sign anyone in.
+    const token = signedIn.headers.get('set-auth-token');
+    const session = token ? await this.session(token) : null;
+    if (!token || !session) {
       throw new Error('session missing after sign-in');
     }
+    const { user } = signedIn.response;
     return {
-      token: signedIn.token,
+      token,
       expiresAt: session.expiresAt,
-      user: { id: signedIn.user.id, email: signedIn.user.email },
+      user: { id: user.id, email: user.email },
     };
   }
 
-  /** SignOut: revokes the session of this token (idempotent). */
+  /** SignOut: revokes the session with this (raw, stored) session token (idempotent). */
   async signOut(token: string): Promise<void> {
     const ctx = await this.auth.$context;
     await ctx.internalAdapter.deleteSession(token);
@@ -71,14 +75,16 @@ export class IdentityService {
             userId: s.userId,
             verified: true,
             kind: 'session',
-            sessionToken: token,
+            sessionToken: s.sessionToken,
             profile: { email: s.email, displayName: null },
           }
         : null;
     },
   };
 
-  private async session(token: string): Promise<{ userId: string; email: string; expiresAt: number } | null> {
+  private async session(
+    token: string
+  ): Promise<{ userId: string; email: string; expiresAt: number; sessionToken: string } | null> {
     const found = await this.auth.api.getSession({ headers: new Headers({ authorization: `Bearer ${token}` }) });
     if (!found) {
       return null;
@@ -87,6 +93,7 @@ export class IdentityService {
       userId: found.user.id,
       email: found.user.email,
       expiresAt: new Date(found.session.expiresAt).getTime(),
+      sessionToken: found.session.token,
     };
   }
 

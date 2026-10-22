@@ -57,8 +57,17 @@ Design: `docs/decisions/api-sync-2026-10-20.md` and
 `DATABASE_URL`, `CRON_SECRET`, `BETTER_AUTH_SECRET`, `BREVO_API_KEY`, `MAIL_FROM` or
 `API_PUBLIC_URL`, or any `AUTH_FIXED_CODE`, fails the function at start instead of running
 half-configured (`checkProductionEnv` in `apps/api/src/wiring.ts`; the error names the variables,
-never their values). Rotating `BETTER_AUTH_SECRET` signs everyone out and resets the rate-limit
-windows.
+never their values).
+
+**Revoking sessions.** A session is a row in `auth_sessions`; the bearer token the phone holds is
+that row's token signed with `BETTER_AUTH_SECRET` (`<token>.<HMAC>`), and only the signed form is
+accepted (`bearer({ requireSignature: true })`). To sign one user out everywhere, delete their rows
+(`DELETE FROM auth_sessions WHERE user_id = '<userId>'`); to sign everyone out, delete all rows.
+Rotating `BETTER_AUTH_SECRET` also invalidates every token (their signatures no longer match), and
+it resets the rate-limit windows; after a suspected leak of the secret or the database, do both.
+Follow-up, not done: session tokens are still stored in plain text, so a database dump together with
+the secret is enough to take over sessions; storing a hash of the token needs Better Auth support or
+our own session lookup.
 
 **Preview deployments MUST use their own Neon branch, never the production database** (a preview has
 test settings such as `AUTH_FIXED_CODE`; data, sessions and exports must not mix). The local dev

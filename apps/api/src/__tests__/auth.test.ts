@@ -155,6 +155,23 @@ describe('sessions', () => {
     expect((await h.call('GET', '/v1/me', { token: TOKENS.admin })).status).toBe(200);
   });
 
+  it('accepts only the signed token: not the raw one in auth_sessions, not after a secret rotation', async () => {
+    const token = await h.signIn(EMAIL);
+    const rows = await h.db.execute(sql`SELECT token FROM auth_sessions`);
+    const [{ token: stored }] = (rows as unknown as { rows: { token: string }[] }).rows;
+    expect(token.startsWith(`${stored}.`)).toBe(true);
+    expect((await h.call('GET', '/v1/me', { token: stored })).status).toBe(401);
+
+    const rotated = new IdentityService(
+      createAuth({ db: h.db, secret: 'y'.repeat(48), baseURL: 'http://localhost:8787', mailer: h.mailer }),
+      new PostgresRateLimiter(h.db),
+      'y'.repeat(48),
+      h.clock
+    );
+    expect(await rotated.verifier.verify(token)).toBeNull();
+    expect(await h.identity.verifier.verify(token)).toMatchObject({ kind: 'session', sessionToken: stored });
+  });
+
   it('keeps device tokens working next to sessions, each with its own data', async () => {
     const token = await h.signIn(EMAIL);
     const body = { granted: true, policyVersion: '2026-10' };

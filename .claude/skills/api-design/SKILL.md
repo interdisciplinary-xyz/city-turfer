@@ -86,9 +86,11 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   mount `auth.handler`. Our own rate limits in Postgres (`rate_limits`,
   `apps/api/src/db/rate-limits.ts`). Tables `auth_*`; the Better Auth user id is `users.id`. The
   verifier is composite: **device tokens** (`API_TOKENS`, sha256 → user id, constant time; one more
-  release) first, then sessions; unknown → 401 `auth.invalid`. The user row is created on first
-  sight. The placeholder verifier (spec generation, planned-route tests) marks callers unverified,
-  which live routes refuse. Decision: `docs/decisions/api-accounts-2026-10-22.md`.
+  release) first, then sessions (only the signed token `<token>.<HMAC>` is accepted:
+  `bearer({ requireSignature: true })`; revoke by deleting `auth_sessions` rows); unknown → 401
+  `auth.invalid`. The user row is created on first sight. The placeholder verifier (spec generation,
+  planned-route tests) marks callers unverified, which live routes refuse. Decision:
+  `docs/decisions/api-accounts-2026-10-22.md`.
 - **Consent:** activity and Home City writes need `cloud-sync` granted (Apple Health activities also
   `apple-health-in-cloud-sync`), else 403 `consent.required`; `DELETE` never needs it. Withdrawing
   erases the server copy it covered (`eraseBackup`, no new tombstones): `cloud-sync` → everything
