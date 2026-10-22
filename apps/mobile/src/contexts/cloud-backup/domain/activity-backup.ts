@@ -224,6 +224,26 @@ export class ActivityBackup {
     }
   }
 
+  /**
+   * Restore: this Activity comes from the server copy at `version` (its gap check included), so
+   * nothing about it has to be sent back.
+   */
+  restoredFromServer(version: number, gapsCheckedAt: number | null, now: number): void {
+    this.state = {
+      ...this.state,
+      status: 'backed-up',
+      op: null,
+      gapsPending: false,
+      renamePending: false,
+      gapsSentAt: gapsCheckedAt,
+      serverVersion: version,
+      uploadedAt: now,
+      attempts: 0,
+      nextAttemptAt: null,
+      errorCode: null,
+    };
+  }
+
   /** The server has a tombstone (410 / 409, or in the manifest): delete wins, never resurrect. */
   goneOnServer(): void {
     this.state = {

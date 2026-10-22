@@ -3,6 +3,54 @@ import type { Database, SqlExecutor } from '@/platform/database';
 import type { BackupRepository } from '../application/ports';
 import { ActivityBackup, type BackupOp, type ServerCopy } from '../domain/activity-backup';
 import { type BackupErrorCode, BackupSettings, type ConsentPurpose } from '../domain/backup-settings';
+import { Restore, type RestoreItem } from '../domain/restore';
+
+interface RestoreRow {
+  status: 'idle' | 'running' | 'done';
+  total: number;
+  done: number;
+  has_home_city: number;
+  home_city_id: string | null;
+  home_city_chosen_at: number | null;
+  started_at: number | null;
+}
+
+async function readRestore(ex: SqlExecutor): Promise<Restore> {
+  const r = await ex.first<RestoreRow>('SELECT * FROM cb_restore WHERE id = 1');
+  if (!r) {
+    return Restore.idle();
+  }
+  return Restore.rehydrate({
+    status: r.status,
+    total: r.total,
+    done: r.done,
+    homeCity:
+      r.has_home_city === 1 && r.home_city_chosen_at != null
+        ? { cityId: r.home_city_id, chosenAt: r.home_city_chosen_at }
+        : null,
+    startedAt: r.started_at,
+  });
+}
+
+async function writeRestore(ex: SqlExecutor, restore: Restore): Promise<void> {
+  const s = restore.toState();
+  await ex.run(
+    `INSERT INTO cb_restore (id, status, total, done, has_home_city, home_city_id, home_city_chosen_at, started_at)
+     VALUES (1, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET status = excluded.status, total = excluded.total, done = excluded.done,
+       has_home_city = excluded.has_home_city, home_city_id = excluded.home_city_id,
+       home_city_chosen_at = excluded.home_city_chosen_at, started_at = excluded.started_at`,
+    [
+      s.status,
+      s.total,
+      s.done,
+      s.homeCity ? 1 : 0,
+      s.homeCity?.cityId ?? null,
+      s.homeCity?.chosenAt ?? null,
+      s.startedAt,
+    ]
+  );
+}
 
 interface StateRow {
   enabled: number;
@@ -226,6 +274,56 @@ export class SqliteBackupRepository implements BackupRepository {
       "SELECT activity_id AS id FROM cb_activities WHERE status = 'backed-up' AND (op IS NULL OR op = 'delete')"
     );
     return rows.map((r) => r.id);
+  }
+
+  restore(): Promise<Restore> {
+    return readRestore(this.db);
+  }
+
+  async startRestore(restore: Restore, items: readonly RestoreItem[]): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      await tx.run('DELETE FROM cb_restore_items');
+      for (const i of items) {
+        await tx.run('INSERT INTO cb_restore_items (activity_id, started_at, version) VALUES (?, ?, ?)', [
+          i.activityId,
+          i.startedAt,
+          i.version,
+        ]);
+      }
+      await writeRestore(tx, restore);
+    });
+  }
+
+  async restoreItems(): Promise<RestoreItem[]> {
+    return this.db.all<RestoreItem>(
+      `SELECT activity_id AS activityId, started_at AS startedAt, version FROM cb_restore_items
+       ORDER BY started_at, activity_id`
+    );
+  }
+
+  async updateBackupForRestore(item: RestoreItem, change: (b: ActivityBackup) => void): Promise<void> {
+    await this.updateBackup(item.activityId, item.startedAt, change);
+  }
+
+  restoreItemDone(activityId: string, change: (r: Restore) => void): Promise<Restore> {
+    return this.db.transaction(async (tx) => {
+      await tx.run('DELETE FROM cb_restore_items WHERE activity_id = ?', [activityId]);
+      const r = await readRestore(tx);
+      change(r);
+      await writeRestore(tx, r);
+      return r;
+    });
+  }
+
+  saveRestore(change: (r: Restore, s: BackupSettings) => void): Promise<Restore> {
+    return this.db.transaction(async (tx) => {
+      const r = await readRestore(tx);
+      const s = await readSettings(tx);
+      change(r, s);
+      await writeRestore(tx, r);
+      await writeSettings(tx, s);
+      return r;
+    });
   }
 
   async refusedIds(): Promise<string[]> {

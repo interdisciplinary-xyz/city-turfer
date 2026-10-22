@@ -4,6 +4,7 @@ import type { Clock } from '@/shared-kernel';
 
 import type { ActivityBackup } from '../domain/activity-backup';
 import type { BackupSettings, ConsentPurpose } from '../domain/backup-settings';
+import type { Restore, RestoreItem } from '../domain/restore';
 
 /**
  * Why a request failed, in the backup's terms (the adapter maps HTTP to these; nothing here knows
@@ -135,6 +136,19 @@ export interface BackupRepository {
   backedUpIds(): Promise<string[]>;
   /** Ids the server refused (too large, invalid). */
   refusedIds(): Promise<string[]>;
+
+  // --- Restore (cb_restore, cb_restore_items) ---
+  restore(): Promise<Restore>;
+  /** Atomic: the restore's state + its (ordered) items. */
+  startRestore(restore: Restore, items: readonly RestoreItem[]): Promise<void>;
+  /** What is still to bring back, oldest first. */
+  restoreItems(): Promise<RestoreItem[]>;
+  /** Atomic: the Activity's backup row from the server copy (written before it is imported). */
+  updateBackupForRestore(item: RestoreItem, change: (b: ActivityBackup) => void): Promise<void>;
+  /** Atomic: the item is handled (removed) and the restore's progress saved. */
+  restoreItemDone(activityId: string, change: (r: Restore) => void): Promise<Restore>;
+  /** Atomic: the restore's state (e.g. finished) + settings (e.g. the Home City the server has). */
+  saveRestore(change: (r: Restore, s: BackupSettings) => void): Promise<Restore>;
 }
 
 /** Port: Activity Log's archive query (its public API, adapted in wiring). */
@@ -146,6 +160,13 @@ export interface ActivitySource {
 /** Port: Territory's Home City decision. */
 export interface HomeCitySource {
   choice(): Promise<HomeCityChoice | null>;
+  /** Restore: applies an earlier choice (an older one never replaces a newer one). */
+  restore(choice: HomeCityChoice): Promise<void>;
+}
+
+/** Port: Activity Log's restore (origin `restore`: claimed as turf, never exported or re-uploaded). */
+export interface ActivitySink {
+  restore(copy: ActivityArchive): Promise<'restored' | 'exists' | 'invalid'>;
 }
 
 /** Counts and codes of a finished run, for diagnostics (never ids, names or coordinates). */
@@ -170,6 +191,9 @@ export interface CloudBackupDeps {
   sha256: Sha256;
   activities: ActivitySource;
   homeCity: HomeCitySource;
+  restoredActivities: ActivitySink;
+  /** Is a Recording Session active? Restore never runs during one. */
+  isRecording: () => Promise<boolean>;
   clock: Clock;
   /** False on headless launches: no network work then (the recording task must never wait on it). */
   isForeground: () => boolean;

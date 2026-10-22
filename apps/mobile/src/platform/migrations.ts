@@ -249,6 +249,28 @@ const MIGRATIONS: { version: number; sql: string }[] = [
         WHERE op IS NOT NULL OR gaps_pending = 1 OR rename_pending = 1;
     `,
   },
+  {
+    version: 11,
+    sql: `
+      -- Cloud Backup: Restore from the backup (one row), resumable after the app was killed.
+      CREATE TABLE cb_restore (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        status TEXT NOT NULL CHECK (status IN ('idle', 'running', 'done')),
+        total INTEGER NOT NULL DEFAULT 0,
+        done INTEGER NOT NULL DEFAULT 0,
+        has_home_city INTEGER NOT NULL DEFAULT 0,
+        home_city_id TEXT,             -- a catalogue id (never coordinates); NULL with has_home_city: cleared
+        home_city_chosen_at INTEGER,
+        started_at INTEGER
+      );
+      -- The Activities still to bring back, from the server's manifest (deleted when handled).
+      CREATE TABLE cb_restore_items (
+        activity_id TEXT PRIMARY KEY,
+        started_at INTEGER NOT NULL,   -- restore order: oldest first
+        version INTEGER NOT NULL
+      );
+    `,
+  },
 ];
 
 /** The newest schema version this build knows. */

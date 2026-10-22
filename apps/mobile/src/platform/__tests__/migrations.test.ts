@@ -142,3 +142,15 @@ describe('migration v10 (cloud backup accounts, renames, gap checks)', () => {
     });
   });
 });
+
+describe('migration v11 (restore from the cloud backup)', () => {
+  it('adds empty restore tables with one state row and known statuses only', async () => {
+    const db = openNodeDatabase();
+    await migrate(db, 10);
+    await migrate(db, 11);
+    expect(await db.first('SELECT COUNT(*) AS n FROM cb_restore_items')).toEqual({ n: 0 });
+    await db.run("INSERT INTO cb_restore (id, status) VALUES (1, 'running')");
+    await expect(db.run("INSERT INTO cb_restore (id, status) VALUES (2, 'running')")).rejects.toThrow();
+    await expect(db.run("UPDATE cb_restore SET status = 'paused'")).rejects.toThrow();
+  });
+});

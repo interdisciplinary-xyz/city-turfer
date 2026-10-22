@@ -120,6 +120,11 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     onDeadLetter: (d) => diagnostics.log('task-error', { code: 'outbox.dead-letter', ...d }),
   });
   const afterCommit = () => void dispatcher.dispatchPending();
+  /** Is a restore from the cloud backup running? (Cloud Backup is wired below.) */
+  let restoring: () => boolean = () => false;
+
+  /** Is a Recording Session active (recording, paused or auto-paused)? Gates sign-out and restore. */
+  const hasActiveSession = async () => (await recording.liveSnapshot.execute()) != null;
 
   const recording = createRecordingApi({
     sessions: new SqliteRecordingSessionRepository(db),
@@ -166,7 +171,8 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
       overlapping: (type, startedAt, endedAt) => activityLog.overlapping.execute(type, startedAt, endedAt),
     },
     clock,
-    isForeground: a.isForeground ?? (() => true),
+    // Apple Health import waits while a restore brings the backup back (no duplicates meanwhile).
+    isForeground: () => (a.isForeground?.() ?? true) && !restoring(),
     onExportError: (code) => diagnostics.log('task-error', { code }),
   });
 
@@ -184,7 +190,12 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
       timeline: () => activityLog.archive.timeline(),
       archiveOf: (id) => activityLog.archive.of(id),
     },
-    homeCity: { choice: () => territory.homeCityChoice.execute() },
+    homeCity: {
+      choice: () => territory.homeCityChoice.execute(),
+      restore: (choice) => territory.chooseHomeCity.execute(choice.cityId, choice.chosenAt),
+    },
+    restoredActivities: { restore: (copy) => activityLog.restoreActivity.execute(copy) },
+    isRecording: () => hasActiveSession().catch(() => true), // unknown: don't restore under a recording
     clock,
     isForeground: a.isForeground ?? (() => true),
     defaultServerUrl: backupAdapters.serverUrl ?? API_BASE_URL,
@@ -197,6 +208,7 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     },
   };
   const cloudBackup = createCloudBackupApi(cloudBackupDeps);
+  restoring = () => cloudBackup.restore.isRunning;
 
   // Context map (docs/poc-plan.md §3): Recording → Activity Log → Territory; Activity Log ↔ Health Sync.
   dispatcher.on('SessionFinished', (e: DomainEvent) => activityLog.recordFromSession.execute(e as SessionFinished));
@@ -270,9 +282,6 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     await syncHealth();
     await backUp();
   }
-
-  /** Is a Recording Session active (recording, paused or auto-paused)? Gates sign-out. */
-  const hasActiveSession = async () => (await recording.liveSnapshot.execute()) != null;
 
   return {
     userId,
