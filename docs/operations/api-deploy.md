@@ -183,7 +183,7 @@ history and download the e-mailed link; confirm a zip over 4.5 MB arrives whole 
 without `Content-Length`; untested on Vercel). If Vercel cuts it, move `FileStorage` to Vercel Blob
 (D11). Building an export uses Fluid compute's default duration (300 s).
 
-- `GET /v1/health` → `{"status":"ok","version":"0.4.0","coreVersion":"0.9.0","database":"ok"}`
+- `GET /v1/health` → `{"status":"ok","version":"0.5.0","coreVersion":"0.10.0","database":"ok"}`
   (`not-configured` without `DATABASE_URL`, `unreachable` when Neon does not answer).
 - `GET /v1/me` with `Authorization: Bearer <token>` → the user; 401 `auth.invalid` when the hash is
   not in `API_TOKENS`.

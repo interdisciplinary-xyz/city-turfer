@@ -198,7 +198,7 @@ describe('changing the e-mail', () => {
     expect((await h.call('GET', '/v1/me', { token: browser })).status).toBe(401);
 
     const notice = h.mailer.lastTo(ANIA);
-    expect(notice?.subject).toBe('Your CityTurfer e-mail address was changed');
+    expect(notice?.subject).toBe('Your CityTurfer email address was changed');
     expect(notice?.text).not.toContain(NEW);
     expect(notice?.text).not.toMatch(/https?:\/\//);
 
@@ -361,7 +361,7 @@ describe('passwords', () => {
 
     expect(await me(phone)).toMatchObject({ hasPassword: true, passwordChangedAt: new Date(h.clock.t).toISOString() });
     expect((await h.call('GET', '/v1/me', { token: browser })).status).toBe(401);
-    expect(h.mailer.lastTo(ANIA)?.subject).toBe('A password was added to your CityTurfer account');
+    expect(h.mailer.lastTo(ANIA)?.subject).toBe('An account password was added to your CityTurfer account');
 
     // Hashed (scrypt), never stored as given.
     const [credential] = await rows(sql`SELECT provider_id, account_id, password FROM auth_accounts`);
@@ -384,7 +384,7 @@ describe('passwords', () => {
     await setPassword(token, PASSWORD, await stepUp(token));
     h.clock.t += 10 * MINUTE;
     expect((await setPassword(token, 'a second long passphrase', await stepUp(token))).status).toBe(204);
-    expect(h.mailer.lastTo(ANIA)?.subject).toBe('Your CityTurfer password was changed');
+    expect(h.mailer.lastTo(ANIA)?.subject).toBe('Your CityTurfer account password was changed');
     expect((await signInWithPassword(ANIA, PASSWORD)).status).toBe(401);
     expect((await signInWithPassword(ANIA, 'a second long passphrase')).status).toBe(200);
   });
@@ -434,7 +434,7 @@ describe('passwords', () => {
     const res = await h.call('DELETE', '/v1/me/password', { token, body: { stepUpCode: await stepUp(token) } });
     expect(res.status).toBe(204);
     expect(await me(token)).toMatchObject({ hasPassword: false, passwordChangedAt: null });
-    expect(h.mailer.lastTo(ANIA)?.subject).toBe('Your CityTurfer password was removed');
+    expect(h.mailer.lastTo(ANIA)?.subject).toBe('Your CityTurfer account password was removed');
     expect(await rows(sql`SELECT id FROM auth_accounts`)).toHaveLength(0);
     expect((await signInWithPassword(ANIA, PASSWORD)).status).toBe(401);
 

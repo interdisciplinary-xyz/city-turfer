@@ -23,7 +23,7 @@ describe('Me › Account rows', () => {
     expect(r.email).toEqual({ value: 'ola@example.com', enabled: true });
     expect(r.password.value).toMatch(/^Set · .*2026/);
     expect(r.password.enabled).toBe(true);
-    expect(r.signIn).toBe('Email code · password');
+    expect(r.signIn).toBe('Email code · account password');
     expect(r.retry).toBe(false);
   });
 

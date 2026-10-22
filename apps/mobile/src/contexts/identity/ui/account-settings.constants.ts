@@ -79,14 +79,14 @@ export const VALUE = {
   createAccount: 'Create an account to back up and sign in anywhere',
   localProfile: 'Local profile on this phone',
   codeOnly: 'Email code',
-  codeAndPassword: 'Email code · password',
+  codeAndPassword: 'Email code · account password',
   signInAgain: 'Sign in again to change this',
   couldNotLoad: 'Couldn’t load. Try again',
 } as const;
 
 export const HINT = {
-  name: 'Opens your name',
-  email: 'Opens the steps to change your email',
+  name: 'Changes the name shown in the app',
+  email: 'Starts changing your email',
   password: 'Opens your account password options',
 } as const;
 
@@ -95,8 +95,8 @@ export const RETRY = 'Try again';
 export const NAME_COPY = {
   label: 'Your name',
   save: 'Save',
-  local: 'Kept on this phone only. Leave it empty to show “You”.',
-  account: 'Shown on your CityTurfer account. Leave it empty to show “You”.',
+  local: 'Optional. Kept on this phone only.',
+  account: 'Optional. Saved to your CityTurfer account.',
   saved: 'Saved',
 } as const;
 
@@ -125,7 +125,7 @@ export const EMAIL_COPY = {
   done: (next: string) =>
     `Your email is now ${next}. Use it to sign in. Other phones and browsers were signed out; we sent a note to your old address.`,
   doneButton: 'Done',
-  taken: 'That email belongs to another CityTurfer account.',
+  taken: 'That email already has a CityTurfer account. Try another one.',
   newInvalid: (next: string) => `That code didn’t work. Check the latest email to ${next}, or start again.`,
 } as const;
 
@@ -133,20 +133,20 @@ export const PASSWORD_COPY = {
   intro: {
     set: 'An account password is optional: you can always sign in with an email code instead.',
     change: 'Choose a new account password. Email codes keep working too.',
-    remove: 'Without an account password you sign in with an email code, as before.',
+    remove: 'Without an account password, you sign in with an email code.',
   },
   stepUp: (email: string) => `First we’ll email a code to ${email}, to check it’s you.`,
   sent: (email: string) => `We emailed a 6-digit code to ${email}. It works for 10 minutes.`,
   newLabel: 'New account password',
   newHint: `At least ${PASSWORD_MIN} characters. A few words you’ll remember work well.`,
-  save: { set: 'Set password', change: 'Change password', remove: 'Remove password' },
+  save: { set: 'Set account password', change: 'Change account password', remove: 'Remove account password' },
   done: {
     set: 'Your account password is set. Other phones and browsers were signed out.',
-    change: 'Your account password is changed. Other phones and browsers were signed out.',
-    remove: 'Your account password is removed. Sign in with an email code from now on.',
+    change: 'Your account password has been changed. Other phones and browsers were signed out.',
+    remove: 'Your account password has been removed. Sign in with an email code from now on.',
   },
   doneButton: 'Done',
-  breached: 'That password has turned up in a data breach. Choose another one.',
+  breached: 'That password appears in leaked password lists, so it’s easy to guess. Choose another one.',
   show: 'Show password',
   hide: 'Hide password',
   actionTitle: 'Account password',

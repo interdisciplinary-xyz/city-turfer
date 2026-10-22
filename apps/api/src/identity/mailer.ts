@@ -93,8 +93,8 @@ export const stepUpCodeMail = (to: string, code: string): MailMessage => ({
   text: [
     `Your code to confirm a change to your CityTurfer account is ${code}.`,
     '',
-    'It works once, for 10 minutes. If you did not ask for it, ignore this e-mail: nothing changes',
-    'without the code.',
+    'It works once, for 10 minutes. Didn’t ask for it? Ignore this email: nothing changes without',
+    'the code. Never share a code with anyone.',
   ].join('\n'),
 });
 
@@ -103,10 +103,10 @@ export const newAddressCodeMail = (to: string, code: string): MailMessage => ({
   to,
   subject: `${code} is your CityTurfer code for this address`,
   text: [
-    `Your code to use this address for your CityTurfer account is ${code}.`,
+    `Your code to use this email address for your CityTurfer account is ${code}.`,
     '',
-    'It works once, for 10 minutes. If you did not ask for it, ignore this e-mail: the address is',
-    'not added without the code.',
+    'It works once, for 10 minutes. Didn’t ask for it? Ignore this email: the address isn’t added',
+    'without the code.',
   ].join('\n'),
 });
 
@@ -115,51 +115,59 @@ export const addressInUseMail = (to: string): MailMessage => ({
   to,
   subject: 'This address already has a CityTurfer account',
   text: [
-    'Someone asked to move their CityTurfer account to this address. It already belongs to a',
-    'CityTurfer account, so nothing changed.',
+    'Someone asked to move their CityTurfer account to this email address. It already belongs to',
+    'a CityTurfer account, so nothing changed.',
     '',
-    'If it was you, sign in with this address instead, or delete one of the two accounts first.',
-    'If it was not you, ignore this e-mail.',
+    'If it was you: sign in with this address instead, or delete one of the two accounts first.',
+    'If it wasn’t you, ignore this email.',
   ].join('\n'),
 });
 
-/** To the old address after an e-mail change (AC5). */
+/**
+ * To the old address after an e-mail change (AC5). Wording for "not you" awaits a founder decision:
+ * there is no recovery process yet and staff can't change an address, so it promises neither.
+ */
 export const emailChangedMail = (to: string, at: number): MailMessage => ({
   to,
-  subject: 'Your CityTurfer e-mail address was changed',
+  subject: 'Your CityTurfer email address was changed',
   text: [
-    `The e-mail address of your CityTurfer account was changed on ${when(at)}. This address no`,
-    'longer signs in, and your other devices were signed out.',
+    `The email address of your CityTurfer account was changed on ${when(at)}. This address no`,
+    'longer signs in, and your other phones and browsers were signed out.',
     '',
-    'If it was you, there is nothing to do.',
-    'Not you? Reply to this e-mail and tell us. Never share a code with anyone.',
+    'If it was you, there’s nothing to do.',
+    '',
+    'Not you? The change needed a code we sent to this address, so someone else may be able to',
+    'read this inbox. Change your email password first. We can’t move the account back to this',
+    'address, and nobody at CityTurfer can change it for you. Never share a code with anyone.',
   ].join('\n'),
 });
 
-/** After a password was set (`changed: false`) or replaced (AC5). */
+/** After an account password was set (`changed: false`) or replaced (AC5). */
 export const passwordSetMail = (to: string, at: number, changed: boolean): MailMessage => ({
   to,
-  subject: changed ? 'Your CityTurfer password was changed' : 'A password was added to your CityTurfer account',
+  subject: changed
+    ? 'Your CityTurfer account password was changed'
+    : 'An account password was added to your CityTurfer account',
   text: [
     changed
-      ? `The password of your CityTurfer account was changed on ${when(at)}.`
-      : `A password was added to your CityTurfer account on ${when(at)}.`,
-    'You can sign in with it or with an e-mailed code. Your other devices were signed out.',
+      ? `Your CityTurfer account password was changed on ${when(at)}.`
+      : `An account password was added to your CityTurfer account on ${when(at)}.`,
+    'You can sign in with it or with an email code. Your other phones and browsers were signed out.',
     '',
-    'If it was you, there is nothing to do.',
-    'Not you? Sign in with a code sent to this address, then change the password or remove it.',
+    'If it was you, there’s nothing to do.',
+    'Not you? Sign in with a code sent to this address, then change the account password or remove it.',
   ].join('\n'),
 });
 
-/** After the password was removed. */
+/** After the account password was removed. */
 export const passwordRemovedMail = (to: string, at: number): MailMessage => ({
   to,
-  subject: 'Your CityTurfer password was removed',
+  subject: 'Your CityTurfer account password was removed',
   text: [
-    `The password of your CityTurfer account was removed on ${when(at)}. You now sign in with an`,
-    'e-mailed code only.',
+    `Your CityTurfer account password was removed on ${when(at)}. You now sign in with an email`,
+    'code only.',
     '',
-    'If it was you, there is nothing to do.',
-    'Not you? Sign in with a code sent to this address and set a new password.',
+    'If it was you, there’s nothing to do.',
+    'Not you? Sign in with a code sent to this address and set a new account password.',
   ].join('\n'),
 });
