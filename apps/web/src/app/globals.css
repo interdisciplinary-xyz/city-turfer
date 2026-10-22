@@ -32,9 +32,9 @@ html {
   }
 }
 
-/* Page loader (page-loader): covers the page from the first paint, fades out when <html> gets
-   `loaded`. Safety net: if the boot script never runs, the `page-loader-out` animation hides it
-   after 2.5 s anyway, so it can never get stuck. */
+/* Page loader (page-loader): hidden by default (so also without JavaScript). The boot script adds
+   `loader-active` to <html> only if the page is still not ready after ~180 ms, and `loaded` when it
+   is; `loaded` wins and fades the loader out. Reduced motion and back/forward never show it. */
 .page-loader {
   position: fixed;
   inset: 0;
@@ -42,7 +42,9 @@ html {
   display: grid;
   place-items: center;
   background: var(--bg);
-  animation: page-loader-out 0.4s ease-out 2.5s forwards;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
   transition:
     opacity 0.4s ease-out,
     visibility 0s linear 0.4s;
@@ -56,18 +58,22 @@ html {
   animation: page-loader-glow 1.6s ease-in-out infinite alternate;
 }
 
+.loader-active .page-loader {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    opacity 0.2s ease-out,
+    visibility 0s;
+}
+
 .loaded .page-loader {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-}
-
-@keyframes page-loader-out {
-  to {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-  }
+  transition:
+    opacity 0.4s ease-out,
+    visibility 0s linear 0.4s;
 }
 
 /* Calm glow, never a spin: turf brightening, like the hero. */

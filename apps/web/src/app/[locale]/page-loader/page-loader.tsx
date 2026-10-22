@@ -2,9 +2,9 @@ import mark from '@cityturfer/brand/svg/mark.svg';
 import Image from 'next/image';
 
 /**
- * Full-page overlay, visible from the first paint, that fades out once the page and fonts have
- * loaded (LOADER_BOOT_SCRIPT). Decorative: hidden from screen readers, which read the page
- * underneath straight away.
+ * Full-page overlay for slow loads: hidden by default, shown by LOADER_BOOT_SCRIPT only if the page
+ * and fonts are still not ready after a short delay, and faded out once they are. Decorative:
+ * hidden from screen readers, which read the page underneath straight away (it is not inert).
  */
 export function PageLoader() {
   return (

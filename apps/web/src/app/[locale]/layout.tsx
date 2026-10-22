@@ -14,7 +14,7 @@ import { displayFont, numericFont } from '../fonts';
 import { SITE_URL } from '../site-url';
 import { MOTION_BOOT_SCRIPT } from './hero-motion';
 import { OG_IMAGE_HEIGHT, OG_IMAGE_PATH, OG_IMAGE_WIDTH } from './layout.constants';
-import { INERT_ROOT_SCRIPT, LOADER_BOOT_SCRIPT, PAGE_ROOT_ID, PageLoader } from './page-loader';
+import { LOADER_BOOT_SCRIPT, PageLoader } from './page-loader';
 
 /** Every language is prerendered by the static export. */
 export const generateStaticParams = () => routing.locales.map((locale) => ({ locale }));
@@ -86,26 +86,17 @@ export default async function LocaleLayout({
       <head>
         {/* Before first paint: hide [data-anim] for the entrance animation (skipped with reduced motion). */}
         <script dangerouslySetInnerHTML={{ __html: MOTION_BOOT_SCRIPT }} />
-        {/* Fades the page loader out once the page and fonts are ready (1.5 s at most). */}
+        {/* Shows the page loader only if the page is slow (and not for reduced motion or back/forward). */}
         <script dangerouslySetInnerHTML={{ __html: LOADER_BOOT_SCRIPT }} />
-        {/* Without JavaScript there is nothing to wait for: no loader at all. */}
-        <noscript>
-          <style>{'.page-loader{display:none}'}</style>
-        </noscript>
       </head>
       <body>
         <PageLoader />
         {/* next-intl's Link (language switcher) is a client component and reads the locale from
             this provider. */}
-        <div id={PAGE_ROOT_ID} suppressHydrationWarning>
-          {/* Content is inert while the loader covers it; the boot script lifts that (and it is never
-              set once the page has loaded or if the boot script is missing). */}
-          <script dangerouslySetInnerHTML={{ __html: INERT_ROOT_SCRIPT }} />
-          <NextIntlClientProvider>
-            {children}
-            {devToolbar}
-          </NextIntlClientProvider>
-        </div>
+        <NextIntlClientProvider>
+          {children}
+          {devToolbar}
+        </NextIntlClientProvider>
       </body>
     </html>
   );
