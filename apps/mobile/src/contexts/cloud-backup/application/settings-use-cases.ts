@@ -1,6 +1,6 @@
 import type { BackupCommandResult, BackupStatus } from '../contract';
 import { deviceToken, mayUpload } from '../domain/backup-policy';
-import { deliverWithdrawals, errorOf, openClient } from './backup-access';
+import { connect, deliverWithdrawals, errorOf } from './backup-access';
 import type { CloudBackupDeps } from './ports';
 
 const OK: BackupCommandResult = { kind: 'ok' };
@@ -17,14 +17,19 @@ export class GetBackupStatus {
       (await this.d.activities.timeline()).map((a) => a.id).filter((id) => mayUpload(id, s.healthIncluded))
     );
     const count = (ids: string[]) => ids.filter((id) => eligible.has(id)).length;
-    const token = await this.d.tokens.read().catch(() => null);
+    const credentials = this.d.available ? await this.d.credentials.current().catch(() => null) : null;
+    const deviceToken = this.d.available ? await this.d.tokens.read().catch(() => null) : null;
+    const backedUp = count(await this.d.repo.backedUpIds());
     return {
+      available: this.d.available,
       enabled: s.enabled,
       healthIncluded: s.healthIncluded,
-      hasToken: token != null,
+      hasToken: credentials != null,
+      hasDeviceToken: deviceToken != null,
+      unsynced: s.enabled ? (await this.d.repo.withWork()).length : 0,
       serverUrl: st.serverUrl ?? this.d.defaultServerUrl,
       serverUrlOverridden: st.serverUrl != null,
-      backedUp: count(await this.d.repo.backedUpIds()),
+      backedUp,
       total: eligible.size,
       refused: count(await this.d.repo.refusedIds()),
       running: this.running(),
@@ -34,10 +39,13 @@ export class GetBackupStatus {
   }
 }
 
-/** Saves the device token the founder pasted (trimmed); a new token clears an "invalid token" stop. */
+/** Saves the device token the founder pasted in Developer tools (trimmed); the server says whose it is. */
 export class SaveDeviceToken {
   constructor(private readonly d: CloudBackupDeps) {}
   async execute(token: string): Promise<void> {
+    if (!this.d.available) {
+      return;
+    }
     await this.d.tokens.save(deviceToken(token));
     await this.d.repo.updateSettings((s) => s.tokenChanged());
   }
@@ -60,15 +68,25 @@ export class UseBackupServer {
   }
 }
 
-/** "Back up to CityTurfer cloud" on: records the consent on the server first, then turns backup on. */
+/** Waits until no backup run is in flight (it may be delivering a withdrawal). */
+type WhenIdle = () => Promise<void>;
+
+/**
+ * "Back up to CityTurfer cloud" on: records the consent on the server first, then turns backup on.
+ * Waits for a running backup first, so a withdrawal it is delivering can't land after this consent.
+ */
 export class EnableBackup {
-  constructor(private readonly d: CloudBackupDeps) {}
+  constructor(
+    private readonly d: CloudBackupDeps,
+    private readonly whenIdle: WhenIdle
+  ) {}
   async execute(): Promise<BackupCommandResult> {
-    const api = await openClient(this.d, await this.d.repo.settings());
-    if (!api) {
-      return { kind: 'failed', error: 'no-token' };
+    await this.whenIdle();
+    const c = await connect(this.d, await this.d.repo.settings());
+    if (c.kind !== 'connected') {
+      return { kind: 'failed', error: c.kind === 'failed' ? c.error : 'auth' };
     }
-    const r = await api.setConsent('cloud-sync', true, this.d.policyVersion);
+    const r = await c.api.setConsent('cloud-sync', true, this.d.policyVersion);
     if (!r.ok) {
       return { kind: 'failed', error: errorOf(r.failure) };
     }
@@ -77,34 +95,51 @@ export class EnableBackup {
   }
 }
 
-/** Off: stops at once on the phone, then withdraws the consents on the server (or on a later run). */
+/**
+ * Off: stops at once on the phone, then withdraws the consents on the server (now or on a later
+ * run). The server then erases its copy; nothing on the phone is deleted.
+ */
 export class DisableBackup {
   constructor(private readonly d: CloudBackupDeps) {}
   async execute(): Promise<BackupCommandResult> {
+    if (!this.d.available) {
+      return { kind: 'failed', error: 'not-available' };
+    }
     const s = await this.d.repo.updateSettings((x) => x.disable());
-    const api = await openClient(this.d, s);
-    const error = api ? await deliverWithdrawals(this.d, api, s) : 'no-token';
-    return error ? { kind: 'failed', error } : OK;
+    return withdraw(this.d, s);
   }
+}
+
+async function withdraw(d: CloudBackupDeps, s: Parameters<typeof connect>[1]): Promise<BackupCommandResult> {
+  const c = await connect(d, s);
+  if (c.kind !== 'connected') {
+    return { kind: 'failed', error: c.kind === 'failed' ? c.error : 'auth' };
+  }
+  const error = await deliverWithdrawals(d, c.api, c.settings);
+  return error ? { kind: 'failed', error } : OK;
 }
 
 /** "Include Apple Health workouts": on needs the server's consent first; off is immediate. */
 export class IncludeHealthWorkouts {
-  constructor(private readonly d: CloudBackupDeps) {}
+  constructor(
+    private readonly d: CloudBackupDeps,
+    private readonly whenIdle: WhenIdle
+  ) {}
   async execute(on: boolean): Promise<BackupCommandResult> {
-    if (!on) {
-      const s = await this.d.repo.updateSettings((x) => x.includeHealth(false));
-      const api = await openClient(this.d, s);
-      const error = api ? await deliverWithdrawals(this.d, api, s) : 'no-token';
-      return error ? { kind: 'failed', error } : OK;
+    if (!this.d.available) {
+      return { kind: 'failed', error: 'not-available' };
     }
+    if (!on) {
+      return withdraw(this.d, await this.d.repo.updateSettings((x) => x.includeHealth(false)));
+    }
+    await this.whenIdle();
     const s = await this.d.repo.settings();
     s.includeHealth(true); // checks the rule (backup must be on) before asking the server
-    const api = await openClient(this.d, s);
-    if (!api) {
-      return { kind: 'failed', error: 'no-token' };
+    const c = await connect(this.d, s);
+    if (c.kind !== 'connected') {
+      return { kind: 'failed', error: c.kind === 'failed' ? c.error : 'auth' };
     }
-    const r = await api.setConsent('apple-health-in-cloud-sync', true, this.d.policyVersion);
+    const r = await c.api.setConsent('apple-health-in-cloud-sync', true, this.d.policyVersion);
     if (!r.ok) {
       return { kind: 'failed', error: errorOf(r.failure) };
     }

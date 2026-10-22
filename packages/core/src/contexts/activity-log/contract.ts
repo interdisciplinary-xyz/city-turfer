@@ -1,8 +1,11 @@
 // Published language of the Activity Log context (types only).
 import type { ActivityType, DomainEvent, TrackPoint } from '../../shared-kernel';
 
-/** Where an Activity came from: a finished Recording Session, or imported (demo history, Apple Health). */
-export type ActivityOrigin = 'recording' | 'import';
+/**
+ * Where an Activity came from: a finished Recording Session, imported (demo history, Apple Health),
+ * or restored from the user's cloud backup (never exported to Apple Health or uploaded again).
+ */
+export type ActivityOrigin = 'recording' | 'import' | 'restore';
 
 export interface ActivityRecorded extends DomainEvent<'ActivityRecorded'> {
   activityId: string;
@@ -14,6 +17,13 @@ export interface ActivityRecorded extends DomainEvent<'ActivityRecorded'> {
 }
 export interface ActivityDeleted extends DomainEvent<'ActivityDeleted'> {
   activityId: string;
+}
+/** The Turfer renamed an Activity (saved in the same transaction as the new name). */
+export interface ActivityRenamed extends DomainEvent<'ActivityRenamed'> {
+  activityId: string;
+  name: string;
+  /** Epoch ms; the cloud copy keeps the latest rename (last write wins). */
+  renamedAt: number;
 }
 /** The stored track was corrected (e.g. split at recording gaps); consumers derived from it must rebuild. */
 export interface ActivityTrackCorrected extends DomainEvent<'ActivityTrackCorrected'> {
@@ -65,4 +75,13 @@ export interface ActivityArchive {
   gapRoutes: { afterSegment: number; distanceM: number; movingS: number; coords: [number, number][] }[];
   /** When the gap routes were estimated; null when not yet. */
   gapsCheckedAt: number | null;
+  /** IANA zone the phone was in when the Activity was saved; null when unknown. */
+  timeZone: string | null;
+  /** When it was last renamed; null: never. */
+  renamedAt: number | null;
 }
+
+/** What Restore brings back into Activity Log: a backed-up Activity with its track and gap routes. */
+export type RestoredActivity = ActivityArchive;
+
+export type RestoreOutcome = 'restored' | 'exists' | 'invalid';

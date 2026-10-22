@@ -2,6 +2,9 @@ import type { Context } from 'hono';
 
 import { PROBLEM_CODES, type ProblemCode } from './errors';
 
+/** A 400 lists at most this many invalid fields (`errors[]`). */
+export const MAX_FIELD_ERRORS = 20;
+
 /** One invalid field of a 400: a JSON pointer into the request and a short reason, never the value. */
 export interface FieldError {
   pointer: string;

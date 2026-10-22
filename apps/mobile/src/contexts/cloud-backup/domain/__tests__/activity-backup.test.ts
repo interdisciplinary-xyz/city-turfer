@@ -1,5 +1,5 @@
 import { ActivityBackup } from '../activity-backup';
-import { deviceToken, mayUpload, retryDelayMs, sourceOf } from '../backup-policy';
+import { deviceToken, mayUpload, nameToUpload, retryDelayMs, sourceOf, trackHashInput } from '../backup-policy';
 import { BackupSettings } from '../backup-settings';
 
 const NOW = 1_000_000;
@@ -11,6 +11,17 @@ const queued = () => {
 };
 
 describe('backup policy', () => {
+  it('a full upload keeps the newer rename (last write wins on renamedAt; the server wins ties)', () => {
+    const phone = (renamedAt: number | null) => ({ name: 'Phone A name', renamedAt });
+    const server = (renamedAt: number | null) => ({ name: 'Server name', renamedAt });
+    expect(nameToUpload(phone(null), server(null))).toBe('Phone A name'); // nobody renamed: phone's content
+    expect(nameToUpload(phone(null), server(10))).toBe('Server name'); // only another phone renamed it
+    expect(nameToUpload(phone(5), server(10))).toBe('Server name'); // the server's rename is newer
+    expect(nameToUpload(phone(10), server(10))).toBe('Server name');
+    expect(nameToUpload(phone(20), server(10))).toBe('Phone A name'); // this phone's rename is newer
+    expect(nameToUpload(phone(20), server(null))).toBe('Phone A name');
+  });
+
   it('never uploads demo history; Apple Health imports only with their consent', () => {
     expect(sourceOf('demo-123')).toBe('demo');
     expect(sourceOf('hk-ABC')).toBe('apple-health');
@@ -87,8 +98,8 @@ describe('ActivityBackup', () => {
     expect(b.nextStep(NOW)).toBe('upload');
     b.uploaded(b.rev, 1, NOW, false);
     expect(b.nextStep(NOW)).toBe('gap-routes');
-    b.gapRoutesSent(b.rev, 2);
-    expect(b.toState()).toMatchObject({ gapsPending: false, serverVersion: 2 });
+    b.gapRoutesSent(b.rev, 2, NOW - 5);
+    expect(b.toState()).toMatchObject({ gapsPending: false, serverVersion: 2, gapsSentAt: NOW - 5 });
   });
 
   it('the manifest skips what the server has, re-queues what it lost', () => {
@@ -133,7 +144,7 @@ describe('ActivityBackup', () => {
 describe('BackupSettings', () => {
   it('queues nothing while off; turning on asks for a full comparison', () => {
     const s = BackupSettings.initial();
-    s.queueHomeCity();
+    s.queueHomeCity(NOW);
     expect(s.homeCityPending).toBe(false);
     expect(s.acceptsChanges).toBe(false);
     s.enable();
@@ -154,6 +165,29 @@ describe('BackupSettings', () => {
     expect(s.withdrawalsPending).toEqual(['apple-health-in-cloud-sync']);
   });
 
+  it('after a restore, the server consents turn backup and Apple Health on; a pending withdrawal wins', () => {
+    const s = BackupSettings.initial();
+    expect(s.adoptServerConsents({ cloudSync: false, health: true })).toBe(false);
+    expect(s.toState()).toMatchObject({ enabled: false, healthIncluded: false });
+    expect(s.adoptServerConsents({ cloudSync: true, health: true })).toBe(true);
+    expect(s.toState()).toMatchObject({ enabled: true, healthIncluded: true, backfilledAt: null });
+    expect(s.adoptServerConsents({ cloudSync: false, health: false })).toBe(false); // never turns off
+    expect(s.enabled).toBe(true);
+
+    const off = BackupSettings.initial();
+    off.enable();
+    off.disable(); // withdrawn here, the server hasn't heard yet
+    expect(off.adoptServerConsents({ cloudSync: true, health: true })).toBe(false);
+    expect(off.enabled).toBe(false);
+
+    const noHealth = BackupSettings.initial();
+    noHealth.enable();
+    noHealth.includeHealth(true);
+    noHealth.includeHealth(false);
+    expect(noHealth.adoptServerConsents({ cloudSync: true, health: true })).toBe(false);
+    expect(noHealth.healthIncluded).toBe(false);
+  });
+
   it('Apple Health needs backup on; turning it on compares again', () => {
     const s = BackupSettings.initial();
     expect(() => s.includeHealth(true)).toThrow(expect.objectContaining({ code: 'backup.off' }));
@@ -163,14 +197,13 @@ describe('BackupSettings', () => {
     expect(s.needsPlanning).toBe(true);
   });
 
-  it('an auth stop lasts until a new token; the token stays while backup is on', () => {
+  it('the token stays while backup is on; a new one clears the last error', () => {
     const s = BackupSettings.initial();
     s.enable();
     s.runFinished(NOW, 'auth');
-    expect(s.waitsForNewToken).toBe(true);
     expect(() => s.ensureTokenRemovable()).toThrow(expect.objectContaining({ code: 'backup.on' }));
     s.tokenChanged();
-    expect(s.waitsForNewToken).toBe(false);
+    expect(s.toState().lastError).toBeNull();
   });
 
   it('accepts http(s) server URLs only, without a trailing slash', () => {
@@ -181,5 +214,151 @@ describe('BackupSettings', () => {
     expect(s.toState().serverUrl).toBeNull();
     expect(() => s.useServer('ftp://x')).toThrow(expect.objectContaining({ code: 'backup.invalid-server-url' }));
     expect(() => s.useServer('https://a b')).toThrow();
+  });
+});
+
+describe('ActivityBackup: renames, gap checks and reconciling', () => {
+  const onServer = () => {
+    const b = queued();
+    b.uploaded(b.rev, 1, NOW, false);
+    return b;
+  };
+  const same = { trackHash: 'h1', name: 'Walk' };
+  const local = { ...same, renamedAt: null };
+
+  it('a rename goes after the activity, once; an upload in flight carries it', () => {
+    const b = queued();
+    b.queueRename();
+    expect(b.nextStep(NOW)).toBe('upload');
+    b.uploaded(b.rev, 1, NOW, false);
+    expect(b.nextStep(NOW)).toBeNull(); // the upload sent the current name
+
+    b.queueRename();
+    expect(b.nextStep(NOW)).toBe('rename');
+    const rev = b.rev;
+    b.queueRename(); // renamed again while the first was being sent
+    b.renamed(rev, 2);
+    expect(b.nextStep(NOW)).toBe('rename');
+    b.renamed(b.rev, 3);
+    expect(b.toState()).toMatchObject({ renamePending: false, serverVersion: 3 });
+  });
+
+  it('a refused rename is dropped; a deleted activity is never renamed', () => {
+    const b = onServer();
+    b.queueRename();
+    b.refused(b.rev, 'rename', 'rejected', 'activity.invalid-name');
+    expect(b.nextStep(NOW)).toBeNull();
+    b.queueDelete();
+    b.queueRename();
+    expect(b.nextStep(NOW)).toBe('delete');
+    b.deleted();
+    b.queueRename();
+    expect(b.nextStep(NOW)).toBeNull();
+  });
+
+  it('reconcile: another track is replaced, another name renamed, a newer gap check sent', () => {
+    const track = onServer();
+    track.reconcile({ trackHash: 'old', name: 'Walk' }, { ...local, gapsCheckedAt: null });
+    expect(track.nextStep(NOW)).toBe('replace');
+
+    const name = onServer();
+    name.reconcile({ trackHash: 'h1', name: 'Old name' }, { ...local, renamedAt: NOW - 5, gapsCheckedAt: null });
+    expect(name.nextStep(NOW)).toBe('rename');
+
+    const gaps = onServer();
+    gaps.reconcile(same, { ...local, gapsCheckedAt: NOW - 1 });
+    expect(gaps.nextStep(NOW)).toBe('gap-routes');
+    gaps.gapRoutesSent(gaps.rev, 2, NOW - 1);
+    gaps.reconcile(same, { ...local, gapsCheckedAt: NOW - 1 });
+    expect(gaps.nextStep(NOW)).toBeNull(); // the server already has that check
+  });
+
+  it("reconcile: a name this phone never renamed is not pushed over the server's", () => {
+    // E.g. renamed on another phone after a restore: the server's name may be the newer one.
+    const b = onServer();
+    b.reconcile({ trackHash: 'h1', name: 'Renamed on phone B' }, { ...local, gapsCheckedAt: null });
+    expect(b.nextStep(NOW)).toBeNull();
+  });
+
+  it('deleted on the phone while off: delete what may be on the server, nothing else', () => {
+    const b = onServer();
+    b.deletedOnPhone();
+    expect(b.nextStep(NOW)).toBe('delete');
+    const never = ActivityBackup.track('x', 1);
+    never.deletedOnPhone();
+    expect(never.nextStep(NOW)).toBeNull();
+    const gone = onServer();
+    gone.goneOnServer();
+    gone.deletedOnPhone();
+    expect(gone.nextStep(NOW)).toBeNull();
+  });
+
+  it('a new track on the server has no gap routes: the next check is sent again', () => {
+    const b = onServer();
+    b.queueGapRoutes();
+    b.gapRoutesSent(b.rev, 2, NOW - 1);
+    b.queueCorrection();
+    b.uploaded(b.rev, 3, NOW, true);
+    expect(b.toState()).toMatchObject({ gapsSentAt: null, gapsPending: true });
+  });
+});
+
+describe('BackupSettings: accounts, withdrawals, Home City', () => {
+  it('adopts the first account as is; another one resets everything and turns backup off', () => {
+    const s = BackupSettings.initial();
+    s.enable();
+    s.planned(NOW, 'c9');
+    expect(s.useAccount('https://api|u1')).toBe(false);
+    expect(s.needsPlanning).toBe(true); // adopted, but compared again
+    s.planned(NOW, 'c10');
+    expect(s.useAccount('https://api|u1')).toBe(false);
+    expect(s.needsPlanning).toBe(false);
+    expect(s.enabled).toBe(true);
+    expect(s.useAccount('https://api|u2')).toBe(true);
+    expect(s.toState()).toMatchObject({
+      enabled: false,
+      cursor: null,
+      backfilledAt: null,
+      accountKey: 'https://api|u2',
+    });
+  });
+
+  it('a delivered backup withdrawal means nothing is on the server; Apple Health only its own', () => {
+    const s = BackupSettings.initial();
+    s.enable();
+    s.planned(NOW, 'c1');
+    s.homeCityDelivered(NOW - 5);
+    s.disable();
+    s.withdrawalDelivered('apple-health-in-cloud-sync');
+    expect(s.toState()).toMatchObject({ cursor: 'c1', homeCitySentAt: NOW - 5 });
+    s.withdrawalDelivered('cloud-sync');
+    expect(s.toState()).toMatchObject({
+      cursor: null,
+      backfilledAt: null,
+      homeCitySentAt: null,
+      withdrawalsPending: [],
+    });
+  });
+
+  it('queues a Home City choice only when the server does not have that one', () => {
+    const s = BackupSettings.initial();
+    s.enable();
+    s.homeCityRestored(NOW - 10);
+    s.queueHomeCity(NOW - 10);
+    expect(s.homeCityPending).toBe(false);
+    s.queueHomeCity(NOW);
+    expect(s.homeCityPending).toBe(true);
+  });
+});
+
+describe('canonical track (the server hashes exactly this)', () => {
+  it('is [lon, lat, whole-ms t, segment, alt | null] as JSON without spaces', () => {
+    const track = [
+      { lat: 52.2297, lon: 21.0122, t: 1760857920000.4, segment: 0, alt: 98.5, accuracy: 4, speed: 3 },
+      { lat: 52.2299, lon: 21.0125, t: 1760857923000, segment: 1, alt: null, accuracy: null, speed: null },
+    ];
+    expect(trackHashInput(track)).toBe(
+      '[[21.0122,52.2297,1760857920000,0,98.5],[21.0125,52.2299,1760857923000,1,null]]'
+    );
   });
 });

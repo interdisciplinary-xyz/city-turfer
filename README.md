@@ -220,16 +220,15 @@ The diagnostics tools never print coordinates: location data is personal data.
 
 ### Environment
 
-No `.env` is needed for local app development. Two public variables select the build mode
-(`apps/mobile/src/composition-root.ts`):
+No `.env` is needed for local app development. The local `admin` and `demo` profiles work in every
+build (decision B6 in `docs/plans/backend-plan-2026-10-22.md`); any other e-mail signs in with a
+code against the API.
 
-- `EXPO_PUBLIC_AUTH_MODE`: default `mock` (the demo account)
-- `EXPO_PUBLIC_APP_ENV`: default `poc`; the app refuses to start with mock auth when this is
-  `production`
-
-Cloud backup talks to `API_BASE_URL` in `apps/mobile/src/constants/api.ts` (a phone can override it
-in Info › Cloud backup). The API reads its database URL and `API_TOKENS` (hashes of device tokens)
-from the environment: see the [API deploy runbook](./docs/operations/api-deploy.md).
+Sign-in and cloud backup talk to `API_BASE_URL` in `apps/mobile/src/constants/api.ts`:
+`EXPO_PUBLIC_API_URL` when set, else the production API `https://city-turfer-api.vercel.app` (a
+phone can override it in Info › Developer tools). The API reads its database URL and `API_TOKENS`
+(hashes of device tokens) from the environment: see the
+[API deploy runbook](./docs/operations/api-deploy.md).
 
 ---
 

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, lt, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, inArray, like, lt, notInArray, or, sql } from 'drizzle-orm';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 
 import type {
@@ -15,7 +15,22 @@ import type {
   UserRecord,
 } from '../backup/model';
 import type { BackupStore, UserReader, UserWriter } from '../backup/ports';
-import { activities, activityTracks, consents, gapRoutes, homeCities, tombstones, users } from './schema';
+import {
+  activities,
+  activityTracks,
+  authUsers,
+  authVerifications,
+  consents,
+  dataExports,
+  gapRoutes,
+  homeCities,
+  storedFiles,
+  tombstones,
+  users,
+} from './schema';
+
+/** A LIKE pattern matching `text` literally. */
+const likeEscaped = (text: string) => text.replace(/[\\%_]/g, (c) => `\\${c}`);
 
 /** A Drizzle Postgres database or transaction: Neon in production, PGlite in tests and dev. */
 export type Db = PgDatabase<PgQueryResultHKT>;
@@ -26,6 +41,7 @@ const toActivity = (r: ActivityRow): ActivityRecord => ({
   id: r.id,
   type: r.type as ActivityTypeName,
   name: r.name,
+  renamedAt: r.renamedAt?.getTime() ?? null,
   source: r.source as ActivitySourceName,
   startedAt: r.startedAt.getTime(),
   endedAt: r.endedAt.getTime(),
@@ -46,6 +62,7 @@ const activityRow = (userId: string, a: ActivityRecord) => ({
   id: a.id,
   type: a.type,
   name: a.name,
+  renamedAt: a.renamedAt === null ? null : new Date(a.renamedAt),
   source: a.source,
   startedAt: new Date(a.startedAt),
   endedAt: new Date(a.endedAt),
@@ -70,7 +87,9 @@ class UserScope implements UserWriter {
 
   async user(): Promise<UserRecord | null> {
     const [row] = await this.db.select().from(users).where(eq(users.id, this.userId));
-    return row ? { id: row.id, email: row.email, displayName: row.displayName } : null;
+    return row
+      ? { id: row.id, email: row.email, displayName: row.displayName, createdAt: row.createdAt.getTime() }
+      : null;
   }
 
   async consents(): Promise<ConsentRecord[]> {
@@ -117,6 +136,28 @@ class UserScope implements UserWriter {
       .from(gapRoutes)
       .where(and(eq(gapRoutes.userId, this.userId), eq(gapRoutes.activityId, id)));
     return row ? { checkedAt: row.checkedAt.getTime(), routes: row.routes } : null;
+  }
+
+  async tracksOf(ids: readonly string[]): Promise<Map<string, CompactPoint[]>> {
+    if (ids.length === 0) {
+      return new Map();
+    }
+    const rows = await this.db
+      .select({ id: activityTracks.activityId, points: activityTracks.points })
+      .from(activityTracks)
+      .where(and(eq(activityTracks.userId, this.userId), inArray(activityTracks.activityId, [...ids])));
+    return new Map(rows.map((r) => [r.id, r.points]));
+  }
+
+  async gapRoutesOf(ids: readonly string[]): Promise<Map<string, GapRoutesRecord>> {
+    if (ids.length === 0) {
+      return new Map();
+    }
+    const rows = await this.db
+      .select()
+      .from(gapRoutes)
+      .where(and(eq(gapRoutes.userId, this.userId), inArray(gapRoutes.activityId, [...ids])));
+    return new Map(rows.map((r) => [r.activityId, { checkedAt: r.checkedAt.getTime(), routes: r.routes }]));
   }
 
   async homeCity(): Promise<HomeCityRecord | null> {
@@ -197,6 +238,9 @@ class UserScope implements UserWriter {
   }
 
   async lock(): Promise<void> {
+    // The middleware caches users it has seen per instance; after an erasure elsewhere the row may
+    // be gone: re-create it (empty account) instead of failing on the foreign keys.
+    await this.db.insert(users).values({ id: this.userId }).onConflictDoNothing();
     await this.db.select({ id: users.id }).from(users).where(eq(users.id, this.userId)).for('update');
   }
 
@@ -270,6 +314,29 @@ class UserScope implements UserWriter {
       .onConflictDoUpdate({ target: [gapRoutes.userId, gapRoutes.activityId], set: values });
   }
 
+  async eraseBackup(scope: 'apple-health' | 'all'): Promise<number> {
+    const mine = eq(activities.userId, this.userId);
+    // Tracks and gap routes go with their activity (ON DELETE CASCADE).
+    const gone = await this.db
+      .delete(activities)
+      .where(scope === 'all' ? mine : and(mine, or(like(activities.id, 'hk-%'), eq(activities.source, 'apple-health'))))
+      .returning({ id: activities.id });
+    if (scope === 'all') {
+      // Tombstones stay (ids and times only, no location data): delete wins (D5) across a
+      // withdrawal, so a phone still holding a deleted activity gets 410 instead of re-uploading
+      // it. They go with the account (eraseAccount).
+      await this.db.delete(homeCities).where(eq(homeCities.userId, this.userId));
+    }
+    // Export zips hold copies of the same data: delete them and expire their links, in this
+    // transaction (Postgres FileStorage; a Blob adapter will need its own delete).
+    await this.db.delete(storedFiles).where(eq(storedFiles.ownerId, this.userId));
+    await this.db
+      .update(dataExports)
+      .set({ status: 'expired', fileKey: null })
+      .where(and(eq(dataExports.userId, this.userId), notInArray(dataExports.status, ['failed', 'expired'])));
+    return gone.length;
+  }
+
   async putHomeCity(h: HomeCityRecord): Promise<void> {
     const values = {
       cityId: h.cityId,
@@ -292,8 +359,31 @@ export class DrizzleBackupStore implements BackupStore {
     return new UserScope(this.db, userId);
   }
 
+  /**
+   * READ COMMITTED on purpose (Postgres' default, pinned so a changed database default cannot
+   * break it): every statement sees what committed before it started, so reads after `lock()` see
+   * the last write of the user that held the lock — a consent withdrawal included. A snapshot
+   * level (REPEATABLE READ) would keep the reads from before the lock wait.
+   */
   write<T>(userId: string, fn: (tx: UserWriter) => Promise<T>): Promise<T> {
-    return this.db.transaction((tx) => fn(new UserScope(tx as unknown as Db, userId)));
+    return this.db.transaction((tx) => fn(new UserScope(tx as unknown as Db, userId)), {
+      isolationLevel: 'read committed',
+    });
+  }
+
+  async eraseAccount(userId: string): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      const [auth] = await tx.delete(authUsers).where(eq(authUsers.id, userId)).returning({ email: authUsers.email });
+      if (auth) {
+        // A pending code is keyed `<type>-otp-<email>` (Better Auth emailOTP).
+        await tx
+          .delete(authVerifications)
+          .where(like(authVerifications.identifier, `%-otp-${likeEscaped(auth.email)}`));
+      }
+      // Everything else hangs off users (ON DELETE CASCADE): consents, activities → tracks and gap
+      // routes, tombstones, the Home City, exports. Sessions went with auth_users.
+      await tx.delete(users).where(eq(users.id, userId));
+    });
   }
 
   async ensureUser(user: UserRecord): Promise<void> {

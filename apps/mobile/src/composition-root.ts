@@ -7,20 +7,24 @@ import * as Crypto from 'expo-crypto';
 import * as Location from 'expo-location';
 import { AppState, Platform } from 'react-native';
 
-import { API_TIMEOUT_MS, API_UPLOAD_TIMEOUT_MS } from '@/constants/api';
+import { API_BASE_URL, API_TIMEOUT_MS, API_UPLOAD_TIMEOUT_MS } from '@/constants/api';
 import { OsmRouteEstimator } from '@/contexts/activity-log/infrastructure/osm-route-estimator';
 import { SecureStoreGapEstimationSetting } from '@/contexts/activity-log/infrastructure/secure-store-gap-estimation-setting';
+import type { DeviceTokenStore } from '@/contexts/cloud-backup';
 import { createFetchApiClient } from '@/contexts/cloud-backup/infrastructure/fetch-api-client';
 import { SecureStoreDeviceTokenStore } from '@/contexts/cloud-backup/infrastructure/secure-store-device-token-store';
 import { HealthKitHealthStore } from '@/contexts/health-sync/infrastructure/healthkit-health-store';
 import { createIdentityApi } from '@/contexts/identity';
+import { ApiAuthGateway } from '@/contexts/identity/infrastructure/api-auth-gateway';
 import { CachedSessionStore } from '@/contexts/identity/infrastructure/cached-session-store';
 import { MockAuthGateway } from '@/contexts/identity/infrastructure/mock-auth-gateway';
+import { SecureStoreAccountProfileStore } from '@/contexts/identity/infrastructure/secure-store-account-profile-store';
+import { SecureStoreCredentialStore } from '@/contexts/identity/infrastructure/secure-store-credential-store';
 import { SecureStoreSessionStore } from '@/contexts/identity/infrastructure/secure-store-session-store';
 import { backgroundActivitySession } from '@/contexts/recording/infrastructure/background-activity-session';
 import { ExpoLocationTracker, ExpoPermissionGateway } from '@/contexts/recording/infrastructure/expo-location-tracker';
 import { liveSessionStore } from '@/contexts/recording/infrastructure/live-session-store';
-import { openExpoDatabase } from '@/platform/expo-database';
+import { deleteExpoDatabase, openExpoDatabase } from '@/platform/expo-database';
 import { runWhenForeground } from '@/platform/foreground';
 import { migrate } from '@/platform/migrations';
 
@@ -28,17 +32,68 @@ import { type Container, wire } from './wiring';
 
 // --- Identity (app-wide, no user database needed) ------------------------------
 
-const AUTH_MODE = process.env.EXPO_PUBLIC_AUTH_MODE ?? 'mock';
-const APP_ENV = process.env.EXPO_PUBLIC_APP_ENV ?? 'poc';
-if (AUTH_MODE === 'mock' && APP_ENV === 'production') {
-  throw new Error('Mock authentication must not ship in a production build (docs/poc-plan.md §4.0).');
-}
-
 // One instance for sign-in, sign-out and getContainer(): it caches the signed-in uid in memory.
 const sessionStore = new CachedSessionStore(new SecureStoreSessionStore());
 const tracker = new ExpoLocationTracker();
 
-export const identity = createIdentityApi({ auth: new MockAuthGateway(), sessions: sessionStore }, isRecording);
+const CLIENT = `${Platform.OS}/${Constants.expoConfig?.version ?? 'dev'}`;
+const databaseName = (profileId: string) => `turftrack-${profileId}.db`;
+
+/**
+ * Local profiles (mock admin + demo, password) in every build, and real accounts (email one-time
+ * code) against the API. Only foreground code paths use the account parts: the background location
+ * task reads the signed-in profile id (sessionStore) and nothing else.
+ */
+export const identity = createIdentityApi(
+  {
+    auth: new MockAuthGateway(),
+    sessions: sessionStore,
+    accounts: {
+      gateway: new ApiAuthGateway({ baseUrl: API_BASE_URL, client: CLIENT, timeoutMs: API_TIMEOUT_MS }),
+      credentials: new SecureStoreCredentialStore(),
+      profiles: new SecureStoreAccountProfileStore(),
+      history: { hasActivities: profileHasActivities },
+    },
+  },
+  isRecording
+);
+
+/** Does a local profile's database hold activities (the history a first real sign-in may adopt)? */
+async function profileHasActivities(profileId: string): Promise<boolean> {
+  if (current?.userId === profileId) {
+    const c = await current.promise.catch(() => null);
+    return c ? (await c.activityLog.list.execute(1)).length > 0 : false;
+  }
+  // expo-sqlite has no "does it exist" nor read-only open, and expo-file-system is not a dependency
+  // of the app (adding it changes the runtime fingerprint). So: open, and if the file holds no
+  // tables at all it was never used (this probe just created it): delete it again, so asking
+  // leaves no empty database behind.
+  const name = databaseName(profileId);
+  const db = await openExpoDatabase(name).catch(() => null);
+  if (!db) {
+    return false;
+  }
+  let unused = false;
+  try {
+    unused = (await db.first<{ n: number }>('SELECT COUNT(*) AS n FROM sqlite_master'))!.n === 0;
+    return !unused && (await db.first<{ n: number }>('SELECT COUNT(*) AS n FROM log_activities'))!.n > 0;
+  } catch {
+    return false; // not migrated that far: no activities
+  } finally {
+    await db.close().catch(() => undefined);
+    if (unused) {
+      await deleteExpoDatabase(name).catch(() => undefined);
+    }
+  }
+}
+
+/** Deletes a signed-out profile's database (after deleting the account, if the Turfer asked to). */
+export async function deleteProfileData(profileId: string): Promise<void> {
+  if (current?.userId === profileId) {
+    await resetContainer();
+  }
+  await deleteExpoDatabase(databaseName(profileId));
+}
 
 /** Sign-out gate: the domain's active Recording Session, not whether the OS tracker happens to run. */
 async function isRecording(): Promise<boolean> {
@@ -67,16 +122,28 @@ const adapters = {
   isForeground: () => AppState.currentState === 'active',
   cloudBackup: {
     api: createFetchApiClient({
-      client: `${Platform.OS}/${Constants.expoConfig?.version ?? 'dev'}`,
+      client: CLIENT,
       timeoutMs: API_TIMEOUT_MS,
       uploadTimeoutMs: API_UPLOAD_TIMEOUT_MS,
     }),
     tokens: (userId: string) => new SecureStoreDeviceTokenStore(userId),
-    timeZone: deviceTimeZone,
+    // The signed-in account's bearer (Identity), else the Developer tools device token.
+    credentials: (userId: string, deviceToken: DeviceTokenStore) => ({
+      current: async () => {
+        const account = await identity.accountBearer.execute(userId);
+        if (account) {
+          return account;
+        }
+        const token = await deviceToken.read();
+        return token ? { token, accountId: null } : null;
+      },
+    }),
+    sha256: (text: string) => Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, text),
   },
+  timeZone: deviceTimeZone,
 };
 
-/** The device's IANA zone (sent with uploads; activities recorded before backup get the current one). */
+/** The device's IANA zone, kept with each new Activity (older ones get the current zone once). */
 function deviceTimeZone(): string | null {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone ?? null;
@@ -107,7 +174,7 @@ export async function getContainer(): Promise<Container | null> {
   }
   let cancelMaintenance: () => void = () => undefined; // set once the container is wired
   const promise = (async () => {
-    const db = await openExpoDatabase(`turftrack-${uid}.db`);
+    const db = await openExpoDatabase(databaseName(uid));
     await migrate(db);
     const c = wire(uid, db, adapters);
     // appState 'background' here means iOS/Android launched us headless (e.g. to deliver locations).

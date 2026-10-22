@@ -1,12 +1,13 @@
 /**
- * CityTurfer HTTP API (apps/api) used by Cloud Backup.
+ * CityTurfer HTTP API (apps/api) used by Cloud Backup and email sign-in.
  *
- * PLACEHOLDER: the preview deployment of scope/v0.8.0. Set this to the deployed API URL before a
- * release (an OTA update is enough: it is plain JS). A phone can override it in Info › Cloud backup
- * for local testing. Never put a token here: the device token is pasted in the app and kept in
- * expo-secure-store.
+ * Default: the API project's production domain on Vercel. A build can point elsewhere with
+ * `EXPO_PUBLIC_API_URL` (empty counts as unset; read directly, so Expo inlines it at bundle time; changing it is an OTA
+ * update, it is plain JS). A phone can override the backup server in Info › Developer tools for
+ * local testing. Never put a token here: tokens live in expo-secure-store (the signed-in account's,
+ * or a device token pasted in Developer tools).
  */
-export const API_BASE_URL = 'https://city-turfer-api-git-scope-v080-micha-dopieralskis-projects.vercel.app';
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://city-turfer-api.vercel.app';
 
 /** Privacy policy version the backup consents refer to (PUT /v1/me/consents/{purpose}). */
 export const CLOUD_BACKUP_POLICY_VERSION = '2026-10';

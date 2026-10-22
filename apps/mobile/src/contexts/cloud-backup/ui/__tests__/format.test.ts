@@ -1,5 +1,6 @@
 import { describeRefused, ERROR_TEXT } from '../cloud-backup-card.constants';
 import { describeLastRun, describeProgress } from '../format';
+import { describeOffer, describeResult } from '../restore-card.constants';
 
 const NOW = new Date(2026, 9, 20, 14, 30).getTime();
 
@@ -25,7 +26,22 @@ describe('cloud backup copy', () => {
       expect(text.length).toBeGreaterThan(10);
     }
     expect(Object.keys(ERROR_TEXT).sort()).toEqual(
-      ['auth', 'busy', 'consent', 'no-token', 'not-ready', 'offline', 'outdated', 'server'].sort()
+      ['auth', 'busy', 'consent', 'no-token', 'not-available', 'not-ready', 'offline', 'outdated', 'server'].sort()
     );
+  });
+});
+
+describe('restore copy', () => {
+  it('offers what the phone lacks, and says when there was nothing to bring', () => {
+    expect(describeOffer({ kind: 'available', count: 1 })).toBe(
+      "Your backup holds 1 activity that isn't on this phone. Bring it over and your turf comes back with it. Nothing here is replaced."
+    );
+    expect(describeOffer({ kind: 'available', count: 3 })).toMatch(
+      /^Your backup holds 3 activities that aren't on this phone\./
+    );
+    expect(describeResult({ kind: 'done', restored: 0, skipped: 0, backupOn: true })).toBe(
+      'This phone already has everything in your backup.'
+    );
+    expect(describeResult({ kind: 'done', restored: 2, skipped: 0, backupOn: false })).toBe('Restored 2 activities.');
   });
 });

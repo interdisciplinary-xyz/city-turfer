@@ -32,8 +32,9 @@ export const Problem = z
     code: ProblemCodeSchema,
     errors: z
       .array(FieldError)
+      .max(20)
       .optional()
-      .openapi({ description: 'Only on 400 `invalid-request`: which fields are invalid.' }),
+      .openapi({ description: 'Only on 400 `invalid-request`: which fields are invalid (the first 20).' }),
   })
   .openapi('Problem');
 
@@ -73,7 +74,7 @@ export const notFound = (what: string) => ({
   404: problemResponse(`No ${what} with this id for this user.`, 'not-found'),
 });
 
-/** Bearer device token (API_TOKENS; Better Auth later). */
+/** Bearer token: a Better Auth session (e-mailed code) or, for one more release, a device token (API_TOKENS). */
 export const BEARER_AUTH = [{ bearerAuth: [] }];
 
 /** Spec extension marking routes that are declared but not built yet. */

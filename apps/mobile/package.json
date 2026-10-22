@@ -83,7 +83,8 @@
       ]
     },
     "moduleNameMapper": {
-      "^@/(.*)$": "<rootDir>/src/$1"
+      "^@/(.*)$": "<rootDir>/src/$1",
+      "^expo/virtual/env$": "<rootDir>/src/test-support/expo-virtual-env.ts"
     },
     "collectCoverageFrom": [
       "src/**/*.{ts,tsx}",

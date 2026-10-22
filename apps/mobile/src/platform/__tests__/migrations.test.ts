@@ -1,6 +1,6 @@
 import { openNodeDatabase } from '@/test-support/node-database';
 
-import { migrate } from '../migrations';
+import { LATEST_SCHEMA_VERSION, migrate } from '../migrations';
 
 const version = async (db: ReturnType<typeof openNodeDatabase>) =>
   (await db.first<{ v: number }>('SELECT MAX(version) AS v FROM sys_schema_version'))!.v;
@@ -27,7 +27,7 @@ describe('migration v5 (outbox retries and dead letters)', () => {
     );
 
     await migrate(db);
-    expect(await version(db)).toBe(8);
+    expect(await version(db)).toBe(LATEST_SCHEMA_VERSION);
 
     const outbox = await db.all<Record<string, unknown>>('SELECT * FROM sys_outbox ORDER BY id');
     expect(outbox).toEqual([
@@ -63,8 +63,10 @@ describe('migration v5 (outbox retries and dead letters)', () => {
 
     // Second launch: nothing re-applied, no error, nothing lost.
     await migrate(db);
-    expect(await version(db)).toBe(8);
-    expect((await db.first<{ n: number }>('SELECT COUNT(*) AS n FROM sys_schema_version'))!.n).toBe(8);
+    expect(await version(db)).toBe(LATEST_SCHEMA_VERSION);
+    expect((await db.first<{ n: number }>('SELECT COUNT(*) AS n FROM sys_schema_version'))!.n).toBe(
+      LATEST_SCHEMA_VERSION
+    );
     expect((await db.first<{ n: number }>('SELECT COUNT(*) AS n FROM sys_outbox'))!.n).toBe(2);
   });
 });
@@ -80,7 +82,7 @@ describe('migration v8 (cloud backup)', () => {
     await db.run("INSERT INTO ter_home_city (id, city_id, chosen_at) VALUES (1, 'pl-krakow', 5)");
 
     await migrate(db);
-    expect(await version(db)).toBe(8);
+    expect(await version(db)).toBe(LATEST_SCHEMA_VERSION);
     expect(await db.first('SELECT COUNT(*) AS n FROM cb_state')).toEqual({ n: 0 });
     expect(await db.first('SELECT COUNT(*) AS n FROM cb_activities')).toEqual({ n: 0 });
     expect(await db.first('SELECT id FROM log_activities')).toEqual({ id: 's1' });
@@ -99,5 +101,67 @@ describe('migration v8 (cloud backup)', () => {
     await expect(
       db.run("INSERT INTO cb_activities (activity_id, started_at, status, op) VALUES ('c', 1, 'none', 'patch')")
     ).rejects.toThrow();
+  });
+});
+
+describe('migration v9 (time zone and rename time of an Activity)', () => {
+  it('adds empty columns to a v8 database, keeping its activities', async () => {
+    const db = openNodeDatabase();
+    await migrate(db, 8);
+    await db.run(
+      `INSERT INTO log_activities (id, type, name, started_at, ended_at, distance_m, moving_s, elapsed_s, splits, created_at)
+       VALUES ('s1', 'run', 'Morning run', 1, 2, 5000, 1500, 1600, '[]', 3)`
+    );
+    await migrate(db, 9);
+    expect(await version(db)).toBe(9);
+    expect(await db.first('SELECT id, name, time_zone, renamed_at FROM log_activities')).toEqual({
+      id: 's1',
+      name: 'Morning run',
+      time_zone: null,
+      renamed_at: null,
+    });
+  });
+});
+
+describe('migration v10 (cloud backup accounts, renames, gap checks)', () => {
+  it('keeps backup rows of a v9 database and adds the new columns empty', async () => {
+    const db = openNodeDatabase();
+    await migrate(db, 9);
+    await db.run('INSERT INTO cb_state (id, enabled) VALUES (1, 1)');
+    await db.run("INSERT INTO cb_activities (activity_id, started_at, status) VALUES ('a', 1, 'backed-up')");
+    await migrate(db, 10);
+    expect(await db.first('SELECT enabled, account_key, home_city_sent_at FROM cb_state')).toEqual({
+      enabled: 1,
+      account_key: null,
+      home_city_sent_at: null,
+    });
+    expect(await db.first('SELECT status, rename_pending, gaps_sent_at FROM cb_activities')).toEqual({
+      status: 'backed-up',
+      rename_pending: 0,
+      gaps_sent_at: null,
+    });
+  });
+});
+
+describe('migration v11 (restore from the cloud backup)', () => {
+  it('adds empty restore tables with one state row and known statuses only', async () => {
+    const db = openNodeDatabase();
+    await migrate(db, 10);
+    await migrate(db, 11);
+    expect(await db.first('SELECT COUNT(*) AS n FROM cb_restore_items')).toEqual({ n: 0 });
+    await db.run("INSERT INTO cb_restore (id, status) VALUES (1, 'running')");
+    await expect(db.run("INSERT INTO cb_restore (id, status) VALUES (2, 'running')")).rejects.toThrow();
+    await expect(db.run("UPDATE cb_restore SET status = 'paused'")).rejects.toThrow();
+  });
+});
+
+describe('migration v12 (declined restore offers)', () => {
+  it('adds an empty table of activity ids, one row per id', async () => {
+    const db = openNodeDatabase();
+    await migrate(db, 11);
+    await migrate(db, 12);
+    expect(await db.first('SELECT COUNT(*) AS n FROM cb_restore_declined')).toEqual({ n: 0 });
+    await db.run("INSERT INTO cb_restore_declined (activity_id) VALUES ('rec-1')");
+    await expect(db.run("INSERT INTO cb_restore_declined (activity_id) VALUES ('rec-1')")).rejects.toThrow();
   });
 });

@@ -2,7 +2,14 @@ import { Activity, estimatedTotals } from '@cityturfer/core/activity-log/ports';
 import corePackage from '@cityturfer/core/package.json' with { type: 'json' };
 import { trackFromPoints, type TrackPoint } from '@cityturfer/core/shared-kernel';
 
-import type { ActivitySourceName, ActivityTypeName, CompactPoint, StoredGapRoute, StoredSummary } from './model';
+import type {
+  ActivityRecord,
+  ActivitySourceName,
+  ActivityTypeName,
+  CompactPoint,
+  StoredGapRoute,
+  StoredSummary,
+} from './model';
 
 /** Version of the shared core that computes the numbers (answered as `coreVersion`). */
 export const CORE_VERSION: string = corePackage.version;
@@ -43,7 +50,7 @@ export function summarizeUpload(input: {
     resumedSegments: input.resumedSegments,
     origin: input.source === 'recording' ? 'recording' : 'import',
   });
-  activity.rename(input.name);
+  activity.rename(input.name, input.now);
   const s = activity.toState();
   return {
     name: s.name,
@@ -64,4 +71,30 @@ export function summarizeUpload(input: {
 /** Distance and moving time the phone's gap routes add (the core's rule). */
 export function gapTotals(routes: readonly StoredGapRoute[]): { distanceM: number; movingS: number } {
   return estimatedTotals(routes);
+}
+
+/** The core's rename rule (trimmed, 1–80 characters, else DomainError `activity.invalid-name`). */
+export function renamed(a: ActivityRecord, name: string): string {
+  const activity = Activity.rehydrate({
+    id: a.id,
+    type: a.type,
+    name: a.name,
+    startedAt: a.startedAt,
+    endedAt: a.endedAt,
+    summary: {
+      distanceM: a.summary.distanceM,
+      movingS: a.summary.movingS,
+      elapsedS: a.summary.elapsedS,
+      elevGainM: a.summary.elevationGainM,
+      splits: a.summary.splits.map((x) => ({ km: x.km, seconds: x.movingS })),
+    },
+    bbox: a.summary.bbox,
+    preview: a.summary.preview,
+    resumedSegments: a.resumedSegments,
+    timeZone: a.timeZone,
+    renamedAt: a.renamedAt,
+  });
+  // Only the cleaned name is used; the rename time comes from the request.
+  activity.rename(name, a.renamedAt ?? 0);
+  return activity.toState().name;
 }

@@ -6,6 +6,7 @@ import { Alert, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View 
 
 import { ACCENT } from '@/constants/colors';
 import { useGapEstimationSetting } from '@/contexts/activity-log/ui/hooks';
+import { BackupDeveloperCard } from '@/contexts/cloud-backup/ui/backup-developer-card';
 import { CloudBackupCard } from '@/contexts/cloud-backup/ui/cloud-backup-card';
 import { AppleHealthCard } from '@/contexts/health-sync/ui/apple-health-card';
 import { removeDemoHistory, seedDemoHistory } from '@/dev/demo-history';
@@ -180,6 +181,7 @@ export default function InfoScreen() {
           />
         </Card>
       )}
+      {showDevTools && <BackupDeveloperCard />}
       <Text style={{ color: p.muted, textAlign: 'center', fontSize: 12 }}>{`${NAME} · ${TAGLINE}`}</Text>
     </ScrollView>
   );

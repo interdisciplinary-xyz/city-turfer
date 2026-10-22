@@ -11,7 +11,7 @@ tags: [auth]
       - tapOn: { id: 'tab-me' }
       - tapOn: { id: 'me-menu-account' }
       - tapOn: { id: 'sign-out' }
-- extendedWaitUntil: { visible: { id: 'sign-in-submit' }, timeout: 10000 }
+- extendedWaitUntil: { visible: { id: 'sign-in-email' }, timeout: 10000 }
 - assertVisible: 'Surf your city. Own your streets.'
 - runFlow: { file: subflows/sign-in.yaml, env: { EMAIL: 'admin@cityturfer.com', PASSWORD: 'wrong-password' } }
 - assertVisible: { id: 'sign-in-error' }

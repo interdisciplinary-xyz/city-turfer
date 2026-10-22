@@ -23,13 +23,17 @@ export class InMemoryActivityRepository implements ActivityRepository {
     const r = this.rows.get(id);
     return r ? Activity.rehydrate(r.state) : null;
   }
-  async save(activity: Activity, track?: readonly TrackPoint[]) {
+  async save(
+    activity: Activity,
+    track?: readonly TrackPoint[],
+    gaps?: { routes: readonly GapRoute[]; checkedAt: number }
+  ) {
     const prev = this.rows.get(activity.id);
     this.rows.set(activity.id, {
       state: activity.toState(),
       track: prev?.track ?? [...(track ?? [])],
-      routes: prev?.routes ?? [],
-      checkedAt: prev?.checkedAt ?? null,
+      routes: prev?.routes ?? [...(gaps?.routes ?? [])],
+      checkedAt: prev?.checkedAt ?? gaps?.checkedAt ?? null,
     });
     this.events.push(...activity.pullEvents());
   }
@@ -68,6 +72,9 @@ export class InMemoryActivityRepository implements ActivityRepository {
   }
   async allIds() {
     return [...this.rows.values()].sort((a, b) => a.state.startedAt - b.state.startedAt).map((r) => r.state.id);
+  }
+  async idsWithoutTimeZone() {
+    return [...this.rows.values()].filter((r) => r.state.timeZone == null).map((r) => r.state.id);
   }
   async timeline() {
     return [...this.rows.values()]
