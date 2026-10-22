@@ -92,6 +92,10 @@ export default function AccountScreen() {
         ],
         offline: ['No connection', 'Try again when you’re online.'],
         auth: ['Signed out on the server', 'Sign in again, then ask for your export.'],
+        'not-signed-in': [
+          'Sign in again',
+          'This phone isn’t signed in to your account any more. Sign out, sign in with your email, then ask for your export.',
+        ],
       };
       Alert.alert(...(text[r.kind] ?? ['Something went wrong', 'Try again in a moment.']));
     });
@@ -125,9 +129,15 @@ export default function AccountScreen() {
           'Sign in again',
           'Your sign-in has expired. Nothing was deleted. Sign out, sign in with your email, then delete your account.'
         );
+      } else if (r.kind === 'not-signed-in') {
+        // The account's sign-in didn't come along (e.g. a restored or migrated iPhone): no request was sent.
+        Alert.alert(
+          'Sign in again',
+          'This phone isn’t signed in to your account any more. Nothing was deleted. Sign out, sign in with your email, then delete your account.'
+        );
       } else if (r.kind === 'offline') {
         Alert.alert('No connection', 'Nothing was deleted. Try again when you’re online.');
-      } else if (r.kind !== 'ok' && r.kind !== 'not-signed-in') {
+      } else if (r.kind !== 'ok') {
         Alert.alert('Could not delete', 'Nothing was deleted. Try again in a moment.');
       }
     });
