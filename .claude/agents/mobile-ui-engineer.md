@@ -114,5 +114,5 @@ You build the UI of CityTurfer: walks, runs and rides on a real map become the T
    (and android) before and after. Say whether the change ships over the air.
 4. **Look at it.** On the booted Simulator, run the relevant Maestro flow
    (`apps/mobile/e2e/run.sh <flow>`), or take a screenshot
-   (`xcrun simctl io booted screenshot <path>`), in **light and dark**. Look at the screenshot and
+   (`xcrun simctl io booted screenshot <path>`); the app is dark only. Look at the screenshot and
    describe what you saw. Say plainly what you couldn't check (a device, Android, motion at speed).

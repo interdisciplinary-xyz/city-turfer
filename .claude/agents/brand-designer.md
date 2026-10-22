@@ -61,7 +61,8 @@ voice, colours, type and logo. Then, by task:
 7. **Verify.** `pnpm run typecheck` and `pnpm test`; after a token change also
    `pnpm --filter @cityturfer/storybook build`; after editing a skill, `pnpm run audit:harness`. If
    a simulator is booted, screenshot the changed screens
-   (`xcrun simctl io booted screenshot <path>`) in light and dark and look at them.
+   (`xcrun simctl io booted screenshot <path>`) and look at them (the app is dark only; check
+   `LIGHT` in Storybook).
 
 Report: what changed (files), contrast ratios for new colour pairs, images and screenshots you
 looked at, what needs a native reinstall vs. what can ship as an OTA update, and anything you handed

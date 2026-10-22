@@ -172,8 +172,8 @@ then publish OTA updates for the new runtime.
 1. Name spelled CityTurfer; internal terms not leaking into copy.
 2. Colours from tokens; accent = `glow`; Ramp direction correct; Turf map dark.
 3. Numbers tabular and concrete; no guilt or casino language.
-4. Dark only from v0.9.0 (app.json `userInterfaceStyle: "dark"`, website `cssVariables('dark')`);
-   `LIGHT` stays for Storybook and any future light surface.
+4. Designed for dark: the app and website are dark only from v0.9.0; `LIGHT` is only checked in
+   Storybook.
 5. Type: Archivo only for display and numbers, via `FONT_FAMILY`, never with `fontWeight`.
 6. New colour pairs meet the contrast minimums (or are knowingly listed in `KNOWN_FAILURES`).
 7. Copy fits all three audiences and the personality: confident, playful, outdoorsy, private.
