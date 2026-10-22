@@ -39,16 +39,19 @@ const locales = readdirSync(path.join(process.cwd(), 'messages'))
   .map((file) => file.slice(0, -'.json'.length));
 const handler = devNode
   ? withLocalOnly(
-      withSwagger(withStorybook(siteHandler, storybookBuild), {
-        // Resolved only in dev: swagger-ui-dist is a dev dependency.
-        distRoot: path.dirname(createRequire(import.meta.url).resolve('swagger-ui-dist/package.json')),
-        specFile: path.join(process.cwd(), '../api/openapi.json'),
-        apiUrl: process.env.API_URL,
-        webRoot: process.cwd(),
-        brandDir: path.join(process.cwd(), '../../packages/brand/svg'),
-        // Same rule as the site's toolbar: only requests from this machine.
-        isLocal: devNode.isLocalClient,
-      }),
+      withSwagger(
+        withStorybook(siteHandler, storybookBuild, { isLocal: devNode.isLocalClient, webRoot: process.cwd() }),
+        {
+          // Resolved only in dev: swagger-ui-dist is a dev dependency.
+          distRoot: path.dirname(createRequire(import.meta.url).resolve('swagger-ui-dist/package.json')),
+          specFile: path.join(process.cwd(), '../api/openapi.json'),
+          apiUrl: process.env.API_URL,
+          webRoot: process.cwd(),
+          brandDir: path.join(process.cwd(), '../../packages/brand/svg'),
+          // Same rule as the site's toolbar: only requests from this machine.
+          isLocal: devNode.isLocalClient,
+        }
+      ),
       { isLocal: devNode.isLocalClient, locales }
     )
   : siteHandler;
