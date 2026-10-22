@@ -115,7 +115,20 @@ export function checkExport(outDir, { locales = ['en', 'pl'], nextDir = path.joi
     }
   }
   if (pages.length > 0 && !markerSeen) {
-    findings.push(`no portal page loads the API client marker (${PORTAL_MARKERS[0]}): the check would see nothing`);
+    // Say what was read, so a failure on a build machine can be diagnosed from its log alone.
+    const seen = pages.map((file) => `${rel(file)}: ${chunksOf(read(file)).length} chunk refs`).join('; ');
+    const chunkDir = [path.join(outDir, '_next/static/chunks'), path.join(nextDir, 'static/chunks')].find((dir) =>
+      existsSync(dir)
+    );
+    const holders = chunkDir
+      ? walk(chunkDir)
+          .filter((file) => file.endsWith('.js') && read(file).includes(PORTAL_MARKERS[0]))
+          .map((file) => path.basename(file))
+      : [];
+    findings.push(
+      `no portal page loads the API client marker (${PORTAL_MARKERS[0]}): the check would see nothing ` +
+        `[${seen}; chunks holding it: ${holders.join(', ') || 'none'} in ${chunkDir ?? 'no chunk folder'}]`
+    );
   }
 
   const sitemap = path.join(outDir, 'sitemap.xml');
