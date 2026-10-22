@@ -24,8 +24,14 @@ test('the theme stylesheet is the site scheme variables plus a skin that only us
   const skin = await readFile(path.join(TOOLS, 'swagger-theme.css'), 'utf8');
   const used = [...skin.matchAll(/var\((--[\w-]+)/g)].map((m) => m[1]);
   const own = new Set([...skin.matchAll(/^\s*(--ct-[\w-]+):/gm)].map((m) => m[1]));
+  // The site header's stylesheet (served with the page as __app-header.css) defines --header-h.
+  const header = await readFile(path.join(WEB, 'src/app/[locale]/app-header/app-header.css'), 'utf8');
+  const fromHeader = new Set([...header.matchAll(/^\s*(--[\w-]+):/gm)].map((m) => m[1]));
   for (const name of used) {
-    assert.ok(name in vars || own.has(name), `${name} is neither a brand variable nor defined in the skin`);
+    assert.ok(
+      name in vars || own.has(name) || fromHeader.has(name),
+      `${name} is neither a brand variable nor defined in the skin or the header`
+    );
   }
 });
 
@@ -47,6 +53,8 @@ test('no colour literals in the swagger route, theme, brand loader or toolbar fi
     'swagger-brand.mjs',
     'swagger-toolbar.mjs',
     'swagger-toolbar-entry.mjs',
+    'app-header-assets.mjs',
+    'app-header-entry.mjs',
   ];
   for (const file of files) {
     assert.doesNotMatch(await readFile(path.join(TOOLS, file), 'utf8'), HEX, `${file} has a hex colour`);
@@ -109,6 +117,7 @@ before(async () => {
     isLocal: (req) => req.headers['x-test-local'] === '1',
     loadTheme: async () => ':root{}',
     loadToolbar: async () => ({ js: 'window.toolbar=1', css: '.toolbar{}' }),
+    loadAppHeader: async () => ({ js: 'window.header=1', css: '.app-header{}' }),
   });
   server = createServer(handler);
   url = await listen(server);
@@ -154,4 +163,23 @@ test('serves the theme and the logos', async () => {
   assert.equal(await (await fetch(`${url}/swagger/brand/wordmark.svg`)).text(), 'next');
   // Allowed, but missing from this brand folder.
   assert.equal((await fetch(`${url}/swagger/brand/wordmark-light.svg`)).status, 404);
+});
+
+test('the page opens with the site header, solid at once over the dark skin', () => {
+  const html = swaggerHtml();
+  assert.match(
+    html,
+    /<body>\s*<div id="app-header-root"><\/div><script src="\.\/__app-header\.js"><\/script>\s*<header class="ct-header">/
+  );
+  assert.match(html, /<link rel="stylesheet" href="\.\/__app-header\.css" \/>/);
+});
+
+test('serves the header bundle to every request', async () => {
+  const js = await fetch(`${url}/swagger/__app-header.js`);
+  assert.equal(js.status, 200);
+  assert.match(js.headers.get('content-type'), /javascript/);
+  assert.equal(await js.text(), 'window.header=1');
+  const css = await fetch(`${url}/swagger/__app-header.css`);
+  assert.match(css.headers.get('content-type'), /text\/css/);
+  assert.equal(await css.text(), '.app-header{}');
 });

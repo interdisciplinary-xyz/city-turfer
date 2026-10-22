@@ -23,6 +23,8 @@
 html {
   -webkit-text-size-adjust: 100%;
   background: var(--bg);
+  /* Deep links and contents jumps land below the sticky site header. */
+  scroll-padding-top: var(--header-h, 0px);
 }
 
 body {
@@ -950,8 +952,9 @@ a {
   }
   .ct-toc {
     position: sticky;
-    top: 0;
-    max-height: 100vh;
+    /* Under the site header (__app-header.css sets --header-h). */
+    top: var(--header-h, 0px);
+    max-height: calc(100vh - var(--header-h, 0px));
     overflow-y: auto;
     /* Bottom room for the dev toolbar, which sits fixed over the page's foot. */
     padding: var(--space-xxxl) 0 96px var(--space-xl);

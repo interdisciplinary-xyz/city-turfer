@@ -29,9 +29,13 @@ import markMonochrome from '@cityturfer/brand/svg/mark-monochrome.svg';
 import wordmark from '@cityturfer/brand/svg/wordmark.svg';
 import wordmarkLight from '@cityturfer/brand/svg/wordmark-light.svg';
 import Image, { type StaticImageData } from 'next/image';
+import { NextIntlClientProvider } from 'next-intl';
+import { setRequestLocale } from 'next-intl/server';
 import type { CSSProperties, ReactNode } from 'react';
 
+import { AppHeader } from '../[locale]/app-header';
 import { displayFont, numericFont } from '../fonts';
+import { WAITLIST } from '../waitlist-config';
 import { BrandNav } from './brand-nav';
 import {
   ACTIVITY_LABEL,
@@ -39,7 +43,9 @@ import {
   ANDROID_CHECK,
   ASSETS,
   AUDIENCES,
+  BRAND_LOCKUP_SELECTOR,
   BRANDING_DESCRIPTION,
+  BRANDING_LOCALE,
   BRANDING_TITLE,
   CONTRAST_FIXES,
   CONTRAST_FIXES_NOTE,
@@ -77,6 +83,7 @@ import {
  * document; noindex and not in the sitemap. Linked from the dev toolbar.
  */
 export default async function BrandingPage() {
+  setRequestLocale(BRANDING_LOCALE);
   // Dev toolbar, same guard as [locale]/layout.tsx: development build + this machine only, dynamic
   // imports inside the NODE_ENV branch so nothing reaches the static export.
   let devToolbar: ReactNode = null;
@@ -102,6 +109,15 @@ export default async function BrandingPage() {
         <link rel='icon' href={mark.src} />
       </head>
       <body className='brand'>
+        {/* The site's header (same as /en), so /branding reads as part of the site. */}
+        <NextIntlClientProvider locale={BRANDING_LOCALE}>
+          <AppHeader
+            locale={BRANDING_LOCALE}
+            waitlist={Boolean(WAITLIST)}
+            waitlistHref={`/${BRANDING_LOCALE}#waitlist`}
+            lockupSelector={BRAND_LOCKUP_SELECTOR}
+          />
+        </NextIntlClientProvider>
         <header className='brand-hero'>
           <div className='brand-wrap'>
             <p className='brand-kicker'>{BRANDING_TITLE}</p>

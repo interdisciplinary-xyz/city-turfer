@@ -14,7 +14,6 @@
   --radius: var(--radius-panel);
   --gutter: var(--space-lg);
   --max: 1080px;
-  --header-h: 56px;
   color-scheme: light;
   /* next/font sets --face-*; the brand variables from cssVariables() are the fallback stack. The
      weight is baked into each font, so never bold them (font-synthesis: none). */
@@ -139,137 +138,6 @@ img {
   z-index: 10;
 }
 
-/* ---------- App header ---------- */
-
-.app-header {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  background: transparent;
-  border-bottom: 1px solid transparent;
-  transition:
-    background-color 200ms ease-out,
-    border-color 200ms ease-out;
-}
-
-.app-header[data-scrolled] {
-  background: color-mix(in srgb, var(--bg) 90%, transparent);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border-bottom-color: var(--border);
-}
-
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .app-header[data-scrolled] {
-    background: var(--bg);
-  }
-}
-
-/* Full page width, unlike .wrap: 48px side padding from tablet width up, the usual gutter on phones. */
-.app-header-inner.wrap {
-  max-width: none;
-}
-
-@media (min-width: 600px) {
-  .app-header-inner.wrap {
-    padding: 0 48px;
-  }
-}
-
-.app-header-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-md);
-  height: var(--header-h);
-}
-
-/* The logo only shows once the hero's own lockup has left the screen. */
-.app-header-home {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  opacity: 0;
-  visibility: hidden;
-  transition:
-    opacity 200ms ease-out,
-    visibility 200ms;
-}
-
-.app-header[data-scrolled] .app-header-home {
-  opacity: 1;
-  visibility: visible;
-}
-
-.app-header-home:focus-visible,
-.app-header-link:focus-visible {
-  outline: 2px solid var(--accent-text);
-  outline-offset: 2px;
-  border-radius: 8px;
-}
-
-.app-header-mark {
-  width: 28px;
-  height: 28px;
-  border-radius: 23%;
-}
-
-.app-header-wordmark {
-  display: none;
-  height: 20px;
-  width: auto;
-}
-
-.app-header-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xl);
-  margin-left: auto;
-}
-
-.app-header-link {
-  color: var(--muted);
-  font-size: var(--font-caption);
-  font-weight: var(--font-weight-bold);
-  text-decoration: none;
-}
-
-.app-header-link:hover,
-.app-header-link:focus-visible {
-  color: var(--text);
-}
-
-/* Phones get the short label ("Waitlist"); from 600px the full one. */
-.app-header-link-long {
-  display: none;
-}
-
-@media (min-width: 600px) {
-  .app-header-link-long {
-    display: inline;
-  }
-  .app-header-link-short {
-    display: none;
-  }
-}
-
-@media (min-width: 960px) {
-  .app-header-mark {
-    width: 32px;
-    height: 32px;
-  }
-  .app-header-wordmark {
-    display: block;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .app-header,
-  .app-header-home {
-    transition: none;
-  }
-}
-
 /* ---------- Hero ---------- */
 
 .hero {
@@ -286,38 +154,6 @@ img {
 .hero-grid {
   flex: 1;
   align-content: center;
-}
-
-.lang {
-  display: inline-flex;
-  gap: 4px;
-  padding: 4px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--card);
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-}
-
-.lang a,
-.lang span {
-  min-width: 40px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  text-align: center;
-  text-decoration: none;
-  color: var(--muted);
-}
-
-.lang a:hover,
-.lang a:focus-visible {
-  color: var(--text);
-}
-
-.lang [aria-current] {
-  background: var(--glow);
-  color: var(--on-glow);
 }
 
 .hero-grid {
@@ -344,9 +180,6 @@ img {
 }
 
 @media (min-width: 960px) {
-  :root {
-    --header-h: 64px;
-  }
   .hero {
     padding: 16px 0 40px;
   }

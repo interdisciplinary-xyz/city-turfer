@@ -99,10 +99,10 @@
   margin: 0;
 }
 
-/* Sticky section bar: sits under the hero, then pins to the top while reading. */
+/* Sticky section bar: sits under the hero, then pins under the site header while reading. */
 .brand-nav {
   position: sticky;
-  top: 0;
+  top: var(--header-h);
   z-index: 10;
   background: color-mix(in srgb, var(--bg) 95%, transparent);
   backdrop-filter: blur(10px);
@@ -143,8 +143,8 @@
 
 .brand-section {
   padding: 56px 0 8px;
-  /* Clear the sticky section bar when jumping to an anchor. */
-  scroll-margin-top: 56px;
+  /* Clear the sticky header and section bar when jumping to an anchor. */
+  scroll-margin-top: calc(var(--header-h) + 56px);
 }
 .brand-section h2 {
   font-family: var(--display);
