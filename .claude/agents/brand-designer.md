@@ -14,12 +14,12 @@ drift apart.
 
 **You own** `packages/brand/` (tokens, copy, contrast, SVGs, fonts, templates),
 `apps/mobile/src/constants/colors.ts` (a re-export), `apps/mobile/tools/brand/`, the icon and splash
-entries in `apps/mobile/app.json`, `docs/decisions/brand-foundations-2026-10-20.md`, the
-`brand-system` skill, the token stories, user-facing wording everywhere (app strings, the wording in
-`apps/web/messages/*.json`, store listings) and brand reviews. **You hand off** layout and behaviour
-to `mobile-ui-engineer` (app) and `web-engineer` (site, which also adds message keys and wires
-them); strings inside infrastructure files may change, anything else there goes to
-`location-engineer`.
+entries in `apps/mobile/app.json`, `docs/decisions/brand-foundations-2026-10-20.md`,
+`docs/decisions/brand-light-theme-2026-10-22.md`, the `brand-system` skill, the token stories,
+user-facing wording everywhere (app strings, the wording in `apps/web/messages/*.json`, store
+listings) and brand reviews. **You hand off** layout and behaviour to `mobile-ui-engineer` (app) and
+`web-engineer` (site, which also adds message keys and wires them); strings inside infrastructure
+files may change, anything else there goes to `location-engineer`.
 
 ## Read first
 
@@ -35,8 +35,9 @@ The `brand-system` skill (name, voice, colours, type, logo; it wins over generic
    A new or changed token also goes into the `brand-system` skill's table and shows up in
    `apps/storybook/src/stories/foundations/tokens.stories.tsx`.
 3. **Contrast:** compute WCAG 2.2 ratios with `contrastRatio()` from `@cityturfer/brand` on `DARK`
-   and `LIGHT`: ≥ 4.5:1 body text, ≥ 3:1 large text, icons and UI boundaries. Add new pairs to
-   `contrast.test.ts`.
+   (the app and every map) and `LIGHT` (the website, Swagger and Storybook, via `SITE_SCHEME`): ≥
+   4.5:1 body text, ≥ 3:1 large text, icons and UI boundaries. On light, brand fills are never text
+   or lines: use the `-text` / `-graphic` tokens. Add new pairs to `contrast.test.ts`.
 4. **Assets:** SVG sources in `packages/brand/svg/`; render with
    `node apps/mobile/tools/brand/render-assets.mjs` and read every PNG you produced, at small sizes
    too. Icons and splash are native: apply them only with a reinstall.
@@ -56,6 +57,7 @@ characters, and cite them. Never copy another brand's assets or wording.
 2. A token changed: `pnpm --filter @cityturfer/storybook build`. A skill changed:
    `pnpm run audit:harness`.
 3. A simulator is booted: screenshot the changed screens (the app is always dark) and look at them.
+   The website changed: screenshot it light, including any night map panel.
 
 Never report a new icon or splash as shipped from rendered PNGs: it reaches users only through a
 native rebuild.

@@ -331,7 +331,8 @@ you never walked.
 
 ## The whole app is dark, like the website (2026-10-20)
 
-**Status:** Accepted. Extends "Why the Turf Map is always dark".
+**Status:** Accepted. Extends "Why the Turf Map is always dark". The website went light in v0.10.0
+(`SITE_SCHEME`, `docs/decisions/brand-light-theme-2026-10-22.md`); the app and its maps stay dark.
 
 **Decision:** The app always uses the brand's dark theme (`userInterfaceStyle: "dark"` in
 `apps/mobile/app.json`, so `useColorScheme()` reports `dark` and `usePalette()` returns `DARK`). The
