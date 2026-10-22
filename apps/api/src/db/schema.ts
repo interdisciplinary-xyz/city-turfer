@@ -202,7 +202,7 @@ export const authAccounts = pgTable(
   (t) => [index('auth_accounts_user').on(t.userId)]
 );
 
-/** Pending one-time codes: `value` is the SHA-256 of the code plus the attempt count. */
+/** Pending one-time codes: `value` is the encrypted code plus the attempt count (codeCipher). */
 export const authVerifications = pgTable(
   'auth_verifications',
   {

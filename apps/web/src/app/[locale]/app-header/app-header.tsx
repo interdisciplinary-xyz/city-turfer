@@ -22,8 +22,11 @@ export function AppHeader({ locale, waitlist }: AppHeaderProps) {
         </a>
         <div className='app-header-actions'>
           {waitlist ? (
-            <a className='app-header-link' href='#waitlist'>
-              {t('waitlist')}
+            <a className='app-header-link' href='#waitlist' aria-label={t('waitlist')}>
+              <span className='app-header-link-long'>{t('waitlist')}</span>
+              <span className='app-header-link-short' aria-hidden='true'>
+                {t('waitlistShort')}
+              </span>
             </a>
           ) : null}
           <LanguageSwitcher locale={locale} />

@@ -4,6 +4,7 @@ import type { HealthSyncStatus } from '../contract';
 import type { ImportReport } from '../domain/health-sync-state';
 import {
   activityTypeFor,
+  healthUuidOf,
   importedActivityId,
   isSameOuting,
   routeFromTrack,
@@ -322,5 +323,32 @@ export class ExportActivityToHealth {
       this.d.onExportError?.('health.export-failed');
       return 'skipped';
     }
+  }
+}
+
+/**
+ * Handles ActivityRecorded for Activities restored from the cloud backup: one imported from Apple
+ * Health on another phone (`hk-<uuid>`) gets its import link here too, so deleting it on this phone
+ * keeps it deleted (the import skips known workouts) instead of importing it again. Idempotent;
+ * never touches HealthKit.
+ */
+export class RememberRestoredImport {
+  constructor(private readonly d: HealthSyncDeps) {}
+
+  async execute(e: { activityId: string; origin?: string }): Promise<void> {
+    const healthUuid = e.origin === 'restore' ? healthUuidOf(e.activityId) : null;
+    if (healthUuid == null || (await this.d.repo.linkOf(e.activityId))) {
+      return;
+    }
+    if (await this.d.repo.linkOfHealthUuid(healthUuid)) {
+      return; // imported here already under that workout
+    }
+    await this.d.repo.saveLink({
+      activityId: e.activityId,
+      healthUuid,
+      direction: 'import',
+      at: this.d.clock.now(),
+      routeSaved: true,
+    });
   }
 }

@@ -15,8 +15,12 @@ export type RestoreOffer =
   | { kind: 'resume'; done: number; total: number };
 
 export type RestoreResult =
-  /** `backupOn`: backup is on afterwards (the server's consents turned it on, or it already was). */
-  | { kind: 'done'; restored: number; skipped: number; backupOn: boolean }
+  /**
+   * `backupOn`: backup is on afterwards (the server's consent turned it on, or it already was).
+   * `healthOffered`: the account includes Apple Health workouts in its backup, but this phone
+   * doesn't (it is never turned on by a restore): the Turfer can turn it on in Info › Cloud backup.
+   */
+  | { kind: 'done'; restored: number; skipped: number; backupOn: boolean; healthOffered: boolean }
   /** Stopped for now (a recording started, the app went to the background, the network failed). */
   | { kind: 'paused'; reason: 'recording' | 'background' | 'offline' | 'server' | 'auth'; done: number; total: number }
   | { kind: 'unavailable'; reason: 'not-available' | 'no-token' | 'busy' };
@@ -116,8 +120,8 @@ export class DismissRestoreOffer {
  * didn't delete), then each Activity's detail and track, oldest first, then the Home City with when
  * it was chosen. Nothing on the phone is overwritten or duplicated: imports are idempotent by id, so
  * a restore killed half-way resumes without duplicates. Each restored Activity gets its backup row
- * (from the server copy), so nothing goes back up. Afterwards the server's consents turn backup on
- * here too. Never during a recording, foreground only; Apple Health import and backup runs wait.
+ * (from the server copy), so nothing goes back up. Afterwards the server's backup consent turns
+ * backup on here too (Apple Health stays off on this phone). Never during a recording, foreground only; Apple Health import and backup runs wait.
  */
 export class RestoreFromBackup {
   private running: Promise<RestoreResult> | null = null;
@@ -235,25 +239,28 @@ export class RestoreFromBackup {
     restore = await d.repo.saveRestore((r) => r.finish(left));
     await d.repo.declineRestore(unreadable); // not offered again: they would be skipped again
     onProgress?.({ done: restore.toState().done, total: restore.toState().total });
-    return { kind: 'done', restored, skipped, backupOn: await adoptConsents(d, c.api) };
+    return { kind: 'done', restored, skipped, ...(await adoptConsents(d, c.api)) };
   }
 }
 
 /**
- * The server copy exists, so this account consented to backup: read its consents and turn backup
- * (and the Apple Health option) on to match. Unreadable consents change nothing. Returns whether
- * backup is on now.
+ * The server copy exists, so this account consented to backup: read its consents and turn backup on
+ * to match. The Apple Health option stays as it is on this phone (off unless turned on here); the
+ * result only says the account has it on. Unreadable consents change nothing.
  */
-async function adoptConsents(d: CloudBackupDeps, api: ApiClient): Promise<boolean> {
+async function adoptConsents(
+  d: CloudBackupDeps,
+  api: ApiClient
+): Promise<{ backupOn: boolean; healthOffered: boolean }> {
   const r = await api.consents();
   if (!r.ok) {
-    return (await d.repo.settings()).enabled;
+    return { backupOn: (await d.repo.settings()).enabled, healthOffered: false };
   }
   const granted = (p: ConsentPurpose) => r.value.some((c) => c.purpose === p && c.granted);
   const s = await d.repo.updateSettings((x) => {
-    x.adoptServerConsents({ cloudSync: granted('cloud-sync'), health: granted('apple-health-in-cloud-sync') });
+    x.adoptServerConsents({ cloudSync: granted('cloud-sync') });
   });
-  return s.enabled;
+  return { backupOn: s.enabled, healthOffered: granted('apple-health-in-cloud-sync') && !s.healthIncluded };
 }
 
 function stopOf(code: string): 'offline' | 'server' | 'auth' {

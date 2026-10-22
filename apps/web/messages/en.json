@@ -6,7 +6,8 @@
   },
   "header": {
     "home": "CityTurfer, home",
-    "waitlist": "Join the waitlist"
+    "waitlist": "Join the waitlist",
+    "waitlistShort": "Waitlist"
   },
   "hero": {
     "skip": "Skip to content",

@@ -90,8 +90,10 @@ export class RunBackup {
     if (!this.d.isForeground()) {
       return { kind: 'skipped', reason: 'background' };
     }
-    // A restore running now, or interrupted (it resumes first): its rows are not complete yet.
-    if (this.paused() || (await this.d.repo.restore()).isRunning) {
+    // Only while a restore runs right now. An interrupted one (paused, killed, "Not now") must not
+    // hold up backups: planning never deletes what is still to restore (see plan), and a restored
+    // Activity gets its backup row from the server copy when it arrives.
+    if (this.paused()) {
       return { kind: 'skipped', reason: 'busy' };
     }
     const before = await this.d.repo.settings();

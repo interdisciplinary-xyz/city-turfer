@@ -18,4 +18,8 @@ export const onboardingDismissal = {
       // Best effort: the card stays hidden for this session either way.
     }
   },
+  /** The profile's data was deleted from this phone. Throws when the keychain refuses. */
+  forget(uid: string): Promise<void> {
+    return SecureStore.deleteItemAsync(key(uid));
+  },
 };

@@ -21,13 +21,14 @@ export function useCloudBackup() {
   );
   useEffect(() => void refresh(), [refresh, dataVersion]);
 
-  /** Runs a backup pass and refreshes the status while and after it runs. */
+  /** Runs a backup pass and refreshes the status while and after it runs; resolves with its result. */
   const backUpNow = useCallback(
     async (options: { now?: boolean } = { now: true }) => {
       const running = c.backUp(options);
       void refresh(); // shows "Backing up…"
-      await running;
+      const result = await running;
       await refresh();
+      return result;
     },
     [c, refresh]
   );
@@ -122,10 +123,10 @@ export function useRestore({ ask = true }: { ask?: boolean } = {}) {
       if (r.kind === 'done') {
         setOffer({ kind: 'none' });
         void c.syncHealth(); // Apple Health import waited for the restore
-        if (r.backupOn) {
-          void c.backUp(); // compares with the server: nothing to send for what just arrived
-        }
       }
+      // Backup runs waited while the restore ran (finished or paused): send what is queued now. It
+      // compares with the server first, so nothing is sent for what just arrived; off: skipped.
+      void c.backUp();
       return r;
     } catch {
       const failed: RestoreResult = { kind: 'paused', reason: 'server', done: 0, total: 0 };

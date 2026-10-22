@@ -132,7 +132,13 @@ describeLive('live API: sign-in, backup, restore', () => {
     // Phone B: a new phone, same account, its own sign-in.
     const b = await phone(address, 'phone-b');
     expect(await b.c.cloudBackup.restoreOffer.execute()).toEqual({ kind: 'available', count: 3 });
-    expect(await b.c.cloudBackup.restore.execute()).toEqual({ kind: 'done', restored: 3, skipped: 0, backupOn: true });
+    expect(await b.c.cloudBackup.restore.execute()).toEqual({
+      kind: 'done',
+      restored: 3,
+      skipped: 0,
+      backupOn: true,
+      healthOffered: false,
+    });
     await b.c.dispatcher.dispatchPending();
 
     const mine = await snapshot(a.c);

@@ -54,8 +54,9 @@ export class ChooseHomeCity {
     }
     const current = await this.d.homeCities.homeCityChoice();
     const at = chosenAt ?? this.d.clock.now();
-    // An explicit (restored) time loses to a newer choice; the Turfer's own choice now always counts.
-    if (current && (current.cityId === cityId || (chosenAt != null && current.chosenAt > at))) {
+    // An explicit (restored) time loses to a newer or equally old choice (the server keeps the one it
+    // has on a tie too); the Turfer’s own choice now always counts.
+    if (current && (current.cityId === cityId || (chosenAt != null && current.chosenAt >= at))) {
       return;
     }
     if (!current && cityId === null) {

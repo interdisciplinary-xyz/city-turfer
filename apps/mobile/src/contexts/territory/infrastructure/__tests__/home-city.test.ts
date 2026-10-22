@@ -82,6 +82,8 @@ describe('Home City', () => {
 
     await choose.execute('pl-krakow', NOW - 2 * 86_400_000); // older: ignored
     expect(await choice.execute()).toEqual({ cityId: 'pl-gdansk', chosenAt: NOW - 86_400_000 });
+    await choose.execute('pl-krakow', NOW - 86_400_000); // equally old: the local choice wins, as on the server
+    expect(await choice.execute()).toEqual({ cityId: 'pl-gdansk', chosenAt: NOW - 86_400_000 });
     await choose.execute('pl-warsaw'); // the Turfer's own choice, now: always counts
     expect(await choice.execute()).toEqual({ cityId: 'pl-warsaw', chosenAt: NOW });
     expect(await outbox(db)).toHaveLength(2);

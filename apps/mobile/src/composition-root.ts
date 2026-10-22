@@ -5,9 +5,11 @@
 import Constants from 'expo-constants';
 import * as Crypto from 'expo-crypto';
 import * as Location from 'expo-location';
+import * as SecureStore from 'expo-secure-store';
 import { AppState, Platform } from 'react-native';
 
 import { API_BASE_URL, API_TIMEOUT_MS, API_UPLOAD_TIMEOUT_MS } from '@/constants/api';
+import { onboardingDismissal } from '@/contexts/achievements/infrastructure/onboarding-dismissal';
 import { OsmRouteEstimator } from '@/contexts/activity-log/infrastructure/osm-route-estimator';
 import { SecureStoreGapEstimationSetting } from '@/contexts/activity-log/infrastructure/secure-store-gap-estimation-setting';
 import type { DeviceTokenStore } from '@/contexts/cloud-backup';
@@ -24,9 +26,11 @@ import { SecureStoreSessionStore } from '@/contexts/identity/infrastructure/secu
 import { backgroundActivitySession } from '@/contexts/recording/infrastructure/background-activity-session';
 import { ExpoLocationTracker, ExpoPermissionGateway } from '@/contexts/recording/infrastructure/expo-location-tracker';
 import { liveSessionStore } from '@/contexts/recording/infrastructure/live-session-store';
+import { turfOverlayPreference } from '@/contexts/territory/infrastructure/turf-overlay-preference';
 import { deleteExpoDatabase, openExpoDatabase } from '@/platform/expo-database';
 import { runWhenForeground } from '@/platform/foreground';
 import { migrate } from '@/platform/migrations';
+import { ProfileDeletions } from '@/platform/profile-deletions';
 
 import { type Container, wire } from './wiring';
 
@@ -87,12 +91,57 @@ async function profileHasActivities(profileId: string): Promise<boolean> {
   }
 }
 
-/** Deletes a signed-out profile's database (after deleting the account, if the Turfer asked to). */
+const PENDING_DELETIONS_KEY = 'cityturfer.profiles.pending-deletion';
+
+/** A profile's database and its per-profile keychain items. A database already gone counts as deleted. */
+async function eraseProfile(profileId: string): Promise<void> {
+  await deleteExpoDatabase(databaseName(profileId)).catch((e: unknown) => {
+    if (!/not found/i.test(String((e as Error)?.message))) {
+      throw e;
+    }
+  });
+  await new SecureStoreDeviceTokenStore(profileId).clear();
+  await onboardingDismissal.forget(profileId);
+  await turfOverlayPreference.forget(profileId);
+}
+
+/** Profile deletions that must finish (ids only, in the keychain: they survive a restart). */
+const profileDeletions = new ProfileDeletions(
+  {
+    read: async () => {
+      const raw = await SecureStore.getItemAsync(PENDING_DELETIONS_KEY);
+      const ids: unknown = raw ? JSON.parse(raw) : [];
+      return Array.isArray(ids) ? ids.filter((x): x is string => typeof x === 'string') : [];
+    },
+    write: (ids) =>
+      ids.length > 0
+        ? SecureStore.setItemAsync(PENDING_DELETIONS_KEY, JSON.stringify(ids))
+        : SecureStore.deleteItemAsync(PENDING_DELETIONS_KEY),
+  },
+  eraseProfile
+);
+
+/**
+ * Deletes a signed-out profile's data on this phone (after deleting the account, if the Turfer asked
+ * to): its database and keychain items. Throws when that failed; it is then retried on the next
+ * launch (retryProfileDeletions) or before the profile is opened again.
+ */
 export async function deleteProfileData(profileId: string): Promise<void> {
   if (current?.userId === profileId) {
     await resetContainer();
   }
-  await deleteExpoDatabase(databaseName(profileId));
+  await profileDeletions.delete(profileId);
+}
+
+/** Launch (foreground): finishes profile deletions that failed before. Never throws. */
+export async function retryProfileDeletions(): Promise<void> {
+  const signedIn = await sessionStore.read().catch(() => null);
+  await profileDeletions.retry(signedIn);
+}
+
+/** A sign-in is about to open this profile: finish a deletion still pending for it first. */
+export function finishProfileDeletion(profileId: string): Promise<void> {
+  return profileDeletions.beforeOpening(profileId);
 }
 
 /** Sign-out gate: the domain's active Recording Session, not whether the OS tracker happens to run. */

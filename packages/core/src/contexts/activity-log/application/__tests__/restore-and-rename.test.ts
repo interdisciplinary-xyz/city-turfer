@@ -131,7 +131,9 @@ describe('time zone of an Activity', () => {
     const t = setup(null);
     await new ImportActivity(t.deps).execute({ id: 'a', type: 'walk', points: line(T0, 3) });
     expect((await t.activities.get('a'))!.toState().timeZone).toBeNull();
-    expect(await new AssignMissingTimeZones(t.deps).execute()).toEqual({ checked: 0, assigned: 0 }); // zone unknown
+    // Zone unknown: fails, so the run-once job is not marked done and runs again next launch.
+    await expect(new AssignMissingTimeZones(t.deps).execute()).rejects.toThrow('activity-log.time-zone-unknown');
+    expect((await t.activities.get('a'))!.toState().timeZone).toBeNull();
     t.tz.zone = 'Europe/Berlin';
     expect(await new AssignMissingTimeZones(t.deps).execute()).toEqual({ checked: 1, assigned: 1 });
     expect((await t.activities.get('a'))!.toState().timeZone).toBe('Europe/Berlin');
@@ -159,6 +161,20 @@ describe('RestoreActivity', () => {
     expect(await new RestoreActivity(t.deps).execute(archived({ id: 'b', track: line(T0, 1) }))).toBe('invalid');
     expect(await new RestoreActivity(t.deps).execute(archived({ id: 'c', name: ' ' }))).toBe('invalid');
     expect(await t.activities.allIds()).toEqual(['rec-1']);
+  });
+
+  it('rethrows an error that is no broken rule instead of calling the content invalid', async () => {
+    const t = setup();
+    const broken = {
+      ...t.deps,
+      clock: {
+        now: () => {
+          throw new TypeError('boom');
+        },
+      },
+    };
+    await expect(new RestoreActivity(broken).execute(archived())).rejects.toThrow(TypeError);
+    expect(await t.activities.allIds()).toEqual([]);
   });
 
   it('leaves gaps unchecked when the backup had not checked them (estimated later on this phone)', async () => {

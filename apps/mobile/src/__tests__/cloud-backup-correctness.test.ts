@@ -284,6 +284,55 @@ describe('Cloud Backup: another account or server', () => {
   });
 });
 
+describe('Cloud Backup: a withdrawal pending when the account changes', () => {
+  const pending = async (t: ReturnType<typeof phone>) =>
+    t.db.first<{ w: string | null; k: string | null }>(
+      'SELECT withdrawals_pending AS w, account_key AS k FROM cb_state'
+    );
+
+  it('is delivered to the previous account (its device token) before switching', async () => {
+    const t = phone({ token: 'secret-token' });
+    const c = await t.container();
+    await c.add('rec-1', walk(0));
+    await backedUp(c);
+    t.server.failNext('setConsent', { kind: 'offline' }, 2); // turned off while offline
+    expect(await c.cloudBackup.disable.execute()).toEqual({ kind: 'failed', error: 'offline' });
+    expect(t.server.activities.has('rec-1')).toBe(true);
+
+    // Signs in by email as another account on this profile.
+    t.server.moreTokens.set('token-y', 'acct-2');
+    t.account.value = { token: 'token-y', accountId: 'acct-2' };
+    await c.cloudBackup.run.execute();
+    expect(t.server.consents.get('cloud-sync')).toMatchObject({ granted: false });
+    expect(t.server.activities.size).toBe(0); // account 1's copy is gone
+    expect(await pending(t)).toEqual({ w: null, k: expect.stringContaining('|acct-2') });
+  });
+
+  it('without a token for the previous account the switch waits, and the withdrawal is kept', async () => {
+    const t = phone({ account: ACCOUNT, token: null });
+    const c = await t.container();
+    await c.add('rec-1', walk(0));
+    await backedUp(c);
+    t.server.failNext('setConsent', { kind: 'offline' }, 2);
+    await c.cloudBackup.disable.execute();
+
+    t.server.moreTokens.set('token-y', 'acct-2');
+    t.account.value = { token: 'token-y', accountId: 'acct-2' };
+    expect(await c.cloudBackup.run.execute()).toMatchObject({ kind: 'done', report: { error: 'auth' } });
+    expect(await pending(t)).toEqual({
+      w: expect.stringContaining('cloud-sync'),
+      k: expect.stringContaining('|acct-1'),
+    });
+    expect(await c.cloudBackup.enable.execute()).toMatchObject({ kind: 'failed' }); // not on account 2 yet
+    expect(t.server.activities.has('rec-1')).toBe(true);
+
+    t.account.value = ACCOUNT; // back on account 1: the withdrawal arrives
+    await c.cloudBackup.run.execute();
+    expect(t.server.activities.size).toBe(0);
+    expect(await pending(t)).toEqual({ w: null, k: expect.stringContaining('|acct-1') });
+  });
+});
+
 describe('Cloud Backup: withdrawing a consent', () => {
   it('off: once the server has it, nothing is on the server; on again uploads everything anew', async () => {
     const t = phone({ account: ACCOUNT });

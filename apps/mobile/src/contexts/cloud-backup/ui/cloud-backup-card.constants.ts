@@ -44,7 +44,12 @@ export const ERROR_TEXT: Record<BackupErrorCode, string> = {
   busy: "The server is busy. We'll try again in a moment.",
   outdated: 'Update CityTurfer to keep backing up.',
   'not-available': 'The demo account stays on this phone: it is never backed up.',
+  'needs-device-token':
+    'A testing server needs a device token. Add one in Developer tools, or go back to the built-in server.',
 };
+
+/** "Back up now" while a restore is bringing the backup back: the run waits for it. */
+export const WAITING_FOR_RESTORE = 'Restoring your backup first. Backing up carries on once it has finished.';
 
 /** Domain error codes of the card's actions, in plain words. */
 export const ACTION_ERRORS: Record<string, string> = {
@@ -52,6 +57,7 @@ export const ACTION_ERRORS: Record<string, string> = {
   'backup.invalid-server-url': 'Use a full address starting with https:// (or http:// on your own network).',
   'backup.on': 'Turn backup off first.',
   'backup.off': 'Turn backup on first.',
+  'backup.withdrawal-pending': "The server hasn't deleted your backup copy yet. Try again once you're online.",
 };
 
 export const ACTION_FAILED = 'Something went wrong. Try again.';

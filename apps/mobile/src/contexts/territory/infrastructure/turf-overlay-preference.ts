@@ -21,4 +21,8 @@ export const turfOverlayPreference = {
       // Best effort: the toggle still applies for this session.
     }
   },
+  /** The profile's data was deleted from this phone. Throws when the keychain refuses. */
+  forget(uid: string): Promise<void> {
+    return SecureStore.deleteItemAsync(key(uid));
+  },
 };

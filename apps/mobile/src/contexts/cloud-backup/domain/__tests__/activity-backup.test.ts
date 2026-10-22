@@ -165,27 +165,20 @@ describe('BackupSettings', () => {
     expect(s.withdrawalsPending).toEqual(['apple-health-in-cloud-sync']);
   });
 
-  it('after a restore, the server consents turn backup and Apple Health on; a pending withdrawal wins', () => {
+  it('after a restore, the server consent turns backup on (never Apple Health); a pending withdrawal wins', () => {
     const s = BackupSettings.initial();
-    expect(s.adoptServerConsents({ cloudSync: false, health: true })).toBe(false);
+    expect(s.adoptServerConsents({ cloudSync: false })).toBe(false);
     expect(s.toState()).toMatchObject({ enabled: false, healthIncluded: false });
-    expect(s.adoptServerConsents({ cloudSync: true, health: true })).toBe(true);
-    expect(s.toState()).toMatchObject({ enabled: true, healthIncluded: true, backfilledAt: null });
-    expect(s.adoptServerConsents({ cloudSync: false, health: false })).toBe(false); // never turns off
+    expect(s.adoptServerConsents({ cloudSync: true })).toBe(true);
+    expect(s.toState()).toMatchObject({ enabled: true, healthIncluded: false, backfilledAt: null });
+    expect(s.adoptServerConsents({ cloudSync: false })).toBe(false); // never turns off
     expect(s.enabled).toBe(true);
 
     const off = BackupSettings.initial();
     off.enable();
     off.disable(); // withdrawn here, the server hasn't heard yet
-    expect(off.adoptServerConsents({ cloudSync: true, health: true })).toBe(false);
+    expect(off.adoptServerConsents({ cloudSync: true })).toBe(false);
     expect(off.enabled).toBe(false);
-
-    const noHealth = BackupSettings.initial();
-    noHealth.enable();
-    noHealth.includeHealth(true);
-    noHealth.includeHealth(false);
-    expect(noHealth.adoptServerConsents({ cloudSync: true, health: true })).toBe(false);
-    expect(noHealth.healthIncluded).toBe(false);
   });
 
   it('Apple Health needs backup on; turning it on compares again', () => {
@@ -338,6 +331,17 @@ describe('BackupSettings: accounts, withdrawals, Home City', () => {
       homeCitySentAt: null,
       withdrawalsPending: [],
     });
+  });
+
+  it('keeps the token until the server has heard about a withdrawal', () => {
+    const s = BackupSettings.initial();
+    s.enable();
+    expect(() => s.ensureTokenRemovable()).toThrow(expect.objectContaining({ code: 'backup.on' }));
+    s.disable();
+    expect(() => s.ensureTokenRemovable()).toThrow(expect.objectContaining({ code: 'backup.withdrawal-pending' }));
+    s.withdrawalDelivered('cloud-sync');
+    s.withdrawalDelivered('apple-health-in-cloud-sync');
+    expect(() => s.ensureTokenRemovable()).not.toThrow();
   });
 
   it('queues a Home City choice only when the server does not have that one', () => {

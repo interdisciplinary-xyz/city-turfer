@@ -26,7 +26,18 @@ describe('cloud backup copy', () => {
       expect(text.length).toBeGreaterThan(10);
     }
     expect(Object.keys(ERROR_TEXT).sort()).toEqual(
-      ['auth', 'busy', 'consent', 'no-token', 'not-available', 'not-ready', 'offline', 'outdated', 'server'].sort()
+      [
+        'auth',
+        'busy',
+        'consent',
+        'needs-device-token',
+        'no-token',
+        'not-available',
+        'not-ready',
+        'offline',
+        'outdated',
+        'server',
+      ].sort()
     );
   });
 });
@@ -39,9 +50,19 @@ describe('restore copy', () => {
     expect(describeOffer({ kind: 'available', count: 3 })).toMatch(
       /^Your backup holds 3 activities that aren't on this phone\./
     );
-    expect(describeResult({ kind: 'done', restored: 0, skipped: 0, backupOn: true })).toBe(
+    expect(describeResult({ kind: 'done', restored: 0, skipped: 0, backupOn: true, healthOffered: false })).toBe(
       'This phone already has everything in your backup.'
     );
-    expect(describeResult({ kind: 'done', restored: 2, skipped: 0, backupOn: false })).toBe('Restored 2 activities.');
+    expect(describeResult({ kind: 'done', restored: 2, skipped: 0, backupOn: false, healthOffered: false })).toBe(
+      'Restored 2 activities.'
+    );
+  });
+
+  it('says Apple Health stayed off on this phone, and where to turn it on (iOS only)', () => {
+    const r = { kind: 'done', restored: 2, skipped: 0, backupOn: true, healthOffered: true } as const;
+    expect(describeResult(r, { health: true })).toBe(
+      "Restored 2 activities. Apple Health workouts aren't backed up from this phone. You can turn that on in Info › Cloud backup."
+    );
+    expect(describeResult(r)).toBe('Restored 2 activities.');
   });
 });

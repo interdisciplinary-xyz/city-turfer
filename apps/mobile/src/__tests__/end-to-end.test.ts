@@ -211,6 +211,18 @@ describe('Data repair: split legacy tracks at recording gaps', () => {
     expect(await runMaintenanceJobs(db)).toEqual(ran);
   });
 
+  it('retries the time-zone repair on a later launch while the zone is unknown; the other jobs still run', async () => {
+    const { c, f, db } = await setup(); // no time zone wired: unknown
+    await c.runMaintenance();
+    const names = (await runMaintenanceJobs(db)).map((j) => j.name);
+    expect(names).not.toContain('activity-time-zones-v1');
+    expect(names).toContain('scrub-closed-sessions-v2');
+
+    const later = wire('test', db, { ...f, timeZone: () => 'Europe/Warsaw' });
+    await later.runMaintenance();
+    expect((await runMaintenanceJobs(db)).map((j) => j.name)).toContain('activity-time-zones-v1');
+  });
+
   it('leaves correct tracks untouched and is idempotent', async () => {
     const { c, f } = await setup();
     f.advance(2 * 86_400_000);

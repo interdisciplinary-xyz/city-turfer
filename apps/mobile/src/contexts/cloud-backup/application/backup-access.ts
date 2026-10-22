@@ -25,25 +25,33 @@ export type Connection =
 
 /**
  * An authenticated client for the configured server, with the settings for that server and account
- * (another account than last time resets them: see BackupSettings.useAccount). Profiles without an
+ * (another account than last time resets them: see BackupSettings.useAccount; consent withdrawals
+ * still pending for the previous one are delivered to it first). Profiles without an
  * account (demo) and phones without credentials never send a request.
  */
 export async function connect(
-  d: Pick<CloudBackupDeps, 'available' | 'credentials' | 'api' | 'defaultServerUrl' | 'repo'>,
+  d: Pick<
+    CloudBackupDeps,
+    'available' | 'credentials' | 'api' | 'defaultServerUrl' | 'repo' | 'tokens' | 'policyVersion'
+  >,
   s: BackupSettings,
   refusedToken: string | null = null
 ): Promise<Connection> {
   if (!d.available) {
     return { kind: 'failed', error: 'not-available' };
   }
-  const credentials = await d.credentials.current().catch(() => null);
-  if (!credentials) {
+  const signedIn = await d.credentials.current().catch(() => null);
+  if (!signedIn) {
     return { kind: 'failed', error: 'no-token' };
+  }
+  const baseUrl = s.toState().serverUrl ?? d.defaultServerUrl;
+  const credentials = await credentialsFor(d, baseUrl, signedIn);
+  if (!credentials) {
+    return { kind: 'failed', error: 'needs-device-token' };
   }
   if (credentials.token === refusedToken) {
     return { kind: 'refused' };
   }
-  const baseUrl = s.toState().serverUrl ?? d.defaultServerUrl;
   const api = d.api({ baseUrl, token: credentials.token });
   let accountId = credentials.accountId;
   if (accountId == null) {
@@ -53,8 +61,73 @@ export async function connect(
     }
     accountId = me.value.id;
   }
-  const settings = await d.repo.useAccount(`${baseUrl}|${accountId}`);
+  const key = `${baseUrl}|${accountId}`;
+  const stored = await d.repo.settings();
+  const previous = stored.toState().accountKey;
+  if (previous != null && previous !== key && stored.withdrawalsPending.length > 0) {
+    // Switching would reset the state and with it the withdrawals the previous account has not heard
+    // about yet: tell that account first (its server copy must go), and only then switch.
+    const error = await deliverToPrevious(d, stored, previous, signedIn);
+    if (error) {
+      return { kind: 'failed', error };
+    }
+  }
+  const settings = await d.repo.useAccount(key);
   return { kind: 'connected', api, settings, token: credentials.token };
+}
+
+type Credentials = { token: string; accountId: string | null };
+
+/**
+ * What may be sent to `baseUrl`. The signed-in account's session token (`accountId` set) was issued
+ * by the built-in server (the identity server) and can delete the account: it never goes anywhere
+ * else. A testing server override gets only the Developer tools device token (null: none saved).
+ */
+async function credentialsFor(
+  d: Pick<CloudBackupDeps, 'tokens' | 'defaultServerUrl'>,
+  baseUrl: string,
+  c: Credentials
+): Promise<Credentials | null> {
+  if (c.accountId == null || baseUrl === d.defaultServerUrl) {
+    return c;
+  }
+  const device = await d.tokens.read().catch(() => null);
+  return device ? { token: device, accountId: null } : null;
+}
+
+/**
+ * Delivers the pending withdrawals to the account the state is about (`previous`, `<server>|<id>`)
+ * with a token this phone still has for it: the Developer tools device token, or the signed-in
+ * account's bearer (only to the built-in server, see credentialsFor). A token counts only when that
+ * server names the same account. Returns null once
+ * every withdrawal arrived, else why not (no token for that account any more: `auth`).
+ */
+async function deliverToPrevious(
+  d: Pick<CloudBackupDeps, 'tokens' | 'api' | 'repo' | 'policyVersion' | 'defaultServerUrl'>,
+  s: BackupSettings,
+  previous: string,
+  signedIn: Credentials
+): Promise<BackupErrorCode | null> {
+  const cut = previous.lastIndexOf('|');
+  const baseUrl = previous.slice(0, cut);
+  const accountId = previous.slice(cut + 1);
+  const device = await d.tokens.read().catch(() => null);
+  const mine = await credentialsFor(d, baseUrl, signedIn);
+  const tokens = [...new Set([device, mine?.token ?? null].filter((t): t is string => t != null))];
+  let error: BackupErrorCode = 'auth';
+  for (const token of tokens) {
+    const api = d.api({ baseUrl, token });
+    const me = await api.me();
+    if (!me.ok) {
+      error = me.failure.kind === 'auth' ? error : errorOf(me.failure);
+      continue;
+    }
+    if (me.value.id !== accountId) {
+      continue;
+    }
+    return deliverWithdrawals(d, api, s);
+  }
+  return error;
 }
 
 /** What a delivered withdrawal erased on the server (contract: no tombstones, no feed entries). */

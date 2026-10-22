@@ -22,6 +22,11 @@ summary:
   call for workout + route) — chosen against for speed; `react-native-health` (old bridge, last
   release 2024).
 - **Free Apple ID is enough:** Apple's capability table lists HealthKit for the free tier.
+- **2026-10-22 (founder): a restore never turns on "Include Apple Health workouts".** Restoring from
+  the cloud backup adopts only the account's `cloud-sync` consent; the Apple Health option stays off
+  on the new phone until the Turfer turns it on there (Info › Cloud backup), and the restore result
+  says so. Restored `hk-…` activities get a Health Sync import link, so one deleted on the new phone
+  is not imported again.
 
 ## Design
 

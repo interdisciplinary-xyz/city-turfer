@@ -26,8 +26,14 @@ export interface AppContextValue {
   /** Step 3 (only after `choose-history`). */
   chooseHistory(useThisPhonesHistory: boolean): Promise<'ok' | 'no-pending'>;
   signOut(): Promise<'ok' | 'recording-in-progress'>;
-  /** Deletes the account on the server; `keepData` false also deletes this phone's copy. */
-  deleteAccount(keepData: boolean): Promise<Exclude<DeleteAccountResult, { kind: 'deleted' }> | { kind: 'ok' }>;
+  /**
+   * Deletes the account on the server; `keepData` false also deletes this phone's copy.
+   * `ok-local-pending`: the account is gone, but this phone's copy could not be deleted yet (it is
+   * retried on the next launch, and before that profile is opened again).
+   */
+  deleteAccount(
+    keepData: boolean
+  ): Promise<Exclude<DeleteAccountResult, { kind: 'deleted' }> | { kind: 'ok' } | { kind: 'ok-local-pending' }>;
   /** "Export my data": the server emails a download link. */
   requestDataExport(): Promise<ExportRequestResult>;
 }

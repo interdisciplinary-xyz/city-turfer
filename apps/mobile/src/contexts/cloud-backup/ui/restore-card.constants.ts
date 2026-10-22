@@ -26,19 +26,28 @@ export function describeProgress(p: RestoreProgress | null): string {
   return p && p.total > 0 ? `Restoring ${Math.min(p.done + 1, p.total)} of ${p.total}…` : 'Restoring…';
 }
 
-/** What the result means, in plain words (null: nothing to say). */
-export function describeResult(r: RestoreResult | null): string | null {
+/** After a restore, when the account backs up Apple Health workouts but this phone doesn't (yet). */
+export const HEALTH_OFF_AFTER_RESTORE =
+  "Apple Health workouts aren't backed up from this phone. You can turn that on in Info › Cloud backup.";
+
+/**
+ * What the result means, in plain words (null: nothing to say). `health`: Apple Health is possible on
+ * this phone (iOS), so mention that it was left off.
+ */
+export function describeResult(r: RestoreResult | null, { health = false }: { health?: boolean } = {}): string | null {
   if (!r) {
     return null;
   }
   switch (r.kind) {
-    case 'done':
-      if (r.skipped > 0) {
-        return `Restored ${r.restored}. ${r.skipped} couldn't be read and stayed on the server.`;
-      }
-      return r.restored === 0
-        ? 'This phone already has everything in your backup.'
-        : `Restored ${r.restored} ${r.restored === 1 ? 'activity' : 'activities'}.`;
+    case 'done': {
+      const what =
+        r.skipped > 0
+          ? `Restored ${r.restored}. ${r.skipped} couldn't be read and stayed on the server.`
+          : r.restored === 0
+            ? 'This phone already has everything in your backup.'
+            : `Restored ${r.restored} ${r.restored === 1 ? 'activity' : 'activities'}.`;
+      return health && r.healthOffered ? `${what} ${HEALTH_OFF_AFTER_RESTORE}` : what;
+    }
     case 'paused':
       return {
         recording: 'Finish your recording first. Restoring carries on afterwards.',
