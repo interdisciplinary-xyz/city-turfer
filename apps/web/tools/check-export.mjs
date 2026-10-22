@@ -117,6 +117,16 @@ export function checkExport(outDir, { locales = ['en', 'pl'], nextDir = path.joi
   if (pages.length > 0 && !markerSeen) {
     // Say what was read, so a failure on a build machine can be diagnosed from its log alone.
     const seen = pages.map((file) => `${rel(file)}: ${chunksOf(read(file)).length} chunk refs`).join('; ');
+    const scripts = [...read(pages[0]).matchAll(/<script[^>]*\ssrc="([^"]+)"/g)].slice(0, 3).map((m) => m[1]);
+    const nextOut = path.join(outDir, '_next');
+    const layout = existsSync(nextOut)
+      ? walk(nextOut)
+          .slice(0, 3)
+          .map((file) => path.relative(outDir, file))
+      : [];
+    findings.push(
+      `diagnostics: first scripts ${scripts.join(', ') || 'none'}; out/_next files ${layout.join(', ') || 'none'}`
+    );
     const chunkDir = [path.join(outDir, '_next/static/chunks'), path.join(nextDir, 'static/chunks')].find((dir) =>
       existsSync(dir)
     );
