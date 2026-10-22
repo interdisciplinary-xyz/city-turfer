@@ -109,7 +109,12 @@ export class ExportService {
       const expiresAt = now + EXPORT_TTL_MS;
       await this.files.put(fileKey, zip, { ownerId: userId, contentType: 'application/zip', expiresAt });
       const done = { readyAt: this.clock.now(), expiresAt, fileKey, byteSize: zip.byteLength };
-      await this.exports.complete(userId, id, { ...done, keyHash: sha256(key) });
+      if (!(await this.exports.complete(userId, id, { ...done, keyHash: sha256(key) }))) {
+        // Withdrawn (or swept) while building: the data must not come back, so no file, no link.
+        this.log.event?.({ msg: 'export.withdrawn' });
+        await this.files.delete(fileKey).catch(() => undefined);
+        return { ...pending, status: 'expired' };
+      }
       await this.mailer.send(exportLinkMail(user.email, `${this.publicUrl}/v1/exports/${key}`, expiresAt));
       return { ...pending, status: 'ready', ...done };
     } catch {

@@ -80,7 +80,8 @@ Expired files are purged daily (Vercel Cron, `GET /internal/cron/retention`, wit
 sessions and stale rate-limit rows) and on the next export request. If building, storing or mailing
 fails, the export is `failed`, its file deleted, and the user may ask again at once. Withdrawing a
 consent deletes the user's export files and expires their links in the same transaction (they copy
-the withdrawn data).
+the withdrawn data). A build still running at that moment cannot undo it: the export only becomes
+`ready` while its row is still `pending`; otherwise the new zip is deleted and no link is mailed.
 
 The download streams 256 KiB chunks without `Content-Length`. **Unverified until a deploy:** that
 Vercel lets a streamed response exceed its 4.5 MB buffered-response cap. Duration: Fluid compute's

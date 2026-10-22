@@ -192,6 +192,34 @@ describe('data export', () => {
     expect(mailer.lastTo(EMAIL)).toBeUndefined();
   });
 
+  it('does not bring an export back when cloud-sync is withdrawn while the zip is built', async () => {
+    const files = new PostgresFileStorage(h.db);
+    const interleaved = Object.assign(Object.create(files) as PostgresFileStorage, {
+      // The withdrawal lands between the build and the store: eraseBackup expires the pending row.
+      put: async (...args: Parameters<PostgresFileStorage['put']>) => {
+        const off = { body: { granted: false, policyVersion: '2026-10' } };
+        expect((await h.call('PUT', '/v1/me/consents/cloud-sync', off)).status).toBe(200);
+        return files.put(...args);
+      },
+    });
+    const mailer = new MemoryMailer();
+    const service = new ExportService(
+      h.store,
+      new DrizzleExportStore(h.db),
+      interleaved,
+      mailer,
+      h.clock,
+      'http://localhost:8787',
+      silentLog
+    );
+    const job = await service.request('admin');
+    expect(job.status).toBe('expired');
+    expect(mailer.lastTo(EMAIL)).toBeUndefined();
+    expect(await (await h.call('GET', `/v1/me/exports/${job.id}`)).json()).toMatchObject({ status: 'expired' });
+    const left = await h.db.execute(sql`SELECT count(*)::int AS n FROM stored_files`);
+    expect((left as unknown as { rows: { n: number }[] }).rows[0].n).toBe(0);
+  });
+
   it('lets only one of two concurrent requests through (row lock)', async () => {
     const [a, b] = await Promise.all([h.call('POST', '/v1/me/exports'), h.call('POST', '/v1/me/exports')]);
     expect([a.status, b.status].sort()).toEqual([202, 429]);
