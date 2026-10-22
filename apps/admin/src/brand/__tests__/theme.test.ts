@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import { brandThemeCss } from '../theme';
 
-const css = brandThemeCss("'Display', sans-serif");
+const css = brandThemeCss({ display: "'Display', sans-serif", body: "'Body'" });
 
 describe('brand theme for Payload', () => {
   it('maps the light and dark brand palettes onto Payload theme variables', () => {
@@ -15,14 +15,14 @@ describe('brand theme for Payload', () => {
     expect(css).toContain(`--theme-text: ${LIGHT.text};`);
     expect(css).toContain(`--theme-error-500: ${DARK.danger};`);
     expect(css).toContain(`--ct-accent: ${ACCENT};`);
-    expect(css).toContain(`--font-body: ${cssVariables('light')['--font-family-body']};`);
+    expect(css).toContain(`--font-body: 'Body', ${cssVariables('light')['--font-family-body']};`);
     expect(css).not.toMatch(/undefined|: ;/);
     // AA label on the pink button in both modes.
     expect(css).not.toContain(`--ct-on-accent: ${DARK.onAccent};`);
     expect(css.split(`--ct-on-accent: ${LIGHT.onAccent};`).length - 1).toBe(2);
   });
 
-  it('uses the display face it is given for headings', () => {
+  it('uses the brand display face for headings', () => {
     expect(css).toContain("font-family: 'Display', sans-serif;");
   });
 

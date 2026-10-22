@@ -13,7 +13,7 @@ const SELECTOR: Record<ColorScheme, string> = {
  * `@cityturfer/brand`, never a hex here. Payload's styles sit in `@layer payload-default`, so these
  * unlayered rules win without `!important`.
  */
-export function brandThemeCss(displayFontFamily: string): string {
+export function brandThemeCss(fonts: { display: string; body: string }): string {
   const rules = (Object.keys(SELECTOR) as ColorScheme[]).map((scheme) => {
     const v = cssVariables(scheme);
     const vars = {
@@ -35,9 +35,9 @@ export function brandThemeCss(displayFontFamily: string): string {
   const shared = cssVariables('light');
   return [
     ...rules,
-    `:root {\n  --font-body: ${shared['--font-family-body']};\n  --style-radius-s: ${shared['--radius-sm']};\n  --style-radius-m: ${shared['--radius-control']};\n  --style-radius-l: ${shared['--radius-card']};\n}`,
+    `:root {\n  --font-body: ${fonts.body}, ${shared['--font-family-body']};\n  --style-radius-s: ${shared['--radius-sm']};\n  --style-radius-m: ${shared['--radius-control']};\n  --style-radius-l: ${shared['--radius-card']};\n}`,
     // Headings in the brand display face (its weight is part of the font: no synthesis).
-    `h1, h2, h3 {\n  font-family: ${displayFontFamily};\n  font-weight: normal;\n  font-synthesis: none;\n}`,
+    `h1, h2, h3 {\n  font-family: ${fonts.display};\n  font-weight: normal;\n  font-synthesis: none;\n}`,
     `.btn--style-primary {\n  background-color: var(--ct-accent);\n  color: var(--ct-on-accent);\n}`,
     // Forgot-password is refused (src/collections/staff/hooks.ts): no link to a form that can't work.
     `.login__form a[href$="/forgot"] { display: none; }`,
