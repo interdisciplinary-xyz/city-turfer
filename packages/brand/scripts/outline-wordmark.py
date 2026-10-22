@@ -1,9 +1,9 @@
 """Draw the CityTurfer wordmark as outlined SVG paths in Big Shoulders Display (brand-system skill, Logo).
 
 Outlines render the same everywhere (no font needed by Chrome, Figma or the store tools). Set in
-capitals like every display line (docs/decisions/brand-typography-2026-10-22.md): "CITY" is Big
-Shoulders Display Medium, "TURFER" Big Shoulders Display Black filled with the Ramp, running from
-bottom-left to top-right; the weight change keeps the two words apart. Two files: `wordmark.svg`
+capitals like every display line (docs/decisions/brand-typography-2026-10-22.md): both words are
+Big Shoulders Display Black; "CITY" is solid, "TURFER" is filled with the Ramp, running from
+bottom-left to top-right, and the colour change keeps the two words apart. Two files: `wordmark.svg`
 for dark backgrounds, `wordmark-light.svg` for light ones ("CITY" in night; "TURFER" uses only
 faint -> glow, which stay legible on white).
 
@@ -58,7 +58,7 @@ def shape(blob, text, wght, x0):
 
 def main(out_dir):
     blob = hb.Blob.from_file_path(FONT_PATH)
-    city, city_end, cb = shape(blob, 'CITY', 500, 0)
+    city, city_end, cb = shape(blob, 'CITY', 900, 0)
     turfer, end, tb = shape(blob, 'TURFER', 900, city_end + 0.01 * SIZE)
     x_min, y_min = min(cb[0], tb[0]), min(cb[1], tb[1])
     x_max, y_max = max(cb[2], tb[2]), max(cb[3], tb[3])

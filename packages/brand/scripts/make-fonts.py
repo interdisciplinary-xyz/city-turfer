@@ -1,7 +1,7 @@
 """Cut CityTurfer's static brand fonts (brand-system skill, Typography).
 
 Big Shoulders Display Black (headings) and Barlow Semi Condensed ExtraBold (numbers) are bundled in
-the app and used by the website; the Barlow body weights are web only. React Native has no
+the app and used by the website; the Barlow body weights and the tagline italic are web only. React Native has no
 variable-font support, and on iOS a font is addressed by its PostScript name, so each font gets a
 PostScript name equal to its file name (`BigShouldersDisplay-Black.ttf` -> `BigShouldersDisplay-Black`).
 Every font is subset to Latin + Polish.
@@ -11,6 +11,7 @@ Usage (fonttools + brotli in a virtualenv), sources from Google Fonts:
   curl -sL -o src/BigShouldersDisplay-VF.ttf "$B/bigshouldersdisplay/BigShouldersDisplay%5Bwght%5D.ttf"
   curl -sL -o src/BarlowSemiCondensed-ExtraBold.ttf "$B/barlowsemicondensed/BarlowSemiCondensed-ExtraBold.ttf"
   for w in Regular Medium SemiBold Bold; do curl -sL -o src/Barlow-$w.ttf "$B/barlow/Barlow-$w.ttf"; done
+  curl -sL -o src/BarlowSemiCondensed-BlackItalic.ttf "$B/barlowsemicondensed/BarlowSemiCondensed-BlackItalic.ttf"
   python make-fonts.py src packages/brand/fonts
 """
 import os
@@ -29,7 +30,11 @@ INSTANCES = [
     ('Barlow-Medium', 'Barlow', 'Medium', 'Barlow-Medium.ttf', None),
     ('Barlow-SemiBold', 'Barlow', 'SemiBold', 'Barlow-SemiBold.ttf', None),
     ('Barlow-Bold', 'Barlow', 'Bold', 'Barlow-Bold.ttf', None),
+    # Website tagline ("Surf your city. Own your streets."), web only.
+    ('BarlowSemiCondensed-BlackItalic', 'Barlow Semi Condensed', 'Black Italic', 'BarlowSemiCondensed-BlackItalic.ttf', None),
 ]
+# Web-only fonts get no TTF (the app never bundles them).
+WEB_ONLY = {'Barlow-Regular', 'Barlow-Medium', 'Barlow-SemiBold', 'Barlow-Bold', 'BarlowSemiCondensed-BlackItalic'}
 # Basic Latin, Latin-1, Latin Extended-A (Polish), punctuation, arrows, superscripts (km²), minus.
 UNICODES = (
     list(range(0x20, 0x7F))
@@ -66,7 +71,7 @@ def main(src_dir, out_dir):
         if 'DSIG' in font:
             del font['DSIG']
         rename(font, ps_name, family, style)
-        if not ps_name.startswith('Barlow-'):  # TTF for the app; the Barlow body weights are web only
+        if ps_name not in WEB_ONLY:  # TTF for the app
             font.flavor = None
             font.save(os.path.join(out_dir, f'{ps_name}.ttf'))
         font.flavor = 'woff2'

@@ -10,6 +10,7 @@
 .brand {
   --display: var(--face-display), var(--font-family-display);
   --numeric: var(--face-numeric), var(--font-family-numeric);
+  --tagline: var(--face-tagline, 'BarlowSemiCondensed-BlackItalic'), var(--font-family-tagline);
   --body: var(--face-body, 'Barlow'), var(--font-family-body);
   /* Readable on the light page: faint to accent-text, like the light wordmark (no blazing). */
   --ramp: linear-gradient(45deg, var(--faint), var(--accent-text));
@@ -80,13 +81,12 @@
 }
 
 .brand-tagline {
-  font-family: var(--display);
-  text-transform: var(--display-case);
-  letter-spacing: var(--display-tracking);
+  font-family: var(--tagline);
+  letter-spacing: -0.01em;
   font-weight: normal;
   font-synthesis: none;
-  font-size: clamp(34px, 6.5vw, 52px);
-  line-height: 0.95;
+  font-size: clamp(30px, 5.6vw, 46px);
+  line-height: 1.02;
   margin: var(--space-xxl) 0 var(--space-md);
   background: var(--ramp);
   -webkit-background-clip: text;
@@ -242,12 +242,11 @@
   border-bottom: 1px solid var(--border);
 }
 .brand-tagline-item {
-  font-family: var(--display);
-  text-transform: var(--display-case);
-  letter-spacing: var(--display-tracking);
+  font-family: var(--tagline);
+  letter-spacing: -0.01em;
   font-synthesis: none;
-  font-size: clamp(23px, 3.9vw, 31px);
-  line-height: 1;
+  font-size: clamp(21px, 3.5vw, 28px);
+  line-height: 1.05;
 }
 .brand-rules {
   margin-top: var(--space-xxl);
