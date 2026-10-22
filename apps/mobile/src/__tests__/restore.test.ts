@@ -5,6 +5,7 @@
  * Apple Health, the street router never asked, nothing uploaded back; a restore killed half-way
  * resumes without duplicates.
  */
+import { SqliteBackupRepository } from '@/contexts/cloud-backup/infrastructure/sqlite-backup-repository';
 import { FakeHealthStore } from '@/contexts/health-sync/test-support/fake-health-store';
 import type { TrackPoint } from '@/shared-kernel';
 import { DAY, phone, type PhoneContainer, T0, walk } from '@/test-support/backup-phone';
@@ -213,6 +214,26 @@ describe('Restore from the cloud backup', () => {
     expect(await c.cloudBackup.restore.execute()).toMatchObject({ kind: 'done', restored: 0 });
     expect(await c.activityLog.detail.execute('rec-run')).toBeNull();
     expect(await b.db.first('SELECT COUNT(*) AS n FROM log_activities')).toEqual({ n: 3 });
+  });
+
+  it('an Activity deleted here stays deleted after switching to another account and back', async () => {
+    const { a, c } = await backedUpPhoneA();
+    a.server.failNext('deleteActivity', { kind: 'offline' }, 10); // the delete never reaches account 1
+    await c.activityLog.remove.execute('rec-run');
+    await c.dispatcher.dispatchPending();
+    await c.cloudBackup.run.execute();
+    expect(a.server.activities.has('rec-run')).toBe(true);
+
+    // Account 2 on this profile, then account 1 again: each switch clears the backup rows.
+    const repo = new SqliteBackupRepository(a.db);
+    const key = (await repo.settings()).toState().accountKey!;
+    await repo.useAccount('https://elsewhere|acct-2');
+    await repo.useAccount(key);
+    expect(await repo.backups()).toEqual([]);
+
+    expect(await c.cloudBackup.restoreOffer.execute()).toEqual({ kind: 'none' });
+    expect(await c.cloudBackup.restore.execute()).toMatchObject({ kind: 'done', restored: 0 });
+    expect(await c.activityLog.detail.execute('rec-run')).toBeNull();
   });
 
   it('"Not now" hides the offer until the server holds something new', async () => {

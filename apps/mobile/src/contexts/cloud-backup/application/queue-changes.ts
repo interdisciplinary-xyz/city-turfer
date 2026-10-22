@@ -53,6 +53,9 @@ export class QueueBackupChanges {
 
   /** Deletes go up for anything the backup tracks, Apple Health imports included (even if since excluded). */
   async activityDeleted(e: ActivityDeleted): Promise<void> {
+    if (this.d.available) {
+      await this.d.repo.rememberDeletedHere(e.activityId); // whatever the settings: restore must not undo it
+    }
     if (!this.d.available || !(await this.d.repo.settings()).acceptsChanges) {
       return;
     }
