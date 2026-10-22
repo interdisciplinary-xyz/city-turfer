@@ -5,9 +5,11 @@ import {
   backgroundActivitySession,
   type Container,
   deleteProfileData,
+  finishProfileDeletion,
   getContainer,
   identity,
   resetContainer,
+  retryProfileDeletions,
 } from '@/composition-root';
 import type { User } from '@/contexts/identity';
 import { prepareDemoAccount } from '@/dev/gdansk-demo';
@@ -20,7 +22,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [auth, setAuth] = useState<AuthState>({ status: 'loading' });
   const [dataVersion, setDataVersion] = useState(0);
 
-  const enter = useCallback(async (user: User) => {
+  /** `fresh`: a sign-in (not the session restored at launch) — finish a deletion pending for this profile first. */
+  const enter = useCallback(async (user: User, fresh = true) => {
+    if (fresh) {
+      await finishProfileDeletion(user.id);
+    }
     const container = await getContainer();
     if (!container) {
       return setAuth({ status: 'signed-out' });
@@ -32,9 +38,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    identity.currentUser
-      .execute()
-      .then((u) => (u ? enter(u) : setAuth({ status: 'signed-out' })))
+    // Data the Turfer deleted from this phone whose deletion failed last time goes first.
+    retryProfileDeletions()
+      .then(() => identity.currentUser.execute())
+      .then((u) => (u ? enter(u, false) : setAuth({ status: 'signed-out' })))
       .catch(() => setAuth({ status: 'signed-out' }));
   }, [enter]);
 
@@ -104,11 +111,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
         // The account is gone: always signed out here, whichever profile held its data.
         await resetContainer();
+        let localDeleted = true;
         if (!keepData && r.profileId) {
-          await deleteProfileData(r.profileId).catch(() => undefined);
+          // Failed: retried on the next launch, and before that profile is opened again.
+          localDeleted = await deleteProfileData(r.profileId).then(
+            () => true,
+            () => false
+          );
         }
         setAuth({ status: 'signed-out' });
-        return { kind: 'ok' };
+        return localDeleted ? { kind: 'ok' } : { kind: 'ok-local-pending' };
       },
     }),
     [auth, dataVersion, enter]

@@ -135,6 +135,11 @@ export default function AccountScreen() {
           'Sign in again',
           'This phone isn’t signed in to your account any more. Nothing was deleted. Sign out, sign in with your email, then delete your account.'
         );
+      } else if (r.kind === 'ok-local-pending') {
+        Alert.alert(
+          'Account deleted',
+          'Your account is deleted. This phone’s copy of your activities couldn’t be deleted just now; CityTurfer deletes it the next time it opens.'
+        );
       } else if (r.kind === 'offline') {
         Alert.alert('No connection', 'Nothing was deleted. Try again when you’re online.');
       } else if (r.kind !== 'ok') {
