@@ -2,6 +2,7 @@ import type { Container } from '@/composition-root';
 import type {
   DeleteAccountResult,
   IdentityApi,
+  PasswordSignInResult,
   StartSignInResult,
   User,
   VerifySignInResult,
@@ -23,6 +24,16 @@ export interface AppContextValue {
   startSignIn(email: string): Promise<StartSignInResult>;
   /** Step 2: the emailed code; `choose-history` asks whether to use this phone's history. */
   verifyCode(email: string, code: string): Promise<Exclude<VerifySignInResult, { kind: 'signed-in' }> | { kind: 'ok' }>;
+  /**
+   * The alternative to the code: email + account password (a local profile's email uses its own
+   * password). Then like a verified code: `choose-history` asks about this phone's history.
+   */
+  signInWithPassword(
+    email: string,
+    password: string
+  ): Promise<Exclude<PasswordSignInResult, { kind: 'signed-in' }> | { kind: 'ok' }>;
+  /** The signed-in user changed (name, email) in Me › Account: show it everywhere. */
+  updateUser(user: User): void;
   /** Step 3 (only after `choose-history`). */
   chooseHistory(useThisPhonesHistory: boolean): Promise<'ok' | 'no-pending'>;
   signOut(): Promise<'ok' | 'recording-in-progress'>;

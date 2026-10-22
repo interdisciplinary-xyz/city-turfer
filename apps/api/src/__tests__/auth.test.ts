@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { DrizzleAccountRepository } from '../db/accounts';
 import { PostgresRateLimiter } from '../db/rate-limits';
 import { DrizzleSessionStore } from '../db/sessions';
 import { adopt } from '../identity/adopt';
@@ -126,6 +127,7 @@ describe('sign-in with an e-mailed code', () => {
       new PostgresRateLimiter(h.db),
       'z'.repeat(48),
       h.clock,
+      new DrizzleAccountRepository(h.db),
       new DrizzleSessionStore(h.db)
     );
     await expect(rotated.signIn(EMAIL, old, '203.0.113.7')).rejects.toMatchObject({ code: 'auth.invalid-code' });
@@ -260,6 +262,7 @@ describe('sign-in with an e-mailed code', () => {
       new PostgresRateLimiter(h.db),
       TEST_AUTH_SECRET,
       h.clock,
+      new DrizzleAccountRepository(h.db),
       new DrizzleSessionStore(h.db)
     );
     await expect(service.requestCode(EMAIL, '203.0.113.50')).resolves.toBeUndefined();
@@ -289,6 +292,7 @@ describe('sessions', () => {
       new PostgresRateLimiter(h.db),
       'y'.repeat(48),
       h.clock,
+      new DrizzleAccountRepository(h.db),
       new DrizzleSessionStore(h.db)
     );
     expect(await rotated.verifier.verify(token)).toBeNull();

@@ -8,7 +8,10 @@ import type { AuthSession, Consent, DataExportJob, User } from '@/api/schema';
 export const USER: User = {
   id: 'u_story',
   email: 'walker@e2e.cityturfer.test',
+  name: null,
   displayName: 'u_story',
+  hasPassword: false,
+  passwordChangedAt: null,
   createdAt: '2026-09-14T08:30:00Z',
 };
 

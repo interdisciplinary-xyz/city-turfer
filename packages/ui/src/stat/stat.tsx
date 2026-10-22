@@ -4,12 +4,12 @@ import { StyleSheet, Text, View } from 'react-native';
 import { usePalette } from '../theme/theme';
 import type { StatProps } from './stat.constants';
 
-/** A number with its unit and caption: tabular figures, Archivo ExtraBold (brand typography). */
+/** A number with its unit and caption: tabular figures, Barlow Semi Condensed ExtraBold (brand typography). */
 export function Stat({ label, value, unit, big, testID }: StatProps) {
   const p = usePalette();
   return (
     <View style={s.stat} testID={testID} accessible accessibilityLabel={`${label} ${value} ${unit ?? ''}`}>
-      {/* Unit is a sibling, not nested: nested text would inherit Archivo, and Archivo + fontWeight falls back to the system font on Android. */}
+      {/* Unit is a sibling, not nested: nested text would inherit the numeric face, and a brand font + fontWeight falls back to the system font on Android. */}
       <View style={s.figure}>
         <Text style={[s.value, { color: p.text, fontSize: big ? FONT_SIZE.hero : FONT_SIZE.stat }]}>{value}</Text>
         {unit ? <Text style={[s.unit, { color: p.muted }]}>{unit}</Text> : null}

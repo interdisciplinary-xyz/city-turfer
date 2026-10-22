@@ -16,10 +16,20 @@ export const iso = (ms: number) => new Date(ms).toISOString();
 /** `Date.parse` of a validated ISO 8601 UTC string. */
 export const ms = (isoString: string) => Date.parse(isoString);
 
-export const userDto = (u: UserRecord) => ({
+/** `displayName` is deprecated (0.5.0): old phone builds show it, so it still falls back to the id. */
+export const userDto = (
+  u: UserRecord,
+  credential: { hasPassword: boolean; passwordChangedAt: number | null } = {
+    hasPassword: false,
+    passwordChangedAt: null,
+  }
+) => ({
   id: u.id,
   email: u.email,
+  name: u.displayName,
   displayName: u.displayName ?? u.id,
+  hasPassword: credential.hasPassword,
+  passwordChangedAt: credential.passwordChangedAt === null ? null : iso(credential.passwordChangedAt),
   createdAt: iso(u.createdAt ?? 0),
 });
 

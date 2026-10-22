@@ -4,6 +4,7 @@ import { sql } from 'drizzle-orm';
 
 import { createApp } from '../app';
 import { deviceTokenAuth, parseApiTokens } from '../auth/device-tokens';
+import { DrizzleAccountRepository } from '../db/accounts';
 import { DrizzleExportStore, PostgresFileStorage } from '../db/exports';
 import { createPgliteDb } from '../db/pglite';
 import { PostgresRateLimiter } from '../db/rate-limits';
@@ -12,10 +13,12 @@ import { DrizzleSessionStore } from '../db/sessions';
 import { DrizzleBackupStore } from '../db/store';
 import { type ApiLog, defaultDeps, silentLog } from '../deps';
 import { createAuth } from '../identity/better-auth';
+import { FakeBreachedPasswords } from '../identity/breached-passwords';
 import { MemoryMailer } from '../identity/mailer';
 import { compositeVerifier, IdentityService } from '../identity/use-cases';
 import { RetentionService } from '../privacy/retention';
 import { ExportService } from '../privacy/use-cases';
+import { accountService } from '../wiring';
 
 /** Device tokens of the test users (made up; never real secrets). */
 export const TOKENS = { admin: 'test-token-admin', other: 'test-token-other' } as const;
@@ -69,6 +72,8 @@ export async function backupApp(
     log?: ApiLog;
     cronSecret?: string | null;
     webEdgeSecret?: string | null;
+    /** Passwords the fake breach check refuses (default: `password1234`, …). */
+    breached?: readonly string[];
   } = {}
 ) {
   shared ??= createPgliteDb();
@@ -91,9 +96,22 @@ export async function backupApp(
     new PostgresRateLimiter(db),
     TEST_AUTH_SECRET,
     clock,
+    new DrizzleAccountRepository(db),
     new DrizzleSessionStore(db)
   );
   const log = options.log ?? silentLog;
+  const breached = new FakeBreachedPasswords(options.breached);
+  const accounts = accountService({
+    db,
+    auth,
+    identity,
+    secret: TEST_AUTH_SECRET,
+    mailer,
+    breached,
+    clock,
+    fixedCode: options.fixedCode ?? null,
+    log,
+  });
   const app = createApp(
     defaultDeps({
       auth: compositeVerifier(deviceTokenAuth(parseApiTokens(API_TOKENS).entries), identity.verifier),
@@ -101,6 +119,7 @@ export async function backupApp(
       log,
       store,
       identity,
+      accounts,
       exports: new ExportService(
         store,
         new DrizzleExportStore(db),
@@ -108,7 +127,8 @@ export async function backupApp(
         mailer,
         clock,
         'http://localhost:8787',
-        log
+        log,
+        new DrizzleAccountRepository(db)
       ),
       retention: new RetentionService(new DrizzleRetentionStore(db), clock, log),
       cronSecret: options.cronSecret === undefined ? TEST_CRON_SECRET : options.cronSecret,
@@ -143,7 +163,7 @@ export async function backupApp(
     });
     return ((await res.json()) as { token: string }).token;
   };
-  return { app, store, db, clock, call, close, mailer, identity, signIn };
+  return { app, store, db, clock, call, close, mailer, auth, identity, accounts, breached, signIn };
 }
 
 /** A made-up run around Warsaw Old Town (public landmark): `n` points, 3 s and ~7 m apart. */

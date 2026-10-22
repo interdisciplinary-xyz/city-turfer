@@ -1,10 +1,14 @@
 import { SPACE } from '@cityturfer/brand';
+import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView } from 'react-native';
 
 import { useCloudBackup } from '@/contexts/cloud-backup/ui/hooks';
+import { AccountOverview } from '@/contexts/identity/ui/account-overview';
+import { PASSWORD_COPY } from '@/contexts/identity/ui/account-settings.constants';
+import { useAccountSettings } from '@/contexts/identity/ui/hooks';
 import { useApp } from '@/ui-kit/app-context';
-import { Button, Card } from '@/ui-kit/components';
+import { Button } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
 
 const RECORDING = ['Recording in progress', 'Finish or discard your recording first.'] as const;
@@ -33,16 +37,29 @@ export default function AccountScreen() {
   const user = auth.status === 'signed-in' ? auth.user : null;
   const hasAccount = user?.accountId != null;
 
-  const rows: [string, string][] = [
-    ['Email', user?.email ?? '—'],
-    ['Sign-in', hasAccount ? 'CityTurfer account (email code)' : 'Local profile on this phone'],
-    [
-      'Data',
-      status?.enabled
-        ? `On this phone, backed up (${status.backedUp} of ${status.total})`
-        : 'Stored on this phone only',
-    ],
-  ];
+  const settings = useAccountSettings();
+  const dataText = status?.enabled
+    ? `On this phone, backed up (${status.backedUp} of ${status.total})`
+    : 'Stored on this phone only';
+
+  /** Not set: straight to "Set"; set: change it or remove it. Each flow asks for a code first. */
+  const onPassword = async () => {
+    const s = settings.state;
+    if (s.status !== 'ready' || s.refreshing || s.settings.kind !== 'account') {
+      return; // not answered yet, or asked again: `hasPassword` may be out of date
+    }
+    if (!s.settings.hasPassword) {
+      router.push('/account-password?action=set');
+      return;
+    }
+    const action = await choose(PASSWORD_COPY.actionTitle, PASSWORD_COPY.actionText, [
+      { text: PASSWORD_COPY.change, value: 'change' },
+      { text: PASSWORD_COPY.remove, value: 'remove', destructive: true },
+    ]);
+    if (action) {
+      router.push(`/account-password?action=${action}`);
+    }
+  };
 
   const busyWhile = async (label: string, work: () => Promise<void>) => {
     setBusy(label);
@@ -149,17 +166,17 @@ export default function AccountScreen() {
 
   return (
     <ScrollView style={{ backgroundColor: p.bg }} contentContainerStyle={{ padding: SPACE.lg, gap: 14 }}>
-      <Card>
-        {rows.map(([k, v], i) => (
-          <View
-            key={k}
-            style={[s.row, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: p.border }]}
-          >
-            <Text style={[s.key, { color: p.muted }]}>{k}</Text>
-            <Text style={[s.value, { color: p.text }]}>{v}</Text>
-          </View>
-        ))}
-      </Card>
+      {user && (
+        <AccountOverview
+          user={user}
+          state={settings.state}
+          dataText={dataText}
+          onName={() => router.push('/account-name')}
+          onEmail={() => router.push('/account-email')}
+          onPassword={() => void onPassword()}
+          onRetry={() => void settings.refresh()}
+        />
+      )}
       <Button
         testID='sign-out'
         label='Sign out'
@@ -194,9 +211,3 @@ export default function AccountScreen() {
     </ScrollView>
   );
 }
-
-const s = StyleSheet.create({
-  row: { paddingVertical: 12, gap: 2 },
-  key: { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8 },
-  value: { fontSize: 16 },
-});

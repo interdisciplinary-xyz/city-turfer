@@ -13,7 +13,7 @@ import { backupApp, closeSharedDb, TOKENS } from './support';
 const app = createApp(defaultDeps({ log: silentLog }));
 const AUTH = { Authorization: 'Bearer test-token' };
 const PUBLIC = new Set(['getHealth', 'requestSignInCode', 'signIn', 'downloadDataExport']);
-/** The one-way backup (docs/decisions/api-sync-2026-10-20.md): live since 0.3.0. */
+/** The one-way backup (docs/decisions/api-sync-2026-10-20.md): live since 0.3.0; account settings since 0.5.0. */
 const LIVE = new Set([
   'getHealth',
   'requestSignInCode',
@@ -23,6 +23,12 @@ const LIVE = new Set([
   'revokeSession',
   'revokeSessions',
   'getMe',
+  'updateMe',
+  'requestStepUpCode',
+  'requestEmailChangeCode',
+  'changeEmail',
+  'setPassword',
+  'removePassword',
   'deleteMe',
   'requestDataExport',
   'getDataExport',
@@ -230,7 +236,7 @@ describe('OpenAPI document', () => {
 
   it('is OpenAPI 3.1 with every route of the decision record', () => {
     expect(doc.openapi).toBe('3.1.0');
-    expect(ops).toHaveLength(27);
+    expect(ops).toHaveLength(33);
   });
 
   it('gives every operation a unique id and a bounded-context tag', () => {

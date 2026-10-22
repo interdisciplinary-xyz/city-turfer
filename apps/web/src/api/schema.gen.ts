@@ -54,8 +54,8 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Sign in with the code
-     * @description Exchanges the e-mailed code for a session (use case SignIn; Better Auth). Creates the account on the first sign-in. **Phones** (default, `client: "phone"`): a bearer `token` in the body, about 60 days, sliding. **Browsers** (`client: "browser"`): no token in the body; the answer sets `__Secure-ct_session=…; Max-Age=2592000; Path=/api/v1; HttpOnly; Secure; SameSite=Strict` (host-only; without `Max-Age` when `sharedComputer`), 14 days sliding, at most 30 days (8 hours on a shared computer); the request must come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`, else `403 auth.csrf`). A wrong or expired code is `401 auth.invalid-code`; three wrong tries burn the code (ask for a new one). Limits: 10 sign-ins per address and 20 failed sign-ins per IP (an IPv6 /64 counts as one IP) per 10 minutes, and 10 failed sign-ins per address per day (then even the right code answers `429` until the day is over).
+     * Sign in with the code or the password
+     * @description Exchanges the e-mailed code, or the account password, for a session (use cases SignIn and SignInWithPassword; Better Auth). A code creates the account on the first sign-in; a password never does. **Phones** (default, `client: "phone"`): a bearer `token` in the body, about 60 days, sliding. **Browsers** (`client: "browser"`, with a code or a password): no token in the body; the answer sets `__Secure-ct_session=…; Max-Age=2592000; Path=/api/v1; HttpOnly; Secure; SameSite=Strict` (host-only; without `Max-Age` when `sharedComputer`), 14 days sliding, at most 30 days (8 hours on a shared computer); the request must come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`, else `403 auth.csrf`). A wrong or expired code is `401 auth.invalid-code`; three wrong tries burn the code (ask for a new one). A wrong password, an account without a password and an unknown address are all `401 auth.invalid-credentials`. Limits (codes and passwords together): 10 sign-ins per address and 20 failed sign-ins per IP (an IPv6 /64 counts as one IP) per 10 minutes, and 10 failed sign-ins per address per day (then even the right code or password answers `429` until the day is over).
      */
     post: operations['signIn'];
     delete?: never;
@@ -137,7 +137,7 @@ export interface paths {
     };
     /**
      * Current user
-     * @description The user the bearer token belongs to (use case GetCurrentUser); the server row is created on the first authenticated request. Consents, export and erasure live under Privacy.
+     * @description The user the bearer token belongs to (use case GetCurrentUser): name, e-mail and whether a password is set; the server row is created on the first authenticated request. Consents, export and erasure live under Privacy.
      */
     get: operations['getMe'];
     put?: never;
@@ -147,6 +147,94 @@ export interface paths {
      * @description Erases the account and every row it owns, in one transaction — activities, tracks, gap routes, tombstones, the Home City, consents, exports, the sign-in account with every session and pending code (use case EraseAccount; GDPR art. 17, App Store account deletion). Afterwards every session answers `401` (with the cookie, this answer clears it). The phone keeps its own copy. A device token (`API_TOKENS`) still authenticates until it is removed from the configuration: its next request starts an empty account. Database backups keep the rows for the provider’s restore window.
      */
     delete: operations['deleteMe'];
+    options?: never;
+    head?: never;
+    /**
+     * Change my name
+     * @description Sets the name (use case RenameAccount; the core rule `displayName`: trimmed, NFC, at most 40 characters, no control characters). A blank name clears it (`name: null`; UIs show "You").
+     */
+    patch: operations['updateMe'];
+    trace?: never;
+  };
+  '/v1/me/step-up/codes': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * E-mail me a step-up code
+     * @description Mails a 6-digit code (10 minutes, single use) to the account's **current** address (use case RequestStepUpCode), to confirm a sensitive change: a new e-mail, or setting, changing or removing the password. Limits per **account**, not per address: 1 code a minute, 5 per 10 minutes and 20 a day, plus the 30 codes per IP (an IPv6 /64 counts as one IP) per 10 minutes of sign-in codes; so a stranger who uses up the address's sign-in limits cannot block it. While a code is still valid and not burnt, a new request mails the same code again.
+     */
+    post: operations['requestStepUpCode'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/me/email/codes': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * E-mail a code to my new address
+     * @description Starts an e-mail change (use case RequestEmailChange). Needs a fresh step-up code (`POST /v1/me/step-up/codes`): it is spent here, three wrong tries burn it, and wrong tries count against the account (10 a day per account, 20 per IP per 10 minutes), not the address's sign-in limits. Then mails a 6-digit code (10 minutes) to the new address. When the new address already belongs to another account the answer is the same `202` (no enumeration) and that inbox gets an "address in use" mail instead of a code. The new address counts in the code limits of that address.
+     */
+    post: operations['requestEmailChangeCode'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/me/email': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Change my e-mail with the code from the new inbox
+     * @description Moves the account to the new address (use case ChangeEmail): the sign-in address and the account e-mail change together, pending codes are cleared, **every other session is signed out** (this one stays) and the old address gets a notice. A wrong, expired or missing code is `401 auth.invalid-code` (also when the address was taken at the code step: no code was sent). `409 email.taken` only once the code proved the new inbox and another account took the address since. Wrong codes count against the account (10 a day), not the address's sign-in limits.
+     */
+    post: operations['changeEmail'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/me/password': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Set or change my password
+     * @description Sets the account password, or replaces it (use case SetPassword). Optional: codes keep working, and a forgotten password is "sign in with a code, then set a new one". Rules: 12 to 128 characters, any characters, not trimmed, no composition rules; a password found in known data breaches (Have I Been Pwned, k-anonymity) is `422 password.breached`. The rules are checked before the step-up code, so a refused password does not spend it. Needs a fresh step-up code (`POST /v1/me/step-up/codes`): it is spent here, three wrong tries burn it, and wrong tries count against the account (10 a day per account, 20 per IP per 10 minutes), not the address's sign-in limits. Afterwards **every other session is signed out** and the account gets a notice.
+     */
+    put: operations['setPassword'];
+    post?: never;
+    /**
+     * Remove my password
+     * @description Removes the account password (use case RemovePassword): sign-in is by e-mailed code only again. Needs a fresh step-up code (`POST /v1/me/step-up/codes`): it is spent here, three wrong tries burn it, and wrong tries count against the account (10 a day per account, 20 per IP per 10 minutes), not the address's sign-in limits. Afterwards **every other session is signed out** (also without a password: `204`, idempotent); the account gets a notice when a password was removed.
+     */
+    delete: operations['removePassword'];
     options?: never;
     head?: never;
     patch?: never;
@@ -509,12 +597,15 @@ export interface components {
       | 'auth.missing'
       | 'auth.invalid'
       | 'auth.invalid-code'
+      | 'auth.invalid-credentials'
       | 'auth.csrf'
       | 'consent.required'
+      | 'identity.account-required'
       | 'not-found'
       | 'activity.deleted'
       | 'sync.cursor-expired'
       | 'export.gone'
+      | 'email.taken'
       | 'precondition-failed'
       | 'payload-too-large'
       | 'unsupported-media-type'
@@ -526,6 +617,13 @@ export interface components {
       | 'activity.source-mismatch'
       | 'home-city.unknown'
       | 'export.no-email'
+      | 'display-name.too-long'
+      | 'display-name.invalid'
+      | 'email.invalid'
+      | 'email.unchanged'
+      | 'password.too-short'
+      | 'password.too-long'
+      | 'password.breached'
       | 'client.too-old'
       | 'precondition-required'
       | 'rate-limited'
@@ -590,7 +688,9 @@ export interface components {
        */
       email: string;
     };
-    SignInBody: {
+    /** @description Either the e-mailed code or the account password, for a phone or a browser session. */
+    SignInBody: components['schemas']['CodeSignInBody'] | components['schemas']['PasswordSignInBody'];
+    CodeSignInBody: {
       /**
        * Format: email
        * @description Compared in lower case.
@@ -602,6 +702,25 @@ export interface components {
        * @example 493027
        */
       code: string;
+      client?: components['schemas']['SessionClient'] & unknown;
+      /**
+       * @description Browsers only ("This is a shared computer"): the cookie lasts until the browser closes and the session at most 8 hours. `true` with a phone is `400`.
+       * @example false
+       */
+      sharedComputer?: boolean;
+    };
+    PasswordSignInBody: {
+      /**
+       * Format: email
+       * @description Compared in lower case.
+       * @example ania@example.com
+       */
+      email: string;
+      /**
+       * @description The account password (sign-in only: accounts are created by a code).
+       * @example tram stops past the old town
+       */
+      password: string;
       client?: components['schemas']['SessionClient'] & unknown;
       /**
        * @description Browsers only ("This is a shared computer"): the cookie lasts until the browser closes and the session at most 8 hours. `true` with a phone is `400`.
@@ -649,16 +768,80 @@ export interface components {
        */
       email: string | null;
       /**
-       * @description Falls back to the user id.
-       * @example u_7Hq2kX9mPz
+       * @description The name the Turfer chose (at most 40 characters); null when none: show "You", never the id.
+       * @example Ania
+       */
+      name: string | null;
+      /**
+       * @deprecated
+       * @description Deprecated since 0.5.0 (old phone builds): `name`, falling back to the user id. Read `name`.
+       * @example Ania
        */
       displayName: string;
+      /** @description Whether the account can also sign in with a password. */
+      hasPassword: boolean;
+      /**
+       * Format: date-time
+       * @description When the password was set or last changed.
+       * @example 2026-10-19T07:12:00Z
+       */
+      passwordChangedAt: string | null;
       /**
        * Format: date-time
        * @description When the server first saw the account.
        * @example 2026-10-19T07:12:00Z
        */
       createdAt: string;
+    };
+    UpdateMeBody: {
+      /**
+       * @description Trimmed, at most 40 characters, no control characters; blank clears it.
+       * @example Ania
+       */
+      name: string;
+    };
+    EmailChangeCodeBody: {
+      /**
+       * @description Compared in lower case.
+       * @example ania@example.com
+       */
+      newEmail: string;
+      /**
+       * @description The code from `POST /v1/me/step-up/codes` (spent here).
+       * @example 493027
+       */
+      stepUpCode: string;
+    };
+    ChangeEmailBody: {
+      /**
+       * @description Compared in lower case.
+       * @example ania@example.com
+       */
+      newEmail: string;
+      /**
+       * @description The code mailed to the new address.
+       * @example 493027
+       */
+      code: string;
+    };
+    SetPasswordBody: {
+      /**
+       * @description 12 to 128 characters, any characters, spaces count; not in a known data breach.
+       * @example tram stops past the old town
+       */
+      newPassword: string;
+      /**
+       * @description The code from `POST /v1/me/step-up/codes` (spent here).
+       * @example 493027
+       */
+      stepUpCode: string;
+    };
+    RemovePasswordBody: {
+      /**
+       * @description The code from `POST /v1/me/step-up/codes` (spent here).
+       * @example 493027
+       */
+      stepUpCode: string;
     };
     /** @description An export of everything the server holds for the account: a zip with `data.json` (account, consents, activities with tracks and gap routes, tombstones, Home City) and one GPX 1.1 file per activity. The download link is only in the e-mail and works until `expiresAt`. */
     DataExportJob: {
@@ -1299,7 +1482,7 @@ export interface operations {
           'application/problem+json': components['schemas']['Problem'];
         };
       };
-      /** @description Wrong, expired or used-up code. Codes: `auth.invalid-code`. */
+      /** @description Wrong, expired or used-up code; or wrong e-mail or password. Codes: `auth.invalid-code`, `auth.invalid-credentials`. */
       401: {
         headers: {
           [name: string]: unknown;
@@ -1681,6 +1864,469 @@ export interface operations {
           'Retry-After': components['headers']['RetryAfter'];
           RateLimit: components['headers']['RateLimit'];
           'RateLimit-Policy': components['headers']['RateLimitPolicy'];
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description No database configured or reachable: retry later. Codes: `storage.unavailable`. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+    };
+  };
+  updateMe: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateMeBody'];
+      };
+    };
+    responses: {
+      /** @description The user with the new name. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['User'];
+        };
+      };
+      /** @description Invalid input. Codes: `invalid-request`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Signed in with a device token: account settings need an account session (sign in with a code). Codes: `identity.account-required`. With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description The name breaks the rule. Codes: `display-name.too-long`, `display-name.invalid`. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Too many requests: wait `Retry-After` seconds. Codes: `rate-limited`. */
+      429: {
+        headers: {
+          'Retry-After': components['headers']['RetryAfter'];
+          RateLimit: components['headers']['RateLimit'];
+          'RateLimit-Policy': components['headers']['RateLimitPolicy'];
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description No database configured or reachable: retry later. Codes: `storage.unavailable`. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+    };
+  };
+  requestStepUpCode: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['CodeRequested'];
+      };
+    };
+    responses: {
+      /** @description Code sent. */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CodeRequested'];
+        };
+      };
+      /** @description Invalid input. Codes: `invalid-request`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Signed in with a device token: account settings need an account session (sign in with a code). Codes: `identity.account-required`. With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Too many codes or sign-ins: wait `Retry-After` seconds. Codes: `auth.rate-limited`. */
+      429: {
+        headers: {
+          'Retry-After': components['headers']['RetryAfter'];
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description No database configured or reachable: retry later. Codes: `storage.unavailable`. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+    };
+  };
+  requestEmailChangeCode: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['EmailChangeCodeBody'];
+      };
+    };
+    responses: {
+      /** @description Code sent if the address can receive it. */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CodeRequested'];
+        };
+      };
+      /** @description Invalid input. Codes: `invalid-request`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Missing or invalid bearer token (checked before the input), or a wrong, expired or used-up code. Codes: `auth.missing`, `auth.invalid`, `auth.invalid-code`. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Signed in with a device token: account settings need an account session (sign in with a code). Codes: `identity.account-required`. With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Not a valid new address. Codes: `email.invalid`, `email.unchanged`. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Too many codes or sign-ins: wait `Retry-After` seconds. Codes: `auth.rate-limited`. */
+      429: {
+        headers: {
+          'Retry-After': components['headers']['RetryAfter'];
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description No database configured or reachable: retry later. Codes: `storage.unavailable`. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+    };
+  };
+  changeEmail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ChangeEmailBody'];
+      };
+    };
+    responses: {
+      /** @description The user with the new address. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['User'];
+        };
+      };
+      /** @description Invalid input. Codes: `invalid-request`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Missing or invalid bearer token (checked before the input), or a wrong, expired or used-up code. Codes: `auth.missing`, `auth.invalid`, `auth.invalid-code`. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Signed in with a device token: account settings need an account session (sign in with a code). Codes: `identity.account-required`. With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Another account has this address. Codes: `email.taken`. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Not a valid new address. Codes: `email.invalid`, `email.unchanged`. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Too many codes or sign-ins: wait `Retry-After` seconds. Codes: `auth.rate-limited`. */
+      429: {
+        headers: {
+          'Retry-After': components['headers']['RetryAfter'];
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description No database configured or reachable: retry later. Codes: `storage.unavailable`. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+    };
+  };
+  setPassword: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetPasswordBody'];
+      };
+    };
+    responses: {
+      /** @description Password set. */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Invalid input. Codes: `invalid-request`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Missing or invalid bearer token (checked before the input), or a wrong, expired or used-up code. Codes: `auth.missing`, `auth.invalid`, `auth.invalid-code`. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Signed in with a device token: account settings need an account session (sign in with a code). Codes: `identity.account-required`. With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description The password breaks a rule. Codes: `password.too-short`, `password.too-long`, `password.breached`. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Too many codes or sign-ins: wait `Retry-After` seconds. Codes: `auth.rate-limited`. */
+      429: {
+        headers: {
+          'Retry-After': components['headers']['RetryAfter'];
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description No database configured or reachable: retry later. Codes: `storage.unavailable`. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+    };
+  };
+  removePassword: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RemovePasswordBody'];
+      };
+    };
+    responses: {
+      /** @description No password any more. */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Invalid input. Codes: `invalid-request`. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Missing or invalid bearer token (checked before the input), or a wrong, expired or used-up code. Codes: `auth.missing`, `auth.invalid`, `auth.invalid-code`. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Signed in with a device token: account settings need an account session (sign in with a code). Codes: `identity.account-required`. With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Too many codes or sign-ins: wait `Retry-After` seconds. Codes: `auth.rate-limited`. */
+      429: {
+        headers: {
+          'Retry-After': components['headers']['RetryAfter'];
           [name: string]: unknown;
         };
         content: {

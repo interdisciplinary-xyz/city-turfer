@@ -1,6 +1,6 @@
 /* CityTurfer landing page. Colours are CSS variables set from @cityturfer/brand in layout.tsx.
    The page is light (SITE_SCHEME in @cityturfer/brand; the app and the Turf Map stay dark). Raw glow/strong/activity
-   colours are fills only on light: text uses --accent-text and the -text variants. Body text is the system font; headings use the self-hosted Archivo display font (fonts.ts). */
+   colours are fills only on light: text uses --accent-text and the -text variants. Body text is self-hosted Barlow; headings use the self-hosted Big Shoulders Display (fonts.ts), always in capitals. */
 
 *,
 *::before,
@@ -19,6 +19,9 @@
      weight is baked into each font, so never bold them (font-synthesis: none). */
   --display: var(--face-display), var(--font-family-display);
   --numeric: var(--face-numeric), var(--font-family-numeric);
+  /* The hero tagline: an italic in sentence case, so it reads apart from the capitals wordmark. */
+  --tagline: var(--face-tagline, 'BarlowSemiCondensed-BlackItalic'), var(--font-family-tagline);
+  --body: var(--face-body, 'Barlow'), var(--font-family-body);
 }
 
 html {
@@ -102,7 +105,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-family-body);
+  font-family: var(--body);
   font-size: 17px;
   line-height: 1.55;
   overflow-x: hidden;
@@ -211,14 +214,14 @@ img {
     margin-left: 0;
   }
   .hero-copy h1 {
-    font-size: clamp(2.6rem, 4.4vw, 3.6rem);
+    font-size: clamp(3rem, 5vw, 4.2rem);
   }
   .hero-copy .mark {
     width: 104px;
     margin-bottom: 16px;
   }
   .hero-copy .wordmark {
-    width: 260px;
+    width: 220px;
     margin-bottom: 20px;
   }
 }
@@ -242,20 +245,21 @@ img {
 }
 
 .wordmark {
-  width: clamp(200px, 62vw, 320px);
+  width: clamp(180px, 54vw, 280px);
   margin: 0 auto 28px;
 }
 
 h1 {
-  font-size: clamp(1.9rem, 8vw, 3.4rem);
-  font-family: var(--display);
+  font-size: clamp(2.4rem, 10vw, 4.1rem);
+  font-family: var(--tagline);
   font-weight: normal;
+  font-style: normal;
   font-synthesis: none;
-  line-height: 1.08;
-  letter-spacing: -0.02em;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
   overflow-wrap: break-word;
   margin: 0 auto 18px;
-  max-width: 14ch;
+  max-width: 20ch;
 }
 
 .line {
@@ -310,7 +314,7 @@ h1 {
   min-height: 52px;
   padding: 14px 26px;
   border-radius: 999px;
-  font-weight: 800;
+  font-weight: 700;
   text-decoration: none;
 }
 
@@ -384,10 +388,12 @@ h1 {
 .waitlist-title {
   margin: 0 0 18px;
   font-family: var(--display);
-  font-size: clamp(1.25rem, 3.5vw, 1.7rem);
+  font-size: clamp(1.7rem, 4.6vw, 2.3rem);
   font-weight: normal;
   font-synthesis: none;
-  line-height: 1.2;
+  text-transform: var(--display-case);
+  letter-spacing: var(--display-tracking);
+  line-height: 0.95;
 }
 
 .waitlist-row {
@@ -426,7 +432,7 @@ h1 {
   background: var(--text);
   color: var(--bg);
   font: inherit;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -540,7 +546,7 @@ h1 {
     margin-bottom: 12px;
   }
   .wordmark {
-    width: 200px;
+    width: 170px;
     margin-bottom: 16px;
   }
 }

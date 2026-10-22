@@ -131,6 +131,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 
 `docs/decisions/` — Full write-ups of single decisions.
 
+- ✅ [`decisions/account-settings-2026-10-22.md`](decisions/account-settings-2026-10-22.md): Account
+  settings (contract 0.5.0) — change name, e-mail and an optional password; codes stay the default
+  sign-in and the recovery path; a fresh code to the current address before any sensitive change;
+  other sessions signed out and a security mail after an e-mail or password change
 - ✅ [`decisions/api-2026-10-20.md`](decisions/api-2026-10-20.md): v0.8.0 HTTP API — apps/api (Hono
   on Vercel, Frankfurt) exposing the app's existing use cases as /v1 routes, contract-first with zod
   → OpenAPI 3.1, documented with Swagger UI at cityturfer.local/swagger; the core logic now lives in
@@ -156,11 +160,16 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   (full history) as Activities that claim turf, and saves recordings to Health with routes
 - ✅ [`decisions/brand-foundations-2026-10-20.md`](decisions/brand-foundations-2026-10-20.md): Brand
   foundations (positioning for three audiences, personality, pillars), Archivo as the brand typeface
-  everywhere, visual language beyond colour, WCAG contrast rules with the open palette fixes, and
-  the asset set (outlined wordmarks, social image, store screenshots)
+  (superseded by brand-typography-2026-10-22), visual language beyond colour, WCAG contrast rules
+  with the open palette fixes, and the asset set (outlined wordmarks, social image, store
+  screenshots)
 - ✅ [`decisions/brand-light-theme-2026-10-22.md`](decisions/brand-light-theme-2026-10-22.md): The
   website, Swagger and Storybook switch to a light theme (SITE_SCHEME) while the app and every map
   stay dark; the AA light palette, its new tokens and ratios, night labels on pink buttons
+- ✅ [`decisions/brand-typography-2026-10-22.md`](decisions/brand-typography-2026-10-22.md): Brand
+  type changes from Archivo to the "Street Plate" pairing: Big Shoulders Display Black in capitals
+  for headings, Barlow Semi Condensed ExtraBold for numbers, Barlow for website body text; the
+  wordmark is redrawn in Big Shoulders Display (CITY Medium + TURFER Black)
 - ✅ [`decisions/design-system-2026-10-19.md`](decisions/design-system-2026-10-19.md): v0.5.0 design
   system — tokens in @cityturfer/brand (TS + CSS variables), React Native components in
   @cityturfer/ui, one Storybook (react-native-web) for the app and the website, shipped OTA
@@ -182,6 +191,11 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 
 `docs/plans/` — Plans for work not shipped yet.
 
+- ✅ [`plans/account-settings-2026-10-22.md`](plans/account-settings-2026-10-22.md): A complete
+  Account tab on the phone and on the web portal — change name, e-mail and password — over one set
+  of API routes and one set of rules in core; passwords as an optional second sign-in method beside
+  e-mailed codes (reverses A1, needs a decision), step-up codes, security mails, tests at every
+  layer
 - 🚧 [`plans/backend-plan-2026-10-22.md`](plans/backend-plan-2026-10-22.md): Plan for the first
   back-end release (opt-in backup, real accounts, restore to a new phone, delete account, export) —
   founder decisions of 2026-10-22, what feat/backend-sync built, and what is left before testers can

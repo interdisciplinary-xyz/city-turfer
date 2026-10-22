@@ -1,5 +1,6 @@
 import { swaggerUI, type SwaggerUIOptions } from '@hono/swagger-ui';
 import { OpenAPIHono } from '@hono/zod-openapi';
+import { HTTPException } from 'hono/http-exception';
 import { requestId } from 'hono/request-id';
 import { secureHeaders } from 'hono/secure-headers';
 
@@ -103,6 +104,10 @@ export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
     // nothing to the caller and logs one sanitised line (describeError: no message, no data).
     if (err instanceof AppError) {
       return problem(c, err.code, undefined, { headers: err.headers });
+    }
+    // Hono's validator refuses a body that is not JSON before zod sees it.
+    if (err instanceof HTTPException && err.status === 400) {
+      return problem(c, 'invalid-request', 'The body is not valid JSON.');
     }
     const code = (err as { code?: unknown }).code;
     if (err.name === 'DomainError' && isProblemCode(code)) {

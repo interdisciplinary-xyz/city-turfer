@@ -34,8 +34,8 @@ const TARGETS = [
   { solid: '#0B0D12', out: 'android-icon-background.png', size: 1024 },
   { src: 'mark-foreground.svg', out: 'splash-icon.png', size: 1024, transparent: true },
   { src: 'mark.svg', out: 'favicon.png', size: 64, transparent: false },
-  { src: 'wordmark.svg', out: 'wordmark.png', width: 1102, height: 192, transparent: true },
-  { src: 'wordmark-light.svg', out: 'wordmark-light.png', width: 1102, height: 192, transparent: true },
+  { src: 'wordmark.svg', out: 'wordmark.png', width: 894, height: 192, transparent: true },
+  { src: 'wordmark-light.svg', out: 'wordmark-light.png', width: 894, height: 192, transparent: true },
   {
     template: 'og-image.html',
     out: join(WEB_PUBLIC, 'og-image.png'),
@@ -85,7 +85,9 @@ function renderTemplate(t, w, h) {
   const slots = {
     W: String(w),
     H: String(h),
-    FONT_DISPLAY: dataUri(join(FONTS, 'ArchivoExpanded-Black.woff2')),
+    FONT_DISPLAY: dataUri(join(FONTS, 'BigShouldersDisplay-Black.woff2')),
+    FONT_BODY: dataUri(join(FONTS, 'Barlow-Medium.woff2')),
+    FONT_TAGLINE: dataUri(join(FONTS, 'BarlowSemiCondensed-BlackItalic.woff2')),
     WORDMARK: dataUri(join(BRAND, 'wordmark.svg')),
     ...t.slots,
     SCREEN: dataUri(join(SCREENS, t.slots.SCREEN)),

@@ -10,7 +10,7 @@ import type { CSSProperties, ReactNode } from 'react';
 
 import { routing } from '@/i18n/routing';
 
-import { displayFont, numericFont } from '../fonts';
+import { bodyFont, displayFont, numericFont, taglineFont } from '../fonts';
 import { SITE_URL } from '../site-url';
 // Deep import on purpose: the folder's index also exports HeroMotion (GSAP), whose client chunk
 // would then load on every page under this layout, the portal's too.
@@ -86,7 +86,7 @@ export default async function LocaleLayout({
     // suppressHydrationWarning: the motion boot script adds a class to <html> before React hydrates.
     <html
       lang={locale}
-      className={`${displayFont.variable} ${numericFont.variable}`}
+      className={`${displayFont.variable} ${numericFont.variable} ${bodyFont.variable} ${taglineFont.variable}`}
       style={tokens}
       suppressHydrationWarning
     >

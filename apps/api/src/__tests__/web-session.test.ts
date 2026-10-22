@@ -496,6 +496,137 @@ describe('caching default', () => {
   });
 });
 
+describe('account settings from the browser (contract 0.5.0: both features)', () => {
+  const PASSWORD = 'tram stops past the old town';
+
+  /** A step-up code mailed to `email`, asked for with the cookie from the website. */
+  async function stepUp(cookie: string, email = 'ania@example.com'): Promise<string> {
+    advance(61_000); // one step-up code a minute per account
+    const res = await withCookie('POST', '/v1/me/step-up/codes', cookie, { headers: WEB });
+    expect(res.status).toBe(202);
+    return codeIn(h.mailer.lastTo(email)?.text);
+  }
+
+  it('guards PATCH /v1/me with the cookie: 403 auth.csrf without the client header, 200 with it', async () => {
+    const { cookie } = await browserSignIn('ania@example.com');
+    const refused = await withCookie('PATCH', '/v1/me', cookie, {
+      headers: { Origin: DEV_WEB_ORIGIN, 'Sec-Fetch-Site': 'same-origin' },
+      body: { name: 'Ania' },
+    });
+    expect(refused.status).toBe(403);
+    expect(await refused.json()).toMatchObject({ code: 'auth.csrf' });
+    expect((await (await withCookie('GET', '/v1/me', cookie)).json()).name).toBeNull();
+
+    const ok = await withCookie('PATCH', '/v1/me', cookie, { headers: WEB, body: { name: 'Ania' } });
+    expect(ok.status).toBe(200);
+    expect(await ok.json()).toMatchObject({ name: 'Ania', email: 'ania@example.com' });
+  });
+
+  it('guards every account-settings write with the cookie (403 auth.csrf before validation)', async () => {
+    const { cookie } = await browserSignIn('ania@example.com');
+    const writes: [string, string][] = [
+      ['POST', '/v1/me/step-up/codes'],
+      ['POST', '/v1/me/email/codes'],
+      ['POST', '/v1/me/email'],
+      ['PUT', '/v1/me/password'],
+      ['DELETE', '/v1/me/password'],
+    ];
+    for (const [method, path] of writes) {
+      const res = await withCookie(method, path, cookie, { headers: { Origin: 'https://evil.example' }, body: {} });
+      expect([method, path, res.status]).toEqual([method, path, 403]);
+      expect(await res.json()).toMatchObject({ code: 'auth.csrf' });
+    }
+  });
+
+  it('signs in with a password as a browser: the cookie, no token, and the login-CSRF guard', async () => {
+    const { cookie } = await browserSignIn('ania@example.com');
+    const set = await withCookie('PUT', '/v1/me/password', cookie, {
+      headers: WEB,
+      body: { newPassword: PASSWORD, stepUpCode: await stepUp(cookie) },
+    });
+    expect(set.status).toBe(204);
+
+    const body = { email: 'ania@example.com', password: PASSWORD, client: 'browser', sharedComputer: true };
+    const foreign = await h.call('POST', '/v1/auth/sign-in', {
+      token: null,
+      body,
+      headers: { Origin: 'https://evil.example' },
+    });
+    expect(foreign.status).toBe(403);
+    expect(await foreign.json()).toMatchObject({ code: 'auth.csrf' });
+
+    const res = await h.call('POST', '/v1/auth/sign-in', { token: null, body, headers: { ...WEB, 'X-Real-IP': IP } });
+    expect(res.status).toBe(200);
+    const setCookie = res.headers.get('set-cookie') ?? '';
+    expect(setCookie).toMatch(new RegExp(`^__Secure-ct_session=[^;]+; ${COOKIE_ATTRS}$`)); // shared: no Max-Age
+    const answer = await res.json();
+    expect(answer).toEqual({
+      client: 'browser',
+      expiresAt: new Date(h.clock.t + 8 * HOUR).toISOString(),
+      absoluteExpiresAt: new Date(h.clock.t + 8 * HOUR).toISOString(),
+      user: { id: expect.any(String), email: 'ania@example.com' },
+    });
+    const passwordCookie = `__Secure-ct_session=${/^__Secure-ct_session=([^;]*)/.exec(setCookie)?.[1]}`;
+    expect((await withCookie('GET', '/v1/me', passwordCookie)).status).toBe(200);
+
+    // sharedComputer with a phone password sign-in is 400, as with a code.
+    const phone = await h.call('POST', '/v1/auth/sign-in', {
+      token: null,
+      body: { email: 'ania@example.com', password: PASSWORD, sharedComputer: true },
+    });
+    expect(phone.status).toBe(400);
+  });
+
+  it('keeps the current browser session and signs out every other one (phones too, over 100) after a password change', async () => {
+    const phone = await h.signIn('ania@example.com');
+    const otherBrowser = await browserSignIn('ania@example.com');
+    const { cookie } = await browserSignIn('ania@example.com');
+    const [{ id: userId }] = await rows(sql`SELECT id FROM auth_users WHERE email = 'ania@example.com'`);
+    for (let i = 0; i < 120; i++) {
+      await h.db.execute(sql`
+        INSERT INTO auth_sessions (id, token, user_id, client, created_at, updated_at, expires_at)
+        VALUES (${`extra-${i}`}, ${`extra-token-${i}`}, ${userId as string}, 'phone', now(), now(),
+                ${new Date(h.clock.t + DAY).toISOString()}::timestamptz)`);
+    }
+    const bartek = await h.signIn('bartek@example.com');
+
+    const set = await withCookie('PUT', '/v1/me/password', cookie, {
+      headers: WEB,
+      body: { newPassword: PASSWORD, stepUpCode: await stepUp(cookie) },
+    });
+    expect(set.status).toBe(204);
+    expect(await rows(sql`SELECT id FROM auth_sessions WHERE user_id = ${userId as string}`)).toHaveLength(1);
+    expect((await withCookie('GET', '/v1/me', cookie)).status).toBe(200);
+    expect((await withCookie('GET', '/v1/me', otherBrowser.cookie)).status).toBe(401);
+    expect((await h.call('GET', '/v1/me', { token: phone })).status).toBe(401);
+    expect((await h.call('GET', '/v1/me', { token: bartek })).status).toBe(200);
+  });
+
+  it('keeps the current phone session and signs the browsers out after an e-mail change', async () => {
+    const phone = await h.signIn('ania@example.com');
+    const { cookie } = await browserSignIn('ania@example.com');
+    advance(61_000);
+    const step = await h.call('POST', '/v1/me/step-up/codes', { token: phone });
+    expect(step.status).toBe(202);
+    const stepUpCode = codeIn(h.mailer.lastTo('ania@example.com')?.text);
+    const newEmail = 'ania.nowak@example.com';
+    expect((await h.call('POST', '/v1/me/email/codes', { token: phone, body: { newEmail, stepUpCode } })).status).toBe(
+      202
+    );
+    const code = codeIn(h.mailer.lastTo(newEmail)?.text);
+    const changed = await h.call('POST', '/v1/me/email', { token: phone, body: { newEmail, code } });
+    expect(changed.status).toBe(200);
+    expect((await h.call('GET', '/v1/me', { token: phone })).status).toBe(200);
+    expect((await withCookie('GET', '/v1/me', cookie)).status).toBe(401);
+  });
+
+  it('still refuses a device token (403 identity.account-required)', async () => {
+    const res = await h.call('PATCH', '/v1/me', { token: TOKENS.admin, body: { name: 'Ania' } });
+    expect(res.status).toBe(403);
+    expect(await res.json()).toMatchObject({ code: 'identity.account-required' });
+  });
+});
+
 describe('client IP for the sign-in limits', () => {
   const EDGE = 'e'.repeat(64);
   /** 21 failed sign-ins from fresh addresses; `headers(i)` says where each claims to come from. */
@@ -541,6 +672,19 @@ describe('client IP for the sign-in limits', () => {
     expect(await failedSignIns(() => ({ 'X-Real-IP': '203.0.113.8' }))).toEqual(limited);
     advance(11 * 60_000); // a new 10-minute window
     expect(await failedSignIns(() => ({ 'X-Forwarded-For': '203.0.113.9' }))).toEqual(limited);
+  });
+
+  it('counts failed password sign-ins in the same IP bucket, from the same trusted header', async () => {
+    const statuses: number[] = [];
+    for (let i = 0; i <= 20; i++) {
+      const res = await h.call('POST', '/v1/auth/sign-in', {
+        token: null,
+        body: { email: `p${i}@example.com`, password: 'not the password at all' },
+        headers: { 'X-Vercel-Forwarded-For': `198.51.100.${i}`, 'X-Forwarded-For': '203.0.113.7' },
+      });
+      statuses.push(res.status);
+    }
+    expect(statuses).toEqual(limited);
   });
 
   it('through the website (edge secret): the visitor in x-vercel-forwarded-for, not the shared hop', async () => {

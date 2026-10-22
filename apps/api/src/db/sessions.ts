@@ -38,14 +38,23 @@ export class DrizzleSessionStore implements SessionStore {
   }
 
   async revokeAll(userId: string, keepSessionId?: string): Promise<void> {
-    await this.db
-      .delete(authSessions)
-      .where(
-        keepSessionId
-          ? and(eq(authSessions.userId, userId), ne(authSessions.id, keepSessionId))
-          : eq(authSessions.userId, userId)
-      );
+    await revokeSessionsOf(this.db, userId, keepSessionId);
   }
+}
+
+/**
+ * Deletes every session of the user, or every one but `keepSessionId`, in one statement (no row
+ * cap). Shared with the account changes (src/db/accounts.ts), which call it inside their own
+ * transaction so the change and the sign-out commit together.
+ */
+export async function revokeSessionsOf(db: Pick<Db, 'delete'>, userId: string, keepSessionId?: string): Promise<void> {
+  await db
+    .delete(authSessions)
+    .where(
+      keepSessionId
+        ? and(eq(authSessions.userId, userId), ne(authSessions.id, keepSessionId))
+        : eq(authSessions.userId, userId)
+    );
 }
 
 function live(now: number) {
