@@ -5,7 +5,9 @@ import pkg from './package.json' with { type: 'json' };
 
 const DEFAULT_PAGE_EXTENSIONS = ['tsx', 'ts', 'jsx', 'js'];
 
-// Static showcase: no server code, no cookies, no third-party scripts. `next build` writes out/.
+// Static export (`next build` writes out/), no server code. Public pages set no cookies, make no API
+// calls and load no third-party scripts; the signed-in portal (/[locale]/account) uses one strictly
+// necessary session cookie through the /api/v1 route in vercel.json (docs/decisions/web-portal-2026-10-22.md).
 // The export applies to production builds only: in development the dev server (server.mjs) renders
 // per request, so the dev toolbar can read the local-client header.
 const config: NextConfig = {

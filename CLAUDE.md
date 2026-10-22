@@ -39,10 +39,12 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
   (`turbo.json`, `pnpm-workspace.yaml`): workspaces apps/* and packages/*; design in
   `docs/decisions/monorepo-turborepo-2026-10-18.md`
 - **Web**: Next.js 16 (App Router, `output: 'export'`) in `apps/web`, hosted on Vercel; static
-  showcase (hero, APK download, waitlist): no backend, cookies or third-party scripts; the waitlist
-  form posts emails straight to Brevo (double opt-in, personal data). Languages via `next-intl`
-  (`/en`, `/pl`; copy in `apps/web/messages/*.json`, no CMS). Light theme (`SITE_SCHEME` in
-  `@cityturfer/brand`, also Swagger and Storybook); the app and the Turf Map stay dark
+  showcase (hero, APK download, waitlist): public pages set no cookies, make no API calls and load
+  no third-party scripts; the waitlist form posts emails straight to Brevo (double opt-in, personal
+  data). Signed-in portal under `/[locale]/account`: one strictly necessary session cookie through
+  the `/api/v1` route to the API (`docs/decisions/web-portal-2026-10-22.md`). Languages via
+  `next-intl` (`/en`, `/pl`; copy in `apps/web/messages/*.json`, no CMS). Light theme (`SITE_SCHEME`
+  in `@cityturfer/brand`, also Swagger and Storybook); the app and the Turf Map stay dark
   (`docs/decisions/brand-light-theme-2026-10-22.md`)
 - **Storage**: `expo-sqlite`, local-first; the phone stays the source of truth. Optional one-way
   cloud backup to `apps/api` (`apps/mobile/src/contexts/cloud-backup`), only after the user's

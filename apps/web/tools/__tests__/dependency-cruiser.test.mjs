@@ -29,7 +29,14 @@ const FILES = {
   'src/app/[locale]/account/page.tsx':
     "import '@tanstack/react-query';\nimport '@cityturfer/core/h3';\nimport 'gsap';\nexport default 1;\n",
   'src/api/client.ts': "import '../app/[locale]/page';\n", // api-client-is-a-leaf
+  // The entry files outside src, cruised like `arch` does, and a dev tool server.mjs loads.
+  'server.mjs': "import './tools/dev-route.mjs';\nimport './src/app/[locale]/account/page';\n", // marketing-not-portal
+  'tools/dev-route.mjs': "import '../src/api/client';\n", // marketing-not-api-client
+  'next.config.ts': "import './src/api/client';\nexport default {};\n", // marketing-not-api-client
 };
+
+/** The roots `arch` cruises (apps/web/package.json). */
+const ROOTS = ['src', 'server.mjs', 'next.config.ts'];
 
 /** Workspace and hoisted packages the fixture imports, linked into its own node_modules. */
 const LINKS = {
@@ -57,7 +64,7 @@ before(() => {
     mkdirSync(path.dirname(link), { recursive: true });
     symlinkSync(target, link, 'dir');
   }
-  const run = spawnSync(process.execPath, [depcruise, 'src', '--config', config, '--output-type', 'json'], {
+  const run = spawnSync(process.execPath, [depcruise, ...ROOTS, '--config', config, '--output-type', 'json'], {
     cwd: dir,
     encoding: 'utf8',
   });
@@ -101,6 +108,18 @@ test('the API client importing a page fails api-client-is-a-leaf', () => {
   expectViolation('api-client-is-a-leaf', 'src/api/client.ts');
 });
 
+test('server.mjs importing the portal fails marketing-not-portal', () => {
+  expectViolation('marketing-not-portal', 'server.mjs');
+});
+
+test('a dev tool loaded by server.mjs importing the API client fails marketing-not-api-client', () => {
+  expectViolation('marketing-not-api-client', 'tools/dev-route.mjs');
+});
+
+test('next.config.ts importing the API client fails marketing-not-api-client', () => {
+  expectViolation('marketing-not-api-client', 'next.config.ts');
+});
+
 test('allowed imports raise nothing: workspace packages resolve, the portal may use its libraries', () => {
   const from = (v) => v.split(' ')[1];
   const allowed = violations.filter(
@@ -109,5 +128,5 @@ test('allowed imports raise nothing: workspace packages resolve, the portal may 
       (from(v) === 'src/app/[locale]/account/page.tsx' && !v.startsWith('portal-no-gsap '))
   );
   assert.deepEqual(allowed, []);
-  assert.equal(violations.length, 7, violations.join('\n'));
+  assert.equal(violations.length, 10, violations.join('\n'));
 });

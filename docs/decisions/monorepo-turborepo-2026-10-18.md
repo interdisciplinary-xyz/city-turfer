@@ -84,7 +84,9 @@ city-turfer/
 - **Look:** dark, matching the Turf Map; colours and SVGs from `@cityturfer/brand`; copy follows the
   `brand-system` skill. _Superseded in v0.10.0:_ the site is light (`SITE_SCHEME`) with maps on
   night panels: `docs/decisions/brand-light-theme-2026-10-22.md`.
-- **Build:** `output: 'export'`, no server code, no cookies, no third-party scripts.
+- **Build:** `output: 'export'`, no server code, no cookies, no third-party scripts. _Narrowed in
+  v0.10.0:_ public pages keep this; the signed-in portal under `/[locale]/account` uses one strictly
+  necessary session cookie through the `/api/v1` route: `docs/decisions/web-portal-2026-10-22.md`.
 - **Hosting:** a Vercel project with root directory `apps/web` and preview deployments per PR.
   Domain is open.
 

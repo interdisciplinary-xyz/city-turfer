@@ -1,25 +1,28 @@
 // The public/portal boundary of apps/web (docs/decisions/web-portal-2026-10-22.md): marketing code
 // (the landing page, the root and shared layouts, i18n) never reaches the portal, its API client or
-// its libraries, so a signed-out visitor never downloads them. Runs in `pnpm test` / `turbo run arch`.
-// Negative control: tools/__tests__/dependency-cruiser.test.mjs.
+// its libraries, so a signed-out visitor never downloads them. Runs in `pnpm test` / `turbo run arch`
+// over src, server.mjs and next.config.ts. Negative control: tools/__tests__/dependency-cruiser.test.mjs.
 const portal = '^src/app/\\[locale\\]/account/';
 const portalLibraries = '(^|/)node_modules/(@tanstack/[^/]+|openapi-fetch|maplibre-gl)/';
 const notPortal = '^src/(app/\\[locale\\]/account/|api/)';
+// Not portal code either: the dev server, the dev tools it loads and the Next config.
+const site = '^(src/|tools/|server\\.mjs$|next\\.config\\.ts$)';
 
 module.exports = {
   forbidden: [
     {
       name: 'marketing-not-portal',
       severity: 'error',
-      comment: 'Public pages and shared layouts never import the portal root (src/app/[locale]/account).',
-      from: { path: '^src/', pathNot: notPortal },
+      comment: 'Public pages, shared layouts, server.mjs, tools and next.config.ts never import the portal root.',
+      from: { path: site, pathNot: notPortal },
       to: { path: portal },
     },
     {
       name: 'marketing-not-api-client',
       severity: 'error',
-      comment: 'Only the portal root uses the API client (src/api): public pages make no API calls.',
-      from: { path: '^src/', pathNot: notPortal },
+      comment:
+        'Only the portal root uses the API client (src/api): public pages (and the dev server) make no API calls.',
+      from: { path: site, pathNot: notPortal },
       to: { path: '^src/api/' },
     },
     {
