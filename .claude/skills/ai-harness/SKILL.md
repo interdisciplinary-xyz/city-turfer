@@ -31,11 +31,19 @@ description: >-
   git-ignored); DDD dependency rule on imports the edit adds (mirror of
   `apps/mobile/.dependency-cruiser.cjs`; `packages/core` has only its gate).
 - **PreToolUse Bash** `pre-bash.mjs`: commands are tokenised (quotes, heredocs, `bash -c`, `git -c`,
-  wrappers), so text inside a message or body never counts. Deny push to main, force-push or delete
-  of main/scope/release (remote or local), `git tag`, `--no-verify` on commit or push, the release
-  (`pnpm run release`, `commit-and-tag-version`; `--dry-run` passes), wrong PR title/base on
-  `gh pr create` and `gh pr edit` (`--fill` still needs `--title`), squash merges; ask for
-  `gh pr merge`, `git reset --hard`, copying data off a physical iPhone.
+  `then`/`do`, wrappers such as `env`, `timeout`, `nice`, `xargs`), so text inside a message or body
+  never counts. A bare push is judged on the branch a `git switch`/`checkout` earlier in the line
+  left. Long options match by unambiguous prefix (`--no-veri`, `--del`), as git does. Deny push to
+  main (also `--all`, `--mirror`, glob refspecs), force-push or delete of main/scope/release (remote
+  or local), `git tag` and `gh release create|edit|delete`, `--no-verify` on commit or push (also
+  `HUSKY=0` and a `core.hooksPath` override), the release (`pnpm run release`,
+  `commit-and-tag-version`; `--dry-run` passes), wrong PR title/base on `gh pr create` and
+  `gh pr edit` (`--fill` still needs `--title`; a head outside the branch naming may target only a
+  scope), squash merges (`--squash=true` too); ask for `gh pr merge`, `git reset --hard`, copying
+  data off a physical iPhone.
+- **Agent-scoped Bash** `read-only-bash.mjs` (in an agent's `hooks:`): an allowlist of reading
+  commands and of pnpm scripts that only check (`PNPM_READ_ONLY_SCRIPT`); with `--allow <paths>`
+  also redirects into those paths and branch/commit/push/PR, for agents with an edit allowlist.
 - **PostToolUse Edit|Write|MultiEdit** `format-ts.sh` (Prettier) and `post-edit.mjs`: block-feedback
   for `audit:logs` privacy findings and newly hard-coded brand hex; once-per-session reminders for
   turf/geo parity (`packages/core` and the app), runtime fingerprint, migrations, background task,
