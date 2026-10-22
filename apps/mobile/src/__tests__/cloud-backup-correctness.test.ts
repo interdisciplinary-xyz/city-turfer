@@ -50,7 +50,13 @@ describe('Cloud Backup: changes made while backup was off', () => {
     await backedUp(c);
     const sent = t.server.requests.slice(before).filter((r) => r.method !== 'changes' && r.method !== 'setConsent');
     expect(sent.map((r) => `${r.method} ${r.id}`).sort()).toEqual(
-      ['deleteActivity rec-del', 'putActivity rec-fix', 'putGapRoutes rec-gap', 'renameActivity rec-ren'].sort()
+      [
+        'deleteActivity rec-del',
+        'activityVersion rec-fix', // the server's name, before replacing (a newer rename there is kept)
+        'putActivity rec-fix',
+        'putGapRoutes rec-gap',
+        'renameActivity rec-ren',
+      ].sort()
     );
     expect(t.server.tombstones.has('rec-del')).toBe(true);
     expect(t.server.activities.get('rec-ren')!.name).toBe('Canal loop');
@@ -125,6 +131,99 @@ describe('Cloud Backup: renames and gap checks while on', () => {
     await c.estimateGaps(); // no gaps worth routing: checked, empty
     await backedUp(c);
     expect(t.server.activities.get('rec-1')!.gapRoutes).toEqual({ checkedAt: expect.any(Number), count: 0 });
+  });
+});
+
+describe('Cloud Backup: renames from another phone (last write wins on renamedAt)', () => {
+  /** Another phone (e.g. after a restore) renames the server copy via PATCH. */
+  function renamedElsewhere(t: ReturnType<typeof phone>, id: string, name: string, renamedAt: number) {
+    const a = t.server.activities.get(id)!;
+    t.server.activities.set(id, { ...a, version: a.version + 1, name, renamedAt });
+  }
+
+  it('comparing again never pushes a name this phone did not rename over a newer server rename', async () => {
+    const t = phone({ account: ACCOUNT });
+    const c = await t.container();
+    await c.add('rec-1', walk(0));
+    await backedUp(c);
+    t.advance(60_000);
+    renamedElsewhere(t, 'rec-1', 'Renamed on phone B', Date.parse('2026-10-20T12:01:00Z'));
+
+    t.advance(60_000);
+    await c.cloudBackup.useServer.execute(null); // compare with the manifest again
+    await c.cloudBackup.run.execute({ now: true });
+    expect(t.server.calls('renameActivity')).toEqual([]);
+    expect(t.server.calls('putActivity').map((r) => r.id)).toEqual(['rec-1']); // only the first upload
+    expect(t.server.activities.get('rec-1')).toMatchObject({
+      name: 'Renamed on phone B',
+      renamedAt: Date.parse('2026-10-20T12:01:00Z'),
+    });
+  });
+
+  it("a rename made here later than the other phone's still wins", async () => {
+    const t = phone({ account: ACCOUNT });
+    const c = await t.container();
+    await c.add('rec-1', walk(0));
+    await backedUp(c);
+    renamedElsewhere(t, 'rec-1', 'Renamed on phone B', Date.parse('2026-10-20T12:00:30Z'));
+    t.advance(60_000);
+    await c.activityLog.rename.execute('rec-1', 'Renamed on phone A');
+    await c.dispatcher.dispatchPending();
+    await c.cloudBackup.useServer.execute(null);
+    await c.cloudBackup.run.execute({ now: true });
+    expect(t.server.activities.get('rec-1')).toMatchObject({
+      name: 'Renamed on phone A',
+      renamedAt: Date.parse('2026-10-20T12:01:00Z'),
+    });
+  });
+
+  it('a replacement retried after 412 keeps the newer server rename', async () => {
+    const t = phone({ account: ACCOUNT });
+    const c = await t.container();
+    await c.add('rec-1', walk(0, 10)); // a 10-minute GPS gap inside one segment
+    await backedUp(c);
+    renamedElsewhere(t, 'rec-1', 'Renamed on phone B', Date.parse('2026-10-20T12:00:30Z')); // version 2
+    t.advance(60_000);
+    await c.activityLog.splitTrackGaps.execute(); // corrects the track → replace with If-Match "v1"
+    await c.dispatcher.dispatchPending();
+    await c.backUp();
+
+    expect(t.server.calls('putActivity').map((r) => r.ifMatch)).toEqual([null, 1, 2]);
+    expect(t.server.activities.get('rec-1')).toMatchObject({
+      version: 3, // the corrected track is there…
+      name: 'Renamed on phone B', // …with the other phone's newer name
+      renamedAt: Date.parse('2026-10-20T12:00:30Z'),
+    });
+  });
+
+  it('a replacement at the version the manifest listed keeps a rename it cannot see in the feed', async () => {
+    const t = phone({ account: ACCOUNT });
+    const c = await t.container();
+    await c.add('rec-1', walk(0, 10));
+    await backedUp(c);
+    renamedElsewhere(t, 'rec-1', 'Renamed on phone B', Date.parse('2026-10-20T12:00:30Z')); // version 2
+    // As after comparing with the manifest: this phone knows version 2, but not who renamed it.
+    await t.db.run("UPDATE cb_activities SET server_version = 2 WHERE activity_id = 'rec-1'");
+    await c.activityLog.splitTrackGaps.execute();
+    await c.dispatcher.dispatchPending();
+    await c.backUp();
+
+    expect(t.server.calls('putActivity').map((r) => r.ifMatch)).toEqual([null, 2]); // no 412
+    expect(t.server.activities.get('rec-1')).toMatchObject({ version: 3, name: 'Renamed on phone B' });
+  });
+
+  it("a replacement carries this phone's name when its rename is the newer one", async () => {
+    const t = phone({ account: ACCOUNT });
+    const c = await t.container();
+    await c.add('rec-1', walk(0, 10));
+    await backedUp(c);
+    renamedElsewhere(t, 'rec-1', 'Renamed on phone B', Date.parse('2026-10-20T12:00:30Z'));
+    t.advance(60_000);
+    await c.activityLog.rename.execute('rec-1', 'Renamed on phone A');
+    await c.activityLog.splitTrackGaps.execute();
+    await c.dispatcher.dispatchPending();
+    await c.backUp();
+    expect(t.server.activities.get('rec-1')!.name).toBe('Renamed on phone A');
   });
 });
 

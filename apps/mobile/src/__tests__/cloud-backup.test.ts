@@ -225,7 +225,9 @@ describe('Cloud Backup: pushes from the outbox', () => {
       endedAt: T0 + DAY,
     });
     await c.cloudBackup.run.execute({ now: true });
-    expect(t.server.uploads().filter((id) => id === 'rec-2')).toHaveLength(2); // the first upload + the one 410
+    // Only the first upload: the 410 came from reading the server copy before replacing it.
+    expect(t.server.uploads().filter((id) => id === 'rec-2')).toHaveLength(1);
+    expect(t.server.calls('activityVersion').map((r) => r.id)).toEqual(['rec-2']);
   });
 
   it('replaces a corrected track with If-Match; on 412 re-reads the version and retries once', async () => {

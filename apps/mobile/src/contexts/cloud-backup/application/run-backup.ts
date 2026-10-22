@@ -1,13 +1,30 @@
 import type { ActivityArchive } from '@/contexts/activity-log';
 
 import type { ActivityBackup, BackupStep } from '../domain/activity-backup';
-import { MAX_TRACK_POINTS, mayUpload, sourceOf, trackHashInput } from '../domain/backup-policy';
+import { MAX_TRACK_POINTS, mayUpload, nameToUpload, sourceOf, trackHashInput } from '../domain/backup-policy';
 import type { BackupErrorCode } from '../domain/backup-settings';
 import { connect, deliverWithdrawals, errorOf } from './backup-access';
-import type { ApiClient, ApiFailure, ApiResult, BackupRunReport, CloudBackupDeps, ServerActivity } from './ports';
+import type {
+  ApiClient,
+  ApiFailure,
+  ApiResult,
+  BackupRunReport,
+  CloudBackupDeps,
+  ServerActivity,
+  ServerActivityHead,
+} from './ports';
 
 /** Safety stop for a changes feed that never says `hasMore: false`. */
 const MAX_MANIFEST_PAGES = 1_000;
+
+/** The archive to PUT, with the name that wins against the server's copy (if known). */
+function withNewerName(archive: ActivityArchive, server: ServerActivityHead | null): ActivityArchive {
+  if (server?.name == null) {
+    return archive;
+  }
+  const name = nameToUpload(archive, { name: server.name, renamedAt: server.renamedAt });
+  return name === archive.name ? archive : { ...archive, name };
+}
 
 export type BackupRunResult =
   | { kind: 'skipped'; reason: 'background' | 'off' | 'no-token' | 'waiting-for-token' | 'not-available' | 'busy' }
@@ -162,7 +179,10 @@ export class RunBackup {
 
     const local = (await this.d.activities.timeline()).filter((a) => mayUpload(a.id, healthIncluded));
     // What the phone has now of the Activities the server also has (one track at a time).
-    const compared = new Map<string, { trackHash: string; name: string; gapsCheckedAt: number | null }>();
+    const compared = new Map<
+      string,
+      { trackHash: string; name: string; renamedAt: number | null; gapsCheckedAt: number | null }
+    >();
     for (const a of local) {
       if (!onServer.has(a.id) || tombstones.has(a.id)) {
         continue;
@@ -172,6 +192,7 @@ export class RunBackup {
         compared.set(a.id, {
           trackHash: await this.d.sha256(trackHashInput(archive.track)),
           name: archive.name,
+          renamedAt: archive.renamedAt,
           gapsCheckedAt: archive.gapsCheckedAt,
         });
       }
@@ -268,15 +289,23 @@ export class RunBackup {
       // Kept with the Activity when it was saved: a retry after travelling sends the same content.
       timeZone: archive.timeZone,
     };
-    let r: ApiResult<{ version: number }> = await api.putActivity(
-      archive,
-      meta,
-      step === 'replace' ? b.toState().serverVersion : null
-    );
+    // A PUT carries a name and the server takes it (keeping its renamedAt): read the server's name
+    // first when it has a copy, so a newer rename from another phone is kept (nameToUpload).
+    const put = (ifMatchVersion: number | null, server: ServerActivityHead | null) =>
+      api.putActivity(withNewerName(archive, server), meta, ifMatchVersion);
+    let head: ServerActivityHead | null = null;
+    if (step === 'replace') {
+      const h = await api.activityVersion(id);
+      if (!h.ok && h.failure.kind !== 'not-found') {
+        return this.failure(b, step, rev, h.failure, report);
+      }
+      head = h.ok ? h.value : null;
+    }
+    let r: ApiResult<{ version: number }> = await put(step === 'replace' ? b.toState().serverVersion : null, head);
     if (!r.ok && r.failure.kind === 'precondition') {
-      // 412 (stale version) or 428 (the server has other content): read its version, retry once.
+      // 412 (stale version) or 428 (the server has other content): read its version and name, retry once.
       const current = await api.activityVersion(id);
-      r = current.ok ? await api.putActivity(archive, meta, current.value.version) : current;
+      r = current.ok ? await put(current.value.version, current.value) : current;
     }
     if (!r.ok) {
       return this.failure(b, step, rev, r.failure, report);
@@ -298,7 +327,13 @@ export class RunBackup {
     rev: number,
     report: BackupRunReport
   ): Promise<BackupErrorCode | null> {
-    const r = await api.renameActivity(archive.id, archive.name, archive.renamedAt ?? this.d.clock.now());
+    if (archive.renamedAt == null) {
+      // Never renamed on this phone: its name is no newer than the server's. Stamping it "now" would
+      // beat a real rename from another phone (last write wins on renamedAt), so nothing is sent.
+      await this.update(b, (x) => x.renamed(rev, null));
+      return null;
+    }
+    const r = await api.renameActivity(archive.id, archive.name, archive.renamedAt);
     if (r.ok) {
       await this.update(b, (x) => x.renamed(rev, r.value.version));
       return null;
