@@ -110,6 +110,13 @@ export function createAuth(config: AuthConfig) {
     telemetry: { enabled: false },
     logger: { disabled: true },
     advanced: { ipAddress: { disableIpTracking: true } },
+    // No IP address or user agent on a session (decision A4, W6). Better Auth writes `''` for both
+    // even with IP tracking off; store NULL so "nothing recorded" is unambiguous.
+    databaseHooks: {
+      session: {
+        create: { before: (session) => Promise.resolve({ data: { ...session, ipAddress: null, userAgent: null } }) },
+      },
+    },
     plugins: [
       // Only signed tokens (`<session token>.<HMAC>`, see IdentityService.signIn): the raw token in
       // `auth_sessions` is not enough to sign in, and rotating BETTER_AUTH_SECRET revokes them all.

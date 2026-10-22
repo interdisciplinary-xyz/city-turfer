@@ -65,7 +65,7 @@ function at start instead of running half-configured (`checkProductionEnv` in
 **Revoking sessions.** A session is a row in `auth_sessions`; the bearer token the phone holds is
 that row's token signed with `BETTER_AUTH_SECRET` (`<token>.<HMAC>`), and only the signed form is
 accepted (`bearer({ requireSignature: true })`). A website session is the same kind of row with
-`client = 'browser'`, delivered as the `__Secure-ct_session` cookie instead; users revoke their own
+`client = 'browser'`, delivered as the `__Host-ct_session` cookie instead; users revoke their own
 sessions in the portal (`DELETE /v1/auth/sessions…`). To sign one user out everywhere, delete their
 rows (`DELETE FROM auth_sessions WHERE user_id = '<userId>'`); to sign everyone out, delete all
 rows. Rotating `BETTER_AUTH_SECRET` also invalidates every token (their signatures no longer match),
@@ -170,9 +170,9 @@ preview: testing the portal on such a preview tests it against production. To te
 
 Checks:
 
-1. **Cookie:** sign in on `/en/account`; DevTools shows `__Secure-ct_session` on the website's host,
-   `Path=/api/v1`, `HttpOnly`, `Secure`, `SameSite=Strict`, no `Domain`; page requests outside
-   `/api/v1` don't carry it; sign-out removes it.
+1. **Cookie:** sign in on `/en/account`; DevTools shows `__Host-ct_session` on the website's host,
+   `Path=/`, `HttpOnly`, `Secure`, `SameSite=Strict`, no `Domain`; `/api/v1/*` requests carry it;
+   sign-out removes it.
 2. **CSRF headers and the query pass through:** writes (sign-out, consents) answer 204/200, not
    `403 auth.csrf` (the route must keep `Origin` and `Sec-Fetch-Site`); "sign out other devices"
    (`DELETE …/auth/sessions?scope=others`) answers 204, not 400 (the query string survives the

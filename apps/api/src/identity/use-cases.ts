@@ -62,6 +62,13 @@ const SLIDING: Record<SessionClient, { ttlMs: number; updateAgeMs: number }> = {
   browser: { ttlMs: BROWSER_SESSION.ttlS * S, updateAgeMs: BROWSER_SESSION.updateAgeS * S },
 };
 
+/**
+ * What a session token can look like: visible ASCII, no spaces, bounded. Anything else (a cookie that
+ * decodes to a control character, say) is no session — refused before it reaches a `Headers` object,
+ * which would throw and turn a forged cookie into a 503.
+ */
+const TOKEN_SHAPE = /^[\x21-\x7e]{1,512}$/;
+
 const time = (value: Date | string | number | null | undefined): number | null =>
   value === null || value === undefined ? null : new Date(value).getTime();
 
@@ -224,6 +231,9 @@ export class IdentityService {
    */
   readonly verifier: AuthVerifier = {
     verify: async (token, credential: Credential = 'bearer'): Promise<Principal | null> => {
+      if (!TOKEN_SHAPE.test(token)) {
+        return null;
+      }
       const s = await this.session(token);
       if (!s || (credential === 'cookie') !== (s.client === 'browser')) {
         return null;

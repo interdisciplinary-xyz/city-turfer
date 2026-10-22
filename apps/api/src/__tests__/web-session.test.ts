@@ -19,7 +19,9 @@ const DAY = 24 * HOUR;
 const IP = '203.0.113.7';
 /** What the website sends on every request that changes something. */
 const WEB = { Origin: DEV_WEB_ORIGIN, 'Sec-Fetch-Site': 'same-origin', 'CityTurfer-Client': 'web/0.10.0' };
-const COOKIE_ATTRS = 'Path=/api/v1; HttpOnly; Secure; SameSite=Strict';
+const COOKIE_ATTRS = 'Path=/; HttpOnly; Secure; SameSite=Strict';
+/** The answer that drops the cookie: same name, path and attributes as the one set, `Max-Age=0`. */
+const CLEARED = `__Host-ct_session=; Max-Age=0; ${COOKIE_ATTRS}`;
 
 beforeEach(async () => {
   h = await backupApp();
@@ -53,8 +55,8 @@ async function browserSignIn(email: string, extra: Record<string, unknown> = {})
     headers: { ...WEB, 'X-Real-IP': IP, 'User-Agent': 'Mozilla/5.0 (test)' },
   });
   const setCookie = res.headers.get('set-cookie') ?? '';
-  const value = /^__Secure-ct_session=([^;]*)/.exec(setCookie)?.[1] ?? '';
-  return { res, setCookie, value, cookie: `__Secure-ct_session=${value}` };
+  const value = /^__Host-ct_session=([^;]*)/.exec(setCookie)?.[1] ?? '';
+  return { res, setCookie, value, cookie: `__Host-ct_session=${value}` };
 }
 
 /** A request with the session cookie (and no bearer token). */
@@ -73,7 +75,7 @@ describe('browser sign-in', () => {
   it('sets the session cookie with exact attributes and keeps the token out of the body', async () => {
     const { res, setCookie, value } = await browserSignIn('ania@example.com');
     expect(res.status).toBe(200);
-    expect(setCookie).toBe(`__Secure-ct_session=${value}; Max-Age=${30 * 24 * 3600}; ${COOKIE_ATTRS}`);
+    expect(setCookie).toBe(`__Host-ct_session=${value}; Max-Age=${30 * 24 * 3600}; ${COOKIE_ATTRS}`);
     expect(setCookie).not.toMatch(/Domain=/i);
     expect(value.length).toBeGreaterThan(20);
     expect(res.headers.get('cache-control')).toBe('no-store');
@@ -89,7 +91,7 @@ describe('browser sign-in', () => {
 
   it('on a shared computer: a browser-session cookie (no Max-Age) and 8 hours', async () => {
     const { res, setCookie, value } = await browserSignIn('ania@example.com', { sharedComputer: true });
-    expect(setCookie).toBe(`__Secure-ct_session=${value}; ${COOKIE_ATTRS}`);
+    expect(setCookie).toBe(`__Host-ct_session=${value}; ${COOKIE_ATTRS}`);
     const body = await res.json();
     expect(body.expiresAt).toBe(new Date(h.clock.t + 8 * HOUR).toISOString());
     expect(body.absoluteExpiresAt).toBe(new Date(h.clock.t + 8 * HOUR).toISOString());
@@ -144,8 +146,8 @@ describe('browser sign-in', () => {
     const stored = await rows(sql`SELECT ip_address, user_agent, client FROM auth_sessions`);
     expect(stored).toHaveLength(1);
     expect(stored[0].client).toBe('browser');
-    expect(stored[0].ip_address || null).toBeNull();
-    expect(stored[0].user_agent || null).toBeNull();
+    expect(stored[0].ip_address).toBeNull();
+    expect(stored[0].user_agent).toBeNull();
   });
 
   it('leaves the phone sign-in as it was: token in the body, no cookie, 60 days', async () => {
@@ -215,13 +217,13 @@ describe('the session cookie as a credential', () => {
   });
 
   it('never takes a device token or a phone session from a cookie, nor a browser session as bearer', async () => {
-    const device = await withCookie('GET', '/v1/me', `__Secure-ct_session=${TOKENS.admin}`);
+    const device = await withCookie('GET', '/v1/me', `__Host-ct_session=${TOKENS.admin}`);
     expect(device.status).toBe(401);
     expect(await device.json()).toMatchObject({ code: 'auth.invalid' });
-    expect(device.headers.get('set-cookie')).toBe(`__Secure-ct_session=; Max-Age=0; ${COOKIE_ATTRS}`);
+    expect(device.headers.get('set-cookie')).toBe(CLEARED);
 
     const phoneToken = await h.signIn('ania@example.com');
-    const phone = await withCookie('GET', '/v1/me', `__Secure-ct_session=${encodeURIComponent(phoneToken)}`);
+    const phone = await withCookie('GET', '/v1/me', `__Host-ct_session=${encodeURIComponent(phoneToken)}`);
     expect(phone.status).toBe(401);
     // …and the phone's session still works as a bearer token.
     expect((await h.call('GET', '/v1/me', { token: phoneToken })).status).toBe(200);
@@ -262,7 +264,7 @@ describe('browser session lifetime', () => {
     advance(DAY + 60_000); // day 30 and a minute: over, however active
     const over = await me();
     expect(over.status).toBe(401);
-    expect(over.headers.get('set-cookie')).toContain('Max-Age=0');
+    expect(over.headers.get('set-cookie')).toBe(CLEARED);
   });
 
   it('ends after 14 days without use', async () => {
@@ -348,7 +350,7 @@ describe('signed-in devices', () => {
     const currentId = mine.find((s: { current: boolean }) => s.current).id;
     const self = await withCookie('DELETE', `/v1/auth/sessions/${currentId}`, cookie, { headers: WEB });
     expect(self.status).toBe(204);
-    expect(self.headers.get('set-cookie')).toBe(`__Secure-ct_session=; Max-Age=0; ${COOKIE_ATTRS}`);
+    expect(self.headers.get('set-cookie')).toBe(CLEARED);
     expect((await withCookie('GET', '/v1/me', cookie)).status).toBe(401);
   });
 
@@ -371,7 +373,7 @@ describe('signed-in devices', () => {
     expect(phoneAgain).toEqual(expect.any(String));
     const all = await withCookie('DELETE', '/v1/auth/sessions?scope=all', cookie, { headers: WEB });
     expect(all.status).toBe(204);
-    expect(all.headers.get('set-cookie')).toBe(`__Secure-ct_session=; Max-Age=0; ${COOKIE_ATTRS}`);
+    expect(all.headers.get('set-cookie')).toBe(CLEARED);
     expect((await withCookie('GET', '/v1/me', cookie)).status).toBe(401);
     expect((await h.call('GET', '/v1/me', { token: phoneAgain })).status).toBe(401);
     // Another account is untouched.
@@ -464,7 +466,7 @@ describe('sign-out and erasure from the browser', () => {
     const { cookie } = await browserSignIn('ania@example.com');
     const out = await withCookie('DELETE', '/v1/auth/session', cookie, { headers: WEB });
     expect(out.status).toBe(204);
-    expect(out.headers.get('set-cookie')).toBe(`__Secure-ct_session=; Max-Age=0; ${COOKIE_ATTRS}`);
+    expect(out.headers.get('set-cookie')).toBe(CLEARED);
     expect((await withCookie('GET', '/v1/me', cookie)).status).toBe(401);
     // Signing out on the website never signs the phone out.
     expect((await h.call('GET', '/v1/me', { token: phoneToken })).status).toBe(200);
@@ -474,8 +476,10 @@ describe('sign-out and erasure from the browser', () => {
     const { cookie } = await browserSignIn('ania@example.com');
     const res = await withCookie('DELETE', '/v1/me', cookie, { headers: WEB });
     expect(res.status).toBe(204);
-    expect(res.headers.get('set-cookie')).toContain('Max-Age=0');
-    expect((await withCookie('GET', '/v1/me', cookie)).status).toBe(401);
+    expect(res.headers.get('set-cookie')).toBe(CLEARED);
+    const after = await withCookie('GET', '/v1/me', cookie);
+    expect(after.status).toBe(401);
+    expect(after.headers.get('set-cookie')).toBe(CLEARED);
   });
 });
 
@@ -558,7 +562,7 @@ describe('account settings from the browser (contract 0.5.0: both features)', ()
     const res = await h.call('POST', '/v1/auth/sign-in', { token: null, body, headers: { ...WEB, 'X-Real-IP': IP } });
     expect(res.status).toBe(200);
     const setCookie = res.headers.get('set-cookie') ?? '';
-    expect(setCookie).toMatch(new RegExp(`^__Secure-ct_session=[^;]+; ${COOKIE_ATTRS}$`)); // shared: no Max-Age
+    expect(setCookie).toMatch(new RegExp(`^__Host-ct_session=[^;]+; ${COOKIE_ATTRS}$`)); // shared: no Max-Age
     const answer = await res.json();
     expect(answer).toEqual({
       client: 'browser',
@@ -566,7 +570,7 @@ describe('account settings from the browser (contract 0.5.0: both features)', ()
       absoluteExpiresAt: new Date(h.clock.t + 8 * HOUR).toISOString(),
       user: { id: expect.any(String), email: 'ania@example.com' },
     });
-    const passwordCookie = `__Secure-ct_session=${/^__Secure-ct_session=([^;]*)/.exec(setCookie)?.[1]}`;
+    const passwordCookie = `__Host-ct_session=${/^__Host-ct_session=([^;]*)/.exec(setCookie)?.[1]}`;
     expect((await withCookie('GET', '/v1/me', passwordCookie)).status).toBe(200);
 
     // sharedComputer with a phone password sign-in is 400, as with a code.
@@ -710,5 +714,249 @@ describe('WEB_ORIGIN', () => {
     for (const bad of ['http://cityturfer.app', 'https://cityturfer.app/en', 'cityturfer.app', '*']) {
       expect(() => webOriginOf({ WEB_ORIGIN: bad })).toThrow(ConfigError);
     }
+  });
+});
+
+describe('browser session lifetime at the exact limits (expired when expiresAt <= now, on the use cases’ clock)', () => {
+  /** Puts both clocks (the harness's and the faked `Date`) at `t`. */
+  function setTime(t: number): void {
+    h.clock.t = t;
+    vi.setSystemTime(t);
+  }
+  /** Signs in from the website and keeps the moment the session started. */
+  async function signedIn(email: string, extra: Record<string, unknown> = {}) {
+    const { cookie } = await browserSignIn(email, extra);
+    return { cookie, at: h.clock.t };
+  }
+  const me = (cookie: string) => withCookie('GET', '/v1/me', cookie);
+
+  it('14 days without use: 1 ms short is 200, exactly 14 days and 1 ms past are 401 (cookie cleared)', async () => {
+    const a = await signedIn('a@example.com');
+    const b = await signedIn('b@example.com');
+    const c = await signedIn('c@example.com');
+    setTime(a.at + 14 * DAY - 1);
+    expect((await me(a.cookie)).status).toBe(200);
+    setTime(b.at + 14 * DAY);
+    const exact = await me(b.cookie);
+    expect(exact.status).toBe(401);
+    expect(exact.headers.get('set-cookie')).toBe(CLEARED);
+    setTime(c.at + 14 * DAY + 1);
+    const past = await me(c.cookie);
+    expect(past.status).toBe(401);
+    expect(past.headers.get('set-cookie')).toBe(CLEARED);
+  });
+
+  it('30 days under daily use: 1 ms short is 200, exactly 30 days and 1 ms past are 401', async () => {
+    const a = await signedIn('a@example.com');
+    const b = await signedIn('b@example.com');
+    for (let day = 1; day < 30; day++) {
+      setTime(a.at + day * DAY);
+      expect((await me(a.cookie)).status).toBe(200);
+      setTime(b.at + day * DAY);
+      expect((await me(b.cookie)).status).toBe(200);
+    }
+    setTime(a.at + 30 * DAY - 1);
+    expect((await me(a.cookie)).status).toBe(200);
+    setTime(a.at + 30 * DAY);
+    const exact = await me(a.cookie);
+    expect(exact.status).toBe(401);
+    expect(exact.headers.get('set-cookie')).toBe(CLEARED);
+    setTime(b.at + 30 * DAY + 1);
+    expect((await me(b.cookie)).status).toBe(401);
+  });
+
+  it('8 hours on a shared computer, in use: 1 ms short is 200, exactly 8 hours and 1 ms past are 401', async () => {
+    const shared = { sharedComputer: true };
+    const a = await signedIn('a@example.com', shared);
+    const b = await signedIn('b@example.com', shared);
+    setTime(a.at + 4 * HOUR);
+    expect((await me(a.cookie)).status).toBe(200);
+    setTime(a.at + 8 * HOUR - 1);
+    expect((await me(a.cookie)).status).toBe(200);
+    setTime(a.at + 8 * HOUR);
+    expect((await me(a.cookie)).status).toBe(401);
+    setTime(b.at + 8 * HOUR + 1);
+    const past = await me(b.cookie);
+    expect(past.status).toBe(401);
+    expect(past.headers.get('set-cookie')).toBe(CLEARED);
+  });
+
+  it('decides on the injected clock: expired by it while Date and the database still call it live', async () => {
+    // PGlite's now() follows the faked Date, so the only clock that can disagree is the injected
+    // one. Put it exactly at the expiry while Date (and with it the database) stays an hour short.
+    const { cookie, at } = await signedIn('a@example.com');
+    vi.setSystemTime(at + 14 * DAY - HOUR);
+    h.clock.t = at + 14 * DAY;
+    const [{ live }] = await rows(sql`SELECT expires_at > now() AS live FROM auth_sessions`);
+    expect(live).toBe(true); // the database (and Better Auth's Date check) would let it through
+    const res = await me(cookie);
+    expect(res.status).toBe(401);
+    expect(res.headers.get('set-cookie')).toBe(CLEARED);
+    // The session list and revoking take the same clock (SessionStore.listLive / revokeLive(…, now)):
+    // a second session that expired 30 minutes ago by it, but is live by Date and the database.
+    const { cookie: mine } = await signedIn('b@example.com');
+    advance(61_000); // one code per address per minute
+    const phone = await h.signIn('b@example.com', '198.51.100.20');
+    expect(phone).toEqual(expect.any(String));
+    vi.setSystemTime(h.clock.t - HOUR);
+    await h.db
+      .execute(sql`UPDATE auth_sessions SET expires_at = ${new Date(h.clock.t - 30 * 60_000).toISOString()}::timestamptz
+      WHERE client = 'phone'`);
+    const [{ phoneLive }] = await rows(
+      sql`SELECT bool_and(expires_at > now()) AS "phoneLive" FROM auth_sessions WHERE client = 'phone'`
+    );
+    expect(phoneLive).toBe(true);
+    const { sessions } = await (await withCookie('GET', '/v1/auth/sessions', mine)).json();
+    expect(sessions.map((s: { client: string }) => s.client)).toEqual(['browser']);
+    const [{ id: phoneId }] = await rows(sql`SELECT id FROM auth_sessions WHERE client = 'phone'`);
+    expect((await withCookie('DELETE', `/v1/auth/sessions/${phoneId as string}`, mine, { headers: WEB })).status).toBe(
+      404
+    );
+  });
+});
+
+describe('when the session cookie is cleared, and when not', () => {
+  it('clears an unknown or garbage cookie (401) with the exact attributes', async () => {
+    const { cookie } = await browserSignIn('ania@example.com');
+    expect((await withCookie('DELETE', '/v1/auth/session', cookie, { headers: WEB })).status).toBe(204);
+    for (const stale of [cookie, '__Host-ct_session=garbage', '__Host-ct_session=a.b.c%00']) {
+      const res = await withCookie('GET', '/v1/me', stale);
+      expect(res.status).toBe(401);
+      expect(await res.json()).toMatchObject({ code: 'auth.invalid' });
+      expect(res.headers.get('set-cookie')).toBe(CLEARED);
+    }
+  });
+
+  it('leaves it alone on 403 auth.csrf, on scope=others and when revoking another session', async () => {
+    const phoneToken = await h.signIn('ania@example.com');
+    const { cookie } = await browserSignIn('ania@example.com');
+    const refused = await withCookie('DELETE', '/v1/auth/session', cookie, {
+      headers: { Origin: 'https://evil.example' },
+    });
+    expect(refused.status).toBe(403);
+    expect(refused.headers.get('set-cookie')).toBeNull();
+
+    const sessions = (await (await withCookie('GET', '/v1/auth/sessions', cookie)).json()).sessions;
+    const phoneId = sessions.find((s: { client: string }) => s.client === 'phone').id;
+    const one = await withCookie('DELETE', `/v1/auth/sessions/${phoneId}`, cookie, { headers: WEB });
+    expect(one.status).toBe(204);
+    expect(one.headers.get('set-cookie')).toBeNull();
+    expect((await h.call('GET', '/v1/me', { token: phoneToken })).status).toBe(401);
+
+    const others = await withCookie('DELETE', '/v1/auth/sessions?scope=others', cookie, { headers: WEB });
+    expect(others.status).toBe(204);
+    expect(others.headers.get('set-cookie')).toBeNull();
+    expect((await withCookie('GET', '/v1/me', cookie)).status).toBe(200);
+  });
+});
+
+describe('the CSRF guard on every route that changes something', () => {
+  type Op = { method: string; path: string; public: boolean; hasGet: boolean };
+  /** The only routes that change something without a credential (the sign-in itself has its own guard). */
+  const PUBLIC_UNSAFE = ['POST /v1/auth/codes', 'POST /v1/auth/sign-in'];
+  /** Registered unsafe routes allowed outside the spec: none. */
+  const OUTSIDE_SPEC: string[] = [];
+  const UNSAFE = ['post', 'put', 'patch', 'delete'];
+  const SAMPLE_PARAMS: Record<string, string> = {
+    activityId: '3f9c2a64-5d1e-4b8e-9a51-0c7d2e6f1b20',
+    sessionId: 'session-id',
+    purpose: 'cloud-sync',
+  };
+  const concrete = (path: string) => path.replace(/\{(\w+)\}/g, (_, name: string) => SAMPLE_PARAMS[name] ?? 'sample');
+
+  async function unsafeOps(): Promise<Op[]> {
+    const spec = (await (await h.app.request('/openapi.json')).json()) as {
+      security?: unknown[];
+      paths: Record<string, Record<string, { security?: unknown[] }>>;
+    };
+    return Object.entries(spec.paths).flatMap(([path, ops]) =>
+      Object.entries(ops)
+        .filter(([m]) => UNSAFE.includes(m))
+        .map(([m, op]) => ({
+          method: m.toUpperCase(),
+          path,
+          public: (op.security ?? spec.security ?? []).length === 0,
+          hasGet: 'get' in ops,
+        }))
+    );
+  }
+
+  /** Every row of every table, as one fingerprint per table. */
+  async function snapshot(): Promise<Record<string, unknown>> {
+    const tables = (await rows(sql`SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY 1`)).map(
+      (r) => r.tablename as string
+    );
+    const out: Record<string, unknown> = {};
+    for (const t of tables) {
+      const [r] = await rows(
+        sql.raw(
+          `SELECT count(*)::int AS n, md5(coalesce(string_agg(x::text, '|' ORDER BY x::text), '')) AS h FROM "${t}" x`
+        )
+      );
+      out[t] = r;
+    }
+    return out;
+  }
+
+  it('every registered unsafe route is in the spec, and only the sign-in routes are public', async () => {
+    const ops = await unsafeOps();
+    const inSpec = new Set(ops.map((o) => `${o.method} ${o.path.replace(/\{(\w+)\}/g, ':$1')}`));
+    const registered = [
+      ...new Set(
+        h.app.routes.filter((r) => UNSAFE.includes(r.method.toLowerCase())).map((r) => `${r.method} ${r.path}`)
+      ),
+    ];
+    expect(registered.filter((r) => !inSpec.has(r) && !OUTSIDE_SPEC.includes(r))).toEqual([]);
+    expect(ops.filter((o) => o.public).map((o) => `${o.method} ${o.path}`)).toEqual(PUBLIC_UNSAFE);
+    expect(ops.filter((o) => !o.public).length).toBeGreaterThanOrEqual(17);
+  });
+
+  it('refuses the cookie without Origin and client header on each protected one (403 auth.csrf), with no side effect', async () => {
+    const { cookie } = await browserSignIn('ania@example.com');
+    await withCookie('PUT', '/v1/me/consents/cloud-sync', cookie, {
+      headers: WEB,
+      body: { granted: true, policyVersion: '2026-10-22' },
+    });
+    const ops = (await unsafeOps()).filter((o) => !o.public);
+    const before = await snapshot();
+    const mails = h.mailer.sent.length;
+    for (const op of ops) {
+      const res = await withCookie(op.method, concrete(op.path), cookie, { body: {} });
+      const body = await res.json();
+      expect([op.method, op.path, res.status, body.code]).toEqual([op.method, op.path, 403, 'auth.csrf']);
+      expect(res.headers.get('set-cookie')).toBeNull();
+    }
+    expect(await snapshot()).toEqual(before);
+    expect(h.mailer.sent.length).toBe(mails);
+    // Reads on the same paths need no CSRF headers.
+    for (const op of ops.filter((o) => o.hasGet)) {
+      const res = await withCookie('GET', concrete(op.path), cookie);
+      expect([op.path, res.status]).not.toEqual([op.path, 403]);
+    }
+    expect((await withCookie('GET', '/v1/me', cookie)).status).toBe(200);
+  });
+
+  it('never refuses a bearer token for CSRF on any of them', async () => {
+    const ops = (await unsafeOps()).filter((o) => !o.public);
+    let i = 0;
+    for (const op of ops) {
+      // A fresh phone session each: some of these sign out or erase the account.
+      i += 1;
+      const token = await h.signIn(`p${i}@example.com`, `198.51.100.${i}`);
+      const res = await h.call(op.method, concrete(op.path), { token, body: {} });
+      const body = res.status === 204 ? {} : await res.json();
+      expect([op.method, op.path, body.code]).not.toEqual([op.method, op.path, 'auth.csrf']);
+      expect([op.method, op.path, res.status]).not.toEqual([op.method, op.path, 403]);
+    }
+  });
+
+  it('starts an export with the cookie from the website (202)', async () => {
+    const { cookie } = await browserSignIn('ania@example.com');
+    const res = await withCookie('POST', '/v1/me/exports', cookie, { headers: WEB });
+    expect(res.status).toBe(202);
+    const job = await res.json();
+    expect(job).toMatchObject({ status: 'ready' });
+    expect(res.headers.get('location')).toBe(`/v1/me/exports/${job.id}`);
+    expect(h.mailer.lastTo('ania@example.com')?.text).toContain('/v1/exports/');
   });
 });

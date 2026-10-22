@@ -66,7 +66,7 @@ export const SessionClient = z.enum(['phone', 'browser']).openapi('SessionClient
 const SignInClient = {
   client: SessionClient.optional().openapi({
     description:
-      'Default `phone`: the token comes in the body. `browser`: the session goes in the `__Secure-ct_session` cookie and the body has no token; the request must come from the website (`Origin`, `CityTurfer-Client: web/<version>`, else `403 auth.csrf`).',
+      'Default `phone`: the token comes in the body. `browser`: the session goes in the `__Host-ct_session` cookie and the body has no token; the request must come from the website (`Origin`, `CityTurfer-Client: web/<version>`, else `403 auth.csrf`).',
     example: 'browser',
   }),
   sharedComputer: z.boolean().optional().openapi({

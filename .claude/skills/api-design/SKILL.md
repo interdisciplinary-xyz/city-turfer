@@ -80,7 +80,7 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   `Vary: Cookie, Authorization` by default on `/v1` (`personalCaching`; tracks keep
   `private, no-cache`); `CityTurfer-Client` (426 `client.too-old`); `Retry-After` + `RateLimit` on
   429; `Location` on 201/202.
-- **Auth:** `bearerAuth` (HTTP bearer) or `cookieAuth` (the website's `__Secure-ct_session`,
+- **Auth:** `bearerAuth` (HTTP bearer) or `cookieAuth` (the website's `__Host-ct_session`,
   `requireCaller` in `apps/api/src/middleware.ts`; cookie writes need `Origin` = `WEB_ORIGIN` and
   `CityTurfer-Client: web/<version>`, else 403 `auth.csrf`; principals carry `realm: 'user'`; design
   `docs/decisions/api-web-sessions-2026-10-22.md`). Every route needs one except `GET /v1/health`,

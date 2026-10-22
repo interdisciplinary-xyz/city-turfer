@@ -82,7 +82,7 @@ export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
     in: 'cookie',
     name: SESSION_COOKIE,
     description:
-      'The website\'s session (`POST /v1/auth/sign-in` with `client: "browser"`): `HttpOnly; Secure; SameSite=Strict; Path=/api/v1`, host-only, set on the website\'s host through its `/api/v1/*` rewrite. 14 days sliding, at most 30 days; on a shared computer a browser-session cookie and 8 hours. Requests that change something also need `Origin` = the website, `Sec-Fetch-Site: same-origin` when sent, and `CityTurfer-Client: web/<version>` (else `403 auth.csrf`).',
+      'The website\'s session (`POST /v1/auth/sign-in` with `client: "browser"`): `HttpOnly; Secure; SameSite=Strict; Path=/`, host-only, set on the website\'s host through its `/api/v1/*` rewrite. 14 days sliding, at most 30 days; on a shared computer a browser-session cookie and 8 hours. Requests that change something also need `Origin` = the website, `Sec-Fetch-Site: same-origin` when sent, and `CityTurfer-Client: web/<version>` (else `403 auth.csrf`).',
   });
   registerHeaders(app.openAPIRegistry);
 

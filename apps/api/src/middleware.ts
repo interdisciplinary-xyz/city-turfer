@@ -155,7 +155,7 @@ export function clearSessionCookie(c: Context<AppEnv>): void {
  * Route middleware for every protected route: runs **before** validation, so a request without a
  * valid credential gets 401 and learns nothing about the schema. The credential is
  * `Authorization: Bearer …` (phones, device tokens; wins when both are sent) or the
- * `__Secure-ct_session` cookie (browsers; then the CSRF guard for unsafe methods). Only principals
+ * `__Host-ct_session` cookie (browsers; then the CSRF guard for unsafe methods). Only principals
  * of the `user` realm pass.
  */
 export const requireCaller: MiddlewareHandler<AppEnv> = async (c, next) => {

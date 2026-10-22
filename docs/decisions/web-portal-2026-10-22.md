@@ -25,9 +25,10 @@ answers; the plan holds the reasoning.
 ## Consequences
 
 - **Public pages keep their promise.** Signed-out visitors get no cookies, API calls or third-party
-  scripts. Only the portal uses one strictly necessary cookie, `__Secure-ct_session`
-  (`Path=/api/v1; HttpOnly; Secure; SameSite=Strict`), reached through a same-site rewrite
-  `/api/v1/*` → the API, so there is no CORS.
+  scripts. Only the portal sets one strictly necessary cookie, `__Host-ct_session`
+  (`Path=/; HttpOnly; Secure; SameSite=Strict`; the prefix and path are W1 in
+  `docs/decisions/api-web-sessions-2026-10-22.md`), and only the API reads it, through a same-site
+  route `/api/v1/*` → the API, so there is no CORS.
 - **Read-only apart from account actions.** Rename and delete of single activities stay on the phone
   until two-way sync: a web delete would leave a tombstone that deletes the phone's copy. Consents
   are shown, not changed, on the web.
