@@ -80,7 +80,7 @@ export class AccountProfiles {
       return { kind: 'known', profileId: known };
     }
     const adoptable = userId(ADOPTABLE_PROFILE);
-    if (adoptableHasHistory && !this.isTaken(adoptable)) {
+    if (adoptableHasHistory && !this.isHeld(adoptable)) {
       return { kind: 'ask', adoptable };
     }
     return { kind: 'known', profileId: profileIdForAccount(account.id) };
@@ -93,7 +93,7 @@ export class AccountProfiles {
       return known;
     }
     const adoptable = userId(ADOPTABLE_PROFILE);
-    return useLocalHistory && !this.isTaken(adoptable) ? adoptable : profileIdForAccount(account.id);
+    return useLocalHistory && !this.isHeld(adoptable) ? adoptable : profileIdForAccount(account.id);
   }
 
   /**
@@ -130,6 +130,11 @@ export class AccountProfiles {
     if (owner && owner.accountId !== account.id) {
       throw new DomainError('account.profile-taken', profileId);
     }
+    // A deleted account's kept profile goes only to an account with that email.
+    const kept = this.state.entries.find((e) => e.profileId === profileId && e.deleted);
+    if (kept && kept.email !== account.email) {
+      throw new DomainError('account.profile-taken', profileId);
+    }
     const others = this.state.entries.filter((e) => e.accountId !== account.id && e.profileId !== profileId);
     this.state = {
       entries: [...others, { accountId: account.id, email: account.email, profileId, deleted: false }],
@@ -162,5 +167,10 @@ export class AccountProfiles {
 
   private isTaken(profileId: UserId): boolean {
     return this.state.entries.some((e) => e.profileId === profileId && !e.deleted);
+  }
+
+  /** Any account's data lives in the profile, a deleted account's kept data included. */
+  private isHeld(profileId: UserId): boolean {
+    return this.state.entries.some((e) => e.profileId === profileId);
   }
 }

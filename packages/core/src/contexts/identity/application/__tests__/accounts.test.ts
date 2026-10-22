@@ -358,6 +358,44 @@ describe('AccountProfiles', () => {
     expect(() => p.link({ id: 'u2', email: 'x@b.cd' }, userId('admin'))).toThrow('account.profile-taken');
   });
 
+  it('a deleted account’s kept history is offered to no other account, only to its email', async () => {
+    const t = setup({ adminHasHistory: true });
+    await t.api.verifyCode.execute('founder@example.com', '000000');
+    await t.api.chooseHistory.execute(true);
+    expect(await t.api.deleteAccount.execute(true)).toEqual({ kind: 'deleted', profileId: 'admin' });
+
+    // Another account is not asked to adopt it and gets a profile of its own.
+    expect(await t.api.verifyCode.execute('other@example.com', '000000')).toMatchObject({
+      kind: 'signed-in',
+      user: { id: 'a-u2', accountId: 'u2' },
+    });
+    await t.api.signOut.execute();
+    expect(t.profiles()?.entries).toContainEqual({
+      accountId: 'u1',
+      email: 'founder@example.com',
+      profileId: 'admin',
+      deleted: true,
+    });
+
+    // The same email finds it again.
+    expect(await t.api.verifyCode.execute('founder@example.com', '000000')).toMatchObject({
+      kind: 'signed-in',
+      user: { id: 'admin', accountId: 'u3' },
+    });
+  });
+
+  it('never links a deleted account’s kept profile to another email', () => {
+    const p = AccountProfiles.empty();
+    p.link({ id: 'u1', email: 'a@b.cd' }, userId('admin'));
+    p.accountDeleted('u1', true);
+    expect(p.placementFor({ id: 'u2', email: 'x@b.cd' }, true)).toEqual({ kind: 'known', profileId: 'a-u2' });
+    expect(p.chosenProfile({ id: 'u2', email: 'x@b.cd' }, true)).toBe('a-u2');
+    expect(() => p.link({ id: 'u2', email: 'x@b.cd' }, userId('admin'))).toThrow('account.profile-taken');
+    expect(p.knownProfile({ id: 'u3', email: 'a@b.cd' })).toBe('admin');
+    p.link({ id: 'u3', email: 'a@b.cd' }, userId('admin'));
+    expect(p.toState().entries).toEqual([{ accountId: 'u3', email: 'a@b.cd', profileId: 'admin', deleted: false }]);
+  });
+
   it('a profile id for any account id fits the profile rules', () => {
     expect(profileIdForAccount('AbC.12/xyz')).toBe('a-AbC_12_xyz');
     expect(profileIdForAccount('x'.repeat(100))).toHaveLength(64);
