@@ -1,3 +1,5 @@
+import { DomainError } from '@/shared-kernel';
+
 import { mayUpload } from '../domain/backup-policy';
 import type { RestoreItem, RestoreState } from '../domain/restore';
 import { connect, errorOf } from './backup-access';
@@ -91,7 +93,11 @@ export class GetRestoreOffer {
 export class RestoreFromBackup {
   private running: Promise<RestoreResult> | null = null;
 
-  constructor(private readonly d: CloudBackupDeps) {}
+  constructor(
+    private readonly d: CloudBackupDeps,
+    /** Waits for a backup run in flight (its comparison must not race the restore's rows). */
+    private readonly backupIdle: () => Promise<void> = async () => undefined
+  ) {}
 
   get isRunning(): boolean {
     return this.running != null;
@@ -115,6 +121,7 @@ export class RestoreFromBackup {
       done: s.done,
       total: s.total,
     });
+    await this.backupIdle();
     let restore = await d.repo.restore();
     if (!d.isForeground()) {
       return paused('background', restore.toState());
@@ -160,15 +167,18 @@ export class RestoreFromBackup {
         return paused(stopOf(errorOf(copy.failure)), restore.toState());
       }
       if (copy.ok) {
-        // First the backup row (so the Activity never goes back up), then the Activity itself.
-        await d.repo.updateBackupForRestore({ ...item, version: copy.value.version }, (b) =>
-          b.restoredFromServer(copy.value.version, copy.value.gapsCheckedAt, d.clock.now())
-        );
+        // First the Activity (origin 'restore': Cloud Backup never queues it), then its backup row.
+        // Never a row without an Activity: the next comparison would take it for one deleted on
+        // this phone and delete the server copy. Killed in between: the comparison finds the
+        // same track on the server and sends nothing.
         const outcome = await d.restoredActivities.restore(copy.value);
-        if (outcome === 'restored') {
-          restored++;
-        } else if (outcome === 'invalid') {
+        if (outcome === 'invalid') {
           skipped++;
+        } else {
+          await d.repo.updateBackupForRestore({ ...item, version: copy.value.version }, (b) =>
+            b.restoredFromServer(copy.value.version, copy.value.gapsCheckedAt, d.clock.now())
+          );
+          restored += outcome === 'restored' ? 1 : 0;
         }
       } else {
         skipped++; // deleted on the server meanwhile, or content this phone can't read
@@ -180,7 +190,14 @@ export class RestoreFromBackup {
     if (homeCity) {
       // The server has this choice: record that first, so it is not sent back.
       await d.repo.saveRestore((_r, s) => s.homeCityRestored(homeCity.chosenAt));
-      await d.homeCity.restore(homeCity);
+      try {
+        await d.homeCity.restore(homeCity);
+      } catch (e) {
+        if (!(e instanceof DomainError)) {
+          throw e;
+        }
+        // A city this version's catalogue doesn't know: skipped (the Turfer can choose one again).
+      }
     }
     const left = (await d.repo.restoreItems()).length;
     restore = await d.repo.saveRestore((r) => r.finish(left));

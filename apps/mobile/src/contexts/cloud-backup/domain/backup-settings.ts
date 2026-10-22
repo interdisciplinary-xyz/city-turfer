@@ -135,8 +135,8 @@ export class BackupSettings {
   }
 
   /**
-   * Which server and account the backup talks to now. The first one is adopted as is (state from
-   * before this was tracked); another one means nothing of this state is true there: backup goes
+   * Which server and account the backup talks to now. The first one is adopted (state from before
+   * this was tracked), with a fresh comparison; another one means nothing of this state is true there: backup goes
    * off (that account has not consented) and starts from scratch. Returns whether it was reset.
    */
   useAccount(key: string): boolean {
@@ -145,7 +145,9 @@ export class BackupSettings {
       return false;
     }
     if (s.accountKey == null) {
-      this.state = { ...s, accountKey: key };
+      // State from before accounts were tracked (a device token, maybe another account): keep the
+      // rows, but compare with this account's manifest before trusting "backed up".
+      this.state = { ...s, accountKey: key, backfilledAt: null, cursor: null };
       return false;
     }
     this.state = {

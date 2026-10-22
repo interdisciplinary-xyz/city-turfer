@@ -14,9 +14,11 @@ import {
 } from './application/settings-use-cases';
 
 export function createCloudBackupApi(deps: CloudBackupDeps) {
-  const restore = new RestoreFromBackup(deps);
-  // Backup runs wait while a restore writes the backup rows.
-  const run = new RunBackup(deps, () => restore.isRunning);
+  // Backup runs wait while a restore runs (or one was interrupted); a restore waits for a run.
+  // eslint-disable-next-line prefer-const -- assigned below: the two wait for each other
+  let run: RunBackup;
+  const restore = new RestoreFromBackup(deps, () => run.whenIdle());
+  run = new RunBackup(deps, () => restore.isRunning);
   return {
     status: new GetBackupStatus(deps, () => run.isRunning),
     saveToken: new SaveDeviceToken(deps),

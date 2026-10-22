@@ -129,6 +129,20 @@ describe('Cloud Backup: renames and gap checks while on', () => {
 });
 
 describe('Cloud Backup: another account or server', () => {
+  it('state from a device token, then an email account with other data: that history goes up', async () => {
+    const t = phone({ token: 'secret-token' });
+    const c = await t.container();
+    await c.add('rec-1', walk(0));
+    await c.cloudBackup.enable.execute();
+    await c.cloudBackup.run.execute();
+    // Before migration 10 nothing said whose rows these were; the account now has nothing.
+    await t.db.run('UPDATE cb_state SET account_key = NULL');
+    t.server.activities.clear();
+    t.account.value = { token: 'secret-token', accountId: 'acct-new' };
+    await c.cloudBackup.run.execute();
+    expect(t.server.activities.has('rec-1')).toBe(true);
+  });
+
   it('starts from scratch: backup off, no rows kept from the other account', async () => {
     const t = phone({ account: ACCOUNT });
     const c = await t.container();
@@ -142,13 +156,16 @@ describe('Cloud Backup: another account or server', () => {
     expect(await c.cloudBackup.status.execute()).toMatchObject({ enabled: false, backedUp: 0, total: 1 });
   });
 
-  it('the first account seen is adopted as is (state from before accounts were tracked)', async () => {
+  it('the first account seen is adopted, after comparing (state from before accounts were tracked)', async () => {
     const t = phone({ account: ACCOUNT });
     const c = await t.container();
     await c.add('rec-1', walk(0));
     await backedUp(c);
     await t.db.run('UPDATE cb_state SET account_key = NULL');
+    const feeds = t.server.calls('changes').length;
     await c.cloudBackup.run.execute();
+    // Adopted, but compared with this account's manifest before "backed up" is trusted.
+    expect(t.server.calls('changes').length).toBe(feeds + 1);
     expect(await rows(t)).toHaveLength(1);
     expect(await t.db.first('SELECT account_key AS k FROM cb_state')).toEqual({
       k: expect.stringContaining('|acct-1'),

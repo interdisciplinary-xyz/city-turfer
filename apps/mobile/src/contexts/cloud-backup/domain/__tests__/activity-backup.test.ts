@@ -267,7 +267,10 @@ describe('BackupSettings: accounts, withdrawals, Home City', () => {
     s.enable();
     s.planned(NOW, 'c9');
     expect(s.useAccount('https://api|u1')).toBe(false);
+    expect(s.needsPlanning).toBe(true); // adopted, but compared again
+    s.planned(NOW, 'c10');
     expect(s.useAccount('https://api|u1')).toBe(false);
+    expect(s.needsPlanning).toBe(false);
     expect(s.enabled).toBe(true);
     expect(s.useAccount('https://api|u2')).toBe(true);
     expect(s.toState()).toMatchObject({

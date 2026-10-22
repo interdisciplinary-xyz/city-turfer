@@ -73,7 +73,8 @@ export class RunBackup {
     if (!this.d.isForeground()) {
       return { kind: 'skipped', reason: 'background' };
     }
-    if (this.paused()) {
+    // A restore running now, or interrupted (it resumes first): its rows are not complete yet.
+    if (this.paused() || (await this.d.repo.restore()).isRunning) {
       return { kind: 'skipped', reason: 'busy' };
     }
     const before = await this.d.repo.settings();
@@ -188,8 +189,10 @@ export class RunBackup {
       }
     });
     const onPhone = new Set((await this.d.activities.timeline()).map((a) => a.id));
+    // Still to be restored: not on the phone yet, but not deleted either.
+    const restoring = new Set((await this.d.repo.restoreItems()).map((i) => i.activityId));
     const gone = (await this.d.repo.backups())
-      .filter((b) => !onPhone.has(b.activityId))
+      .filter((b) => !onPhone.has(b.activityId) && !restoring.has(b.activityId))
       .map((b) => ({ id: b.activityId, startedAt: b.toState().startedAt }));
     await this.d.repo.updateBackups(gone, (b) => b.deletedOnPhone());
 

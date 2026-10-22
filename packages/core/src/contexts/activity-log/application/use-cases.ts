@@ -144,7 +144,9 @@ export class ImportActivity {
  * Brings a backed-up Activity back (Restore from cloud backup): name, times, resumed segments, time
  * zone, the track and the gap routes as they were, in one transaction. Origin `restore`, so it is
  * claimed as turf but never exported to Apple Health or uploaded again; gap routes that were checked
- * keep their check time, so the street router is not asked again. Idempotent by id.
+ * keep their check time, so the street router is not asked again. One whose gaps the old phone never
+ * checked (`gapsCheckedAt` null) stays unchecked and is estimated on this phone like any other, if
+ * the Turfer has street estimation on. Idempotent by id.
  */
 export class RestoreActivity {
   constructor(private readonly d: ActivityLogDeps) {}

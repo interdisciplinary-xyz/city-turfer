@@ -178,6 +178,61 @@ describe('Restore from the cloud backup', () => {
     expect(new Set(copied).size).toBe(4);
   });
 
+  it('an item this phone cannot hold gets no backup row, so backing up never deletes it on the server', async () => {
+    const { a, c: phoneA } = await backedUpPhoneA();
+    const good = (await phoneA.activityLog.archive.of('rec-walk'))!;
+    a.server.seedCopy({ ...good, id: 'rec-bad', name: 'x'.repeat(81) }, 2);
+    const { b, c } = await newPhone(a);
+    expect(await c.cloudBackup.restore.execute()).toMatchObject({ kind: 'done', restored: 4, skipped: 1 });
+    expect(await b.db.first("SELECT COUNT(*) AS n FROM cb_activities WHERE activity_id = 'rec-bad'")).toEqual({ n: 0 });
+    expect(await c.cloudBackup.enable.execute()).toEqual({ kind: 'ok' });
+    await c.cloudBackup.run.execute();
+    expect(a.server.calls('deleteActivity')).toEqual([]);
+    expect(a.server.activities.has('rec-bad')).toBe(true);
+  });
+
+  it('killed between an import and its backup row: backing up later sends nothing, deletes nothing', async () => {
+    const { a } = await backedUpPhoneA();
+    const { b, c } = await newPhone(a);
+    await c.cloudBackup.restore.execute();
+    await c.dispatcher.dispatchPending();
+    await b.db.run("DELETE FROM cb_activities WHERE activity_id = 'rec-run'"); // the row never got written
+    const uploads = a.server.uploads().length;
+    expect(await c.cloudBackup.enable.execute()).toEqual({ kind: 'ok' });
+    await c.cloudBackup.run.execute();
+    expect(a.server.uploads().length).toBe(uploads);
+    expect(a.server.calls('deleteActivity')).toEqual([]);
+  });
+
+  it('backup waits while a restore is interrupted, and never deletes what is still to restore', async () => {
+    const { a } = await backedUpPhoneA();
+    const { b, c } = await newPhone(a);
+    let copies = 0;
+    a.server.onRequest = (r) => {
+      if (r.method === 'activityCopy' && ++copies === 2) {
+        throw new Error('app killed');
+      }
+    };
+    await expect(c.cloudBackup.restore.execute()).rejects.toThrow('app killed');
+    a.server.onRequest = null;
+    const relaunched = await b.container();
+    await relaunched.cloudBackup.enable.execute();
+    expect(await relaunched.cloudBackup.run.execute()).toEqual({ kind: 'skipped', reason: 'busy' });
+    expect(a.server.calls('deleteActivity')).toEqual([]);
+    expect(await relaunched.cloudBackup.restore.execute()).toMatchObject({ kind: 'done' });
+    await relaunched.cloudBackup.run.execute();
+    expect(a.server.calls('deleteActivity')).toEqual([]);
+  });
+
+  it('a Home City this version does not know is skipped; the restore still finishes', async () => {
+    const { a } = await backedUpPhoneA();
+    a.server.homeCity = { cityId: 'xx-nowhere', chosenAt: Date.parse('2026-10-19T07:00:00Z') };
+    const { c } = await newPhone(a);
+    expect(await c.cloudBackup.restore.execute()).toMatchObject({ kind: 'done', restored: 4 });
+    expect(await c.territory.homeCity.execute()).toBeNull();
+    expect(await c.cloudBackup.restoreOffer.execute()).toEqual({ kind: 'none' });
+  });
+
   it('never runs during a recording; pauses and continues afterwards', async () => {
     const { a } = await backedUpPhoneA();
     const { c } = await newPhone(a);
