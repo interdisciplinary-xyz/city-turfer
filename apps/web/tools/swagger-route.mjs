@@ -49,6 +49,30 @@ export function swaggerHtml({ toolbar = false } = {}) {
     <script src="./swagger-ui-bundle.js"></script>
     <script src="./swagger-ui-standalone-preset.js"></script>
     <script>
+      // The guide (info.description: getting started, sync flow, errors, units, privacy) goes
+      // after the endpoints and schemas, so the page opens on the title and then Platform.
+      const GuideLast = () => ({
+        // OAS 3.1's info block reads the description through this selector, not its props.
+        statePlugins: { spec: { wrapSelectors: { selectInfoDescriptionField: () => () => null } } },
+        wrapComponents: {
+          info: (Original, system) => (props) =>
+            system.React.createElement(Original, { ...props, info: props.info.delete('description') }),
+          Models: (Original, system) => (props) => {
+            const h = system.React.createElement;
+            const description = system.specSelectors.info().get('description');
+            const Markdown = system.getComponent('Markdown', true);
+            return h(
+              'div',
+              null,
+              h(Original, props),
+              description
+                ? h('section', { className: 'info ct-guide', 'aria-label': 'Guide' },
+                    h('div', { className: 'description' }, h(Markdown, { source: description })))
+                : null,
+            );
+          },
+        },
+      });
       window.ui = SwaggerUIBundle({
         url: './openapi.json',
         dom_id: '#swagger-ui',
@@ -58,6 +82,7 @@ export function swaggerHtml({ toolbar = false } = {}) {
         showExtensions: true,
         docExpansion: 'list',
         presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+        plugins: [GuideLast],
         layout: 'StandaloneLayout',
       });
     </script>${toolbar ? '\n    <script src="./__toolbar.js"></script>' : ''}
