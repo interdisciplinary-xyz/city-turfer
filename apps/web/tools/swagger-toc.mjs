@@ -1,6 +1,7 @@
 // Dev only: the table of contents beside the Swagger page (https://cityturfer.local/swagger).
 // Served as ./ct-toc.mjs (a browser module). Built from the spec itself: the guide's headings
-// (info.description), then every tag with its operations, then the schemas. Links scroll to
+// (info.description) go last, like on the page: every tag with its operations, the schemas, then
+// the guide (the GuideLast plugin in swagger-route.mjs renders it after Schemas). Links scroll to
 // Swagger UI's own elements and open the tag or operation they point at.
 //
 // The pure parts (tocEntries, swaggerDomId) run in Node too, for tools/__tests__.
@@ -15,15 +16,32 @@ export function swaggerDomId(name) {
   return String(name).trim().replace(/\s+/g, '_');
 }
 
-/** `## Getting started` lines of the guide (levels 1–3), without the hashes. */
+/** `## Getting started` lines of the guide (levels 1–3), without the hashes; fenced code is skipped. */
 export function guideHeadings(markdown = '') {
-  return [...String(markdown).matchAll(/^#{1,3}\s+(.+?)\s*#*\s*$/gm)].map((match) => match[1]);
+  const headings = [];
+  let fence = null;
+  for (const line of String(markdown).split(/\r?\n/)) {
+    const marker = line.match(/^ {0,3}(`{3,}|~{3,})/)?.[1];
+    if (marker) {
+      if (!fence) {
+        fence = marker;
+      } else if (marker[0] === fence[0] && marker.length >= fence.length) {
+        fence = null;
+      }
+      continue;
+    }
+    const heading = !fence && line.match(/^#{1,3}\s+(.+?)\s*#*\s*$/);
+    if (heading) {
+      headings.push(heading[1]);
+    }
+  }
+  return headings;
 }
 
 /**
  * The contents as plain data: `{ guide: string[], tags: [{ name, operations: [{ method, path,
  * summary, operationId }] }], schemas: number }`. Tags keep the spec's order (as Swagger UI shows
- * them); operations without a tag are left out, like in Swagger UI's tag list.
+ * them); an operation with two tags appears under both; operations without a tag are left out, like in Swagger UI's tag list.
  */
 export function tocEntries(spec) {
   const tagNames = (spec.tags ?? []).map((tag) => tag.name);
@@ -81,8 +99,11 @@ function findTarget(link) {
   if (kind === 'schemas') {
     return document.querySelector('.swagger-ui section.models');
   }
+  if (kind === 'guide-root') {
+    return document.querySelector('.swagger-ui .ct-guide');
+  }
   if (kind === 'guide') {
-    return [...document.querySelectorAll('.swagger-ui .info .description :is(h1, h2, h3)')].find(
+    return [...document.querySelectorAll('.swagger-ui .ct-guide .description :is(h1, h2, h3)')].find(
       (heading) => heading.textContent.trim() === name
     );
   }
@@ -141,21 +162,7 @@ function render(nav, entries) {
   const section = (label, kind, extra = {}, children = null) =>
     h('li', { class: 'ct-toc-item' }, entryLink({ 'data-kind': kind, ...extra }, label), children);
 
-  list.append(
-    section(
-      'Overview',
-      'overview',
-      {},
-      entries.guide.length
-        ? h(
-            'ol',
-            { class: 'ct-toc-sub' },
-            ...entries.guide.map((name) => section(name, 'guide', { 'data-name': name }))
-          )
-        : null
-    ),
-    section('Servers & auth', 'servers')
-  );
+  list.append(section('Overview', 'overview'), section('Servers & auth', 'servers'));
 
   for (const tag of entries.tags) {
     const operations = h(
@@ -187,6 +194,17 @@ function render(nav, entries) {
       section(h('span', {}, 'Schemas ', h('span', { class: 'ct-toc-count' }, String(entries.schemas))), 'schemas')
     );
   }
+  // The guide comes last on the page (GuideLast), so it comes last here.
+  if (entries.guide.length) {
+    list.append(
+      section(
+        'Guide',
+        'guide-root',
+        {},
+        h('ol', { class: 'ct-toc-sub' }, ...entries.guide.map((name) => section(name, 'guide', { 'data-name': name })))
+      )
+    );
+  }
 
   const details = h(
     'details',
@@ -199,16 +217,19 @@ function render(nav, entries) {
   return details;
 }
 
-/** Highlights the section being read: the last link whose target starts above a line near the top. */
+/** Highlights the section being read: the link whose target is the nearest above a line near the top. */
 function trackCurrent(nav) {
   let queued = false;
   const update = () => {
     queued = false;
     const links = [...nav.querySelectorAll('.ct-toc-link')];
+    // By position on the page, not by order in the list: the nearest target above the line wins.
     let current = null;
+    let best = -Infinity;
     for (const link of links) {
-      const target = findTarget(link);
-      if (target && target.getBoundingClientRect().top < 120) {
+      const top = findTarget(link)?.getBoundingClientRect().top;
+      if (top !== undefined && top < 120 && top > best) {
+        best = top;
         current = link;
       }
     }
@@ -259,8 +280,18 @@ function mount(ui) {
     }
   });
   // Beside the page (wide) the contents are always open; folded again when the window narrows.
-  window.matchMedia(WIDE).addEventListener('change', (event) => {
-    details.open = event.matches;
+  const summary = details.querySelector('.ct-toc-summary');
+  const sync = (wide) => {
+    details.open = wide;
+    // Wide: the summary is not a control (no tab stop), so the keyboard can't fold the sidebar.
+    summary.tabIndex = wide ? -1 : 0;
+  };
+  sync(window.matchMedia(WIDE).matches);
+  window.matchMedia(WIDE).addEventListener('change', (event) => sync(event.matches));
+  details.addEventListener('toggle', () => {
+    if (window.matchMedia(WIDE).matches && !details.open) {
+      details.open = true;
+    }
   });
   trackCurrent(nav);
 }

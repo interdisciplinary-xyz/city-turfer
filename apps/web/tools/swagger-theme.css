@@ -893,6 +893,11 @@ a {
   color: var(--text);
   box-shadow: inset 2px 0 0 var(--glow);
 }
+/* On the --border highlight the coloured method labels fall under 4.5:1 (POST 4.05:1): plain text. */
+.ct-toc-link:hover .ct-toc-method,
+.ct-toc-link[aria-current='true'] .ct-toc-method {
+  color: var(--text);
+}
 .ct-toc-count {
   color: var(--muted);
   font-family: var(--font-family-numeric);

@@ -5,7 +5,10 @@ import { test } from 'node:test';
 import { deepLink, guideHeadings, swaggerDomId, tocEntries } from '../../apps/web/tools/swagger-toc.mjs';
 
 const SPEC = {
-  info: { description: '# Title\n\nIntro\n\n## Getting started\n\ntext\n\n### Every day after\n\n#### Too deep\n' },
+  info: {
+    description:
+      '# Title\n\nIntro\n\n## Getting started\n\ntext\n\n```sh\n# a shell comment\n## not a heading\n```\n\n### Every day after\n\n#### Too deep\n',
+  },
   tags: [{ name: 'Platform' }, { name: 'Activity Log' }, { name: 'Unused' }],
   paths: {
     '/v1/health': { get: { operationId: 'getHealth', summary: 'Liveness', tags: ['Platform'] } },
@@ -14,6 +17,7 @@ const SPEC = {
       put: { operationId: 'putActivity', summary: 'Upload', tags: ['Activity Log'] },
       delete: { operationId: 'deleteActivity', tags: ['Activity Log'] },
     },
+    '/v1/shared': { post: { operationId: 'shared', summary: 'Both', tags: ['Platform', 'Activity Log'] } },
     '/v1/untagged': { get: { operationId: 'untagged' } },
   },
   components: { schemas: { A: {}, B: {} } },
@@ -22,6 +26,12 @@ const SPEC = {
 test('guide headings are levels 1 to 3, without hashes', () => {
   assert.deepEqual(guideHeadings(SPEC.info.description), ['Title', 'Getting started', 'Every day after']);
   assert.deepEqual(guideHeadings(undefined), []);
+});
+
+test('guide headings skip fenced code blocks', () => {
+  const fenced =
+    '# One\n\n```\n# comment\n```\n\n~~~sh\n## also code\n```\n~~~\n\n## Two\n\n````md\n# nested\n```\n# still code\n````\n\n### Three\n';
+  assert.deepEqual(guideHeadings(fenced), ['One', 'Two', 'Three']);
 });
 
 test('Swagger UI ids turn whitespace into underscores', () => {
@@ -34,19 +44,23 @@ test('deep links match Swagger UI deep linking', () => {
   assert.equal(deepLink('Platform'), '#/Platform');
 });
 
-test('contents: guide, tags in spec order with their operations, schema count', () => {
+test('contents: tags in spec order with their operations (a two-tag one under both), guide, schema count', () => {
   assert.deepEqual(tocEntries(SPEC), {
     guide: ['Title', 'Getting started', 'Every day after'],
     tags: [
       {
         name: 'Platform',
-        operations: [{ method: 'get', path: '/v1/health', summary: 'Liveness', operationId: 'getHealth' }],
+        operations: [
+          { method: 'get', path: '/v1/health', summary: 'Liveness', operationId: 'getHealth' },
+          { method: 'post', path: '/v1/shared', summary: 'Both', operationId: 'shared' },
+        ],
       },
       {
         name: 'Activity Log',
         operations: [
           { method: 'put', path: '/v1/activities/{id}', summary: 'Upload', operationId: 'putActivity' },
           { method: 'delete', path: '/v1/activities/{id}', summary: '', operationId: 'deleteActivity' },
+          { method: 'post', path: '/v1/shared', summary: 'Both', operationId: 'shared' },
         ],
       },
     ],
@@ -54,13 +68,17 @@ test('contents: guide, tags in spec order with their operations, schema count', 
   });
 });
 
-test('the real spec: every operation is in the contents once', async () => {
+test('the real spec: every operation is in the contents under each of its tags', async () => {
   const spec = JSON.parse(await readFile(new URL('../../apps/api/openapi.json', import.meta.url), 'utf8'));
   const { guide, tags } = tocEntries(spec);
   assert.ok(guide.includes('Getting started'));
   const listed = tags.flatMap((tag) => tag.operations.map((operation) => operation.operationId));
-  const all = Object.values(spec.paths).flatMap((item) =>
-    Object.values(item).filter((operation) => operation?.operationId && operation.tags?.length)
+  const expected = Object.values(spec.paths).flatMap((item) =>
+    Object.values(item).flatMap((operation) =>
+      operation?.operationId ? (operation.tags ?? []).map((tag) => `${tag}/${operation.operationId}`) : []
+    )
   );
-  assert.equal(listed.length, all.length);
+  const found = tags.flatMap((tag) => tag.operations.map((operation) => `${tag.name}/${operation.operationId}`));
+  assert.deepEqual([...found].sort(), [...expected].sort());
+  assert.ok(listed.length > 0);
 });

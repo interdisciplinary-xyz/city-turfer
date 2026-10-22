@@ -51,6 +51,8 @@ test('the page loads Swagger UI with the spec next to it', () => {
   assert.match(html, /<nav id="ct-toc"/);
   assert.match(html, /<script type="module" src="\.\/ct-toc\.mjs"><\/script>/);
   assert.match(html, /onComplete:/);
+  // The guide is rendered after the schemas, the order the contents list it in.
+  assert.match(html, /plugins: \[GuideLast\]/);
 });
 
 let dist;
