@@ -26,14 +26,76 @@ const CONTROL = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/;
 
 const codePoints = (s: string) => [...s].length;
 
+// Unicode format characters (Cf): zero-width spaces and joiners, bidi marks and overrides
+// (U+200B–200F, U+202A–202E, U+2066–2069), the BOM, tag characters… Invisible, so a name of only
+// U+200B would look blank, and U+202E reorders the text around it.
+const FORMAT = /\p{Cf}/u;
+const PICTOGRAPHIC = /\p{Extended_Pictographic}/u;
+// What may sit between a pictograph and the ZWJ that follows it: VS16 and skin-tone modifiers.
+const EMOJI_TAIL = /[\uFE0F\p{Emoji_Modifier}]/u;
+const ZWJ = '\u200D';
+const ZWNJ = '\u200C';
+const LETTER = /\p{L}/u;
+const MARK = /\p{M}/u;
+const TAG_BLACK_FLAG = '\u{1F3F4}';
+const isTag = (cp: string) => cp >= '\u{E0020}' && cp <= '\u{E007F}';
+
+/**
+ * Whether `name` holds a format character outside an emoji sequence or a word. Allowed, so emoji
+ * and some scripts keep working: ZWJ (U+200D) between two pictographs (👩‍💻, 🏳️‍🌈, 🏃🏽‍♀️), tag
+ * characters right after 🏴 (the England, Scotland and Wales flags), and ZWNJ (U+200C) between two
+ * letters (Persian and Indic spelling needs it). Every other Cf is refused: none of these can make a
+ * name look blank or reorder it.
+ */
+function hasFormatCharacter(name: string): boolean {
+  const cps = [...name];
+  for (let i = 0; i < cps.length; i++) {
+    const cp = cps[i];
+    if (!FORMAT.test(cp)) {
+      continue;
+    }
+    if (cp === ZWJ) {
+      let before = i - 1;
+      while (before >= 0 && EMOJI_TAIL.test(cps[before])) {
+        before--;
+      }
+      if (before >= 0 && PICTOGRAPHIC.test(cps[before]) && i + 1 < cps.length && PICTOGRAPHIC.test(cps[i + 1])) {
+        continue;
+      }
+      return true;
+    }
+    if (cp === ZWNJ) {
+      let before = i - 1;
+      while (before >= 0 && MARK.test(cps[before])) {
+        before--;
+      }
+      if (before >= 0 && LETTER.test(cps[before]) && i + 1 < cps.length && LETTER.test(cps[i + 1])) {
+        continue;
+      }
+      return true;
+    }
+    if (isTag(cp)) {
+      let start = i;
+      while (start > 0 && isTag(cps[start - 1])) {
+        start--;
+      }
+      if (start > 0 && cps[start - 1] === TAG_BLACK_FLAG) {
+        continue;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
 /**
  * A display name: trimmed, NFC, inner runs of whitespace collapsed to one space, at most 40 code
- * points, no control characters. `null` means "no name" (an empty or blank input clears it); the
- * UIs then show "You".
+ * points, no control characters and no format characters (Cf) except inside emoji sequences.
+ * `null` means "no name" (an empty or blank input clears it); the UIs then show "You".
  */
 export function displayName(raw: string): string | null {
   // Tabs and line breaks count as whitespace (collapsed below); any other control character is refused.
-  if (CONTROL.test(raw.replace(/[\t\n\r]/g, ' '))) {
+  if (CONTROL.test(raw.replace(/[\t\n\r]/g, ' ')) || hasFormatCharacter(raw)) {
     throw new DomainError('display-name.invalid');
   }
   const value = raw.normalize('NFC').trim().replace(/\s+/g, ' ');

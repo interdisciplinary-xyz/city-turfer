@@ -78,7 +78,7 @@ const CODE_REFUSED = {
 } as const;
 
 const STEP_UP =
-  'Needs a fresh step-up code (`POST /v1/me/step-up/codes`): it is spent here, wrong tries count as failed sign-ins (A5), three wrong tries burn it.';
+  "Needs a fresh step-up code (`POST /v1/me/step-up/codes`): it is spent here, three wrong tries burn it, and wrong tries count against the account (10 a day per account, 20 per IP per 10 minutes), not the address's sign-in limits.";
 
 /**
  * Identity: e-mail codes, sign-in (code or password), sign-out, the current user and the account
@@ -236,7 +236,7 @@ export function registerIdentity(app: OpenAPIHono<AppEnv>): void {
       operationId: 'requestStepUpCode',
       summary: 'E-mail me a step-up code',
       description:
-        "Mails a 6-digit code (10 minutes, single use) to the account's **current** address (use case RequestStepUpCode), to confirm a sensitive change: a new e-mail, or setting, changing or removing the password. The same limits as sign-in codes, in the same counters. While a code is still valid and not burnt, a new request mails the same code again.",
+        "Mails a 6-digit code (10 minutes, single use) to the account's **current** address (use case RequestStepUpCode), to confirm a sensitive change: a new e-mail, or setting, changing or removing the password. Limits per **account**, not per address: 1 code a minute, 5 per 10 minutes and 20 a day, plus the 30 codes per IP (an IPv6 /64 counts as one IP) per 10 minutes of sign-in codes; so a stranger who uses up the address's sign-in limits cannot block it. While a code is still valid and not burnt, a new request mails the same code again.",
       request: { body: { required: false, content: json(CodeRequested) } },
       responses: {
         202: { description: 'Code sent.', content: json(CodeRequested) },
@@ -292,7 +292,7 @@ export function registerIdentity(app: OpenAPIHono<AppEnv>): void {
       operationId: 'changeEmail',
       summary: 'Change my e-mail with the code from the new inbox',
       description:
-        'Moves the account to the new address (use case ChangeEmail): the sign-in address and the account e-mail change together, pending codes are cleared, **every other session is signed out** (this one stays) and the old address gets a notice. A wrong, expired or missing code is `401 auth.invalid-code` (also when the address was taken at the code step: no code was sent). `409 email.taken` only once the code proved the new inbox and another account took the address since. Wrong codes count as failed sign-ins (A5).',
+        "Moves the account to the new address (use case ChangeEmail): the sign-in address and the account e-mail change together, pending codes are cleared, **every other session is signed out** (this one stays) and the old address gets a notice. A wrong, expired or missing code is `401 auth.invalid-code` (also when the address was taken at the code step: no code was sent). `409 email.taken` only once the code proved the new inbox and another account took the address since. Wrong codes count against the account (10 a day), not the address's sign-in limits.",
       request: { body: { required: true, content: json(ChangeEmailBody) } },
       responses: {
         200: { description: 'The user with the new address.', content: json(User) },
@@ -356,7 +356,7 @@ export function registerIdentity(app: OpenAPIHono<AppEnv>): void {
       tags: TAG,
       operationId: 'removePassword',
       summary: 'Remove my password',
-      description: `Removes the account password (use case RemovePassword): sign-in is by e-mailed code only again. ${STEP_UP} The account gets a notice. Idempotent: \`204\` also without a password.`,
+      description: `Removes the account password (use case RemovePassword): sign-in is by e-mailed code only again. ${STEP_UP} Afterwards **every other session is signed out** (also without a password: \`204\`, idempotent); the account gets a notice when a password was removed.`,
       request: { body: { required: true, content: json(RemovePasswordBody) } },
       responses: {
         204: { description: 'No password any more.' },

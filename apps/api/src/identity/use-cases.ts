@@ -5,6 +5,24 @@ import type { Auth } from './better-auth';
 import { ipBucket } from './ip-bucket';
 import { AuthRateLimits, type RateLimiter } from './rate-limit';
 
+/**
+ * What a sign-in was checked against: the account an address signs in to, its address and its
+ * password hash (null without a password). Compared in memory only, never logged.
+ */
+export interface SignInStamp {
+  userId: string;
+  email: string;
+  password: string | null;
+}
+
+/** Port: the stamps of `IdentityService`'s revocation re-check (src/db/accounts.ts). */
+export interface SignInStamps {
+  /** The account `email` signs in to now, or null when none. */
+  byEmail(email: string): Promise<SignInStamp | null>;
+  /** The account `userId` as it is now, or null when it is gone. */
+  byUser(userId: string): Promise<SignInStamp | null>;
+}
+
 export interface SignedIn {
   token: string;
   expiresAt: number;
@@ -23,7 +41,8 @@ export class IdentityService {
     private readonly auth: Auth,
     limiter: RateLimiter,
     secret: string,
-    clock: Clock
+    clock: Clock,
+    private readonly stamps: SignInStamps
   ) {
     this.limits = new AuthRateLimits(limiter, secret, clock);
   }
@@ -65,6 +84,7 @@ export class IdentityService {
     // phones share one IPv4 address (CGNAT), per address and day against a slow brute force.
     const attempt = await this.limits.beforeAttempt(email, ipBucket(ip));
     await this.limits.signInAttempt(email);
+    const before = await this.stamps.byEmail(email);
     let signedIn: { headers: Headers; response: { user: { id: string; email: string } } };
     try {
       signedIn = await signIn();
@@ -83,11 +103,26 @@ export class IdentityService {
       throw new Error('session missing after sign-in');
     }
     const { user } = signedIn.response;
+    // A password or e-mail change that committed while this sign-in was being checked revoked the
+    // sessions that existed then, not this one: re-read the account after the session exists (a
+    // change committing later deletes it itself) and drop the session if anything moved.
+    if (before && !(await this.unchanged(before, user.id))) {
+      await this.signOut(session.sessionToken);
+      throw new AppError(refusal);
+    }
     return {
       token,
       expiresAt: session.expiresAt,
       user: { id: user.id, email: user.email },
     };
+  }
+
+  /** Same account, same address, same password hash as when the sign-in started. */
+  private async unchanged(before: SignInStamp, userId: string): Promise<boolean> {
+    const now = await this.stamps.byUser(userId);
+    return (
+      now !== null && now.userId === before.userId && now.email === before.email && now.password === before.password
+    );
   }
 
   /** SignOut: revokes the session with this (raw, stored) session token (idempotent). */

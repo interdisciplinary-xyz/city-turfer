@@ -36,7 +36,11 @@ export const User = z
 /** A 6-digit code from an e-mail (trimmed; checked by the use case). */
 const Code = (description: string) => z.string().min(1).max(16).openapi({ description, example: '493027' });
 
-/** An e-mail as typed: the core rule (`newEmail`) answers `422 email.invalid`, not a 400. */
+/**
+ * An e-mail as typed: the core rule (`newEmail`) answers `422 email.invalid`, not a 400. That rule
+ * accepts exactly what `Email` (`z.email()`, the sign-in routes) accepts, after trimming, so an
+ * account can never move to an address it cannot sign in with (pinned by account.test.ts).
+ */
 const NewEmail = z
   .string()
   .min(1)

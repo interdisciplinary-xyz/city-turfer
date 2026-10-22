@@ -1,10 +1,13 @@
+import { newEmail } from '@cityturfer/core/identity';
 import { sql } from 'drizzle-orm';
+import { strFromU8, unzipSync } from 'fflate';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { ApiLog } from '../deps';
 import { BREACH_CHECK_TIMEOUT_MS, HibpBreachedPasswords } from '../identity/breached-passwords';
 import { OneTimeCodes } from '../identity/codes';
 import { MemoryMailer } from '../identity/mailer';
+import { Email } from '../schemas/identity';
 import { backupApp, closeSharedDb, codeIn, TEST_AUTH_SECRET, TOKENS } from './support';
 
 /**
@@ -98,6 +101,13 @@ describe('GET and PATCH /v1/me: the name', () => {
     const longer = await h.call('PATCH', '/v1/me', { token, body: { name: 'a'.repeat(300) } });
     expect(longer.status).toBe(422);
     expect(await longer.json()).toMatchObject({ code: 'display-name.too-long' });
+    // Format characters: a name of only U+200B, or a right-to-left override.
+    for (const name of ['\u200B', 'Ania\u202Ekowon']) {
+      const res = await h.call('PATCH', '/v1/me', { token, body: { name } });
+      expect(res.status).toBe(422);
+      expect(await res.json()).toMatchObject({ code: 'display-name.invalid' });
+    }
+    expect((await h.call('PATCH', '/v1/me', { token, body: { name: 'Ania 👩\u200D💻' } })).status).toBe(200);
     // 40 code points (emoji are two UTF-16 units each) are fine.
     expect((await h.call('PATCH', '/v1/me', { token, body: { name: '🏃'.repeat(40) } })).status).toBe(200);
   });
@@ -144,22 +154,78 @@ describe('POST /v1/me/step-up/codes', () => {
     expect(String(stored[0].value)).not.toContain(code);
   });
 
-  it('has its own one-a-minute bucket but shares the 10-minute cap with sign-in codes (A5)', async () => {
+  it('limits step-up codes per account: 1 a minute, 5 per 10 minutes, 20 a day, apart from sign-in codes', async () => {
     const token = await h.signIn(ANIA);
+    const ask = () => h.call('POST', '/v1/me/step-up/codes', { token });
     // The sign-in code went out this minute; a step-up code may still follow at once.
-    expect((await h.call('POST', '/v1/me/step-up/codes', { token })).status).toBe(202);
-    const soon = await h.call('POST', '/v1/me/step-up/codes', { token });
+    expect((await ask()).status).toBe(202);
+    const soon = await ask();
     expect(soon.status).toBe(429);
     expect(await soon.json()).toMatchObject({ code: 'auth.rate-limited' });
     expect(Number(soon.headers.get('retry-after'))).toBeGreaterThan(0);
+    for (let i = 1; i < 5; i++) {
+      h.clock.t += MINUTE;
+      expect((await ask()).status).toBe(202);
+    }
     h.clock.t += MINUTE;
-    expect((await h.call('POST', '/v1/me/step-up/codes', { token })).status).toBe(202);
+    expect((await ask()).status).toBe(429); // the sixth in 10 minutes
+    // The address's own buckets are untouched: a sign-in code still goes out.
+    expect((await h.call('POST', '/v1/auth/codes', { token: null, body: { email: ANIA } })).status).toBe(202);
+    // 20 a day: three more 10-minute windows of 5.
+    for (let w = 0; w < 3; w++) {
+      h.clock.t += 10 * MINUTE;
+      for (let i = 0; i < 5; i++) {
+        expect((await ask()).status).toBe(202);
+        h.clock.t += MINUTE;
+      }
+    }
+    h.clock.t += 10 * MINUTE;
+    expect((await ask()).status).toBe(429);
+    h.clock.t += 24 * 3600_000;
+    expect((await ask()).status).toBe(202);
+  });
+
+  it("keeps working for the owner when a stranger used up the address's sign-in limits", async () => {
+    const token = await account();
+    h.clock.t += 10 * MINUTE;
+    // The stranger asks for sign-in codes up to the daily cap (10, the owner's own sign-in code
+    // included) and tries 10 wrong codes, from many IPs.
+    for (let i = 0; i < 10; i++) {
+      const ip = `198.51.100.${i}`;
+      const asked = await h.call('POST', '/v1/auth/codes', {
+        token: null,
+        body: { email: ANIA },
+        headers: { 'X-Real-IP': ip },
+      });
+      expect(asked.status).toBe(i < 9 ? 202 : 429);
+      const tried = await h.call('POST', '/v1/auth/sign-in', {
+        token: null,
+        body: { email: ANIA, code: '123456' },
+        headers: { 'X-Real-IP': ip },
+      });
+      expect(tried.status).toBe(401);
+      h.clock.t += 4 * MINUTE;
+    }
+    const stranger = { token: null, headers: { 'X-Real-IP': '198.51.100.99' } };
+    expect((await h.call('POST', '/v1/auth/codes', { ...stranger, body: { email: ANIA } })).status).toBe(429);
+    expect(
+      (await h.call('POST', '/v1/auth/sign-in', { ...stranger, body: { email: ANIA, code: '123456' } })).status
+    ).toBe(429);
+
+    // The owner can still evict a stolen session: step-up code, password, e-mail change.
+    const res = await h.call('PUT', '/v1/me/password', {
+      token,
+      body: { newPassword: PASSWORD, stepUpCode: await stepUp(token) },
+    });
+    expect(res.status).toBe(204);
     h.clock.t += MINUTE;
-    // Sign-in code + two step-up codes in 10 minutes: a fourth code of either kind is refused.
-    expect((await h.call('POST', '/v1/me/step-up/codes', { token })).status).toBe(429);
-    const signInCode = await h.call('POST', '/v1/auth/codes', { token: null, body: { email: ANIA } });
-    expect(signInCode.status).toBe(429);
-    expect(h.mailer.sent.filter((m) => m.to === ANIA)).toHaveLength(3);
+    const asked = await h.call('POST', '/v1/me/email/codes', {
+      token,
+      body: { newEmail: NEW, stepUpCode: await stepUp(token) },
+    });
+    expect(asked.status).toBe(202);
+    const code = codeIn(h.mailer.lastTo(NEW)?.text);
+    expect((await h.call('POST', '/v1/me/email', { token, body: { newEmail: NEW, code } })).status).toBe(200);
   });
 
   it('lets the first sensitive change follow a code sign-in at once', async () => {
@@ -371,6 +437,135 @@ describe('changing the e-mail', () => {
     expect((await ask(borek, stepUpCode)).status).toBe(202);
   });
 
+  it('accepts exactly the addresses sign-in accepts (z.email() and core newEmail agree)', async () => {
+    const vectors = [
+      'ania@example.com',
+      'ania.nowak@example.com',
+      'Ania+Run@Example.co.uk',
+      "o'brien@example.ie",
+      'jan_kowalski-2@sub-domain.example.pl',
+      'a@b.cd',
+      'jürgen@example.de', // non-ASCII local part
+      'ania@exämple.de',
+      'jan&co@firma.pl', // `&`
+      'ania@example.c', // one-letter TLD
+      'ania@example.123',
+      'ania.@example.com',
+      '.ania@example.com',
+      'an..ia@example.com',
+      'ania@-example.com',
+      'ania@example',
+      '"ania"@example.com',
+      'ania@[192.0.2.1]',
+      '\u212Aania@example.com', // Kelvin sign: lower-cases to an ASCII k
+      `${'a'.repeat(64)}@${'b'.repeat(185)}.com`, // 254 characters
+      `${'a'.repeat(64)}@${'b'.repeat(186)}.com`, // 255
+    ];
+    const coreAccepts = (raw: string) => {
+      try {
+        newEmail(raw, null);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+    for (const raw of vectors) {
+      expect([raw, coreAccepts(raw)]).toEqual([raw, Email.safeParse(raw).success]);
+    }
+    // Over HTTP: what sign-in refuses, the change refuses (422) before spending the step-up code.
+    const token = await account();
+    const stepUpCode = await stepUp(token);
+    for (const bad of ['jürgen@example.de', 'jan&co@firma.pl', 'ania@example.c']) {
+      const res = await h.call('POST', '/v1/me/email/codes', { token, body: { newEmail: bad, stepUpCode } });
+      expect([bad, res.status]).toEqual([bad, 422]);
+      expect(await res.json()).toMatchObject({ code: 'email.invalid' });
+    }
+    expect((await h.call('POST', '/v1/me/email/codes', { token, body: { newEmail: NEW, stepUpCode } })).status).toBe(
+      202
+    );
+  });
+
+  it('signs in with a code at the moved-to address afterwards', async () => {
+    const token = await account();
+    const { id } = await me(token);
+    const moved = "o'brien+run@example.co.uk";
+    await h.call('POST', '/v1/me/email/codes', {
+      token,
+      body: { newEmail: " O'Brien+Run@Example.co.uk ", stepUpCode: await stepUp(token) },
+    });
+    const code = codeIn(h.mailer.lastTo(moved)?.text);
+    expect((await h.call('POST', '/v1/me/email', { token, body: { newEmail: moved, code } })).status).toBe(200);
+
+    h.clock.t += MINUTE; // the new-address code counted in this address's minute bucket
+    const ip = { 'X-Real-IP': '198.51.100.30' };
+    const asked = await h.call('POST', '/v1/auth/codes', { token: null, body: { email: moved }, headers: ip });
+    expect(asked.status).toBe(202);
+    const signIn = await h.call('POST', '/v1/auth/sign-in', {
+      token: null,
+      body: { email: moved, code: codeIn(h.mailer.lastTo(moved)?.text) },
+      headers: ip,
+    });
+    expect(signIn.status).toBe(200);
+    expect(await signIn.json()).toMatchObject({ user: { id, email: moved } });
+  });
+
+  it('does the same database work for a taken address: a code is issued, then discarded', async () => {
+    await account(BOREK, '198.51.100.40');
+    const token = await account();
+    const { internalAdapter } = await h.auth.$context;
+    const original = internalAdapter.createVerificationValue;
+    let issued = 0;
+    internalAdapter.createVerificationValue = (data) => {
+      issued++;
+      return original(data);
+    };
+    try {
+      for (const newEmail of [NEW, BOREK]) {
+        const stepUpCode = await stepUp(token);
+        issued = 0;
+        const res = await h.call('POST', '/v1/me/email/codes', { token, body: { newEmail, stepUpCode } });
+        expect([newEmail, res.status, issued]).toEqual([newEmail, 202, 1]);
+        h.clock.t += 10 * MINUTE;
+      }
+    } finally {
+      internalAdapter.createVerificationValue = original;
+    }
+    // The taken address's code is gone; the free one's is pending.
+    expect(await rows(sql`SELECT id FROM auth_verifications WHERE identifier LIKE 'email-change-otp-%'`)).toHaveLength(
+      1
+    );
+  });
+
+  it('answers 409 and rolls everything back when the address is taken inside the transaction', async () => {
+    const phone = await account();
+    const browser = await account(ANIA, '198.51.100.20');
+    await h.call('POST', '/v1/me/email/codes', {
+      token: phone,
+      body: { newEmail: NEW, stepUpCode: await stepUp(phone) },
+    });
+    const code = codeIn(h.mailer.lastTo(NEW)?.text);
+    // A concurrent sign-up wins the unique index after the check: the update of users.email fails
+    // with 23505 after auth_users.email was already written in the same transaction.
+    await h.db.execute(sql`
+      CREATE FUNCTION test_unique_violation() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN RAISE unique_violation USING MESSAGE = 'test: address taken'; END $$`);
+    await h.db.execute(
+      sql`CREATE TRIGGER test_unique_violation BEFORE UPDATE OF email ON users FOR EACH ROW EXECUTE FUNCTION test_unique_violation()`
+    );
+    try {
+      const res = await h.call('POST', '/v1/me/email', { token: phone, body: { newEmail: NEW, code } });
+      expect(res.status).toBe(409);
+      expect(await res.json()).toMatchObject({ code: 'email.taken' });
+    } finally {
+      await h.db.execute(sql`DROP TRIGGER test_unique_violation ON users`);
+      await h.db.execute(sql`DROP FUNCTION test_unique_violation()`);
+    }
+    const [row] = await rows(sql`SELECT a.email AS auth_email, u.email FROM auth_users a JOIN users u USING (id)`);
+    expect(row).toEqual({ auth_email: ANIA, email: ANIA });
+    expect((await h.call('GET', '/v1/me', { token: browser })).status).toBe(200);
+    expect(h.mailer.sent.filter((m) => m.subject === 'Your CityTurfer email address was changed')).toHaveLength(0);
+  });
+
   it('does not count wrong step-up codes against the new address', async () => {
     const token = await account();
     const stepUpCode = await stepUp(token);
@@ -447,16 +642,12 @@ describe('passwords', () => {
     expect((await signInWithPassword(ANIA, '🔑'.repeat(128))).status).toBe(200);
   });
 
-  it('answers a locked-out caller 429 before any breach check', async () => {
+  it('counts wrong step-up codes per account: 10 a day, then 429 before any breach check', async () => {
     const token = await account();
     const stepUpCode = await stepUp(token);
-    // 10 failed sign-ins for the address today (two 10-minute windows, many IPs).
+    // 10 wrong account codes today (two 10-minute windows).
     for (let i = 0; i < 10; i++) {
-      const res = await h.call('POST', '/v1/auth/sign-in', {
-        token: null,
-        body: { email: ANIA, code: '123456' },
-        headers: { 'X-Real-IP': `198.51.100.${i}` },
-      });
+      const res = await h.call('DELETE', '/v1/me/password', { token, body: { stepUpCode: '123456' } });
       expect(res.status).toBe(401);
       if (i === 4) {
         h.clock.t += 11 * MINUTE;
@@ -469,6 +660,11 @@ describe('passwords', () => {
       expect(await res.json()).toMatchObject({ code: 'auth.rate-limited' });
     }
     expect(h.breached.checks).toBe(checks);
+    // Only this account: the address still signs in.
+    h.clock.t += 10 * MINUTE;
+    expect(await me(await h.signIn(ANIA, '198.51.100.60'))).toMatchObject({ email: ANIA });
+    h.clock.t += 24 * 3600_000;
+    expect((await setPassword(token, PASSWORD, await stepUp(token))).status).toBe(204);
   });
 
   it('caps breach checks at 10 per account per 10 minutes', async () => {
@@ -526,6 +722,45 @@ describe('passwords', () => {
     ).toBe(204);
     // Only the step-up code went out: nothing was removed, so no notice.
     expect(h.mailer.sent.length).toBe(sent + 1);
+  });
+
+  it('signs out the other sessions when the password is removed, also when there was none', async () => {
+    const phone = await account();
+    await setPassword(phone, PASSWORD, await stepUp(phone));
+    // The intruder signs in with the password after it was set.
+    const intruder = await (await signInWithPassword(ANIA, PASSWORD, '198.51.100.66')).json();
+    expect((await h.call('GET', '/v1/me', { token: intruder.token })).status).toBe(200);
+    h.clock.t += 10 * MINUTE;
+    const res = await h.call('DELETE', '/v1/me/password', { token: phone, body: { stepUpCode: await stepUp(phone) } });
+    expect(res.status).toBe(204);
+    expect((await h.call('GET', '/v1/me', { token: intruder.token })).status).toBe(401);
+    expect((await h.call('GET', '/v1/me', { token: phone })).status).toBe(200);
+    expect(h.mailer.lastTo(ANIA)?.text).toContain('other phones and browsers were signed out');
+
+    // Without a password (an intruder removed it first) the other sessions go all the same.
+    h.clock.t += 10 * MINUTE;
+    const browser = await h.signIn(ANIA, '198.51.100.21');
+    h.clock.t += MINUTE;
+    expect(
+      (await h.call('DELETE', '/v1/me/password', { token: phone, body: { stepUpCode: await stepUp(phone) } })).status
+    ).toBe(204);
+    expect((await h.call('GET', '/v1/me', { token: browser })).status).toBe(401);
+    expect((await h.call('GET', '/v1/me', { token: phone })).status).toBe(200);
+  });
+
+  it('exports hasPassword and passwordChangedAt, never the hash', async () => {
+    const token = await account();
+    await setPassword(token, PASSWORD, await stepUp(token));
+    const changedAt = new Date(h.clock.t).toISOString();
+    const [{ password: hash }] = await rows(sql`SELECT password FROM auth_accounts`);
+    expect((await h.call('POST', '/v1/me/exports', { token })).status).toBe(202);
+    const link = /http:\/\/localhost:8787(\/v1\/exports\/[A-Za-z0-9_-]+)/.exec(h.mailer.lastTo(ANIA)?.text ?? '')?.[1];
+    const download = await h.call('GET', link ?? '', { token: null });
+    expect(download.status).toBe(200);
+    const json = strFromU8(unzipSync(new Uint8Array(await download.arrayBuffer()))['data.json']);
+    expect(JSON.parse(json).account).toMatchObject({ email: ANIA, hasPassword: true, passwordChangedAt: changedAt });
+    expect(json).not.toContain(String(hash));
+    expect(json).not.toContain(PASSWORD);
   });
 
   it('answers a wrong password, no password and an unknown account with the same 401', async () => {
@@ -618,6 +853,83 @@ describe('DELETE /v1/me', () => {
     expect(
       (await h.call('POST', '/v1/auth/sign-in', { token: null, body: { email: ANIA, password: PASSWORD } })).status
     ).toBe(401);
+  });
+});
+
+describe('sign-ins racing a password or e-mail change', () => {
+  /** Runs `meanwhile` once, right before Better Auth inserts the next session (after its checks). */
+  async function beforeNextSession(meanwhile: () => Promise<unknown>) {
+    const { internalAdapter } = await h.auth.$context;
+    const original = internalAdapter.createSession;
+    internalAdapter.createSession = async (...args) => {
+      internalAdapter.createSession = original;
+      await meanwhile();
+      return original(...args);
+    };
+  }
+  const sessions = async () => (await rows(sql`SELECT token FROM auth_sessions`)).length;
+
+  it('drops a password sign-in checked before the password changed (401)', async () => {
+    const phone = await account();
+    await h.call('PUT', '/v1/me/password', {
+      token: phone,
+      body: { newPassword: PASSWORD, stepUpCode: await stepUp(phone) },
+    });
+    h.clock.t += 10 * MINUTE;
+    const stepUpCode = await stepUp(phone);
+    await beforeNextSession(async () => {
+      const res = await h.call('PUT', '/v1/me/password', {
+        token: phone,
+        body: { newPassword: 'a second long passphrase', stepUpCode },
+      });
+      expect(res.status).toBe(204);
+    });
+    const raced = await h.call('POST', '/v1/auth/sign-in', {
+      token: null,
+      body: { email: ANIA, password: PASSWORD },
+      headers: { 'X-Real-IP': '198.51.100.70' },
+    });
+    expect(raced.status).toBe(401);
+    expect(await raced.json()).toMatchObject({ code: 'auth.invalid-credentials' });
+    expect(await sessions()).toBe(1); // the phone's only
+    expect((await h.call('GET', '/v1/me', { token: phone })).status).toBe(200);
+  });
+
+  it('drops a code sign-in checked before the e-mail changed (401)', async () => {
+    const phone = await account();
+    await h.call('POST', '/v1/me/email/codes', {
+      token: phone,
+      body: { newEmail: NEW, stepUpCode: await stepUp(phone) },
+    });
+    const changeCode = codeIn(h.mailer.lastTo(NEW)?.text);
+    const ip = { 'X-Real-IP': '198.51.100.71' };
+    await h.call('POST', '/v1/auth/codes', { token: null, body: { email: ANIA }, headers: ip });
+    const signInCode = codeIn(h.mailer.lastTo(ANIA)?.text);
+    await beforeNextSession(async () => {
+      const res = await h.call('POST', '/v1/me/email', { token: phone, body: { newEmail: NEW, code: changeCode } });
+      expect(res.status).toBe(200);
+    });
+    const raced = await h.call('POST', '/v1/auth/sign-in', {
+      token: null,
+      body: { email: ANIA, code: signInCode },
+      headers: ip,
+    });
+    expect(raced.status).toBe(401);
+    expect(await raced.json()).toMatchObject({ code: 'auth.invalid-code' });
+    expect(await sessions()).toBe(1);
+    expect(await me(phone)).toMatchObject({ email: NEW });
+  });
+
+  it('keeps a sign-in that raced nothing', async () => {
+    const phone = await account();
+    await h.call('PUT', '/v1/me/password', {
+      token: phone,
+      body: { newPassword: PASSWORD, stepUpCode: await stepUp(phone) },
+    });
+    await beforeNextSession(async () => h.call('PATCH', '/v1/me', { token: phone, body: { name: 'Ania' } }));
+    const res = await h.call('POST', '/v1/auth/sign-in', { token: null, body: { email: ANIA, password: PASSWORD } });
+    expect(res.status).toBe(200);
+    expect(await sessions()).toBe(2);
   });
 });
 

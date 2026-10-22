@@ -73,8 +73,11 @@ export interface AccountRepository {
     keepSessionToken: string;
     at: number;
   }): Promise<'set' | 'changed'>;
-  /** Removes the password credential; false when there was none. */
-  removePassword(userId: string): Promise<boolean>;
+  /**
+   * Removes the password credential and revokes every other session, in one transaction (also
+   * when there was no password); false when there was none.
+   */
+  removePassword(input: { userId: string; keepSessionToken: string }): Promise<boolean>;
 }
 
 export interface AccountServiceDeps {
@@ -107,11 +110,12 @@ export class AccountService {
   }
 
   /**
-   * RequestStepUpCode: mails a code to the current address (A5 code limits; its own one-a-minute
-   * bucket, so it may follow the sign-in code at once).
+   * RequestStepUpCode: mails a code to the current address. Its limits are the account's (user id,
+   * `stepUpMail`), not the address's sign-in buckets, so a stranger who fills those cannot stop the
+   * owner from evicting a stolen session; a step-up code may follow the sign-in code at once.
    */
   async requestStepUpCode(caller: AccountCaller, ip: string): Promise<void> {
-    await this.deps.limits.codeMail(caller.email, ipBucket(ip), 'step-up');
+    await this.deps.limits.stepUpMail(caller.userId, ipBucket(ip));
     const code = await this.deps.codes.issue(this.deps.codes.stepUpId(caller.email), this.fixedFor(caller.email));
     await this.send(stepUpCodeMail(caller.email, code), 'code');
   }
@@ -119,7 +123,9 @@ export class AccountService {
   /**
    * RequestEmailChange: spends the step-up code, then mails a code to the new address. When another
    * account already has that address, it gets an "address in use" mail instead and the answer is
-   * the same (no enumeration); the confirm step then finds no code (401).
+   * the same (no enumeration); the confirm step then finds no code (401). Both paths do the same
+   * database work (a code is issued and, for a taken address, discarded at once), so the answer
+   * time does not tell either.
    */
   async requestEmailChange(caller: AccountCaller, rawNewEmail: string, stepUpCode: string, ip: string): Promise<void> {
     const to = newEmail(rawNewEmail, caller.email);
@@ -127,14 +133,18 @@ export class AccountService {
     // mail goes out (wrong step-up codes do not use up a stranger's quota). Known race, accepted: a
     // concurrent request for the same address can fill its bucket between the peek and the count,
     // so this request spends its step-up code and still answers 429 (the user asks for a new code).
-    await this.deps.limits.checkCodeMail(to, ipBucket(ip), 'new-address');
+    await this.deps.limits.checkCodeMail(to, ipBucket(ip));
     await this.spendStepUp(caller, stepUpCode, ip);
-    await this.deps.limits.codeMail(to, ipBucket(ip), 'new-address');
-    if (await this.deps.repo.emailTaken(to, caller.userId)) {
+    await this.deps.limits.codeMail(to, ipBucket(ip));
+    const taken = await this.deps.repo.emailTaken(to, caller.userId);
+    const identifier = this.deps.codes.emailChangeId(caller.userId, to);
+    const code = await this.deps.codes.issue(identifier, this.fixedFor(to));
+    if (taken) {
+      // Never mailed: discarded, so the confirm step answers 401 as for any wrong code.
+      await this.deps.codes.discard(identifier);
       await this.send(addressInUseMail(to), 'notice');
       return;
     }
-    const code = await this.deps.codes.issue(this.deps.codes.emailChangeId(caller.userId, to), this.fixedFor(to));
     await this.send(newAddressCodeMail(to, code), 'code');
   }
 
@@ -145,7 +155,7 @@ export class AccountService {
    */
   async changeEmail(caller: AccountCaller, rawNewEmail: string, code: string, ip: string): Promise<void> {
     const to = newEmail(rawNewEmail, caller.email);
-    const attempt = await this.deps.limits.beforeAttempt(caller.email, ipBucket(ip));
+    const attempt = await this.deps.limits.beforeAccountCode(caller.userId, ipBucket(ip));
     if (!(await this.deps.codes.consume(this.deps.codes.emailChangeId(caller.userId, to), code))) {
       await attempt.failed();
       throw new AppError('auth.invalid-code');
@@ -165,14 +175,14 @@ export class AccountService {
   }
 
   /**
-   * SetPassword: sets or replaces the password (core length rule, then the failed-attempt caps, then
-   * the breach check, then the step-up code: a refused password does not spend the code), revokes
-   * the other sessions, mails the account. A locked-out caller gets 429 before any outbound call,
-   * and breach checks are capped per account (A5 `breachChecksPerUser`).
+   * SetPassword: sets or replaces the password (core length rule, then the account's failed-code
+   * caps, then the breach check, then the step-up code: a refused password does not spend the
+   * code), revokes the other sessions, mails the account. A locked-out caller gets 429 before any
+   * outbound call, and breach checks are capped per account (A5 `breachChecksPerUser`).
    */
   async setPassword(caller: AccountCaller, rawPassword: string, stepUpCode: string, ip: string): Promise<void> {
     const password = newPassword(rawPassword);
-    const attempt = await this.deps.limits.beforeAttempt(caller.email, ipBucket(ip));
+    const attempt = await this.deps.limits.beforeAccountCode(caller.userId, ipBucket(ip));
     await this.deps.limits.breachCheck(caller.userId);
     if (await this.deps.breached.isBreached(password)) {
       throw new AppError('password.breached');
@@ -189,22 +199,29 @@ export class AccountService {
     await this.send(passwordSetMail(caller.email, at, result === 'changed'), 'notice');
   }
 
-  /** RemovePassword: back to codes only; mails the account when there was a password. */
+  /**
+   * RemovePassword: back to codes only, and every other session is signed out (as after setting
+   * or changing it: the password-set notice tells a victim to remove it, which must evict the
+   * intruder); mails the account when there was a password.
+   */
   async removePassword(caller: AccountCaller, stepUpCode: string, ip: string): Promise<void> {
     await this.spendStepUp(caller, stepUpCode, ip);
-    if (await this.deps.repo.removePassword(caller.userId)) {
+    if (await this.deps.repo.removePassword({ userId: caller.userId, keepSessionToken: caller.sessionToken })) {
       await this.send(passwordRemovedMail(caller.email, this.deps.clock.now()), 'notice');
     }
   }
 
-  /** The step-up check (AC4): a wrong code counts as a failed sign-in for the account's address. */
+  /**
+   * The step-up check (AC4): a wrong code counts in the account's failed-code buckets (user id and
+   * IP), not the address's sign-in buckets.
+   */
   private async spendStepUp(
     caller: AccountCaller,
     code: string,
     ip: string,
     checked?: { failed: () => Promise<void> }
   ): Promise<void> {
-    const attempt = checked ?? (await this.deps.limits.beforeAttempt(caller.email, ipBucket(ip)));
+    const attempt = checked ?? (await this.deps.limits.beforeAccountCode(caller.userId, ipBucket(ip)));
     if (!(await this.deps.codes.consume(this.deps.codes.stepUpId(caller.email), code))) {
       await attempt.failed();
       throw new AppError('auth.invalid-code');

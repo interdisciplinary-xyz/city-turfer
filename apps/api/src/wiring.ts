@@ -161,7 +161,9 @@ export function productionDeps(env: NodeJS.ProcessEnv, overrides: WiringOverride
         })
       : null;
   const identity =
-    db && secret && auth ? new IdentityService(auth, new PostgresRateLimiter(db), secret, base.clock) : null;
+    db && secret && auth
+      ? new IdentityService(auth, new PostgresRateLimiter(db), secret, base.clock, new DrizzleAccountRepository(db))
+      : null;
   const accounts =
     db && secret && auth && identity
       ? accountService({
@@ -208,7 +210,8 @@ export function productionDeps(env: NodeJS.ProcessEnv, overrides: WiringOverride
             mailer,
             base.clock,
             publicUrlOf(env),
-            base.log
+            base.log,
+            new DrizzleAccountRepository(db)
           )
         : null,
     retention: db ? new RetentionService(new DrizzleRetentionStore(db), base.clock, base.log) : null,

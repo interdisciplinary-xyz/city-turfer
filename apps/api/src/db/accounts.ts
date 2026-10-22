@@ -4,6 +4,7 @@ import { and, eq, like, ne, or } from 'drizzle-orm';
 
 import type { AccountRepository } from '../identity/account';
 import { emailChangePrefix } from '../identity/codes';
+import type { SignInStamp, SignInStamps } from '../identity/use-cases';
 import { authAccounts, authSessions, authUsers, authVerifications, users } from './schema';
 import type { Db } from './store';
 
@@ -22,9 +23,37 @@ function isUniqueViolation(error: unknown): boolean {
   return code(error) === '23505' || code((error as { cause?: unknown } | null)?.cause) === '23505';
 }
 
-/** AccountRepository on Postgres: the Better Auth tables beside `users` (src/db/schema.ts). */
-export class DrizzleAccountRepository implements AccountRepository {
+/**
+ * AccountRepository (and the sign-in stamps) on Postgres: the Better Auth tables beside `users`
+ * (src/db/schema.ts).
+ */
+export class DrizzleAccountRepository implements AccountRepository, SignInStamps {
   constructor(private readonly db: Db) {}
+
+  byEmail(email: string): Promise<SignInStamp | null> {
+    return this.stamp(eq(authUsers.email, email));
+  }
+
+  byUser(userId: string): Promise<SignInStamp | null> {
+    return this.stamp(eq(authUsers.id, userId));
+  }
+
+  /** One query: the user and its password credential (left join). */
+  private async stamp(where: ReturnType<typeof eq>): Promise<SignInStamp | null> {
+    const [row] = await this.db
+      .select({ userId: authUsers.id, email: authUsers.email, password: authAccounts.password })
+      .from(authUsers)
+      .leftJoin(
+        authAccounts,
+        and(
+          eq(authAccounts.userId, authUsers.id),
+          eq(authAccounts.providerId, CREDENTIAL),
+          eq(authAccounts.accountId, authUsers.id)
+        )
+      )
+      .where(where);
+    return row ? { userId: row.userId, email: row.email, password: row.password ?? null } : null;
+  }
 
   async credential(userId: string): Promise<{ changedAt: number } | null> {
     const [row] = await this.db
@@ -135,11 +164,17 @@ export class DrizzleAccountRepository implements AccountRepository {
     });
   }
 
-  async removePassword(userId: string): Promise<boolean> {
-    const removed = await this.db
-      .delete(authAccounts)
-      .where(isCredential(userId))
-      .returning({ password: authAccounts.password });
-    return removed.some((r) => r.password);
+  async removePassword(input: { userId: string; keepSessionToken: string }): Promise<boolean> {
+    const { userId, keepSessionToken } = input;
+    return this.db.transaction(async (tx) => {
+      const removed = await tx
+        .delete(authAccounts)
+        .where(isCredential(userId))
+        .returning({ password: authAccounts.password });
+      await tx
+        .delete(authSessions)
+        .where(and(eq(authSessions.userId, userId), ne(authSessions.token, keepSessionToken)));
+      return removed.some((r) => r.password);
+    });
   }
 }

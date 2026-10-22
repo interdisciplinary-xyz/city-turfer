@@ -2365,7 +2365,7 @@
         ],
         "operationId": "requestStepUpCode",
         "summary": "E-mail me a step-up code",
-        "description": "Mails a 6-digit code (10 minutes, single use) to the account's **current** address (use case RequestStepUpCode), to confirm a sensitive change: a new e-mail, or setting, changing or removing the password. The same limits as sign-in codes, in the same counters. While a code is still valid and not burnt, a new request mails the same code again.",
+        "description": "Mails a 6-digit code (10 minutes, single use) to the account's **current** address (use case RequestStepUpCode), to confirm a sensitive change: a new e-mail, or setting, changing or removing the password. Limits per **account**, not per address: 1 code a minute, 5 per 10 minutes and 20 a day, plus the 30 codes per IP (an IPv6 /64 counts as one IP) per 10 minutes of sign-in codes; so a stranger who uses up the address's sign-in limits cannot block it. While a code is still valid and not burnt, a new request mails the same code again.",
         "security": [
           {
             "bearerAuth": []
@@ -2521,7 +2521,7 @@
         ],
         "operationId": "requestEmailChangeCode",
         "summary": "E-mail a code to my new address",
-        "description": "Starts an e-mail change (use case RequestEmailChange). Needs a fresh step-up code (`POST /v1/me/step-up/codes`): it is spent here, wrong tries count as failed sign-ins (A5), three wrong tries burn it. Then mails a 6-digit code (10 minutes) to the new address. When the new address already belongs to another account the answer is the same `202` (no enumeration) and that inbox gets an \"address in use\" mail instead of a code. The new address counts in the code limits of that address.",
+        "description": "Starts an e-mail change (use case RequestEmailChange). Needs a fresh step-up code (`POST /v1/me/step-up/codes`): it is spent here, three wrong tries burn it, and wrong tries count against the account (10 a day per account, 20 per IP per 10 minutes), not the address's sign-in limits. Then mails a 6-digit code (10 minutes) to the new address. When the new address already belongs to another account the answer is the same `202` (no enumeration) and that inbox gets an \"address in use\" mail instead of a code. The new address counts in the code limits of that address.",
         "security": [
           {
             "bearerAuth": []
@@ -2716,7 +2716,7 @@
         ],
         "operationId": "changeEmail",
         "summary": "Change my e-mail with the code from the new inbox",
-        "description": "Moves the account to the new address (use case ChangeEmail): the sign-in address and the account e-mail change together, pending codes are cleared, **every other session is signed out** (this one stays) and the old address gets a notice. A wrong, expired or missing code is `401 auth.invalid-code` (also when the address was taken at the code step: no code was sent). `409 email.taken` only once the code proved the new inbox and another account took the address since. Wrong codes count as failed sign-ins (A5).",
+        "description": "Moves the account to the new address (use case ChangeEmail): the sign-in address and the account e-mail change together, pending codes are cleared, **every other session is signed out** (this one stays) and the old address gets a notice. A wrong, expired or missing code is `401 auth.invalid-code` (also when the address was taken at the code step: no code was sent). `409 email.taken` only once the code proved the new inbox and another account took the address since. Wrong codes count against the account (10 a day), not the address's sign-in limits.",
         "security": [
           {
             "bearerAuth": []
@@ -2932,7 +2932,7 @@
         ],
         "operationId": "setPassword",
         "summary": "Set or change my password",
-        "description": "Sets the account password, or replaces it (use case SetPassword). Optional: codes keep working, and a forgotten password is \"sign in with a code, then set a new one\". Rules: 12 to 128 characters, any characters, not trimmed, no composition rules; a password found in known data breaches (Have I Been Pwned, k-anonymity) is `422 password.breached`. The rules are checked before the step-up code, so a refused password does not spend it. Needs a fresh step-up code (`POST /v1/me/step-up/codes`): it is spent here, wrong tries count as failed sign-ins (A5), three wrong tries burn it. Afterwards **every other session is signed out** and the account gets a notice.",
+        "description": "Sets the account password, or replaces it (use case SetPassword). Optional: codes keep working, and a forgotten password is \"sign in with a code, then set a new one\". Rules: 12 to 128 characters, any characters, not trimmed, no composition rules; a password found in known data breaches (Have I Been Pwned, k-anonymity) is `422 password.breached`. The rules are checked before the step-up code, so a refused password does not spend it. Needs a fresh step-up code (`POST /v1/me/step-up/codes`): it is spent here, three wrong tries burn it, and wrong tries count against the account (10 a day per account, 20 per IP per 10 minutes), not the address's sign-in limits. Afterwards **every other session is signed out** and the account gets a notice.",
         "security": [
           {
             "bearerAuth": []
@@ -3127,7 +3127,7 @@
         ],
         "operationId": "removePassword",
         "summary": "Remove my password",
-        "description": "Removes the account password (use case RemovePassword): sign-in is by e-mailed code only again. Needs a fresh step-up code (`POST /v1/me/step-up/codes`): it is spent here, wrong tries count as failed sign-ins (A5), three wrong tries burn it. The account gets a notice. Idempotent: `204` also without a password.",
+        "description": "Removes the account password (use case RemovePassword): sign-in is by e-mailed code only again. Needs a fresh step-up code (`POST /v1/me/step-up/codes`): it is spent here, three wrong tries burn it, and wrong tries count against the account (10 a day per account, 20 per IP per 10 minutes), not the address's sign-in limits. Afterwards **every other session is signed out** (also without a password: `204`, idempotent); the account gets a notice when a password was removed.",
         "security": [
           {
             "bearerAuth": []

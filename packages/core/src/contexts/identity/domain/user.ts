@@ -11,12 +11,32 @@ export const userId = (raw: string): UserId => {
 export interface Email {
   readonly value: string;
 }
+
+/** The longest address accepted (the API's `Email` schema: `.max(254)`, RFC 5321's path limit). */
+export const EMAIL_MAX = 254;
+
+/**
+ * The address rule of the sign-in routes, copied: zod 4's `z.email()` default pattern
+ * (`regexes.email` in zod 4.6.7, "practical email validation"), which the API's sign-in schema and
+ * Better Auth both apply. Core cannot import zod, so the pattern lives here too, and
+ * `apps/api/src/__tests__/account.test.ts` runs shared vectors through both so they cannot drift.
+ * ASCII only: `jürgen@example.de` or `jan&co@firma.pl` would be accepted by a looser rule and then
+ * never sign in again. Update it together with zod.
+ */
+const ZOD_EMAIL =
+  // eslint-disable-next-line no-useless-escape -- verbatim copy of zod's pattern, kept diffable.
+  /^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/;
+
+/**
+ * An account e-mail: trimmed, then exactly the set the sign-in routes accept (ZOD_EMAIL, at most
+ * EMAIL_MAX characters), then lower-cased (ASCII only, so lower-casing keeps it valid).
+ */
 export function email(raw: string): Email {
-  const value = raw.trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+  const trimmed = raw.trim();
+  if (trimmed.length > EMAIL_MAX || !ZOD_EMAIL.test(trimmed)) {
     throw new DomainError('email.invalid');
   }
-  return { value };
+  return { value: trimmed.toLowerCase() };
 }
 
 export interface User {

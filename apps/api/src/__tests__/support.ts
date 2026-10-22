@@ -4,6 +4,7 @@ import { sql } from 'drizzle-orm';
 
 import { createApp } from '../app';
 import { deviceTokenAuth, parseApiTokens } from '../auth/device-tokens';
+import { DrizzleAccountRepository } from '../db/accounts';
 import { DrizzleExportStore, PostgresFileStorage } from '../db/exports';
 import { createPgliteDb } from '../db/pglite';
 import { PostgresRateLimiter } from '../db/rate-limits';
@@ -88,7 +89,13 @@ export async function backupApp(
     mailer,
     fixedCode: options.fixedCode ?? null,
   });
-  const identity = new IdentityService(auth, new PostgresRateLimiter(db), TEST_AUTH_SECRET, clock);
+  const identity = new IdentityService(
+    auth,
+    new PostgresRateLimiter(db),
+    TEST_AUTH_SECRET,
+    clock,
+    new DrizzleAccountRepository(db)
+  );
   const log = options.log ?? silentLog;
   const breached = new FakeBreachedPasswords(options.breached);
   const accounts = accountService({
@@ -117,7 +124,8 @@ export async function backupApp(
         mailer,
         clock,
         'http://localhost:8787',
-        log
+        log,
+        new DrizzleAccountRepository(db)
       ),
       retention: new RetentionService(new DrizzleRetentionStore(db), clock, log),
       cronSecret: options.cronSecret === undefined ? TEST_CRON_SECRET : options.cronSecret,

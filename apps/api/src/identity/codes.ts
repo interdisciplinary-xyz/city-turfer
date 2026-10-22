@@ -61,6 +61,12 @@ export class OneTimeCodes {
     return code;
   }
 
+  /** Deletes the pending code of `identifier` (one issued that must never be used). */
+  async discard(identifier: string): Promise<void> {
+    const { internalAdapter } = await this.auth.$context;
+    await internalAdapter.deleteVerificationByIdentifier(identifier);
+  }
+
   /**
    * Spends the code: true once for the right code within 10 minutes. A wrong code costs one of the
    * three tries; the third wrong one burns the code. Expired, burnt or missing: false.

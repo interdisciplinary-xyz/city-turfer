@@ -159,13 +159,13 @@ export const passwordSetMail = (to: string, at: number, changed: boolean): MailM
   ].join('\n'),
 });
 
-/** After the account password was removed. */
+/** After the account password was removed (the other sessions were revoked with it). */
 export const passwordRemovedMail = (to: string, at: number): MailMessage => ({
   to,
   subject: 'Your CityTurfer account password was removed',
   text: [
     `Your CityTurfer account password was removed on ${when(at)}. You now sign in with an email`,
-    'code only.',
+    'code only, and your other phones and browsers were signed out.',
     '',
     'If it was you, there’s nothing to do.',
     'Not you? Sign in with a code sent to this address and set a new account password.',

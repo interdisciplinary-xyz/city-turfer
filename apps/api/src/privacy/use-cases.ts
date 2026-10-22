@@ -9,7 +9,7 @@ import type { Clock } from '../backup/use-cases';
 import type { ApiLog } from '../deps';
 import type { Mailer, MailMessage } from '../identity/mailer';
 import { gpxOf } from './gpx';
-import type { ExportRecord, ExportStore, FileStorage } from './ports';
+import type { ExportRecord, ExportStore, FileStorage, PasswordCredentials } from './ports';
 
 /**
  * RequestDataExport, GetDataExport, DownloadDataExport (GDPR art. 15 and 20; contract 0.4.0). The
@@ -63,6 +63,8 @@ export class ExportService {
     private readonly clock: Clock,
     private readonly publicUrl: string,
     private readonly log: ApiLog,
+    /** `hasPassword` and `passwordChangedAt` of the account block (never the hash). */
+    private readonly credentials: PasswordCredentials,
     /** MAX_EXPORT_BYTES; smaller in tests. */
     private readonly maxBytes = MAX_EXPORT_BYTES
   ) {}
@@ -168,6 +170,7 @@ export class ExportService {
     const reader = this.store.read(userId);
     const user = await reader.user();
     const consents = await reader.consents();
+    const credential = await this.credentials.credential(userId);
     const chunks: Uint8Array[] = [];
     let size = 0;
     let zipError: Error | null = null;
@@ -210,6 +213,8 @@ export class ExportService {
         email: user?.email ?? null,
         name: user?.displayName ?? null,
         createdAt: iso(user?.createdAt ?? null),
+        hasPassword: credential !== null,
+        passwordChangedAt: iso(credential?.changedAt ?? null),
       },
       consents: consents.map((c) => ({
         purpose: c.purpose,

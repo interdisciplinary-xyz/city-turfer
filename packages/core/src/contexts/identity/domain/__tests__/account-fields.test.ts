@@ -34,6 +34,43 @@ describe('displayName', () => {
     expect(codeOf(() => displayName('Ala\u001b[31m'))).toBe('display-name.invalid');
     expect(codeOf(() => displayName('Ala\u2028Kot'))).toBe('display-name.invalid');
   });
+
+  it('refuses format characters (Cf): zero-width, bidi marks and overrides, isolates', () => {
+    for (const cf of [
+      '\u200B', // zero-width space: a name of only this would save as non-empty
+      '\u200E',
+      '\u200F',
+      '\u202A',
+      '\u202E', // right-to-left override: reorders the text after it
+      '\u2066',
+      '\u2069',
+      '\uFEFF',
+      '\u00AD',
+    ]) {
+      expect([cf.codePointAt(0), codeOf(() => displayName(`Ala${cf}Kot`))]).toEqual([
+        cf.codePointAt(0),
+        'display-name.invalid',
+      ]);
+    }
+    expect(codeOf(() => displayName('\u200B'))).toBe('display-name.invalid');
+    expect(codeOf(() => displayName('\u202Etxt.exe'))).toBe('display-name.invalid');
+  });
+
+  it('keeps ZWJ inside emoji, flag tags after 🏴, and ZWNJ between letters', () => {
+    for (const ok of ['Ala 👩\u200D💻', '🏳\uFE0F\u200D🌈', '🏃🏽\u200D♀\uFE0F', '👨\u200D👩\u200D👧']) {
+      expect(displayName(ok)).toBe(ok);
+    }
+    const england = '🏴\u{E0067}\u{E0062}\u{E0065}\u{E006E}\u{E0067}\u{E007F}';
+    expect(displayName(`Ala ${england}`)).toBe(`Ala ${england}`);
+    expect(displayName('می\u200Cخواهم')).toBe('می\u200Cخواهم');
+    // Outside those sequences they are refused.
+    expect(codeOf(() => displayName('Ala\u200DKot'))).toBe('display-name.invalid');
+    expect(codeOf(() => displayName('\u200D👩'))).toBe('display-name.invalid');
+    expect(codeOf(() => displayName('👩\u200D'))).toBe('display-name.invalid');
+    expect(codeOf(() => displayName('\u200C'))).toBe('display-name.invalid');
+    expect(codeOf(() => displayName('Ala \u200CKot'))).toBe('display-name.invalid');
+    expect(codeOf(() => displayName('Ala\u{E0067}'))).toBe('display-name.invalid');
+  });
 });
 
 describe('newEmail', () => {
@@ -47,6 +84,38 @@ describe('newEmail', () => {
 
   it('refuses an invalid address', () => {
     expect(codeOf(() => newEmail('not-an-email', null))).toBe('email.invalid');
+  });
+
+  // The sign-in routes' rule (zod 4 `z.email()`): an address outside it could never sign in again.
+  // apps/api runs the same kind of vectors through zod and this rule and asserts they agree.
+  it('accepts exactly what sign-in accepts', () => {
+    for (const ok of [
+      'ania@example.com',
+      'ania.nowak@example.com',
+      'ania+cityturfer@example.co.uk',
+      "o'brien@example.ie",
+      'jan_kowalski-2@sub-domain.example.pl',
+      'a@b.cd',
+    ]) {
+      expect(newEmail(ok, null)).toBe(ok);
+    }
+    for (const bad of [
+      'jürgen@example.de', // non-ASCII local part
+      'ania@exämple.de', // non-ASCII domain
+      'jan&co@firma.pl', // `&`
+      'ania@example.c', // one-letter TLD
+      'ania@example.123', // numeric TLD
+      'ania.@example.com', // dot before @
+      '.ania@example.com',
+      'an..ia@example.com',
+      'ania@-example.com',
+      'ania@example',
+      '"ania"@example.com',
+      `${'a'.repeat(64)}@${'b'.repeat(186)}.com`, // 255 characters
+    ]) {
+      expect([bad, codeOf(() => newEmail(bad, null))]).toEqual([bad, 'email.invalid']);
+    }
+    expect(newEmail(`${'a'.repeat(64)}@${'b'.repeat(185)}.com`, null)).toHaveLength(254);
   });
 });
 
