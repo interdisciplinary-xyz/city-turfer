@@ -36,6 +36,13 @@ proportions went from 5.7 : 1 to about 4.2 : 1, so every fixed logo size was red
 hero, /branding, Swagger, the app's sign-in screen, the social image). The mark (hexagon), app icon
 and splash are unchanged; no Archivo is left in the brand.
 
+**Second amendment (same day):** the founder asked for a bold wordmark and a different face for the
+tagline. The wordmark is now "CITY" and "TURFER" both in Black, told apart by colour (894 × 192,
+about 4.7 : 1). The tagline "Surf your city. Own your streets." (website hero, /branding, social
+image) is set in Barlow Semi Condensed Black Italic, sentence case (`TAGLINE_FONT_FAMILY`,
+`--font-family-tagline`, web only): the slant reads as motion, and it no longer repeats the
+wordmark's condensed capitals right below it. Other headings stay Big Shoulders Display.
+
 This supersedes "Typography: Archivo" in `docs/decisions/brand-foundations-2026-10-20.md`.
 
 ## Why

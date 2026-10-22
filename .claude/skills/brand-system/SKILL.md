@@ -132,6 +132,10 @@ by `packages/brand/scripts/make-fonts.py`), names in `FONT_FAMILY` and `BODY_FON
   tabular figures (`fontVariant: ['tabular-nums']` / `font-variant-numeric: tabular-nums`).
 - Body (web only): Barlow 400/500/600/700 (`BODY_FONT_FAMILY`), self-hosted; never bundled in the
   app.
+- Tagline (web only): Barlow Semi Condensed Black Italic (`TAGLINE_FONT_FAMILY`,
+  `--font-family-tagline`), sentence case, for "Surf your city. Own your streets." in the hero, on
+  /branding and in the social image. Its slant sets it apart from the upright capitals of the
+  wordmark and headings.
 - The weight is part of each font: never add `fontWeight` (Android falls back to the system font)
   and on the web use `font-weight: normal` + `font-synthesis: none`.
 - Labels: 12–13 pt system font, weight 600–700, uppercase, letter-spacing `LABEL_TRACKING` (0.8).
@@ -143,9 +147,9 @@ by `packages/brand/scripts/make-fonts.py`), names in `FONT_FAMILY` and `BODY_FON
 - **Mark** (`packages/brand/svg/mark.svg`): a claimed turf cell (hexagon, `glow` outline) with a
   street riding through it like a wave, coloured with the Ramp and ending in a white-hot "you are
   here" point at the crest. Faint city grid inside the cell.
-- **Wordmark**: outlined Big Shoulders Display in capitals, "CITY" Medium + "TURFER" Black (the
-  weight change keeps the two words apart; in running text the name is still spelled CityTurfer).
-  Its proportions are 813 × 192 (about 4.2 : 1). `packages/brand/svg/wordmark-light.svg` on light
+- **Wordmark**: outlined Big Shoulders Display in capitals, "CITY" + "TURFER", both Black (the
+  colour change keeps the two words apart; in running text the name is still spelled CityTurfer).
+  Its proportions are 894 × 192 (about 4.7 : 1). `packages/brand/svg/wordmark-light.svg` on light
   surfaces, so the website, Swagger and Storybook ("CITY" `night`, "TURFER" faint → glow, the part
   of the Ramp that holds on white); `packages/brand/svg/wordmark.svg` on night surfaces: the app,
   splash and any map panel, also inside a light page ("CITY" `blazing`, "TURFER" in the Ramp). Both
