@@ -34,6 +34,8 @@ export interface ActivityRecord {
   id: string;
   type: ActivityTypeName;
   name: string;
+  /** When a `PATCH` last renamed it (phone time); null when never renamed. Last write wins. */
+  renamedAt: number | null;
   source: ActivitySourceName;
   startedAt: number;
   endedAt: number;

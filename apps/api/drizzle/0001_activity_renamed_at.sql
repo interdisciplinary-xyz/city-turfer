@@ -1,0 +1,1 @@
+ALTER TABLE "activities" ADD COLUMN "renamed_at" timestamp with time zone;

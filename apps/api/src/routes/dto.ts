@@ -51,6 +51,7 @@ export const activityDetailDto = (a: ActivityRecord, gapRoutes: GapRoutesRecord 
   splits: a.summary.splits,
   resumedSegments: a.resumedSegments,
   gapRoutes: gapRoutes?.routes ?? [],
+  renamedAt: a.renamedAt === null ? null : iso(a.renamedAt),
   gapsCheckedAt: gapRoutes ? iso(gapRoutes.checkedAt) : null,
 });
 

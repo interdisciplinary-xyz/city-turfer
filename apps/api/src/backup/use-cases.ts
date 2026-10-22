@@ -16,7 +16,7 @@ import type {
   UserRecord,
 } from './model';
 import type { BackupStore, UserReader } from './ports';
-import { gapTotals, summarizeUpload } from './summary';
+import { gapTotals, renamed, summarizeUpload } from './summary';
 
 /**
  * One-way backup phone → server (docs/decisions/api-sync-2026-10-20.md, "Sync protocol"): the
@@ -142,6 +142,7 @@ export class BackupService {
         id,
         type: input.type,
         name,
+        renamedAt: existing?.renamedAt ?? null,
         source: input.source,
         startedAt: input.startedAt,
         endedAt: input.endedAt,
@@ -168,6 +169,48 @@ export class BackupService {
         await tx.updateActivity(record);
       }
       return { created: false, activity: record };
+    });
+  }
+
+  /**
+   * RenameActivity: last write wins on `renamedAt` (the phone's time of the rename) — an equal or
+   * older rename answers the current activity, unchanged. The name follows the core's rule (422).
+   * `If-Match` is optional; a stale one is 412. Version + 1 and a feed entry when the name changed.
+   * The stored content hash follows the new name, so the phone's next upload with it is a replay.
+   */
+  async rename(
+    userId: string,
+    id: string,
+    input: { name: string; renamedAt: number },
+    ifMatch: string | undefined
+  ): Promise<ActivityRecord> {
+    return this.store.write(userId, async (tx) => {
+      await requireConsent(tx, 'cloud-sync');
+      await tx.lock();
+      const existing = await existingActivity(tx, id);
+      if (ifMatch && !matchesVersion(ifMatch, existing.version)) {
+        throw new AppError('precondition-failed', { ETag: etagOf(existing.version) });
+      }
+      if (existing.renamedAt !== null && existing.renamedAt >= input.renamedAt) {
+        return existing;
+      }
+      const name = renamed(existing, input.name);
+      if (name === existing.name) {
+        const record = { ...existing, renamedAt: input.renamedAt };
+        await tx.updateActivity(record);
+        return record;
+      }
+      const record: ActivityRecord = {
+        ...existing,
+        name,
+        renamedAt: input.renamedAt,
+        contentHash: contentHashOf({ ...existing, name }),
+        version: existing.version + 1,
+        updatedAt: this.clock.now(),
+        changeSeq: await tx.nextSeq(),
+      };
+      await tx.updateActivity(record);
+      return record;
     });
   }
 

@@ -60,6 +60,8 @@ export const activities = pgTable(
     id: text('id').notNull(),
     type: text('type').notNull(),
     name: text('name').notNull(),
+    /** When the name was last changed by `PATCH` (the phone's time): last write wins. */
+    renamedAt: ts('renamed_at'),
     source: text('source').notNull(),
     startedAt: ts('started_at').notNull(),
     endedAt: ts('ended_at').notNull(),

@@ -23,6 +23,7 @@ const LIVE = new Set([
   'listActivities',
   'uploadActivity',
   'getActivity',
+  'renameActivity',
   'deleteActivity',
   'getActivityTrack',
   'saveGapRoutes',

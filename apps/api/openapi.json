@@ -992,6 +992,15 @@
                   "$ref": "#/components/schemas/GapRoute"
                 }
               },
+              "renamedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "example": "2026-10-19T07:12:00Z",
+                "description": "When a `PATCH` last renamed it (the phone’s time); null when never renamed."
+              },
               "gapsCheckedAt": {
                 "type": [
                   "string",
@@ -1007,6 +1016,7 @@
               "splits",
               "resumedSegments",
               "gapRoutes",
+              "renamedAt",
               "gapsCheckedAt"
             ]
           }
@@ -1108,14 +1118,20 @@
         "properties": {
           "name": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 80,
-            "description": "As in the app (1–80 characters).",
-            "example": "Morning run"
+            "maxLength": 200,
+            "description": "The new name (1–80 characters once trimmed).",
+            "example": "Old Town loop"
+          },
+          "renamedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z",
+            "description": "When the user renamed it on the phone: the latest `renamedAt` wins (offline-safe)."
           }
         },
         "required": [
-          "name"
+          "name",
+          "renamedAt"
         ]
       },
       "GapRoutesUpload": {
@@ -3318,14 +3334,13 @@
           "Activity Log"
         ],
         "operationId": "renameActivity",
-        "summary": "[planned] Rename an activity",
-        "description": "Use case RenameActivity. Without `If-Match` the last write wins (decision D6); with it, a stale version answers `412`.",
+        "summary": "Rename an activity",
+        "description": "Use case RenameActivity. The last write wins on `renamedAt` (decision D6): an equal or older rename answers `200` with the activity unchanged. A new name bumps the version and appears in the changes feed. `If-Match` is optional; a stale one answers `412`. Needs the `cloud-sync` consent.",
         "security": [
           {
             "bearerAuth": []
           }
         ],
-        "x-cityturfer-status": "planned",
         "parameters": [
           {
             "schema": {
@@ -3364,7 +3379,7 @@
         },
         "responses": {
           "200": {
-            "description": "Renamed; version + 1.",
+            "description": "Renamed (or unchanged).",
             "headers": {
               "ETag": {
                 "$ref": "#/components/headers/ETag"
@@ -3373,7 +3388,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ActivitySummary"
+                  "$ref": "#/components/schemas/ActivityDetail"
                 }
               }
             }
@@ -3420,6 +3435,27 @@
                       "title": "Invalid or expired token",
                       "status": 401,
                       "code": "auth.invalid"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Give the consent first: `PUT /v1/me/consents/cloud-sync`. Codes: `consent.required`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "consent.required": {
+                    "summary": "consent.required",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/consent.required",
+                      "title": "Give the cloud-sync consent first",
+                      "status": 403,
+                      "code": "consent.required"
                     }
                   }
                 },
@@ -3545,18 +3581,18 @@
               }
             }
           },
-          "501": {
-            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
+          "503": {
+            "description": "No database configured or reachable: retry later. Codes: `storage.unavailable`.",
             "content": {
               "application/problem+json": {
                 "examples": {
-                  "not-implemented": {
-                    "summary": "not-implemented",
+                  "storage.unavailable": {
+                    "summary": "storage.unavailable",
                     "value": {
-                      "type": "https://cityturfer.app/problems/not-implemented",
-                      "title": "Not implemented yet",
-                      "status": 501,
-                      "code": "not-implemented"
+                      "type": "https://cityturfer.app/problems/storage.unavailable",
+                      "title": "Storage is not available: retry later",
+                      "status": 503,
+                      "code": "storage.unavailable"
                     }
                   }
                 },

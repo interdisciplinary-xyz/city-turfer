@@ -145,6 +145,9 @@ export const ActivityDetail = ActivitySummary.extend({
     .nullable()
     .openapi({ description: 'Segments that began with a manual Resume; null when unknown.' }),
   gapRoutes: z.array(GapRoute),
+  renamedAt: IsoDateTime.nullable().openapi({
+    description: 'When a `PATCH` last renamed it (the phone’s time); null when never renamed.',
+  }),
   gapsCheckedAt: IsoDateTime.nullable().openapi({
     description:
       'When the phone last checked the GPS gaps (`PUT …/gap-routes`, an empty list included); null when never checked or since the track changed. A restoring phone that sees a time here does not estimate the gaps again.',
@@ -191,7 +194,17 @@ export const ActivityUpload = z
   })
   .openapi('ActivityUpload');
 
-export const ActivityRename = z.object({ name: ActivityName }).openapi('ActivityRename');
+export const ActivityRename = z
+  .object({
+    name: z
+      .string()
+      .max(200)
+      .openapi({ description: 'The new name (1–80 characters once trimmed).', example: 'Old Town loop' }),
+    renamedAt: IsoDateTime.openapi({
+      description: 'When the user renamed it on the phone: the latest `renamedAt` wins (offline-safe).',
+    }),
+  })
+  .openapi('ActivityRename');
 
 export const GapRoutesUpload = z
   .object({

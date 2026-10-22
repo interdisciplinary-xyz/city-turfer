@@ -193,6 +193,50 @@ describe('PUT /v1/activities/{id}', () => {
   });
 });
 
+describe('PATCH /v1/activities/{id}', () => {
+  beforeEach(async () => {
+    await grant();
+    await put('run-1', upload());
+  });
+
+  const rename = (name: string, renamedAt: string, headers: Record<string, string> = {}, id = 'run-1') =>
+    h.call('PATCH', `/v1/activities/${id}`, { body: { name, renamedAt }, headers });
+
+  it('renames with last write wins on renamedAt, bumping the version once', async () => {
+    const res = await rename('  Old Town loop ', '2026-10-19T09:00:00Z');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('etag')).toBe('"v2"');
+    expect(await res.json()).toMatchObject({
+      name: 'Old Town loop',
+      version: 2,
+      renamedAt: '2026-10-19T09:00:00.000Z',
+      gapRoutes: [],
+    });
+    const older = await rename('Older name', '2026-10-19T08:00:00Z');
+    expect(older.status).toBe(200);
+    expect(await older.json()).toMatchObject({ name: 'Old Town loop', version: 2 });
+    const same = await rename('Old Town loop', '2026-10-19T10:00:00Z');
+    expect(await same.json()).toMatchObject({ version: 2, renamedAt: '2026-10-19T10:00:00.000Z' });
+
+    // The feed shows the new name; an upload carrying it is a replay.
+    const feed = await (await h.call('GET', '/v1/sync/changes')).json();
+    expect(feed.changes[0].activity).toMatchObject({ name: 'Old Town loop', version: 2 });
+    expect((await put('run-1', upload({ name: 'Old Town loop' }))).status).toBe(200);
+  });
+
+  it('answers 422 for an invalid name, 412 for a stale If-Match, 404 and 410', async () => {
+    const empty = await rename('   ', '2026-10-19T09:00:00Z');
+    expect(empty.status).toBe(422);
+    expect(await empty.json()).toMatchObject({ code: 'activity.invalid-name' });
+    expect((await rename('x'.repeat(81), '2026-10-19T09:00:00Z')).status).toBe(422);
+    expect((await rename('New', '2026-10-19T09:00:00Z', { 'If-Match': '"v9"' })).status).toBe(412);
+    expect((await rename('New', '2026-10-19T09:00:00Z', { 'If-Match': '"v1"' })).status).toBe(200);
+    expect((await rename('New', '2026-10-19T09:00:00Z', {}, 'nope')).status).toBe(404);
+    await h.call('DELETE', '/v1/activities/run-1');
+    expect((await rename('New', '2026-10-19T11:00:00Z')).status).toBe(410);
+  });
+});
+
 describe('DELETE and tombstones', () => {
   beforeEach(async () => {
     await grant();
