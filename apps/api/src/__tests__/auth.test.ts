@@ -80,7 +80,7 @@ describe('sign-in with an e-mailed code', () => {
     expect((await requestCode('not-an-email')).status).toBe(400);
   });
 
-  it('limits codes to 3 per e-mail and 10 per IP per 10 minutes (429 + Retry-After)', async () => {
+  it('limits codes to 3 per e-mail and 30 per IP per 10 minutes (429 + Retry-After)', async () => {
     for (let i = 0; i < 3; i++) {
       expect((await requestCode(EMAIL)).status).toBe(202);
     }
@@ -89,10 +89,10 @@ describe('sign-in with an e-mailed code', () => {
     expect(await limited.json()).toMatchObject({ code: 'auth.rate-limited' });
     expect(Number(limited.headers.get('retry-after'))).toBeGreaterThan(0);
 
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 26; i++) {
       expect((await requestCode(`u${i}@example.com`)).status).toBe(202);
     }
-    // Ten hits from this IP so far (4 + 6): the eleventh is refused, another IP is not.
+    // Thirty hits from this IP so far (4 + 26): the next one is refused, another IP is not.
     expect((await requestCode('late@example.com')).status).toBe(429);
     expect((await requestCode('late@example.com', { 'X-Real-IP': '198.51.100.1' })).status).toBe(202);
 
@@ -100,11 +100,32 @@ describe('sign-in with an e-mailed code', () => {
     expect((await requestCode(EMAIL)).status).toBe(202);
   });
 
-  it('limits sign-ins to 10 per IP per 10 minutes', async () => {
-    for (let i = 0; i < 10; i++) {
+  it('limits failed sign-ins to 20 per IP per 10 minutes; successful ones do not count', async () => {
+    for (let i = 0; i < 25; i++) {
+      expect(await h.signIn(`ok${i}@example.com`)).toEqual(expect.any(String));
+    }
+    for (let i = 0; i < 20; i++) {
       expect((await signIn(`s${i}@example.com`, '123456')).status).toBe(401);
     }
-    expect((await signIn('s10@example.com', '123456')).status).toBe(429);
+    const limited = await signIn('s20@example.com', '123456');
+    expect(limited.status).toBe(429);
+    expect(Number(limited.headers.get('retry-after'))).toBeGreaterThan(0);
+    // The limit refuses without counting: once the window ends the IP may try again.
+    h.clock.t += 10 * 60_000 + 1000;
+    expect((await signIn('s21@example.com', '123456')).status).toBe(401);
+  });
+
+  it('counts an IPv6 /64 as one IP, and an IPv4-mapped address as its IPv4', async () => {
+    for (let i = 0; i < 20; i++) {
+      expect((await signIn(`v${i}@example.com`, '123456', { 'X-Real-IP': `2001:db8:1:2::${i + 1}` })).status).toBe(401);
+    }
+    expect((await signIn('v20@example.com', '123456', { 'X-Real-IP': '2001:db8:1:2:ffff::9' })).status).toBe(429);
+    expect((await signIn('v20@example.com', '123456', { 'X-Real-IP': '2001:db8:1:3::1' })).status).toBe(401);
+
+    for (let i = 0; i < 20; i++) {
+      expect((await signIn(`m${i}@example.com`, '123456', { 'X-Real-IP': '::ffff:198.51.100.40' })).status).toBe(401);
+    }
+    expect((await signIn('m20@example.com', '123456', { 'X-Real-IP': '198.51.100.40' })).status).toBe(429);
   });
 
   it('accepts AUTH_FIXED_CODE only for the reserved test domain; real addresses get random codes', async () => {

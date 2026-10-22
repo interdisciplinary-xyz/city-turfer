@@ -1,4 +1,4 @@
-import { lt, sql } from 'drizzle-orm';
+import { and, eq, gt, lt, sql } from 'drizzle-orm';
 
 import { AUTH_LIMITS, type RateLimiter } from '../identity/rate-limit';
 import { rateLimits } from './schema';
@@ -34,7 +34,19 @@ export class PostgresRateLimiter implements RateLimiter {
       })
       .returning({ hits: rateLimits.hits, windowStartedAt: rateLimits.windowStartedAt });
     await this.db.delete(rateLimits).where(lt(rateLimits.windowStartedAt, new Date(now - windowMs - RETENTION_MS)));
-    const endsAt = row.windowStartedAt.getTime() + windowMs;
-    return { ok: row.hits <= max, retryAfterS: Math.max(1, Math.ceil((endsAt - now) / 1000)) };
+    return { ok: row.hits <= max, retryAfterS: retryAfter(row.windowStartedAt, windowMs, now) };
+  }
+
+  async peek(key: string, max: number, windowMs: number, now: number) {
+    const [row] = await this.db
+      .select({ hits: rateLimits.hits, windowStartedAt: rateLimits.windowStartedAt })
+      .from(rateLimits)
+      .where(and(eq(rateLimits.key, key), gt(rateLimits.windowStartedAt, new Date(now - windowMs))));
+    return !row || row.hits < max
+      ? { ok: true, retryAfterS: 0 }
+      : { ok: false, retryAfterS: retryAfter(row.windowStartedAt, windowMs, now) };
   }
 }
+
+const retryAfter = (windowStartedAt: Date, windowMs: number, now: number) =>
+  Math.max(1, Math.ceil((windowStartedAt.getTime() + windowMs - now) / 1000));
