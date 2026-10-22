@@ -992,14 +992,22 @@ export function bashFindings(line, ctx = {}) {
           );
         }
 
-        const allowed = head ? allowedBases(head, ctx.activeScope) : null;
+        // A head outside the naming (`worktree-agent-1`, `claude/x`) may only target a scope.
+        const known = head ? allowedBases(head, ctx.activeScope) : null;
+        const allowed = head ? (known ?? [ctx.activeScope ?? 'scope/vX.Y.Z']) : null;
+        const rename = known
+          ? ''
+          : ` ${head} is not a feat/, fix/, scope/ or release/ branch; rename it (git branch -m feat/<domain>) and push it under that name.`;
         if (action === 'create' && allowed && !base) {
           deny(
             'pr-base',
-            `Pass --base explicitly: ${head} must target ${expectedBase(head, ctx.activeScope).join(' or ')}.`
+            `Pass --base explicitly: ${head} must target ${(expectedBase(head, ctx.activeScope) ?? allowed).join(' or ')}.${rename}`
           );
         } else if (base !== null && allowed && !baseMatches(allowed, base)) {
-          deny('pr-base', `${head} must target ${allowed.join(' or ')}, not ${base} (feat → scope → release → main).`);
+          deny(
+            'pr-base',
+            `${head} must target ${allowed.join(' or ')}, not ${base} (feat → scope → release → main).${rename}`
+          );
         } else if (action === 'edit' && base !== null && !head) {
           ask('pr-base', `Changing the base of a PR to ${base}: confirm it follows feat → scope → release → main.`);
         }

@@ -562,6 +562,28 @@ test('fix/ after promotion may target release; release and hotfix merge back dow
   assert.deepEqual(expectedBase('fix/gps-drop', 'scope/v0.9.0'), ['scope/v0.9.0']);
 });
 
+test('a head outside the branch naming may only target a scope', () => {
+  const agent = { branch: 'worktree-agent-abc', activeScope: 'scope/v0.9.0' };
+  for (const cmd of [
+    'gh pr create --base main --title "city-turfer - worktree-agent-abc"',
+    'gh pr create --base release/v0.9.0 --title "city-turfer - worktree-agent-abc"',
+    'gh pr create --title "city-turfer - worktree-agent-abc"',
+    'gh pr create --head claude/x --base main --title "city-turfer - claude/x"',
+    'gh pr edit --base main',
+  ]) {
+    assert.deepEqual(rules(bashFindings(cmd, agent)), ['pr-base'], cmd);
+  }
+  assert.match(
+    bashFindings('gh pr create --base main --title "city-turfer - worktree-agent-abc"', agent)[0].message,
+    /git branch -m/
+  );
+  // false positive: the active scope is a valid base for any head
+  assert.deepEqual(
+    bashFindings('gh pr create --base scope/v0.9.0 --title "city-turfer - worktree-agent-abc"', agent),
+    []
+  );
+});
+
 test('device data: copies ask, device listings do not', () => {
   assert.deepEqual(rules(bashFindings('idevicebackup2 backup /tmp/b', CTX)), ['device-data']);
   assert.deepEqual(bashFindings('idevice_id -l', CTX), []);
