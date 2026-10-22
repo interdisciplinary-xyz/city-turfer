@@ -1,3 +1,7 @@
+import { createHmac } from 'node:crypto';
+
+import { AppError } from '../backup/app-error';
+
 /** Port: fixed-window counters (Postgres in production and tests: src/db/rate-limits.ts). */
 export interface RateLimiter {
   /** Counts one hit on `key`; `ok: false` once more than `max` hits fell in the current window. */
@@ -16,7 +20,8 @@ const TEN_MINUTES = 10 * ONE_MINUTE;
 const ONE_DAY = 24 * 60 * 60_000;
 
 /**
- * The contract's auth limits (backend contract 0.4.0). Per-IP buckets are the IPv4 address or the
+ * The contract's auth limits (backend contract 0.4.0; 0.5.0 counts step-up and new-address codes
+ * and password sign-ins in the same buckets). Per-IP buckets are the IPv4 address or the
  * IPv6 /64 (ipBucket). The per-address limits are the real protection; the per-IP ones are loose
  * because mobile carriers put many phones behind one IPv4 address (CGNAT), and for sign-ins they
  * count only failed attempts.
@@ -39,3 +44,90 @@ export const AUTH_LIMITS = {
   failedSignInsPerEmailPerDay: { max: 10, windowMs: ONE_DAY },
   failedSignInsPerIp: { max: 20, windowMs: TEN_MINUTES },
 } satisfies Record<string, Limit>;
+
+/**
+ * The A5 buckets as operations, shared by the sign-in and account use cases so every code mailed to
+ * an address and every failed code or password counts in the same counters. Keys are HMACs of the
+ * subject (address or IP bucket) under BETTER_AUTH_SECRET, never the subject itself.
+ */
+export class AuthRateLimits {
+  constructor(
+    private readonly limiter: RateLimiter,
+    private readonly secret: string,
+    private readonly clock: { now(): number }
+  ) {}
+
+  /** Before mailing a code to `email`: per IP, and per address a minute, 10 minutes and a day. */
+  async codeMail(email: string, ipBucket: string): Promise<void> {
+    for (const [scope, subject, limit] of this.codeMailBuckets(email, ipBucket)) {
+      await this.limit(scope, subject, limit);
+    }
+  }
+
+  /** Like `codeMail` without counting: refuses (429) when a code mail would be refused now. */
+  async checkCodeMail(email: string, ipBucket: string): Promise<void> {
+    for (const [scope, subject, limit] of this.codeMailBuckets(email, ipBucket)) {
+      await this.check(scope, subject, limit);
+    }
+  }
+
+  private codeMailBuckets(email: string, ipBucket: string): [string, string, Limit][] {
+    return [
+      ['codes:ip', ipBucket, AUTH_LIMITS.codesPerIp],
+      ['codes-minute:email', email, AUTH_LIMITS.codesPerEmailPerMinute],
+      ['codes:email', email, AUTH_LIMITS.codesPerEmail],
+      ['codes-day:email', email, AUTH_LIMITS.codesPerEmailPerDay],
+    ];
+  }
+
+  /**
+   * Before checking a code or password for `email`: refuses (429) once the failed-attempt caps are
+   * reached, without counting. Returns `failed()`, to call when the attempt fails.
+   */
+  async beforeAttempt(email: string, ipBucket: string): Promise<{ failed: () => Promise<void> }> {
+    const failures = [
+      { scope: 'sign-in-failed:ip', subject: ipBucket, limit: AUTH_LIMITS.failedSignInsPerIp },
+      { scope: 'sign-in-failed-day:email', subject: email, limit: AUTH_LIMITS.failedSignInsPerEmailPerDay },
+    ];
+    for (const f of failures) {
+      await this.check(f.scope, f.subject, f.limit);
+    }
+    return {
+      failed: async () => {
+        for (const f of failures) {
+          await this.count(f.scope, f.subject, f.limit);
+        }
+      },
+    };
+  }
+
+  /** Every sign-in attempt (code or password) for `email`, failed or not. */
+  async signInAttempt(email: string): Promise<void> {
+    await this.limit('sign-in:email', email, AUTH_LIMITS.signInsPerEmail);
+  }
+
+  /** Counts one hit and refuses (429) once the limit is passed. */
+  private async limit(scope: string, subject: string, limit: Limit): Promise<void> {
+    rateLimited(await this.limiter.hit(this.key(scope, subject), limit.max, limit.windowMs, this.clock.now()));
+  }
+
+  /** Refuses (429) once the limit is reached, without counting (see `count`). */
+  private async check(scope: string, subject: string, limit: Limit): Promise<void> {
+    rateLimited(await this.limiter.peek(this.key(scope, subject), limit.max, limit.windowMs, this.clock.now()));
+  }
+
+  /** Counts one hit for a later `check` (a failure), without refusing this request. */
+  private async count(scope: string, subject: string, limit: Limit): Promise<void> {
+    await this.limiter.hit(this.key(scope, subject), limit.max, limit.windowMs, this.clock.now());
+  }
+
+  private key(scope: string, subject: string): string {
+    return `${scope}:${createHmac('sha256', this.secret).update(subject).digest('base64url')}`;
+  }
+}
+
+function rateLimited({ ok, retryAfterS }: { ok: boolean; retryAfterS: number }): void {
+  if (!ok) {
+    throw new AppError('auth.rate-limited', { 'Retry-After': String(retryAfterS) });
+  }
+}

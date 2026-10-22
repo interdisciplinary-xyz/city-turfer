@@ -205,7 +205,12 @@ export class ExportService {
       format: 'cityturfer-export',
       version: 1,
       exportedAt: iso(now),
-      account: { id: userId, email: user?.email ?? null, createdAt: iso(user?.createdAt ?? null) },
+      account: {
+        id: userId,
+        email: user?.email ?? null,
+        name: user?.displayName ?? null,
+        createdAt: iso(user?.createdAt ?? null),
+      },
       consents: consents.map((c) => ({
         purpose: c.purpose,
         granted: c.granted,

@@ -1,61 +1,77 @@
-import { createHmac } from 'node:crypto';
-
 import { AppError } from '../backup/app-error';
 import type { Clock } from '../backup/use-cases';
 import type { AuthVerifier, Principal } from '../deps';
 import type { Auth } from './better-auth';
 import { ipBucket } from './ip-bucket';
-import { AUTH_LIMITS, type Limit, type RateLimiter } from './rate-limit';
+import { AuthRateLimits, type RateLimiter } from './rate-limit';
+
+export interface SignedIn {
+  token: string;
+  expiresAt: number;
+  user: { id: string; email: string };
+}
 
 /**
- * Identity use cases over Better Auth: RequestSignInCode, SignIn, SignOut, and the verifier for
- * session tokens. Rate limits: AUTH_LIMITS (per address, and per IP bucket: the IPv4 address or the
- * IPv6 /64). Keys are HMACs, never the address or IP.
+ * Identity use cases over Better Auth: RequestSignInCode, SignIn (code), SignInWithPassword,
+ * SignOut, and the verifier for session tokens. Rate limits: AUTH_LIMITS (per address, and per IP
+ * bucket: the IPv4 address or the IPv6 /64). Keys are HMACs, never the address or IP.
  */
 export class IdentityService {
+  readonly limits: AuthRateLimits;
+
   constructor(
     private readonly auth: Auth,
-    private readonly limiter: RateLimiter,
-    private readonly secret: string,
-    private readonly clock: Clock
-  ) {}
+    limiter: RateLimiter,
+    secret: string,
+    clock: Clock
+  ) {
+    this.limits = new AuthRateLimits(limiter, secret, clock);
+  }
 
   /** RequestSignInCode: always "accepted" (unknown e-mails too: the account is made on sign-in). */
   async requestCode(email: string, ip: string): Promise<void> {
-    await this.limit('codes:ip', ipBucket(ip), AUTH_LIMITS.codesPerIp);
-    await this.limit('codes-minute:email', email, AUTH_LIMITS.codesPerEmailPerMinute);
-    await this.limit('codes:email', email, AUTH_LIMITS.codesPerEmail);
-    await this.limit('codes-day:email', email, AUTH_LIMITS.codesPerEmailPerDay);
+    await this.limits.codeMail(email, ipBucket(ip));
     // A mail failure is logged (without the address) by createAuth's onMailError and answers 202
     // all the same: the phone shows "check your inbox" and the user can ask again.
     await this.auth.api.sendVerificationOTP({ body: { email, type: 'sign-in' } });
   }
 
   /** SignIn: exchanges a code for a bearer session; creates the account on the first sign-in. */
-  async signIn(
+  signIn(email: string, code: string, ip: string): Promise<SignedIn> {
+    return this.attempt(email, ip, 'auth.invalid-code', () =>
+      this.auth.api.signInEmailOTP({ body: { email, otp: code }, returnHeaders: true })
+    );
+  }
+
+  /**
+   * SignInWithPassword: the same session as a code sign-in. A wrong password, an account without
+   * one and an unknown address are the same 401 `auth.invalid-credentials`, in about the same time
+   * (Better Auth hashes the given password when there is nothing to compare it with), and count in
+   * the same failed-sign-in buckets as codes. Never creates an account.
+   */
+  signInWithPassword(email: string, password: string, ip: string): Promise<SignedIn> {
+    return this.attempt(email, ip, 'auth.invalid-credentials', () =>
+      this.auth.api.signInEmail({ body: { email, password }, returnHeaders: true })
+    );
+  }
+
+  private async attempt(
     email: string,
-    code: string,
-    ip: string
-  ): Promise<{ token: string; expiresAt: number; user: { id: string; email: string } }> {
+    ip: string,
+    refusal: 'auth.invalid-code' | 'auth.invalid-credentials',
+    signIn: () => Promise<{ headers: Headers; response: { user: { id: string; email: string } } }>
+  ): Promise<SignedIn> {
     // Failures are checked first and counted only when they happen: per IP because many honest
     // phones share one IPv4 address (CGNAT), per address and day against a slow brute force.
-    const failures = [
-      { scope: 'sign-in-failed:ip', subject: ipBucket(ip), limit: AUTH_LIMITS.failedSignInsPerIp },
-      { scope: 'sign-in-failed-day:email', subject: email, limit: AUTH_LIMITS.failedSignInsPerEmailPerDay },
-    ];
-    for (const f of failures) {
-      await this.check(f.scope, f.subject, f.limit);
-    }
-    await this.limit('sign-in:email', email, AUTH_LIMITS.signInsPerEmail);
+    const attempt = await this.limits.beforeAttempt(email, ipBucket(ip));
+    await this.limits.signInAttempt(email);
     let signedIn: { headers: Headers; response: { user: { id: string; email: string } } };
     try {
-      signedIn = await this.auth.api.signInEmailOTP({ body: { email, otp: code }, returnHeaders: true });
+      signedIn = await signIn();
     } catch (error) {
       if (isClientError(error)) {
-        for (const f of failures) {
-          await this.count(f.scope, f.subject, f.limit);
-        }
-        throw new AppError('auth.invalid-code');
+        await attempt.failed();
+        throw new AppError(refusal);
       }
       throw error;
     }
@@ -110,34 +126,9 @@ export class IdentityService {
       sessionToken: found.session.token,
     };
   }
-
-  /** Counts one hit and refuses (429) once the limit is passed. */
-  private async limit(scope: string, subject: string, limit: Limit): Promise<void> {
-    rateLimited(await this.limiter.hit(this.key(scope, subject), limit.max, limit.windowMs, this.clock.now()));
-  }
-
-  /** Refuses (429) once the limit is reached, without counting (see `count`). */
-  private async check(scope: string, subject: string, limit: Limit): Promise<void> {
-    rateLimited(await this.limiter.peek(this.key(scope, subject), limit.max, limit.windowMs, this.clock.now()));
-  }
-
-  /** Counts one hit for a later `check` (a failure), without refusing this request. */
-  private async count(scope: string, subject: string, limit: Limit): Promise<void> {
-    await this.limiter.hit(this.key(scope, subject), limit.max, limit.windowMs, this.clock.now());
-  }
-
-  private key(scope: string, subject: string): string {
-    return `${scope}:${createHmac('sha256', this.secret).update(subject).digest('base64url')}`;
-  }
 }
 
-function rateLimited({ ok, retryAfterS }: { ok: boolean; retryAfterS: number }): void {
-  if (!ok) {
-    throw new AppError('auth.rate-limited', { 'Retry-After': String(retryAfterS) });
-  }
-}
-
-/** Better Auth's APIError for a wrong, expired or burnt code (400/401/403), not a server fault. */
+/** Better Auth's APIError for a wrong, expired or burnt code or a wrong password (4xx), not a server fault. */
 function isClientError(error: unknown): boolean {
   const status = (error as { statusCode?: unknown }).statusCode;
   return typeof status === 'number' && status >= 400 && status < 500;

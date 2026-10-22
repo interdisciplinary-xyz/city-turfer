@@ -107,7 +107,7 @@ Bounded contexts: <!-- probe:contexts -->7<!-- /probe -->
   (<!-- probe:migrations -->12<!-- /probe -->)
 - `docs`: markdown files under `docs/` (<!-- probe:docs -->45<!-- /probe -->)
 - `api-operations`: HTTP operations in `apps/api/openapi.json`
-  (<!-- probe:api-operations -->24<!-- /probe -->)
+  (<!-- probe:api-operations -->30<!-- /probe -->)
 
 **If a number is not probed, don't write it.** Write the derivation instead ("one per file in
 `apps/mobile/e2e/`"). Numbers in session logs are fine: they are `historical` records of what was

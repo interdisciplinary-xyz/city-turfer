@@ -1,5 +1,6 @@
 import type { BackupStore } from './backup/ports';
 import type { BackupService } from './backup/use-cases';
+import type { AccountService } from './identity/account';
 import type { IdentityService } from './identity/use-cases';
 import type { RetentionService } from './privacy/retention';
 import type { ExportService } from './privacy/use-cases';
@@ -49,6 +50,8 @@ export interface ApiDeps {
   store: BackupStore | null;
   /** Sign-in with e-mailed codes (Better Auth); null without a database or BETTER_AUTH_SECRET (503). */
   identity: IdentityService | null;
+  /** Account settings (name, e-mail, password); null when sign-in is off (503). */
+  accounts: AccountService | null;
   /** Data exports (zip + e-mailed link); null without a database (503). */
   exports: ExportService | null;
   /** Purges expired export files, codes, sessions and rate-limit rows; null without a database (503). */
@@ -79,6 +82,7 @@ export function defaultDeps(overrides: Partial<ApiDeps> = {}): ApiDeps {
     log: jsonLineLog,
     store: null,
     identity: null,
+    accounts: null,
     exports: null,
     retention: null,
     cronSecret: null,
