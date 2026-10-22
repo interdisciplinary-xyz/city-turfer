@@ -10,19 +10,20 @@
 .brand {
   --display: var(--face-display), var(--font-family-display);
   --numeric: var(--face-numeric), var(--font-family-numeric);
-  --ramp: linear-gradient(45deg, var(--faint), var(--glow) 45%, var(--strong) 80%, var(--blazing));
+  /* Readable on the light page: faint to accent-text, like the light wordmark (no blazing). */
+  --ramp: linear-gradient(45deg, var(--faint), var(--accent-text));
   margin: 0;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-family-body);
   font-size: var(--font-body);
   line-height: 1.55;
-  color-scheme: dark;
+  color-scheme: light;
   -webkit-text-size-adjust: 100%;
 }
 
 .brand a {
-  color: var(--glow);
+  color: var(--accent-text);
 }
 
 .brand code {
@@ -134,8 +135,8 @@
   border-color: var(--glow);
 }
 .brand-nav a[aria-current] {
-  border-color: var(--glow);
-  color: var(--glow);
+  border-color: var(--accent-text);
+  color: var(--accent-text);
 }
 
 /* ---------- Sections ---------- */
@@ -221,7 +222,7 @@
   letter-spacing: -0.02em;
   font-synthesis: none;
   margin-bottom: var(--space-sm) !important;
-  color: var(--blazing);
+  color: var(--accent-text);
 }
 
 .brand-taglines,
@@ -289,7 +290,7 @@
   vertical-align: top;
 }
 .brand-pass {
-  color: var(--walk);
+  color: var(--walk-text);
   font-weight: var(--font-weight-semibold);
 }
 .brand-fail {
@@ -509,7 +510,7 @@
   font-synthesis: none;
   font-size: clamp(20px, 4vw, 28px);
   line-height: 1.2;
-  color: var(--blazing);
+  color: var(--accent-text);
 }
 .brand-icp-job {
   margin: var(--space-xl) 0;
@@ -547,7 +548,7 @@
   gap: var(--space-xs);
   margin: var(--space-xl) 0;
   padding: var(--space-lg) var(--space-xl);
-  border: 1px dashed var(--strong);
+  border: 1px dashed var(--strong-text);
   border-radius: var(--radius-card);
   max-width: 80ch;
 }
@@ -555,5 +556,5 @@
   margin: 0;
 }
 .brand-check .brand-label {
-  color: var(--strong);
+  color: var(--strong-text);
 }

@@ -246,9 +246,9 @@ export const NAME_RULES: readonly string[] = [
 
 export const TIER_MEANING: Record<TierName, string> = {
   faint: 'Tier 1, gradient start',
-  glowing: 'Tier 2 and the primary accent: buttons, selection, links',
+  glowing: 'Tier 2 and the primary accent fill: buttons, selection. Pink text on light is accent-text',
   strong: 'Tier 3, highlights',
-  blazing: 'Tier 4, “City” in the logotype, headlines on dark',
+  blazing: 'Tier 4, “City” in the logotype, headlines on night panels',
 };
 
 export const ACTIVITY_LABEL: Record<BrandActivityType, string> = { walk: 'Walk', run: 'Run', cycle: 'Ride' };
@@ -322,25 +322,18 @@ export const VISUAL_LANGUAGE: readonly Pillar[] = [
 export type ContrastFix = { pair: string; today: string; fix: string };
 export const CONTRAST_FIXES: readonly ContrastFix[] = [
   {
-    pair: 'White label on the glow accent (buttons)',
+    pair: 'White label on the glow accent (app buttons)',
     today: '3.5:1',
-    fix: 'Night label on glow (5.5:1), or white on #C8137F (5.4:1)',
-  },
-  { pair: 'Glow as text or links on light theme', today: '3.3:1', fix: 'Light-theme accent text #C8137F (5.1:1)' },
-  { pair: 'Danger on light theme', today: '3.7:1', fix: '#CF2F35 (4.8:1)' },
-  {
-    pair: 'Walk / run / ride lines on light',
-    today: '1.8–2.4:1',
-    fix: 'Light-map variants #14935C, #C85A12, #1477B8 (≥ 3.6:1)',
+    fix: 'The website already uses the night label (5.5:1); the app moves with its next native release',
   },
   {
     pair: 'White label on danger (Hold to finish)',
     today: '2.9–3.9:1',
-    fix: 'A deeper danger fill token, decided with the accent fix',
+    fix: 'A deeper danger fill token, decided with the app accent fix',
   },
 ];
 export const CONTRAST_FIXES_NOTE =
-  'From v0.9.0 the app and the website are dark only, so the light-theme rows matter for Storybook and any future light surface; the glow button and Hold to finish rows affect every screen.';
+  'The website, Swagger and Storybook are light (docs/decisions/brand-light-theme-2026-10-22.md); the light rows above are fixed. The app stays dark and keeps these two known failures so it does not shift over the air.';
 
 export type BrandAsset = { name: string; where: string; note: string };
 export const ASSETS: readonly BrandAsset[] = [
