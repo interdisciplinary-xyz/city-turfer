@@ -40,7 +40,9 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
 - **Web**: Next.js 16 (App Router, `output: 'export'`) in `apps/web`, hosted on Vercel; static
   showcase (hero, APK download, waitlist): no backend, cookies or third-party scripts; the waitlist
   form posts emails straight to Brevo (double opt-in, personal data). Languages via `next-intl`
-  (`/en`, `/pl`; copy in `apps/web/messages/*.json`, no CMS)
+  (`/en`, `/pl`; copy in `apps/web/messages/*.json`, no CMS). Light theme (`SITE_SCHEME` in
+  `@cityturfer/brand`, also Swagger and Storybook); the app and the Turf Map stay dark
+  (`docs/decisions/brand-light-theme-2026-10-22.md`)
 - **Storage**: `expo-sqlite`, local-first; the phone stays the source of truth. Optional one-way
   cloud backup to `apps/api` (`apps/mobile/src/contexts/cloud-backup`), only after the user's
   consent (Info › Cloud backup); device token in the secure store
