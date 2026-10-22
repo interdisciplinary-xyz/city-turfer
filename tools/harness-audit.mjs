@@ -15,8 +15,9 @@
  *   - a `<name>-engineer|architect|reviewer|designer` agent or a `<name>` skill that does not exist
  *   - agent tools: no `tools:` (it would inherit every tool), an `Agent(x)` naming a missing agent;
  *     a read-only agent (description says "read-only") with Write/Edit, with `memory` (which grants
- *     Write/Edit) or with Bash but no PreToolUse Bash hook in its frontmatter; a frontmatter hook
- *     script that does not exist
+ *     Write/Edit) or with Bash but no PreToolUse Bash hook in its frontmatter; an agent with an
+ *     edit-allowlist hook and Bash but no PreToolUse Bash hook (Bash would route around the
+ *     allowlist); a frontmatter hook script that does not exist
  * Warnings: the old product name in agent/skill text; a description over 300 characters (it is
  * loaded into every session's context, so keep it a short trigger); an unknown agent frontmatter
  * field (Claude Code ignores it silently, so it is usually a typo); an agent body without a
@@ -336,6 +337,16 @@ export function auditHarness(root) {
           'read-only agent has Bash without a PreToolUse Bash hook; Bash can write (add `.claude/hooks/read-only-bash.mjs` under `hooks:`)'
         );
       }
+    }
+    const bashHook = scripts.some((h) => h.event === 'PreToolUse' && /Bash/.test(h.matcher));
+    const editAllowlist = scripts.some((h) => h.event === 'PreToolUse' && /edit-allowlist\.mjs$/.test(h.script));
+    if (editAllowlist && tools.includes('Bash') && !bashHook) {
+      add(
+        'error',
+        file,
+        'tools',
+        'agent with an edit allowlist has Bash without a PreToolUse Bash hook; Bash can write anywhere (add `.claude/hooks/read-only-bash.mjs --allow <its --allow paths>` under `hooks:`)'
+      );
     }
     const body = text.replace(/^---\n[\s\S]*?\n---\n/, '');
     const report = body.match(/^## Report\b[\s\S]*/m)?.[0] ?? '';

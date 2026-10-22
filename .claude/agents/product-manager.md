@@ -20,6 +20,12 @@ hooks:
             node "$CLAUDE_PROJECT_DIR"/.claude/hooks/edit-allowlist.mjs --allow
             docs/product/,docs/plans/,.claude/agent-memory/product-manager/ --ask
             NOTEBOOK.md,apps/web/messages/
+    - matcher: Bash
+      hooks:
+        - type: command
+          command: >-
+            node "$CLAUDE_PROJECT_DIR"/.claude/hooks/read-only-bash.mjs --allow
+            docs/product/,docs/plans/,.claude/agent-memory/product-manager/
 skills:
   - product-knowledge
   - product-discovery
@@ -88,8 +94,10 @@ anything, check your memory for a past decision on the same topic.
 
 ## What you own and what you don't
 
-A hook in your frontmatter enforces this: edits outside these paths are denied, and the "propose"
-paths ask the founder first.
+Hooks in your frontmatter enforce this: edits outside these paths are denied, and the "propose"
+paths ask the founder first. Bash is held to the same paths: it may read, run checks, branch,
+commit, push and open PRs, but writes files only through Edit/Write (or a redirect into your own
+paths).
 
 - **Own (edit freely):** everything under `docs/product/`, product specs you write in `docs/plans/`
   (other teams' plans there are theirs), and your memory. Keep docs frontmatter valid.

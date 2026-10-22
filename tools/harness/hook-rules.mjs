@@ -295,10 +295,29 @@ export function shellCommands(line) {
   return parseShell(line).commands;
 }
 
+/** Words that start a compound command or a group and carry the real command after them. */
+const UNWRAP_KEYWORDS = new Set(['{', '}', '!', 'do', 'then', 'else', 'elif', 'if', 'while', 'until']);
+/**
+ * Commands that run the rest of their words as a command. `values`: their options that take a
+ * separate value; `operand`: a positional before the command (`timeout 120 git …`).
+ */
+const WRAPPERS = {
+  command: { values: /^$/ },
+  exec: { values: /^-a$/ },
+  env: { values: /^-[uCS]$/ },
+  sudo: { values: /^-[ugUCDhprt]$/ },
+  nohup: { values: /^$/ },
+  time: { values: /^-[fo]$/ },
+  timeout: { values: /^-[sk]$/, operand: true },
+  nice: { values: /^-n$/ },
+  xargs: { values: /^-[nILPdsEa]$|^--(max-args|max-lines|max-procs|delimiter|arg-file|eof|replace)$/ },
+};
+
 /**
  * Commands plus the redirections between them. `redirects` holds `{ op, target }` for every `>`,
  * `>>`, `&>` or `<` with a file target (`2>&1` has none), including those inside `bash -c '…'`.
- * @returns {{ commands: string[][], redirects: { op: string, target: string }[] }}
+ * `assignments` holds every `NAME=value` the line sets (prefix, `env` or `export`).
+ * @returns {{ commands: string[][], redirects: { op: string, target: string }[], assignments: string[] }}
  */
 export function parseShell(line) {
   const commands = [];
@@ -464,18 +483,30 @@ export function parseShell(line) {
   }
   endCommand();
 
-  // Unwrap: env assignments, `command`/`exec`/`env`/`sudo`/`nohup`/`time`, `{` groups, and
-  // `bash -c '…'` / `eval '…'` (their string is parsed as commands of its own).
+  // Unwrap: env assignments, shell keywords (`then git push`), wrappers that run the rest as a
+  // command (`command`/`exec`/`env`/`sudo`/`nohup`/`time`/`timeout`/`nice`/`xargs`), `{` groups,
+  // and `bash -c '…'` / `eval '…'` (their string is parsed as commands of its own).
   const out = [];
+  const assignments = [];
   for (let w of commands) {
+    if (['export', 'declare', 'typeset', 'readonly'].includes(w[0])) {
+      assignments.push(...w.slice(1).filter((x) => /^[A-Za-z_]\w*=/.test(x)));
+    }
     for (;;) {
-      while (w.length && (/^[A-Za-z_]\w*=/.test(w[0]) || ['{', '}', '!'].includes(w[0]))) {
+      while (w.length && (/^[A-Za-z_]\w*=/.test(w[0]) || UNWRAP_KEYWORDS.has(w[0]))) {
+        if (/^[A-Za-z_]\w*=/.test(w[0])) {
+          assignments.push(w[0]); // `HUSKY=0 git commit` still matters to the no-verify rule
+        }
         w = w.slice(1);
       }
-      if (w.length && ['command', 'exec', 'env', 'sudo', 'nohup', 'time'].includes(w[0])) {
+      const wrapper = WRAPPERS[w[0]?.replace(/^.*\//, '')];
+      if (w.length && wrapper) {
         w = w.slice(1);
-        while (w.length && w[0].startsWith('-')) {
-          w = w.slice(1); // wrapper options (`env -i`, `time -p`)
+        while (w.length && w[0].startsWith('-') && w[0] !== '-') {
+          w = w.slice(wrapper.values.test(w[0]) ? 2 : 1); // wrapper options (`env -i`, `nice -n 5`)
+        }
+        if (wrapper.operand && w.length) {
+          w = w.slice(1); // `timeout 120 …`: the duration
         }
         continue;
       }
@@ -496,11 +527,12 @@ export function parseShell(line) {
       const parsed = parseShell(inner);
       out.push(...parsed.commands);
       redirects.push(...parsed.redirects);
+      assignments.push(...parsed.assignments);
       continue;
     }
     out.push(w);
   }
-  return { commands: out, redirects };
+  return { commands: out, redirects, assignments };
 }
 
 /** @deprecated kept for callers that only need the command strings */
@@ -514,10 +546,16 @@ function gitCall(words) {
     return null;
   }
   let k = 1;
+  const config = [];
   while (k < words.length && words[k].startsWith('-')) {
+    if (words[k] === '-c') {
+      config.push(words[k + 1] ?? '');
+    } else if (words[k].startsWith('--config-env=')) {
+      config.push(words[k].slice('--config-env='.length));
+    }
     k += ['-C', '-c', '--git-dir', '--work-tree', '--namespace', '--exec-path'].includes(words[k]) ? 2 : 1;
   }
-  return k < words.length ? { sub: words[k], args: words.slice(k + 1) } : null;
+  return k < words.length ? { sub: words[k], args: words.slice(k + 1), config } : null;
 }
 
 /** Positional arguments and flags, skipping the values of the given value-taking options. */
@@ -542,11 +580,19 @@ function splitArgs(args, valueOptions) {
   return { positional, flags };
 }
 
-/** True when `flags` hold the long option or a short cluster (`-uf`) containing the letter. */
+/**
+ * True when `flags` hold the long option or a short cluster (`-uf`) containing the letter. git
+ * accepts any unambiguous prefix of a long option (`--no-veri`, `--del`), so a prefix of four or
+ * more characters counts as the option (an ambiguous one makes git fail, so over-matching is safe).
+ */
 function hasFlag(flags, long, short, stopAt = '') {
   return flags.some((f) => {
-    if (f === long || f.startsWith(`${long}=`)) {
-      return true;
+    const name = f.split('=')[0];
+    if (
+      name === long ||
+      (long.startsWith('--') && name.startsWith('--') && name.length >= 4 && long.startsWith(name))
+    ) {
+      return !/=(false|f|0)$/i.test(f); // `--squash=false` (pflag) turns the option off
     }
     if (!short || !/^-[A-Za-z]+$/.test(f)) {
       return false;
@@ -563,7 +609,7 @@ function hasFlag(flags, long, short, stopAt = '') {
   });
 }
 
-/** Value of `--long v`, `--long=v`, `-s v` in a word list (quotes already removed). */
+/** Value of `--long v`, `--long=v`, `-s v` or `-svalue` in a word list (quotes already removed). */
 function optionValue(words, long, short) {
   for (let k = 0; k < words.length; k++) {
     const w = words[k];
@@ -573,9 +619,29 @@ function optionValue(words, long, short) {
     if (w.startsWith(`${long}=`)) {
       return w.slice(long.length + 1);
     }
+    if (short && /^-[A-Za-z]$/.test(short) && w.length > 2 && w.startsWith(short)) {
+      return w.slice(2); // attached short value (getopt, pflag and curl all accept `-XPOST`)
+    }
   }
   return null;
 }
+
+/**
+ * Value of short option `letter` at the end of a cluster of boolean letters (`-sXPOST`,
+ * `-iX DELETE`), or null. `bools` lists the letters that take no value.
+ */
+function clusterValue(words, letter, bools) {
+  const re = new RegExp(`^-[${bools}]*${letter}(.*)$`);
+  for (let k = 0; k < words.length; k++) {
+    const m = words[k].match(re);
+    if (m) {
+      return m[1] || (words[k + 1] ?? '');
+    }
+  }
+  return null;
+}
+/** curl's common boolean short options, which may precede -X/-d/-o in a cluster. */
+const CURL_BOOLS = 'sSiILkvfgqN46';
 
 // ---------------------------------------------------------------------------
 // Bash: git / gh policy (docs/process/release-manager.md)
@@ -645,6 +711,71 @@ const COMMIT_VALUE_OPTIONS = [
   '--fixup',
   '--squash',
 ];
+/** Env settings that switch the git hooks off (husky's `HUSKY=0`, a config override of hooksPath). */
+const HOOKS_OFF_ENV = /^HUSKY=0$|^GIT_CONFIG_KEY_\d+=core\.hookspath$|^GIT_CONFIG_PARAMETERS=.*core\.hookspath/i;
+
+/** `git config …` that writes or unsets core.hooksPath (reading it is fine). */
+function configSetsHooksPath(args) {
+  const key = args.findIndex((a) => /^core\.hookspath$/i.test(a));
+  if (key < 0) {
+    return false;
+  }
+  if (args.some((a) => /^(--get.*|-l|--list|--show-.*)$/.test(a)) || ['get', 'list'].includes(args[0])) {
+    return false;
+  }
+  const writesByFlag = args.some((a) => /^--(unset|unset-all|add|replace-all)$/.test(a));
+  const value = args.slice(key + 1).some((a) => !a.startsWith('-'));
+  return writesByFlag || value || ['set', 'unset'].includes(args[0]);
+}
+
+/**
+ * The branch `git switch|checkout …` leaves HEAD on: the name, null when the line cannot tell
+ * (`-`, `@{-1}`, `--detach`), or undefined when it does not move HEAD (`checkout -- file`).
+ */
+function switchedTo(sub, args) {
+  const create = optionValue(args, sub === 'switch' ? '--create' : '-b', sub === 'switch' ? '-c' : '-b');
+  const force = optionValue(args, sub === 'switch' ? '--force-create' : '-B', sub === 'switch' ? '-C' : '-B');
+  const orphan = optionValue(args, '--orphan');
+  const created = create ?? force ?? orphan;
+  if (created) {
+    return created;
+  }
+  if (args.includes('--') || args.some((a) => /^(-p|--patch|--pathspec-from-file.*)$/.test(a))) {
+    return undefined; // restores files; HEAD stays
+  }
+  if (args.some((a) => /^(-d|--detach)$/.test(a))) {
+    return null;
+  }
+  const { positional } = splitArgs(args, []);
+  const target = positional[0];
+  if (target === undefined) {
+    return undefined;
+  }
+  if (target === '-' || /^@\{-\d+\}$/.test(target)) {
+    return null;
+  }
+  // `git checkout apps/x.ts` restores a file: a path, not a branch (versioned names are branches)
+  if (
+    sub === 'checkout' &&
+    (/^\.{0,2}\//.test(target) || (/\.[A-Za-z]{1,5}$/.test(target) && !/v\d+\.\d+\.\d+$/.test(target)))
+  ) {
+    return undefined;
+  }
+  return target;
+}
+
+/** `gh <group> <action> …` past gh's own `-R/--repo` option, or null. */
+function ghCall(words) {
+  if (!/^(?:.*\/)?gh$/.test(words[0] ?? '')) {
+    return null;
+  }
+  let k = 1;
+  while (k < words.length && words[k].startsWith('-')) {
+    k += ['-R', '--repo'].includes(words[k]) ? 2 : 1;
+  }
+  return { group: words[k], action: words[k + 1], args: words.slice(k + 2) };
+}
+
 const PUSH_VALUE_OPTIONS = ['-o', '--push-option', '--repo', '--receive-pack', '--exec'];
 const RELEASE_DRY_RUN = (words) => words.includes('--dry-run');
 
@@ -658,8 +789,36 @@ export function bashFindings(line, ctx = {}) {
   const deny = (rule, message) => out.push({ decision: 'deny', rule, message });
   const ask = (rule, message) => out.push({ decision: 'ask', rule, message });
 
-  for (const words of shellCommands(line)) {
+  const { commands, assignments } = parseShell(line);
+  const hooksOffByEnv = assignments.some((a) => HOOKS_OFF_ENV.test(a));
+  // The branch HEAD is on as the line runs: `git switch main && git push` pushes main.
+  // null = unknown (`git switch -`).
+  let branch = ctx.branch;
+  for (const words of commands) {
     const git = gitCall(words);
+    if (git?.sub === 'switch' || git?.sub === 'checkout') {
+      const next = switchedTo(git.sub, git.args);
+      if (next !== undefined) {
+        branch = next;
+      }
+    }
+
+    // Hooks turned off without --no-verify: HUSKY=0, `-c core.hooksPath=…`, GIT_CONFIG_* env.
+    if (
+      ['commit', 'push', 'merge'].includes(git?.sub) &&
+      (hooksOffByEnv || git.config.some((c) => /^core\.hookspath=/i.test(c)))
+    ) {
+      deny(
+        'no-verify',
+        `HUSKY=0 or core.hooksPath on git ${git.sub} turns off the git hooks (secret-file guard, commitlint, pre-push gate) just like --no-verify. Fix the failing hook instead.`
+      );
+    }
+    if (git?.sub === 'config' && configSetsHooksPath(git.args)) {
+      deny(
+        'no-verify',
+        'Changing core.hooksPath turns off the husky hooks for every later commit and push. Leave it as husky set it (`pnpm install` runs `husky`).'
+      );
+    }
 
     if (git?.sub === 'commit') {
       const { flags } = splitArgs(git.args, COMMIT_VALUE_OPTIONS);
@@ -680,7 +839,7 @@ export function bashFindings(line, ctx = {}) {
         hasFlag(flags, '--force-with-lease') ||
         refspecs.some((r) => r.startsWith('+'));
       const toBranch = (r) => {
-        const name = r === 'HEAD' && ctx.branch ? ctx.branch : r.replace(/^refs\/heads\//, '');
+        const name = r === 'HEAD' && branch ? branch : r.replace(/^refs\/heads\//, '');
         return name;
       };
       const deleted = [];
@@ -693,8 +852,15 @@ export function bashFindings(line, ctx = {}) {
           targets.push(dst);
         }
       }
-      if (!refspecs.length && ctx.branch && !deleting) {
-        targets.push(ctx.branch);
+      if (!refspecs.length && branch && !deleting) {
+        targets.push(branch);
+      }
+      const unknownHead = branch === null && (!refspecs.length || refspecs.some((r) => /^\+?HEAD(:|$)/.test(r)));
+      if (unknownHead && !deleting) {
+        deny(
+          'push-main',
+          'This push follows `git switch -` (or `@{-N}`), so its branch cannot be told from the line. Push the branch by name: git push origin <branch>.'
+        );
       }
       if (hasFlag(flags, '--no-verify')) {
         deny(
@@ -708,7 +874,19 @@ export function bashFindings(line, ctx = {}) {
           `Deleting ${deleted.filter((t) => PROTECTED.test(t)).join(', ')} on the remote removes an integration branch. Only feature branches may be deleted.`
         );
       }
-      if (targets.includes('main')) {
+      // `--all`/`--branches` push every local branch, `--mirror` also force-rewrites and prunes the
+      // remote; a glob refspec (`refs/heads/*`) matches main as well.
+      const everyBranch =
+        hasFlag(flags, '--all') ||
+        hasFlag(flags, '--branches') ||
+        hasFlag(flags, '--mirror') ||
+        refspecs.some((r) => r.includes('*'));
+      if (everyBranch) {
+        deny(
+          'push-main',
+          'git push --all, --branches, --mirror or a glob refspec pushes every branch, main and the integration branches included (--mirror also deletes remote branches). Push the one branch by name.'
+        );
+      } else if (targets.includes('main')) {
         deny(
           'push-main',
           'Never push to main. main only moves by the founder merging a release/vX.Y.Z PR (docs/process/release-manager.md).'
@@ -782,16 +960,25 @@ export function bashFindings(line, ctx = {}) {
     }
 
     // gh pr …
-    if (words[0] === 'gh' && words[1] === 'pr') {
-      const action = words[2];
-      const args = words.slice(3);
+    const gh = ghCall(words);
+
+    // Releases (and their tags) are made only by release.yml.
+    if (gh?.group === 'release' && ['create', 'new', 'edit', 'delete'].includes(gh.action)) {
+      deny(
+        'tag',
+        `gh release ${gh.action} creates, moves or deletes a release tag. Tags and releases are made only by release.yml (commit-and-tag-version) on merge to main.`
+      );
+    }
+
+    if (gh?.group === 'pr') {
+      const { action, args } = gh;
 
       if (action === 'merge') {
         ask(
           'pr-merge',
           "PR merges are the founder's call (merge commits, never squash; main only by hand). Confirm this merge."
         );
-        if (args.some((a) => ['--squash', '-s', '--rebase', '-r'].includes(a))) {
+        if (hasFlag(args, '--squash', 's', 'btFA') || hasFlag(args, '--rebase', 'r', 'btFA')) {
           deny(
             'merge-style',
             'Use merge commits (--merge), never squash or rebase: the changelog is built from the conventional commits.'
@@ -802,7 +989,7 @@ export function bashFindings(line, ctx = {}) {
       if (action === 'create' || action === 'edit') {
         let head;
         if (action === 'create') {
-          head = optionValue(args, '--head', '-H') ?? ctx.branch;
+          head = optionValue(args, '--head', '-H') ?? branch ?? undefined;
         } else {
           const { positional } = splitArgs(args, [
             '--title',
@@ -827,7 +1014,7 @@ export function bashFindings(line, ctx = {}) {
             '-R',
           ]);
           const target = positional[0];
-          head = target === undefined ? ctx.branch : /^\d+$|^https?:/.test(target) ? undefined : target;
+          head = target === undefined ? (branch ?? undefined) : /^\d+$|^https?:/.test(target) ? undefined : target;
         }
         const base = optionValue(args, '--base', '-B');
         const title = optionValue(args, '--title', '-t');
@@ -846,14 +1033,22 @@ export function bashFindings(line, ctx = {}) {
           );
         }
 
-        const allowed = head ? allowedBases(head, ctx.activeScope) : null;
+        // A head outside the naming (`worktree-agent-1`, `claude/x`) may only target a scope.
+        const known = head ? allowedBases(head, ctx.activeScope) : null;
+        const allowed = head ? (known ?? [ctx.activeScope ?? 'scope/vX.Y.Z']) : null;
+        const rename = known
+          ? ''
+          : ` ${head} is not a feat/, fix/, scope/ or release/ branch; rename it (git branch -m feat/<domain>) and push it under that name.`;
         if (action === 'create' && allowed && !base) {
           deny(
             'pr-base',
-            `Pass --base explicitly: ${head} must target ${expectedBase(head, ctx.activeScope).join(' or ')}.`
+            `Pass --base explicitly: ${head} must target ${(expectedBase(head, ctx.activeScope) ?? allowed).join(' or ')}.${rename}`
           );
         } else if (base !== null && allowed && !baseMatches(allowed, base)) {
-          deny('pr-base', `${head} must target ${allowed.join(' or ')}, not ${base} (feat → scope → release → main).`);
+          deny(
+            'pr-base',
+            `${head} must target ${allowed.join(' or ')}, not ${base} (feat → scope → release → main).${rename}`
+          );
         } else if (action === 'edit' && base !== null && !head) {
           ask('pr-base', `Changing the base of a PR to ${base}: confirm it follows feat → scope → release → main.`);
         }
@@ -897,14 +1092,19 @@ const GIT_READ_ONLY = new Set(
   ).split(' ')
 );
 const DEV_NULL = /^\/dev\/(null|stdout|stderr)$/;
-/** pnpm scripts that rewrite tracked files, install, release or start long-running servers. */
-const PNPM_WRITE_SCRIPT =
-  /^(format|openapi|cache:clean|release.*|ios|android|start(:.*)?|web:dev|dev|install|i|add|remove|rm|update|up|upgrade|dlx|create|link|unlink|patch.*|import|prune|publish|pack|setup)$|fix|write/;
+/**
+ * pnpm/npm scripts (and turbo tasks) a read-only agent may run: checks that change no tracked
+ * file. An allowlist, so a new script (`db:migrate`, `user:delete`, `token:new`) is denied until
+ * someone adds it here with a test.
+ */
+const PNPM_READ_ONLY_SCRIPT =
+  /^(test|test:(unit|types|arch|tools)|typecheck|lint|arch|audit:(docs|harness|logs)|e2e:audit|check:secret-files|standard|standard:(format|lint)|ci:quality)$/;
+/** pnpm built-ins that only read (`pnpm why react`, `pnpm ls --depth 0`). */
+const PNPM_READ_ONLY_BUILTIN = new Set(['list', 'ls', 'why', 'outdated', 'view', 'info', 'licenses']);
 const WRITE_ARG = /^(--fix|--write(?!-tree).*|--update.*|--out(put)?(=.*)?|--in-place.*)$/;
 /** Temp folders: a read-only agent may park command output there (it never reaches the repo). */
 const TEMP_PATH = /^(\/private)?\/tmp\/|^\/var\/folders\/|^\$\{?TMPDIR\}?\//;
-/** Shell keywords that prefix a command (`do cat x`) or carry none (`done`). */
-const SHELL_KEYWORDS = new Set(['do', 'then', 'else', 'elif', 'if', 'while', 'until', '!']);
+/** Shell keywords that carry no command (`done`); leading ones are unwrapped by parseShell. */
 const SHELL_ENDS = new Set(['done', 'fi', 'esac', ']]']);
 const PNPM_EXEC_READ_ONLY = new Set([
   'tsc',
@@ -929,8 +1129,13 @@ function execReason(bin, rest) {
   if ((bin === 'jest' || bin === 'vitest') && rest.some((a) => /^(-u|--updateSnapshot|--update)$/.test(a))) {
     return `\`${bin} -u\` rewrites snapshots`;
   }
-  if (bin === 'turbo' && rest.some((t) => PNPM_WRITE_SCRIPT.test(t))) {
-    return '`turbo run` of a task that writes files';
+  if (bin === 'turbo') {
+    const { positional } = splitArgs(rest, ['--filter', '-F', '--concurrency', '--cache-dir', '--log-order']);
+    const tasks = positional[0] === 'run' ? positional.slice(1) : positional;
+    const bad = tasks.find((t) => !PNPM_READ_ONLY_SCRIPT.test(t));
+    if (!tasks.length || bad) {
+      return `\`turbo run ${bad ?? ''}\` is not on the read-only task list`;
+    }
   }
   if (bin === 'expo-updates' && rest[0] !== 'fingerprint:generate') {
     return '`expo-updates` other than `fingerprint:generate`';
@@ -986,11 +1191,19 @@ function scripts(args, scriptFlag) {
   return [];
 }
 
-/** Why one simple command is not read-only, or null when it is. */
-function writeReason(words) {
-  while (words.length && SHELL_KEYWORDS.has(words[0])) {
-    words = words.slice(1);
-  }
+/**
+ * git subcommands an agent with an edit allowlist may also run: it ships its own docs (branch,
+ * commit, push), while pre-bash.mjs still applies the branch policy. No checkout of files, reset,
+ * restore, stash or merge: those rewrite other owners' files.
+ */
+const SCOPED_GIT = new Set(['add', 'commit', 'push', 'pull', 'switch']);
+const DOCS_INDEX = /^(pnpm|npm) (run )?audit:docs -- --write-index$/;
+
+/**
+ * Why one simple command is not read-only, or null when it is. `scoped`: the agent has an edit
+ * allowlist, so it may also branch, commit, push, open PRs and regenerate docs/INDEX.md.
+ */
+function writeReason(words, scoped = false) {
   if (!words.length || SHELL_ENDS.has(words[0]) || /^\w+\)$/.test(words[0])) {
     return null;
   }
@@ -999,20 +1212,17 @@ function writeReason(words) {
   if (name === 'for' || name === 'case') {
     return null; // `for f in a b` / `case x in`: the words are data; substitutions are checked separately
   }
-  if (name === 'timeout') {
-    let k = 0;
-    while (k < args.length && args[k].startsWith('-')) {
-      k += 1;
-    }
-    return args.length > k + 1 ? writeReason(args.slice(k + 1)) : null;
-  }
   if (name === 'npx') {
     const rest = args.filter((a) => !/^(--yes|-y|--no-install|--no)$/.test(a));
     return execReason(rest[0] ?? '', rest.slice(1));
   }
   if (name === 'curl') {
-    const method = optionValue(args, '--request', '-X');
-    const bad = args.find((a) => /^(-d|--data.*|-F|--form.*|-T|--upload-file|-o|-O|--remote-name.*|--json)$/.test(a));
+    const method = optionValue(args, '--request', '-X') ?? clusterValue(args, 'X', CURL_BOOLS);
+    const bad = args.find(
+      (a) =>
+        new RegExp(`^-[${CURL_BOOLS}]*[dFToO]`).test(a) ||
+        /^--(data.*|form.*|upload-file|remote-name.*|json|output.*)(=|$)/.test(a)
+    );
     return bad || (method && !/^(get|head)$/i.test(method)) ? '`curl` that sends data or writes a file' : null;
   }
   if (name === 'plutil') {
@@ -1026,6 +1236,9 @@ function writeReason(words) {
   if (name === '[[') {
     return null;
   }
+  if (scoped && DOCS_INDEX.test(words.join(' '))) {
+    return null; // regenerates docs/INDEX.md from the docs' frontmatter
+  }
   if (args.some((a) => WRITE_ARG.test(a))) {
     return `\`${args.find((a) => WRITE_ARG.test(a))}\` writes files`;
   }
@@ -1036,7 +1249,10 @@ function writeReason(words) {
     }
     const { sub, args: a } = git;
     const listing = (ok) => (ok ? null : `\`git ${sub}\` with these arguments can change the repo`);
-    if (GIT_READ_ONLY.has(sub)) {
+    if (GIT_READ_ONLY.has(sub) || (scoped && SCOPED_GIT.has(sub))) {
+      return null;
+    }
+    if (scoped && sub === 'checkout' && a.some((x) => /^-[bB]/.test(x)) && !a.includes('--')) {
       return null;
     }
     if (sub === 'branch') {
@@ -1077,9 +1293,12 @@ function writeReason(words) {
     ) {
       return null;
     }
+    if (scoped && group === 'pr' && ['create', 'edit'].includes(action)) {
+      return null;
+    }
     if (group === 'api') {
-      const method = optionValue(args, '--method', '-X');
-      const sends = args.some((x) => /^(-f|-F|--field|--raw-field|--input)$/.test(x));
+      const method = optionValue(args, '--method', '-X') ?? clusterValue(args, 'X', 'i');
+      const sends = args.some((x) => /^-i*[fF]/.test(x) || /^--(field|raw-field|input)(=|$)/.test(x));
       return (method === null || /^get$/i.test(method)) && !sends ? null : '`gh api` with a write method or fields';
     }
     return `\`gh ${args.slice(0, 2).join(' ')}\` is not a read-only gh command`;
@@ -1087,16 +1306,22 @@ function writeReason(words) {
   if (name === 'pnpm' || name === 'npm') {
     let k = 0;
     while (k < args.length && args[k].startsWith('-')) {
-      k += ['-C', '--dir', '--filter', '-F'].includes(args[k]) ? 2 : 1;
+      k += ['-C', '--dir', '--filter', '-F', '--prefix', '--workspace'].includes(args[k]) ? 2 : 1;
     }
     const sub = args[k] ?? '';
+    if (args.slice(k + 1).includes('-u')) {
+      return `\`${name} ${sub} … -u\` rewrites snapshots`;
+    }
     if (sub === 'exec') {
       return execReason(args[k + 1] ?? '', args.slice(k + 2));
     }
-    const script = sub === 'run' ? (args[k + 1] ?? '') : sub;
-    return PNPM_WRITE_SCRIPT.test(script) || !script
-      ? `\`pnpm ${sub}${sub === 'run' ? ` ${script}` : ''}\` writes, installs or starts something`
-      : null;
+    if (PNPM_READ_ONLY_BUILTIN.has(sub)) {
+      return null;
+    }
+    const script = ['run', 'run-script'].includes(sub) ? (args[k + 1] ?? '') : sub;
+    return PNPM_READ_ONLY_SCRIPT.test(script)
+      ? null
+      : `\`${name} ${sub}${script === sub ? '' : ` ${script}`}\` is not on the read-only script list (tests, typecheck, lint, arch, audits, standard:format)`;
   }
   if (name === 'node') {
     if (args[0] === '--test') {
@@ -1132,39 +1357,46 @@ function writeReason(words) {
   if (name === 'uniq') {
     return args.filter((x) => !x.startsWith('-')).length > 1 ? '`uniq in out` writes a file' : null;
   }
-  if (name === 'xargs') {
-    let k = 0;
-    while (k < args.length && args[k].startsWith('-')) {
-      k += /^-[nILPdsEa]$/.test(args[k]) ? 2 : 1;
-    }
-    return args.length > k ? writeReason(args.slice(k)) : null;
-  }
   return READ_ONLY_COMMANDS.has(name) ? null : `\`${name}\` is not on the read-only list`;
 }
 
 /**
  * Findings for a Bash command run by a read-only agent: anything that could write a file, change
  * git state or run arbitrary code. Unknown commands are denied (allowlist).
+ *
+ * With `scope.writable` (an agent with an edit allowlist, e.g. product-manager) the same rules
+ * apply, except that redirections may write into those paths and the agent may branch, commit,
+ * push and open PRs: its Bash cannot write where its Edit/Write may not.
+ * @param {string} line
+ * @param {{ writable?: string[], cwd?: string | null, root?: string }} [scope]  `cwd`: the
+ *   repo-relative working directory (null when outside the repo); `root`: the repo's absolute path
  * @returns {{ decision: 'deny', rule: string, message: string }[]}
  */
-export function readOnlyBashFindings(line) {
+export function readOnlyBashFindings(line, scope = {}) {
+  const scoped = Array.isArray(scope.writable);
   const out = [];
   const seen = new Set();
   const deny = (message) => {
     if (!seen.has(message)) {
       seen.add(message);
-      out.push({ decision: 'deny', rule: 'read-only-agent', message });
+      out.push({ decision: 'deny', rule: scoped ? 'bash-allowlist' : 'read-only-agent', message });
     }
   };
   const visit = (text, depth) => {
     const { commands, redirects } = parseShell(text);
+    const moves = commands.some((w) => ['cd', 'pushd', 'popd'].includes(w[0]));
     for (const r of redirects) {
-      if (r.op.includes('>') && !DEV_NULL.test(r.target) && !TEMP_PATH.test(r.target)) {
+      if (
+        r.op.includes('>') &&
+        !DEV_NULL.test(r.target) &&
+        !TEMP_PATH.test(r.target) &&
+        !(scoped && writableTarget(r.target, scope, moves || depth > 0))
+      ) {
         deny(`redirect \`${r.op} ${r.target}\` writes a file`);
       }
     }
     for (const words of commands) {
-      const reason = writeReason(words);
+      const reason = writeReason(words, scoped);
       if (reason) {
         deny(reason);
       }
@@ -1176,10 +1408,32 @@ export function readOnlyBashFindings(line) {
     }
   };
   visit(line, 0);
-  return out.map((f) => ({
-    ...f,
-    message: `${f.message}. This agent is read-only: report the finding or the command for the main session to run (READ_ONLY_COMMANDS in tools/harness/hook-rules.mjs; widen it there, with a test, only for a command that cannot write).`,
-  }));
+  const why = scoped
+    ? `. This agent may write only ${scope.writable.join(', ')}, and Bash may not reach further: use Edit/Write there, or report the change for its owner (scoped mode of readOnlyBashFindings in tools/harness/hook-rules.mjs)`
+    : '. This agent is read-only: report the finding or the command for the main session to run (READ_ONLY_COMMANDS and PNPM_READ_ONLY_SCRIPT in tools/harness/hook-rules.mjs; widen it there, with a test, only for a command that cannot write)';
+  return out.map((f) => ({ ...f, message: `${f.message}${why}.` }));
+}
+
+/**
+ * Whether a redirection target lands inside the writable paths. Relative targets resolve against
+ * `scope.cwd`, and are refused when the line changes directory (`cd x && echo > y`) or the target
+ * starts with a variable or `~`.
+ */
+function writableTarget(target, scope, moved) {
+  let rel;
+  if (target.startsWith('/')) {
+    if (!scope.root) {
+      return false;
+    }
+    rel = posix.relative(scope.root, target);
+  } else {
+    if (moved || scope.cwd === null || scope.cwd === undefined || /^[~$]/.test(target)) {
+      return false;
+    }
+    rel = posix.join(scope.cwd, target);
+  }
+  rel = posix.normalize(rel).replace(/^\.claude\/worktrees\/[^/]+\//, '');
+  return editAllowed(rel, scope.writable);
 }
 
 /**
