@@ -23,11 +23,12 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
   Import of walks, hikes, runs, rides with routes; export of recordings. Design:
   `docs/decisions/apple-health-2026-10-18.md`
 - **Design system**: tokens in `@cityturfer/brand` (`packages/brand/src/tokens.ts`; the web gets
-  them as CSS variables from `cssVariables()`; brand typeface Archivo, bundled in the app via the
-  `expo-font` plugin; brand foundations in `docs/decisions/brand-foundations-2026-10-20.md`), React
-  Native components in `@cityturfer/ui` (`packages/ui`, peer dependencies only, no native code), one
-  Storybook in `apps/storybook` (Storybook 10 + react-native-web, port 6006; static build, Vercel
-  project pending). Design: `docs/decisions/design-system-2026-10-19.md`
+  them as CSS variables from `cssVariables()`; brand typefaces Big Shoulders Display + Barlow
+  (`docs/decisions/brand-typography-2026-10-22.md`), bundled in the app via the `expo-font` plugin;
+  brand foundations in `docs/decisions/brand-foundations-2026-10-20.md`), React Native components in
+  `@cityturfer/ui` (`packages/ui`, peer dependencies only, no native code), one Storybook in
+  `apps/storybook` (Storybook 10 + react-native-web, port 6006; static build, Vercel project
+  pending). Design: `docs/decisions/design-system-2026-10-19.md`
 - **Spatial index**: `h3-js` (Turf Cells = H3 res 11), behind the Territory `CellGrid` port; the
   adapter is `@cityturfer/core/h3`, the only place h3-js is declared (pinned exactly, one copy)
 - **Core**: `@cityturfer/core` (`packages/core`) holds the shared kernel, core constants and the

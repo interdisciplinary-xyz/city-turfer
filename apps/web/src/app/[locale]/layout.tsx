@@ -10,7 +10,7 @@ import type { CSSProperties, ReactNode } from 'react';
 
 import { routing } from '@/i18n/routing';
 
-import { displayFont, numericFont } from '../fonts';
+import { bodyFont, displayFont, numericFont } from '../fonts';
 import { SITE_URL } from '../site-url';
 import { MOTION_BOOT_SCRIPT } from './hero-motion';
 import { OG_IMAGE_HEIGHT, OG_IMAGE_PATH, OG_IMAGE_WIDTH } from './layout.constants';
@@ -79,7 +79,7 @@ export default async function LocaleLayout({
     // suppressHydrationWarning: the motion boot script adds a class to <html> before React hydrates.
     <html
       lang={locale}
-      className={`${displayFont.variable} ${numericFont.variable}`}
+      className={`${displayFont.variable} ${numericFont.variable} ${bodyFont.variable}`}
       style={tokens}
       suppressHydrationWarning
     >

@@ -85,7 +85,8 @@ function renderTemplate(t, w, h) {
   const slots = {
     W: String(w),
     H: String(h),
-    FONT_DISPLAY: dataUri(join(FONTS, 'ArchivoExpanded-Black.woff2')),
+    FONT_DISPLAY: dataUri(join(FONTS, 'BigShouldersDisplay-Black.woff2')),
+    FONT_BODY: dataUri(join(FONTS, 'Barlow-Medium.woff2')),
     WORDMARK: dataUri(join(BRAND, 'wordmark.svg')),
     ...t.slots,
     SCREEN: dataUri(join(SCREENS, t.slots.SCREEN)),

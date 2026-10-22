@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ACCENT, FONT_FAMILY } from '@/constants/colors';
+import { ACCENT, DISPLAY_CASE, DISPLAY_TRACKING, FONT_FAMILY } from '@/constants/colors';
 import { evaluateAchievements, type OnboardingStepId, summarizeAchievements } from '@/contexts/achievements';
 import { AchievementsCard } from '@/contexts/achievements/ui/achievements-card';
 import { OnboardingCard } from '@/contexts/achievements/ui/onboarding-card';
@@ -122,6 +122,12 @@ export default function DashboardScreen() {
 }
 
 const s = StyleSheet.create({
-  h1: { fontSize: 28, fontFamily: FONT_FAMILY.display, letterSpacing: -0.5 },
+  h1: {
+    fontSize: 35,
+    lineHeight: 38,
+    fontFamily: FONT_FAMILY.display,
+    textTransform: DISPLAY_CASE,
+    letterSpacing: DISPLAY_TRACKING,
+  },
   h2: { fontSize: 17, fontWeight: '800' },
 });

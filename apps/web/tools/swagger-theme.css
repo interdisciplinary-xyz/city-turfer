@@ -14,6 +14,49 @@
   --ct-toc-current: color-mix(in srgb, var(--glow) 12%, var(--card));
 }
 
+@font-face {
+  font-family: 'Barlow';
+  src: url('./fonts/Barlow-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Barlow';
+  src: url('./fonts/Barlow-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Barlow';
+  src: url('./fonts/Barlow-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Barlow';
+  src: url('./fonts/Barlow-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'BigShouldersDisplay-Black';
+  src: url('./fonts/BigShouldersDisplay-Black.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'BarlowSemiCondensed-ExtraBold';
+  src: url('./fonts/BarlowSemiCondensed-ExtraBold.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 *,
 *::before,
 *::after {
@@ -67,9 +110,13 @@ a {
   display: flex;
   align-items: center;
   gap: var(--space-md);
-  font-size: 1.25rem;
-  font-weight: var(--font-weight-heavy);
-  letter-spacing: -0.02em;
+  font-family: var(--font-family-display);
+  font-size: 1.7rem;
+  font-weight: normal;
+  font-synthesis: none;
+  line-height: 1;
+  text-transform: var(--display-case);
+  letter-spacing: var(--display-tracking);
   color: var(--text);
 }
 .ct-mark {
@@ -121,8 +168,13 @@ a {
   color: var(--text);
 }
 .swagger-ui .info .title {
-  font-weight: var(--font-weight-heavy);
-  letter-spacing: -0.02em;
+  font-family: var(--font-family-display);
+  font-size: 2.6rem;
+  font-weight: normal;
+  font-synthesis: none;
+  line-height: 0.95;
+  text-transform: var(--display-case);
+  letter-spacing: var(--display-tracking);
 }
 .swagger-ui .info .title small {
   background: var(--card);
@@ -445,7 +497,18 @@ a {
 /* Tags. */
 .swagger-ui .opblock-tag {
   border-bottom: 1px solid var(--border);
-  font-weight: var(--font-weight-bold);
+  font-family: var(--font-family-display);
+  font-size: 1.5rem;
+  font-weight: normal;
+  font-synthesis: none;
+  text-transform: var(--display-case);
+  letter-spacing: var(--display-tracking);
+}
+.swagger-ui .opblock-tag small {
+  font-family: var(--font-family-body);
+  font-size: 0.9rem;
+  text-transform: none;
+  letter-spacing: normal;
 }
 .swagger-ui .opblock-tag:hover {
   background: var(--card);
@@ -504,7 +567,7 @@ a {
   border-radius: var(--radius-sm);
   color: var(--ct-method-label, var(--card));
   font-family: var(--font-family-body);
-  font-weight: var(--font-weight-heavy);
+  font-weight: var(--font-weight-bold);
   letter-spacing: var(--label-tracking);
   min-width: 72px;
   text-shadow: none;

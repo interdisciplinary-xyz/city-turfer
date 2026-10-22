@@ -31,6 +31,29 @@ test('maps the table of contents script', () => {
   assert.deepEqual(swaggerTarget(DIST, '/swagger/ct-toc.mjs'), { kind: 'toc' });
 });
 
+test('maps only the whitelisted brand fonts', () => {
+  assert.deepEqual(swaggerTarget(DIST, '/swagger/fonts/Barlow-Regular.woff2'), {
+    kind: 'font',
+    name: 'Barlow-Regular.woff2',
+  });
+  assert.deepEqual(swaggerTarget(DIST, '/swagger/fonts/BigShouldersDisplay-Black.woff2'), {
+    kind: 'font',
+    name: 'BigShouldersDisplay-Black.woff2',
+  });
+  assert.equal(swaggerTarget(DIST, '/swagger/fonts/BigShouldersDisplay-Black.ttf'), null);
+  assert.equal(swaggerTarget(DIST, '/swagger/fonts/../package.json'), null);
+  assert.equal(swaggerTarget(DIST, '/swagger/fonts/%2e%2e%2fpackage.json'), null);
+});
+
+test('the theme declares @font-face for every whitelisted font', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const { FONT_FILES } = await import('../../apps/web/tools/swagger-route.mjs');
+  const css = await readFile(path.join(import.meta.dirname, '../../apps/web/tools/swagger-theme.css'), 'utf8');
+  for (const name of FONT_FILES) {
+    assert.ok(css.includes(`./fonts/${name}`), name);
+  }
+});
+
 test('strips /api from proxied paths, keeping the query', () => {
   assert.equal(apiPath('/api/v1/health'), '/v1/health');
   assert.equal(apiPath('/api/v1/turf/cells?zoom=13'), '/v1/turf/cells?zoom=13');
