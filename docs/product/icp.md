@@ -14,21 +14,22 @@ summary:
 🚧 **Proposed on 2026-10-22 from desk research and the product as built — no interviews yet.** The
 evidence log in [discovery-board.md](discovery-board.md) is empty, so every line below is an
 assumption. It sharpens beachhead 1 of [strategy.md](strategy.md) §5; market facts come from
-[market-landscape.md](market-landscape.md) (dated snapshot). Shown on the website's `/branding` page
-(`apps/web/src/app/branding/page.constants.ts` mirrors this doc: update both together).
+[market-landscape.md](market-landscape.md) (dated snapshot). Shown on the dev-only `/branding` page
+(local dev server; not in the production export; `apps/web/src/app/branding/page.constants.ts`
+mirrors this doc: update both together).
 
 ## Primary: the Apple Watch city walker
 
-| Field            | Hypothesis                                                                                                                                                                                                                                                                                                                                |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Who              | 25–45, lives in a Polish city (Warsaw, Kraków, Wrocław, Poznań, Tri-City), iPhone and often an Apple Watch. Walks, runs or rides several times a week, mostly the same streets                                                                                                                                                            |
-| Moment           | Years of workouts sit in Apple Health and nobody looks at them; a new neighbourhood; wanting a reason to take a different street on the usual loop                                                                                                                                                                                        |
-| Job              | "When I head out for my usual walk or run, I want to see my city fill in and my regular streets glow, so everyday movement feels like it adds up to something."                                                                                                                                                                           |
-| Uses today       | Apple Fitness, Strava or Garmin Connect (a list of workouts; Strava's personal heatmap is paid); nothing that rewards a repeated dog walk                                                                                                                                                                                                 |
-| Why CityTurfer   | Apple Health import shows years of turf on day one; return visits count, so the streets they live on blaze; nothing decays and no one takes it away; routes stay on the phone unless they turn on backup (planned, not built: using the app without an account; today a new user signs in with an emailed code, which creates an account) |
-| What puts it off | A login wall, rankings and rivals, turf that decays, battery drain, a map that shows where they live                                                                                                                                                                                                                                      |
-| Where to find    | Candidates to test: city subreddits and Facebook groups, run clubs and parkrun, Apple Watch communities, Polish running and cycling media                                                                                                                                                                                                 |
-| Would pay        | Once, like Fog of World (~$30) or MoveMap ($24.99 lifetime), not a subscription — assumption A7, untested; cloud backup now costs money to run, which a one-off price has to cover                                                                                                                                                        |
+| Field            | Hypothesis                                                                                                                                                                                                                                                                                                                                                         |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Who              | 25–45, lives in a Polish city (Warsaw, Kraków, Wrocław, Poznań, Tri-City), iPhone and often an Apple Watch. Walks, runs or rides several times a week, mostly the same streets                                                                                                                                                                                     |
+| Moment           | Past outdoor workouts with routes sit in Apple Health and nobody looks at them; a new neighbourhood; wanting a reason to take a different street on the usual loop                                                                                                                                                                                                 |
+| Job              | "When I head out for my usual walk or run, I want to see my city fill in and my regular streets glow, so everyday movement feels like it adds up to something."                                                                                                                                                                                                    |
+| Uses today       | Apple Fitness, Strava or Garmin Connect (a list of workouts; Strava's personal heatmap is paid); nothing that rewards a repeated dog walk                                                                                                                                                                                                                          |
+| Why CityTurfer   | Apple Health import adds past outdoor workouts that have a route on day one; return visits count, so the streets they live on blaze; nothing decays and no one takes it away; routes stay on the phone unless they turn on backup (planned, not built: using the app without an account; today a new user signs in with an emailed code, which creates an account) |
+| What puts it off | A login wall, rankings and rivals, turf that decays, battery drain, a map that shows where they live                                                                                                                                                                                                                                                               |
+| Where to find    | Candidates to test: city subreddits and Facebook groups, run clubs and parkrun, Apple Watch communities, Polish running and cycling media                                                                                                                                                                                                                          |
+| Would pay        | Once, like Fog of World (~$30) or MoveMap ($24.99 lifetime), not a subscription — assumption A7, untested; cloud backup now costs money to run, which a one-off price has to cover                                                                                                                                                                                 |
 
 Context (market-landscape, dated): iOS is ~36 % of mobile in Poland (StatCounter, Sept 2026), so
 this profile reaches about a third of the market until Android is proven; walking became Strava's #2
@@ -36,7 +37,8 @@ activity in 2025; cycling is Poland's most common sport (GUS 2025).
 
 ### Fit signals
 
-- iPhone, with Apple Health history (ideally Apple Watch)
+- iPhone, with outdoor walks, runs or rides recorded with a route in Apple Health (ideally Apple
+  Watch)
 - Two or more outings a week, on repeated routes
 - Lives and moves in one city most of the year
 - Prefers private to social; doesn't post workouts publicly

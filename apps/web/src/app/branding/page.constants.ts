@@ -35,7 +35,7 @@ export const POSITIONING =
  */
 export type FactCheck = { line: string; today: string; proposal: string };
 const WHAT_LEAVES_THE_PHONE =
-  'Since v0.8.0, opt-in Cloud backup (off by default) uploads tracks to the CityTurfer API. Map tiles load from OpenFreeMap, and GPS-gap estimates send the gap’s two end points to the OpenStreetMap router unless switched off in Info. Apple Health imports are uploaded only with a second, separate backup switch.';
+  'Since v0.8.0, opt-in Cloud backup (off by default) uploads tracks and the Home City choice to the CityTurfer API. Map tiles load from OpenFreeMap, and GPS-gap estimates send the gap’s two end points to the OpenStreetMap router unless switched off in Info. Apple Health imports are uploaded only with a second, separate backup switch.';
 export const POSITIONING_CHECK: FactCheck = {
   line: '“And your routes never leave your phone.”',
   today: WHAT_LEAVES_THE_PHONE,
@@ -92,7 +92,7 @@ export type IcpField = { label: string; text: string };
 export const ICP_PRIMARY = {
   name: 'The Apple Watch city walker',
   summary:
-    'Walks, runs or rides the same city streets every week, with years of history sitting unused in Apple Health.',
+    'Walks, runs or rides the same city streets every week, with outdoor workouts and routes sitting unused in Apple Health.',
   job: 'When I head out for my usual walk or run, I want to see my city fill in and my regular streets glow, so everyday movement feels like it adds up to something.',
   fields: [
     {
@@ -101,7 +101,7 @@ export const ICP_PRIMARY = {
     },
     {
       label: 'Moment',
-      text: 'Years of workouts nobody looks at; a new neighbourhood; wanting a reason to take a different street on the usual loop.',
+      text: 'Past workouts with routes that nobody looks at; a new neighbourhood; wanting a reason to take a different street on the usual loop.',
     },
     {
       label: 'Uses today',
@@ -109,7 +109,7 @@ export const ICP_PRIMARY = {
     },
     {
       label: 'Why CityTurfer',
-      text: 'Apple Health import shows years of turf on day one. Coming back counts, so home streets blaze. Turf never decays and no one takes it. Routes stay on the phone unless they turn on backup. (Planned, not built: using the app without an account. Today a new user signs in with an emailed code, which creates a CityTurfer account.)',
+      text: 'Apple Health import fills in your past outdoor workouts that have a route, on day one. Coming back counts, so home streets blaze. Turf never decays and no one takes it. Routes stay on the phone unless they turn on backup. (Planned, not built: using the app without an account. Today a new user signs in with an emailed code, which creates a CityTurfer account.)',
     },
     {
       label: 'What puts them off',
@@ -127,7 +127,7 @@ export const ICP_PRIMARY = {
 };
 
 export const ICP_FIT: readonly string[] = [
-  'iPhone, with Apple Health history (ideally Apple Watch)',
+  'iPhone, with outdoor walks, runs or rides recorded with a route in Apple Health (ideally Apple Watch)',
   'Two or more outings a week, on repeated routes',
   'Lives and moves in one city most of the year',
   'Prefers private to social; doesn’t post workouts publicly',
@@ -199,7 +199,7 @@ export const ICP_TESTS: readonly IcpTest[] = [
     bar: 'Privacy variant sign-ups ≥ glow variant',
   },
 ];
-export const ICP_DOC_URL = 'https://github.com/interdisciplinary-xyz/city-turfer/blob/scope/v0.9.0/docs/product/icp.md';
+export const ICP_DOC_URL = 'https://github.com/interdisciplinary-xyz/city-turfer/blob/main/docs/product/icp.md';
 
 export type Trait = { we: string; weAre: string; notName: string; weAreNot: string };
 export const PERSONALITY: readonly Trait[] = [
