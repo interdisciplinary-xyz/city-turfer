@@ -54,7 +54,7 @@ describe('sign-in with an e-mailed code', () => {
     expect((await signIn(EMAIL, code)).status).toBe(401);
   });
 
-  it('stores only a hash of the code', async () => {
+  it('never stores the code in plain text', async () => {
     await requestCode(EMAIL);
     const code = codeIn(h.mailer.lastTo(EMAIL)?.text);
     const rows = await h.db.execute(sql`SELECT value FROM auth_verifications`);
@@ -76,6 +76,59 @@ describe('sign-in with an e-mailed code', () => {
     expect((await signIn('nobody@example.com', '123456')).status).toBe(401);
   });
 
+  it('mails the same code again while it is valid, so asking for codes cannot void the one in use', async () => {
+    expect((await requestCode(EMAIL)).status).toBe(202);
+    const code = codeIn(h.mailer.lastTo(EMAIL)?.text);
+    // A stranger asks again at once, from another IP: one mail per address per minute.
+    const soon = await requestCode(EMAIL, { 'X-Real-IP': '198.51.100.66' });
+    expect(soon.status).toBe(429);
+    expect(Number(soon.headers.get('retry-after'))).toBeLessThanOrEqual(60);
+    expect(h.mailer.sent).toHaveLength(1);
+
+    h.clock.t += 61_000;
+    expect((await requestCode(EMAIL, { 'X-Real-IP': '198.51.100.66' })).status).toBe(202);
+    expect(h.mailer.sent).toHaveLength(2);
+    expect(codeIn(h.mailer.lastTo(EMAIL)?.text)).toBe(code);
+    expect((await signIn(EMAIL, code)).status).toBe(200);
+  });
+
+  it('mails a new code once the old one is burnt', async () => {
+    await requestCode(EMAIL);
+    const code = codeIn(h.mailer.lastTo(EMAIL)?.text);
+    const wrong = code === '000000' ? '111111' : '000000';
+    for (let i = 0; i < 3; i++) {
+      expect((await signIn(EMAIL, wrong)).status).toBe(401);
+    }
+    h.clock.t += 61_000;
+    await requestCode(EMAIL);
+    const next = codeIn(h.mailer.lastTo(EMAIL)?.text);
+    // A fresh code (with 3 tries of its own) replaced the burnt one, which no longer works.
+    expect((await signIn(EMAIL, next)).status).toBe(200);
+  });
+
+  it('reads a code sealed under another secret as no code (a rotation fails closed, no 500)', async () => {
+    const { codeCipher } = await import('../identity/better-auth');
+    const sealed = await codeCipher(TEST_AUTH_SECRET).encrypt('123456');
+    expect(sealed).not.toContain('123456');
+    expect(await codeCipher(TEST_AUTH_SECRET).decrypt(sealed)).toBe('123456');
+    expect(await codeCipher('z'.repeat(48)).decrypt(sealed)).toBe('');
+    expect(await codeCipher(TEST_AUTH_SECRET).decrypt('not-a-sealed-code')).toBe('');
+
+    // End to end: a code pending across a rotation is a wrong code, and a new request mails a new one.
+    await requestCode(EMAIL);
+    const old = codeIn(h.mailer.lastTo(EMAIL)?.text);
+    const rotated = new IdentityService(
+      createAuth({ db: h.db, secret: 'z'.repeat(48), baseURL: 'http://localhost:8787', mailer: h.mailer }),
+      new PostgresRateLimiter(h.db),
+      'z'.repeat(48),
+      h.clock
+    );
+    await expect(rotated.signIn(EMAIL, old, '203.0.113.7')).rejects.toMatchObject({ code: 'auth.invalid-code' });
+    await rotated.requestCode(EMAIL, '203.0.113.7');
+    const fresh = codeIn(h.mailer.lastTo(EMAIL)?.text);
+    await expect(rotated.signIn(EMAIL, fresh, '203.0.113.7')).resolves.toMatchObject({ user: { email: EMAIL } });
+  });
+
   it('rejects an invalid e-mail with 400', async () => {
     expect((await requestCode('not-an-email')).status).toBe(400);
   });
@@ -83,6 +136,7 @@ describe('sign-in with an e-mailed code', () => {
   it('limits codes to 3 per e-mail and 30 per IP per 10 minutes (429 + Retry-After)', async () => {
     for (let i = 0; i < 3; i++) {
       expect((await requestCode(EMAIL)).status).toBe(202);
+      h.clock.t += 61_000;
     }
     const limited = await requestCode(EMAIL);
     expect(limited.status).toBe(429);
@@ -239,6 +293,7 @@ describe('sessions', () => {
 
   it('a second sign-in with the same e-mail is the same account', async () => {
     const first = await h.signIn(EMAIL);
+    h.clock.t += 61_000;
     const second = await h.signIn(EMAIL, '198.51.100.9');
     const id = async (token: string) => (await (await h.call('GET', '/v1/me', { token })).json()).id;
     expect(await id(first)).toBe(await id(second));

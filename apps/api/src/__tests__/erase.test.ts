@@ -54,7 +54,8 @@ describe('DELETE /v1/me', () => {
       token,
       body: { cityId: 'pl-warsaw', chosenAt: '2026-10-19T07:00:00Z' },
     });
-    // A pending code for the same address.
+    // A pending code for the same address (a minute later: one mail per address per minute).
+    h.clock.t += 61_000;
     await h.call('POST', '/v1/auth/codes', { token: null, body: { email: 'ania@example.com' } });
 
     // Another user's data must survive.
@@ -74,6 +75,7 @@ describe('DELETE /v1/me', () => {
     expect((await rowsOf('admin')).activities).toBe(1);
 
     // Signing in again starts a new, empty account.
+    h.clock.t += 61_000;
     const again = await h.signIn('ania@example.com', '198.51.100.2');
     const fresh = await (await h.call('GET', '/v1/me', { token: again })).json();
     expect(fresh.id).not.toBe(me.id);

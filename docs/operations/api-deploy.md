@@ -64,10 +64,10 @@ that row's token signed with `BETTER_AUTH_SECRET` (`<token>.<HMAC>`), and only t
 accepted (`bearer({ requireSignature: true })`). To sign one user out everywhere, delete their rows
 (`DELETE FROM auth_sessions WHERE user_id = '<userId>'`); to sign everyone out, delete all rows.
 Rotating `BETTER_AUTH_SECRET` also invalidates every token (their signatures no longer match), and
-it resets the rate-limit windows; after a suspected leak of the secret or the database, do both.
-Follow-up, not done: session tokens are still stored in plain text, so a database dump together with
-the secret is enough to take over sessions; storing a hash of the token needs Better Auth support or
-our own session lookup.
+it resets the rate-limit windows and voids pending sign-in codes (they are encrypted with it); after
+a suspected leak of the secret or the database, do both. Follow-up, not done: session tokens are
+still stored in plain text, so a database dump together with the secret is enough to take over
+sessions; storing a hash of the token needs Better Auth support or our own session lookup.
 
 **Preview deployments MUST use their own Neon branch, never the production database** (a preview has
 test settings such as `AUTH_FIXED_CODE`; data, sessions and exports must not mix). The local dev

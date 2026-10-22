@@ -1,3 +1,5 @@
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
+
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { betterAuth } from 'better-auth/minimal';
 import { bearer } from 'better-auth/plugins/bearer';
@@ -24,8 +26,9 @@ export const CODE_TTL_S = 10 * 60;
 export interface AuthConfig {
   db: Db;
   /**
-   * BETTER_AUTH_SECRET: signs the bearer tokens and keys the rate-limit HMACs (≥ 32 characters).
-   * Rotating it signs everyone out and resets the rate-limit counters.
+   * BETTER_AUTH_SECRET (≥ 32 characters): signs the bearer tokens, encrypts pending codes and keys
+   * the rate-limit HMACs. Rotating it signs everyone out, voids pending codes and resets the
+   * rate-limit counters.
    */
   secret: string;
   /** Public base URL of the API (Better Auth wants one; no callbacks are used). */
@@ -77,7 +80,11 @@ export function createAuth(config: AuthConfig) {
         otpLength: 6,
         expiresIn: CODE_TTL_S,
         allowedAttempts: 3,
-        storeOTP: 'hashed',
+        // A new request while a code is still valid (and not burnt) mails the same code again
+        // instead of replacing it, so a stranger asking for codes cannot void the one the user is
+        // typing. `reuse` needs a recoverable code, hence encrypted rather than hashed.
+        resendStrategy: 'reuse',
+        storeOTP: codeCipher(config.secret),
         generateOTP: ({ email }) => (config.fixedCode && isTestEmail(email) ? config.fixedCode : undefined),
         sendVerificationOTP: async ({ email, otp }) => {
           if (isTestEmail(email)) {
@@ -95,3 +102,33 @@ export function createAuth(config: AuthConfig) {
 }
 
 export type Auth = ReturnType<typeof createAuth>;
+
+/**
+ * AES-256-GCM for pending sign-in codes (key derived from BETTER_AUTH_SECRET). Decryption fails
+ * closed: a value it cannot open (tampered, or from before a secret rotation) reads as an empty
+ * code, which Better Auth treats as "no code to reuse" on resend and as a wrong code on sign-in.
+ */
+export function codeCipher(secret: string): {
+  encrypt: (otp: string) => Promise<string>;
+  decrypt: (stored: string) => Promise<string>;
+} {
+  const key = createHash('sha256').update(`cityturfer:sign-in-code:${secret}`).digest();
+  return {
+    encrypt: (otp) => {
+      const iv = randomBytes(12);
+      const cipher = createCipheriv('aes-256-gcm', key, iv);
+      const sealed = Buffer.concat([cipher.update(otp, 'utf8'), cipher.final()]);
+      return Promise.resolve([iv, cipher.getAuthTag(), sealed].map((b) => b.toString('base64url')).join('.'));
+    },
+    decrypt: (stored) => {
+      try {
+        const [iv, tag, sealed] = stored.split('.').map((part) => Buffer.from(part, 'base64url'));
+        const decipher = createDecipheriv('aes-256-gcm', key, iv);
+        decipher.setAuthTag(tag);
+        return Promise.resolve(Buffer.concat([decipher.update(sealed), decipher.final()]).toString('utf8'));
+      } catch {
+        return Promise.resolve('');
+      }
+    },
+  };
+}

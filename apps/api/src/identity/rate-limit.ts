@@ -11,7 +11,8 @@ export interface Limit {
   windowMs: number;
 }
 
-const TEN_MINUTES = 10 * 60_000;
+const ONE_MINUTE = 60_000;
+const TEN_MINUTES = 10 * ONE_MINUTE;
 const ONE_DAY = 24 * 60 * 60_000;
 
 /**
@@ -24,8 +25,13 @@ const ONE_DAY = 24 * 60 * 60_000;
  * 10-minute windows alone would allow about 1,300 guesses a day. With 10 failed sign-ins a day an
  * address takes at most 10 guesses a day against the 10^6 codes (about 0.4 % a year). The price: a
  * stranger who knows the address can block its sign-in for up to a day.
+ *
+ * Mails per address: at most one a minute and 10 a day (inbox spam, Brevo cost). A request while a
+ * code is still valid mails that same code (`resendStrategy: 'reuse'`), so asking for codes never
+ * voids the one the user already has.
  */
 export const AUTH_LIMITS = {
+  codesPerEmailPerMinute: { max: 1, windowMs: ONE_MINUTE },
   codesPerEmail: { max: 3, windowMs: TEN_MINUTES },
   codesPerEmailPerDay: { max: 10, windowMs: ONE_DAY },
   codesPerIp: { max: 30, windowMs: TEN_MINUTES },

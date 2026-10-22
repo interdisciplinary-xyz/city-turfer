@@ -23,6 +23,7 @@ export class IdentityService {
   /** RequestSignInCode: always "accepted" (unknown e-mails too: the account is made on sign-in). */
   async requestCode(email: string, ip: string): Promise<void> {
     await this.limit('codes:ip', ipBucket(ip), AUTH_LIMITS.codesPerIp);
+    await this.limit('codes-minute:email', email, AUTH_LIMITS.codesPerEmailPerMinute);
     await this.limit('codes:email', email, AUTH_LIMITS.codesPerEmail);
     await this.limit('codes-day:email', email, AUTH_LIMITS.codesPerEmailPerDay);
     // A mail failure is logged (without the address) by createAuth's onMailError and answers 202
