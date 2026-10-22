@@ -261,7 +261,14 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     if (capped) {
       diagnostics.log('maintenance', { job: 'cap-gap-moving-time-v1', ...capped });
     }
-    const zoned = await runOnce(db, 'activity-time-zones-v1', () => activityLog.assignMissingTimeZones.execute());
+    // Throws while the phone's zone can't be read: not marked done (retried next launch), and the
+    // jobs after it still run.
+    const zoned = await runOnce(db, 'activity-time-zones-v1', () => activityLog.assignMissingTimeZones.execute()).catch(
+      (e) => {
+        diagnostics.log('task-error', { code: 'maintenance', message: String(e) });
+        return null;
+      }
+    );
     if (zoned) {
       diagnostics.log('maintenance', { job: 'activity-time-zones-v1', ...zoned });
     }

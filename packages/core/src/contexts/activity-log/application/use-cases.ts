@@ -1,6 +1,7 @@
 import {
   type ActivityType,
   type Clock,
+  DomainError,
   type GeoPoint,
   segmentCount,
   splitAtGaps,
@@ -171,7 +172,10 @@ export class RestoreActivity {
         renamedAt: input.renamedAt,
         now: this.d.clock.now(),
       });
-    } catch {
+    } catch (e) {
+      if (!(e instanceof DomainError)) {
+        throw e; // a bug, not bad content: fail loudly, so the item is not declined for good
+      }
       return 'invalid'; // content this version can't hold (e.g. a name it doesn't accept)
     }
     const gaps =
@@ -184,12 +188,18 @@ export class RestoreActivity {
   }
 }
 
-/** Data repair: Activities saved before the time zone was kept get the phone's current one, once. */
+/**
+ * Data repair: Activities saved before the time zone was kept get the phone's current one, once.
+ * Throws when the phone's zone can't be read, so a run-once job is not marked done and retries.
+ */
 export class AssignMissingTimeZones {
   constructor(private readonly d: ActivityLogDeps) {}
   async execute(): Promise<{ checked: number; assigned: number }> {
     const zone = zoneOf(this.d);
-    const ids = zone ? await this.d.activities.idsWithoutTimeZone() : [];
+    if (!zone) {
+      throw new Error('activity-log.time-zone-unknown');
+    }
+    const ids = await this.d.activities.idsWithoutTimeZone();
     let assigned = 0;
     for (const id of ids) {
       const a = await this.d.activities.get(id);
