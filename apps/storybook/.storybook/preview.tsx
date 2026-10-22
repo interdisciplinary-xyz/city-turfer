@@ -49,6 +49,7 @@ const preview: Preview = {
         scheme={context.globals.scheme === 'light' ? 'light' : 'dark'}
         locale={(context.globals.locale as Locale) ?? 'en'}
         web={context.title.startsWith('Website/')}
+        pageLoaded={context.parameters.pageLoaded !== false}
       >
         <Story />
       </Frame>
