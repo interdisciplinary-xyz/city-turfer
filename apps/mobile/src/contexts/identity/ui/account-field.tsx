@@ -5,6 +5,7 @@ import { Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 import { usePalette } from '@/ui-kit/theme';
 
 import type { AccountFieldProps } from './account-settings.constants';
+import { useAnnounce } from './use-announce';
 
 /** A labelled text field with its error (announced) or hint underneath; `code` for the 6-digit codes. */
 export const AccountField = forwardRef<TextInput, AccountFieldProps>(function AccountField(
@@ -12,6 +13,7 @@ export const AccountField = forwardRef<TextInput, AccountFieldProps>(function Ac
   ref
 ) {
   const p = usePalette();
+  useAnnounce(error);
   const note = error ?? hint ?? null;
   return (
     <View style={s.wrap}>

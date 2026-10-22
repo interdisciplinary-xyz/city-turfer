@@ -11,7 +11,6 @@ import { usePalette } from '@/ui-kit/theme';
 import { AccountField } from './account-field';
 import {
   CODE_COPY,
-  failureText,
   FIELD_ERROR_TEXT,
   INVALID_CODE,
   PASSWORD_COPY,
@@ -19,6 +18,7 @@ import {
 } from './account-settings.constants';
 import { useAccountActions, useSubmit } from './hooks';
 import type { PasswordStep } from './password-flow.constants';
+import { useAnnounce } from './use-announce';
 
 /** The shared rule for a draft password: null when it can be saved. */
 function ruleOf(draft: string) {
@@ -39,7 +39,8 @@ export function PasswordFlow({ action, onDone }: PasswordFlowProps) {
   const { auth } = useApp();
   const email = auth.status === 'signed-in' ? auth.user.email : '';
   const actions = useAccountActions();
-  const { busy, error, run } = useSubmit();
+  const { busy, error, run, refused, waiting } = useSubmit();
+  useAnnounce(error);
   const [step, setStep] = useState<PasswordStep>('start');
   const [code, setCode] = useState('');
   const [draft, setDraft] = useState('');
@@ -53,9 +54,12 @@ export function PasswordFlow({ action, onDone }: PasswordFlowProps) {
 
   const sendCode = () =>
     run(async () => {
+      if (waiting) {
+        return null;
+      }
       const r = await actions.requestStepUpCode();
       if (r.kind !== 'sent') {
-        return failureText(r);
+        return refused(r);
       }
       setCode('');
       setStep('code');
@@ -77,7 +81,7 @@ export function PasswordFlow({ action, onDone }: PasswordFlowProps) {
         case 'field-error':
           return FIELD_ERROR_TEXT[r.code];
         default:
-          return failureText(r);
+          return refused(r);
       }
     });
 
@@ -114,6 +118,7 @@ export function PasswordFlow({ action, onDone }: PasswordFlowProps) {
             label={CODE_COPY.sendCode}
             color={ACCENT}
             busy={busy}
+            disabled={waiting}
             onPress={() => void sendCode()}
           />
         </>
@@ -180,11 +185,12 @@ export function PasswordFlow({ action, onDone }: PasswordFlowProps) {
             testID='account-password-resend'
             accessibilityRole='button'
             accessibilityLabel={CODE_COPY.resend}
+            accessibilityState={{ disabled: busy || waiting }}
             onPress={() => void sendCode()}
-            disabled={busy}
+            disabled={busy || waiting}
             style={s.linkTarget}
           >
-            <Text style={[s.link, { color: p.accentText }]}>{CODE_COPY.resend}</Text>
+            <Text style={[s.link, { color: busy || waiting ? p.muted : p.accentText }]}>{CODE_COPY.resend}</Text>
           </Pressable>
         </>
       )}

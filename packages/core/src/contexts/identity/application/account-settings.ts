@@ -78,8 +78,22 @@ function field<T>(rule: () => T): { ok: T } | FieldRefused {
 
 const codeOf = (raw: string) => raw.replace(/\s+/g, '');
 
-/** Keeps the account's e-mail in step on this phone: the profile map and the stored session. */
-async function followEmail(at: SignedInAccount, email: string): Promise<void> {
+/**
+ * Keeps the account's e-mail in step on this phone: the profile map and the stored session. The
+ * stores are read again right before writing (a request may have run in between): when nobody is
+ * signed in any more, or another account is, nothing is written, so a sign-out during the request
+ * never puts the old session back into the keychain.
+ */
+async function followEmail(d: IdentityDeps, before: SignedInAccount, email: string): Promise<void> {
+  const at = await signedInAccount(d);
+  if (
+    !at ||
+    at.entry.accountId !== before.entry.accountId ||
+    at.entry.profileId !== before.entry.profileId ||
+    at.session.account.id !== before.session.account.id
+  ) {
+    return;
+  }
   if (email === at.entry.email && email === at.session.account.email) {
     return;
   }
@@ -113,7 +127,7 @@ export class GetAccountSettings {
       return r;
     }
     await cacheName(this.d, p.at, r.me.name);
-    await followEmail(p.at, r.me.email);
+    await followEmail(this.d, p.at, r.me.email);
     return {
       kind: 'account',
       email: r.me.email,
@@ -235,7 +249,10 @@ export class ConfirmEmailChange {
     if (r.kind !== 'changed') {
       return r;
     }
-    await followEmail(at, r.email);
+    // Best effort: the server has made the change, so a failed write here (e.g. the keychain) must
+    // not read as a failure (a retry would then get "code didn't work"). The next
+    // GetAccountSettings follows the e-mail again.
+    await followEmail(this.d, at, r.email).catch(() => undefined);
     const user = await new GetCurrentUser(this.d).execute();
     return user ? { kind: 'changed', user } : { kind: 'not-signed-in' };
   }

@@ -45,7 +45,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // Demo account only: fills in Gdańsk demo data on first use; screens refresh as it lands.
       void prepareDemoAccount(user, container).catch(() => undefined);
       if (user.accountId) {
-        // Best effort: the account's name (and an email changed on the web) from the server.
+        // Best effort: the account's name (and an email changed on the web) from the server. A
+        // sign-out meanwhile is safe: the use case re-reads the stores before writing, and
+        // `updateUser` only touches the same signed-in user.
         void identity.accountSettings
           .execute()
           .then((r) => (r.kind === 'account' ? identity.currentUser.execute() : null))

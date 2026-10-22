@@ -238,6 +238,7 @@ export function setup(
   let credentials: AccountSession | null = null;
   let profiles: ReturnType<AccountProfiles['toState']> | null = opts.profiles ?? null;
   let recording = false;
+  let keychainBroken = false;
   const names = new Map<string, string | null>();
   const sessions: SessionStore = {
     read: async () => session,
@@ -246,7 +247,12 @@ export function setup(
   };
   const credentialStore: CredentialStore = {
     read: async () => credentials,
-    save: async (s) => void (credentials = s),
+    save: async (s) => {
+      if (keychainBroken) {
+        throw new Error('keychain write failed');
+      }
+      credentials = s;
+    },
     clear: async () => void (credentials = null),
   };
   const profileStore: AccountProfileStore = {
@@ -291,5 +297,7 @@ export function setup(
     forgetProfiles: () => void (profiles = null),
     /** Simulates a keychain that lost the session (e.g. a restored iPhone). */
     forgetCredentials: () => void (credentials = null),
+    /** Simulates a keychain that refuses writes (reads still work). */
+    breakKeychain: (broken = true) => void (keychainBroken = broken),
   };
 }

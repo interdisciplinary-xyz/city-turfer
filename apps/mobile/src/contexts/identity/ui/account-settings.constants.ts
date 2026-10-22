@@ -164,7 +164,28 @@ export const FIELD_ERROR_TEXT: Record<AccountFieldError, string> = {
   'password.too-long': `Use at most ${PASSWORD_MAX} characters.`,
 };
 
+/** How often a Retry-After wait is checked again (timers pause in the background). */
+export const COOLDOWN_CHECK_MS = 60_000;
+
 export const INVALID_CODE = 'That code didn’t work. Check the latest email, or send a new code.';
+
+const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? '' : 's'}`;
+
+/**
+ * How long to wait, spelled out: seconds under a minute, minutes under an hour, otherwise hours
+ * (always rounded up, so the Turfer never tries a moment too early).
+ */
+export function waitText(retryAfterS: number): string {
+  const s = Math.max(1, Math.ceil(retryAfterS));
+  if (s < 60) {
+    return plural(s, 'second');
+  }
+  const min = Math.ceil(s / 60);
+  if (min < 60) {
+    return plural(min, 'minute');
+  }
+  return plural(Math.ceil(s / 3600), 'hour');
+}
 
 /** Why an account request failed, in plain words (nothing was changed or queued). */
 export function failureText(f: AccountFailure | NotSignedIn | { kind: 'unavailable' }): string {
@@ -173,7 +194,7 @@ export function failureText(f: AccountFailure | NotSignedIn | { kind: 'unavailab
       return 'No connection. Changes to your account need the internet; nothing was changed.';
     case 'rate-limited':
       return f.retryAfterS
-        ? `Too many tries. Wait ${Math.max(1, Math.ceil(f.retryAfterS / 60))} min and try again.`
+        ? `Too many tries. Wait ${waitText(f.retryAfterS)} and try again.`
         : 'Too many tries. Wait a few minutes and try again.';
     case 'auth':
     case 'not-signed-in':

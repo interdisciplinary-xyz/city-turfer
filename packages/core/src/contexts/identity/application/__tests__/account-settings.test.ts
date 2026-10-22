@@ -32,6 +32,37 @@ describe('Me › Account: what it shows', () => {
     expect(t.credentials()?.account.email).toBe('ola@new.example');
   });
 
+  it('a sign-out while the server answers: the old session is not written back', async () => {
+    const t = await signedIn();
+    t.gateway.accounts.get('u1')!.email = 'ola@new.example';
+    const fetchMe = t.gateway.fetchMe.bind(t.gateway);
+    t.gateway.fetchMe = async (token) => {
+      const r = await fetchMe(token);
+      await t.api.signOut.execute();
+      return r;
+    };
+    await t.api.accountSettings.execute();
+    expect(t.session()).toBeNull();
+    expect(t.credentials()).toBeNull();
+    expect(t.profiles()?.entries[0].email).toBe('ola@example.com');
+  });
+
+  it('another account signed in while the server answers: it is left alone', async () => {
+    const t = await signedIn();
+    t.gateway.accounts.get('u1')!.email = 'ola@new.example';
+    const fetchMe = t.gateway.fetchMe.bind(t.gateway);
+    t.gateway.fetchMe = async (token) => {
+      const r = await fetchMe(token);
+      t.gateway.fetchMe = fetchMe;
+      await t.api.signOut.execute();
+      await t.api.verifyCode.execute('kuba@example.com', '000000');
+      return r;
+    };
+    await t.api.accountSettings.execute();
+    expect(t.credentials()?.account).toEqual({ id: 'u2', email: 'kuba@example.com' });
+    expect(t.profiles()?.entries.map((e) => e.email)).toEqual(['ola@example.com', 'kuba@example.com']);
+  });
+
   it('a local profile: only its name, kept on this phone', async () => {
     const t = setup({ names: true });
     expect(await t.api.accountSettings.execute()).toEqual({ kind: 'not-signed-in' });
@@ -121,6 +152,22 @@ describe('changing the email', () => {
     // The same profile opens with the new address.
     await t.api.signOut.execute();
     expect(await t.api.verifyCode.execute('ola@new.example', '000000')).toMatchObject({ user: { id: 'a-u1' } });
+  });
+
+  it('the server changed it but the keychain write failed: still changed, the next refresh follows', async () => {
+    const t = await signedIn();
+    await t.api.requestStepUpCode.execute();
+    await t.api.requestEmailChange.execute('ola@new.example', STEP_UP_CODE);
+    t.breakKeychain();
+    expect(await t.api.confirmEmailChange.execute('ola@new.example', NEW_INBOX_CODE)).toMatchObject({
+      kind: 'changed',
+      user: { id: 'a-u1' },
+    });
+    expect(t.credentials()?.account.email).toBe('ola@example.com');
+    t.breakKeychain(false);
+    await t.api.accountSettings.execute();
+    expect(t.credentials()?.account.email).toBe('ola@new.example');
+    expect(t.profiles()?.entries[0].email).toBe('ola@new.example');
   });
 
   it('checks the new address first, and a step-up code works once', async () => {

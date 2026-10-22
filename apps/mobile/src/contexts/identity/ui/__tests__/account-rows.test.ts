@@ -2,7 +2,7 @@ import type { User } from '@/contexts/identity';
 import { shownName } from '@/ui-kit/format';
 
 import { accountRows } from '../account-rows';
-import { failureText, FIELD_ERROR_TEXT, VALUE } from '../account-settings.constants';
+import { failureText, FIELD_ERROR_TEXT, VALUE, waitText } from '../account-settings.constants';
 
 const account: User = { id: 'a-u1' as User['id'], email: 'ola@example.com', displayName: 'ola', accountId: 'u1' };
 const local: User = { id: 'demo' as User['id'], email: 'demo@cityturfer.com', displayName: 'Ola', name: 'Ola' };
@@ -85,9 +85,28 @@ describe('account copy', () => {
 
   it('every field rule and failure has plain words', () => {
     expect(Object.values(FIELD_ERROR_TEXT).every((t) => t.length > 0)).toBe(true);
-    expect(failureText({ kind: 'rate-limited', retryAfterS: 90 })).toBe('Too many tries. Wait 2 min and try again.');
+    expect(failureText({ kind: 'rate-limited', retryAfterS: 90 })).toBe(
+      'Too many tries. Wait 2 minutes and try again.'
+    );
+    expect(failureText({ kind: 'rate-limited', retryAfterS: 82_800 })).toBe(
+      'Too many tries. Wait 23 hours and try again.'
+    );
     expect(failureText({ kind: 'rate-limited', retryAfterS: null })).toMatch(/few minutes/);
     expect(failureText({ kind: 'offline' })).toMatch(/nothing was changed/);
     expect(failureText({ kind: 'not-signed-in' })).toBe(failureText({ kind: 'auth' }));
+  });
+
+  it('a wait is said in seconds under a minute, minutes under an hour, otherwise hours (rounded up)', () => {
+    expect(waitText(0)).toBe('1 second');
+    expect(waitText(1)).toBe('1 second');
+    expect(waitText(30)).toBe('30 seconds');
+    expect(waitText(59.2)).toBe('1 minute');
+    expect(waitText(60)).toBe('1 minute');
+    expect(waitText(61)).toBe('2 minutes');
+    expect(waitText(3540)).toBe('59 minutes');
+    expect(waitText(3599)).toBe('1 hour');
+    expect(waitText(3600)).toBe('1 hour');
+    expect(waitText(3601)).toBe('2 hours');
+    expect(waitText(82_800)).toBe('23 hours');
   });
 });

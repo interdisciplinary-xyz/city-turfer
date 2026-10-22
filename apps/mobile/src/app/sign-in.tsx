@@ -14,6 +14,7 @@ import {
 
 import { ACCENT, DARK } from '@/constants/colors';
 import type { AccountFailure } from '@/contexts/identity';
+import { waitText } from '@/contexts/identity/ui/account-settings.constants';
 import { useApp } from '@/ui-kit/app-context';
 import { Button } from '@/ui-kit/components';
 import { useLightStatusBar } from '@/ui-kit/use-light-status-bar';
@@ -28,7 +29,7 @@ function failureText(f: AccountFailure | { kind: 'accounts-unavailable' }): stri
   switch (f.kind) {
     case 'rate-limited':
       return f.retryAfterS
-        ? `Too many tries. Wait ${Math.max(1, Math.ceil(f.retryAfterS / 60))} min and try again.`
+        ? `Too many tries. Wait ${waitText(f.retryAfterS)} and try again.`
         : 'Too many tries. Wait a few minutes and try again.';
     case 'offline':
       return 'No connection. Signing in needs the internet once; after that the app works offline.';

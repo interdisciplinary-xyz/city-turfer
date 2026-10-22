@@ -13,12 +13,12 @@ import {
   CODE_COPY,
   EMAIL_COPY,
   type EmailChangeFlowProps,
-  failureText,
   FIELD_ERROR_TEXT,
   INVALID_CODE,
 } from './account-settings.constants';
 import type { EmailChangeStep } from './email-change-flow.constants';
 import { useAccountActions, useSubmit } from './hooks';
+import { useAnnounce } from './use-announce';
 
 /** The shared rule's message for the new address; `invalid` only once the Turfer tried to send. */
 function problemOf(draft: string, current: string, tried: boolean): string | null {
@@ -44,7 +44,8 @@ export function EmailChangeFlow({ onDone }: EmailChangeFlowProps) {
   const { auth } = useApp();
   const current = auth.status === 'signed-in' ? auth.user.email : '';
   const actions = useAccountActions();
-  const { busy, error, setError, run } = useSubmit();
+  const { busy, error, setError, run, refused, waiting } = useSubmit();
+  useAnnounce(error);
   const [step, setStep] = useState<EmailChangeStep>('start');
   const [stepUpCode, setStepUpCode] = useState('');
   const [draft, setDraft] = useState('');
@@ -57,9 +58,12 @@ export function EmailChangeFlow({ onDone }: EmailChangeFlowProps) {
 
   const sendStepUp = () =>
     run(async () => {
+      if (waiting) {
+        return null;
+      }
       const r = await actions.requestStepUpCode();
       if (r.kind !== 'sent') {
-        return failureText(r);
+        return refused(r);
       }
       setStepUpCode('');
       setStep('current-code');
@@ -79,7 +83,7 @@ export function EmailChangeFlow({ onDone }: EmailChangeFlowProps) {
   const sendToNew = () =>
     run(async () => {
       setTried(true);
-      if (problemOf(draft, current, true)) {
+      if (waiting || problemOf(draft, current, true)) {
         return null;
       }
       const r = await actions.requestEmailChange(draft, stepUpCode);
@@ -97,7 +101,7 @@ export function EmailChangeFlow({ onDone }: EmailChangeFlowProps) {
         case 'field-error':
           return FIELD_ERROR_TEXT[r.code];
         default:
-          return failureText(r);
+          return refused(r);
       }
     });
 
@@ -115,7 +119,7 @@ export function EmailChangeFlow({ onDone }: EmailChangeFlowProps) {
         case 'field-error':
           return FIELD_ERROR_TEXT[r.code];
         default:
-          return failureText(r);
+          return refused(r);
       }
     });
 
@@ -131,16 +135,17 @@ export function EmailChangeFlow({ onDone }: EmailChangeFlowProps) {
       {t}
     </Text>
   );
-  const link = (label: string, testID: string, onPress: () => void) => (
+  const link = (label: string, testID: string, onPress: () => void, disabled = busy) => (
     <Pressable
       testID={testID}
       accessibilityRole='button'
       accessibilityLabel={label}
+      accessibilityState={{ disabled }}
       onPress={onPress}
-      disabled={busy}
+      disabled={disabled}
       style={s.linkTarget}
     >
-      <Text style={[s.link, { color: p.accentText }]}>{label}</Text>
+      <Text style={[s.link, { color: disabled ? p.muted : p.accentText }]}>{label}</Text>
     </Pressable>
   );
   const errorText = error && (
@@ -169,6 +174,7 @@ export function EmailChangeFlow({ onDone }: EmailChangeFlowProps) {
             label={CODE_COPY.sendCode}
             color={ACCENT}
             busy={busy}
+            disabled={waiting}
             onPress={() => void sendStepUp()}
           />
         </>
@@ -194,7 +200,7 @@ export function EmailChangeFlow({ onDone }: EmailChangeFlowProps) {
             disabled={!stepUpCode.trim()}
             onPress={toNewEmail}
           />
-          {link(CODE_COPY.resend, 'account-email-resend-current', () => void sendStepUp())}
+          {link(CODE_COPY.resend, 'account-email-resend-current', () => void sendStepUp(), busy || waiting)}
         </>
       )}
       {step === 'new-email' && (
@@ -226,7 +232,7 @@ export function EmailChangeFlow({ onDone }: EmailChangeFlowProps) {
             label={EMAIL_COPY.sendNew}
             color={ACCENT}
             busy={busy}
-            disabled={!draft.trim() || problem != null}
+            disabled={waiting || !draft.trim() || problem != null}
             onPress={() => void sendToNew()}
           />
         </>
