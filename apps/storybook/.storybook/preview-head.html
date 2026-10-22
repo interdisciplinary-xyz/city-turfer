@@ -1,16 +1,56 @@
-<!-- Brand typefaces for the stories. Names match FONT_FAMILY in @cityturfer/brand (the PostScript
-     names the native app uses). Relative URLs, so it also works under /storybook. -->
+<!-- Brand typefaces for the stories ("Street Plate"). Display and numeric names match FONT_FAMILY in
+     @cityturfer/brand (the PostScript names the native app uses); 'Barlow' is BODY_FONT_FAMILY, the
+     website's body face (web only: the app's body text stays on the system font). Relative URLs, so
+     it also works under /storybook. -->
 <style>
   @font-face {
-    font-family: 'ArchivoExpanded-Black';
-    src: url('./fonts/ArchivoExpanded-Black.woff2') format('woff2');
+    font-family: 'BigShouldersDisplay-Black';
+    src: url('./fonts/BigShouldersDisplay-Black.woff2') format('woff2');
     font-weight: 900;
     font-display: swap;
   }
   @font-face {
-    font-family: 'Archivo-ExtraBold';
-    src: url('./fonts/Archivo-ExtraBold.woff2') format('woff2');
+    font-family: 'BarlowSemiCondensed-ExtraBold';
+    src: url('./fonts/BarlowSemiCondensed-ExtraBold.woff2') format('woff2');
     font-weight: 800;
     font-display: swap;
+  }
+  @font-face {
+    font-family: 'Barlow';
+    src: url('./fonts/Barlow-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Barlow';
+    src: url('./fonts/Barlow-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Barlow';
+    src: url('./fonts/Barlow-SemiBold.woff2') format('woff2');
+    font-weight: 600;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Barlow';
+    src: url('./fonts/Barlow-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-display: swap;
+  }
+  /* Docs pages and plain HTML in the preview read in the website's body face. React Native Text
+     sets its own (system) family, as in the app. */
+  body {
+    font-family:
+      'Barlow',
+      -apple-system,
+      BlinkMacSystemFont,
+      'SF Pro Text',
+      'Segoe UI',
+      Roboto,
+      'Helvetica Neue',
+      Arial,
+      sans-serif;
   }
 </style>

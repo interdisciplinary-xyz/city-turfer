@@ -8,6 +8,8 @@ import { createReadStream } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
+import { APP_HEADER_SCRIPT, APP_HEADER_STYLES, appHeaderMarkup, appHeaderStylesheet } from './app-header-assets.mjs';
+
 export const STORYBOOK_PREFIX = '/storybook';
 
 const CONTENT_TYPES = {
@@ -69,12 +71,25 @@ export function withToolbar(html) {
 }
 
 /**
+ * Storybook's index.html under the site's header (the same bar as /en): the header first in the
+ * body, and Storybook's UI (#root) pinned to the space below it.
+ */
+export function withAppHeader(html) {
+  const layout = '<style>#root { position: fixed; inset: var(--header-h) 0 0 0; }</style>';
+  return html
+    .replace('</head>', `${appHeaderStylesheet()}${layout}</head>`)
+    .replace(/<body([^>]*)>/, (body) => `${body}${appHeaderMarkup()}`);
+}
+
+/**
  * Wraps a request handler: Storybook paths are served from `root`; everything else goes to `next`.
  *
  * - `isLocal(req)` says whether the request comes from this machine (the dev toolbar's
  *   `isLocalClient`); only then is the dev toolbar injected into index.html and served.
  * - `loadToolbar()` returns `{ js, css }`; defaults to ./swagger-toolbar.mjs (the same bundle the
  *   Swagger page uses), loaded on first use.
+ * - `loadAppHeader()` returns `{ js, css }` for the site's header; defaults to
+ *   ./app-header-assets.mjs.
  */
 export function withStorybook(
   next,
@@ -83,6 +98,7 @@ export function withStorybook(
     isLocal = () => false,
     webRoot = process.cwd(),
     loadToolbar = async () => (await import('./swagger-toolbar.mjs')).toolbarAssets(webRoot),
+    loadAppHeader = async () => (await import('./app-header-assets.mjs')).appHeaderAssets(webRoot),
   } = {}
 ) {
   const absRoot = path.resolve(root);
@@ -98,6 +114,17 @@ export function withStorybook(
       res.end();
       return undefined;
     }
+    const headerAsset = [APP_HEADER_SCRIPT, APP_HEADER_STYLES].find((name) => file === path.join(absRoot, name));
+    if (headerAsset !== undefined) {
+      const assets = await loadAppHeader();
+      const isScript = headerAsset === APP_HEADER_SCRIPT;
+      res.writeHead(200, {
+        'Content-Type': isScript ? 'text/javascript; charset=utf-8' : 'text/css; charset=utf-8',
+        'Cache-Control': 'no-store',
+      });
+      res.end(isScript ? assets.js : assets.css);
+      return undefined;
+    }
     const toolbarAsset = [TOOLBAR_SCRIPT, TOOLBAR_STYLES].find((name) => file === path.join(absRoot, name));
     if (toolbarAsset !== undefined && isLocal(req)) {
       const assets = await loadToolbar();
@@ -110,9 +137,10 @@ export function withStorybook(
       return undefined;
     }
     const info = await stat(file).catch(() => null);
-    if (info?.isFile() && file === path.join(absRoot, 'index.html') && isLocal(req)) {
+    if (info?.isFile() && file === path.join(absRoot, 'index.html')) {
+      const html = withAppHeader(await readFile(file, 'utf8'));
       res.writeHead(200, { 'Content-Type': contentTypeOf(file), 'Cache-Control': 'no-store' });
-      res.end(withToolbar(await readFile(file, 'utf8')));
+      res.end(isLocal(req) ? withToolbar(html) : html);
       return undefined;
     }
     if (!info?.isFile()) {

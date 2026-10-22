@@ -2,19 +2,19 @@
 
 import { useEffect, useRef } from 'react';
 
-import { LOCKUP_SELECTOR, SCROLLED_ATTRIBUTE } from './scroll-state.constants';
+import { LOCKUP_SELECTOR, SCROLLED_ATTRIBUTE, type ScrollStateProps } from './scroll-state.constants';
 
 /**
- * Sets `data-scrolled` on the enclosing header once the hero lockup has scrolled past the top of
- * the viewport. Renders nothing; the header itself stays a server component.
+ * Sets `data-scrolled` on the enclosing header once the page's lockup (its own big logo) has
+ * scrolled past the top of the viewport; on a page without one, at once. Renders nothing; the
+ * header itself stays a server component.
  */
-export function ScrollState() {
+export function ScrollState({ lockupSelector = LOCKUP_SELECTOR }: ScrollStateProps) {
   const anchor = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     const header = anchor.current?.closest('header');
-    const lockup = document.querySelector(LOCKUP_SELECTOR);
-    if (!header || !lockup) {
+    if (!header) {
       return;
     }
     const observer = new IntersectionObserver(([entry]) => {
@@ -25,11 +25,25 @@ export function ScrollState() {
         header.removeAttribute(SCROLLED_ATTRIBUTE);
       }
     });
-    observer.observe(lockup);
+    const watch = () => {
+      const lockup = document.querySelector(lockupSelector);
+      if (lockup) {
+        observer.observe(lockup);
+      } else {
+        header.setAttribute(SCROLLED_ATTRIBUTE, '');
+      }
+    };
+    // On the dev pages the header renders before the rest of the body is parsed.
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', watch, { once: true });
+    } else {
+      watch();
+    }
     return () => {
+      document.removeEventListener('DOMContentLoaded', watch);
       observer.disconnect();
     };
-  }, []);
+  }, [lockupSelector]);
 
   return <span ref={anchor} hidden />;
 }

@@ -1,5 +1,5 @@
 /* /branding page. Colours and sizes are CSS variables from @cityturfer/brand (set on <html> by
-   page.dev.tsx); never a hard-coded brand hex. Archivo comes from next/font (fonts.ts). */
+   page.dev.tsx); never a hard-coded brand hex. Big Shoulders, Barlow Semi Condensed and Barlow come from next/font (fonts.ts). */
 
 *,
 *::before,
@@ -10,12 +10,13 @@
 .brand {
   --display: var(--face-display), var(--font-family-display);
   --numeric: var(--face-numeric), var(--font-family-numeric);
+  --body: var(--face-body, 'Barlow'), var(--font-family-body);
   /* Readable on the light page: faint to accent-text, like the light wordmark (no blazing). */
   --ramp: linear-gradient(45deg, var(--faint), var(--accent-text));
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-family-body);
+  font-family: var(--body);
   font-size: var(--font-body);
   line-height: 1.55;
   color-scheme: light;
@@ -80,11 +81,12 @@
 
 .brand-tagline {
   font-family: var(--display);
-  letter-spacing: -0.02em;
+  text-transform: var(--display-case);
+  letter-spacing: var(--display-tracking);
   font-weight: normal;
   font-synthesis: none;
-  font-size: clamp(26px, 5vw, 40px);
-  line-height: 1.1;
+  font-size: clamp(34px, 6.5vw, 52px);
+  line-height: 0.95;
   margin: var(--space-xxl) 0 var(--space-md);
   background: var(--ramp);
   -webkit-background-clip: text;
@@ -99,10 +101,10 @@
   margin: 0;
 }
 
-/* Sticky section bar: sits under the hero, then pins to the top while reading. */
+/* Sticky section bar: sits under the hero, then pins under the site header while reading. */
 .brand-nav {
   position: sticky;
-  top: 0;
+  top: var(--header-h);
   z-index: 10;
   background: color-mix(in srgb, var(--bg) 95%, transparent);
   backdrop-filter: blur(10px);
@@ -143,15 +145,16 @@
 
 .brand-section {
   padding: 56px 0 8px;
-  /* Clear the sticky section bar when jumping to an anchor. */
-  scroll-margin-top: 56px;
+  /* Clear the sticky header and section bar when jumping to an anchor. */
+  scroll-margin-top: calc(var(--header-h) + 56px);
 }
 .brand-section h2 {
   font-family: var(--display);
-  letter-spacing: -0.02em;
+  text-transform: var(--display-case);
+  letter-spacing: var(--display-tracking);
   font-weight: normal;
   font-synthesis: none;
-  font-size: clamp(24px, 4vw, 32px);
+  font-size: clamp(31px, 5.2vw, 42px);
   margin: 0 0 var(--space-xs);
 }
 .brand-section h3 {
@@ -219,7 +222,8 @@
 }
 .brand-pillar-name {
   font-family: var(--display);
-  letter-spacing: -0.02em;
+  text-transform: var(--display-case);
+  letter-spacing: var(--display-tracking);
   font-synthesis: none;
   margin-bottom: var(--space-sm) !important;
   color: var(--accent-text);
@@ -239,10 +243,11 @@
 }
 .brand-tagline-item {
   font-family: var(--display);
-  letter-spacing: -0.02em;
+  text-transform: var(--display-case);
+  letter-spacing: var(--display-tracking);
   font-synthesis: none;
-  font-size: clamp(18px, 3vw, 24px);
-  line-height: 1.2;
+  font-size: clamp(23px, 3.9vw, 31px);
+  line-height: 1;
 }
 .brand-rules {
   margin-top: var(--space-xxl);
@@ -370,9 +375,10 @@
 }
 .brand-swatch-name {
   font-family: var(--display);
-  letter-spacing: -0.02em;
+  text-transform: var(--display-case);
+  letter-spacing: var(--display-tracking);
   font-synthesis: none;
-  font-size: var(--font-lead);
+  font-size: calc(var(--font-lead) * 1.25);
 }
 .brand-swatch-meta {
   display: grid;
@@ -427,8 +433,8 @@
   font-weight: normal;
   font-synthesis: none;
   font-variant-numeric: tabular-nums;
-  font-size: clamp(26px, 5vw, 44px);
-  line-height: 1.1;
+  font-size: clamp(34px, 6.5vw, 57px);
+  line-height: 0.95;
   overflow-wrap: anywhere;
 }
 .brand-scale-row {
@@ -445,9 +451,10 @@
 }
 .brand-scale-sample {
   font-family: var(--display);
-  letter-spacing: -0.02em;
+  text-transform: var(--display-case);
+  letter-spacing: var(--display-tracking);
   font-synthesis: none;
-  line-height: 1.1;
+  line-height: 0.95;
   white-space: nowrap;
 }
 
@@ -505,11 +512,12 @@
 .brand-icp-name.brand-icp-name {
   margin: var(--space-xs) 0 var(--space-sm);
   font-family: var(--display);
-  letter-spacing: -0.02em;
+  text-transform: var(--display-case);
+  letter-spacing: var(--display-tracking);
   font-weight: normal;
   font-synthesis: none;
-  font-size: clamp(20px, 4vw, 28px);
-  line-height: 1.2;
+  font-size: clamp(26px, 5.2vw, 36px);
+  line-height: 1;
   color: var(--accent-text);
 }
 .brand-icp-job {
