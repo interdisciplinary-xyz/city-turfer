@@ -88,6 +88,13 @@ export function isImportedFromHealth(activityId: string): boolean {
   return activityId.startsWith(IMPORTED_PREFIX);
 }
 
+/** The Apple Health workout an imported Activity came from (the inverse of importedActivityId); null: none. */
+export function healthUuidOf(activityId: string): string | null {
+  return isImportedFromHealth(activityId) && activityId.length > IMPORTED_PREFIX.length
+    ? activityId.slice(IMPORTED_PREFIX.length)
+    : null;
+}
+
 const isValid = (p: HealthRoutePoint) =>
   Number.isFinite(p.lat) &&
   Number.isFinite(p.lon) &&

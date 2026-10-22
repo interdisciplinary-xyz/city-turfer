@@ -6,7 +6,7 @@
  * resumes without duplicates.
  */
 import { SqliteBackupRepository } from '@/contexts/cloud-backup/infrastructure/sqlite-backup-repository';
-import { FakeHealthStore } from '@/contexts/health-sync/test-support/fake-health-store';
+import { FakeHealthStore, straightRoute } from '@/contexts/health-sync/test-support/fake-health-store';
 import type { TrackPoint } from '@/shared-kernel';
 import { DAY, phone, type PhoneContainer, T0, walk } from '@/test-support/backup-phone';
 import { loadFixes } from '@/test-support/fixtures';
@@ -377,6 +377,34 @@ describe('Restore from the cloud backup', () => {
     expect(a.server.calls('activityCopy')).toEqual([]);
     await c.recording.discard.execute();
     expect(await c.cloudBackup.restore.execute()).toMatchObject({ kind: 'done', restored: 4 });
+  });
+
+  it('a restored Apple Health walk deleted on this phone is not imported again', async () => {
+    const route = straightRoute({ lat: 52.24, lon: 21.0, t: T0 + 12 * DAY }, 10);
+    const a = phone({ account: ACCOUNT });
+    const phoneA = await a.container();
+    await phoneA.add(
+      'hk-w1',
+      route.map((p) => ({ ...p, segment: 0 }))
+    );
+    expect(await phoneA.cloudBackup.enable.execute()).toEqual({ kind: 'ok' });
+    expect(await phoneA.cloudBackup.includeHealth.execute(true)).toEqual({ kind: 'ok' });
+    await phoneA.cloudBackup.run.execute();
+    expect(a.server.activities.has('hk-w1')).toBe(true);
+
+    // The new phone: the same workout is in Apple Health (synced through iCloud).
+    const { b, c, health } = await newPhone(a);
+    health.add({ uuid: 'w1', kind: 'walking' }, route);
+    expect(await c.cloudBackup.restore.execute()).toMatchObject({ kind: 'done', restored: 1 });
+    await c.dispatcher.dispatchPending();
+    expect(await b.db.first("SELECT direction FROM hs_links WHERE health_uuid = 'w1'")).toEqual({
+      direction: 'import',
+    });
+
+    await c.activityLog.remove.execute('hk-w1');
+    await c.dispatcher.dispatchPending();
+    expect(await c.healthSync.importWorkouts.execute({ full: true })).toMatchObject({ imported: 0 });
+    expect(await c.activityLog.detail.execute('hk-w1')).toBeNull();
   });
 
   it('Apple Health import waits while a restore runs', async () => {
