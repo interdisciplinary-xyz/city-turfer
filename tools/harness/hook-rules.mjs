@@ -1092,9 +1092,15 @@ const GIT_READ_ONLY = new Set(
   ).split(' ')
 );
 const DEV_NULL = /^\/dev\/(null|stdout|stderr)$/;
-/** pnpm scripts that rewrite tracked files, install, release or start long-running servers. */
-const PNPM_WRITE_SCRIPT =
-  /^(format|openapi|cache:clean|release.*|ios|android|start(:.*)?|web:dev|dev|install|i|add|remove|rm|update|up|upgrade|dlx|create|link|unlink|patch.*|import|prune|publish|pack|setup)$|fix|write/;
+/**
+ * pnpm/npm scripts (and turbo tasks) a read-only agent may run: checks that change no tracked
+ * file. An allowlist, so a new script (`db:migrate`, `user:delete`, `token:new`) is denied until
+ * someone adds it here with a test.
+ */
+const PNPM_READ_ONLY_SCRIPT =
+  /^(test|test:(unit|types|arch|tools)|typecheck|lint|arch|audit:(docs|harness|logs)|e2e:audit|check:secret-files|standard|standard:(format|lint)|ci:quality)$/;
+/** pnpm built-ins that only read (`pnpm why react`, `pnpm ls --depth 0`). */
+const PNPM_READ_ONLY_BUILTIN = new Set(['list', 'ls', 'why', 'outdated', 'view', 'info', 'licenses']);
 const WRITE_ARG = /^(--fix|--write(?!-tree).*|--update.*|--out(put)?(=.*)?|--in-place.*)$/;
 /** Temp folders: a read-only agent may park command output there (it never reaches the repo). */
 const TEMP_PATH = /^(\/private)?\/tmp\/|^\/var\/folders\/|^\$\{?TMPDIR\}?\//;
@@ -1123,8 +1129,13 @@ function execReason(bin, rest) {
   if ((bin === 'jest' || bin === 'vitest') && rest.some((a) => /^(-u|--updateSnapshot|--update)$/.test(a))) {
     return `\`${bin} -u\` rewrites snapshots`;
   }
-  if (bin === 'turbo' && rest.some((t) => PNPM_WRITE_SCRIPT.test(t))) {
-    return '`turbo run` of a task that writes files';
+  if (bin === 'turbo') {
+    const { positional } = splitArgs(rest, ['--filter', '-F', '--concurrency', '--cache-dir', '--log-order']);
+    const tasks = positional[0] === 'run' ? positional.slice(1) : positional;
+    const bad = tasks.find((t) => !PNPM_READ_ONLY_SCRIPT.test(t));
+    if (!tasks.length || bad) {
+      return `\`turbo run ${bad ?? ''}\` is not on the read-only task list`;
+    }
   }
   if (bin === 'expo-updates' && rest[0] !== 'fingerprint:generate') {
     return '`expo-updates` other than `fingerprint:generate`';
@@ -1275,16 +1286,22 @@ function writeReason(words) {
   if (name === 'pnpm' || name === 'npm') {
     let k = 0;
     while (k < args.length && args[k].startsWith('-')) {
-      k += ['-C', '--dir', '--filter', '-F'].includes(args[k]) ? 2 : 1;
+      k += ['-C', '--dir', '--filter', '-F', '--prefix', '--workspace'].includes(args[k]) ? 2 : 1;
     }
     const sub = args[k] ?? '';
+    if (args.slice(k + 1).includes('-u')) {
+      return `\`${name} ${sub} … -u\` rewrites snapshots`;
+    }
     if (sub === 'exec') {
       return execReason(args[k + 1] ?? '', args.slice(k + 2));
     }
-    const script = sub === 'run' ? (args[k + 1] ?? '') : sub;
-    return PNPM_WRITE_SCRIPT.test(script) || !script
-      ? `\`pnpm ${sub}${sub === 'run' ? ` ${script}` : ''}\` writes, installs or starts something`
-      : null;
+    if (PNPM_READ_ONLY_BUILTIN.has(sub)) {
+      return null;
+    }
+    const script = ['run', 'run-script'].includes(sub) ? (args[k + 1] ?? '') : sub;
+    return PNPM_READ_ONLY_SCRIPT.test(script)
+      ? null
+      : `\`${name} ${sub}${script === sub ? '' : ` ${script}`}\` is not on the read-only script list (tests, typecheck, lint, arch, audits, standard:format)`;
   }
   if (name === 'node') {
     if (args[0] === '--test') {
@@ -1359,7 +1376,7 @@ export function readOnlyBashFindings(line) {
   visit(line, 0);
   return out.map((f) => ({
     ...f,
-    message: `${f.message}. This agent is read-only: report the finding or the command for the main session to run (READ_ONLY_COMMANDS in tools/harness/hook-rules.mjs; widen it there, with a test, only for a command that cannot write).`,
+    message: `${f.message}. This agent is read-only: report the finding or the command for the main session to run (READ_ONLY_COMMANDS and PNPM_READ_ONLY_SCRIPT in tools/harness/hook-rules.mjs; widen it there, with a test, only for a command that cannot write).`,
   }));
 }
 
