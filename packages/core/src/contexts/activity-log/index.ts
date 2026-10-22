@@ -3,6 +3,7 @@ import {
   ActivityArchiveQuery,
   type ActivityLogDeps,
   ActivityTrackQuery,
+  AssignMissingTimeZones,
   CapEstimatedMovingTime,
   DeleteActivity,
   EstimateGapRoutes,
@@ -13,6 +14,7 @@ import {
   OverlappingActivitiesQuery,
   RecordActivityFromSession,
   RenameActivity,
+  RestoreActivity,
   SetGapEstimationSetting,
   SplitTrackGaps,
 } from './application/use-cases';
@@ -21,6 +23,7 @@ export function createActivityLogApi(deps: ActivityLogDeps) {
   return {
     recordFromSession: new RecordActivityFromSession(deps),
     importActivity: new ImportActivity(deps),
+    restoreActivity: new RestoreActivity(deps),
     list: new ListActivities(deps),
     detail: new GetActivityDetail(deps),
     rename: new RenameActivity(deps),
@@ -31,6 +34,7 @@ export function createActivityLogApi(deps: ActivityLogDeps) {
     splitTrackGaps: new SplitTrackGaps(deps),
     estimateGapRoutes: new EstimateGapRoutes(deps),
     capEstimatedMovingTime: new CapEstimatedMovingTime(deps),
+    assignMissingTimeZones: new AssignMissingTimeZones(deps),
     gapEstimationEnabled: new GetGapEstimationSetting(deps),
     setGapEstimationEnabled: new SetGapEstimationSetting(deps),
   };

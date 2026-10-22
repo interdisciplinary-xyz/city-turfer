@@ -8,7 +8,7 @@ import {
 } from '@cityturfer/core/activity-log/ports';
 
 import { insertMany } from '@/platform/batch';
-import type { Database } from '@/platform/database';
+import type { Database, SqlExecutor } from '@/platform/database';
 import { appendToOutbox } from '@/platform/outbox';
 import type { TrackPoint } from '@/shared-kernel';
 
@@ -29,6 +29,8 @@ type Row = {
   preview: string | null;
   estimated_m: number;
   estimated_moving_s: number;
+  time_zone: string | null;
+  renamed_at: number | null;
 };
 
 /**
@@ -69,7 +71,27 @@ function toState(r: Row): ActivityState {
     bbox: r.bbox ? JSON.parse(r.bbox) : null,
     preview: r.preview ? JSON.parse(r.preview) : [],
     resumedSegments: stored.resumedSegments ?? null,
+    timeZone: r.time_zone ?? null,
+    renamedAt: r.renamed_at ?? null,
   };
+}
+
+async function insertGapRoutes(tx: SqlExecutor, id: string, routes: readonly GapRoute[], checkedAt: number) {
+  const totals = estimatedTotals(routes);
+  await tx.run('DELETE FROM log_gap_routes WHERE activity_id = ?', [id]);
+  for (const r of routes) {
+    await tx.run(
+      'INSERT INTO log_gap_routes (activity_id, after_segment, distance_m, moving_s, coords) VALUES (?, ?, ?, ?, ?)',
+      [id, r.afterSegment, r.distanceM, Math.round(r.movingS), JSON.stringify(r.coords)]
+    );
+  }
+  await tx.run('UPDATE log_activities SET estimated_m = ?, estimated_moving_s = ?, gaps_checked_at = ? WHERE id = ?', [
+    totals.distanceM,
+    totals.movingS,
+    checkedAt,
+    id,
+  ]);
+  return totals;
 }
 
 export class SqliteActivityRepository implements ActivityRepository {
@@ -84,15 +106,19 @@ export class SqliteActivityRepository implements ActivityRepository {
     return r ? Activity.rehydrate(toState(r)) : null;
   }
 
-  async save(activity: Activity, track?: readonly TrackPoint[]) {
+  async save(
+    activity: Activity,
+    track?: readonly TrackPoint[],
+    gaps?: { routes: readonly GapRoute[]; checkedAt: number }
+  ) {
     const s = activity.toState();
     const events = activity.pullEvents();
     const now = Date.now();
     await this.db.transaction(async (tx) => {
       await tx.run(
-        `INSERT INTO log_activities (id, type, name, started_at, ended_at, distance_m, moving_s, elapsed_s, elev_gain_m, splits, bbox, preview, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT(id) DO UPDATE SET name = excluded.name`,
+        `INSERT INTO log_activities (id, type, name, started_at, ended_at, distance_m, moving_s, elapsed_s, elev_gain_m, splits, bbox, preview, created_at, time_zone, renamed_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET name = excluded.name, time_zone = excluded.time_zone, renamed_at = excluded.renamed_at`,
         [
           s.id,
           s.type,
@@ -107,6 +133,8 @@ export class SqliteActivityRepository implements ActivityRepository {
           s.bbox ? JSON.stringify(s.bbox) : null,
           JSON.stringify(s.preview),
           now,
+          s.timeZone,
+          s.renamedAt,
         ]
       );
       if (track) {
@@ -115,6 +143,9 @@ export class SqliteActivityRepository implements ActivityRepository {
           'INSERT OR IGNORE INTO log_track_points (activity_id, seq, segment, t, lat, lon, alt, accuracy, speed)',
           track.map((p, seq) => [s.id, seq, p.segment, p.t, p.lat, p.lon, p.alt, p.accuracy, p.speed])
         );
+      }
+      if (gaps) {
+        await insertGapRoutes(tx, s.id, gaps.routes, gaps.checkedAt);
       }
       await appendToOutbox(tx, events, now);
     });
@@ -204,19 +235,8 @@ export class SqliteActivityRepository implements ActivityRepository {
   }
 
   async saveGapRoutes(id: string, routes: readonly GapRoute[], now: number) {
-    const totals = estimatedTotals(routes);
     await this.db.transaction(async (tx) => {
-      await tx.run('DELETE FROM log_gap_routes WHERE activity_id = ?', [id]);
-      for (const r of routes) {
-        await tx.run(
-          'INSERT INTO log_gap_routes (activity_id, after_segment, distance_m, moving_s, coords) VALUES (?, ?, ?, ?, ?)',
-          [id, r.afterSegment, r.distanceM, Math.round(r.movingS), JSON.stringify(r.coords)]
-        );
-      }
-      await tx.run(
-        'UPDATE log_activities SET estimated_m = ?, estimated_moving_s = ?, gaps_checked_at = ? WHERE id = ?',
-        [totals.distanceM, totals.movingS, now, id]
-      );
+      const totals = await insertGapRoutes(tx, id, routes, now);
       const event: ActivityDistanceEstimated = {
         type: 'ActivityDistanceEstimated',
         v: 1,
@@ -253,6 +273,11 @@ export class SqliteActivityRepository implements ActivityRepository {
     return this.db.all<ActivityTimeRange>(
       'SELECT id, started_at AS startedAt, ended_at AS endedAt FROM log_activities ORDER BY started_at, id'
     );
+  }
+
+  async idsWithoutTimeZone(): Promise<string[]> {
+    const rows = await this.db.all<{ id: string }>('SELECT id FROM log_activities WHERE time_zone IS NULL');
+    return rows.map((r) => r.id);
   }
 
   async allIds(): Promise<string[]> {

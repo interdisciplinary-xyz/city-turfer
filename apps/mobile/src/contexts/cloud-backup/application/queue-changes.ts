@@ -19,6 +19,9 @@ export class QueueBackupChanges {
   constructor(private readonly d: Pick<CloudBackupDeps, 'repo'>) {}
 
   async activityRecorded(e: ActivityRecorded): Promise<void> {
+    if (e.origin === 'restore') {
+      return; // brought back from this backup: already on the server (Restore wrote its state first)
+    }
     if (await this.eligible(e.activityId)) {
       await this.d.repo.updateBackup(e.activityId, e.startedAt, (b) => b.queueUpload());
     }

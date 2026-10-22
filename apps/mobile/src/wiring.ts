@@ -52,13 +52,14 @@ export interface DeviceAdapters {
   isForeground?: () => boolean;
   /** Cloud Backup's HTTP client and per-user token store. Omitted: no server (backup can't be turned on). */
   cloudBackup?: CloudBackupAdapters;
+  /** The device's IANA time zone now (kept with each new Activity). Omitted: unknown. */
+  timeZone?: () => string | null;
   clock?: Clock;
 }
 
 export interface CloudBackupAdapters {
   api: ApiClientFactory;
   tokens: (userId: string) => DeviceTokenStore;
-  timeZone?: () => string | null;
   /** Default: API_BASE_URL. */
   serverUrl?: string;
 }
@@ -116,6 +117,7 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     gapRouting: a.gapRouting ?? GAP_ROUTING_OFF,
     clock,
     afterCommit,
+    timeZone: a.timeZone,
   });
 
   const territory = createTerritoryApi({
@@ -159,7 +161,6 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     isForeground: a.isForeground ?? (() => true),
     defaultServerUrl: backupAdapters.serverUrl ?? API_BASE_URL,
     policyVersion: CLOUD_BACKUP_POLICY_VERSION,
-    timeZone: backupAdapters.timeZone ?? (() => null),
     // Counts and codes only: no ids, names or coordinates.
     onRunFinished: (r) => {
       if (r.uploaded + r.deleted + r.failed + r.refused > 0 || r.error) {
@@ -217,6 +218,10 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     const capped = await runOnce(db, 'cap-gap-moving-time-v1', () => activityLog.capEstimatedMovingTime.execute());
     if (capped) {
       diagnostics.log('maintenance', { job: 'cap-gap-moving-time-v1', ...capped });
+    }
+    const zoned = await runOnce(db, 'activity-time-zones-v1', () => activityLog.assignMissingTimeZones.execute());
+    if (zoned) {
+      diagnostics.log('maintenance', { job: 'activity-time-zones-v1', ...zoned });
     }
     const scrubbed = await runOnce(db, 'scrub-closed-sessions-v2', () => recording.scrubClosedSessions.execute());
     if (scrubbed) {

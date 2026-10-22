@@ -1,5 +1,4 @@
-import { userId } from '@cityturfer/core/identity/ports';
-
+import type { User } from '@/contexts/identity';
 import { migrate } from '@/platform/migrations';
 import { openNodeDatabase } from '@/test-support/node-database';
 import { wire } from '@/wiring';
@@ -35,7 +34,7 @@ async function setup() {
   return wire('demo', db, fakes());
 }
 
-const demo = { id: userId('demo'), email: 'demo@cityturfer.com', displayName: 'Ola' };
+const demo = { id: 'demo', email: 'demo@cityturfer.com', displayName: 'Ola' } as User;
 const GDANSK: [number, number, number, number] = [18.5, 54.3, 18.8, 54.45]; // [west, south, east, north]
 
 describe('Gdańsk demo account', () => {
@@ -77,7 +76,7 @@ describe('Gdańsk demo account', () => {
 
   it('leaves other accounts alone', async () => {
     const c = await setup();
-    await prepareDemoAccount({ ...demo, id: userId('admin') }, c);
+    await prepareDemoAccount({ ...demo, id: 'admin' as User['id'] }, c);
     expect(await c.activityLog.list.execute(1)).toEqual([]);
     expect(await c.territory.homeCity.execute()).toBeNull();
   });

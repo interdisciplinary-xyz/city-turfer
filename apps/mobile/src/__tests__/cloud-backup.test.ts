@@ -47,7 +47,8 @@ function setup(options: { token?: string | null } = {}) {
     ids: { next: () => `session-${++n}` },
     clock: { now: () => now },
     isForeground: () => app.foreground,
-    cloudBackup: { api: server.factory, tokens: () => tokens, timeZone: () => 'Europe/Warsaw' },
+    cloudBackup: { api: server.factory, tokens: () => tokens },
+    timeZone: () => 'Europe/Warsaw',
   };
   return {
     db,

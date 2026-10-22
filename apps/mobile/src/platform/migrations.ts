@@ -225,7 +225,19 @@ const MIGRATIONS: { version: number; sql: string }[] = [
       CREATE INDEX idx_cb_activities_work ON cb_activities(started_at) WHERE op IS NOT NULL OR gaps_pending = 1;
     `,
   },
+  {
+    version: 9,
+    sql: `
+      -- Activity Log: the IANA zone the phone was in when the Activity was saved (NULL: unknown,
+      -- filled once by a repair job) and when the Turfer last renamed it (NULL: never).
+      ALTER TABLE log_activities ADD COLUMN time_zone TEXT;
+      ALTER TABLE log_activities ADD COLUMN renamed_at INTEGER;
+    `,
+  },
 ];
+
+/** The newest schema version this build knows. */
+export const LATEST_SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1].version;
 
 /** `upTo` stops at a schema version (tests seeding an older database). */
 export async function migrate(db: Database, upTo = Infinity): Promise<void> {

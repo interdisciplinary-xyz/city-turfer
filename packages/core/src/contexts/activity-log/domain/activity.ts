@@ -10,7 +10,13 @@ import {
   type Split,
   type Track,
 } from '../../../shared-kernel';
-import type { ActivityDeleted, ActivityOrigin, ActivityRecorded, ActivityTrackCorrected } from '../contract';
+import type {
+  ActivityDeleted,
+  ActivityOrigin,
+  ActivityRecorded,
+  ActivityRenamed,
+  ActivityTrackCorrected,
+} from '../contract';
 import { acceptRoute, estimatedMovingS, type Gap, type GapRoute, routableGaps } from './gap-route';
 
 export interface ActivitySummary {
@@ -32,9 +38,29 @@ export interface ActivityState {
   readonly preview: readonly [number, number][];
   /** Segment numbers that began with a manual Resume; null when unknown (older or imported activity). */
   readonly resumedSegments: readonly number[] | null;
+  /** IANA zone the phone was in when the Activity was saved; null when unknown. Never changes afterwards. */
+  readonly timeZone: string | null;
+  /** When the Turfer last renamed it; null: never (the name is the default one or came with an import). */
+  readonly renamedAt: number | null;
 }
 
-type ActivityEvent = ActivityRecorded | ActivityDeleted | ActivityTrackCorrected;
+type ActivityEvent = ActivityRecorded | ActivityDeleted | ActivityTrackCorrected | ActivityRenamed;
+
+const MAX_NAME_LENGTH = 80;
+
+function validName(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed || trimmed.length > MAX_NAME_LENGTH) {
+    throw new DomainError('activity.invalid-name');
+  }
+  return trimmed;
+}
+
+/** An IANA zone as reported by the phone (1–64 characters), or null. */
+function validTimeZone(tz: string | null | undefined): string | null {
+  const t = tz?.trim();
+  return t && t.length <= 64 ? t : null;
+}
 
 export function defaultName(type: ActivityType, startedAt: number): string {
   const h = new Date(startedAt).getHours();
@@ -57,6 +83,8 @@ export class Activity {
     resumedSegments?: readonly number[] | null;
     /** Default 'recording'. */
     origin?: ActivityOrigin;
+    /** The phone's IANA zone when it was saved. */
+    timeZone?: string | null;
   }): Activity {
     const points = pointsOf(input.track);
     if (points.length < 2) {
@@ -73,6 +101,8 @@ export class Activity {
       endedAt: input.endedAt,
       ...derive(input.type, input.track, input.startedAt, input.endedAt),
       resumedSegments: input.resumedSegments ? [...input.resumedSegments] : null,
+      timeZone: validTimeZone(input.timeZone),
+      renamedAt: null,
     });
     a.events.push({
       type: 'ActivityRecorded',
@@ -87,6 +117,28 @@ export class Activity {
     return a;
   }
 
+  /**
+   * An Activity brought back from the user's cloud backup, as it was on the phone that backed it up
+   * (name, times, resumed segments, time zone). Origin `restore`: it is not a new recording, so it is
+   * never exported to Apple Health or uploaded again.
+   */
+  static restore(input: {
+    id: string;
+    type: ActivityType;
+    name: string;
+    startedAt: number;
+    endedAt: number;
+    track: Track;
+    resumedSegments: readonly number[] | null;
+    timeZone: string | null;
+    renamedAt: number | null;
+    now: number;
+  }): Activity {
+    const a = Activity.record({ ...input, origin: 'restore' });
+    a.state = { ...a.state, name: validName(input.name), renamedAt: input.renamedAt };
+    return a;
+  }
+
   static rehydrate(state: ActivityState) {
     return new Activity(state);
   }
@@ -98,12 +150,31 @@ export class Activity {
     return this.state;
   }
 
-  rename(name: string) {
-    const trimmed = name.trim();
-    if (!trimmed || trimmed.length > 80) {
-      throw new DomainError('activity.invalid-name');
+  /** A new name (1–80 characters, trimmed). The same name again changes nothing and records nothing. */
+  rename(name: string, now: number) {
+    const trimmed = validName(name);
+    if (trimmed === this.state.name) {
+      return;
     }
-    this.state = { ...this.state, name: trimmed };
+    this.state = { ...this.state, name: trimmed, renamedAt: now };
+    this.events.push({
+      type: 'ActivityRenamed',
+      v: 1,
+      at: now,
+      activityId: this.state.id,
+      name: trimmed,
+      renamedAt: now,
+    });
+  }
+
+  /** Data repair for Activities saved before the time zone was kept: only fills a missing one. */
+  assignTimeZone(timeZone: string | null): boolean {
+    const tz = validTimeZone(timeZone);
+    if (this.state.timeZone != null || tz == null) {
+      return false;
+    }
+    this.state = { ...this.state, timeZone: tz };
+    return true;
   }
 
   /** Replace the track (same fixes, corrected segmentation): totals, bbox and preview are recomputed. */

@@ -7,7 +7,7 @@ import {
   trackFromPoints,
   type TrackPoint,
 } from '../../../shared-kernel';
-import type { ActivityArchive, ActivityDetail, ActivityListItem } from '../contract';
+import type { ActivityArchive, ActivityDetail, ActivityListItem, RestoredActivity, RestoreOutcome } from '../contract';
 import { Activity } from '../domain/activity';
 import type { ActivityRepository } from '../domain/activity-repository';
 import { estimatedTotals, type GapRoute } from '../domain/gap-route';
@@ -70,7 +70,17 @@ export interface ActivityLogDeps {
   gapRouting: GapRoutingEnvironment;
   clock: Clock;
   afterCommit: () => void;
+  /** The phone's IANA zone now, kept with each new Activity. Omitted: unknown (null). */
+  timeZone?: () => string | null;
 }
+
+const zoneOf = (d: Pick<ActivityLogDeps, 'timeZone'>): string | null => {
+  try {
+    return d.timeZone?.() ?? null;
+  } catch {
+    return null;
+  }
+};
 
 export interface SessionFinishedPayload {
   sessionId: string;
@@ -100,6 +110,7 @@ export class RecordActivityFromSession {
       track: trackFromPoints(points),
       now: this.d.clock.now(),
       resumedSegments: e.resumedSegments ?? null,
+      timeZone: zoneOf(this.d),
     });
     await this.d.activities.save(activity, points);
     this.d.afterCommit();
@@ -121,10 +132,71 @@ export class ImportActivity {
       track: trackFromPoints(input.points),
       now: this.d.clock.now(),
       origin: 'import',
+      timeZone: zoneOf(this.d),
     });
     await this.d.activities.save(activity, input.points);
     this.d.afterCommit();
     return true;
+  }
+}
+
+/**
+ * Brings a backed-up Activity back (Restore from cloud backup): name, times, resumed segments, time
+ * zone, the track and the gap routes as they were, in one transaction. Origin `restore`, so it is
+ * claimed as turf but never exported to Apple Health or uploaded again; gap routes that were checked
+ * keep their check time, so the street router is not asked again. Idempotent by id.
+ */
+export class RestoreActivity {
+  constructor(private readonly d: ActivityLogDeps) {}
+  async execute(input: RestoredActivity): Promise<RestoreOutcome> {
+    if (await this.d.activities.exists(input.id)) {
+      return 'exists';
+    }
+    if (input.track.length < 2) {
+      return 'invalid';
+    }
+    let activity: Activity;
+    try {
+      activity = Activity.restore({
+        id: input.id,
+        type: input.type,
+        name: input.name,
+        startedAt: input.startedAt,
+        endedAt: input.endedAt,
+        track: trackFromPoints(input.track),
+        resumedSegments: input.resumedSegments,
+        timeZone: input.timeZone,
+        renamedAt: input.renamedAt,
+        now: this.d.clock.now(),
+      });
+    } catch {
+      return 'invalid'; // content this version can't hold (e.g. a name it doesn't accept)
+    }
+    const gaps =
+      input.gapsCheckedAt != null
+        ? { routes: input.gapRoutes.map((r) => ({ ...r })), checkedAt: input.gapsCheckedAt }
+        : undefined;
+    await this.d.activities.save(activity, input.track, gaps);
+    this.d.afterCommit();
+    return 'restored';
+  }
+}
+
+/** Data repair: Activities saved before the time zone was kept get the phone's current one, once. */
+export class AssignMissingTimeZones {
+  constructor(private readonly d: ActivityLogDeps) {}
+  async execute(): Promise<{ checked: number; assigned: number }> {
+    const zone = zoneOf(this.d);
+    const ids = zone ? await this.d.activities.idsWithoutTimeZone() : [];
+    let assigned = 0;
+    for (const id of ids) {
+      const a = await this.d.activities.get(id);
+      if (a?.assignTimeZone(zone)) {
+        await this.d.activities.save(a);
+        assigned++;
+      }
+    }
+    return { checked: ids.length, assigned };
   }
 }
 
@@ -331,8 +403,9 @@ export class RenameActivity {
     if (!a) {
       return;
     }
-    a.rename(name);
+    a.rename(name, this.d.clock.now());
     await this.d.activities.save(a);
+    this.d.afterCommit();
   }
 }
 
@@ -396,6 +469,8 @@ export class ActivityArchiveQuery {
         coords: r.coords.map(([lon, lat]) => [lon, lat] as [number, number]),
       })),
       gapsCheckedAt: await this.d.activities.gapsCheckedAt(id),
+      timeZone: s.timeZone,
+      renamedAt: s.renamedAt,
     };
   }
 }

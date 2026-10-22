@@ -299,7 +299,8 @@ export class ExportActivityToHealth {
     private readonly flush: FlushHealthExports
   ) {}
 
-  async execute(e: { activityId: string; at: number; origin?: 'recording' | 'import' }): Promise<ExportResult> {
+  /** Only new recordings: imports and Activities restored from the cloud backup are never exported. */
+  async execute(e: { activityId: string; at: number; origin?: string }): Promise<ExportResult> {
     try {
       if ((e.origin ?? 'recording') !== 'recording' || !this.d.store.available) {
         return 'skipped';

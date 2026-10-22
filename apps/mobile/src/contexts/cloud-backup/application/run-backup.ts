@@ -195,7 +195,8 @@ export class RunBackup {
 
     const meta = {
       source: sourceOf(id) === 'apple-health' ? ('apple-health' as const) : ('recording' as const),
-      timeZone: this.d.timeZone(),
+      // Kept with the Activity when it was saved: a retry after travelling sends the same content.
+      timeZone: archive.timeZone,
     };
     let r: ApiResult<{ version: number }> = await api.putActivity(
       archive,

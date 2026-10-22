@@ -1,6 +1,6 @@
 import { openNodeDatabase } from '@/test-support/node-database';
 
-import { migrate } from '../migrations';
+import { LATEST_SCHEMA_VERSION, migrate } from '../migrations';
 
 const version = async (db: ReturnType<typeof openNodeDatabase>) =>
   (await db.first<{ v: number }>('SELECT MAX(version) AS v FROM sys_schema_version'))!.v;
@@ -27,7 +27,7 @@ describe('migration v5 (outbox retries and dead letters)', () => {
     );
 
     await migrate(db);
-    expect(await version(db)).toBe(8);
+    expect(await version(db)).toBe(LATEST_SCHEMA_VERSION);
 
     const outbox = await db.all<Record<string, unknown>>('SELECT * FROM sys_outbox ORDER BY id');
     expect(outbox).toEqual([
@@ -63,8 +63,10 @@ describe('migration v5 (outbox retries and dead letters)', () => {
 
     // Second launch: nothing re-applied, no error, nothing lost.
     await migrate(db);
-    expect(await version(db)).toBe(8);
-    expect((await db.first<{ n: number }>('SELECT COUNT(*) AS n FROM sys_schema_version'))!.n).toBe(8);
+    expect(await version(db)).toBe(LATEST_SCHEMA_VERSION);
+    expect((await db.first<{ n: number }>('SELECT COUNT(*) AS n FROM sys_schema_version'))!.n).toBe(
+      LATEST_SCHEMA_VERSION
+    );
     expect((await db.first<{ n: number }>('SELECT COUNT(*) AS n FROM sys_outbox'))!.n).toBe(2);
   });
 });
@@ -80,7 +82,7 @@ describe('migration v8 (cloud backup)', () => {
     await db.run("INSERT INTO ter_home_city (id, city_id, chosen_at) VALUES (1, 'pl-krakow', 5)");
 
     await migrate(db);
-    expect(await version(db)).toBe(8);
+    expect(await version(db)).toBe(LATEST_SCHEMA_VERSION);
     expect(await db.first('SELECT COUNT(*) AS n FROM cb_state')).toEqual({ n: 0 });
     expect(await db.first('SELECT COUNT(*) AS n FROM cb_activities')).toEqual({ n: 0 });
     expect(await db.first('SELECT id FROM log_activities')).toEqual({ id: 's1' });
@@ -99,5 +101,24 @@ describe('migration v8 (cloud backup)', () => {
     await expect(
       db.run("INSERT INTO cb_activities (activity_id, started_at, status, op) VALUES ('c', 1, 'none', 'patch')")
     ).rejects.toThrow();
+  });
+});
+
+describe('migration v9 (time zone and rename time of an Activity)', () => {
+  it('adds empty columns to a v8 database, keeping its activities', async () => {
+    const db = openNodeDatabase();
+    await migrate(db, 8);
+    await db.run(
+      `INSERT INTO log_activities (id, type, name, started_at, ended_at, distance_m, moving_s, elapsed_s, splits, created_at)
+       VALUES ('s1', 'run', 'Morning run', 1, 2, 5000, 1500, 1600, '[]', 3)`
+    );
+    await migrate(db, 9);
+    expect(await version(db)).toBe(9);
+    expect(await db.first('SELECT id, name, time_zone, renamed_at FROM log_activities')).toEqual({
+      id: 's1',
+      name: 'Morning run',
+      time_zone: null,
+      renamed_at: null,
+    });
   });
 });

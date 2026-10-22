@@ -72,11 +72,11 @@ const adapters = {
       uploadTimeoutMs: API_UPLOAD_TIMEOUT_MS,
     }),
     tokens: (userId: string) => new SecureStoreDeviceTokenStore(userId),
-    timeZone: deviceTimeZone,
   },
+  timeZone: deviceTimeZone,
 };
 
-/** The device's IANA zone (sent with uploads; activities recorded before backup get the current one). */
+/** The device's IANA zone, kept with each new Activity (older ones get the current zone once). */
 function deviceTimeZone(): string | null {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone ?? null;

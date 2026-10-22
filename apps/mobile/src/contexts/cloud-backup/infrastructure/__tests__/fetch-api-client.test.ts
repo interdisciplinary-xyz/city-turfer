@@ -17,6 +17,8 @@ const archive: ActivityArchive = {
   ],
   gapRoutes: [],
   gapsCheckedAt: null,
+  timeZone: 'Europe/Warsaw',
+  renamedAt: null,
 };
 
 interface Call {

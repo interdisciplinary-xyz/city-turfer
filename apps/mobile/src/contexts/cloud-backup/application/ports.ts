@@ -127,8 +127,6 @@ export interface CloudBackupDeps {
   isForeground: () => boolean;
   defaultServerUrl: string;
   policyVersion: string;
-  /** The device's IANA time zone, or null when unknown. */
-  timeZone: () => string | null;
   /** Uploads in flight at once (≤ 2). */
   concurrency?: number;
   onRunFinished?: (report: BackupRunReport) => void;
