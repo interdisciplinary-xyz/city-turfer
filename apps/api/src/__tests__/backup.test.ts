@@ -86,8 +86,52 @@ describe('consents', () => {
     expect((await put('a1', upload())).status).toBe(201);
     await h.call('PUT', '/v1/me/consents/cloud-sync', { body: { granted: false, policyVersion: '2026-10' } });
     expect((await put('a2', upload())).status).toBe(403);
-    // Withdrawing erases nothing.
-    expect((await h.call('GET', '/v1/activities/a1')).status).toBe(200);
+  });
+
+  const withdraw = (purpose: string) =>
+    h.call('PUT', `/v1/me/consents/${purpose}`, { body: { granted: false, policyVersion: '2026-10' } });
+
+  it('withdrawing cloud-sync erases the server copy without tombstones; the account stays', async () => {
+    await grant();
+    await put('a1', upload());
+    await put('a2', upload());
+    await h.call('PUT', '/v1/activities/a1/gap-routes', { body: { checkedAt: '2026-10-19T08:00:00Z', routes: [] } });
+    await h.call('DELETE', '/v1/activities/a2');
+    await h.call('PUT', '/v1/turf/home-city', { body: { cityId: 'pl-warsaw', chosenAt: '2026-10-19T07:00:00Z' } });
+    const before = await (await h.call('GET', '/v1/sync/changes')).json();
+
+    expect((await withdraw('cloud-sync')).status).toBe(200);
+    expect((await h.call('GET', '/v1/activities/a1')).status).toBe(404);
+    expect((await (await h.call('GET', '/v1/sync/changes')).json()).changes).toEqual([]);
+    // No tombstone: the old cursor shows nothing new either.
+    const since = await (await h.call('GET', `/v1/sync/changes?cursor=${before.nextCursor}`)).json();
+    expect(since.changes).toEqual([]);
+    expect(await (await h.call('GET', '/v1/turf/home-city')).json()).toEqual({ city: null, chosenAt: null });
+    expect((await h.call('GET', '/v1/me')).status).toBe(200);
+
+    // Backup on again: the same ids upload as new (the old delete is forgotten too).
+    await grant();
+    expect((await put('a1', upload())).status).toBe(201);
+    expect((await put('a2', upload())).status).toBe(201);
+  });
+
+  it('withdrawing apple-health-in-cloud-sync erases only the Apple Health activities', async () => {
+    await grant();
+    await grant(TOKENS.admin, 'apple-health-in-cloud-sync');
+    await put('hk-1', upload({ source: 'apple-health' }));
+    await put('run-1', upload());
+    await grant(TOKENS.other);
+    await grant(TOKENS.other, 'apple-health-in-cloud-sync');
+    await put('hk-1', upload({ source: 'apple-health' }), {}, TOKENS.other);
+
+    await withdraw('apple-health-in-cloud-sync');
+    expect((await h.call('GET', '/v1/activities/hk-1')).status).toBe(404);
+    expect((await h.call('GET', '/v1/activities/hk-1/track')).status).toBe(404);
+    expect((await h.call('GET', '/v1/activities/run-1')).status).toBe(200);
+    const feed = await (await h.call('GET', '/v1/sync/changes')).json();
+    expect(feed.changes.map((c: { type: string }) => c.type)).toEqual(['activity.upserted']);
+    // Another user's copy is untouched.
+    expect((await h.call('GET', '/v1/activities/hk-1', { token: TOKENS.other })).status).toBe(200);
   });
 
   it('derives the source from the id: hk-… is apple-health, nothing else is (422)', async () => {

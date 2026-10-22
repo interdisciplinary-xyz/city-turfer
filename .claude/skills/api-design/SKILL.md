@@ -86,7 +86,9 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   placeholder verifier (spec generation, planned-route tests) marks callers unverified, which live
   routes refuse.
 - **Consent:** activity and Home City writes need `cloud-sync` granted (Apple Health activities also
-  `apple-health-in-cloud-sync`), else 403 `consent.required`; `DELETE` never needs it.
+  `apple-health-in-cloud-sync`), else 403 `consent.required`; `DELETE` never needs it. Withdrawing
+  erases the server copy it covered (`eraseBackup`, no tombstones): `cloud-sync` → everything but
+  the account and consents, `apple-health-in-cloud-sync` → the `hk-…` activities.
 - **Planned routes** are declared with full schemas, answer `501` (`code: "not-implemented"`), carry
   `x-cityturfer-status: planned` and a `[planned]` summary prefix, so Swagger shows the whole API
   before it is built.

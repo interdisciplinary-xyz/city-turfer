@@ -81,14 +81,23 @@ export class BackupService {
     return this.store.read(userId).consents();
   }
 
-  /** Gives or withdraws a consent. Withdrawing stops writes; it erases nothing (that is DELETE /v1/me). */
+  /**
+   * GiveOrWithdrawConsent. Withdrawing deletes the **server copy** it covered, in the same
+   * transaction and without tombstones or feed entries (phones keep theirs): `cloud-sync` → every
+   * activity, track, gap route, tombstone and the Home City (the account and consents stay);
+   * `apple-health-in-cloud-sync` → the Apple Health activities. Idempotent.
+   */
   async setConsent(
     userId: string,
     purpose: ConsentPurposeName,
     decision: { granted: boolean; policyVersion: string }
   ): Promise<ConsentRecord[]> {
     return this.store.write(userId, async (tx) => {
+      await tx.lock();
       await tx.putConsent({ purpose, ...decision, at: this.clock.now() });
+      if (!decision.granted) {
+        await tx.eraseBackup(purpose === 'cloud-sync' ? 'all' : 'apple-health');
+      }
       return tx.consents();
     });
   }

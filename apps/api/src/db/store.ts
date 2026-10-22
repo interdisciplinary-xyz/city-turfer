@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, lt, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, like, lt, or, sql } from 'drizzle-orm';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 
 import type {
@@ -270,6 +270,20 @@ class UserScope implements UserWriter {
       .insert(gapRoutes)
       .values({ userId: this.userId, activityId, ...values })
       .onConflictDoUpdate({ target: [gapRoutes.userId, gapRoutes.activityId], set: values });
+  }
+
+  async eraseBackup(scope: 'apple-health' | 'all'): Promise<number> {
+    const mine = eq(activities.userId, this.userId);
+    // Tracks and gap routes go with their activity (ON DELETE CASCADE).
+    const gone = await this.db
+      .delete(activities)
+      .where(scope === 'all' ? mine : and(mine, or(like(activities.id, 'hk-%'), eq(activities.source, 'apple-health'))))
+      .returning({ id: activities.id });
+    if (scope === 'all') {
+      await this.db.delete(tombstones).where(eq(tombstones.userId, this.userId));
+      await this.db.delete(homeCities).where(eq(homeCities.userId, this.userId));
+    }
+    return gone.length;
   }
 
   async putHomeCity(h: HomeCityRecord): Promise<void> {

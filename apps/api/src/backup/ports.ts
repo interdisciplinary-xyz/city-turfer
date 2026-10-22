@@ -47,6 +47,13 @@ export interface UserWriter extends UserReader {
   /** Replaces the gap routes; null removes them. */
   putGapRoutes(activityId: string, routes: GapRoutesRecord | null): Promise<void>;
   putHomeCity(homeCity: HomeCityRecord): Promise<void>;
+  /**
+   * Erases the server copy without leaving tombstones or feed entries: `apple-health` removes the
+   * Apple Health activities (`hk-…` or source `apple-health`) with their tracks and gap routes;
+   * `all` removes every activity, track, gap route, tombstone and the Home City. Returns how many
+   * activities went.
+   */
+  eraseBackup(scope: 'apple-health' | 'all'): Promise<number>;
 }
 
 /** Port: the server's storage (Postgres via Drizzle in production, PGlite in tests and dev). */

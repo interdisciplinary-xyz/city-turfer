@@ -2277,7 +2277,7 @@
         ],
         "operationId": "setConsent",
         "summary": "Give or withdraw a consent",
-        "description": "Records the decision with the policy version and the server time (use case GiveOrWithdrawConsent). Without `cloud-sync` granted, activity and Home City writes answer `403 consent.required`. Withdrawing `cloud-sync` stops sync but erases nothing; erasing the data already stored is `DELETE /v1/me`. Withdrawing `apple-health-in-cloud-sync` stops new Apple Health uploads.",
+        "description": "Records the decision with the policy version and the server time (use case GiveOrWithdrawConsent). Without `cloud-sync` granted, activity and Home City writes answer `403 consent.required`. **Withdrawing deletes the server copy only** (never anything on a phone), at once and without tombstones or feed entries: `cloud-sync` → every activity with its track and gap routes, every tombstone and the Home City (the account and consents stay; turning backup on again re-uploads everything); `apple-health-in-cloud-sync` → every Apple Health (`hk-…`) activity. Deleting the account is `DELETE /v1/me`.",
         "security": [
           {
             "bearerAuth": []
