@@ -102,7 +102,11 @@ export default function SignIn() {
     busyWhile(async () => {
       const r = await verifyCode(email, code);
       if (r.kind === 'choose-history') {
-        await chooseHistory(await askHistory());
+        if ((await chooseHistory(await askHistory())) === 'no-pending') {
+          setStep('email');
+          setCode('');
+          setError('That took a while. Send a new code and sign in again.');
+        }
       } else if (r.kind === 'invalid-code') {
         setError('That code didn’t work. Check the latest email, or send a new code.');
       } else if (r.kind === 'invalid-email') {
@@ -224,7 +228,13 @@ export default function SignIn() {
               busy={busy}
               disabled={!code.trim()}
             />
-            <Pressable testID='sign-in-resend' accessibilityRole='button' onPress={submitEmail} disabled={busy}>
+            <Pressable
+              testID='sign-in-resend'
+              accessibilityRole='button'
+              onPress={submitEmail}
+              disabled={busy}
+              style={s.linkTarget}
+            >
               <Text style={s.link}>Send a new code</Text>
             </Pressable>
           </>
@@ -255,5 +265,6 @@ const s = StyleSheet.create({
   hint: { color: DARK.muted, textAlign: 'center' },
   error: { color: DARK.danger, textAlign: 'center' },
   link: { color: ACCENT, fontWeight: '700', textAlign: 'center', paddingVertical: SPACE.xs },
+  linkTarget: { minHeight: 44, justifyContent: 'center' },
   note: { color: DARK.muted, textAlign: 'center', fontSize: 12, marginTop: 8 },
 });

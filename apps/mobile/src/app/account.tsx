@@ -106,7 +106,11 @@ export default function AccountScreen() {
       if (!sure) {
         return;
       }
-      const keep = await choose('And on this phone?', 'Keep your activities and turf here, or delete them too?', [
+      const local =
+        user?.id === 'admin'
+          ? 'Keep your activities and turf here, or delete them too? Deleting also removes this phone’s history from before the account (the local admin profile uses the same data).'
+          : 'Keep your activities and turf here, or delete them too?';
+      const keep = await choose('And on this phone?', local, [
         { text: 'Keep on this phone', value: 'keep' },
         { text: 'Delete from this phone', value: 'delete', destructive: true },
       ]);
@@ -116,6 +120,11 @@ export default function AccountScreen() {
       const r = await deleteAccount(keep === 'keep');
       if (r.kind === 'recording-in-progress') {
         Alert.alert(...RECORDING);
+      } else if (r.kind === 'auth') {
+        Alert.alert(
+          'Sign in again',
+          'Your sign-in has expired. Nothing was deleted. Sign out, sign in with your email, then delete your account.'
+        );
       } else if (r.kind === 'offline') {
         Alert.alert('No connection', 'Nothing was deleted. Try again when you’re online.');
       } else if (r.kind !== 'ok' && r.kind !== 'not-signed-in') {
