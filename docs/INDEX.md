@@ -154,6 +154,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   foundations (positioning for three audiences, personality, pillars), Archivo as the brand typeface
   everywhere, visual language beyond colour, WCAG contrast rules with the open palette fixes, and
   the asset set (outlined wordmarks, social image, store screenshots)
+- ✅ [`decisions/brand-light-theme-2026-10-22.md`](decisions/brand-light-theme-2026-10-22.md): The
+  website, Swagger and Storybook switch to a light theme (SITE_SCHEME) while the app and every map
+  stay dark; the AA light palette, its new tokens and ratios, night labels on pink buttons
 - ✅ [`decisions/design-system-2026-10-19.md`](decisions/design-system-2026-10-19.md): v0.5.0 design
   system — tokens in @cityturfer/brand (TS + CSS variables), React Native components in
   @cityturfer/ui, one Storybook (react-native-web) for the app and the website, shipped OTA

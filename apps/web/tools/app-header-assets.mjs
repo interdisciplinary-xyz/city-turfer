@@ -18,7 +18,8 @@ const WAITLIST_ENV = ['NEXT_PUBLIC_WAITLIST_FORM_URL', 'NEXT_PUBLIC_WAITLIST_CON
 
 /**
  * Mount point and script for a page: `lockup` is the page's own logo (the header's logo shows once
- * it has scrolled away); without one the bar is solid at once. Goes first in <body>.
+ * it has scrolled away); without one the bar is solid at once, which a dark page needs (the bar
+ * is light, like the website). Goes first in <body>.
  */
 export function appHeaderMarkup({ lockup } = {}) {
   const data = lockup ? ` data-lockup="${lockup.replaceAll('"', '&quot;')}"` : '';
@@ -53,11 +54,14 @@ export function appHeaderAssets(webRoot) {
       define,
       absWorkingDir: webRoot,
     });
-    const { cssVariables } = await loadBrand(webRoot);
+    const { cssVariables, SITE_SCHEME } = await loadBrand(webRoot);
     const stylesheet = await readFile(path.join(webRoot, 'src/app/[locale]/app-header/app-header.css'), 'utf8');
-    // Brand variables on the header only, so the host page's own :root stays as it is.
-    const variables = rootVariablesCss(cssVariables('dark')).replace(':root', '.app-header');
-    const css = `${variables}\n#app-header-root {\n  display: contents;\n}\n\n${stylesheet}`;
+    // The website's colours (SITE_SCHEME, light) on the header only, so the host page's own :root
+    // (Swagger's dark skin, Storybook) stays as it is.
+    const variables = rootVariablesCss(cssVariables(SITE_SCHEME)).replace(':root', '.app-header');
+    // Opaque on these pages: 90% of a light bar over a dark page reads grey, not like the website.
+    const opaque = '#app-header-root .app-header[data-scrolled] {\n  background: var(--bg);\n}\n';
+    const css = `${variables}\n#app-header-root {\n  display: contents;\n}\n\n${stylesheet}\n${opaque}`;
     return { js: bundle.outputFiles[0].text, css };
   })();
   return assets;

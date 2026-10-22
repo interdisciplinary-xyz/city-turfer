@@ -22,9 +22,6 @@ const TOC_FILE = path.join(import.meta.dirname, 'swagger-toc.mjs');
 /** Brand files the page may load (packages/brand/svg): the header and the tab icon. */
 export const BRAND_FILES = ['mark.svg', 'wordmark.svg'];
 
-/** The page's own logo: the site header's logo shows once it has scrolled away. */
-export const SWAGGER_LOCKUP = '.ct-header h1';
-
 /**
  * The Swagger UI page, under the site's header (the same bar as /en): assets next to it, the spec at ./openapi.json. `toolbar` adds the dev
  * toolbar (only for requests from this machine, see withSwagger).
@@ -43,7 +40,7 @@ export function swaggerHtml({ toolbar = false } = {}) {
     ${appHeaderStylesheet()}${toolbar ? '\n    <link rel="stylesheet" href="./__toolbar.css" />' : ''}
   </head>
   <body>
-    ${appHeaderMarkup({ lockup: SWAGGER_LOCKUP })}
+    ${appHeaderMarkup()}
     <header class="ct-header">
       <div class="ct-header-inner">
         <h1>

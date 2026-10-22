@@ -1,8 +1,9 @@
 // Dev only: bundled by app-header-assets.mjs into the script the local Storybook and Swagger pages
-// load. Renders the site's header (the same AppHeaderView as /en and /branding) into
-// #app-header-root. The pages are English, so: EN marked, PL links to the Polish home page.
+// load. Renders the site's header (the same AppHeaderView as /en and /branding, light like the
+// website) into #app-header-root. The pages are English, so: EN marked, PL links to the Polish home
+// page.
 import mark from '@cityturfer/brand/svg/mark.svg';
-import wordmark from '@cityturfer/brand/svg/wordmark.svg';
+import wordmark from '@cityturfer/brand/svg/wordmark-light.svg';
 import { createElement as h, Fragment } from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';

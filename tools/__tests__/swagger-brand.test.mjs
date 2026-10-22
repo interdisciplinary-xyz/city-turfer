@@ -6,7 +6,7 @@ import path from 'node:path';
 import { after, before, test } from 'node:test';
 
 import { loadBrand, swaggerThemeCss } from '../../apps/web/tools/swagger-brand.mjs';
-import { SWAGGER_LOCKUP, swaggerHtml, swaggerTarget, withSwagger } from '../../apps/web/tools/swagger-route.mjs';
+import { swaggerHtml, swaggerTarget, withSwagger } from '../../apps/web/tools/swagger-route.mjs';
 import { isLocalClient } from '../../packages/dev-toolbar/src/node/index.js';
 
 const WEB = path.resolve(import.meta.dirname, '../../apps/web');
@@ -143,14 +143,13 @@ test('serves the theme and the logos', async () => {
   assert.equal((await fetch(`${url}/swagger/brand/wordmark.svg`)).status, 404);
 });
 
-test('the page opens with the site header, whose logo waits for the page title to scroll away', () => {
+test('the page opens with the site header, solid at once over the dark skin', () => {
   const html = swaggerHtml();
   assert.match(
     html,
-    /<body>\s*<div id="app-header-root" data-lockup="\.ct-header h1"><\/div><script src="\.\/__app-header\.js"><\/script>\s*<header class="ct-header">/
+    /<body>\s*<div id="app-header-root"><\/div><script src="\.\/__app-header\.js"><\/script>\s*<header class="ct-header">/
   );
   assert.match(html, /<link rel="stylesheet" href="\.\/__app-header\.css" \/>/);
-  assert.equal(SWAGGER_LOCKUP, '.ct-header h1');
 });
 
 test('serves the header bundle to every request', async () => {
