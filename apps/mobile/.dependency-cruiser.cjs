@@ -12,7 +12,7 @@ module.exports = {
       comment: 'Domain and shared kernel: no frameworks, no infrastructure, no outer layers.',
       from: { path: '^src/(shared-kernel|contexts/[^/]+/domain)/', pathNot: notTests },
       to: {
-        path: '^((\\.\\./)*node_modules/(react|react-native|expo[^/]*|zustand|h3-js|@maplibre|better-sqlite3|@cityturfer/ui)/|(\\.\\./)*packages/ui/|@cityturfer/ui$|(\\.\\./)*packages/core/src/h3/|src/(platform|composition-root|wiring|app|ui-kit)|src/contexts/[^/]+/(application|infrastructure|ui)/)',
+        path: '^((\\.\\./)*node_modules/(react|react-native|react-native-nitro-modules|@kingstinct/react-native-healthkit|@[^/]+/react-native-[^/]+|@react-native[^/]*|expo[^/]*|zustand|h3-js|@maplibre|better-sqlite3|@cityturfer/ui)/|(\\.\\./)*packages/ui/|@cityturfer/ui$|(\\.\\./)*packages/core/src/h3/|src/(platform|composition-root|wiring|app|ui-kit)|src/contexts/[^/]+/(application|infrastructure|ui)/)',
       },
     },
     {

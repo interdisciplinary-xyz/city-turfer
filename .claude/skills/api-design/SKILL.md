@@ -1,13 +1,9 @@
 ---
 name: api-design
-description:
-  CityTurfer's HTTP API (apps/api, Hono on Vercel) — route conventions for /v1, contract-first
-  schemas with @hono/zod-openapi and zod 4, the generated OpenAPI 3.1 spec (apps/api/openapi.json,
-  drift check, Redocly lint), Swagger UI at cityturfer.local/swagger, errors as problem+json, auth,
-  idempotent uploads of activities, privacy of location data, Vercel limits, and how routes map to
-  the app's DDD use cases. Use before adding or changing any API route or schema, when planning sync
-  between the phone and the server, when touching apps/api, the swagger dev route, or when someone
-  asks "what does the API look like?" or "is this endpoint documented?".
+description: >-
+  The HTTP API in apps/api (Hono, zod-openapi, generated OpenAPI spec, Swagger): route conventions,
+  sync, errors, auth, privacy, Vercel limits, database and tokens. Use before adding or changing a
+  route or schema, planning sync, or asked "what does the API look like?".
 ---
 
 # API design (apps/api)
@@ -33,15 +29,18 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   PGlite clients); migrations in `apps/api/drizzle/` (committed). Decision:
   `docs/decisions/api-device-tokens-2026-10-20.md`.
 - Routes per bounded context in `apps/api/src/routes/<context>.ts` (identity, privacy, sync,
-  activities, territory), declared through `defineRoute()` (`routes/define.ts`) with
+  activities, territory, and `platform` for `GET /v1/health`), records → JSON mappers in
+  `apps/api/src/routes/dto.ts`, declared through `defineRoute()` (`routes/define.ts`) with
   `status: 'planned' | 'live'`; schemas in `apps/api/src/schemas/<context>.ts`; shared pieces
   (problem, ids, cursor, headers, standard responses) in `apps/api/src/schemas/common.ts`; the error
   code catalogue in `apps/api/src/errors.ts`.
 - **Routes are driving adapters:** validate (zod) → call a use case → map the result to a DTO.
   Business rules live in the domain (`@cityturfer/core`, `packages/core`), never in a handler.
 - The spec is **generated**: `pnpm --filter @cityturfer/api run openapi` writes
-  `apps/api/openapi.json`. Never edit it by hand. `ci:quality` regenerates it (fails on drift) and
-  runs `redocly lint`.
+  `apps/api/openapi.json`. Never edit it by hand. A Vitest case in
+  `apps/api/src/__tests__/app.test.ts` builds the spec from the routes and fails when it differs
+  from the committed file (so `ci:quality` catches drift, it does not regenerate); the `lint` script
+  runs `redocly lint` on it.
 
 ## Conventions
 

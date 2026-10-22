@@ -1,13 +1,9 @@
 ---
 name: brand-system
-description:
-  CityTurfer brand rules and assets — positioning and personality, name usage, tagline and voice,
-  colour tokens (the turf strength ramp), the Archivo typeface, visual language, colour contrast
-  (WCAG), logo/wordmark/app-icon construction, splash, social image, store screenshots and copy, and
-  how to render them with apps/mobile/tools/brand/render-assets.mjs. Use whenever writing
-  user-facing copy, designing or restyling a screen, choosing a colour or font, touching app
-  icons/splash/app name, preparing App Store / Play listings or marketing material, or when someone
-  asks "is this on-brand?".
+description: >-
+  "is this on-brand?", user-facing copy, choosing a colour or font, restyling a screen, app icon,
+  splash, store listing or screenshots, social image. CityTurfer name, voice, colour tokens (turf
+  Ramp), Archivo, logo, WCAG contrast and rendering assets with render-assets.mjs.
 ---
 
 # CityTurfer brand system
@@ -31,13 +27,14 @@ Pillars: **Your streets** (ownership is permanent) · **The glow** (repetition i
 
 ## Name
 
-- **CityTurfer (one word, two capitals)**: Cityturfer, City Turfer, CITYTURFER, City-Turfer
-- **"your turf", "claim", "glow", "streets you own"**: "territory" (internal/code term only),
-  "score", "points", "conquer" (too aggressive)
-
+- **Do:** write **CityTurfer** (one word, two capitals). **Don't:** Cityturfer, City Turfer,
+  CITYTURFER, City-Turfer.
+- **Do:** say "your turf", "claim", "glow", "streets you own". **Don't:** "territory" (internal/code
+  term only), "score", "points", "conquer" (too aggressive).
 - Users are **Turfers**. Their claimed area is **turf**; one hexagon is a **cell**.
 - Use the ubiquitous language from `docs/poc-plan.md` §2 in UI copy (Walk / Run / Ride, Turf, Cell,
-  Strength tiers).
+  Strength tiers). The UI says **Ride**; code, tokens and data say `cycle` (`TYPE_COLOR.cycle`, CSS
+  `--ride`). Change the label, never the identifier.
 - Internal identifiers stay as they are: bundle id `com.turftrack.poc`, Expo slug `turftrack`
   (changing them breaks installs, data and OTA updates).
 
@@ -58,31 +55,48 @@ it. Own it." · "Every street you cover becomes yours."
 
 The brand palette **is** the turf strength ramp — the app's core mechanic is the brand.
 
-| Token                   | Hex                               | Use                                                  |
-| ----------------------- | --------------------------------- | ---------------------------------------------------- |
-| `night` (dark `bg`)     | `#0B0D12`                         | Primary background (Turf map, sign-in, splash, icon) |
-| `night-raised` (`card`) | `#151924`                         | Cards on dark                                        |
-| `faint`                 | `#7B2FF7`                         | Turf tier 1, gradient start                          |
-| `glow` (accent)         | `#F72FA8`                         | Primary accent: buttons, selection, links            |
-| `strong`                | `#FFB02E`                         | Turf tier 3, highlights                              |
-| `blazing`               | `#FFF3C4`                         | Turf tier 4, logotype "City", headline on dark       |
-| `walk` / `run` / `ride` | `#2BD48B` / `#FF8A3D` / `#3DB8FF` | Activity type colours only                           |
+Brand names (left) are what people say; code names are what you import (`@cityturfer/brand`), CSS
+names what the website uses.
+
+| Brand name     | Code                                  | CSS                       | Hex                           | Use                                           |
+| -------------- | ------------------------------------- | ------------------------- | ----------------------------- | --------------------------------------------- |
+| `night`        | `DARK.bg`                             | `--bg`                    | `#0B0D12`                     | Background (whole app, website, splash, icon) |
+| `night-raised` | `DARK.card`                           | `--card`                  | `#151924`                     | Cards on dark                                 |
+| `faint`        | `TIER_COLOR.faint`                    | `--faint`                 | `#7B2FF7`                     | Turf tier 1, gradient start                   |
+| `glow`         | `TIER_COLOR.glowing`, `ACCENT`        | `--glow`, `--accent`      | `#F72FA8`                     | Tier 2; accent: buttons, selection, links     |
+| `strong`       | `TIER_COLOR.strong`                   | `--strong`                | `#FFB02E`                     | Turf tier 3, highlights                       |
+| `blazing`      | `TIER_COLOR.blazing`                  | `--blazing`               | `#FFF3C4`                     | Turf tier 4, logotype "City", headline        |
+| Ramp           | `RAMP`                                | `--ramp-stops`            | the four tiers                | Gradient, in tier order                       |
+| walk/run/ride  | `TYPE_COLOR.walk` / `.run` / `.cycle` | `--walk`/`--run`/`--ride` | `#2BD48B`/`#FF8A3D`/`#3DB8FF` | Activity type colours only                    |
+| on-accent      | `ON_ACCENT`                           | `--on-accent`             | `#FFFFFF`                     | Label on `glow` fills (known contrast fail)   |
+| on-tier        | `ON_TIER.<tier>`                      | `--on-glow`               | white / `#0B0D12`             | Text on a tier fill (white on faint/glowing)  |
+| on-light       | `ON_LIGHT`, `ON_TYPE_COLOR.<type>`    | `--on-type`               | `#0B0D12`                     | Text on light fills and activity colours      |
+
+Themes (`THEMES.dark` = `DARK`, `THEMES.light` = `LIGHT`) use semantic names; CSS `--bg`, `--card`,
+`--text`, `--muted`, `--border`, `--danger`:
+
+| Theme   | `bg`      | `card`    | `text`    | `muted`   | `border`  | `danger`  |
+| ------- | --------- | --------- | --------- | --------- | --------- | --------- |
+| `DARK`  | `#0B0D12` | `#151924` | `#EEF1F7` | `#9AA3B5` | `#242A38` | `#FF6369` |
+| `LIGHT` | `#F6F7FB` | `#FFFFFF` | `#0E1116` | `#5C6577` | `#E3E6EE` | `#E5484D` |
+
+**The app is always dark** (`userInterfaceStyle: "dark"` in `apps/mobile/app.json`, so
+`usePalette()` returns `DARK`), and so is the website (`cssVariables('dark')`). `LIGHT` stays for
+Storybook and a possible light mode later; its contrast failures matter only then.
 
 Gradient **Ramp** = `faint → glow → strong → blazing`, always running from bottom-left to top-right
-(movement "up" into white-hot). Never use the ramp for errors; errors use `#E5484D`/`#FF6369`.
-Tokens live in `packages/brand/src/colors.ts` (`@cityturfer/brand`, re-exported by
-`apps/mobile/src/constants/colors.ts`: `TIER_COLOR`, `ACCENT`, `LIGHT`, `DARK`, `TYPE_COLOR`;
-`usePalette()` from `@cityturfer/ui`, re-exported by `apps/mobile/src/ui-kit/theme.ts`) — reference
-those, never hard-code hex in components.
-
-Themes (`THEMES.light` / `THEMES.dark` = `LIGHT` / `DARK`) use semantic names: `bg`, `card`, `text`,
-`muted`, `border`, `danger`; `night` and `night-raised` are the dark `bg` and `card`. Spacing
-(`SPACE`), radii (`RADIUS`), type (`FONT_SIZE`, `FONT_WEIGHT`, `LABEL_TRACKING`) and the tier order
-(`TIER_ORDER`) live in `packages/brand/src/tokens.ts`; tier names users see (`TIER_LABEL`: Faint,
-Glowing, Strong, Blazing) in `copy.ts`. The website gets every token as a CSS variable from
-`cssVariables('dark')` (`--bg`, `--card`, `--glow`, `--walk`, `--space-lg`, `--radius-panel`,
-`--font-hero`, `--font-weight-black`, `--label-tracking`…). Components and Storybook: the
-`design-system` skill.
+(movement "up" into white-hot). Never use the ramp for errors; errors use `danger`. Tokens live in
+`packages/brand/src/colors.ts`; `apps/mobile/src/constants/colors.ts` re-exports `ACCENT`, `DARK`,
+`LIGHT`, `ON_ACCENT`, `ON_LIGHT`, `ON_TIER`, `ON_TYPE_COLOR`, `RAMP`, `TIER_COLOR`, `TYPE_COLOR` and
+`FONT_FAMILY` (never add a token there); `usePalette()` comes from `@cityturfer/ui`, re-exported by
+`apps/mobile/src/ui-kit/theme.ts`. Reference those, never hard-code hex in components or native
+config written from TS (e.g. the Android tracking notification's `notificationColor` takes
+`ACCENT`). Spacing (`SPACE`), radii (`RADIUS`), type (`FONT_SIZE`, `FONT_WEIGHT`, `LABEL_TRACKING`)
+and the tier order (`TIER_ORDER`) live in `packages/brand/src/tokens.ts`; tier names users see
+(`TIER_LABEL`: Faint, Glowing, Strong, Blazing) in `copy.ts`. The website gets every token as a CSS
+variable from `cssVariables('dark')` (`--bg`, `--card`, `--glow`, `--walk`, `--space-lg`,
+`--radius-panel`, `--font-hero`, `--font-weight-black`, `--label-tracking`…). Components and
+Storybook: the `design-system` skill.
 
 ## Typography
 
@@ -97,7 +111,7 @@ Files in `packages/brand/fonts/` (cut by `packages/brand/scripts/make-fonts.py`)
   (`fontVariant: ['tabular-nums']` / `font-variant-numeric: tabular-nums`).
 - The weight is part of each font: never add `fontWeight` (Android falls back to the system font)
   and on the web use `font-weight: normal` + `font-synthesis: none`.
-- Labels: 12–13 pt system font, weight 600–700, uppercase, letter-spacing 0.8–1.
+- Labels: 12–13 pt system font, weight 600–700, uppercase, letter-spacing `LABEL_TRACKING` (0.8).
 - Fonts are bundled natively (`expo-font` plugin in `apps/mobile/app.json`): a new font or file
   changes the runtime fingerprint and needs a reinstall.
 
@@ -134,7 +148,8 @@ Check a pair with `contrastRatio(fg, bg)` from `@cityturfer/brand`
 (`packages/brand/src/contrast.ts`). `packages/brand/src/__tests__/contrast.test.ts` covers every
 pairing the apps draw; its `KNOWN_FAILURES` list is the open palette work (white on glow buttons,
 glow and danger as text on light, activity colours on light), with suggested fixes in the decision
-doc. Fixing one means removing it from the list.
+doc. Fixing one means removing it from the list. Only white on glow is live today (the app and the
+website are dark-only); the light-theme failures bite once a light mode ships.
 
 ## Assets pipeline
 
@@ -152,16 +167,22 @@ node apps/mobile/tools/brand/render-assets.mjs store og     # only outputs whose
   frame the screens in `apps/web/public/screens/`; recapture those from a current build at full
   resolution before submitting.
 - Templates and SVGs can't import tokens; `packages/brand/src/__tests__/asset-colors.test.ts` fails
-  on any hex that isn't a token or a listed art-only shade.
+  on any hex that isn't a token or a listed art-only shade. Fast loop after a token, SVG or template
+  edit: `pnpm --filter @cityturfer/brand test:unit` (asset colours, contrast, tokens).
 
-Icons and splash are **native**: they change the runtime fingerprint, so OTA updates stop matching
-installed builds. Apply them only together with a native reinstall: copy
-`apps/mobile/assets/brand/out/*` into `apps/mobile/assets/`, set `expo.name`, rebuild, reinstall,
-then publish OTA updates for the new runtime.
+`apps/mobile/assets/brand/out/` is a staging area; `apps/mobile/app.json` reads the copies in
+`apps/mobile/assets/` (today identical to the staged ones). Icons and splash are **native**: they
+change the runtime fingerprint, so OTA updates stop matching installed builds. Apply them only
+together with a native reinstall: copy just the changed files that `app.json` references
+(`icon.png`, `android-icon-foreground.png`, `android-icon-background.png`,
+`android-icon-monochrome.png`, `splash-icon.png`) from `assets/brand/out/` into
+`apps/mobile/assets/` (never `out/*`: wordmarks and `store/` don't belong there), rebuild,
+reinstall, then publish OTA updates for the new runtime.
 
 ## Store copy (draft)
 
-- **Name:** CityTurfer · **Subtitle (30):** Surf your city. Own its streets.
+- **Name:** CityTurfer · **Subtitle (27/30 chars):** Own every street you cover. (The main tagline
+  is 33 chars, too long for the App Store's 30.)
 - **Promo:** Walk, run or ride — every street you cover becomes your turf. Come back and watch it
   glow.
 - **Keywords:** walking, running, cycling, GPS tracker, route map, city explorer, heatmap,
@@ -170,10 +191,10 @@ then publish OTA updates for the new runtime.
 ## Review checklist ("is this on-brand?")
 
 1. Name spelled CityTurfer; internal terms not leaking into copy.
-2. Colours from tokens; accent = `glow`; Ramp direction correct; Turf map dark.
+2. Colours from tokens; accent = `glow`; Ramp direction correct.
 3. Numbers tabular and concrete; no guilt or casino language.
-4. Designed for dark: the app and website are dark only from v0.9.0; `LIGHT` is only checked in
-   Storybook.
+4. Designed for dark: the app and website are dark only from v0.9.0 (`DARK` via `usePalette()`,
+   never a hard-coded scheme); `LIGHT` is only checked in Storybook.
 5. Type: Archivo only for display and numbers, via `FONT_FAMILY`, never with `fontWeight`.
 6. New colour pairs meet the contrast minimums (or are knowingly listed in `KNOWN_FAILURES`).
 7. Copy fits all three audiences and the personality: confident, playful, outdoorsy, private.

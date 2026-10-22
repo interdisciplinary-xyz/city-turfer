@@ -1,12 +1,9 @@
 ---
 name: mobile-testing
-description:
-  How to test CityTurfer — Jest unit tests for metrics/filter/db, mocking
-  expo-location/task-manager/sqlite, GPS fixture generation with apps/mobile/tools/gen-route.mjs,
-  the route-stats oracle, replaying routes into the iOS Simulator / Android emulator with
-  apps/mobile/tools/sim-location.sh, background-tracking manual checks, and Maestro E2E flows. Use
-  when writing tests, verifying a feature end to end, reproducing a tracking bug, or when asked
-  "does it work?".
+description: >-
+  Use when writing tests, verifying a feature end to end, reproducing a tracking bug, or asked "does
+  it work?". Jest on real SQL, gen-route fixtures, route-stats oracle, sim-location.sh replay,
+  background checks, Maestro E2E.
 ---
 
 # Testing CityTurfer
@@ -15,37 +12,32 @@ Three layers, and each one catches things the others can't.
 
 ## 1. Unit (Jest, fast, every change)
 
-- `packages/core/src/shared-kernel/**` (metrics) and
-  `apps/mobile/src/contexts/recording/domain/fix-filter.ts`: pure functions, tested directly against
-  fixtures.
-- Repositories and the outbox: test against a real SQLite. Jest uses
-  `apps/mobile/src/test-support/node-database.ts`, a thin `Database` adapter over `better-sqlite3`
-  (dev dependency), so the SQL actually runs. Don't mock the queries themselves.
-- When a test needs Expo native modules, mock them in that test file (there is no `jest.setup.ts`;
-  see `apps/mobile/src/contexts/recording/infrastructure/__tests__/to-fix.test.ts` and
-  `apps/mobile/src/platform/__tests__/expo-database.test.ts`), for example:
+- Pure domain and application code lives in `packages/core` (shared-kernel, identity, activity-log,
+  territory, achievements): `pnpm --filter @cityturfer/core test:unit`.
+- Mobile-side units (`apps/mobile/src/**`, e.g. `contexts/recording/domain/fix-filter.ts`) run with
+  `pnpm -C apps/mobile exec jest`; the Jest config is the `jest` key in each `package.json` (node
+  environment, `babel-preset-expo`, `@/` mapper, `watchman: false`), no `jest.config.*`.
+  `pnpm -C apps/mobile test` also runs depcruise; `test:tools` runs the `node --test` suites in
+  `tools/__tests__/` (e2e audit, turf parity).
+- Repositories and the outbox: test against real SQLite via
+  `apps/mobile/src/test-support/node-database.ts` (`openNodeDatabase()`, a `Database` adapter over
+  `better-sqlite3`). Don't mock the queries.
+- **Integration tests use real wiring:** `migrate(db)` then `wire()` from
+  `apps/mobile/src/wiring.ts` with fakes for the device ports. Models in
+  `apps/mobile/src/__tests__/`: `end-to-end`, `headless-resilience`, `recording-concurrency`,
+  `outbox-and-retention`, `apple-health`, `cloud-backup`. Drive the recording path by calling
+  `c.recording.ingestFixes.execute(fixes)` with batches built by `loadFixes('walk-2k.gpx')`
+  (`test-support/fixtures.ts`). Expected numbers come from `oracleStats(fixture)`
+  (`test-support/oracle.ts`, wraps the `route-stats` oracle).
+- No `expo-task-manager` mock is used: the task is a thin adapter over `IngestFixes`. When a test
+  needs a native module, mock it in that file (there is no `jest.setup.ts`) and keep it minimal; see
+  `contexts/recording/infrastructure/__tests__/to-fix.test.ts`:
   ```ts
-  jest.mock('expo-location', () => ({
-    Accuracy: { BestForNavigation: 6, High: 4 },
-    ActivityType: { Fitness: 3 },
-    requestForegroundPermissionsAsync: jest.fn(async () => ({ status: 'granted' })),
-    requestBackgroundPermissionsAsync: jest.fn(async () => ({ status: 'granted' })),
-    hasServicesEnabledAsync: jest.fn(async () => true),
-    startLocationUpdatesAsync: jest.fn(),
-    stopLocationUpdatesAsync: jest.fn(),
-    hasStartedLocationUpdatesAsync: jest.fn(async () => false),
-  }));
-  jest.mock('expo-task-manager', () => {
-    const tasks: Record<string, Function> = {};
-    return {
-      defineTask: (n: string, fn: Function) => (tasks[n] = fn),
-      __tasks: tasks,
-      isTaskRegisteredAsync: jest.fn(async () => true),
-    };
-  });
+  jest.mock('expo-location', () => ({}));
+  jest.mock('react-native', () => ({ Platform: { OS: 'android' } }));
+  jest.mock('../background-activity-session', () => ({ backgroundActivitySession: {} }));
   ```
-  With the `__tasks` handle, a test can invoke the task handler with a batch of locations built from
-  a fixture. That's how the task → filter → DB path gets tested without a device.
+  `jest.mock` factories may only reference variables prefixed `mock`.
 
 ### Fixtures
 
@@ -53,7 +45,7 @@ Three layers, and each one catches things the others can't.
 node apps/mobile/tools/gen-route.mjs --type walk  --km 2  --interval 2 > apps/mobile/tools/fixtures/walk-2k.gpx
 node apps/mobile/tools/gen-route.mjs --type run   --km 5  --outliers 4 --pause 90 > apps/mobile/tools/fixtures/run-5k-outliers-pause.gpx
 node apps/mobile/tools/gen-route.mjs --type cycle --km 20 --interval 2 --climb 40 > apps/mobile/tools/fixtures/cycle-20k.gpx
-node apps/mobile/tools/gen-route.mjs --type run --km 5 --format json > apps/mobile/tools/fixtures/run-5k.json   # includes truth.{distanceM,movingS,elevGainM}
+node apps/mobile/tools/gen-route.mjs --type run --km 5 --format json > apps/mobile/tools/fixtures/run-5k.json   # (illustrative, not committed) includes truth.{distanceM,movingS,elevGainM}
 ```
 
 For turf work, generate months of overlapping history (deterministic, gitignored, regenerate instead
@@ -65,13 +57,14 @@ node apps/mobile/tools/gen-history.mjs --days 365 --per-week 5 --out /tmp/year  
 node apps/mobile/tools/turf-preview.mjs apps/mobile/tools/fixtures/history --out /tmp/turf.html     # visual reference for the Turf Map
 ```
 
-Load history into a dev build through the dev menu's "Import fixture history"
-(`ImportActivityFromGpx`; copy the files to the simulator with `xcrun simctl addmedia` or
-`adb push`).
+In a dev build, the Info screen's "Seed demo history" button loads the built-in demo history
+(`apps/mobile/src/dev/demo-history.ts`); "Add sample workouts to Apple Health" uses
+`dev/health-seed.ts`. There is no GPX import UI for fixture files.
 
-Generation is seeded (`--seed`), so fixtures are reproducible. Commit them. Assert the app's metrics
-against `node apps/mobile/tools/route-stats.mjs <gpx> --json` (oracle) and, for JSON fixtures,
-against `truth`. Distance should land within ±3% of truth.
+Generation is seeded (`--seed`), so fixtures are reproducible. Commit single-route fixtures (`.gpx`
+directly in `apps/mobile/tools/fixtures/`, un-ignored in `.gitignore`); never `fixtures/history/`.
+Assert the app's metrics against `node apps/mobile/tools/route-stats.mjs <gpx> --json` (oracle) and,
+for JSON fixtures, against `truth`. Distance should land within ±3% of truth.
 
 ## 2. Simulated movement on a dev build (any tracking change)
 
@@ -94,7 +87,7 @@ Freeway Drive.
 4. Lock the screen (Android: `adb shell input keyevent KEYCODE_POWER`) and wait ≥ 60 s.
 5. Foreground the app. The live polyline must have no straight-line gap over the background period,
    and the point count must keep growing.
-6. Android only: `adb shell am kill com.turftrack.app` while recording → relaunch → the "Resume
+6. Android only: `adb shell am kill com.turftrack.poc` while recording → relaunch → the "Resume
    recording?" flow must appear, with no points lost before the kill.
 
 Report what you actually observed. If no simulator or emulator is available, say the change is
@@ -124,7 +117,8 @@ always runs last. Shared steps live in `apps/mobile/e2e/subflows/` (`launch`, `s
 **Write:**
 
 - Select by `id:` (`testID`). Every id a flow uses must exist in `apps/mobile/src`, and tags must
-  come from the allowed list. Run `pnpm -C apps/mobile run e2e:audit` (also part of `ci:quality`).
+  come from `ALLOWED_TAGS` in `apps/mobile/tools/e2e/audit.mjs`. Run
+  `pnpm -C apps/mobile run e2e:audit` (also part of `ci:quality`).
 - Register a new flow in `flowsOrder` and add its critical path to `docs/quality/e2e.md`.
 - Toggles: `assertVisible: { id: 'record-turf', checked: true }` reads the switch's
   `accessibilityState`.
@@ -165,6 +159,11 @@ tags: [recording]
 ```
 
 ## Real devices
+
+For recording gaps in a pulled database, run `node apps/mobile/tools/diagnose-recording.mjs <db>`
+(timeline without coordinates) or `apps/mobile/tools/device-diagnose.sh`. CP-4 (kill recovery) has
+no Maestro flow, so the Android kill step above is its only on-device check; CP-3 is
+`03-background-recording` (simulator only).
 
 Simulators don't reproduce GPS warm-up, urban-canyon multipath, OEM battery killers or tunnels.
 Before calling tracking "done", record one real walk on a physical device, export the GPX, and

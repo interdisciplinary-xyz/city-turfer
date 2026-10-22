@@ -1,19 +1,22 @@
 ---
 name: turf-territory
-description:
-  CityTurfer's main feature — turning recorded tracks into "turf" — the Territory bounded context
-  (Claim aggregate, Turf Cells on an H3 grid, permanent turf with visit-based Strength, Territory
-  projection, rebuild/release), and the Turf Map rendering on MapLibre (heatmap glow,
-  strength-coloured cells, overlapping blurred tracks, zoom level-of-detail). Use for anything in
-  packages/core/src/contexts/territory/ (domain, use cases, contract), packages/core/src/h3/ or
-  apps/mobile/src/contexts/territory/ (SQLite projection, Turf Map UI), the Turf Map screen, "turf
-  gained" on activities, tuning turf parameters, or turf performance with large histories.
+description: >-
+  Use for turf: Claims, H3 Turf Cells, Strength, the Territory projection, viewport queries, Turf
+  Map and Record-map turf layers, Home City, "turf gained", turf tuning or performance. Code:
+  packages/core/src/contexts/territory/, packages/core/src/h3/, apps/mobile/src/contexts/territory/.
 ---
 
 # Turf & Territory
 
 Design source: `docs/poc-plan.md` §2 (the vocabulary), §4.3 (the model) and §5 (map layers).
-Reference implementation of the formula and look: `apps/mobile/tools/turf-preview.mjs`.
+Reference implementation of the formula: `apps/mobile/tools/lib/turf.mjs` (used by
+`apps/mobile/tools/turf-preview.mjs` for the look and tuning).
+
+**Where it lives:** Territory's domain, use cases and contract are in
+`packages/core/src/contexts/territory/` (`@cityturfer/core/territory`; adapters import
+`@cityturfer/core/territory/ports`). The SQLite projection (`SqliteTerritoryRepository`,
+`SqliteHomeCityRepository`), the overlay preference and the Turf Map UI stay in
+`apps/mobile/src/contexts/territory/`. The server will claim turf with the same core code.
 
 ## Model in one picture
 
@@ -22,27 +25,31 @@ ActivityRecorded ─▶ ClaimTurfFromActivity ─▶ Claim (aggregate, immutable
                                                 │ TurfClaimed
                                                 ▼
                                    Territory projection (ter_cells)          ← read model, rebuildable
-                                                │ GetTurfInViewport / GetTurfSummary
+                                                │ GetTurfInViewport / GetTurfSummary / GetClaimForActivity
                                                 ▼
-                                   Turf Map (MapLibre layers)
+                                   Turf Map + Record map (MapLibre layers)
+ActivityDeleted ─▶ ReleaseTurfOfActivity (the only way turf shrinks)
+ActivityTrackCorrected ─▶ ReclaimTurfOfActivity (release + claim again)
 ```
 
-## Claim: from track to cells (domain, pure)
+## Claim: from track to cells (`domain/claim.ts`, pure)
 
 ```ts
-static fromTrack(a: ClaimSource, track: Track, grid: CellGrid): Claim {
+static fromTrack(src: { activityId; type; startedAt }, track: Track, grid: CellGrid, now: number): Claim {
+  if (src.startedAt > now + 60_000) throw new DomainError('claim.in-future');
   const cells = new Set<CellId>();
-  for (const seg of track.segments) {               // never bridge segment gaps
-    for (let i = 0; i < seg.points.length; i++) {
-      cells.add(grid.cellOf(seg.points[i]));
-      const next = seg.points[i + 1];
+  const step = grid.cellWidthM / 2;
+  for (const seg of track.segments) {               // a segment is TrackPoint[]; never bridge gaps
+    for (let i = 0; i < seg.length; i++) {
+      cells.add(grid.cellOf(seg[i]));
+      const next = seg[i + 1];
       if (!next) break;
-      const steps = Math.ceil(distance(seg.points[i], next).metres / (grid.cellWidthM / 2));
-      for (let s = 1; s < steps; s++) cells.add(grid.cellOf(interpolate(seg.points[i], next, s / steps)));
+      const n = Math.ceil(distanceM(seg[i], next) / step);
+      for (let s = 1; s < n; s++) cells.add(grid.cellOf(interpolate(seg[i], next, s / n)));
     }
   }
   if (cells.size === 0) throw new DomainError('claim.empty');
-  return new Claim({ activityId: a.activityId, type: a.type, claimedAt: a.startedAt, cells });
+  return new Claim({ activityId: src.activityId, type: src.type, claimedAt: src.startedAt, cells });
 }
 ```
 
@@ -50,28 +57,30 @@ static fromTrack(a: ClaimSource, track: Track, grid: CellGrid): Claim {
 - `claimedAt` is the activity's start time. An imported old activity counts as old turf.
 - A `Set` enforces "a cell counts at most once per activity", so running laps of the same block
   doesn't multiply its strength.
+- `claim.claimed(newCells, grid, now)` records `TurfClaimed` (cell count, new cells, new area) once
+  the projection has said which cells were new.
 
-## Strength (domain policy, must match the tool exactly)
+## Strength (`domain/strength.ts`, must match the tool exactly)
 
 **Turf is permanent** (product decision, `docs/poc-plan.md` §9): cells never fade or get lost.
 Strength depends only on the visit count.
 
 ```ts
-export const DEFAULT_TURF = { saturationK: 3 } as const;
+export const TURF_SATURATION_K = 3;
 
-strength(visits: number, p = DEFAULT_TURF): Strength {
-  if (visits < 1) throw new DomainError('turf.no-visits');
-  return Strength.of(1 - Math.exp(-visits / p.saturationK));   // k=3: 1→0.28, 3→0.63, 7→0.90, 10→0.96
-}
-tier(s): s < 0.33 'faint' | < 0.66 'glowing' | < 0.9 'strong' | else 'blazing'
+strengthOf(visits, k = TURF_SATURATION_K) // throws DomainError('turf.no-visits') when visits < 1
+  = 1 - Math.exp(-visits / k);            // k=3: 1→0.28, 3→0.63, 7→0.90, 10→0.96
+tierOf(s): s < 0.33 'faint' | < 0.66 'glowing' | < 0.9 'strong' | else 'blazing'
+isStrong(s): tier is 'strong' or 'blazing'
 ```
 
 - Projection update: applying a Claim increments `visits` (and the type's count) for each cell and
   sets `last_at = max(last_at, claimedAt)`. Order doesn't matter. Releasing a Claim decrements, and
   deletes the cell when it reaches 0.
-- Strength is computed on read, so changing `saturationK` needs no migration.
-- Test vectors live in `apps/mobile/tools/fixtures/turf-vectors.json` (visits → strength, tier).
-  Generate them from the reference formula and assert both the tool and the app against them.
+- Strength is computed on read, so changing `TURF_SATURATION_K` needs no migration.
+- Test vectors live in `apps/mobile/tools/fixtures/turf-vectors.json` (visits → strength, tier); the
+  core territory test and `apps/mobile/tools/__tests__/turf-parity.test.mjs` both assert against
+  them.
 - Don't reintroduce time decay without a product decision. "Recent activity" belongs in the summary
   (new turf this week or month), not in Strength.
 
@@ -81,75 +90,66 @@ tier(s): s < 0.33 'faint' | < 0.66 'glowing' | < 0.9 'strong' | else 'blazing'
 export interface CellGrid {
   readonly cellWidthM: number; // ~50 for H3 res 11
   cellOf(p: GeoPoint): CellId;
-  boundary(c: CellId): GeoPoint[];
   centroid(c: CellId): GeoPoint;
-  parent(c: CellId, res: number): CellId;
-  cellsCovering(b: BoundingBox, res: number): CellId[];
+  boundary(c: CellId): GeoPoint[];
   areaM2(c: CellId): number;
+  coarse(c: CellId): CellId; // coarser cell containing c, for zoomed-out aggregation
 }
 ```
 
-- **Where it lives:** Territory's domain, use cases and contract are in
-  `packages/core/src/contexts/territory/` (`@cityturfer/core/territory`; adapters import
-  `@cityturfer/core/territory/ports`); the SQLite projection, preferences and Turf Map UI stay in
-  `apps/mobile/src/contexts/territory/`. The server will claim turf with the same core code.
 - `H3CellGrid` (`packages/core/src/h3/`, entry `@cityturfer/core/h3`) uses h3-js, pinned to one
   exact version in `packages/core/package.json` (guarded by `tools/__tests__/single-h3.test.mjs`):
-  `latLngToCell(lat, lng, 11)`, `cellToBoundary`, `cellToParent`, `polygonToCells`,
-  `cellArea(c, 'm2')`. Resolution 11 claims; resolution 7 is the parent for viewport indexing
-  (`ter_cells.parent_r7`); resolution 9 is the aggregation level when zoomed out.
-- The domain never imports h3-js. Tests use `SquareCellGrid` (pure TS, the same as
-  `apps/mobile/tools/turf-preview.mjs`).
+  `latLngToCell(lat, lon, 11)`, `cellToLatLng`, `cellToBoundary`, `cellArea(c, 'm2')`, and
+  `cellToParent(c, 9)` for `coarse`. Resolution 11 claims; resolution 9 aggregates.
+- The domain never imports h3-js (core's `h3-only-in-h3` dependency rule). Tests use the real
+  `H3CellGrid` (`packages/core/src/contexts/territory/domain/__tests__/territory.test.ts`); a
+  pure-TS square grid like the one in `turf-preview.mjs` is an option if H3 ever gets in the way.
 
-## Viewport query (application + infrastructure)
+## Viewport query (`GetTurfInViewport`, core application + app repository)
 
-`GetTurfInViewport({ bbox, zoom, now, types })`:
+`execute(bbox, zoom, types = ACTIVITY_TYPES): Promise<TurfCellView[]>`:
 
-1. Expand the bbox by 10%.
-2. `SELECT … FROM ter_cells WHERE lat BETWEEN … AND lon BETWEEN …` on the centroid index
-   `idx_ter_cells_lat_lon` (filtering by type via the `walk/run/cycle` count columns). (Simpler than
-   the parent_r7 index originally planned; revisit if viewport queries exceed budget.)
-3. Compute strength from `visits`.
-4. At zoom < 14: group by the resolution-9 parent, taking max strength. At zoom ≥ 14: return
-   resolution-11 cells.
-5. Return GeoJSON-ready DTOs: `{ id, strength, tier, centroid, boundary? }` (boundary only at zoom ≥
-   13).
+1. Expand the bbox by 10% on each axis.
+2. `repo.cellsIn(bbox, types)`: `SELECT … FROM ter_cells WHERE lat BETWEEN … AND lon BETWEEN …` on
+   the centroid index `idx_ter_cells_lat_lon`; visits are summed over the selected types' count
+   columns and cells with 0 drop out.
+3. Compute strength and tier from those visits.
+4. Up to `MAX_FEATURES` (5,000) cells: return them all; each carries a `ring` (closed polygon,
+   `[lon, lat]`) only when `zoom >= DETAIL_ZOOM` (13.5, `packages/core/src/constants/turf.ts`). More
+   than 5,000: aggregate to the coarse (res 9) cell, keeping the strongest member, no rings.
+5. DTO (`contract.ts` `TurfCellView`): `{ id, strength, tier, visits, centroid, ring? }`.
 
-Budget: ≤ 5,000 features per response and < 150 ms on a mid-range Android. Debounce viewport changes
-by 250 ms, and cache by `(parent set, zoom bucket, types)`, and invalidate on `TurfClaimed` /
-`TurfReleased`.
+Budget: < 150 ms on a mid-range Android. The UI hook `useTurfViewport` debounces view changes by 250
+ms and re-reads when `dataVersion` changes (after any commit). A cache by
+`(parent set, zoom bucket, types)` is planned if queries exceed budget (likewise a `parent_r7` index
+column).
 
 ## Turf Map rendering (ui, MapLibre)
 
-Use `@maplibre/maplibre-react-native` with an OpenFreeMap dark style. Layers, bottom to top:
+`@maplibre/maplibre-react-native` with the OpenFreeMap dark style (`MAP_STYLE_DARK`,
+`apps/mobile/src/constants/map.ts`). `TurfLayers`
+(`apps/mobile/src/contexts/territory/ui/layers.tsx`) draws, bottom to top:
 
-- `turf-heat`
-  - Type: heatmap
-  - Source: cell centroids
-  - Key style: `heatmap-weight: ['get','strength']`, radius 12→30 px across zoom 8→13, ramp
-    transparent → violet → magenta → amber → white. maxzoom 13.5
-- `turf-glow`
-  - Type: fill
-  - Source: cell polygons
-  - Key style: colour by tier, `fill-opacity: 0.25 + 0.5*strength`. Render a second blurred line
-    layer of the same polygons (`line-blur: 6`, `line-width: 8`) for the halo. minzoom 13
-- `turf-cells`
-  - Type: fill
-  - Source: cell polygons
-  - Key style: crisp, `fill-opacity: 0.15 + 0.55*strength`. minzoom 13
-- `tracks`
-  - Type: line
-  - Source: simplified tracks (Douglas–Peucker ε ≈ 5 m)
-  - Key style: `line-color` by type, `line-opacity: 0.18`, `line-blur: 1`, width 1.5→3. Overlaps
-    brighten naturally
+- `turf-heat` (heatmap) on `GeoJSONSource` `turf-points` (cell centroids): weight from `strength`,
+  radius and intensity interpolated over zoom 8 → 14, colour ramp transparent → faint → glowing →
+  strong → blazing (`TIER_COLOR`), fading out up to `maxzoom` `DETAIL_ZOOM + 1`.
+- `turf-halo` (line, `line-blur: 8`, width and opacity from `TURF_STYLE`) and `turf-fill` (fill,
+  `fill-opacity: fillBase + fillScale × strength`) on `GeoJSONSource` `turf-cells` (the rings), both
+  `minzoom` `DETAIL_ZOOM`, coloured by tier.
 
-Colours: walk `#5be7a9`, run `#ff8a3d`, cycle `#4cc2ff`. Tier ramp: faint `#7b2ff7`, glowing
-`#f72fa8`, strong `#ffb02e`, blazing `#fff3c4`. The Turf Map is always dark, so the glow reads
-properly.
+`TurfMapView` (`turf-map-view.tsx`) adds `turf-tracks-line` on `GeoJSONSource` `turf-tracks`: every
+Activity's stored `preview` (Douglas–Peucker ε = 15 m), coloured by type (`TYPE_COLOR`), low opacity
+and a slight blur so overlaps brighten, filtered by type with a layer `filter` expression rather
+than by rebuilding data. `ClaimLayers` draws one claim (`claim-fill`, new cells in the glowing
+colour).
 
-Keep sources as `ShapeSource` with stable ids, and update their `shape` rather than remounting
-layers. Tracks for the whole history load once (simplified, cached per activity), then get filtered
-by type with a layer `filter` expression, not by rebuilding data.
+Colours come only from `@cityturfer/brand` via `apps/mobile/src/constants/colors.ts`:
+`TYPE_COLOR.walk|run|cycle` for tracks, `TIER_COLOR.faint|glowing|strong|blazing` for turf. Never
+hard-code hex. Tunables live in `TURF_STYLE` (`ui/layers.constants.ts`). The Turf Map is always
+dark, so the glow reads properly.
+
+Keep sources mounted with stable ids and pass new `data` rather than remounting layers; memoise the
+GeoJSON (sources re-serialise their data on every render).
 
 ### Camera and the Home City
 
@@ -201,8 +201,9 @@ node apps/mobile/tools/gen-history.mjs --days 120 --out apps/mobile/tools/fixtur
 node apps/mobile/tools/turf-preview.mjs apps/mobile/tools/fixtures/history --out /tmp/turf.html && open /tmp/turf.html   # sliders: date (watch turf grow), k
 ```
 
-If you change `saturationK`, change `TurfParameters` in the domain,
-`apps/mobile/tools/turf-preview.mjs` and `turf-vectors.json` together.
+If you change `TURF_SATURATION_K` or the tier bounds, change
+`packages/core/src/contexts/territory/domain/strength.ts`, `apps/mobile/tools/lib/turf.mjs` and
+`apps/mobile/tools/fixtures/turf-vectors.json` together.
 
 ## Tests that must exist
 
