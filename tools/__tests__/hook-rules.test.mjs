@@ -11,9 +11,12 @@ import {
   brandHexFindings,
   contentAfter,
   dependencyFindings,
+  editAllowed,
   expectedBase,
   importSpecifiers,
+  parseShell,
   protectedFileFindings,
+  readOnlyBashFindings,
   remindersFor,
   shellCommands,
 } from '../harness/hook-rules.mjs';
@@ -488,4 +491,116 @@ test('pre-bash hook denies pushing to main and ignores unrelated commands', () =
   const release = runHook('pre-bash.mjs', { tool_name: 'Bash', tool_input: { command: 'pnpm run release' } });
   assert.equal(release.hookSpecificOutput.permissionDecision, 'deny');
   assert.match(release.hookSpecificOutput.permissionDecisionReason, /\[release\]/);
+});
+
+// --- agent-scoped guards ---------------------------------------------------
+
+const blocked = (line) => readOnlyBashFindings(line).length > 0;
+
+test('parseShell reports file redirections, not fd duplications', () => {
+  assert.deepEqual(parseShell('git diff > /tmp/x 2>&1').redirects, [{ op: '>', target: '/tmp/x' }]);
+  assert.deepEqual(parseShell("bash -c 'echo hi >> log'").redirects, [{ op: '>>', target: 'log' }]);
+  assert.deepEqual(parseShell('cat a 2>/dev/null').redirects, [{ op: '2>', target: '/dev/null' }]);
+});
+
+test('read-only agents: inspection and test commands pass', () => {
+  for (const line of [
+    'git diff --stat origin/scope/v0.9.0...HEAD',
+    'git log --oneline -20 && git show HEAD:CLAUDE.md | head -40',
+    'git branch --list "feat/*"',
+    'git branch -r --sort=-v:refname',
+    'grep -rn "beforeId" apps/mobile/src 2>/dev/null | wc -l',
+    "sed -n '1,40p' tools/harness/worker.mjs",
+    "awk '$3 > 5 {print $1}' data.txt",
+    'find apps/mobile/src -name "*.ts" | xargs grep -l useContainer',
+    'pnpm -C apps/mobile exec jest src/contexts/territory',
+    'pnpm --filter @cityturfer/core run arch',
+    'pnpm exec turbo run typecheck test:unit --filter=@cityturfer/core',
+    'pnpm exec prettier --check .claude',
+    'pnpm run audit:harness',
+    'node --test tools/__tests__/hook-rules.test.mjs',
+    'node apps/mobile/tools/route-stats.mjs apps/mobile/tools/fixtures/run-5k.gpx --json',
+    'gh pr view 115 --json files',
+    'gh api repos/o/r/pulls/115/comments',
+    'git diff > /private/tmp/claude-501/x/scratchpad/review.patch',
+    'for f in a.ts b.ts; do echo "== $f"; cat -n "$f"; done',
+    "grep -rnoE '`[^`]*src/[^` ]*`' .claude | sort -u",
+    'npx tsc --noEmit 2>&1 | tail -5; npm run test:arch & wait',
+    'timeout 300 npx vitest run',
+  ]) {
+    assert.deepEqual(readOnlyBashFindings(line), [], line);
+  }
+});
+
+test('read-only agents: anything that writes, mutates git or runs code is denied', () => {
+  for (const line of [
+    'git diff > review.patch',
+    'git diff >> apps/mobile/src/x.ts',
+    'cat <<EOF > notes.md\nhi\nEOF',
+    'echo x | tee out.txt',
+    "sed -i '' s/a/b/ file.ts",
+    "sed -n 's/a/b/w out' f",
+    'awk \'{print $1 > "out"}\' f',
+    'git checkout -- apps/mobile/src/x.ts',
+    'git stash',
+    'git branch -D feat/x',
+    'git commit -m x',
+    'bash -c "git reset --hard"',
+    'echo $(rm -rf build)',
+    'find . -name "*.orig" -delete',
+    'pnpm exec eslint --fix apps/mobile/src',
+    'pnpm exec prettier --write .',
+    'pnpm run audit:docs -- --write-index',
+    'pnpm --filter @cityturfer/api run openapi',
+    'pnpm add zod',
+    "node -e \"require('fs').writeFileSync('x', '')\"",
+    'gh pr comment 115 --body hi',
+    'gh api -X POST repos/o/r/issues',
+    'python3 fix.py',
+    'npx jest -u',
+    'for f in *.ts; do sed -i "" s/a/b/ "$f"; done',
+    'echo "$(git checkout main)"',
+  ]) {
+    assert.ok(blocked(line), line);
+  }
+  assert.match(readOnlyBashFindings('rm x')[0].message, /read-only/);
+});
+
+test('edit allowlist: folders by trailing slash, files exactly, nothing outside the repo', () => {
+  const allow = ['docs/product/', 'NOTEBOOK.md'];
+  assert.ok(editAllowed('docs/product/brief.md', allow));
+  assert.ok(editAllowed('NOTEBOOK.md', allow));
+  assert.ok(!editAllowed('docs/productivity.md', allow));
+  assert.ok(!editAllowed('NOTEBOOK.md.bak', allow));
+  assert.ok(!editAllowed('../outside/docs/product/x.md', allow));
+  assert.ok(!editAllowed('', allow));
+});
+
+function runAgentHook(script, args, payload) {
+  const r = spawnSync('node', [resolve(ROOT, '.claude/hooks', script), ...args], {
+    input: JSON.stringify(payload),
+    encoding: 'utf8',
+    env: { ...process.env, CLAUDE_PROJECT_DIR: ROOT },
+  });
+  assert.equal(r.status, 0, r.stderr);
+  return r.stdout ? JSON.parse(r.stdout).hookSpecificOutput.permissionDecision : 'allow';
+}
+
+test('read-only-bash and edit-allowlist hooks end to end', () => {
+  const bash = (command) => runAgentHook('read-only-bash.mjs', [], { tool_name: 'Bash', tool_input: { command } });
+  assert.equal(bash('git diff HEAD~1'), 'allow');
+  assert.equal(bash('git diff > x.patch'), 'deny');
+
+  const args = ['--allow', 'docs/product/,.claude/agent-memory/product-manager/', '--ask', 'NOTEBOOK.md'];
+  const edit = (path) =>
+    runAgentHook('edit-allowlist.mjs', args, {
+      tool_name: 'Edit',
+      cwd: ROOT,
+      tool_input: { file_path: resolve(ROOT, path) },
+    });
+  assert.equal(edit('docs/product/product-brief.md'), 'allow');
+  assert.equal(edit('.claude/agent-memory/product-manager/MEMORY.md'), 'allow');
+  assert.equal(edit('NOTEBOOK.md'), 'ask');
+  assert.equal(edit('apps/mobile/src/app/(tabs)/record.tsx'), 'deny');
+  assert.equal(edit('.claude/agents/product-manager.md'), 'deny');
 });

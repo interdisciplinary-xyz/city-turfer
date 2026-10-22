@@ -292,7 +292,18 @@ const PROTECTED = /^(main|release\/v\d+\.\d+\.\d+|scope\/v\d+\.\d+\.\d+)$/;
  * @returns {string[][]}
  */
 export function shellCommands(line) {
+  return parseShell(line).commands;
+}
+
+/**
+ * Commands plus the redirections between them. `redirects` holds `{ op, target }` for every `>`,
+ * `>>`, `&>` or `<` with a file target (`2>&1` has none), including those inside `bash -c '…'`.
+ * @returns {{ commands: string[][], redirects: { op: string, target: string }[] }}
+ */
+export function parseShell(line) {
   const commands = [];
+  const redirects = [];
+  let redirectOp = '';
   let words = [];
   let word = null;
   let dropNextWord = false; // the target of a redirection (`> file`) is not an argument
@@ -301,6 +312,7 @@ export function shellCommands(line) {
     if (word !== null) {
       if (dropNextWord) {
         dropNextWord = false;
+        redirects.push({ op: redirectOp, target: word });
       } else {
         words.push(word);
       }
@@ -426,6 +438,7 @@ export function shellCommands(line) {
     const redirect = word === null && line.slice(i).match(/^(?:\d*(?:>>?|<)(&\d+|&-)?|&>>?)/);
     if (redirect) {
       dropNextWord = !redirect[1];
+      redirectOp = redirect[0];
       i += redirect[0].length;
       continue;
     }
@@ -473,17 +486,21 @@ export function shellCommands(line) {
     }
     const shell = /^(?:.*\/)?(?:ba|z|da)?sh$/.test(w[0]);
     const cFlag = shell ? w.findIndex((x, k) => k > 0 && /^-[a-z]*c[a-z]*$/.test(x)) : -1;
-    if (cFlag > 0 && w[cFlag + 1] !== undefined) {
-      out.push(...shellCommands(w[cFlag + 1]));
-      continue;
-    }
-    if (w[0] === 'eval' && w.length > 1) {
-      out.push(...shellCommands(w.slice(1).join(' ')));
+    const inner =
+      cFlag > 0 && w[cFlag + 1] !== undefined
+        ? w[cFlag + 1]
+        : w[0] === 'eval' && w.length > 1
+          ? w.slice(1).join(' ')
+          : null;
+    if (inner !== null) {
+      const parsed = parseShell(inner);
+      out.push(...parsed.commands);
+      redirects.push(...parsed.redirects);
       continue;
     }
     out.push(w);
   }
-  return out;
+  return { commands: out, redirects };
 }
 
 /** @deprecated kept for callers that only need the command strings */
@@ -857,4 +874,321 @@ export function bashFindings(line, ctx = {}) {
     }
   }
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// Agent-scoped guards: read-only Bash (mobile-reviewer, rn-architect) and an edit allowlist
+// (product-manager). Wired through `hooks:` in the agent's frontmatter, so they bind only while
+// that agent runs. A prompt that says "read-only" is a request; this is the enforcement.
+// ---------------------------------------------------------------------------
+
+/** Commands that only read. Anything not listed is denied, so the list errs on the safe side. */
+const READ_ONLY_COMMANDS = new Set(
+  (
+    'ls cat head tail wc grep egrep fgrep rg jq diff cmp cut tr nl column file stat du df pwd echo printf true ' +
+    'false wait which type basename dirname realpath readlink test [ cd date comm paste fold od strings shasum ' +
+    'sha256sum md5 tree'
+  ).split(' ')
+);
+const GIT_READ_ONLY = new Set(
+  (
+    'diff log show status blame grep ls-files ls-tree rev-parse rev-list merge-base describe shortlog cat-file ' +
+    'for-each-ref name-rev show-ref fetch whatchanged range-diff check-ignore check-attr merge-tree'
+  ).split(' ')
+);
+const DEV_NULL = /^\/dev\/(null|stdout|stderr)$/;
+/** pnpm scripts that rewrite tracked files, install, release or start long-running servers. */
+const PNPM_WRITE_SCRIPT =
+  /^(format|standard:format|openapi|cache:clean|release.*|ios|android|start(:.*)?|web:dev|dev|install|i|add|remove|rm|update|up|upgrade|dlx|create|link|unlink|patch.*|import|prune|publish|pack|setup)$|fix|write/;
+const WRITE_ARG = /^(--fix|--write(?!-tree).*|--update.*|--out(put)?(=.*)?|--in-place.*)$/;
+/** Temp folders: a read-only agent may park command output there (it never reaches the repo). */
+const TEMP_PATH = /^(\/private)?\/tmp\/|^\/var\/folders\/|^\$\{?TMPDIR\}?\//;
+/** Shell keywords that prefix a command (`do cat x`) or carry none (`done`). */
+const SHELL_KEYWORDS = new Set(['do', 'then', 'else', 'elif', 'if', 'while', 'until', '!']);
+const SHELL_ENDS = new Set(['done', 'fi', 'esac', ']]']);
+const PNPM_EXEC_READ_ONLY = new Set([
+  'tsc',
+  'jest',
+  'vitest',
+  'eslint',
+  'depcruise',
+  'turbo',
+  'expo-updates',
+  'prettier',
+  'redocly',
+]);
+
+/** `pnpm exec <bin> …` / `npx <bin> …`: only checkers, never in a mode that rewrites files. */
+function execReason(bin, rest) {
+  if (!PNPM_EXEC_READ_ONLY.has(bin)) {
+    return `\`${bin}\` is not on the read-only exec list`;
+  }
+  if (bin === 'prettier' && !rest.includes('--check')) {
+    return '`prettier` without `--check` rewrites files';
+  }
+  if ((bin === 'jest' || bin === 'vitest') && rest.some((a) => /^(-u|--updateSnapshot|--update)$/.test(a))) {
+    return `\`${bin} -u\` rewrites snapshots`;
+  }
+  if (bin === 'turbo' && rest.some((t) => PNPM_WRITE_SCRIPT.test(t))) {
+    return '`turbo run` of a task that writes files';
+  }
+  if (bin === 'expo-updates' && rest[0] !== 'fingerprint:generate') {
+    return '`expo-updates` other than `fingerprint:generate`';
+  }
+  return null;
+}
+
+/** Bodies of `$(…)` and backtick substitutions in raw shell text (not inside single quotes). */
+function substitutions(text) {
+  const out = [];
+  let quote = '';
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '\\') {
+      i += 1;
+    } else if (quote === "'") {
+      quote = c === "'" ? '' : quote;
+    } else if (c === "'" && !quote) {
+      quote = "'";
+    } else if (c === '"') {
+      quote = quote === '"' ? '' : '"';
+    } else if (text.startsWith('$(', i) && !text.startsWith('$((', i)) {
+      let depth = 1;
+      let j = i + 2;
+      while (j < text.length && depth > 0) {
+        depth += text[j] === '(' ? 1 : text[j] === ')' ? -1 : 0;
+        j += 1;
+      }
+      out.push(text.slice(i + 2, depth === 0 ? j - 1 : j));
+      i = j - 1;
+    } else if (c === '`') {
+      const close = text.indexOf('`', i + 1);
+      out.push(text.slice(i + 1, close < 0 ? text.length : close));
+      i = close < 0 ? text.length : close;
+    }
+  }
+  return out;
+}
+
+/** The program text of `sed`/`awk`: the values of `-e` (sed), else the first positional argument. */
+function scripts(args, scriptFlag) {
+  const values = args.flatMap((a, k) => (a === scriptFlag && scriptFlag === '-e' ? [args[k + 1] ?? ''] : []));
+  if (values.length) {
+    return values;
+  }
+  for (let k = 0; k < args.length; k++) {
+    if (args[k] === '-f' || args[k] === '-v' || args[k] === '-F') {
+      k += 1;
+    } else if (!args[k].startsWith('-')) {
+      return [args[k]];
+    }
+  }
+  return [];
+}
+
+/** Why one simple command is not read-only, or null when it is. */
+function writeReason(words) {
+  while (words.length && SHELL_KEYWORDS.has(words[0])) {
+    words = words.slice(1);
+  }
+  if (!words.length || SHELL_ENDS.has(words[0]) || /^\w+\)$/.test(words[0])) {
+    return null;
+  }
+  const [cmd, ...args] = words;
+  const name = cmd.replace(/^.*\//, '');
+  if (name === 'for' || name === 'case') {
+    return null; // `for f in a b` / `case x in`: the words are data; substitutions are checked separately
+  }
+  if (name === 'timeout') {
+    let k = 0;
+    while (k < args.length && args[k].startsWith('-')) {
+      k += 1;
+    }
+    return args.length > k + 1 ? writeReason(args.slice(k + 1)) : null;
+  }
+  if (name === 'npx') {
+    const rest = args.filter((a) => !/^(--yes|-y|--no-install|--no)$/.test(a));
+    return execReason(rest[0] ?? '', rest.slice(1));
+  }
+  if (name === 'curl') {
+    const method = optionValue(args, '--request', '-X');
+    const bad = args.find((a) => /^(-d|--data.*|-F|--form.*|-T|--upload-file|-o|-O|--remote-name.*|--json)$/.test(a));
+    return bad || (method && !/^(get|head)$/i.test(method)) ? '`curl` that sends data or writes a file' : null;
+  }
+  if (name === 'plutil') {
+    return args.some((a) => /^(-p|-lint)$/.test(a)) ? null : '`plutil` other than `-p`/`-lint` can rewrite a plist';
+  }
+  if (name === 'xcrun') {
+    return args[0] === 'simctl' && ['list', 'get_app_container'].includes(args[1])
+      ? null
+      : '`xcrun` other than `simctl list|get_app_container`';
+  }
+  if (name === '[[') {
+    return null;
+  }
+  if (args.some((a) => WRITE_ARG.test(a))) {
+    return `\`${args.find((a) => WRITE_ARG.test(a))}\` writes files`;
+  }
+  if (name === 'git') {
+    const git = gitCall(words);
+    if (!git) {
+      return null;
+    }
+    const { sub, args: a } = git;
+    const listing = (ok) => (ok ? null : `\`git ${sub}\` with these arguments can change the repo`);
+    if (GIT_READ_ONLY.has(sub)) {
+      return null;
+    }
+    if (sub === 'branch') {
+      const { positional, flags } = splitArgs(a, []);
+      const lists = flags.some((f) =>
+        /^(-l|--list|-a|-r|--all|--remotes|--contains|--merged|--no-merged|--points-at|--show-current|-v|-vv|--sort=.*|--format=.*)$/.test(
+          f
+        )
+      );
+      return listing(
+        !flags.some((f) =>
+          /^(-[dDmMcCu]|--delete|--move|--copy|--set-upstream-to.*|--unset-upstream|--edit-description|-f|--force)$/.test(
+            f
+          )
+        ) &&
+          (positional.length === 0 || lists)
+      );
+    }
+    if (sub === 'worktree' || sub === 'stash') {
+      return listing(['list', 'show'].includes(a[0]));
+    }
+    if (sub === 'remote') {
+      return listing(a.length === 0 || ['-v', 'show', 'get-url'].includes(a[0]));
+    }
+    if (sub === 'config') {
+      return listing(a.some((x) => /^(--get.*|--list|-l)$/.test(x)));
+    }
+    if (sub === 'tag') {
+      return listing(a.length === 0 || a.some((x) => /^(-l|--list|--contains|--points-at)$/.test(x)));
+    }
+    return `\`git ${sub}\` is not a read-only git command`;
+  }
+  if (name === 'gh') {
+    const [group, action] = args;
+    if (
+      ['pr', 'issue', 'run', 'repo', 'release'].includes(group) &&
+      ['view', 'diff', 'checks', 'list', 'status'].includes(action)
+    ) {
+      return null;
+    }
+    if (group === 'api') {
+      const method = optionValue(args, '--method', '-X');
+      const sends = args.some((x) => /^(-f|-F|--field|--raw-field|--input)$/.test(x));
+      return (method === null || /^get$/i.test(method)) && !sends ? null : '`gh api` with a write method or fields';
+    }
+    return `\`gh ${args.slice(0, 2).join(' ')}\` is not a read-only gh command`;
+  }
+  if (name === 'pnpm' || name === 'npm') {
+    let k = 0;
+    while (k < args.length && args[k].startsWith('-')) {
+      k += ['-C', '--dir', '--filter', '-F'].includes(args[k]) ? 2 : 1;
+    }
+    const sub = args[k] ?? '';
+    if (sub === 'exec') {
+      return execReason(args[k + 1] ?? '', args.slice(k + 2));
+    }
+    const script = sub === 'run' ? (args[k + 1] ?? '') : sub;
+    return PNPM_WRITE_SCRIPT.test(script) || !script
+      ? `\`pnpm ${sub}${sub === 'run' ? ` ${script}` : ''}\` writes, installs or starts something`
+      : null;
+  }
+  if (name === 'node') {
+    if (args[0] === '--test') {
+      return null;
+    }
+    if (args.some((x) => /^(-e|-p|--eval|--print|--input-type.*)$/.test(x))) {
+      return '`node -e` runs arbitrary code';
+    }
+    return /^(\.\/)?(tools|apps\/[^/]+\/tools)\/[\w./-]+\.m?js$/.test(args[0] ?? '')
+      ? null
+      : 'only `node --test` and repo tools under tools/ are allowed';
+  }
+  if (name === 'find') {
+    const bad = args.find((x) => /^-(delete|exec|execdir|ok|okdir|fprint.*|fls)$/.test(x));
+    return bad ? `\`find ${bad}\` changes files or runs commands` : null;
+  }
+  if (name === 'sed') {
+    if (args.some((x) => /^(-i.*|--in-place.*|-[a-zA-Z]*i[a-zA-Z]*)$/.test(x))) {
+      return '`sed -i` edits files in place';
+    }
+    return scripts(args, '-e').some((x) => /(^|[;{}\n]\s*|\/[gpI0-9]*)[wW]\s*\S/.test(x))
+      ? '`sed` script with a `w` command writes a file'
+      : null;
+  }
+  if (name === 'awk') {
+    return scripts(args, '-f').some((x) => /system\s*\(|\bprintf?\b[^;}]*>>?\s*["$A-Za-z_]|\|\s*"|getline/.test(x))
+      ? '`awk` script that writes or runs commands'
+      : null;
+  }
+  if (name === 'sort') {
+    return args.some((x) => /^(-o.*|--output.*)$/.test(x)) ? '`sort -o` writes a file' : null;
+  }
+  if (name === 'uniq') {
+    return args.filter((x) => !x.startsWith('-')).length > 1 ? '`uniq in out` writes a file' : null;
+  }
+  if (name === 'xargs') {
+    let k = 0;
+    while (k < args.length && args[k].startsWith('-')) {
+      k += /^-[nILPdsEa]$/.test(args[k]) ? 2 : 1;
+    }
+    return args.length > k ? writeReason(args.slice(k)) : null;
+  }
+  return READ_ONLY_COMMANDS.has(name) ? null : `\`${name}\` is not on the read-only list`;
+}
+
+/**
+ * Findings for a Bash command run by a read-only agent: anything that could write a file, change
+ * git state or run arbitrary code. Unknown commands are denied (allowlist).
+ * @returns {{ decision: 'deny', rule: string, message: string }[]}
+ */
+export function readOnlyBashFindings(line) {
+  const out = [];
+  const seen = new Set();
+  const deny = (message) => {
+    if (!seen.has(message)) {
+      seen.add(message);
+      out.push({ decision: 'deny', rule: 'read-only-agent', message });
+    }
+  };
+  const visit = (text, depth) => {
+    const { commands, redirects } = parseShell(text);
+    for (const r of redirects) {
+      if (r.op.includes('>') && !DEV_NULL.test(r.target) && !TEMP_PATH.test(r.target)) {
+        deny(`redirect \`${r.op} ${r.target}\` writes a file`);
+      }
+    }
+    for (const words of commands) {
+      const reason = writeReason(words);
+      if (reason) {
+        deny(reason);
+      }
+    }
+    for (const inner of substitutions(text)) {
+      if (depth < 4) {
+        visit(inner, depth + 1);
+      }
+    }
+  };
+  visit(line, 0);
+  return out.map((f) => ({
+    ...f,
+    message: `${f.message}. This agent is read-only: report the finding or the command for the main session to run (READ_ONLY_COMMANDS in tools/harness/hook-rules.mjs; widen it there, with a test, only for a command that cannot write).`,
+  }));
+}
+
+/**
+ * Whether an agent with an edit allowlist may write `relPath` (repo-relative, forward slashes).
+ * A prefix ending in `/` matches a folder; anything else must match the whole path.
+ */
+export function editAllowed(relPath, allowed) {
+  if (!relPath || relPath.startsWith('..') || relPath.startsWith('/')) {
+    return false;
+  }
+  return allowed.some((p) => (p.endsWith('/') ? relPath.startsWith(p) : relPath === p));
 }
