@@ -435,4 +435,33 @@ describe('Cloud Backup: Apple Health and turning off', () => {
     await c.cloudBackup.useServer.execute(null);
     expect((await c.cloudBackup.status.execute()).serverUrlOverridden).toBe(false);
   });
+
+  it('a testing server never gets the account session token: only the device token', async () => {
+    const t = setup({ account: { token: 'account-session', accountId: 'acct-1' }, token: 'secret-token' });
+    t.server.moreTokens.set('account-session', 'acct-1');
+    const c = await t.container();
+    await c.add('rec-1', walk(0));
+    await c.cloudBackup.useServer.execute('http://192.168.1.20:8787');
+    await enable(c);
+    expect(t.server.uploads()).toEqual(['rec-1']);
+    expect(t.server.requests.length).toBeGreaterThan(0);
+    expect(t.server.requests.every((r) => r.token === 'secret-token')).toBe(true);
+
+    // Back on the built-in server (another server: backup starts afresh there), the account's
+    // session token is used again.
+    await c.cloudBackup.useServer.execute(null);
+    const before = t.server.requests.length;
+    await enable(c);
+    const later = t.server.requests.slice(before);
+    expect(later.length).toBeGreaterThan(0);
+    expect(later.every((r) => r.token === 'account-session' && r.baseUrl !== 'http://192.168.1.20:8787')).toBe(true);
+  });
+
+  it('a testing server without a device token sends nothing and says why', async () => {
+    const t = setup({ account: { token: 'account-session', accountId: 'acct-1' }, token: null });
+    const c = await t.container();
+    await c.cloudBackup.useServer.execute('http://192.168.1.20:8787');
+    expect(await c.cloudBackup.enable.execute()).toEqual({ kind: 'failed', error: 'needs-device-token' });
+    expect(t.server.requests).toEqual([]);
+  });
 });

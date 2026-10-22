@@ -7,6 +7,7 @@ import {
   FlushHealthExports,
   GetHealthSyncStatus,
   ImportHealthWorkouts,
+  RememberRestoredImport,
   SetHealthSyncDirections,
 } from './application/use-cases';
 
@@ -21,6 +22,8 @@ export function createHealthSyncApi(deps: HealthSyncDeps) {
     importWorkouts,
     flushExports,
     exportActivity: new ExportActivityToHealth(deps, flushExports),
+    /** Outbox handler: links an Apple Health import restored from the cloud backup. */
+    rememberRestoredImport: new RememberRestoredImport(deps),
   };
 }
 export type HealthSyncApi = ReturnType<typeof createHealthSyncApi>;

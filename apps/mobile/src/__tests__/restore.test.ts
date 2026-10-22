@@ -6,7 +6,7 @@
  * resumes without duplicates.
  */
 import { SqliteBackupRepository } from '@/contexts/cloud-backup/infrastructure/sqlite-backup-repository';
-import { FakeHealthStore } from '@/contexts/health-sync/test-support/fake-health-store';
+import { FakeHealthStore, straightRoute } from '@/contexts/health-sync/test-support/fake-health-store';
 import type { TrackPoint } from '@/shared-kernel';
 import { DAY, phone, type PhoneContainer, T0, walk } from '@/test-support/backup-phone';
 import { loadFixes } from '@/test-support/fixtures';
@@ -116,7 +116,8 @@ describe('Restore from the cloud backup', () => {
       kind: 'done',
       restored: 4,
       skipped: 0,
-      backupOn: true, // the server's consents turned backup on here too
+      backupOn: true, // the server's consent turned backup on here too
+      healthOffered: false,
     });
     expect(a.server.calls('consents')).toHaveLength(1);
     expect(await c.cloudBackup.status.execute()).toMatchObject({ enabled: true, healthIncluded: false });
@@ -164,7 +165,13 @@ describe('Restore from the cloud backup', () => {
     await c.dispatcher.dispatchPending();
 
     expect(await c.cloudBackup.restoreOffer.execute()).toEqual({ kind: 'available', count: 3 });
-    expect(await c.cloudBackup.restore.execute()).toEqual({ kind: 'done', restored: 3, skipped: 0, backupOn: true });
+    expect(await c.cloudBackup.restore.execute()).toEqual({
+      kind: 'done',
+      restored: 3,
+      skipped: 0,
+      backupOn: true,
+      healthOffered: false,
+    });
     await c.dispatcher.dispatchPending();
     const ids = (await c.activityLog.list.execute(100)).map((x) => x.id).sort();
     expect(ids).toEqual(['rec-a', 'rec-b', 'rec-c', 'rec-mine']);
@@ -185,7 +192,13 @@ describe('Restore from the cloud backup', () => {
 
     // Restoring again (the always-available action) changes nothing and duplicates nothing.
     const copies = a.server.calls('activityCopy').length;
-    expect(await c.cloudBackup.restore.execute()).toEqual({ kind: 'done', restored: 0, skipped: 0, backupOn: true });
+    expect(await c.cloudBackup.restore.execute()).toEqual({
+      kind: 'done',
+      restored: 0,
+      skipped: 0,
+      backupOn: true,
+      healthOffered: false,
+    });
     expect(a.server.calls('activityCopy')).toHaveLength(copies);
     expect(await b.db.first('SELECT COUNT(*) AS n FROM log_activities')).toEqual({ n: 4 });
   });
@@ -251,19 +264,29 @@ describe('Restore from the cloud backup', () => {
     expect(await c.cloudBackup.restore.execute()).toMatchObject({ kind: 'done', restored: 5 });
   });
 
-  it('turns backup and the Apple Health option on to match the server’s consents', async () => {
+  it('turns backup on to match the server’s consent, but leaves Apple Health off on this phone', async () => {
     const { a, c: phoneA } = await backedUpPhoneA();
     expect(await phoneA.cloudBackup.includeHealth.execute(true)).toEqual({ kind: 'ok' });
     const { c } = await newPhone(a);
-    expect(await c.cloudBackup.restore.execute()).toMatchObject({ kind: 'done', backupOn: true });
-    expect(await c.cloudBackup.status.execute()).toMatchObject({ enabled: true, healthIncluded: true });
+    expect(await c.cloudBackup.restore.execute()).toMatchObject({ kind: 'done', backupOn: true, healthOffered: true });
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ enabled: true, healthIncluded: false });
+    // An Apple Health import on the new phone stays here until the Turfer turns the option on.
+    await c.add('hk-new', walk(13));
+    await c.cloudBackup.run.execute();
+    expect(a.server.activities.has('hk-new')).toBe(false);
+    expect(a.server.consents.get('apple-health-in-cloud-sync')).toMatchObject({ granted: true }); // phone A's choice
   });
 
   it('leaves backup off when the consents can’t be read; turning it on then works', async () => {
     const { a } = await backedUpPhoneA();
     const { c } = await newPhone(a);
     a.server.failNext('consents', { kind: 'offline' });
-    expect(await c.cloudBackup.restore.execute()).toMatchObject({ kind: 'done', restored: 4, backupOn: false });
+    expect(await c.cloudBackup.restore.execute()).toMatchObject({
+      kind: 'done',
+      restored: 4,
+      backupOn: false,
+      healthOffered: false,
+    });
     expect(await c.cloudBackup.status.execute()).toMatchObject({ enabled: false });
     expect(await c.cloudBackup.enable.execute()).toEqual({ kind: 'ok' });
   });
@@ -321,8 +344,8 @@ describe('Restore from the cloud backup', () => {
     expect(a.server.calls('deleteActivity')).toEqual([]);
   });
 
-  it('backup waits while a restore is interrupted, and never deletes what is still to restore', async () => {
-    const { a } = await backedUpPhoneA();
+  it('an interrupted restore never holds up backups, and they never delete what is still to restore', async () => {
+    const { a, c: phoneA } = await backedUpPhoneA();
     const { b, c } = await newPhone(a);
     let copies = 0;
     a.server.onRequest = (r) => {
@@ -334,11 +357,30 @@ describe('Restore from the cloud backup', () => {
     a.server.onRequest = null;
     const relaunched = await b.container();
     await relaunched.cloudBackup.enable.execute();
-    expect(await relaunched.cloudBackup.run.execute()).toEqual({ kind: 'skipped', reason: 'busy' });
+    // A walk recorded before the restore is resumed (the Turfer said "Not now" to the offer).
+    await relaunched.add('rec-new', walk(14));
+    expect(await relaunched.cloudBackup.restoreOffer.execute()).toMatchObject({ kind: 'resume' });
+    const uploads = a.server.uploads().length;
+    expect(await relaunched.cloudBackup.run.execute()).toMatchObject({ kind: 'done', report: { error: null } });
+    expect(a.server.uploads().slice(uploads)).toEqual(['rec-new']);
     expect(a.server.calls('deleteActivity')).toEqual([]);
     expect(await relaunched.cloudBackup.restore.execute()).toMatchObject({ kind: 'done' });
+    await relaunched.dispatcher.dispatchPending();
     await relaunched.cloudBackup.run.execute();
     expect(a.server.calls('deleteActivity')).toEqual([]);
+    expect(a.server.uploads().slice(uploads)).toEqual(['rec-new']); // nothing restored goes back up
+    const ids = (await relaunched.activityLog.list.execute(100)).map((x) => x.id).sort();
+    expect(ids).toEqual([...(await snapshot(phoneA)).activities.map((x) => x.id), 'rec-new'].sort());
+  });
+
+  it('backup skips as busy only while a restore is running right now', async () => {
+    const { a } = await backedUpPhoneA();
+    const { c } = await newPhone(a);
+    await c.cloudBackup.enable.execute();
+    const restoring = c.cloudBackup.restore.execute();
+    expect(await c.cloudBackup.run.execute()).toEqual({ kind: 'skipped', reason: 'busy' });
+    expect(await restoring).toMatchObject({ kind: 'done', restored: 4 });
+    expect(await c.cloudBackup.run.execute()).toMatchObject({ kind: 'done', report: { error: null } });
   });
 
   it('a Home City this version does not know is skipped; the restore still finishes', async () => {
@@ -358,6 +400,34 @@ describe('Restore from the cloud backup', () => {
     expect(a.server.calls('activityCopy')).toEqual([]);
     await c.recording.discard.execute();
     expect(await c.cloudBackup.restore.execute()).toMatchObject({ kind: 'done', restored: 4 });
+  });
+
+  it('a restored Apple Health walk deleted on this phone is not imported again', async () => {
+    const route = straightRoute({ lat: 52.24, lon: 21.0, t: T0 + 12 * DAY }, 10);
+    const a = phone({ account: ACCOUNT });
+    const phoneA = await a.container();
+    await phoneA.add(
+      'hk-w1',
+      route.map((p) => ({ ...p, segment: 0 }))
+    );
+    expect(await phoneA.cloudBackup.enable.execute()).toEqual({ kind: 'ok' });
+    expect(await phoneA.cloudBackup.includeHealth.execute(true)).toEqual({ kind: 'ok' });
+    await phoneA.cloudBackup.run.execute();
+    expect(a.server.activities.has('hk-w1')).toBe(true);
+
+    // The new phone: the same workout is in Apple Health (synced through iCloud).
+    const { b, c, health } = await newPhone(a);
+    health.add({ uuid: 'w1', kind: 'walking' }, route);
+    expect(await c.cloudBackup.restore.execute()).toMatchObject({ kind: 'done', restored: 1 });
+    await c.dispatcher.dispatchPending();
+    expect(await b.db.first("SELECT direction FROM hs_links WHERE health_uuid = 'w1'")).toEqual({
+      direction: 'import',
+    });
+
+    await c.activityLog.remove.execute('hk-w1');
+    await c.dispatcher.dispatchPending();
+    expect(await c.healthSync.importWorkouts.execute({ full: true })).toMatchObject({ imported: 0 });
+    expect(await c.activityLog.detail.execute('hk-w1')).toBeNull();
   });
 
   it('Apple Health import waits while a restore runs', async () => {

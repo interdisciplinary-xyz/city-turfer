@@ -71,7 +71,7 @@ export interface CloudBackupAdapters {
    */
   credentials?: (userId: string, deviceToken: DeviceTokenStore) => BackupCredentials;
   sha256: Sha256;
-  /** Default: API_BASE_URL. */
+  /** The built-in server; it must be the identity server (the account's session token goes only there). Default: API_BASE_URL. */
   serverUrl?: string;
 }
 
@@ -219,6 +219,10 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     await recording.purgeRecorded.execute(ev.activityId);
     await healthSync.exportActivity.execute(ev); // never throws: a failed export doesn't hold up the queue
   });
+  // Cloud Backup restore → Health Sync: a restored Apple Health import stays deleted once deleted here.
+  dispatcher.on('ActivityRecorded', (e: DomainEvent) =>
+    healthSync.rememberRestoredImport.execute(e as ActivityRecorded)
+  );
   dispatcher.on('ActivityDeleted', (e: DomainEvent) => territory.release.execute((e as ActivityDeleted).activityId));
   dispatcher.on('ActivityTrackCorrected', (e: DomainEvent) => territory.reclaim.execute(e as ActivityTrackCorrected));
   // Activity Log, Territory → Cloud Backup: local queueing only (no network inside the outbox).

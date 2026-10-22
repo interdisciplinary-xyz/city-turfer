@@ -218,6 +218,7 @@ export interface CloudBackupDeps {
   clock: Clock;
   /** False on headless launches: no network work then (the recording task must never wait on it). */
   isForeground: () => boolean;
+  /** The built-in server, which is also the identity server: the only one the account's session token goes to. */
   defaultServerUrl: string;
   policyVersion: string;
   /** Uploads in flight at once (≤ 2). */
