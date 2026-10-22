@@ -9,6 +9,7 @@ import { stat } from 'node:fs/promises';
 import { request as httpRequest } from 'node:http';
 import path from 'node:path';
 
+import { APP_HEADER_SCRIPT, APP_HEADER_STYLES, appHeaderMarkup, appHeaderStylesheet } from './app-header-assets.mjs';
 import { contentTypeOf } from './storybook-route.mjs';
 
 export const SWAGGER_PREFIX = '/swagger';
@@ -21,8 +22,11 @@ const TOC_FILE = path.join(import.meta.dirname, 'swagger-toc.mjs');
 /** Brand files the page may load (packages/brand/svg): the header and the tab icon. */
 export const BRAND_FILES = ['mark.svg', 'wordmark.svg'];
 
+/** The page's own logo: the site header's logo shows once it has scrolled away. */
+export const SWAGGER_LOCKUP = '.ct-header h1';
+
 /**
- * The Swagger UI page: assets next to it, the spec at ./openapi.json. `toolbar` adds the dev
+ * The Swagger UI page, under the site's header (the same bar as /en): assets next to it, the spec at ./openapi.json. `toolbar` adds the dev
  * toolbar (only for requests from this machine, see withSwagger).
  */
 export function swaggerHtml({ toolbar = false } = {}) {
@@ -35,9 +39,11 @@ export function swaggerHtml({ toolbar = false } = {}) {
     <title>CityTurfer API</title>
     <link rel="icon" type="image/svg+xml" href="./brand/mark.svg" />
     <link rel="stylesheet" href="./swagger-ui.css" />
-    <link rel="stylesheet" href="./ct-theme.css" />${toolbar ? '\n    <link rel="stylesheet" href="./__toolbar.css" />' : ''}
+    <link rel="stylesheet" href="./ct-theme.css" />
+    ${appHeaderStylesheet()}${toolbar ? '\n    <link rel="stylesheet" href="./__toolbar.css" />' : ''}
   </head>
   <body>
+    ${appHeaderMarkup({ lockup: SWAGGER_LOCKUP })}
     <header class="ct-header">
       <div class="ct-header-inner">
         <h1>
@@ -129,6 +135,9 @@ export function swaggerTarget(distRoot, urlPath) {
   if (rest === '/ct-toc.mjs') {
     return { kind: 'toc' };
   }
+  if (rest === `/${APP_HEADER_SCRIPT}` || rest === `/${APP_HEADER_STYLES}`) {
+    return { kind: 'appHeader', ext: rest.slice(rest.lastIndexOf('.') + 1) };
+  }
   if (rest === '/__toolbar.js' || rest === '/__toolbar.css') {
     return { kind: 'toolbar', ext: rest.slice(rest.lastIndexOf('.') + 1) };
   }
@@ -203,8 +212,8 @@ function proxy(req, res, apiUrl, targetPath) {
  * - `webRoot` (apps/web) and `brandDir` (packages/brand/svg) feed the CityTurfer skin and logos.
  * - `isLocal(req)` says whether the request comes from this machine (the dev-toolbar package's
  *   `isLocalClient`, the rule the site uses); only then is the dev toolbar injected and served.
- * - `loadTheme()` / `loadToolbar()` default to ./swagger-brand.mjs and ./swagger-toolbar.mjs,
- *   loaded on first use; tests pass fakes.
+ * - `loadTheme()` / `loadToolbar()` / `loadAppHeader()` default to ./swagger-brand.mjs,
+ *   ./swagger-toolbar.mjs and ./app-header-assets.mjs, loaded on first use; tests pass fakes.
  */
 export function withSwagger(
   next,
@@ -217,6 +226,7 @@ export function withSwagger(
     isLocal = () => false,
     loadTheme = async () => (await import('./swagger-brand.mjs')).swaggerThemeCss(webRoot),
     loadToolbar = async () => (await import('./swagger-toolbar.mjs')).toolbarAssets(webRoot),
+    loadAppHeader = async () => (await import('./app-header-assets.mjs')).appHeaderAssets(webRoot),
   }
 ) {
   const absDist = path.resolve(distRoot);
@@ -249,6 +259,11 @@ export function withSwagger(
     }
     if (target.kind === 'toc') {
       await sendFile(res, TOC_FILE, 'text/javascript; charset=utf-8');
+      return undefined;
+    }
+    if (target.kind === 'appHeader') {
+      const assets = await loadAppHeader();
+      send(res, target.ext === 'js' ? 'text/javascript; charset=utf-8' : 'text/css; charset=utf-8', assets[target.ext]);
       return undefined;
     }
     if (target.kind === 'toolbar') {

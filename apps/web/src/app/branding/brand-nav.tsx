@@ -23,7 +23,8 @@ export function BrandNav({ sections }: { sections: readonly BrandSection[] }) {
         const top = sections.find((s) => visible.has(s.id));
         setCurrent(top ? top.id : null);
       },
-      { rootMargin: '-64px 0px -55% 0px' }
+      // Below the site header (up to 64px) and this bar.
+      { rootMargin: '-128px 0px -55% 0px' }
     );
     for (const s of sections) {
       const el = document.getElementById(s.id);

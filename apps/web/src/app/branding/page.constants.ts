@@ -1,5 +1,7 @@
 import { type BrandActivityType, FONT_SIZE, LABEL_TRACKING, type TierName, TURF_LEGEND_TITLE } from '@cityturfer/brand';
 
+import type { Locale } from '@/i18n/routing';
+
 /**
  * Words on the /branding page. The values (colours, type, spacing, copy lines) come from
  * @cityturfer/brand; the rationale mirrors docs/decisions/brand-foundations-2026-10-20.md and the
@@ -8,6 +10,10 @@ import { type BrandActivityType, FONT_SIZE, LABEL_TRACKING, type TierName, TURF_
 export const BRANDING_TITLE = 'Brand definition';
 export const BRANDING_DESCRIPTION =
   'CityTurfer brand definition: positioning, personality, logo, colour, type, visual language and accessibility.';
+/** /branding is English only, like the brand docs; the site header uses this language. */
+export const BRANDING_LOCALE: Locale = 'en';
+/** The hero wordmark: the site header's logo shows once it has scrolled away. */
+export const BRAND_LOCKUP_SELECTOR = '.brand-hero-wordmark';
 export const DECISION_DOC_URL =
   'https://github.com/interdisciplinary-xyz/city-turfer/blob/main/docs/decisions/brand-foundations-2026-10-20.md';
 
