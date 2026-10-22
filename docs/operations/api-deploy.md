@@ -53,6 +53,7 @@ server (`apps/api/src/server.ts`) adds the `dev-token` for user `admin` only whe
 | `0000_init`                | 0.3.0    | users, consents, activities, tracks, gap routes … |
 | `0001_activity_renamed_at` | 0.4.0    | `activities.renamed_at` (rename, last write wins) |
 | `0002_auth`                | 0.4.0    | Better Auth `auth_*` tables, `rate_limits`        |
+| `0003_exports`             | 0.4.0    | `data_exports`, `stored_files` (export zips)      |
 
 Migrations are SQL files in `apps/api/drizzle/`, generated from `apps/api/src/db/schema.ts` with
 `pnpm --filter @cityturfer/api run db:generate` and committed. Apply them **before** deploying code

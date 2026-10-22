@@ -48,15 +48,26 @@ export const ExportIdParam = z.object({
 
 export const DataExportJob = z
   .object({
-    id: z.string().openapi({ example: 'exp_01' }),
-    status: z.enum(['pending', 'ready', 'failed', 'expired']).openapi({ example: 'ready' }),
+    id: z.string().openapi({ example: 'exp_4fJq9TzW1kXv8bNc' }),
+    status: z.enum(['ready', 'downloaded', 'expired', 'failed']).openapi({
+      description:
+        '`ready`: the link was e-mailed; `downloaded`: used (links work once); `expired`: 24 h passed; `failed`: nothing was sent, ask again.',
+      example: 'ready',
+    }),
     requestedAt: IsoDateTime,
     readyAt: IsoDateTime.nullable(),
-    url: z.url().nullable().openapi({
-      description:
-        'Short-lived signed link to a zip: `data.json` (account, consents, activities, tombstones, Home City) and one GPX file per activity. Only while `ready`.',
-      example: 'https://files.cityturfer.app/exports/exp_01.zip?signature=abc123',
-    }),
-    expiresAt: IsoDateTime.nullable().openapi({ description: 'The link stops working 24 h after it is ready.' }),
+    expiresAt: IsoDateTime.nullable().openapi({ description: 'The e-mailed link stops working then (24 h).' }),
   })
-  .openapi('DataExportJob');
+  .openapi('DataExportJob', {
+    description:
+      'An export of everything the server holds for the account: a zip with `data.json` (account, consents, activities with tracks and gap routes, tombstones, Home City) and one GPX 1.1 file per activity. The download link is only in the e-mail.',
+  });
+
+export const DownloadKeyParam = z.object({
+  key: z
+    .string()
+    .min(20)
+    .max(100)
+    .regex(/^[A-Za-z0-9_-]+$/)
+    .openapi({ param: { name: 'key', in: 'path' }, example: 'Zm9vYmFyYmF6cXV4cXV1eHF1dXgxMjM0NTY3ODkw' }),
+});

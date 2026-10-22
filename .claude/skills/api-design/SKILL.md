@@ -80,16 +80,16 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
 - **Headers:** `X-Request-Id` on every answer; `CityTurfer-Client` (426 `client.too-old`);
   `Retry-After` + `RateLimit` on 429; `Location` on 201/202.
 - **Auth:** `bearerAuth` (HTTP bearer). Every route needs it except `GET /v1/health`,
-  `POST /v1/auth/codes`, `POST /v1/auth/sign-in`, `/openapi.json` and `/swagger`. **Sign-in** =
-  e-mailed 6-digit code via Better Auth (`apps/api/src/identity/`: `better-auth.ts`, `use-cases.ts`
-  IdentityService, `mailer.ts` Mailer port with Brevo/Console/Memory/Null adapters); we call
-  `auth.api.*` from our own routes, never mount `auth.handler`. Our own rate limits in Postgres
-  (`rate_limits`, `apps/api/src/db/rate-limits.ts`). Tables `auth_*`; the Better Auth user id is
-  `users.id`. The verifier is composite: **device tokens** (`API_TOKENS`, sha256 → user id, constant
-  time; one more release) first, then sessions; unknown → 401 `auth.invalid`. The user row is
-  created on first sight. The placeholder verifier (spec generation, planned-route tests) marks
-  callers unverified, which live routes refuse. Decision:
-  `docs/decisions/api-accounts-2026-10-22.md`.
+  `POST /v1/auth/codes`, `POST /v1/auth/sign-in`, `GET /v1/exports/{key}` (the key is the
+  credential), `/openapi.json` and `/swagger`. **Sign-in** = e-mailed 6-digit code via Better Auth
+  (`apps/api/src/identity/`: `better-auth.ts`, `use-cases.ts` IdentityService, `mailer.ts` Mailer
+  port with Brevo/Console/Memory/Null adapters); we call `auth.api.*` from our own routes, never
+  mount `auth.handler`. Our own rate limits in Postgres (`rate_limits`,
+  `apps/api/src/db/rate-limits.ts`). Tables `auth_*`; the Better Auth user id is `users.id`. The
+  verifier is composite: **device tokens** (`API_TOKENS`, sha256 → user id, constant time; one more
+  release) first, then sessions; unknown → 401 `auth.invalid`. The user row is created on first
+  sight. The placeholder verifier (spec generation, planned-route tests) marks callers unverified,
+  which live routes refuse. Decision: `docs/decisions/api-accounts-2026-10-22.md`.
 - **Consent:** activity and Home City writes need `cloud-sync` granted (Apple Health activities also
   `apple-health-in-cloud-sync`), else 403 `consent.required`; `DELETE` never needs it. Withdrawing
   erases the server copy it covered (`eraseBackup`, no tombstones): `cloud-sync` → everything but
@@ -106,6 +106,10 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   one transaction: `eraseAccount` in `apps/api/src/db/store.ts`) must cover every table, tombstones,
   consents and the `auth_*` rows included. A new table hangs off `users` with `ON DELETE CASCADE`
   (or is deleted in `eraseAccount`) — `apps/api/src/__tests__/erase.test.ts` counts the rows.
+- **Export** (`apps/api/src/privacy/`): `POST /v1/me/exports` builds the zip (fflate; `data.json` +
+  GPX 1.1 per activity) in the request, stores it behind the `FileStorage` port (Postgres `bytea`,
+  `apps/api/src/db/exports.ts`; Vercel Blob later) and e-mails a one-time 24 h link
+  `GET /v1/exports/{key}` (public; only the key's SHA-256 is stored; streamed). One per 24 h.
 - **Never** log request bodies, coordinates, track points, cell ids or Home City; log route, status,
   duration and user id only. No coordinates in error `detail`.
 - **OpenAPI examples** use public landmarks (Warsaw Old Town, 21.0122 / 52.2297) and made-up ids,

@@ -7,6 +7,7 @@ import type {
   UserRecord,
 } from '../backup/model';
 import { cityViewOf } from '../backup/use-cases';
+import type { ExportRecord } from '../privacy/ports';
 
 /** Records of the backup → the JSON of the contract (ISO 8601 UTC times, totals incl. gap routes). */
 
@@ -101,3 +102,11 @@ export function changeDto(change: ChangeRecord) {
       };
   }
 }
+
+export const exportJobDto = (e: ExportRecord) => ({
+  id: e.id,
+  status: e.status,
+  requestedAt: iso(e.requestedAt),
+  readyAt: e.readyAt === null ? null : iso(e.readyAt),
+  expiresAt: e.expiresAt === null ? null : iso(e.expiresAt),
+});

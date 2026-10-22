@@ -4,6 +4,7 @@ import { sql } from 'drizzle-orm';
 
 import { createApp } from '../app';
 import { deviceTokenAuth, parseApiTokens } from '../auth/device-tokens';
+import { DrizzleExportStore, PostgresFileStorage } from '../db/exports';
 import { createPgliteDb } from '../db/pglite';
 import { PostgresRateLimiter } from '../db/rate-limits';
 import { DrizzleBackupStore } from '../db/store';
@@ -11,6 +12,7 @@ import { defaultDeps, silentLog } from '../deps';
 import { createAuth } from '../identity/better-auth';
 import { MemoryMailer } from '../identity/mailer';
 import { compositeVerifier, IdentityService } from '../identity/use-cases';
+import { ExportService } from '../privacy/use-cases';
 
 /** Device tokens of the test users (made up; never real secrets). */
 export const TOKENS = { admin: 'test-token-admin', other: 'test-token-other' } as const;
@@ -78,6 +80,15 @@ export async function backupApp(options: { fixedCode?: string } = {}) {
       log: silentLog,
       store,
       identity,
+      exports: new ExportService(
+        store,
+        new DrizzleExportStore(db),
+        new PostgresFileStorage(db),
+        mailer,
+        clock,
+        'http://localhost:8787',
+        silentLog
+      ),
     })
   );
   const call = (

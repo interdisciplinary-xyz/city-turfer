@@ -59,3 +59,18 @@ gap routes), tombstones, the Home City and exports cascade. Afterwards the sessi
 authenticates until it is removed from `API_TOKENS` (its next request starts an empty account).
 Rate-limit rows are HMAC-keyed and expire within about 70 minutes. Database backups keep the rows
 for Neon's restore window (to be stated with the plan).
+
+## Data export
+
+`POST /v1/me/exports` → `202 { id, status, requestedAt, readyAt, expiresAt }` + `Location`. The
+server builds the zip in the request (paging the changes feed: `data.json` with account, consents,
+activities with tracks and gap routes, tombstones and the Home City; one GPX 1.1 per activity, one
+`<trkseg>` per segment), stores it behind the `FileStorage` port (`stored_files`, Postgres `bytea`,
+24 h; Vercel Blob later) and e-mails a link `GET /v1/exports/{key}`: public, 32 random bytes, only
+its SHA-256 stored, works **once** within 24 h (then 410 `export.gone`), streamed in 256 KiB chunks
+with `Cache-Control: no-store`. One export per 24 h (429 `rate-limited`, `Retry-After`); no e-mail
+on the account → 422 `export.no-email`. `GET /v1/me/exports/{id}` reports `ready`, `downloaded`,
+`expired` or `failed`. Zips above 200 MB fail rather than exhaust a function.
+
+Why e-mail: the phone cannot save files without new native modules (`expo-file-system`,
+`expo-sharing`), and the release must stay OTA.

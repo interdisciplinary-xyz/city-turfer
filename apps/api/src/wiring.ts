@@ -1,4 +1,5 @@
 import { deviceTokenAuth, parseApiTokens } from './auth/device-tokens';
+import { DrizzleExportStore, PostgresFileStorage } from './db/exports';
 import { createNeonDb } from './db/neon';
 import { PostgresRateLimiter } from './db/rate-limits';
 import { type Db, DrizzleBackupStore } from './db/store';
@@ -6,6 +7,7 @@ import { type ApiDeps, defaultDeps, jsonLineLog } from './deps';
 import { createAuth } from './identity/better-auth';
 import { BrevoMailer, type Mailer, nullMailer, parseMailFrom } from './identity/mailer';
 import { compositeVerifier, IdentityService } from './identity/use-cases';
+import { ExportService } from './privacy/use-cases';
 import { LOCAL_API_PORT } from './spec';
 
 /**
@@ -112,10 +114,23 @@ export function productionDeps(env: NodeJS.ProcessEnv, overrides: WiringOverride
     })}\n`
   );
   const devices = deviceTokenAuth(tokens.entries);
+  const store = db ? new DrizzleBackupStore(db) : null;
   return {
     ...base,
     auth: identity ? compositeVerifier(devices, identity.verifier) : devices,
-    store: db ? new DrizzleBackupStore(db) : null,
+    store,
     identity,
+    exports:
+      db && store
+        ? new ExportService(
+            store,
+            new DrizzleExportStore(db),
+            new PostgresFileStorage(db),
+            mailer,
+            base.clock,
+            publicUrlOf(env),
+            base.log
+          )
+        : null,
   };
 }

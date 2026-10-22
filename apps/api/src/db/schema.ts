@@ -1,6 +1,7 @@
 import {
   bigint,
   boolean,
+  customType,
   doublePrecision,
   foreignKey,
   index,
@@ -225,6 +226,49 @@ export const rateLimits = pgTable(
   (t) => [index('rate_limits_window').on(t.windowStartedAt)]
 );
 
+// ---------------------------------------------------------------------------------------------
+// Data exports (GDPR art. 15 and 20) and the Postgres FileStorage adapter. Both hang off `users`
+// (ON DELETE CASCADE), so erasing the account erases them.
+// ---------------------------------------------------------------------------------------------
+
+const bytea = customType<{ data: Uint8Array; driverData: Uint8Array }>({ dataType: () => 'bytea' });
+
+/** One export job. The download key is never stored: only its SHA-256 (`key_hash`). */
+export const dataExports = pgTable(
+  'data_exports',
+  {
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    id: text('id').notNull(),
+    status: text('status').notNull(),
+    requestedAt: ts('requested_at').notNull(),
+    readyAt: ts('ready_at'),
+    expiresAt: ts('expires_at'),
+    downloadedAt: ts('downloaded_at'),
+    keyHash: text('key_hash').unique(),
+    fileKey: text('file_key'),
+    byteSize: integer('byte_size'),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.id] }), index('data_exports_user_requested').on(t.userId, t.requestedAt)]
+);
+
+/** FileStorage on Postgres (`bytea`): export zips until Vercel Blob. Expired rows are purged. */
+export const storedFiles = pgTable(
+  'stored_files',
+  {
+    key: text('key').primaryKey(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    contentType: text('content_type').notNull(),
+    bytes: bytea('bytes').notNull(),
+    createdAt: ts('created_at').notNull(),
+    expiresAt: ts('expires_at').notNull(),
+  },
+  (t) => [index('stored_files_expires').on(t.expiresAt)]
+);
+
 export const schema = {
   users,
   consents,
@@ -238,4 +282,6 @@ export const schema = {
   authAccounts,
   authVerifications,
   rateLimits,
+  dataExports,
+  storedFiles,
 };

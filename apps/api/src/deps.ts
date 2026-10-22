@@ -1,6 +1,7 @@
 import type { BackupStore } from './backup/ports';
 import type { BackupService } from './backup/use-cases';
 import type { IdentityService } from './identity/use-cases';
+import type { ExportService } from './privacy/use-cases';
 
 /**
  * What the API needs from the outside, injected into `createApp(deps)`: tests pass PGlite and their
@@ -47,6 +48,8 @@ export interface ApiDeps {
   store: BackupStore | null;
   /** Sign-in with e-mailed codes (Better Auth); null without a database or BETTER_AUTH_SECRET (503). */
   identity: IdentityService | null;
+  /** Data exports (zip + e-mailed link); null without a database (503). */
+  exports: ExportService | null;
 }
 
 /**
@@ -71,6 +74,7 @@ export function defaultDeps(overrides: Partial<ApiDeps> = {}): ApiDeps {
     log: jsonLineLog,
     store: null,
     identity: null,
+    exports: null,
     ...overrides,
   };
 }
