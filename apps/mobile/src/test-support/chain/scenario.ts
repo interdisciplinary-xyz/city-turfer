@@ -7,7 +7,8 @@ import { appendFileSync } from 'node:fs';
 import type { ActivityType, TrackPoint } from '@/shared-kernel';
 import { loadFixes } from '@/test-support/fixtures';
 
-import type { ChainPhone, Pending } from './chain-server';
+import type { ChainPhone } from './chain-server';
+import type { Pending } from './pending';
 
 type Container = ChainPhone['c'];
 
