@@ -52,3 +52,22 @@ export function deviceToken(raw: string): string {
   }
   return t;
 }
+
+/** A name with the time it was set by a rename (null: never renamed, or not known). */
+export interface NameStamp {
+  name: string;
+  renamedAt: number | null;
+}
+
+/**
+ * Which name a full upload (PUT) should carry when the server already has the Activity: last write
+ * wins on `renamedAt` (decision D6), as the server decides for a PATCH. The server's name wins ties
+ * and whenever only the server knows a rename time; the phone's otherwise (the phone stays
+ * authoritative for content nobody renamed).
+ */
+export function nameToUpload(local: NameStamp, server: NameStamp): string {
+  if (server.renamedAt != null && (local.renamedAt == null || server.renamedAt >= local.renamedAt)) {
+    return server.name;
+  }
+  return local.name;
+}

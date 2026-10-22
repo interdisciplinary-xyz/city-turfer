@@ -2,7 +2,11 @@ import { sql } from 'drizzle-orm';
 import { strFromU8, unzipSync } from 'fflate';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import type { BackupStore } from '../backup/ports';
+import { DrizzleExportStore, PostgresFileStorage } from '../db/exports';
+import { silentLog } from '../deps';
 import { MemoryMailer } from '../identity/mailer';
+import { EXPORT_PENDING_LEASE_MS, EXPORT_TTL_MS, ExportService } from '../privacy/use-cases';
 import { backupApp, closeSharedDb, TOKENS, track, upload } from './support';
 
 type Harness = Awaited<ReturnType<typeof backupApp>>;
@@ -59,6 +63,8 @@ describe('data export', () => {
     expect(data.activities[0].track.points).toHaveLength(10);
     const gpxName = Object.keys(files).find((f) => f.endsWith('.gpx'))!;
     expect(gpxName).toBe('activities/2026-10-19-run-1.gpx');
+    // data.json is written across the whole build, so it is the last entry (see buildZip).
+    expect(Object.keys(files).at(-1)).toBe('data.json');
     const gpx = strFromU8(files[gpxName]);
     expect(gpx).toContain('<gpx version="1.1" creator="CityTurfer" xmlns="http://www.topografix.com/GPX/1/1">');
     expect(gpx).toContain('<name>Old Town &lt;loop&gt; &amp; back</name>');
@@ -122,6 +128,68 @@ describe('data export', () => {
     const left = await f.db.execute(sql`SELECT count(*)::int AS n FROM stored_files`);
     expect((left as unknown as { rows: { n: number }[] }).rows[0].n).toBe(0);
     expect((await f.call('POST', '/v1/me/exports')).status).toBe(202);
+  });
+
+  it('frees the slot of a build that was killed (pending past its lease)', async () => {
+    // A request whose function timed out: reserved, never completed nor failed.
+    const exports = new DrizzleExportStore(h.db);
+    const stale = {
+      id: 'exp_killed',
+      status: 'pending' as const,
+      requestedAt: h.clock.now(),
+      readyAt: null,
+      expiresAt: null,
+      downloadedAt: null,
+      fileKey: null,
+      byteSize: null,
+    };
+    await exports.reserve('admin', stale, { windowMs: EXPORT_TTL_MS, leaseMs: EXPORT_PENDING_LEASE_MS });
+
+    // Within the lease it may still be running: 429 until the lease ends, not for 24 h.
+    h.clock.t += EXPORT_PENDING_LEASE_MS - 60_000;
+    const early = await h.call('POST', '/v1/me/exports');
+    expect(early.status).toBe(429);
+    expect(Number(early.headers.get('retry-after'))).toBe(60);
+
+    h.clock.t += 60_000;
+    const res = await h.call('POST', '/v1/me/exports');
+    expect(res.status).toBe(202);
+    expect(await res.json()).toMatchObject({ status: 'ready' });
+    expect(await (await h.call('GET', '/v1/me/exports/exp_killed')).json()).toMatchObject({ status: 'failed' });
+  });
+
+  it('stops building once the zip passes the size limit, counting GPX output as it is made', async () => {
+    for (let i = 0; i < 120; i += 1) {
+      await h.call('PUT', `/v1/activities/run-${100 + i}`, { body: upload() });
+    }
+    let pages = 0;
+    const counting: BackupStore = Object.assign(Object.create(h.store) as BackupStore, {
+      read: (userId: string) => {
+        const reader = h.store.read(userId);
+        return Object.assign(Object.create(reader) as typeof reader, {
+          changesSince: (after: number, limit: number) => {
+            pages += 1;
+            return reader.changesSince(after, limit);
+          },
+        });
+      },
+    });
+    const mailer = new MemoryMailer();
+    // Far below 50 GPX files, far above data.json's header: only GPX output can trip it.
+    const service = new ExportService(
+      counting,
+      new DrizzleExportStore(h.db),
+      new PostgresFileStorage(h.db),
+      mailer,
+      h.clock,
+      'http://localhost:8787',
+      silentLog,
+      5_000
+    );
+    expect(await service.request('admin')).toMatchObject({ status: 'failed' });
+    // Three pages of 50 exist; the guard stopped after the first one.
+    expect(pages).toBe(1);
+    expect(mailer.lastTo(EMAIL)).toBeUndefined();
   });
 
   it('lets only one of two concurrent requests through (row lock)', async () => {

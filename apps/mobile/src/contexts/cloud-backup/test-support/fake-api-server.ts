@@ -49,7 +49,7 @@ const hashOf = (text: string) => createHash('sha256').update(text, 'utf8').diges
 /**
  * The API contract (0.4.0) in memory, for tests: one account per token, versions, If-Match
  * (412/428), tombstones (410), renames (last `renamedAt` wins), consents (403 without one;
- * withdrawing one erases what it covered, without tombstones), whole copies for restore, and
+ * withdrawing one erases what it covered, adds no tombstones and keeps existing ones), whole copies for restore, and
  * failures injected per method.
  */
 export class FakeApiServer {
@@ -126,7 +126,6 @@ export class FakeApiServer {
       }
     }
     if (purpose === 'cloud-sync') {
-      this.tombstones.clear();
       this.homeCity = null;
     }
   }
@@ -262,7 +261,7 @@ export class FakeApiServer {
             return fail({ kind: 'gone' });
           }
           const a = this.activities.get(id);
-          return a ? ok({ version: a.version }) : fail({ kind: 'not-found' });
+          return a ? ok({ version: a.version, name: a.name, renamedAt: a.renamedAt }) : fail({ kind: 'not-found' });
         }),
       deleteActivity: (id) =>
         call('deleteActivity', { id }, () => {

@@ -40,6 +40,12 @@ export function matchesVersion(ifMatch: string, version: number): boolean {
   return ifMatch.split(',').some((tag) => tag.trim().replace(/^W\//, '') === wanted);
 }
 
+/**
+ * Refuses a write without the consent. Call it **after `tx.lock()`**: a withdrawal erases the
+ * server copy under the same lock, so a consent read before the lock may be stale by the time the
+ * write runs (it would store data after the erasure committed). Transactions are READ COMMITTED
+ * (`DrizzleBackupStore.write`): a read after the lock sees the withdrawal that held it.
+ */
 async function requireConsent(reader: UserReader, purpose: ConsentPurposeName): Promise<void> {
   const consent = (await reader.consents()).find((c) => c.purpose === purpose);
   if (!consent?.granted) {
@@ -91,8 +97,9 @@ export class BackupService {
 
   /**
    * GiveOrWithdrawConsent. Withdrawing deletes the **server copy** it covered, in the same
-   * transaction and without tombstones or feed entries (phones keep theirs): `cloud-sync` → every
-   * activity, track, gap route, tombstone and the Home City (the account and consents stay);
+   * transaction and without new tombstones or feed entries (phones keep theirs): `cloud-sync` →
+   * every activity, track, gap route and the Home City (the account, consents and existing
+   * tombstones stay — ids and times only, so delete still wins after backup is turned on again);
    * `apple-health-in-cloud-sync` → the Apple Health activities. Idempotent.
    */
   async setConsent(
@@ -136,11 +143,11 @@ export class BackupService {
     const contentHash = contentHashOf({ ...input, name, timeZone, trackHash });
 
     return this.store.write(userId, async (tx) => {
+      await tx.lock();
       await requireConsent(tx, 'cloud-sync');
       if (input.source === 'apple-health') {
         await requireConsent(tx, 'apple-health-in-cloud-sync');
       }
-      await tx.lock();
       if (await tx.tombstone(id)) {
         throw new AppError('activity.deleted');
       }
@@ -209,8 +216,8 @@ export class BackupService {
       throw new AppError('activity.renamed-in-future');
     }
     return this.store.write(userId, async (tx) => {
-      await requireConsent(tx, 'cloud-sync');
       await tx.lock();
+      await requireConsent(tx, 'cloud-sync');
       const existing = await existingActivity(tx, id);
       if (ifMatch && !matchesVersion(ifMatch, existing.version)) {
         throw new AppError('precondition-failed', { ETag: etagOf(existing.version) });
@@ -265,8 +272,8 @@ export class BackupService {
     input: { checkedAt: number; routes: StoredGapRoute[] }
   ): Promise<ActivityRecord> {
     return this.store.write(userId, async (tx) => {
-      await requireConsent(tx, 'cloud-sync');
       await tx.lock();
+      await requireConsent(tx, 'cloud-sync');
       const existing = await existingActivity(tx, id);
       const current = await tx.gapRoutes(id);
       if (current && sameRoutes(current.routes, input.routes)) {
@@ -370,8 +377,8 @@ export class BackupService {
       catalogueCityView(input.cityId);
     }
     return this.store.write(userId, async (tx) => {
-      await requireConsent(tx, 'cloud-sync');
       await tx.lock();
+      await requireConsent(tx, 'cloud-sync');
       const current = await tx.homeCity();
       if (current && current.chosenAt >= input.chosenAt) {
         return current;

@@ -322,7 +322,9 @@ class UserScope implements UserWriter {
       .where(scope === 'all' ? mine : and(mine, or(like(activities.id, 'hk-%'), eq(activities.source, 'apple-health'))))
       .returning({ id: activities.id });
     if (scope === 'all') {
-      await this.db.delete(tombstones).where(eq(tombstones.userId, this.userId));
+      // Tombstones stay (ids and times only, no location data): delete wins (D5) across a
+      // withdrawal, so a phone still holding a deleted activity gets 410 instead of re-uploading
+      // it. They go with the account (eraseAccount).
       await this.db.delete(homeCities).where(eq(homeCities.userId, this.userId));
     }
     // Export zips hold copies of the same data: delete them and expire their links, in this
@@ -357,8 +359,16 @@ export class DrizzleBackupStore implements BackupStore {
     return new UserScope(this.db, userId);
   }
 
+  /**
+   * READ COMMITTED on purpose (Postgres' default, pinned so a changed database default cannot
+   * break it): every statement sees what committed before it started, so reads after `lock()` see
+   * the last write of the user that held the lock — a consent withdrawal included. A snapshot
+   * level (REPEATABLE READ) would keep the reads from before the lock wait.
+   */
   write<T>(userId: string, fn: (tx: UserWriter) => Promise<T>): Promise<T> {
-    return this.db.transaction((tx) => fn(new UserScope(tx as unknown as Db, userId)));
+    return this.db.transaction((tx) => fn(new UserScope(tx as unknown as Db, userId)), {
+      isolationLevel: 'read committed',
+    });
   }
 
   async eraseAccount(userId: string): Promise<void> {

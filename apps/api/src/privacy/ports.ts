@@ -17,12 +17,14 @@ export interface ExportRecord {
 export interface ExportStore {
   /**
    * Reserves an export under the user's row lock (no two requests race the 24 h rule): `reserved`
-   * after inserting `pending`, else the newest export still counting against the window.
+   * after inserting `pending`, else the newest export still counting against the window. A
+   * `pending` export older than `leaseMs` is stale (its function was killed before it could mark
+   * it `failed`): it becomes `failed` here and no longer counts.
    */
   reserve(
     userId: string,
     record: ExportRecord,
-    windowMs: number
+    limits: { windowMs: number; leaseMs: number }
   ): Promise<{ reserved: true } | { reserved: false; last: ExportRecord }>;
   /** The pending export is ready: its file, size, expiry and the SHA-256 of its link key. */
   complete(

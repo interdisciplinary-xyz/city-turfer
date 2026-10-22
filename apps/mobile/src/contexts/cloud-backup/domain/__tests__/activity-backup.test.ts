@@ -1,5 +1,5 @@
 import { ActivityBackup } from '../activity-backup';
-import { deviceToken, mayUpload, retryDelayMs, sourceOf, trackHashInput } from '../backup-policy';
+import { deviceToken, mayUpload, nameToUpload, retryDelayMs, sourceOf, trackHashInput } from '../backup-policy';
 import { BackupSettings } from '../backup-settings';
 
 const NOW = 1_000_000;
@@ -11,6 +11,17 @@ const queued = () => {
 };
 
 describe('backup policy', () => {
+  it('a full upload keeps the newer rename (last write wins on renamedAt; the server wins ties)', () => {
+    const phone = (renamedAt: number | null) => ({ name: 'Phone A name', renamedAt });
+    const server = (renamedAt: number | null) => ({ name: 'Server name', renamedAt });
+    expect(nameToUpload(phone(null), server(null))).toBe('Phone A name'); // nobody renamed: phone's content
+    expect(nameToUpload(phone(null), server(10))).toBe('Server name'); // only another phone renamed it
+    expect(nameToUpload(phone(5), server(10))).toBe('Server name'); // the server's rename is newer
+    expect(nameToUpload(phone(10), server(10))).toBe('Server name');
+    expect(nameToUpload(phone(20), server(10))).toBe('Phone A name'); // this phone's rename is newer
+    expect(nameToUpload(phone(20), server(null))).toBe('Phone A name');
+  });
+
   it('never uploads demo history; Apple Health imports only with their consent', () => {
     expect(sourceOf('demo-123')).toBe('demo');
     expect(sourceOf('hk-ABC')).toBe('apple-health');
@@ -213,6 +224,7 @@ describe('ActivityBackup: renames, gap checks and reconciling', () => {
     return b;
   };
   const same = { trackHash: 'h1', name: 'Walk' };
+  const local = { ...same, renamedAt: null };
 
   it('a rename goes after the activity, once; an upload in flight carries it', () => {
     const b = queued();
@@ -246,19 +258,26 @@ describe('ActivityBackup: renames, gap checks and reconciling', () => {
 
   it('reconcile: another track is replaced, another name renamed, a newer gap check sent', () => {
     const track = onServer();
-    track.reconcile({ trackHash: 'old', name: 'Walk' }, { ...same, gapsCheckedAt: null });
+    track.reconcile({ trackHash: 'old', name: 'Walk' }, { ...local, gapsCheckedAt: null });
     expect(track.nextStep(NOW)).toBe('replace');
 
     const name = onServer();
-    name.reconcile({ trackHash: 'h1', name: 'Old name' }, { ...same, gapsCheckedAt: null });
+    name.reconcile({ trackHash: 'h1', name: 'Old name' }, { ...local, renamedAt: NOW - 5, gapsCheckedAt: null });
     expect(name.nextStep(NOW)).toBe('rename');
 
     const gaps = onServer();
-    gaps.reconcile(same, { ...same, gapsCheckedAt: NOW - 1 });
+    gaps.reconcile(same, { ...local, gapsCheckedAt: NOW - 1 });
     expect(gaps.nextStep(NOW)).toBe('gap-routes');
     gaps.gapRoutesSent(gaps.rev, 2, NOW - 1);
-    gaps.reconcile(same, { ...same, gapsCheckedAt: NOW - 1 });
+    gaps.reconcile(same, { ...local, gapsCheckedAt: NOW - 1 });
     expect(gaps.nextStep(NOW)).toBeNull(); // the server already has that check
+  });
+
+  it("reconcile: a name this phone never renamed is not pushed over the server's", () => {
+    // E.g. renamed on another phone after a restore: the server's name may be the newer one.
+    const b = onServer();
+    b.reconcile({ trackHash: 'h1', name: 'Renamed on phone B' }, { ...local, gapsCheckedAt: null });
+    expect(b.nextStep(NOW)).toBeNull();
   });
 
   it('deleted on the phone while off: delete what may be on the server, nothing else', () => {

@@ -31,6 +31,15 @@ export interface ServerActivity {
   trackHash: string;
 }
 
+/** The server's current version of one Activity and its name (GET /v1/activities/{id}). */
+export interface ServerActivityHead {
+  version: number;
+  /** Null when the answer carried none (then the phone's name is sent). */
+  name: string | null;
+  /** When a PATCH last renamed it (the renaming phone's time); null: never. */
+  renamedAt: number | null;
+}
+
 /** One page of the server's changes feed, reduced to what backup and restore need. */
 export interface ChangesPage {
   /** Activities the server holds, in feed order. */
@@ -67,8 +76,12 @@ export interface ApiClient {
     meta: { source: UploadSource; timeZone: string | null },
     ifMatchVersion: number | null
   ): Promise<ApiResult<{ version: number }>>;
-  /** The server's current version of an Activity (after a 412). */
-  activityVersion(activityId: string): Promise<ApiResult<{ version: number }>>;
+  /**
+   * GET /v1/activities/{id}: the server's current version of an Activity, with its name and when a
+   * PATCH last renamed it (before a replacement, and after a 412/428) — so a PUT never overwrites a
+   * newer rename from another phone.
+   */
+  activityVersion(activityId: string): Promise<ApiResult<ServerActivityHead>>;
   deleteActivity(activityId: string): Promise<ApiResult<void>>;
   /** PATCH the name; the server keeps the latest `renamedAt`. */
   renameActivity(activityId: string, name: string, renamedAt: number): Promise<ApiResult<{ version: number | null }>>;

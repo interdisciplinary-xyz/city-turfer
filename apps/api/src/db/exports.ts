@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, isNull, lt, notInArray } from 'drizzle-orm';
+import { and, desc, eq, gt, isNull, lt, lte, notInArray } from 'drizzle-orm';
 
 import type { ExportRecord, ExportStatus, ExportStore, FileStorage } from '../privacy/ports';
 import { dataExports, storedFiles, users } from './schema';
@@ -22,11 +22,23 @@ const mine = (userId: string, id: string) => and(eq(dataExports.userId, userId),
 export class DrizzleExportStore implements ExportStore {
   constructor(private readonly db: Db) {}
 
-  reserve(userId: string, r: ExportRecord, windowMs: number) {
+  reserve(userId: string, r: ExportRecord, limits: { windowMs: number; leaseMs: number }) {
+    const { windowMs, leaseMs } = limits;
     return this.db.transaction(async (tx) => {
       // The user's row lock serialises this user's export requests (and every other write).
       await tx.insert(users).values({ id: userId }).onConflictDoNothing();
       await tx.select({ id: users.id }).from(users).where(eq(users.id, userId)).for('update');
+      // A build outliving its lease was killed (timeout, crash) before its catch could run.
+      await tx
+        .update(dataExports)
+        .set({ status: 'failed', fileKey: null, keyHash: null })
+        .where(
+          and(
+            eq(dataExports.userId, userId),
+            eq(dataExports.status, 'pending'),
+            lte(dataExports.requestedAt, new Date(r.requestedAt - leaseMs))
+          )
+        );
       const [last] = await tx
         .select()
         .from(dataExports)

@@ -3,7 +3,7 @@ import { migrate } from '@/platform/migrations';
 import { openNodeDatabase } from '@/test-support/node-database';
 import { wire } from '@/wiring';
 
-import { prepareDemoAccount, trackAlongPath } from '../gdansk-demo';
+import { prepareDemoAccount, seedGdanskDemo, trackAlongPath } from '../gdansk-demo';
 import data from '../gdansk-routes.json';
 
 function fakes() {
@@ -73,6 +73,45 @@ describe('Gdańsk demo account', () => {
     await prepareDemoAccount(demo, c);
     expect((await c.activityLog.list.execute(500)).length).toBe(all.length);
   }, 120_000);
+
+  it('finishes an interrupted fill on a later day, without duplicates', async () => {
+    const c = await setup();
+    const full = await setup();
+    await prepareDemoAccount(demo, full);
+    const expected = (await full.activityLog.list.execute(500)).length;
+
+    // A legacy id (from before ids were stable) is replaced, not duplicated.
+    const legacy = (await full.activityLog.list.execute(1))[0];
+    const track = await full.activityLog.trackQuery.execute(legacy.id);
+    await c.activityLog.importActivity.execute({ id: 'demo-gdansk-1700000000000', type: legacy.type, points: track });
+
+    // The app is killed during the first sign-in, after ten activities.
+    await expect(
+      seedGdanskDemo(c, (done) => {
+        if (done === 10) {
+          throw new Error('killed');
+        }
+      })
+    ).rejects.toThrow('killed');
+    expect((await c.territory.homeCity.execute())?.name).toBe('Gdańsk');
+    expect(await c.activityLog.list.execute(500)).toHaveLength(10);
+
+    // Signed in again three days later: the rest arrives, the first ten are not imported again.
+    jest.useFakeTimers({
+      now: Date.now() + 3 * 86_400_000,
+      doNotFake: ['nextTick', 'setImmediate', 'setTimeout', 'setInterval', 'queueMicrotask', 'clearTimeout'],
+    });
+    try {
+      await prepareDemoAccount(demo, c);
+      const ids = (await c.activityLog.list.execute(500)).map((a) => a.id);
+      expect(ids).toHaveLength(expected);
+      expect(new Set(ids).size).toBe(expected);
+      expect(ids).not.toContain('demo-gdansk-1700000000000');
+      expect(await seedGdanskDemo(c)).toBe(0);
+    } finally {
+      jest.useRealTimers();
+    }
+  }, 240_000);
 
   it('leaves other accounts alone', async () => {
     const c = await setup();

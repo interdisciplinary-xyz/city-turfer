@@ -92,8 +92,10 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   which live routes refuse. Decision: `docs/decisions/api-accounts-2026-10-22.md`.
 - **Consent:** activity and Home City writes need `cloud-sync` granted (Apple Health activities also
   `apple-health-in-cloud-sync`), else 403 `consent.required`; `DELETE` never needs it. Withdrawing
-  erases the server copy it covered (`eraseBackup`, no tombstones): `cloud-sync` → everything but
-  the account and consents, `apple-health-in-cloud-sync` → the `hk-…` activities.
+  erases the server copy it covered (`eraseBackup`, no new tombstones): `cloud-sync` → everything
+  but the account, consents and existing tombstones (kept so delete wins, D5; they go with the
+  account), `apple-health-in-cloud-sync` → the `hk-…` activities. Use cases read consent **after**
+  `tx.lock()` (transactions are READ COMMITTED), so a write cannot land after a withdrawal's erase.
 - **Planned routes** are declared with full schemas, answer `501` (`code: "not-implemented"`), carry
   `x-cityturfer-status: planned` and a `[planned]` summary prefix, so Swagger shows the whole API
   before it is built.

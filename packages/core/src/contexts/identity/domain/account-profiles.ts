@@ -37,7 +37,8 @@ export type ProfilePlacement = { kind: 'known'; profileId: UserId } | { kind: 'a
 /**
  * Accounts ↔ local profiles on this phone. Invariants: one profile per account and one account per
  * profile; a local-only profile (demo) never gets an account; the adoptable `admin` history is only
- * linked after the Turfer said yes; a deleted account's kept profile is found again by its email.
+ * linked after the Turfer said yes, and from then on never opens with the mock password; a deleted
+ * account's kept profile is found again by its email.
  */
 export class AccountProfiles {
   private constructor(private state: AccountProfilesState) {}
@@ -93,6 +94,31 @@ export class AccountProfiles {
     }
     const adoptable = userId(ADOPTABLE_PROFILE);
     return useLocalHistory && !this.isTaken(adoptable) ? adoptable : profileIdForAccount(account.id);
+  }
+
+  /**
+   * A local profile opens with its password (mock admin) only while no account's data lives in it.
+   * Once an account adopted it (or the account was deleted and its data kept here) only that
+   * account's email sign-in opens it: the mock password is public.
+   */
+  opensWithPassword(profileId: UserId): boolean {
+    return !this.state.entries.some((e) => e.profileId === profileId);
+  }
+
+  /**
+   * The profile an account's deletion concerns: the one linked to it, else the signed-in profile
+   * (if it is no local-only one and no other account holds it); null: none on this phone.
+   */
+  profileForDeletion(accountId: string, signedIn: UserId | null): UserId | null {
+    const linked = this.profileOf(accountId);
+    if (linked) {
+      return linked;
+    }
+    if (!signedIn || isLocalOnlyProfile(signedIn)) {
+      return null;
+    }
+    const owner = this.state.entries.find((e) => e.profileId === signedIn && !e.deleted);
+    return owner && owner.accountId !== accountId ? null : signedIn;
   }
 
   /** Links the account to a profile (replacing a deleted account's entry for it) and signs it in. */

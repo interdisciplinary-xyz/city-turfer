@@ -10,6 +10,7 @@ import type {
   ConsentPurpose,
   ServerAccess,
   ServerActivityCopy,
+  ServerActivityHead,
   UploadSource,
 } from '../application/ports';
 import { canonicalTrackPoints } from '../domain/backup-policy';
@@ -288,8 +289,18 @@ class FetchApiClient implements ApiClient {
     return this.versioned(a);
   }
 
-  async activityVersion(activityId: string): Promise<ApiResult<{ version: number }>> {
-    return this.versioned(await this.request('GET', `/v1/activities/${encodeURIComponent(activityId)}`));
+  async activityVersion(activityId: string): Promise<ApiResult<ServerActivityHead>> {
+    const a = await this.request('GET', `/v1/activities/${encodeURIComponent(activityId)}`);
+    const r = this.versioned(a);
+    if (!r.ok) {
+      return r;
+    }
+    const json = isObject(a?.json) ? a.json : {};
+    return ok({
+      version: r.value.version,
+      name: typeof json.name === 'string' ? json.name : null,
+      renamedAt: ms(json.renamedAt),
+    });
   }
 
   async deleteActivity(activityId: string): Promise<ApiResult<void>> {

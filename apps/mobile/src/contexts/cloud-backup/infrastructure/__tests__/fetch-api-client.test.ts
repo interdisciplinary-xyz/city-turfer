@@ -93,6 +93,25 @@ describe('FetchApiClient', () => {
     expect(body(calls[0]).source).toBe('apple-health');
   });
 
+  it('reads the server version with its name and rename time (before replacing, after a 412)', async () => {
+    const { api, calls } = setup(() => ({
+      status: 200,
+      body: { id: 'rec-1', version: 5, name: 'Renamed elsewhere', renamedAt: '2026-10-19T08:00:00.000Z' },
+    }));
+    expect(await api.activityVersion('rec-1')).toEqual({
+      ok: true,
+      value: { version: 5, name: 'Renamed elsewhere', renamedAt: Date.parse('2026-10-19T08:00:00Z') },
+    });
+    expect(calls[0].init.method).toBe('GET');
+    expect(calls[0].url).toBe('https://api.example.org/v1/activities/rec-1');
+
+    const never = setup(() => ({ status: 200, body: { version: 2, renamedAt: null }, etag: '"v2"' }));
+    expect(await never.api.activityVersion('rec-1')).toEqual({
+      ok: true,
+      value: { version: 2, name: null, renamedAt: null },
+    });
+  });
+
   it.each([
     [401, { kind: 'auth' }],
     [403, { kind: 'consent' }],

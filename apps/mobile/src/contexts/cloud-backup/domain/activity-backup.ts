@@ -164,20 +164,23 @@ export class ActivityBackup {
 
   /**
    * Compares the server's copy with the phone's (both already known to be there): a different track
-   * is replaced, a different name renamed, gap routes checked since we last sent them are sent.
+   * is replaced, a different name renamed — only when this phone renamed it (`renamedAt`): a name
+   * nobody renamed here is never pushed over the server's (it may be a newer rename from another
+   * phone; the server keeps the latest `renamedAt` of what is sent) — and gap routes checked since
+   * we last sent them are sent.
    */
   reconcile(
     server: { trackHash: string; name: string },
-    local: { trackHash: string; name: string; gapsCheckedAt: number | null }
+    local: { trackHash: string; name: string; renamedAt: number | null; gapsCheckedAt: number | null }
   ): void {
     if (this.isClosed || this.state.op === 'delete' || this.state.status !== 'backed-up') {
       return;
     }
     if (server.trackHash !== local.trackHash) {
       this.queueCorrection();
-      return; // the replacement carries the name; gap routes follow it
+      return; // the replacement picks the newer name (nameToUpload); gap routes follow it
     }
-    if (server.name !== local.name) {
+    if (server.name !== local.name && local.renamedAt != null) {
       this.queueRename();
     }
     if (local.gapsCheckedAt != null && local.gapsCheckedAt !== this.state.gapsSentAt) {

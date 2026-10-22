@@ -14,8 +14,11 @@ export interface AppContextValue {
   auth: AuthState;
   /** Increments whenever persisted data changed (outbox processed). */
   dataVersion: number;
-  /** Local profiles (mock admin, demo): email + password. */
-  signIn(email: string, password: string): Promise<'ok' | 'invalid'>;
+  /**
+   * Local profiles (mock admin, demo): email + password. `linked-to-account`: a CityTurfer account
+   * has adopted this profile's history, so only that account's email sign-in opens it.
+   */
+  signIn(email: string, password: string): Promise<'ok' | 'invalid' | 'linked-to-account'>;
   /** Accounts, step 1: a local profile's email asks for its password, any other gets a code. */
   startSignIn(email: string): Promise<StartSignInResult>;
   /** Step 2: the emailed code; `choose-history` asks whether to use this phone's history. */

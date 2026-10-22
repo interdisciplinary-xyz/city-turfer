@@ -74,18 +74,31 @@ async function enterProfile(
   return userOf(profiles.current!);
 }
 
-/** Signs a local profile in with its password (the mock admin and demo accounts). */
+export type SignInResult =
+  | SignInOutcome
+  | { kind: 'invalid-email' }
+  /** The local profile now holds a CityTurfer account's data: sign in with that account's email. */
+  | { kind: 'linked-to-account' };
+
+/**
+ * Signs a local profile in with its password (the mock admin and demo accounts), unless an account
+ * has adopted that profile: then only the account's own sign-in opens it.
+ */
 export class SignIn {
   constructor(private readonly d: IdentityDeps) {}
-  async execute(rawEmail: string, password: string): Promise<SignInOutcome | { kind: 'invalid-email' }> {
+  async execute(rawEmail: string, password: string): Promise<SignInResult> {
     const parsed = emailOf(rawEmail);
     if (!parsed) {
       return { kind: 'invalid-email' };
     }
     const outcome = await this.d.auth.signIn(parsed, password);
-    if (outcome.kind === 'signed-in') {
-      await this.d.sessions.write(outcome.user.id);
+    if (outcome.kind !== 'signed-in') {
+      return outcome;
     }
+    if (this.d.accounts && !(await loadProfiles(this.d.accounts)).opensWithPassword(outcome.user.id)) {
+      return { kind: 'linked-to-account' };
+    }
+    await this.d.sessions.write(outcome.user.id);
     return outcome;
   }
 }
@@ -264,7 +277,8 @@ export class SignOut {
 }
 
 export type DeleteAccountResult =
-  | { kind: 'deleted'; profileId: UserId }
+  /** Signed out. `profileId`: the profile that held the account's data here (null: none). */
+  | { kind: 'deleted'; profileId: UserId | null }
   | { kind: 'recording-in-progress' }
   | { kind: 'not-signed-in' }
   | AccountFailure;
@@ -288,19 +302,21 @@ export class DeleteAccount {
     if (await this.isRecording()) {
       return { kind: 'recording-in-progress' };
     }
+    // Resolved before the server call: once the account is gone, this phone signs out regardless.
+    const profiles = await loadProfiles(a);
+    const signedIn = await this.d.sessions.read().catch(() => null);
+    const profileId = profiles.profileForDeletion(session.account.id, signedIn);
     const r = await a.gateway.deleteAccount(session.token);
     if (r.kind !== 'deleted') {
       // Offline, failed, or 401 (the session expired: sign in again first). Nothing changes here,
       // and this phone's data is never deleted on an answer that doesn't say the account is gone.
       return r;
     }
-    const profiles = await loadProfiles(a);
-    const profileId = profiles.profileOf(session.account.id);
     profiles.accountDeleted(session.account.id, keepData);
     await a.profiles.write(profiles.toState());
     await a.credentials.clear();
     await this.d.sessions.clear();
-    return profileId ? { kind: 'deleted', profileId } : { kind: 'not-signed-in' };
+    return { kind: 'deleted', profileId };
   }
 }
 
