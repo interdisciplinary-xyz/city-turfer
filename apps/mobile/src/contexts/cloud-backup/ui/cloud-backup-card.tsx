@@ -1,6 +1,6 @@
 import { FONT_SIZE, FONT_WEIGHT, RADIUS, SPACE } from '@cityturfer/brand';
 import { useState } from 'react';
-import { Alert, Platform, Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, Platform, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { ACCENT } from '@/constants/colors';
 import { Button, Card } from '@/ui-kit/components';
@@ -19,14 +19,26 @@ import {
   ERROR_TITLE,
   HEALTH_NOTE,
   HEALTH_SWITCH_LABEL,
+  OFF_CONFIRM_TEXT,
+  OFF_CONFIRM_TITLE,
   OFF_PENDING,
-  SERVER_LABEL,
-  TOKEN_LABEL,
-  TOKEN_PLACEHOLDER,
-  TOKEN_SAVED,
+  WAITING_FOR_RESTORE,
 } from './cloud-backup-card.constants';
 import { describeProgress } from './format';
-import { useCloudBackup } from './hooks';
+import { useCloudBackup, useRestore } from './hooks';
+import {
+  describeProgress as describeRestoreProgress,
+  describeResult as describeRestoreResult,
+  RESTORE_ACTION,
+  RESTORE_ACTION_NOTE,
+} from './restore-card.constants';
+
+/** Turning backup off erases the server copy: ask first. */
+const confirmOff = (off: () => void) =>
+  Alert.alert(OFF_CONFIRM_TITLE, OFF_CONFIRM_TEXT, [
+    { text: 'Cancel', style: 'cancel' },
+    { text: 'Turn off', style: 'destructive', onPress: off },
+  ]);
 
 const showError = (e: unknown) => {
   const code = (e as { code?: string })?.code;
@@ -34,21 +46,28 @@ const showError = (e: unknown) => {
 };
 
 /**
- * Info screen card: device token, consent switch ("Back up to CityTurfer cloud"), Apple Health
+ * Info screen card (the device token and testing server are in Developer tools): consent switch ("Back up to CityTurfer cloud"), Apple Health
  * switch, progress and "Back up now". The token is entered secure and never shown again.
  */
 export function CloudBackupCard() {
   const p = usePalette();
-  const { status, setEnabled, setHealthIncluded, saveToken, removeToken, saveServerUrl, backUpNow } = useCloudBackup();
+  const { status, refresh, setEnabled, setHealthIncluded, backUpNow } = useCloudBackup();
+  const restore = useRestore({ ask: false });
   const [busy, setBusy] = useState(false);
-  const [tokenDraft, setTokenDraft] = useState('');
-  const [editingToken, setEditingToken] = useState(false);
-  const [serverOpen, setServerOpen] = useState(false);
-  const [serverDraft, setServerDraft] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   if (!status) {
     return null;
+  }
+  if (!status.available) {
+    return (
+      <Card style={{ gap: SPACE.md }}>
+        <Text style={[s.h2, { color: p.text }]}>{CLOUD_BACKUP_TITLE}</Text>
+        <Text testID='backup-not-available' style={{ color: p.muted }}>
+          {ERROR_TEXT['not-available']}
+        </Text>
+      </Card>
+    );
   }
 
   const run = (work: () => Promise<unknown>) => {
@@ -65,61 +84,17 @@ export function CloudBackupCard() {
     }
   };
 
-  const inputStyle = [s.input, { color: p.text, backgroundColor: p.bg, borderColor: p.border }];
-  const showTokenInput = !status.hasToken || editingToken;
+  const restoreMessage = describeRestoreResult(restore.result, { health: Platform.OS === 'ios' });
   const error = notice ?? (status.enabled && status.lastError ? ERROR_TEXT[status.lastError] : null);
 
   return (
     <Card style={{ gap: SPACE.md }}>
       <Text style={[s.h2, { color: p.text }]}>{CLOUD_BACKUP_TITLE}</Text>
       <Text style={{ color: p.muted }}>{CLOUD_BACKUP_PITCH}</Text>
-
-      <Text style={[s.label, { color: p.text }]}>{TOKEN_LABEL}</Text>
-      {showTokenInput ? (
-        <View style={s.inline}>
-          <TextInput
-            testID='backup-token-input'
-            accessibilityLabel={TOKEN_LABEL}
-            value={tokenDraft}
-            onChangeText={setTokenDraft}
-            placeholder={TOKEN_PLACEHOLDER}
-            placeholderTextColor={p.muted}
-            secureTextEntry
-            autoCapitalize='none'
-            autoCorrect={false}
-            spellCheck={false}
-            textContentType='password'
-            importantForAutofill='no'
-            style={[inputStyle, s.grow]}
-          />
-          <Button
-            testID='backup-token-save'
-            label='Save'
-            color={ACCENT}
-            disabled={busy || tokenDraft.trim() === ''}
-            onPress={() =>
-              run(async () => {
-                await saveToken(tokenDraft);
-                setTokenDraft('');
-                setEditingToken(false);
-              })
-            }
-          />
-        </View>
-      ) : (
-        <View style={s.inline}>
-          <Text testID='backup-token-saved' style={[s.grow, { color: p.muted, fontSize: FONT_SIZE.caption }]}>
-            {TOKEN_SAVED}
-          </Text>
-          <Pressable testID='backup-token-replace' accessibilityRole='button' onPress={() => setEditingToken(true)}>
-            <Text style={[s.link, { color: ACCENT }]}>Replace</Text>
-          </Pressable>
-          {!status.enabled && (
-            <Pressable testID='backup-token-remove' accessibilityRole='button' onPress={() => run(removeToken)}>
-              <Text style={[s.link, { color: p.danger }]}>Remove</Text>
-            </Pressable>
-          )}
-        </View>
+      {!status.hasToken && (
+        <Text testID='backup-sign-in-first' style={{ color: p.text }}>
+          {ERROR_TEXT['no-token']}
+        </Text>
       )}
 
       <View style={s.row}>
@@ -129,7 +104,11 @@ export function CloudBackupCard() {
           accessibilityLabel={BACKUP_SWITCH_LABEL}
           value={status.enabled}
           disabled={busy || (!status.enabled && !status.hasToken)}
-          onValueChange={(on) => run(async () => switched(await setEnabled(on), on))}
+          onValueChange={(on) =>
+            on
+              ? run(async () => switched(await setEnabled(true), true))
+              : confirmOff(() => run(async () => switched(await setEnabled(false), false)))
+          }
           trackColor={{ true: ACCENT, false: p.border }}
         />
       </View>
@@ -175,63 +154,39 @@ export function CloudBackupCard() {
           textColor={p.text}
           busy={status.running}
           disabled={busy}
-          onPress={() => run(() => backUpNow())}
+          onPress={() =>
+            run(async () => {
+              const r = await backUpNow();
+              if (r?.kind === 'skipped' && r.reason === 'busy') {
+                setNotice(WAITING_FOR_RESTORE);
+              }
+            })
+          }
         />
       )}
 
-      <Pressable
-        testID='backup-server-toggle'
-        accessibilityRole='button'
-        onPress={() => {
-          setServerOpen(!serverOpen);
-          setServerDraft(status.serverUrlOverridden ? status.serverUrl : '');
-        }}
-      >
-        <Text style={[s.link, { color: p.muted }]}>
-          {SERVER_LABEL}
-          {status.serverUrlOverridden ? ' · custom' : ''}
-        </Text>
-      </Pressable>
-      {serverOpen && (
+      {status.hasToken && (
         <>
-          <TextInput
-            testID='backup-server-input'
-            accessibilityLabel={SERVER_LABEL}
-            value={serverDraft ?? ''}
-            onChangeText={setServerDraft}
-            placeholder={status.serverUrlOverridden ? undefined : status.serverUrl}
-            placeholderTextColor={p.muted}
-            autoCapitalize='none'
-            autoCorrect={false}
-            spellCheck={false}
-            keyboardType='url'
-            style={inputStyle}
+          <Text style={{ color: p.muted, fontSize: FONT_SIZE.caption }}>{RESTORE_ACTION_NOTE}</Text>
+          {restore.running && (
+            <Text testID='backup-restore-progress' style={{ color: p.text, fontSize: FONT_SIZE.caption }}>
+              {describeRestoreProgress(restore.progress)}
+            </Text>
+          )}
+          {!restore.running && restoreMessage && (
+            <Text testID='backup-restore-message' style={{ color: p.text, fontSize: FONT_SIZE.caption }}>
+              {restoreMessage}
+            </Text>
+          )}
+          <Button
+            testID='backup-restore'
+            label={RESTORE_ACTION}
+            color={p.border}
+            textColor={p.text}
+            busy={restore.running}
+            disabled={busy || status.running}
+            onPress={() => run(() => restore.start().then(refresh))}
           />
-          <View style={s.inline}>
-            <Button
-              testID='backup-server-save'
-              label='Use this server'
-              color={p.border}
-              textColor={p.text}
-              disabled={busy || !serverDraft?.trim()}
-              onPress={() => run(() => saveServerUrl(serverDraft))}
-            />
-            {status.serverUrlOverridden && (
-              <Button
-                testID='backup-server-reset'
-                label='Default server'
-                color={p.card}
-                textColor={p.text}
-                disabled={busy}
-                onPress={() =>
-                  run(async () => {
-                    await saveServerUrl(null);
-                    setServerDraft('');
-                  })
-                }
-              />
-            )}
-          </View>
         </>
       )}
     </Card>

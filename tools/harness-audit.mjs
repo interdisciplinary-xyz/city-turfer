@@ -4,14 +4,24 @@
  * Complements `pnpm run audit:docs`, which already checks dead paths and links inside .claude/*.md.
  *
  * Errors (exit 1):
- *   - agent / skill / command frontmatter: missing, name ≠ file or folder, empty or over-long
- *     description, unknown tool, unknown model
+ *   - agent / skill / command frontmatter: missing, not valid YAML (Claude Code then drops the file
+ *     silently), name ≠ file or folder, empty or over-long description, unknown tool, unknown model
+ *   - a nested `.claude/` folder inside .claude/ (an agent ran with the wrong cwd and wrote its
+ *     memory or settings there)
  *   - CLAUDE.md "Claude Code setup" lists ≠ the agents, skills and commands on disk
  *   - .claude/settings.json hooks that point at a missing or non-executable script
  *   - `pnpm run <script>` / `pnpm --filter <pkg> <script>` / `pnpm -C <dir> run <script>` naming a
  *     script that does not exist
  *   - a `<name>-engineer|architect|reviewer|designer` agent or a `<name>` skill that does not exist
- * Warnings: the old product name in agent/skill text.
+ *   - agent tools: no `tools:` (it would inherit every tool), an `Agent(x)` naming a missing agent;
+ *     a read-only agent (description says "read-only") with Write/Edit, with `memory` (which grants
+ *     Write/Edit) or with Bash but no PreToolUse Bash hook in its frontmatter; an agent with an
+ *     edit-allowlist hook and Bash but no PreToolUse Bash hook (Bash would route around the
+ *     allowlist); a frontmatter hook script that does not exist
+ * Warnings: the old product name in agent/skill text; a description over 300 characters (it is
+ * loaded into every session's context, so keep it a short trigger); an unknown agent frontmatter
+ * field (Claude Code ignores it silently, so it is usually a typo); an agent body without a
+ * `## Report` section that asks for "Not verified".
  *
  *   pnpm run audit:harness            report, exit 1 on errors
  *   pnpm run audit:harness -- --json  machine-readable findings
@@ -20,7 +30,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { parseFrontmatter } from './docs-audit.mjs';
+import { parse as parseYaml } from 'yaml';
 
 export const KNOWN_TOOLS = new Set([
   'Read',
@@ -39,8 +49,56 @@ export const KNOWN_TOOLS = new Set([
   'Skill',
   'AskUserQuestion',
 ]);
+/** Descriptions longer than this still load, but cost context in every session. */
+export const DESCRIPTION_SOFT_LIMIT = 300;
 export const KNOWN_MODELS = new Set(['opus', 'sonnet', 'haiku', 'fable', 'inherit']);
 const AGENT_SUFFIX = /\b([a-z][a-z0-9]*(?:-[a-z0-9]+)*-(?:engineer|architect|reviewer|designer))\b/g;
+/** Subagent frontmatter fields Claude Code reads (https://code.claude.com/docs/en/sub-agents). */
+export const AGENT_FIELDS = new Set([
+  'name',
+  'description',
+  'tools',
+  'disallowedTools',
+  'model',
+  'effort',
+  'permissionMode',
+  'maxTurns',
+  'autoCompactWindow',
+  'skills',
+  'mcpServers',
+  'hooks',
+  'memory',
+  'background',
+  'omitClaudeMd',
+  'isolation',
+  'color',
+  'initialPrompt',
+  'experimental',
+]);
+const WRITE_TOOLS = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit']);
+
+/** `Read, Agent(a, b), Bash` → ['Read', 'Agent(a, b)', 'Bash'] (commas inside parentheses stay). */
+export function toolList(value) {
+  if (Array.isArray(value)) {
+    return value.map((t) => String(t).trim()).filter(Boolean);
+  }
+  return (String(value ?? '').match(/[^,(]+(?:\([^)]*\))?/g) ?? []).map((t) => t.trim()).filter(Boolean);
+}
+
+/** Script paths (`.claude/hooks/x.mjs`) that a hooks map runs, by event. */
+function hookScripts(hooks) {
+  const out = [];
+  for (const [event, groups] of Object.entries(hooks ?? {})) {
+    for (const group of Array.isArray(groups) ? groups : []) {
+      for (const hook of group?.hooks ?? []) {
+        for (const m of String(hook?.command ?? '').matchAll(/\$\{?CLAUDE_PROJECT_DIR\}?"?\/([^\s"']+)/g)) {
+          out.push({ event, matcher: String(group.matcher ?? ''), script: m[1], command: String(hook.command) });
+        }
+      }
+    }
+  }
+  return out;
+}
 const STALE_NAMES = [{ re: /\bTurfTrack\b/, now: 'CityTurfer' }];
 /**
  * Skills the harness may name that live outside .claude/skills/ (user-level skills, built-ins).
@@ -60,6 +118,30 @@ export const EXTERNAL_SKILLS = new Set([
   'seo-checker',
   'data-privacy-reviewer',
 ]);
+
+/**
+ * Frontmatter parsed the way Claude Code parses it (real YAML). Returns `null` without frontmatter,
+ * `{ error }` when the YAML is invalid (e.g. a plain-scalar description containing ": "), else
+ * `{ data }` with string values.
+ */
+export function yamlFrontmatter(text) {
+  if (!text.startsWith('---\n')) {
+    return null;
+  }
+  const end = text.indexOf('\n---', 4);
+  if (end < 0) {
+    return null;
+  }
+  try {
+    const data = parseYaml(text.slice(4, end));
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      return { error: 'frontmatter is not a YAML mapping' };
+    }
+    return { data };
+  } catch (e) {
+    return { error: String(e.message).split('\n')[0] };
+  }
+}
 
 /** Fenced code blocks and inline code spans: the only places a command is meant literally. */
 export function codeText(markdown) {
@@ -157,34 +239,121 @@ export function auditHarness(root) {
   // --- frontmatter -------------------------------------------------------
   const texts = new Map();
   const checkDescription = (file, fm) => {
-    if (!fm.description) {
+    if (fm.description && typeof fm.description !== 'string') {
+      add(
+        'error',
+        file,
+        'frontmatter',
+        'description is not a string (an unquoted ": " made it a YAML mapping); use `description: >-`'
+      );
+    } else if (typeof fm.description !== 'string' || !fm.description.trim()) {
       add('error', file, 'frontmatter', 'missing `description:` (it decides when Claude uses this)');
     } else if (fm.description.length > 1024) {
       add('error', file, 'frontmatter', `description is ${fm.description.length} chars (max 1024)`);
+    } else if (fm.description.length > DESCRIPTION_SOFT_LIMIT) {
+      add(
+        'warn',
+        file,
+        'frontmatter',
+        `description is ${fm.description.length} chars; keep it ≤ ${DESCRIPTION_SOFT_LIMIT}, trigger first`
+      );
     }
+  };
+  /** Parsed frontmatter, or null after reporting why it is unusable. */
+  const frontmatter = (file, text) => {
+    const parsed = yamlFrontmatter(text);
+    if (!parsed) {
+      add('error', file, 'frontmatter', 'missing frontmatter');
+      return null;
+    }
+    if (parsed.error) {
+      add(
+        'error',
+        file,
+        'frontmatter',
+        `invalid YAML, so Claude Code ignores this file (${parsed.error}). Quote the value or use \`description: >-\``
+      );
+      return null;
+    }
+    return parsed.data;
   };
   for (const name of agents) {
     const file = `.claude/agents/${name}.md`;
     const text = read(file);
     texts.set(file, text);
-    const fm = parseFrontmatter(text);
+    const fm = frontmatter(file, text);
     if (!fm) {
-      add('error', file, 'frontmatter', 'missing frontmatter');
       continue;
     }
     if (fm.name !== name) {
       add('error', file, 'frontmatter', `name \`${fm.name}\` ≠ file name \`${name}\``);
     }
     checkDescription(file, fm);
-    for (const tool of (fm.tools ?? '')
-      .split(',')
-      .map((t) => t.trim())
-      .filter(Boolean)) {
-      if (!KNOWN_TOOLS.has(tool) && !tool.startsWith('mcp__')) {
+    for (const key of Object.keys(fm).filter((k) => !AGENT_FIELDS.has(k))) {
+      add(
+        'warn',
+        file,
+        'frontmatter',
+        `unknown field \`${key}\` (Claude Code ignores it silently; check the spelling)`
+      );
+    }
+    if (fm.tools === undefined) {
+      add('error', file, 'tools', 'no `tools:` allowlist, so the agent inherits every tool; grant the smallest set');
+    }
+    const tools = toolList(fm.tools);
+    for (const tool of tools) {
+      const spawn = tool.match(/^(Agent|Task)\((.*)\)$/);
+      if (spawn) {
+        for (const target of spawn[2]
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean)) {
+          if (!agents.includes(target)) {
+            add('error', file, 'tools', `\`${spawn[1]}(${target})\` names an agent that does not exist`);
+          }
+        }
+      } else if (!KNOWN_TOOLS.has(tool) && !tool.startsWith('mcp__')) {
         add('error', file, 'frontmatter', `unknown tool \`${tool}\``);
       }
     }
-    if (fm.model && !KNOWN_MODELS.has(fm.model) && !fm.model.startsWith('claude-')) {
+    const scripts = hookScripts(fm.hooks);
+    for (const { event, script } of scripts) {
+      if (!existsSync(join(root, script))) {
+        add('error', file, 'hook', `${event} hook runs \`${script}\`, which does not exist`);
+      }
+    }
+    if (/read-only/i.test(String(fm.description ?? ''))) {
+      for (const tool of tools.filter((t) => WRITE_TOOLS.has(t))) {
+        add('error', file, 'tools', `read-only agent has \`${tool}\``);
+      }
+      if (fm.memory) {
+        add('error', file, 'tools', 'read-only agent has `memory`, which grants Write and Edit');
+      }
+      if (tools.includes('Bash') && !scripts.some((h) => h.event === 'PreToolUse' && /Bash/.test(h.matcher))) {
+        add(
+          'error',
+          file,
+          'tools',
+          'read-only agent has Bash without a PreToolUse Bash hook; Bash can write (add `.claude/hooks/read-only-bash.mjs` under `hooks:`)'
+        );
+      }
+    }
+    const bashHook = scripts.some((h) => h.event === 'PreToolUse' && /Bash/.test(h.matcher));
+    const editAllowlist = scripts.some((h) => h.event === 'PreToolUse' && /edit-allowlist\.mjs$/.test(h.script));
+    if (editAllowlist && tools.includes('Bash') && !bashHook) {
+      add(
+        'error',
+        file,
+        'tools',
+        'agent with an edit allowlist has Bash without a PreToolUse Bash hook; Bash can write anywhere (add `.claude/hooks/read-only-bash.mjs --allow <its --allow paths>` under `hooks:`)'
+      );
+    }
+    const body = text.replace(/^---\n[\s\S]*?\n---\n/, '');
+    const report = body.match(/^## Report\b[\s\S]*/m)?.[0] ?? '';
+    if (!/not verified/i.test(report)) {
+      add('warn', file, 'report', 'no `## Report` section asking for "Not verified" (what the agent could not prove)');
+    }
+    if (fm.model && typeof fm.model === 'string' && !KNOWN_MODELS.has(fm.model) && !fm.model.startsWith('claude-')) {
       add('error', file, 'frontmatter', `unknown model \`${fm.model}\``);
     }
   }
@@ -192,9 +361,8 @@ export function auditHarness(root) {
     const file = `.claude/skills/${name}/SKILL.md`;
     const text = read(file);
     texts.set(file, text);
-    const fm = parseFrontmatter(text);
+    const fm = frontmatter(file, text);
     if (!fm) {
-      add('error', file, 'frontmatter', 'missing frontmatter');
       continue;
     }
     if (fm.name !== name) {
@@ -206,12 +374,36 @@ export function auditHarness(root) {
     const file = `.claude/commands/${name}.md`;
     const text = read(file);
     texts.set(file, text);
-    const fm = parseFrontmatter(text);
-    if (!fm) {
-      add('error', file, 'frontmatter', 'missing frontmatter');
-    } else {
+    const fm = frontmatter(file, text);
+    if (fm) {
       checkDescription(file, fm);
     }
+  }
+
+  // --- stray nested .claude/ folders ------------------------------------
+  const walkDirs = (rel) => {
+    for (const entry of readdirSync(join(root, rel), { withFileTypes: true })) {
+      if (!entry.isDirectory() || entry.name === 'node_modules') {
+        continue;
+      }
+      const child = `${rel}/${entry.name}`;
+      if (child === '.claude/worktrees') {
+        continue;
+      }
+      if (entry.name === '.claude') {
+        add(
+          'error',
+          child,
+          'stray-claude-dir',
+          'nested .claude/ folder: an agent ran with a cwd inside .claude/ and wrote here. Move anything worth keeping to the real .claude/ and delete it'
+        );
+        continue;
+      }
+      walkDirs(child);
+    }
+  };
+  if (existsSync(join(root, '.claude'))) {
+    walkDirs('.claude');
   }
 
   // --- CLAUDE.md lists ---------------------------------------------------

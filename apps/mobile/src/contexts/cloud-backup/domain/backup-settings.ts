@@ -2,12 +2,23 @@ import { DomainError } from '@/shared-kernel';
 
 /**
  * Why the last backup run stopped, in codes the UI turns into plain words:
- * `no-token` no device token yet · `auth` the server refused the token · `consent` the server has no
+ * `no-token` not signed in (no account token yet) · `not-available` this profile never backs up (demo) · `auth` the server refused the token · `consent` the server has no
  * backup consent · `offline` no connection · `server` the server failed · `not-ready` the server
- * doesn't offer backup yet (501) · `busy` rate limited · `outdated` the server wants a newer app.
+ * doesn't offer backup yet (501) · `busy` rate limited · `outdated` the server wants a newer app ·
+ * `needs-device-token` a testing server override and no Developer tools device token (the account's
+ * session token only ever goes to the built-in server).
  */
 export type BackupErrorCode =
-  'no-token' | 'auth' | 'consent' | 'offline' | 'server' | 'not-ready' | 'busy' | 'outdated';
+  | 'no-token'
+  | 'auth'
+  | 'consent'
+  | 'offline'
+  | 'server'
+  | 'not-ready'
+  | 'busy'
+  | 'outdated'
+  | 'not-available'
+  | 'needs-device-token';
 
 /** The consents Cloud Backup records on the server (contract: ConsentPurpose). */
 export type ConsentPurpose = 'cloud-sync' | 'apple-health-in-cloud-sync';
@@ -27,6 +38,10 @@ export interface BackupSettingsState {
   readonly withdrawalsPending: readonly ConsentPurpose[];
   readonly lastRunAt: number | null;
   readonly lastError: BackupErrorCode | null;
+  /** The server and account this state is about (`<server>|<account id>`); null: not known yet. */
+  readonly accountKey: string | null;
+  /** `chosenAt` of the Home City choice the server has from us; null: none. */
+  readonly homeCitySentAt: number | null;
 }
 
 const URL_PATTERN = /^https?:\/\/[^\s/?#]+(\/[^\s?#]*)?$/;
@@ -53,6 +68,8 @@ export class BackupSettings {
       withdrawalsPending: [],
       lastRunAt: null,
       lastError: null,
+      accountKey: null,
+      homeCitySentAt: null,
     });
   }
 
@@ -89,11 +106,6 @@ export class BackupSettings {
     return this.state.enabled && this.state.homeCityPending;
   }
 
-  /** The server refused the token: no more requests until a new one is saved. */
-  get waitsForNewToken(): boolean {
-    return this.state.lastError === 'auth';
-  }
-
   /** The server recorded the backup consent: start (or restart) with a full comparison. */
   enable(): void {
     this.state = {
@@ -103,6 +115,22 @@ export class BackupSettings {
       backfilledAt: null,
       lastError: null,
     };
+  }
+
+  /**
+   * After a restore: the account's backup consent on the server (read with GET /v1/me/consents)
+   * turns backup on here too, so a new phone carries on backing up. Only ever turns it on; a
+   * withdrawal made on this phone that the server has not heard about yet wins over the server's
+   * older "granted". Apple Health is never adopted: it stays off on this phone until the Turfer
+   * turns it on here (decision 2026-10-22, docs/decisions/apple-health-2026-10-18.md). Returns
+   * whether anything changed.
+   */
+  adoptServerConsents(granted: { cloudSync: boolean }): boolean {
+    const before = this.state;
+    if (granted.cloudSync && !this.state.enabled && !this.state.withdrawalsPending.includes('cloud-sync')) {
+      this.enable();
+    }
+    return this.state !== before;
   }
 
   /** Stops at once; the server is told (both consents withdrawn) now or on a later run. */
@@ -120,8 +148,43 @@ export class BackupSettings {
     };
   }
 
+  /**
+   * The server has the withdrawal and has erased what it covered (contract: no tombstones). Without
+   * `cloud-sync` nothing of ours is on the server any more: turning backup on again uploads everything.
+   */
   withdrawalDelivered(purpose: ConsentPurpose): void {
-    this.state = { ...this.state, withdrawalsPending: without(this.state.withdrawalsPending, purpose) };
+    const s = this.state;
+    const withdrawalsPending = without(s.withdrawalsPending, purpose);
+    this.state =
+      purpose === 'cloud-sync'
+        ? { ...s, withdrawalsPending, cursor: null, backfilledAt: null, homeCityPending: false, homeCitySentAt: null }
+        : { ...s, withdrawalsPending };
+  }
+
+  /**
+   * Which server and account the backup talks to now. The first one is adopted (state from before
+   * this was tracked), with a fresh comparison; another one means nothing of this state is true there: backup goes
+   * off (that account has not consented) and starts from scratch. Returns whether it was reset.
+   * Pending withdrawals are reset too: deliver them to the previous account first (see connect).
+   */
+  useAccount(key: string): boolean {
+    const s = this.state;
+    if (s.accountKey === key) {
+      return false;
+    }
+    if (s.accountKey == null) {
+      // State from before accounts were tracked (a device token, maybe another account): keep the
+      // rows, but compare with this account's manifest before trusting "backed up".
+      this.state = { ...s, accountKey: key, backfilledAt: null, cursor: null };
+      return false;
+    }
+    this.state = {
+      ...BackupSettings.initial().state,
+      serverUrl: s.serverUrl,
+      lastRunAt: s.lastRunAt,
+      accountKey: key,
+    };
+    return true;
   }
 
   /**
@@ -152,10 +215,16 @@ export class BackupSettings {
     this.state = { ...this.state, serverUrl: trimmed, backfilledAt: null, cursor: null, lastError: null };
   }
 
-  /** The token may only be forgotten while backup is off: turning backup off needs it to tell the server. */
+  /**
+   * The token may only be forgotten while backup is off and the server has heard about it: turning
+   * backup off needs the token to tell the server (also after switching to another account).
+   */
   ensureTokenRemovable(): void {
     if (this.state.enabled) {
       throw new DomainError('backup.on');
+    }
+    if (this.state.withdrawalsPending.length > 0) {
+      throw new DomainError('backup.withdrawal-pending');
     }
   }
 
@@ -168,14 +237,20 @@ export class BackupSettings {
     this.state = { ...this.state, backfilledAt: now, cursor: cursor ?? this.state.cursor };
   }
 
-  queueHomeCity(): void {
-    if (this.acceptsChanges) {
+  /** A Home City choice made at `chosenAt` goes up, unless the server already has that one. */
+  queueHomeCity(chosenAt: number | null): void {
+    if (this.acceptsChanges && (chosenAt == null || chosenAt !== this.state.homeCitySentAt)) {
       this.state = { ...this.state, homeCityPending: true };
     }
   }
 
-  homeCityDelivered(): void {
-    this.state = { ...this.state, homeCityPending: false };
+  homeCityDelivered(chosenAt: number | null): void {
+    this.state = { ...this.state, homeCityPending: false, homeCitySentAt: chosenAt ?? this.state.homeCitySentAt };
+  }
+
+  /** Restore: the server's Home City choice is applied here, so it is not sent back. */
+  homeCityRestored(chosenAt: number): void {
+    this.state = { ...this.state, homeCitySentAt: chosenAt };
   }
 
   runFinished(now: number, error: BackupErrorCode | null): void {

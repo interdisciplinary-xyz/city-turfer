@@ -41,19 +41,29 @@ export class HomeCityChoiceQuery {
   }
 }
 
-/** Sets (or, with null, clears) the Home City. Only catalogue cities can be chosen. */
+/**
+ * Sets (or, with null, clears) the Home City. Only catalogue cities can be chosen. `chosenAt` (epoch
+ * ms) is when the Turfer made the choice, default now; a restored, older choice never replaces a
+ * newer one (last write wins).
+ */
 export class ChooseHomeCity {
   constructor(private readonly d: HomeCityDeps) {}
-  async execute(cityId: string | null): Promise<void> {
+  async execute(cityId: string | null, chosenAt?: number): Promise<void> {
     if (cityId !== null) {
       homeCityFromCatalogue(cityId);
     }
-    if ((await this.d.homeCities.homeCityId()) === cityId) {
+    const current = await this.d.homeCities.homeCityChoice();
+    const at = chosenAt ?? this.d.clock.now();
+    // An explicit (restored) time loses to a newer or equally old choice (the server keeps the one it
+    // has on a tie too); the Turfer’s own choice now always counts.
+    if (current && (current.cityId === cityId || (chosenAt != null && current.chosenAt >= at))) {
       return;
     }
-    const now = this.d.clock.now();
-    const event: HomeCityChosen = { type: 'HomeCityChosen', v: 1, at: now, cityId };
-    await this.d.homeCities.saveHomeCity(cityId, event, now);
+    if (!current && cityId === null) {
+      return; // nothing chosen, nothing to clear
+    }
+    const event: HomeCityChosen = { type: 'HomeCityChosen', v: 1, at: this.d.clock.now(), cityId, chosenAt: at };
+    await this.d.homeCities.saveHomeCity(cityId, event, at);
     this.d.afterCommit();
   }
 }

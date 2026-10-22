@@ -5,7 +5,7 @@
 // relative URLs, so it works under a sub-path. Storybook's live dev server doesn't (it loads
 // from the site root), so live editing stays on http://localhost:6006.
 import { createReadStream } from 'node:fs';
-import { stat } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 export const STORYBOOK_PREFIX = '/storybook';
@@ -54,10 +54,37 @@ export function contentTypeOf(file) {
   return CONTENT_TYPES[path.extname(file).toLowerCase()] ?? 'application/octet-stream';
 }
 
+export const TOOLBAR_SCRIPT = '__toolbar.js';
+export const TOOLBAR_STYLES = '__toolbar.css';
+
+/**
+ * Storybook's index.html with the dev toolbar added (stylesheet in the head, mount node and script
+ * at the end of the body). Storybook's own UI lives in #root and is untouched; the toolbar is a
+ * fixed overlay of its own.
+ */
+export function withToolbar(html) {
+  return html
+    .replace('</head>', `<link rel="stylesheet" href="./${TOOLBAR_STYLES}" /></head>`)
+    .replace('</body>', `<div id="dev-toolbar-root"></div><script src="./${TOOLBAR_SCRIPT}"></script></body>`);
+}
+
 /**
  * Wraps a request handler: Storybook paths are served from `root`; everything else goes to `next`.
+ *
+ * - `isLocal(req)` says whether the request comes from this machine (the dev toolbar's
+ *   `isLocalClient`); only then is the dev toolbar injected into index.html and served.
+ * - `loadToolbar()` returns `{ js, css }`; defaults to ./swagger-toolbar.mjs (the same bundle the
+ *   Swagger page uses), loaded on first use.
  */
-export function withStorybook(next, root) {
+export function withStorybook(
+  next,
+  root,
+  {
+    isLocal = () => false,
+    webRoot = process.cwd(),
+    loadToolbar = async () => (await import('./swagger-toolbar.mjs')).toolbarAssets(webRoot),
+  } = {}
+) {
   const absRoot = path.resolve(root);
   return async (req, res) => {
     const urlPath = (req.url ?? '/').split('?')[0];
@@ -71,7 +98,23 @@ export function withStorybook(next, root) {
       res.end();
       return undefined;
     }
+    const toolbarAsset = [TOOLBAR_SCRIPT, TOOLBAR_STYLES].find((name) => file === path.join(absRoot, name));
+    if (toolbarAsset !== undefined && isLocal(req)) {
+      const assets = await loadToolbar();
+      const isScript = toolbarAsset === TOOLBAR_SCRIPT;
+      res.writeHead(200, {
+        'Content-Type': isScript ? 'text/javascript; charset=utf-8' : 'text/css; charset=utf-8',
+        'Cache-Control': 'no-store',
+      });
+      res.end(isScript ? assets.js : assets.css);
+      return undefined;
+    }
     const info = await stat(file).catch(() => null);
+    if (info?.isFile() && file === path.join(absRoot, 'index.html') && isLocal(req)) {
+      res.writeHead(200, { 'Content-Type': contentTypeOf(file), 'Cache-Control': 'no-store' });
+      res.end(withToolbar(await readFile(file, 'utf8')));
+      return undefined;
+    }
     if (!info?.isFile()) {
       const built = await stat(path.join(absRoot, 'index.html')).catch(() => null);
       res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });

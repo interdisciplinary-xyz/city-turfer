@@ -1,19 +1,17 @@
 ---
 name: ship-branch
-description:
-  Commit, push and open the PR for CityTurfer work following the branch flow (feat/<domain> →
-  scope/vX.Y.Z → release/vX.Y.Z → main) — cut the branch from the active scope, stage only your own
-  paths, Conventional Commits with the context scopes, PR title "city-turfer - <branch>", the right
-  base, the PR template filled with what was actually verified, OTA vs native risk, scope → release
-  as draft, never merge. Use when the user says "commit", "push", "open a PR", "ship it", "cut a
-  branch", "promote scope to release" or "start the next version".
+description: >-
+  Commit, push and open the PR the CityTurfer way: feat/fix → scope → release → main, explicit
+  paths, Conventional Commits, title "city-turfer - <branch>", right base, honest template, never
+  merge. Use for "commit", "push", "open a PR", "ship it", "cut a branch" or "promote to release".
 ---
 
 # Ship a branch
 
 Policy source: `docs/process/release-manager.md`. The `.claude/hooks/pre-bash.mjs` guard denies the
-worst mistakes (push to main, force-push to scope/release, hand-made tags, `--no-verify`, wrong PR
-title or base); this skill is the path that never trips it.
+worst mistakes (push to main, force-push or deleting scope/release, hand-made tags, running the
+release locally, `--no-verify` on commit or push, wrong PR title or base); this skill is the path
+that never trips it.
 
 ## 0. Where am I?
 
@@ -43,9 +41,9 @@ Uncommitted changes come along. If they are the user's unrelated work, ask befor
 - Stage **explicit paths** you changed (`git add <paths>`), never `git add -A` over someone's work
   in progress. `git diff --staged --stat` before committing.
 - Conventional Commit, scope = the context or area: `identity`, `recording`, `activity-log`,
-  `territory`, `health-sync`, `achievements`, `platform`, `shared-kernel`, `app`, `brand`, `ui`,
-  `web`, `e2e`, `tooling`, `release`, `docs`. One logical change per commit; the CHANGELOG is built
-  from these.
+  `territory`, `health-sync`, `achievements`, `cloud-backup`, `platform`, `shared-kernel`, `core`,
+  `app`, `api`, `brand`, `ui`, `storybook`, `web`, `e2e`, `claude` (the harness), `tooling`,
+  `release`, `docs`. One logical change per commit; the CHANGELOG is built from these.
 
 ```bash
 git commit -m "feat(territory): show turf overlay on the record screen" -m "Why, in one or two lines." -m "Co-Authored-By: …"
@@ -53,7 +51,9 @@ git commit -m "feat(territory): show turf overlay on the record screen" -m "Why,
 
 End the message with the attribution line from the system reminder when one is given.
 
-If a hook fails, fix the cause. Never `--no-verify` a commit (it skips the secret-file guard).
+If a hook fails, fix the cause. Never `--no-verify` a commit (it skips the secret-file guard) or a
+push (it skips the pre-push gate); `.husky/pre-push` allows that for docs-only pushes by a person,
+not by Claude.
 
 ## 3. Push and open the PR (every branch gets one)
 
@@ -68,6 +68,7 @@ gh pr create --base scope/vX.Y.Z --title "city-turfer - feat/<domain>" --body-fi
 | `scope/vX.Y.Z`             | `release/vX.Y.Z` | `--draft`; needs `pnpm run test:e2e` first       |
 | `release/vX.Y.Z`           | `main`           | founder merges by hand                           |
 | `fix/<slug>` after promote | `release/vX.Y.Z` | then merge release back down into the next scope |
+| `hotfix/<slug>`            | `main`           | then back down into release and scope            |
 
 Body = `.github/pull_request_template.md`, filled honestly:
 
@@ -85,7 +86,8 @@ Body = `.github/pull_request_template.md`, filled honestly:
 
 - Report the PR URL and CI state (`gh pr checks <n>`).
 - **Never merge** (`gh pr merge` asks the user; squash/rebase are denied). Merge commits only.
-- Never tag and never edit `CHANGELOG.md`: `release.yml` does both on merge to main.
+- Never tag, never run `pnpm run release` (commit-and-tag-version) and never edit `CHANGELOG.md`:
+  `release.yml` does all three on merge to main. `--dry-run` is fine for a preview.
 
 ## Starting the next version (scope cut)
 

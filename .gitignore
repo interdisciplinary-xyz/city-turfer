@@ -72,8 +72,9 @@ service-account*.json
 .env.*
 !.env.example
 
-# Claude Code agent worktrees (isolated copies of this repo)
+# Claude Code agent worktrees (isolated copies of this repo) and its per-session lock
 .claude/worktrees/
+.claude/scheduled_tasks.lock
 
 # Turborepo cache
 .turbo/

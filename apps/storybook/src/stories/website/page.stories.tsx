@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { useLocale, useTranslations } from 'next-intl';
 
+import { AppHeader } from '@/app/[locale]/app-header';
 import { HeroCopy } from '@/app/[locale]/hero-copy';
 import { HeroMotion } from '@/app/[locale]/hero-motion';
 import { HeroScreens } from '@/app/[locale]/hero-screens';
-import { LanguageSwitcher } from '@/app/[locale]/language-switcher';
 import { StoreButtons } from '@/app/[locale]/store-buttons';
 import { WaitlistForm } from '@/app/[locale]/waitlist-form';
 import type { Locale } from '@/i18n/routing';
@@ -23,11 +23,9 @@ function Page({ apkUrl, waitlist }: PageProps) {
       <a className='skip' href='#main'>
         {t('hero.skip')}
       </a>
+      <AppHeader locale={locale} waitlist={waitlist} />
       <main id='main'>
         <div className='hero'>
-          <div className='wrap hero-bar'>
-            <LanguageSwitcher locale={locale} />
-          </div>
           <HeroMotion className='wrap hero-grid'>
             <HeroCopy />
             <HeroScreens />

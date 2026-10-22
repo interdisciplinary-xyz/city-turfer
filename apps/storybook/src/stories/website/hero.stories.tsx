@@ -1,21 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
-import { useLocale } from 'next-intl';
 
 import { HeroCopy } from '@/app/[locale]/hero-copy';
 import { HeroMotion } from '@/app/[locale]/hero-motion';
 import { HeroScreens } from '@/app/[locale]/hero-screens';
-import { LanguageSwitcher } from '@/app/[locale]/language-switcher';
 import { StoreButtons } from '@/app/[locale]/store-buttons';
-import type { Locale } from '@/i18n/routing';
 
 /** The landing page's hero as apps/web/src/app/[locale]/page.tsx composes it. */
 function Hero({ apkUrl }: { apkUrl: string | null }) {
-  const locale = useLocale() as Locale;
   return (
     <div className='hero'>
-      <div className='wrap hero-bar'>
-        <LanguageSwitcher locale={locale} />
-      </div>
       <HeroMotion className='wrap hero-grid'>
         <HeroCopy />
         <HeroScreens />
@@ -33,7 +26,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'The whole first screen of cityturfer.com, always dark. Switch the language in the toolbar. The entrance animation runs on load (GSAP, `web-motion` skill).',
+          'The whole first screen of cityturfer.com, always dark. Switch the language in the toolbar (the language switcher lives in the sticky AppHeader). The entrance animation runs on load (GSAP, `web-motion` skill).',
       },
     },
   },

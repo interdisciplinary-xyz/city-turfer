@@ -3,10 +3,16 @@ import type { BackupErrorCode } from './domain/backup-settings';
 
 /** What the Info screen's Cloud backup card shows. */
 export interface BackupStatus {
+  /** False for profiles that never back up (the demo profile). */
+  available: boolean;
   enabled: boolean;
   healthIncluded: boolean;
-  /** A device token is saved on this phone (its value is never exposed). */
+  /** The phone can reach the server: a signed-in account or a device token (values never exposed). */
   hasToken: boolean;
+  /** A Developer tools device token is saved on this phone. */
+  hasDeviceToken: boolean;
+  /** Activities with changes not on the server yet (0 while backup is off). */
+  unsynced: number;
   /** The server in use (the built-in one or the testing override). */
   serverUrl: string;
   serverUrlOverridden: boolean;

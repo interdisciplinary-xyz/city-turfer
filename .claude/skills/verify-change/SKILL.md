@@ -1,11 +1,9 @@
 ---
 name: verify-change
-description:
-  Prove a CityTurfer change works before calling it done — pick the checks from what the diff
-  touched (mobile app, shared kernel, turf, recording, health, packages/ui, web, tools, docs,
-  .claude), run them fastest-first, run the mobile-reviewer agent, and report what was verified and
-  what was not. Use after building or fixing anything, before committing or opening a PR, and
-  whenever the user asks "does it work?", "is it done?" or "run the checks".
+description: >-
+  Prove a change works before calling it done: pick checks from what the diff touched (app, core,
+  API, web, packages, tools, .claude), run them fastest first, get a review, report verified vs not.
+  Use before committing or a PR, or when asked "does it work?" or "run the checks".
 ---
 
 # Verify a change
@@ -31,10 +29,14 @@ If the working tree holds the user's unrelated work in progress, verify only you
   - `pnpm -C apps/mobile exec jest --findRelatedTests <changed files>`, then the full
     `pnpm -C apps/mobile exec jest`
   - `pnpm run audit:logs` (privacy: no unguarded console, no coordinates in diagnostics)
-- `apps/mobile/src/shared-kernel/**` or `apps/mobile/tools/lib/geo.mjs`
+- `packages/core/**` (`@cityturfer/core`: shared kernel, core constants, the domain and application
+  layers of Territory, Activity Log, Achievements, Identity; used by the app and the API)
+  - `pnpm exec turbo run typecheck arch test:unit --filter=@cityturfer/core --filter=@cityturfer/mobile --filter=@cityturfer/api`
+    (core's own dependency rules plus both consumers)
+- `packages/core/src/shared-kernel/**` or `apps/mobile/tools/lib/geo.mjs`
   - Compare against the oracle: `node apps/mobile/tools/route-stats.mjs <fixture.gpx>` vs the app's
     numbers (route-metrics skill). `pnpm -C apps/mobile run test:tools`.
-- `apps/mobile/src/contexts/territory/domain/**` or `apps/mobile/tools/turf-preview.mjs`
+- `packages/core/src/contexts/territory/domain/**` or `apps/mobile/tools/turf-preview.mjs`
   - The turf vectors test (`apps/mobile/tools/fixtures/turf-vectors.json`) must pass unchanged
     unless the formula change is intended; then regenerate and say so. Optional look:
     `node apps/mobile/tools/turf-preview.mjs apps/mobile/tools/fixtures/history --out /tmp/turf.html`.
@@ -52,10 +54,18 @@ If the working tree holds the user's unrelated work in progress, verify only you
   - Runtime fingerprint unchanged (design-system skill):
     `pnpm -C apps/mobile exec expo-updates fingerprint:generate --platform ios`
   - `pnpm --filter @cityturfer/storybook build` when a story or component changed.
+- `apps/api/**`
+  - `pnpm exec turbo run typecheck lint test:unit --filter=@cityturfer/api` (lint includes Redocly;
+    the Vitest suite fails when the committed `apps/api/openapi.json` drifts from the routes)
+  - Routes changed: `pnpm --filter @cityturfer/api run openapi`, commit the spec, and try them in
+    Swagger (`pnpm --filter @cityturfer/api dev`, https://cityturfer.local/swagger) — api-design
+    skill
+  - Schema changed: `pnpm --filter @cityturfer/api run db:generate` and commit `apps/api/drizzle/`
 - `apps/web/**` — `pnpm exec turbo run typecheck lint build --filter=@cityturfer/web`
 - `tools/**` — `pnpm run test:tools` and `pnpm exec eslint tools`
 - `docs/**` or any `*.md` with paths — `pnpm run audit:docs`
-- `.claude/**` or `CLAUDE.md` — `pnpm run audit:harness` and `pnpm run audit:docs`
+- `.claude/**` or `CLAUDE.md` — `pnpm run audit:harness` and `pnpm run audit:docs`; for an edited
+  agent or skill, confirm it shows up in the session's agent or skill list (ai-harness skill)
 
 Across workspaces at once: `pnpm exec turbo run typecheck arch test:unit --affected`
 (`TURBO_SCM_BASE=origin/scope/vX.Y.Z` to compare against the active scope).

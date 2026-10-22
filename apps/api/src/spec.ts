@@ -5,7 +5,7 @@ import { API_GUIDE } from './guide';
  * Version of the API contract, not of the app: bump it when the contract changes. (The app's release
  * commit bumps package.json versions; the spec must not change with it.)
  */
-export const API_VERSION = '0.3.0';
+export const API_VERSION = '0.4.0';
 
 export const SPEC_PATH = '/openapi.json';
 
@@ -48,7 +48,8 @@ export const OPENAPI_CONFIG = {
     { name: 'Platform', description: 'Liveness. Public.' },
     {
       name: 'Identity',
-      description: 'The signed-in user. Sign-in is a dev-only mock until Better Auth (its endpoints arrive with it).',
+      description:
+        'Sign-in with an e-mailed one-time code (Better Auth behind our own routes), sign-out and the signed-in user.',
     },
     {
       name: 'Privacy',
@@ -58,7 +59,7 @@ export const OPENAPI_CONFIG = {
     {
       name: 'Sync',
       description:
-        'The one feed every device pulls: activity upserts, tombstones and the Home City since a cursor. Uploads go to the Activity Log. See **Sync flow** above.',
+        'The one feed every device pulls: activity upserts, tombstones and the Home City since a cursor. Uploads go to the Activity Log. See **Sync flow** below.',
     },
     {
       name: 'Activity Log',

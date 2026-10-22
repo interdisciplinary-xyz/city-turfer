@@ -1,5 +1,5 @@
 /* /branding page. Colours and sizes are CSS variables from @cityturfer/brand (set on <html> by
-   page.tsx); never a hard-coded brand hex. Archivo comes from next/font (fonts.ts). */
+   page.dev.tsx); never a hard-coded brand hex. Archivo comes from next/font (fonts.ts). */
 
 *,
 *::before,
@@ -79,6 +79,7 @@
 
 .brand-tagline {
   font-family: var(--display);
+  letter-spacing: -0.02em;
   font-weight: normal;
   font-synthesis: none;
   font-size: clamp(26px, 5vw, 40px);
@@ -97,14 +98,31 @@
   margin: 0;
 }
 
+/* Sticky section bar: sits under the hero, then pins to the top while reading. */
 .brand-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: color-mix(in srgb, var(--bg) 95%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.brand-nav-inner {
   display: flex;
-  flex-wrap: wrap;
   gap: var(--space-sm);
-  margin-top: var(--space-xxxl);
+  overflow-x: auto;
+  padding-top: var(--space-sm);
+  padding-bottom: var(--space-sm);
+  scrollbar-width: none;
+}
+.brand-nav-inner::-webkit-scrollbar {
+  display: none;
 }
 .brand-nav a {
-  padding: 6px 12px;
+  flex: none;
+  white-space: nowrap;
+  padding: var(--space-xs) var(--space-md);
   border: 1px solid var(--border);
   border-radius: var(--radius-full);
   color: var(--text);
@@ -115,15 +133,21 @@
 .brand-nav a:focus-visible {
   border-color: var(--glow);
 }
+.brand-nav a[aria-current] {
+  border-color: var(--glow);
+  color: var(--glow);
+}
 
 /* ---------- Sections ---------- */
 
 .brand-section {
   padding: 56px 0 8px;
-  scroll-margin-top: var(--space-lg);
+  /* Clear the sticky section bar when jumping to an anchor. */
+  scroll-margin-top: 56px;
 }
 .brand-section h2 {
   font-family: var(--display);
+  letter-spacing: -0.02em;
   font-weight: normal;
   font-synthesis: none;
   font-size: clamp(24px, 4vw, 32px);
@@ -191,11 +215,10 @@
 .brand-no {
   color: var(--muted);
   margin-top: var(--space-sm) !important;
-  text-decoration: line-through;
-  text-decoration-color: var(--danger);
 }
 .brand-pillar-name {
   font-family: var(--display);
+  letter-spacing: -0.02em;
   font-synthesis: none;
   margin-bottom: var(--space-sm) !important;
   color: var(--blazing);
@@ -215,6 +238,7 @@
 }
 .brand-tagline-item {
   font-family: var(--display);
+  letter-spacing: -0.02em;
   font-synthesis: none;
   font-size: clamp(18px, 3vw, 24px);
   line-height: 1.2;
@@ -326,7 +350,7 @@
 .brand-ramp {
   height: 56px;
   border-radius: var(--radius-control);
-  background: linear-gradient(90deg, var(--ramp-stops));
+  background: linear-gradient(to top right, var(--ramp-stops));
   margin-bottom: var(--space-lg);
 }
 .brand-swatch {
@@ -345,6 +369,7 @@
 }
 .brand-swatch-name {
   font-family: var(--display);
+  letter-spacing: -0.02em;
   font-synthesis: none;
   font-size: var(--font-lead);
 }
@@ -419,6 +444,7 @@
 }
 .brand-scale-sample {
   font-family: var(--display);
+  letter-spacing: -0.02em;
   font-synthesis: none;
   line-height: 1.1;
   white-space: nowrap;
@@ -468,4 +494,66 @@
 }
 .brand main {
   padding-bottom: 96px;
+}
+
+/* Ideal customer profile */
+.brand-icp {
+  margin-bottom: var(--space-xl);
+  border-color: var(--glow);
+}
+.brand-icp-name.brand-icp-name {
+  margin: var(--space-xs) 0 var(--space-sm);
+  font-family: var(--display);
+  letter-spacing: -0.02em;
+  font-weight: normal;
+  font-synthesis: none;
+  font-size: clamp(20px, 4vw, 28px);
+  line-height: 1.2;
+  color: var(--blazing);
+}
+.brand-icp-job {
+  margin: var(--space-xl) 0;
+  padding-left: var(--space-lg);
+  border-left: 3px solid var(--glow);
+}
+.brand-icp-job p {
+  margin-top: var(--space-xs);
+  font-size: var(--font-lead);
+  max-width: 70ch;
+}
+.brand-icp-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-lg) var(--space-xl);
+  margin: 0;
+}
+.brand-icp-fields dd {
+  margin: var(--space-xs) 0 0;
+}
+.brand .brand-icp-not li::before {
+  background: var(--muted);
+}
+.brand-card .brand-rules {
+  margin-top: 0;
+}
+.brand-card .brand-icp-gap {
+  margin-top: var(--space-md);
+  color: var(--muted);
+}
+
+/* Fact check: a brand line the product no longer matches exactly */
+.brand-check {
+  display: grid;
+  gap: var(--space-xs);
+  margin: var(--space-xl) 0;
+  padding: var(--space-lg) var(--space-xl);
+  border: 1px dashed var(--strong);
+  border-radius: var(--radius-card);
+  max-width: 80ch;
+}
+.brand-check p {
+  margin: 0;
+}
+.brand-check .brand-label {
+  color: var(--strong);
 }

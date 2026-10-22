@@ -12,17 +12,25 @@ import { backupApp, closeSharedDb, TOKENS } from './support';
 /** Spec and planned routes: no database, the placeholder auth (any bearer token, never verified). */
 const app = createApp(defaultDeps({ log: silentLog }));
 const AUTH = { Authorization: 'Bearer test-token' };
-const PUBLIC = new Set(['getHealth', 'signIn']);
+const PUBLIC = new Set(['getHealth', 'requestSignInCode', 'signIn', 'downloadDataExport']);
 /** The one-way backup (docs/decisions/api-sync-2026-10-20.md): live since 0.3.0. */
 const LIVE = new Set([
   'getHealth',
+  'requestSignInCode',
+  'signIn',
+  'signOut',
   'getMe',
+  'deleteMe',
+  'requestDataExport',
+  'getDataExport',
+  'downloadDataExport',
   'listConsents',
   'setConsent',
   'listChanges',
   'listActivities',
   'uploadActivity',
   'getActivity',
+  'renameActivity',
   'deleteActivity',
   'getActivityTrack',
   'saveGapRoutes',
@@ -60,7 +68,12 @@ describe('routes', () => {
   it('answers health without auth', async () => {
     const res = await app.request('/v1/health');
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ status: 'ok', version: API_VERSION, database: 'not-configured' });
+    expect(await res.json()).toEqual({
+      status: 'ok',
+      version: API_VERSION,
+      coreVersion: expect.stringMatching(/^\d+\.\d+\.\d+$/),
+      database: 'not-configured',
+    });
   });
 
   it('answers planned routes with a 501 problem', async () => {
@@ -158,6 +171,18 @@ describe('platform middleware', () => {
     expect(await res.json()).toMatchObject({ code: 'auth.invalid' });
   });
 
+  it('lists at most 20 invalid fields', async () => {
+    const points = Array.from({ length: 100 }, (_, i) => [21.0122, 52.2297, 1760857920000 + i, 0, 'x']);
+    const res = await upload(
+      { ...LIVE_AUTH, 'Content-Type': 'application/json' },
+      JSON.stringify({ type: 'run', track: { points } })
+    );
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.errors).toHaveLength(20);
+    expect(body.detail).toContain('more');
+  });
+
   it('lists invalid fields as JSON pointers', async () => {
     const res = await upload({ ...LIVE_AUTH, 'Content-Type': 'application/json' }, JSON.stringify({ type: 'swim' }));
     expect(res.status).toBe(400);
@@ -200,7 +225,7 @@ describe('OpenAPI document', () => {
 
   it('is OpenAPI 3.1 with every route of the decision record', () => {
     expect(doc.openapi).toBe('3.1.0');
-    expect(ops).toHaveLength(22);
+    expect(ops).toHaveLength(24);
   });
 
   it('gives every operation a unique id and a bounded-context tag', () => {
@@ -223,7 +248,7 @@ describe('OpenAPI document', () => {
       const id = o.op.operationId!;
       if (LIVE.has(id)) {
         expect([id, o.op['x-cityturfer-status']]).toEqual([id, undefined]);
-        expect([id, Object.hasOwn(o.op.responses ?? {}, '503')]).toEqual([id, !PUBLIC.has(id)]);
+        expect([id, Object.hasOwn(o.op.responses ?? {}, '503')]).toEqual([id, id !== 'getHealth']);
       } else {
         expect([id, o.op['x-cityturfer-status']]).toEqual([id, 'planned']);
         expect(o.op.responses).toHaveProperty('501');

@@ -13,8 +13,8 @@ import { routing } from '@/i18n/routing';
 import { displayFont, numericFont } from '../fonts';
 import { SITE_URL } from '../site-url';
 import { MOTION_BOOT_SCRIPT } from './hero-motion';
-import { LanguageSwitcher } from './language-switcher';
 import { OG_IMAGE_HEIGHT, OG_IMAGE_PATH, OG_IMAGE_WIDTH } from './layout.constants';
+import { LOADER_BOOT_SCRIPT, PageLoader } from './page-loader';
 
 /** Every language is prerendered by the static export. */
 export const generateStaticParams = () => routing.locales.map((locale) => ({ locale }));
@@ -71,7 +71,7 @@ export default async function LocaleLayout({
     const { shouldRenderDevToolbar } = await import('@interdisciplinary/dev-toolbar/next');
     if (await shouldRenderDevToolbar()) {
       const { DevToolbarWithApp } = await import('../dev-toolbar-with-app');
-      devToolbar = <DevToolbarWithApp locale={locale} languageSwitcher={<LanguageSwitcher locale={locale} />} />;
+      devToolbar = <DevToolbarWithApp locale={locale} />;
     }
   }
 
@@ -86,10 +86,13 @@ export default async function LocaleLayout({
       <head>
         {/* Before first paint: hide [data-anim] for the entrance animation (skipped with reduced motion). */}
         <script dangerouslySetInnerHTML={{ __html: MOTION_BOOT_SCRIPT }} />
+        {/* Shows the page loader only if the page is slow (and not for reduced motion or back/forward). */}
+        <script dangerouslySetInnerHTML={{ __html: LOADER_BOOT_SCRIPT }} />
       </head>
       <body>
-        {/* next-intl's Link (language switcher, also slotted into the dev toolbar) is a client
-            component and reads the locale from this provider. */}
+        <PageLoader />
+        {/* next-intl's Link (language switcher) is a client component and reads the locale from
+            this provider. */}
         <NextIntlClientProvider>
           {children}
           {devToolbar}

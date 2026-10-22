@@ -5,71 +5,7 @@
  */
 import type { ActivityRecorded } from '@/contexts/activity-log';
 import { SqliteActivityRepository } from '@/contexts/activity-log/infrastructure/sqlite-activity-repository';
-import { FakeApiServer, InMemoryDeviceTokenStore } from '@/contexts/cloud-backup/test-support/fake-api-server';
-import { migrate } from '@/platform/migrations';
-import type { TrackPoint } from '@/shared-kernel';
-import { openNodeDatabase } from '@/test-support/node-database';
-import { wire } from '@/wiring';
-
-const T0 = Date.parse('2026-10-01T07:00:00Z');
-const DAY = 86_400_000;
-
-/** A short walk on day `day` (20 points, 5 s apart); `gapAt` puts a 10-minute pause inside segment 0. */
-function walk(day: number, gapAt?: number): TrackPoint[] {
-  return Array.from({ length: 20 }, (_, i) => ({
-    lat: 52.25 + day * 0.001 + i * 0.00005,
-    lon: 21.01 + i * 0.00005,
-    t: T0 + day * DAY + i * 5_000 + (gapAt != null && i >= gapAt ? 600_000 : 0),
-    segment: 0,
-    alt: i === 0 ? null : 100,
-    accuracy: 5,
-    speed: 1.4,
-  }));
-}
-
-function setup(options: { token?: string | null } = {}) {
-  const db = openNodeDatabase();
-  const server = new FakeApiServer();
-  const tokens = new InMemoryDeviceTokenStore(options.token === undefined ? 'secret-token' : options.token);
-  let now = Date.parse('2026-10-20T12:00:00Z');
-  const app = { foreground: true };
-  let n = 0;
-  const adapters = {
-    tracker: {
-      start: async () => undefined,
-      stop: async () => undefined,
-      isRunning: async () => false,
-      reacquire: async () => null,
-    },
-    permissions: { ensureForeground: async () => 'granted' as const, requestBackground: async () => true },
-    notifier: { publish: () => undefined },
-    router: { route: async () => null },
-    ids: { next: () => `session-${++n}` },
-    clock: { now: () => now },
-    isForeground: () => app.foreground,
-    cloudBackup: { api: server.factory, tokens: () => tokens, timeZone: () => 'Europe/Warsaw' },
-  };
-  return {
-    db,
-    server,
-    tokens,
-    app,
-    advance: (ms: number) => void (now += ms),
-    async container() {
-      await migrate(db);
-      const c = wire('test', db, adapters);
-      /** Import and let the outbox deliver (claims turf, queues backup work). */
-      const add = async (id: string, points: TrackPoint[]) => {
-        await c.activityLog.importActivity.execute({ id, type: 'walk', points });
-        await c.dispatcher.dispatchPending();
-      };
-      return Object.assign(c, { add });
-    },
-  };
-}
-
-type Setup = ReturnType<typeof setup>;
-type C = Awaited<ReturnType<Setup['container']>>;
+import { DAY, phone as setup, type PhoneContainer as C, T0, walk } from '@/test-support/backup-phone';
 
 /** Turn backup on and wait for the first run to finish. */
 async function enable(c: C) {
@@ -121,7 +57,8 @@ describe('Cloud Backup: first upload', () => {
 
     const result = await enable(c);
     expect(t.server.consentLog).toEqual([{ purpose: 'cloud-sync', granted: true, policyVersion: '2026-10' }]);
-    expect(t.server.requests[0].method).toBe('setConsent');
+    // A device token: the server first says whose it is, then records the consent.
+    expect(t.server.requests.slice(0, 2).map((r) => r.method)).toEqual(['me', 'setConsent']);
     expect(result).toEqual({ kind: 'done', report: { uploaded: 2, deleted: 0, failed: 0, refused: 0, error: null } });
     expect(t.server.uploads()).toEqual(['rec-early', 'rec-late']);
     expect(t.server.activities.get('rec-early')).toMatchObject({
@@ -143,12 +80,13 @@ describe('Cloud Backup: first upload', () => {
   it('skips what the server already has and never resurrects what it deleted (manifest, paged)', async () => {
     const t = setup();
     t.server.pageSize = 1;
-    t.server.seed('rec-a', 4);
     t.server.tombstones.add('rec-b');
     const c = await t.container();
     await c.add('rec-a', walk(0));
     await c.add('rec-b', walk(1));
     await c.add('rec-c', walk(2));
+    // Another install uploaded rec-a, same track and name (version 4).
+    t.server.seedCopy((await c.activityLog.archive.of('rec-a'))!, 4);
 
     await enable(c);
     expect(t.server.requests.filter((r) => r.method === 'changes')).toHaveLength(2);
@@ -287,7 +225,9 @@ describe('Cloud Backup: pushes from the outbox', () => {
       endedAt: T0 + DAY,
     });
     await c.cloudBackup.run.execute({ now: true });
-    expect(t.server.uploads().filter((id) => id === 'rec-2')).toHaveLength(2); // the first upload + the one 410
+    // Only the first upload: the 410 came from reading the server copy before replacing it.
+    expect(t.server.uploads().filter((id) => id === 'rec-2')).toHaveLength(1);
+    expect(t.server.calls('activityVersion').map((r) => r.id)).toEqual(['rec-2']);
   });
 
   it('replaces a corrected track with If-Match; on 412 re-reads the version and retries once', async () => {
@@ -494,5 +434,34 @@ describe('Cloud Backup: Apple Health and turning off', () => {
     expect(t.tokens.token).toBeNull();
     await c.cloudBackup.useServer.execute(null);
     expect((await c.cloudBackup.status.execute()).serverUrlOverridden).toBe(false);
+  });
+
+  it('a testing server never gets the account session token: only the device token', async () => {
+    const t = setup({ account: { token: 'account-session', accountId: 'acct-1' }, token: 'secret-token' });
+    t.server.moreTokens.set('account-session', 'acct-1');
+    const c = await t.container();
+    await c.add('rec-1', walk(0));
+    await c.cloudBackup.useServer.execute('http://192.168.1.20:8787');
+    await enable(c);
+    expect(t.server.uploads()).toEqual(['rec-1']);
+    expect(t.server.requests.length).toBeGreaterThan(0);
+    expect(t.server.requests.every((r) => r.token === 'secret-token')).toBe(true);
+
+    // Back on the built-in server (another server: backup starts afresh there), the account's
+    // session token is used again.
+    await c.cloudBackup.useServer.execute(null);
+    const before = t.server.requests.length;
+    await enable(c);
+    const later = t.server.requests.slice(before);
+    expect(later.length).toBeGreaterThan(0);
+    expect(later.every((r) => r.token === 'account-session' && r.baseUrl !== 'http://192.168.1.20:8787')).toBe(true);
+  });
+
+  it('a testing server without a device token sends nothing and says why', async () => {
+    const t = setup({ account: { token: 'account-session', accountId: 'acct-1' }, token: null });
+    const c = await t.container();
+    await c.cloudBackup.useServer.execute('http://192.168.1.20:8787');
+    expect(await c.cloudBackup.enable.execute()).toEqual({ kind: 'failed', error: 'needs-device-token' });
+    expect(t.server.requests).toEqual([]);
   });
 });

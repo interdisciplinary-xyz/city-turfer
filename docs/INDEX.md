@@ -43,6 +43,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`product/discovery-board.md`](product/discovery-board.md): The live state of product discovery
   — evidence log, assumption map, opportunity tree and the interview queue; every product claim
   cites an id from here
+- 🚧 [`product/icp.md`](product/icp.md): Ideal customer profile (hypothesis) — the primary Turfer to
+  win first, two segments to test, who it isn't for yet, fit signals and the assumptions that would
+  prove or kill it
 - ✅ [`product/launch-readiness.md`](product/launch-readiness.md): What stands between CityTurfer
   and a public App Store / Google Play launch — store, privacy and legal blockers in order, with
   today's status and sources (research 2026-10-20)
@@ -63,8 +66,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`operations/android-release.md`](operations/android-release.md): Build the Android APK on EAS,
   publish it to the website download link, test it on an emulator
 - ✅ [`operations/api-deploy.md`](operations/api-deploy.md): Deploy the CityTurfer API — Vercel
-  project city-turfer-api (apps/api, fra1), Neon Postgres env vars, applying migrations, minting and
-  rotating device tokens, checking health
+  project city-turfer-api (apps/api, fra1), production branch, env vars (Neon, Better Auth, Brevo,
+  cron), migrations before the merge, the daily retention cron, adopting the admin data, device
+  tokens, support requests (find, delete), checking health
 - ✅ [`operations/apple-health.md`](operations/apple-health.md): Install the Apple Health build on
   the iPhone and check import and export with real data
 - ❔ [`operations/observability.md`](operations/observability.md): _no frontmatter_
@@ -115,6 +119,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   the city picker (catalogue of 38 cities, migration 7), Turf and Record maps open on the chosen
   city; JS-only, ships over the air
 - ✅ [`sessions/v0.8.0.md`](sessions/v0.8.0.md): Session log v0.8.0 — API from skeleton (#89,
+- ✅ [`sessions/v0.9.0.md`](sessions/v0.9.0.md): Session log v0.9.0 — dark app with Turf Map colours
+  on Record (native change), accounts by e-mailed code with restore, delete, export and rename (API
+  0.4.0), demo account, website header and loader, internal /branding page with the ICP, Swagger
+  contents, and the agent harness rewrite
 
 ## Decision records
 
@@ -124,6 +132,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   on Vercel, Frankfurt) exposing the app's existing use cases as /v1 routes, contract-first with zod
   → OpenAPI 3.1, documented with Swagger UI at cityturfer.local/swagger; the core logic now lives in
   packages/core (phase 3 done). Its route table is superseded by api-sync-2026-10-20.md
+- ✅ [`decisions/api-accounts-2026-10-22.md`](decisions/api-accounts-2026-10-22.md): Real accounts
+  for backup and restore (contract 0.4.0) — sign-in with an e-mailed one-time code through Better
+  Auth behind our own routes, our own Postgres rate limits, device tokens for one more release,
+  auth:adopt for the existing admin data, production boot guards
 - ✅ [`decisions/api-device-tokens-2026-10-20.md`](decisions/api-device-tokens-2026-10-20.md):
   Stopgap for the first live backup — secret device tokens (API_TOKENS holds only SHA-256 hashes)
   instead of Better Auth, one-way backup phone → server on Neon Postgres via Drizzle, canonical
@@ -151,5 +163,14 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`decisions/monorepo-turborepo-2026-10-18.md`](decisions/monorepo-turborepo-2026-10-18.md):
   v0.3.0 moves the repo to a pnpm + Turborepo monorepo — apps/mobile (Expo), apps/web (Next.js
   landing page), packages/brand and packages/config — in three PRs
+
+## Live plans
+
+`docs/plans/` — Plans for work not shipped yet.
+
+- 🚧 [`plans/backend-plan-2026-10-22.md`](plans/backend-plan-2026-10-22.md): Plan for the first
+  back-end release (opt-in backup, real accounts, restore to a new phone, delete account, export) —
+  founder decisions of 2026-10-22, what feat/backend-sync built, and what is left before testers can
+  use it
 
 <!-- docs-index:end -->
