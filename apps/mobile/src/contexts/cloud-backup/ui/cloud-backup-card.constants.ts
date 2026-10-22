@@ -44,6 +44,8 @@ export const ERROR_TEXT: Record<BackupErrorCode, string> = {
   busy: "The server is busy. We'll try again in a moment.",
   outdated: 'Update CityTurfer to keep backing up.',
   'not-available': 'The demo account stays on this phone: it is never backed up.',
+  'needs-device-token':
+    'A testing server needs a device token. Add one in Developer tools, or go back to the built-in server.',
 };
 
 /** "Back up now" while a restore is bringing the backup back: the run waits for it. */

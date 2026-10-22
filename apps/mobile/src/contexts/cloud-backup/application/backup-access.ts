@@ -40,14 +40,18 @@ export async function connect(
   if (!d.available) {
     return { kind: 'failed', error: 'not-available' };
   }
-  const credentials = await d.credentials.current().catch(() => null);
-  if (!credentials) {
+  const signedIn = await d.credentials.current().catch(() => null);
+  if (!signedIn) {
     return { kind: 'failed', error: 'no-token' };
+  }
+  const baseUrl = s.toState().serverUrl ?? d.defaultServerUrl;
+  const credentials = await credentialsFor(d, baseUrl, signedIn);
+  if (!credentials) {
+    return { kind: 'failed', error: 'needs-device-token' };
   }
   if (credentials.token === refusedToken) {
     return { kind: 'refused' };
   }
-  const baseUrl = s.toState().serverUrl ?? d.defaultServerUrl;
   const api = d.api({ baseUrl, token: credentials.token });
   let accountId = credentials.accountId;
   if (accountId == null) {
@@ -63,7 +67,7 @@ export async function connect(
   if (previous != null && previous !== key && stored.withdrawalsPending.length > 0) {
     // Switching would reset the state and with it the withdrawals the previous account has not heard
     // about yet: tell that account first (its server copy must go), and only then switch.
-    const error = await deliverToPrevious(d, stored, previous, credentials);
+    const error = await deliverToPrevious(d, stored, previous, signedIn);
     if (error) {
       return { kind: 'failed', error };
     }
@@ -72,23 +76,44 @@ export async function connect(
   return { kind: 'connected', api, settings, token: credentials.token };
 }
 
+type Credentials = { token: string; accountId: string | null };
+
+/**
+ * What may be sent to `baseUrl`. The signed-in account's session token (`accountId` set) was issued
+ * by the built-in server (the identity server) and can delete the account: it never goes anywhere
+ * else. A testing server override gets only the Developer tools device token (null: none saved).
+ */
+async function credentialsFor(
+  d: Pick<CloudBackupDeps, 'tokens' | 'defaultServerUrl'>,
+  baseUrl: string,
+  c: Credentials
+): Promise<Credentials | null> {
+  if (c.accountId == null || baseUrl === d.defaultServerUrl) {
+    return c;
+  }
+  const device = await d.tokens.read().catch(() => null);
+  return device ? { token: device, accountId: null } : null;
+}
+
 /**
  * Delivers the pending withdrawals to the account the state is about (`previous`, `<server>|<id>`)
  * with a token this phone still has for it: the Developer tools device token, or the signed-in
- * account's bearer. A token counts only when that server names the same account. Returns null once
+ * account's bearer (only to the built-in server, see credentialsFor). A token counts only when that
+ * server names the same account. Returns null once
  * every withdrawal arrived, else why not (no token for that account any more: `auth`).
  */
 async function deliverToPrevious(
-  d: Pick<CloudBackupDeps, 'tokens' | 'api' | 'repo' | 'policyVersion'>,
+  d: Pick<CloudBackupDeps, 'tokens' | 'api' | 'repo' | 'policyVersion' | 'defaultServerUrl'>,
   s: BackupSettings,
   previous: string,
-  current: { token: string; accountId: string | null }
+  signedIn: Credentials
 ): Promise<BackupErrorCode | null> {
   const cut = previous.lastIndexOf('|');
   const baseUrl = previous.slice(0, cut);
   const accountId = previous.slice(cut + 1);
   const device = await d.tokens.read().catch(() => null);
-  const tokens = [...new Set([device, current.token].filter((t): t is string => t != null))];
+  const mine = await credentialsFor(d, baseUrl, signedIn);
+  const tokens = [...new Set([device, mine?.token ?? null].filter((t): t is string => t != null))];
   let error: BackupErrorCode = 'auth';
   for (const token of tokens) {
     const api = d.api({ baseUrl, token });

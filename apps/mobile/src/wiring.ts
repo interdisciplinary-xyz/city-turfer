@@ -71,7 +71,7 @@ export interface CloudBackupAdapters {
    */
   credentials?: (userId: string, deviceToken: DeviceTokenStore) => BackupCredentials;
   sha256: Sha256;
-  /** Default: API_BASE_URL. */
+  /** The built-in server; it must be the identity server (the account's session token goes only there). Default: API_BASE_URL. */
   serverUrl?: string;
 }
 

@@ -40,6 +40,8 @@ export interface LoggedRequest {
   id?: string;
   ifMatch?: number | null;
   baseUrl: string;
+  /** The bearer the request carried (tests check where a token goes). */
+  token: string;
 }
 
 /** SHA-256 hex in Node (expo-crypto on the phone). */
@@ -135,10 +137,10 @@ export class FakeApiServer {
   private client(access: ServerAccess): ApiClient {
     const call = async <T>(
       method: Method,
-      extra: Omit<LoggedRequest, 'method' | 'baseUrl'>,
+      extra: Omit<LoggedRequest, 'method' | 'baseUrl' | 'token'>,
       work: () => ApiResult<T>
     ) => {
-      const logged = { method, baseUrl: access.baseUrl, ...extra };
+      const logged = { method, baseUrl: access.baseUrl, token: access.token, ...extra };
       this.requests.push(logged);
       this.inFlight++;
       this.maxInFlight = Math.max(this.maxInFlight, this.inFlight);

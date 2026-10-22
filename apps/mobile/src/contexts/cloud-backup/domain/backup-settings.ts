@@ -4,10 +4,21 @@ import { DomainError } from '@/shared-kernel';
  * Why the last backup run stopped, in codes the UI turns into plain words:
  * `no-token` not signed in (no account token yet) · `not-available` this profile never backs up (demo) · `auth` the server refused the token · `consent` the server has no
  * backup consent · `offline` no connection · `server` the server failed · `not-ready` the server
- * doesn't offer backup yet (501) · `busy` rate limited · `outdated` the server wants a newer app.
+ * doesn't offer backup yet (501) · `busy` rate limited · `outdated` the server wants a newer app ·
+ * `needs-device-token` a testing server override and no Developer tools device token (the account's
+ * session token only ever goes to the built-in server).
  */
 export type BackupErrorCode =
-  'no-token' | 'auth' | 'consent' | 'offline' | 'server' | 'not-ready' | 'busy' | 'outdated' | 'not-available';
+  | 'no-token'
+  | 'auth'
+  | 'consent'
+  | 'offline'
+  | 'server'
+  | 'not-ready'
+  | 'busy'
+  | 'outdated'
+  | 'not-available'
+  | 'needs-device-token';
 
 /** The consents Cloud Backup records on the server (contract: ConsentPurpose). */
 export type ConsentPurpose = 'cloud-sync' | 'apple-health-in-cloud-sync';
