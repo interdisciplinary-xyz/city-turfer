@@ -409,6 +409,24 @@ test('no-verify: HUSKY=0 and core.hooksPath switch the hooks off too', () => {
   assert.deepEqual(bashFindings('HUSKY=0 pnpm install', CTX), []);
 });
 
+test('abbreviated long options count as the option (git accepts unambiguous prefixes)', () => {
+  assert.deepEqual(rules(bashFindings('git commit --no-veri -m x', CTX)), ['no-verify']);
+  assert.deepEqual(rules(bashFindings('git commit --no-v -m x', CTX)), ['no-verify']);
+  assert.deepEqual(rules(bashFindings('git push --no-veri', CTX)), ['no-verify']);
+  assert.deepEqual(rules(bashFindings('git push --del origin scope/v0.9.0', CTX)), ['delete-branch']);
+  assert.deepEqual(rules(bashFindings('git push origin --dele release/v0.8.0', CTX)), ['delete-branch']);
+  assert.deepEqual(rules(bashFindings('git branch --del main', CTX)), ['delete-branch']);
+  assert.deepEqual(rules(bashFindings('git push --force-w origin scope/v0.9.0', CTX)), ['force-push']);
+  assert.deepEqual(rules(bashFindings('git push --force-w=scope/v0.9.0 origin scope/v0.9.0', CTX)), ['force-push']);
+  assert.deepEqual(rules(bashFindings('git push --forc origin release/v0.8.0', CTX)), ['force-push']);
+  // false positives: other options sharing a few letters
+  assert.deepEqual(bashFindings('git commit --no-edit --amend', CTX), []);
+  assert.deepEqual(bashFindings('git push --follow-tags origin scope/v0.8.0', CTX), []);
+  assert.deepEqual(bashFindings('git push --force-if-includes origin scope/v0.8.0', CTX), []);
+  assert.deepEqual(bashFindings('git push --dry-run origin --delete feat/old', CTX), []);
+  assert.deepEqual(bashFindings('git push --d origin feat/x', CTX), []); // ambiguous in git: it fails
+});
+
 test('integration branches are never deleted, locally or on the remote', () => {
   assert.deepEqual(rules(bashFindings('git push origin --delete scope/v0.8.0', CTX)), ['delete-branch']);
   assert.deepEqual(rules(bashFindings('git push origin -d release/v0.8.0', CTX)), ['delete-branch']);

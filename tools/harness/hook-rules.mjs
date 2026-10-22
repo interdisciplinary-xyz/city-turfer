@@ -580,10 +580,18 @@ function splitArgs(args, valueOptions) {
   return { positional, flags };
 }
 
-/** True when `flags` hold the long option or a short cluster (`-uf`) containing the letter. */
+/**
+ * True when `flags` hold the long option or a short cluster (`-uf`) containing the letter. git
+ * accepts any unambiguous prefix of a long option (`--no-veri`, `--del`), so a prefix of four or
+ * more characters counts as the option (an ambiguous one makes git fail, so over-matching is safe).
+ */
 function hasFlag(flags, long, short, stopAt = '') {
   return flags.some((f) => {
-    if (f === long || f.startsWith(`${long}=`)) {
+    const name = f.split('=')[0];
+    if (
+      name === long ||
+      (long.startsWith('--') && name.startsWith('--') && name.length >= 4 && long.startsWith(name))
+    ) {
       return true;
     }
     if (!short || !/^-[A-Za-z]+$/.test(f)) {
