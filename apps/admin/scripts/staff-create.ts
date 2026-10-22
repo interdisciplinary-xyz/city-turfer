@@ -13,9 +13,7 @@ import config from '@payload-config';
 import { getPayload } from 'payload';
 
 import { STAFF_BOOTSTRAP } from '../src/collections/staff/hooks';
-import { STAFF_ROLES, STAFF_SLUG, type StaffRole } from '../src/collections/staff/roles';
-
-const MIN_PASSWORD = 12;
+import { MIN_PASSWORD, STAFF_ROLES, STAFF_SLUG, type StaffRole } from '../src/collections/staff/roles';
 
 function arg(name: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`);

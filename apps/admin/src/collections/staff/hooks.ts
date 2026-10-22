@@ -4,7 +4,10 @@ import {
   type CollectionBeforeLoginHook,
   type CollectionBeforeOperationHook,
   Forbidden,
+  ValidationError,
 } from 'payload';
+
+import { MIN_PASSWORD } from './roles';
 
 /** `req.context` flag set only by scripts/staff-create.ts (the Local API, run by the founder). */
 export const STAFF_BOOTSTRAP = 'staffBootstrap';
@@ -16,6 +19,8 @@ export const STAFF_BOOTSTRAP = 'staffBootstrap';
  *   `req.context`, so the flag cannot be sent from outside.)
  * - No "forgot password" e-mail: there is no e-mail adapter, the endpoint is public, and Payload's
  *   console fallback would log the staff address. A staff admin resets a password instead.
+ * - Passwords of at least MIN_PASSWORD characters on every create and update (Payload's own
+ *   minimum is 3). This runs before Payload reads or hashes the password.
  */
 export const guardStaffOperations: CollectionBeforeOperationHook = ({ operation, req, args }) => {
   if (operation === 'create' && !req.user && req.context?.[STAFF_BOOTSTRAP] !== true) {
@@ -23,6 +28,16 @@ export const guardStaffOperations: CollectionBeforeOperationHook = ({ operation,
   }
   if (operation === 'forgotPassword') {
     throw new Forbidden(req.t);
+  }
+  const password = (args as { data?: { password?: unknown } }).data?.password;
+  if ((operation === 'create' || operation === 'update') && typeof password === 'string') {
+    if (password.length < MIN_PASSWORD) {
+      throw new ValidationError({
+        collection: 'staff',
+        errors: [{ path: 'password', message: `Use at least ${MIN_PASSWORD} characters.` }],
+        req,
+      });
+    }
   }
   return args;
 };

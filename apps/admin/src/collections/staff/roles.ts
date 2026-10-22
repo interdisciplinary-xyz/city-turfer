@@ -16,3 +16,6 @@ export const STAFF_ROLES = [
 export type StaffRole = (typeof STAFF_ROLES)[number];
 
 export const STAFF_SLUG = 'staff';
+
+/** The shortest staff password, in the panel and in scripts/staff-create.ts alike. */
+export const MIN_PASSWORD = 12;

@@ -11,6 +11,12 @@ const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
  * Staff accounts: the only people who can open admin. They live in admin's own database and are
  * never CityTurfer users. MFA (decision AD3: SSO with provider MFA, or local login plus TOTP) is
  * still open; until it is decided, this local login must not be deployed.
+ *
+ * Also before a deploy (AD3, from the PR #139 review), all stock Payload auth behaviour:
+ * - the 5-try lockout answers differently for a real staff e-mail, so anyone can confirm staff
+ *   addresses and keep one locked out: the plan's IP allowlist or a rate limit in front;
+ * - `tokenExpiration` is an idle timeout (refresh moves it), not an absolute session cap;
+ * - staff change their own password and e-mail without re-entering the current password.
  */
 export const Staff: CollectionConfig = {
   slug: STAFF_SLUG,

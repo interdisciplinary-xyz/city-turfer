@@ -4,15 +4,11 @@ import { fileURLToPath } from 'node:url';
 import { withPayload } from '@payloadcms/next/withPayload';
 import type { NextConfig } from 'next';
 
+import { ROOT_REDIRECT, SECURITY_HEADER_SOURCE, securityHeaders } from './src/security-headers';
+
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Staff only: nothing here is for search engines or for framing by another site.
-const SECURITY_HEADERS = [
-  { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
-  { key: 'X-Frame-Options', value: 'DENY' },
-  { key: 'Referrer-Policy', value: 'no-referrer' },
-  { key: 'X-Content-Type-Options', value: 'nosniff' },
-];
+const dev = process.env.NODE_ENV !== 'production';
 
 const config: NextConfig = {
   reactStrictMode: true,
@@ -23,9 +19,8 @@ const config: NextConfig = {
   turbopack: { root: path.resolve(dirname, '../..') },
   // Dev only: the portless URL (`pnpm --filter @cityturfer/admin dev` -> https://admin.cityturfer.local).
   allowedDevOrigins: ['admin.cityturfer.local', '*.admin.cityturfer.local'],
-  headers: async () => [{ source: '/:path*', headers: SECURITY_HEADERS }],
-  // Admin is the whole app: the root goes to the panel.
-  redirects: async () => [{ source: '/', destination: '/admin', permanent: false }],
+  headers: async () => [{ source: SECURITY_HEADER_SOURCE, headers: securityHeaders(dev) }],
+  redirects: async () => [ROOT_REDIRECT],
 };
 
 export default withPayload(config, { devBundleServerPackages: false });

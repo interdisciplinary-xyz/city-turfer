@@ -50,7 +50,8 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
   GraphQL off, every access rule of its collections explicit, no document locks, public first-user
   form and forgot-password closed (staff come from `staff:create`); missing env fails closed. User
   data only through the API's audited `/internal/admin` routes (not built). Local login without MFA:
-  not deployable until decision AD3 (the admin portal plan)
+  not deployable until decision AD3 (`docs/plans/admin-portal-2026-10-22.md`, with the
+  portals-planning change)
 - **Storage**: `expo-sqlite`, local-first; the phone stays the source of truth. Optional one-way
   cloud backup to `apps/api` (`apps/mobile/src/contexts/cloud-backup`), only after the user's
   consent (Info › Cloud backup); device token in the secure store
@@ -174,13 +175,13 @@ pnpm start:dev                   # web:dev, building Storybook first if storyboo
 pnpm cache:clean                 # delete node_modules, .turbo, .next, out, .expo (then pnpm install)
 pnpm --filter @cityturfer/storybook dev     # Storybook at http://localhost:6006 (app components + website pieces)
 pnpm --filter @cityturfer/storybook build   # static Storybook in apps/storybook/storybook-static
+#   …also served by `pnpm run web:dev` at https://cityturfer.local/storybook (rebuild to refresh)
 pnpm --filter @cityturfer/api dev           # API on http://localhost:8787 (Swagger at /swagger); web:dev proxies /api/* to it
 pnpm --filter @cityturfer/api run openapi   # regenerate apps/api/openapi.json after changing routes (a test checks it)
 pnpm --filter @cityturfer/admin dev         # admin at https://admin.cityturfer.local (needs PAYLOAD_DATABASE_URL, PAYLOAD_SECRET, ADMIN_URL: apps/admin/.env.example)
 pnpm --filter @cityturfer/admin migrate     # apply admin's Payload migrations (migrate:create after a collection change)
 pnpm --filter @cityturfer/admin generate    # payload-types.ts + importMap.js after a config change (ci:quality checks they are current)
 read -s STAFF_PASSWORD && export STAFF_PASSWORD && pnpm --filter @cityturfer/admin staff:create -- --email <e> --roles staff-admin   # a staff account
-#   …also served by `pnpm run web:dev` at https://cityturfer.local/storybook (rebuild to refresh)
 pnpm -C apps/mobile run android:build     # Android APK on EAS (docs/operations/android-release.md)
 pnpm -C apps/mobile exec expo install <pkg>                     # add a native dependency to the app
 # Local quirks: watchman is disabled (broken Homebrew install) in jest + metro config; pnpm with

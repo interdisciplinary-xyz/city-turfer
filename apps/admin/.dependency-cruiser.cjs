@@ -4,6 +4,14 @@
 module.exports = {
   forbidden: [
     {
+      name: 'no-undeclared-deps',
+      severity: 'error',
+      comment:
+        'The install is hoisted: every package in the repo resolves from here. Only what apps/admin/package.json declares may be imported (closes better-sqlite3, kysely and the like).',
+      from: {},
+      to: { dependencyTypes: ['npm-no-pkg', 'npm-unknown'] },
+    },
+    {
       name: 'no-other-apps',
       severity: 'error',
       comment: 'Admin is a client of the API like the phone and the web portal: never import an app.',
