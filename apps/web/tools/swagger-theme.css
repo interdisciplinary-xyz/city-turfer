@@ -958,3 +958,10 @@ a {
     padding: 0;
   }
 }
+
+/* The guide (info.description), moved below the schemas by the GuideLast plugin. */
+.swagger-ui .ct-guide {
+  margin-top: 48px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
