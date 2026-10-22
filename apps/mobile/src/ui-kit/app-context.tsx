@@ -1,7 +1,14 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { AppState } from 'react-native';
 
-import { backgroundActivitySession, type Container, getContainer, identity, resetContainer } from '@/composition-root';
+import {
+  backgroundActivitySession,
+  type Container,
+  deleteProfileData,
+  getContainer,
+  identity,
+  resetContainer,
+} from '@/composition-root';
 import type { User } from '@/contexts/identity';
 import { prepareDemoAccount } from '@/dev/gdansk-demo';
 
@@ -60,6 +67,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
         await enter(r.user);
         return 'ok';
       },
+      startSignIn: (email) => identity.startSignIn.execute(email),
+      async verifyCode(email, code) {
+        const r = await identity.verifyCode.execute(email, code);
+        if (r.kind !== 'signed-in') {
+          return r;
+        }
+        await enter(r.user);
+        return { kind: 'ok' };
+      },
+      async chooseHistory(useThisPhonesHistory) {
+        const r = await identity.chooseHistory.execute(useThisPhonesHistory);
+        if (r.kind !== 'signed-in') {
+          return 'no-pending';
+        }
+        await enter(r.user);
+        return 'ok';
+      },
       async signOut() {
         const r = await identity.signOut.execute();
         if (r.kind === 'recording-in-progress') {
@@ -68,6 +92,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
         await resetContainer();
         setAuth({ status: 'signed-out' });
         return 'ok';
+      },
+      async deleteAccount(keepData) {
+        const r = await identity.deleteAccount.execute(keepData);
+        if (r.kind !== 'deleted') {
+          return r;
+        }
+        await resetContainer();
+        if (!keepData) {
+          await deleteProfileData(r.profileId).catch(() => undefined);
+        }
+        setAuth({ status: 'signed-out' });
+        return { kind: 'ok' };
       },
     }),
     [auth, dataVersion, enter]

@@ -284,6 +284,11 @@ export class FakeApiServer {
           if (a.renamedAt != null && a.renamedAt >= renamedAt) {
             return ok({ version: a.version }); // older rename: unchanged
           }
+          if (name === a.name) {
+            // A newer rename to the same name only moves renamedAt (no new version).
+            this.activities.set(id, { ...a, renamedAt, archive: a.archive && { ...a.archive, renamedAt } });
+            return ok({ version: a.version });
+          }
           const version = a.version + 1;
           this.activities.set(id, {
             ...a,

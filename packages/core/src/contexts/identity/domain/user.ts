@@ -20,9 +20,12 @@ export function email(raw: string): Email {
 }
 
 export interface User {
+  /** The local profile (one database per profile). */
   readonly id: UserId;
   readonly email: string;
   readonly displayName: string;
+  /** The CityTurfer account signed in on this profile; absent: a local profile (mock admin, demo). */
+  readonly accountId?: string;
 }
 
 /**

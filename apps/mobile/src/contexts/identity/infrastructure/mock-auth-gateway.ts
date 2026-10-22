@@ -11,8 +11,8 @@ import {
  * PoC-only authentication (docs/poc-plan.md §4.0, §9). Two fixed accounts:
  * the admin, and a demo account whose first sign-in fills its own database
  * with Gdańsk demo data for screenshots (src/dev/gdansk-demo.ts).
- * The credentials live in this file only; replace this adapter with a real
- * provider by adding another AuthGateway and wiring it in the composition root.
+ * The credentials live in this file only. Real accounts (email one-time codes)
+ * go through ApiAuthGateway; these two local profiles keep working in every build.
  */
 const ACCOUNTS: readonly { password: string; user: User }[] = [
   { password: 'admin1234', user: { id: userId('admin'), email: 'admin@cityturfer.com', displayName: 'Admin' } },
@@ -26,5 +26,9 @@ export class MockAuthGateway implements AuthGateway {
   }
   async userById(id: UserId): Promise<User | null> {
     return ACCOUNTS.find((a) => a.user.id === id)?.user ?? null;
+  }
+  /** These emails sign in with their password in every build; any other email gets a code. */
+  hasLocalAccount(email: Email): boolean {
+    return ACCOUNTS.some((a) => a.user.email === email.value);
   }
 }

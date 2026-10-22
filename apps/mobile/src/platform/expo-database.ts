@@ -53,3 +53,8 @@ export async function openExpoDatabase(name: string): Promise<Database> {
   await db.execAsync('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
   return new ExpoDatabase(db);
 }
+
+/** Deletes a closed database file (a profile's data, after the Turfer chose to delete it). */
+export function deleteExpoDatabase(name: string): Promise<void> {
+  return SQLite.deleteDatabaseAsync(name);
+}
