@@ -54,4 +54,6 @@ export type DevToolbarProps = {
   languageSwitcher?: ReactNode;
   /** Host-app settings shown as segmented controls in the action row. */
   switches?: readonly DevToolbarSwitch[];
+  /** The second row, the API logger (live requests / route map). Default true. */
+  requestLogger?: boolean;
 };
