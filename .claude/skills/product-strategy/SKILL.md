@@ -1,26 +1,26 @@
 ---
 name: product-strategy
-description:
-  CityTurfer's product strategy toolkit — positioning against competitors (Dunford canvas; the
-  market landscape of completionist, fog-of-war and territory-capture apps), the strategy kernel
-  (diagnosis, guiding policy, coherent actions), the North Star, outcome-themed Now/Next/Later
-  roadmap, evidence-weighted prioritisation, one Shape Up pitch per version, and pricing discovery.
-  Use when deciding what the next version is for, prioritising the backlog, positioning or naming
-  against Strava / CityStrides / Squadrats / INTVL / StreetSiege, asking "why would anyone switch",
-  "what should we charge", "should we add leaderboards / sharing / Android", or writing a pitch.
+description: >-
+  Use for "what is the next version for", "why would anyone switch", "what should we charge",
+  "should we add leaderboards / sharing / Android", prioritising the backlog or writing a pitch:
+  positioning, strategy kernel, North Star, Now/Next/Later, Shape Up pitches, pricing.
 ---
 
 # Product strategy
 
 State lives in `docs/product/strategy.md` (status `proposed` until the founder signs off a section);
-the market is in `docs/product/market-landscape.md`; the backlog is `NOTEBOOK.md`. Evidence comes
-from the `product-discovery` skill — strategy without evidence ids is a hypothesis and must say so.
+the market is in `docs/product/market-landscape.md`; the backlog is `NOTEBOOK.md` (it may lag: the
+newest `scope/v*` branch and `docs/sessions/` are what's really in flight). Competitors to position
+against: Strava, CityStrides, Squadrats, INTVL, StreetSiege (Dunford canvas over completionist,
+fog-of-war and territory-capture apps). Evidence comes from the `product-discovery` skill — strategy
+without evidence ids is a hypothesis and must say so.
 
 ## Strategy kernel (Rumelt) — the one-pager
 
 - **Diagnosis**: the crux challenge, in one or two sentences. Today's draft: exploration and
   territory apps are crowded; CityTurfer has no network effects, so it must win on emotional payoff
-  (your city glows) and trust (nothing leaves the phone) for a specific group first.
+  (your city glows) and trust (local-only is a full mode; nothing leaves the phone unless you opt
+  in) for a specific group first.
 - **Guiding policy**: the rule that makes choices easy (e.g. "the best _private_ map of your own
   city; never require an account or an upload").
 - **Coherent actions**: three, reinforcing each other. Everything else is a no.
@@ -33,11 +33,13 @@ the challenge (single-player retention, Android share in Poland).
 
 1. **Competitive alternatives** — what they'd use if we didn't exist (Strava heatmap, CityStrides,
    Squadrats, Fog of World/MoveMap, territory games, nothing).
-2. **Unique attributes** — permanent turf that brightens on return; on-device, no account; Apple
-   Health back-import; walk/run/ride equally; ~50 m street cells.
+2. **Unique attributes** — permanent turf that brightens on return; local-only with no account as a
+   full mode (accounts and cloud backup are opt-in); Apple Health back-import; walk/run/ride
+   equally; ~50 m street cells.
 3. **Value** — what those attributes let people feel or do.
 4. **Best-fit customers** — who cares most about that value (candidate beachheads in
-   `docs/product/market-landscape.md` §4 and the strategy doc).
+   `docs/product/strategy.md` §5; strengths and weaknesses in `docs/product/market-landscape.md`
+   §4).
 5. **Market category** — the frame that makes the value obvious ("private exploration map" vs
    "walking game" vs "every-street tracker"). Pick one and test it (headline variants, the
    `product-discovery` skill).
@@ -54,8 +56,8 @@ is opt-in, coordinate-free telemetry — never by adding analytics on coordinate
 ## Roadmap: Now / Next / Later
 
 Outcome-themed, dates only on Now. Each line: outcome · bets · evidence · open questions. Now maps
-to the open `scope/vX.Y.Z` and its block in `NOTEBOOK.md`; Next and Later are candidate
-opportunities, not promises.
+to the newest `scope/vX.Y.Z` branch and its session log (plus its `NOTEBOOK.md` block if there is
+one — flag it if not); Next and Later are candidate opportunities, not promises.
 
 ## Prioritising
 
@@ -91,7 +93,11 @@ Hand the shaped pitch to `rn-architect` (the `add-feature` skill) for the techni
 
 - Ask one willingness-to-pay question in interviews; Van Westendorp only with n ≥ 30.
 - Category anchors: free / ~$40 yr freemium / ~$25–30 one-off for private single-player maps
-  (`docs/product/market-landscape.md` §3). No server cost makes one-off or lifetime viable.
+  (`docs/product/market-landscape.md` §3). Local-only use costs us nothing, but the opt-in cloud
+  backup runs on our EU API (Vercel + Neon, `docs/decisions/api-2026-10-20.md`,
+  `docs/decisions/api-sync-2026-10-20.md`, `docs/decisions/api-device-tokens-2026-10-20.md`,
+  `apps/mobile/src/contexts/cloud-backup`), so server cost now exists: re-check one-off or lifetime
+  pricing against per-user backup cost before proposing it.
 - Test before building: a "Founding Turfer" fake door on the website (disclosed, no payment).
 - Never paywall what the brand promises (your turf, your data, export).
 

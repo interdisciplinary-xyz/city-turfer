@@ -1,15 +1,9 @@
 ---
 name: ddd-architecture
-description:
-  CityTurfer's Domain-Driven Design rules and code patterns — bounded contexts (Identity, Recording,
-  Activity Log, Territory, Shared Kernel), layers (domain/application/infrastructure/ui), dependency
-  rule enforced by dependency-cruiser, aggregate/value-object/domain-event/repository/use-case
-  templates, transactional outbox, composition root usable from the headless background task, and
-  the ubiquitous language, and what lives in packages/core (@cityturfer/core: shared kernel, core
-  constants, domain + application of Territory, Activity Log, Achievements, Identity) versus the
-  app. Use before writing or reviewing any code in apps/mobile/src/ or packages/core/, when
-  deciding where code belongs, adding an aggregate, use case, port, adapter, event or context, or
-  when a dependency-cruiser rule fails.
+description: >-
+  Use before writing or reviewing code in apps/mobile/src/ or packages/core/: where code belongs
+  (core vs app, which context and layer), aggregates, use cases, ports, adapters, events, outbox,
+  composition root, ubiquitous language, or when a dependency-cruiser rule fails.
 ---
 
 # DDD architecture for CityTurfer
@@ -19,22 +13,28 @@ DDD is a **hard requirement** for this project. The design lives in `docs/poc-pl
 
 ## Where does this code go?
 
+Contexts: Identity, Recording, Activity Log, Territory, Health Sync, Cloud Backup, Achievements,
+plus the Shared Kernel (`CLAUDE.md` has the layout).
+
 First, which package. **`packages/core` (`@cityturfer/core`)** holds what the phone and the server
 both run: the shared kernel, the core constants (activity types, tracking thresholds, Earth radius,
 `DETAIL_ZOOM`) and the `domain/` + `application/` + `contract.ts` + public `index.ts` of
 **Territory, Activity Log, Achievements and Identity**, plus the H3 adapter
 (`packages/core/src/h3/`, entry `@cityturfer/core/h3`). **`apps/mobile`** keeps everything
-device-bound: Recording and Health Sync (all layers), every adapter (SQLite repositories, Expo, OSM
-router, secure store), `platform/` (SQLite, migrations, outbox), UI and wiring. Core is TS source
-with no React, Expo, native module, UI package or `@/` import; its contexts use relative imports.
+device-bound: Recording, Health Sync and Cloud Backup (all layers), every adapter (SQLite
+repositories, Expo, OSM router, secure store), `platform/` (SQLite, migrations, outbox), UI and
+wiring. Core is TS source with no React, Expo, native module, UI package or `@/` import; its
+contexts use relative imports.
 
 - **is a business rule or invariant ("can't resume a finished session", "drop fixes faster than 8
   m/s for a run")**: the context's `domain/`, **inside the aggregate** or a domain policy
   (`packages/core/src/contexts/<ctx>/domain/` for the four core contexts)
 - **is pure maths on tracks or measures used by both contexts**: `packages/core/src/shared-kernel/`
   (the app's `@/shared-kernel` is a re-export shim)
-- **orchestrates: load aggregate → call method → save → publish**: the context's `application/` (one
-  use case per file; in core for the four core contexts)
+- **orchestrates: load aggregate → call method → save → publish**: the context's `application/` (in
+  core for the four core contexts). One class per use case; most contexts keep them together in
+  `application/use-cases.ts`, larger ones split per file (e.g. Cloud Backup's `run-backup.ts`,
+  `queue-changes.ts`)
 - **talks to Expo, SQLite, the filesystem or the OS**: the context's `infrastructure/` (an adapter
   implementing a port)
 - **is cross-cutting plumbing (db connection, migrations, outbox, dispatcher, jobs, diagnostics)**:
@@ -47,63 +47,39 @@ If a rule shows up as an `if` in a use case, a repository or a component, move i
 
 ## Dependency rule (enforced)
 
-`.dependency-cruiser.cjs`:
+Two configs, each run by its workspace's `arch` script (`pnpm test` runs `turbo run arch` for both).
+Read the live file; don't copy rules into docs.
 
-```js
-const ctx = '^apps/mobile/src/contexts/([^/]+)/';
-module.exports = {
-  forbidden: [
-    {
-      name: 'domain-is-pure',
-      severity: 'error',
-      from: { path: '^apps/mobile/src/(shared-kernel|contexts/[^/]+/domain)/' },
-      to: {
-        path: '^(node_modules/(react|react-native|expo[^/]*|zustand|h3-js|@maplibre|expo-secure-store)|apps/mobile/src/(platform|composition-root)|apps/mobile/src/contexts/[^/]+/(application|infrastructure|ui))',
-      },
-    },
-    {
-      name: 'application-no-infra-or-ui',
-      severity: 'error',
-      from: { path: ctx + 'application/' },
-      to: {
-        path: '^(node_modules/(react|react-native|expo[^/]*)|apps/mobile/src/contexts/[^/]+/(infrastructure|ui)|apps/mobile/src/composition-root)',
-      },
-    },
-    {
-      name: 'contexts-only-via-public-api',
-      severity: 'error',
-      from: { path: ctx },
-      to: {
-        path: '^apps/mobile/src/contexts/([^/]+)/(domain|application|infrastructure|ui)/',
-        pathNot: '^apps/mobile/src/contexts/$1/',
-      },
-    },
-    {
-      name: 'screens-use-ui-layer',
-      severity: 'error',
-      from: { path: '^app/' },
-      to: {
-        path: '^apps/mobile/src/(contexts/[^/]+/(domain|application|infrastructure)|platform)/',
-      },
-    },
-    { name: 'no-circular', severity: 'error', from: {}, to: { circular: true } },
-  ],
-  options: { tsConfig: { fileName: 'tsconfig.json' }, doNotFollow: { path: 'node_modules' } },
-};
-```
-
-`packages/core/.dependency-cruiser.cjs` repeats the layer rules for core and adds
-`core-is-platform-free` (no React, Expo, native, UI packages or apps anywhere in core) and
-`h3-only-in-h3`. The app's config adds `core-via-entry-points` (only `@cityturfer/core/<entry>`,
-never files under `packages/core/src/` directly), `core-ports-for-own-adapters` and
-`core-ports-only-of-own-context` (`@cityturfer/core/<ctx>/ports` is for that context's
-`infrastructure/`, test doubles and the wiring). Both run as each workspace's `arch` script.
+- **`apps/mobile/.dependency-cruiser.cjs`** (its patterns are relative to `apps/mobile`, so
+  `^src/…`; tests under `__tests__/` and `test-support/` are exempt from the layer rules):
+  - `domain-is-pure`: `apps/mobile/src/shared-kernel/` and each context's `domain/` import no React,
+    React Native, `expo-*`, h3-js (nor core's H3 adapter), MapLibre, better-sqlite3,
+    `@cityturfer/ui`, and nothing from `platform`, `composition-root`, `wiring`, `app`, `ui-kit` or
+    another layer.
+  - `application-no-infra-or-ui`: `application/` imports no React/Expo/h3/MapLibre/UI package (nor
+    core's H3 adapter) and no `infrastructure`, `ui`, `composition-root`, `wiring`, `app` or
+    `ui-kit`.
+  - `contexts-only-via-public-api`: a context reaches another only through its `index.ts` /
+    `contract.ts`.
+  - `screens-use-ui-layer`: `apps/mobile/src/app/` never imports a context's domain, application,
+    infrastructure, or `platform`.
+  - `constants-are-leaf`: `apps/mobile/src/constants/` imports only other constants and
+    `@cityturfer/brand`.
+  - `core-via-entry-points`, `core-ports-for-own-adapters`, `core-ports-only-of-own-context`: see
+    below.
+  - `no-circular`.
+- **`packages/core/.dependency-cruiser.cjs`** repeats the layer rules for core and adds
+  `core-is-platform-free` (no React, Expo, native, UI packages or apps anywhere in core) and
+  `h3-only-in-h3`. The app's config adds `core-via-entry-points` (only `@cityturfer/core/<entry>`,
+  never files under `packages/core/src/` directly), `core-ports-for-own-adapters` and
+  `core-ports-only-of-own-context` (`@cityturfer/core/<ctx>/ports` is for that context's
+  `infrastructure/`, test doubles and the wiring).
 
 Exceptions: the root `index.ts` imports the background task module (it sits outside
 `apps/mobile/src/`, so depcruise doesn't cruise it), and `apps/mobile/src/composition-root.ts` /
-`apps/mobile/src/wiring.ts` may import anything (no rule has them as a `from`). The live rules are
-`.dependency-cruiser.cjs`. Don't relax the rules any further. In M0, add a deliberately violating
-fixture file, check that `depcruise` fails on it, then delete it, so the rules are known to work.
+`apps/mobile/src/wiring.ts` may import anything (no rule has them as a `from`). Don't relax the
+rules. When you add a rule, prove it with a deliberately violating file, check that `arch` fails,
+then delete the file.
 
 ## Patterns
 
@@ -128,28 +104,34 @@ export class Distance {
 
 ### Aggregate: state stays private, commands enforce invariants and record events
 
+Shape of `RecordingSession` (`apps/mobile/src/contexts/recording/domain/recording-session.ts`),
+trimmed:
+
 ```ts
 export class RecordingSession {
   private events: RecordingEvent[] = [];
   private constructor(private state: RecordingSessionState) {}
 
-  static start(id: SessionId, type: ActivityType, now: Instant): RecordingSession {
+  static start(id: string, type: ActivityType, now: number): RecordingSession {
     const s = new RecordingSession({
       id,
       type,
-      profile: TrackingProfile.forType(type),
       status: 'recording',
       startedAt: now,
       segment: 0,
-      tail: null,
-      totals: Totals.zero(),
+      tail: null /* … */,
     });
-    s.record({ type: 'SessionStarted', sessionId: id, activityType: type, at: now });
+    s.record({ type: 'SessionStarted', v: 1, at: now /* … */ });
     return s;
   }
 
-  resume(now: Instant): void {
+  get profile() {
+    return trackingProfileFor(this.state.type);
+  }
+
+  resume(now: number): void {
     if (this.state.status !== 'paused') throw new DomainError('session.not-paused');
+    // A manual resume starts a new segment: never measure or draw across the pause.
     this.state = {
       ...this.state,
       status: 'recording',
@@ -158,14 +140,16 @@ export class RecordingSession {
     };
     this.record({
       type: 'SessionResumed',
-      sessionId: this.state.id,
-      segment: this.state.segment,
+      v: 1,
       at: now,
+      sessionId: this.id,
+      auto: false,
+      segment: this.state.segment,
     });
   }
 
-  ingest(fixes: readonly Fix[]): TrackPoint[] {
-    /* FixFilter + AutoPausePolicy; update tail/totals */
+  ingestWithReport(fixes: readonly Fix[]): IngestReport {
+    /* Fix Filter + gaps + auto-pause */
   }
 
   pullEvents(): RecordingEvent[] {
@@ -200,18 +184,29 @@ export interface RecordingSessionRepository {
   save(session: RecordingSession, newPoints: readonly TrackPoint[]): Promise<void>;
 }
 
-// application/IngestFixes.ts
+// application/use-cases.ts (trimmed)
 export class IngestFixes {
-  constructor(
-    private readonly sessions: RecordingSessionRepository,
-    private readonly log: Logger
-  ) {}
-  async execute(fixes: readonly Fix[]): Promise<IngestResult> {
-    const session = await this.sessions.getActive();
-    if (!session) return { kind: 'no-active-session' }; // the caller (task) may stop the tracker
-    const accepted = session.ingest(fixes);
-    await this.sessions.save(session, accepted); // also writes pullEvents() to the outbox
-    return { kind: 'ingested', accepted: accepted.length, snapshot: session.snapshot() };
+  constructor(private readonly d: RecordingDeps) {}
+  execute(fixes: readonly Fix[]): Promise<IngestResult> {
+    return this.d.commands.run(() => this.run(fixes)); // Recording commands are serialised
+  }
+  private async run(fixes: readonly Fix[]): Promise<IngestResult> {
+    const session = await this.d.sessions.getActive();
+    if (!session) {
+      await this.d.tracker.stop(); // orphaned tracker
+      return { kind: 'no-active-session' };
+    }
+    const { points, ...report } = session.ingestWithReport(fixes);
+    await this.d.sessions.save(session, points); // also writes pullEvents() to the outbox
+    const snapshot = session.snapshot(this.d.clock.now());
+    this.d.notifier.publish(snapshot);
+    return {
+      kind: 'ingested',
+      accepted: points.length,
+      report,
+      status: session.status,
+      snapshot /* … */,
+    };
   }
 }
 ```
@@ -221,12 +216,15 @@ programming errors. A use case never contains an `if` that encodes a business ru
 
 ### Outbox and events
 
-- `platform/outbox.ts`: `append(tx, events)` writes to the `sys_outbox` table inside the
-  repository's transaction.
-- `platform/EventDispatcher.ts`: `dispatchPending()` reads unprocessed rows, calls the registered
-  handlers, and marks each row processed. It runs after each commit and on app start.
-- Handlers are **idempotent**. For example, `RecordActivityFromSession` uses activity id = session
-  id with `INSERT OR IGNORE`.
+- `apps/mobile/src/platform/outbox.ts`: `appendToOutbox(tx, events, now)` writes to `sys_outbox`
+  inside the repository's transaction.
+- `EventDispatcher` (same file): handlers register with `dispatcher.on(type, handler)` in
+  `apps/mobile/src/wiring.ts`; `dispatchPending()` reads unprocessed rows, calls the handlers and
+  marks each row processed. A failing handler is retried with backoff (`OUTBOX_MAX_ATTEMPTS`,
+  `OUTBOX_RETRY_BASE_MS`) and then dead-lettered, so it never blocks later events; `pruneOutbox`
+  removes old rows. It runs after each commit (`afterCommit`) and on app start.
+- Handlers are **idempotent**. For example, `RecordActivityFromSession` (core Activity Log) uses
+  activity id = session id and returns early when that Activity already exists.
 - Event payloads are the published language: plain JSON, versioned (`{ type, v: 1, … }`), and never
   containing entity objects.
 
@@ -234,35 +232,40 @@ programming errors. A use case never contains an `if` that encodes a business ru
 
 ```ts
 // recording/infrastructure/expo-location-tracker.ts — the only file that knows LocationObject
-export const toFix = (l: Location.LocationObject): Fix =>
-  Fix.of({
+export const toFix = (l: Location.LocationObject): Fix => toFixOn(l, Platform.OS);
+export function toFixOn(l: Location.LocationObject, os: typeof Platform.OS): Fix {
+  // Android reports unknown speed/altitude as 0: map to null. iOS: negative speed = unknown.
+  return {
     lat: l.coords.latitude,
     lon: l.coords.longitude,
-    altitude: l.coords.altitude ?? null,
+    t: l.timestamp,
     accuracy: l.coords.accuracy ?? null,
-    speed: l.coords.speed != null && l.coords.speed >= 0 ? l.coords.speed : null,
-    at: Instant.ofEpochMs(l.timestamp),
-  });
+    alt /* … */,
+    speed /* … */,
+  };
+}
 ```
 
 ### Composition root (lazy, React-free, usable headless)
 
+`apps/mobile/src/composition-root.ts` (Expo-bound) resolves the signed-in user and opens their
+database; `apps/mobile/src/wiring.ts` (`wire(userId, db, adapters)`, platform-independent, also used
+by integration tests with fakes) builds every context and registers the event handlers.
+
 ```ts
-let container: Container | null = null;
-export async function getContainer(): Promise<Container> {
-  if (container) return container;
-  const db = await openDatabase();           // platform; also runs migrations
-  const dispatcher = new EventDispatcher(db);
-  const sessions = new SqliteRecordingSessionRepository(db);
-  // …activity-log wiring, handler registration on dispatcher
-  container = { recording: createRecordingApi({ sessions, tracker: new ExpoLocationTracker(), clock: systemClock }),
-                activityLog: createActivityLogApi({ … }), dispatcher };
-  return container;
+export async function getContainer(): Promise<Container | null> {
+  const uid = await sessionStore.read();
+  if (!uid) return null; // nobody signed in (rejects if it can't tell)
+  if (current?.userId === uid) return current.promise;
+  const db = await openExpoDatabase(`turftrack-${uid}.db`);
+  await migrate(db);
+  return wire(uid, db, adapters); // cached per user; diagnostics + maintenance omitted
 }
 ```
 
 Use no DI library: plain functions, constructed lazily. The background task and the UI's
-`AppProvider` (`apps/mobile/src/ui-kit/app-context.tsx`) both call `getContainer()`.
+`AppProvider` (`apps/mobile/src/ui-kit/app-context.tsx`) both call `getContainer()`, and both must
+handle `null`.
 
 ### Context public API (`index.ts`) and adapter SPI (`ports.ts`)
 
@@ -275,12 +278,18 @@ app. The app keeps `src/contexts/<ctx>/index.ts` (and `contract.ts`) as `export 
 
 ## Testing per layer
 
-- **Domain**: plain Jest with no mocks. Every invariant in `docs/poc-plan.md` §4 has a test. Use
-  `FakeClock`.
-- **Application**: in-memory repositories (`InMemoryRecordingSessionRepository`) and
-  `FakeLocationTracker` under `application/__tests__/fakes/`.
-- **Infrastructure**: real SQL through the better-sqlite3 adapter. Test that atomic save rolls back
-  everything if the outbox insert fails.
+- **Domain**: plain Jest with no mocks. Every invariant in `docs/poc-plan.md` §4 has a test. Pass
+  time explicitly (`now: number` arguments, or a `{ now: () => t }` clock).
+- **Application**: in-memory doubles, e.g. `InMemoryActivityRepository`
+  (`packages/core/src/contexts/activity-log/test-support/`), `FakeHealthStore`
+  (`apps/mobile/src/contexts/health-sync/test-support/`), the fake API server
+  (`apps/mobile/src/contexts/cloud-backup/test-support/`); Recording use cases are tested through
+  `wire('test', db, fakes)` with a fake tracker in `apps/mobile/src/__tests__/` (end-to-end,
+  headless-resilience, recording-concurrency).
+- **Infrastructure**: real SQL through `openNodeDatabase()`
+  (`apps/mobile/src/test-support/node-database.ts`, better-sqlite3). Test that an atomic save writes
+  nothing when any part fails. Fixtures: `loadFixes` (`test-support/fixtures.ts`) and `oracleStats`
+  (`test-support/oracle.ts`).
 - **Where tests live**: a test that uses only core code lives next to it in `packages/core` (its own
   Jest, `pnpm --filter @cityturfer/core test:unit`); a test that needs SQLite, Expo fakes or
   Recording stays in the app (e.g. the Home City and Identity use-case tests, the oracle parity

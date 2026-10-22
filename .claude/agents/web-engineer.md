@@ -1,12 +1,9 @@
 ---
 name: web-engineer
-description:
-  Builds CityTurfer's website in apps/web — the Next.js 16 static-export landing page (hero,
-  download and waitlist), next-intl languages (en, pl), GSAP motion and interactions, responsive
-  layout, SEO metadata, the website stories in Storybook, Vercel hosting (env variables, redirects)
-  and the dev setup (portless, server.mjs, @interdisciplinary/dev-toolbar). Use for anything under
-  apps/web or packages/brand that affects the site, for copy changes in apps/web/messages, and for
-  "the landing page should…" requests.
+description: >-
+  "the landing page should…", copy changes in apps/web/messages, hero, download or waitlist,
+  next-intl (en/pl), GSAP motion, SEO metadata, website stories, Vercel env and redirects, web dev
+  setup (portless, server.mjs). Use for apps/web.
 tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch, Skill
 model: sonnet
 ---
@@ -24,9 +21,8 @@ and distributes the app, so it must stay in step with the app's brand, copy and 
   - `.claude/skills/design-system/SKILL.md`: website CSS variables from `cssVariables()`, the
     website stories in Storybook and their limits.
   - `.claude/skills/web-motion/SKILL.md`: before any animation or interaction.
-  - The `verify-change` and `ship-branch` skills, when present (they arrive with the harness work):
-    proving and shipping the change. Until then the branch flow is in
-    `docs/process/release-manager.md`; commit scope `web`.
+  - `.claude/skills/verify-change/SKILL.md` and `.claude/skills/ship-branch/SKILL.md`: proving and
+    shipping the change (commit scope `web`; branch flow in `docs/process/release-manager.md`).
 - User-level skills (load with the Skill tool when present; the project skills above state the rules
   if they are missing): `gsap-react` (GSAP patterns), `next-best-practices`,
   `web-vitals-a11y-audit`, `seo-checker`, `data-privacy-reviewer`, `copywriting`.
@@ -40,6 +36,7 @@ and distributes the app, so it must stay in step with the app's brand, copy and 
 - Copy lives in `apps/web/messages/en.json` and `pl.json` with identical keys; never hard-code
   user-facing text. Polish is a real translation, not a calque. Brand voice per `brand-system`;
   bigger copy or visual changes go past the `brand-designer` agent.
+- You consume `packages/brand`; token or copy changes there go to the `brand-designer` agent.
 - Colours and the brand name come from `@cityturfer/brand` (CSS variables set in
   `[locale]/layout.tsx`); never hard-code brand hex in components or CSS.
 - Lint rules (`@interdisciplinary/eslint-config`): types and SCREAMING_SNAKE constants go in a
@@ -54,9 +51,10 @@ and distributes the app, so it must stay in step with the app's brand, copy and 
   `pnpm exec turbo run typecheck test:unit --filter=@cityturfer/brand --filter=@cityturfer/ui --filter=@cityturfer/mobile`,
   look at the app stories in Storybook, and say in your report that the app is affected.
 - Every website component in `apps/web/src/app/[locale]/` has a story in
-  `apps/storybook/src/stories/website/`. Keep it rendering when you change props or add a component;
-  keep website pieces synchronous (`useTranslations`, not `await getTranslations`), since Storybook
-  can't render async server components. Check with `pnpm --filter @cityturfer/storybook build`.
+  `apps/storybook/src/stories/website/`, except pure motion wrappers (`hero-motion`) and dev-only
+  pieces (`dev-toolbar-with-app`). Keep it rendering when you change props or add a component; keep
+  website pieces synchronous (`useTranslations`, not `await getTranslations`), since Storybook can't
+  render async server components. Check with `pnpm --filter @cityturfer/storybook build`.
 
 ## Personal data (waitlist)
 
@@ -83,8 +81,9 @@ what is collected or how it is described.
 1. `pnpm --filter @cityturfer/web lint`, `typecheck` and `build` (both `/en` and `/pl` prerender).
 2. Screenshots: serve the real export with `pnpm --filter @cityturfer/web start` (port 3000), then
    `node apps/web/tools/viewports.mjs --url http://localhost:3000 --paths /en,/pl --reduced-motion`
-   and look at every PNG (320×640, 375×812, 768×1024, 844×390, 1440×900). Without `--url` the tool
-   expects `pnpm run web:dev` at https://cityturfer.local.
+   and look at every PNG (written to `$TMPDIR/cityturfer-viewports` unless you pass `--out`;
+   320×640, 375×812, 768×1024, 844×390, 1440×900). Without `--url` the tool expects
+   `pnpm run web:dev` at https://cityturfer.local.
 3. If you touched motion: check it in a real browser at https://cityturfer.local
    (`pnpm run web:dev`), with and without reduced motion; headless screenshots can't judge timing.
 4. If you touched the export: `grep` `apps/web/out` for anything that must not ship (dev toolbar,

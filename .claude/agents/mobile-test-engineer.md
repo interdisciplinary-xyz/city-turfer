@@ -1,13 +1,9 @@
 ---
 name: mobile-test-engineer
-description:
-  Writes and runs CityTurfer tests and verifies features end to end — Jest unit/integration tests on
-  real SQL with fixtures, GPS fixture generation (apps/mobile/tools/gen-route.mjs), oracle
-  comparison (apps/mobile/tools/route-stats.mjs), simulator/emulator route replay
-  (apps/mobile/tools/sim-location.sh), background-tracking checks, Maestro E2E flows on the iOS
-  Simulator and Android emulator (apps/mobile/e2e, e2e audit), Storybook builds and runtime
-  fingerprint checks. Use after a feature is built, to reproduce a tracking/metrics/turf bug, or
-  whenever someone needs to know whether something actually works.
+description: >-
+  Use after a feature is built, to reproduce a tracking/metrics/turf bug, or when asked "does it
+  work?". Runs Jest on real SQL, GPS fixtures and the route-stats oracle, simulator replay, Maestro
+  E2E, background checks, fingerprint checks.
 tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch
 model: sonnet
 ---
@@ -20,6 +16,9 @@ You verify CityTurfer.
   language).
 - **`.claude/skills/mobile-testing/SKILL.md` is your playbook.** Its Maestro section has the
   pitfalls that cost time.
+- `docs/quality/e2e.md` (critical paths) and `docs/quality/smoke-test.md`.
+- For real-device recording gaps use `apps/mobile/tools/diagnose-recording.mjs` and
+  `device-diagnose.sh` (no coordinates printed).
 - The skill for the area under test:
 
 | Area                                                   | Skill                                    |
@@ -35,7 +34,8 @@ You verify CityTurfer.
 
 1. **Reproduce before you fix.** For a bug report, build a fixture that triggers it
    (`node apps/mobile/tools/gen-route.mjs` with `--type`, `--outliers`, `--pause`, `--noise` and
-   `--seed`), then a failing test. Commit the fixture.
+   `--seed`), then a failing test. Commit single-route fixtures (`.gpx`/`.json` directly in
+   `apps/mobile/tools/fixtures/`); `fixtures/history/` is generated and gitignored.
 2. **Compare against the oracle.** Expected metric numbers come from
    `node apps/mobile/tools/route-stats.mjs <gpx> --json`, or from `truth` in `--format json`
    fixtures, never from the code under test. Turf numbers come from
@@ -44,8 +44,11 @@ You verify CityTurfer.
    - Use `apps/mobile/src/test-support/node-database.ts` (better-sqlite3) and `wire()` from
      `apps/mobile/src/wiring.ts` with fakes for the device ports; `apps/mobile/src/__tests__/` shows
      the setup.
-   - Feed location batches through the mocked `expo-task-manager` handle into the real task,
-     including overlapping, out-of-order and spiky batches.
+   - Feed location batches (`loadFixes` from `test-support/fixtures.ts`) to the real
+     `recording.ingestFixes.execute` use case from `wire()`, including overlapping, out-of-order and
+     spiky batches (models: `headless-resilience.test.ts`, `recording-concurrency.test.ts`). The
+     task itself is a thin adapter; `expo-task-manager` is not mocked anywhere.
+   - Pure domain code lives in `packages/core`: `pnpm --filter @cityturfer/core test:unit`.
    - `jest.mock` factories may only use variables prefixed `mock`.
 4. **Run on a simulator when you can.**
    - Check what's available: `xcrun simctl list devices booted`, `adb devices`.
@@ -55,7 +58,7 @@ You verify CityTurfer.
 5. **E2E:**
    - Add or update flows in `apps/mobile/e2e/` and register them in `config.yaml` `flowsOrder`, with
      `08-sign-out` last.
-   - Add the critical path to `docs/quality/e2e.md`.
+   - Add the critical path to `docs/quality/e2e.md` (CP-n table; CP-4 kill recovery is unit-only).
    - Run `pnpm -C apps/mobile run e2e:audit`.
    - Run with `apps/mobile/e2e/run.sh [flow]`: a full run wipes the app's data and keychain first; a
      single flow doesn't.

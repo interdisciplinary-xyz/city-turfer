@@ -1,13 +1,9 @@
 ---
 name: design-system
-description:
-  CityTurfer's shared design system — tokens in @cityturfer/brand (spacing, radii, type scale, turf
-  strength ramp, light/dark themes, CSS variables for the website), React Native components in
-  @cityturfer/ui (Button, Card, Stat, Badge, ActivityRow, TurfLegend, ThemeProvider/usePalette), and
-  the one Storybook in apps/storybook (react-native-web, light/dark + en/pl toggles, placeholders
-  for native modules). Use when adding or changing a shared component or token, restyling a screen
-  with shared pieces, writing a story, running or deploying Storybook, or when someone asks "is
-  there a component for this?" or "will this still ship over the air?".
+description: >-
+  Use when adding or changing a shared component or token, writing a story, running Storybook, or
+  asking "is there a component for this?" / "will this still ship over the air?". Covers
+  @cityturfer/brand tokens, @cityturfer/ui components and apps/storybook.
 ---
 
 # Design system
@@ -28,13 +24,15 @@ logo) stay in the `brand-system` skill; this skill is about the code that carrie
 
 1. **No native code in `@cityturfer/ui`.** Only `react`, `react-native` and `@cityturfer/brand`.
    ESLint bans `expo*`, `@expo/*`, `@maplibre/*`, `@kingstinct/*`, `react-native-*`, `h3-js` there.
-   A component that needs one (map, symbols, haptics) takes it as `children` or stays in the app's
-   context `ui/` (e.g. the Achievements badge passes its `SymbolView` into `Badge`).
-2. **Peer dependencies only** in `packages/ui/package.json` (`react`, `react-native`). A real
-   dependency with native code would be autolinked into the app and change the fingerprint. Keep
-   **one react-native and one react** in the workspace: dev dependencies that peer on them (e.g.
-   `@react-native/jest-preset`) must have the same version in every workspace, or pnpm nests a
-   second copy (`tools/__tests__/single-react-native.test.mjs` catches it).
+   A component that needs one (map, symbols, haptics) takes it as `children` from the app (e.g. the
+   Achievements screen, `apps/mobile/src/app/achievements.tsx`, passes an `expo-symbols`
+   `SymbolView` into `Badge`), or stays in the app (`ui-kit/` or a context's `ui/`).
+2. **Peer dependencies plus `@cityturfer/brand`** in `packages/ui/package.json`: `react` and
+   `react-native` are peers; the only real dependency is `@cityturfer/brand` (pure TS workspace
+   package). A real dependency with native code would be autolinked into the app and change the
+   fingerprint. Keep **one react-native and one react** in the workspace: dev dependencies that peer
+   on them (e.g. `@react-native/jest-preset`) must have the same version in every workspace, or pnpm
+   nests a second copy (`tools/__tests__/single-react-native.test.mjs` catches it).
 3. **Presentational components.** Strings arrive formatted; units convert in the app's
    `ui-kit/format.ts`, not in `@cityturfer/ui`. No domain types: a context maps its item to props
    (see `apps/mobile/src/contexts/activity-log/ui/activity-row.tsx`).
@@ -107,5 +105,7 @@ pnpm -C apps/mobile exec expo-updates fingerprint:generate --platform ios | jq -
 pnpm -C apps/mobile exec expo-updates fingerprint:generate --platform android | jq -r .hash
 ```
 
-Compare with the release's fingerprint (v0.5.0: iOS `2932ab55…`, Android `b5a00190…`). Also never
-bump `apps/mobile/app.json` `version` in a JS-only release: it is part of the fingerprint.
+Compare with the base fingerprint: run the same two commands on a checkout of the base (the active
+`scope/v*` branch, or the latest release tag, `git tag --sort=-v:refname | head -1`), e.g. in a
+temporary `git worktree` after `pnpm install`. Equal hashes mean the change ships over the air. Also
+never bump `apps/mobile/app.json` `version` in a JS-only release: it is part of the fingerprint.

@@ -1,13 +1,10 @@
 ---
 name: location-engineer
-description:
-  Implements CityTurfer's core engine — background GPS tracking (expo-location + expo-task-manager),
-  permission flow, point filtering, auto-pause, session lifecycle and kill recovery, route metrics
-  (distance, pace, splits, elevation), the Territory/turf engine (claims, H3 cells, visit-based
-  strength, projection, viewport queries), SQLite storage/migrations and GPX import/export. Use for
-  domain, application and infrastructure code in packages/core/src/ (shared kernel, core contexts),
-  apps/mobile/src/contexts/*/(domain|application|infrastructure)/ and apps/mobile/src/platform/, and
-  for bugs like gaps in routes, GPS jumps, wrong distance, or lost activities.
+description: >-
+  Use for GPS tracking and core-engine code: background location, permissions, Fix Filter,
+  auto-pause, kill recovery, route metrics, turf claims/strength/viewport, SQLite migrations and
+  repositories. Bugs: route gaps, GPS jumps, wrong distance, lost activities. Not UI, Health Sync or
+  Cloud Backup.
 tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch
 model: opus
 ---
@@ -17,15 +14,25 @@ CityTurfer (Expo + TypeScript). Read `CLAUDE.md`, `docs/poc-plan.md` and
 `.claude/skills/ddd-architecture/SKILL.md` before starting (DDD is a hard requirement: respect
 layers, contexts and the ubiquitous language).
 
+**Your scope:** the domain, application and infrastructure layers of Recording
+(`apps/mobile/src/contexts/recording/`), the shared kernel and the core contexts in
+`packages/core/src/` (Territory, Activity Log, Achievements, Identity; H3 adapter in
+`packages/core/src/h3/`), the app-side adapters of Territory and Activity Log, and
+`apps/mobile/src/platform/`. **Not yours:** `apps/mobile/src/contexts/health-sync/`
+(health-engineer), `apps/mobile/src/contexts/cloud-backup/` and anything server-side (api-engineer),
+and every `ui/` layer, screen or `packages/ui` (mobile-ui-engineer). If a change crosses into those,
+do your part and name the rest in your report.
+
 Before writing code, read the skill for the area you're touching. Treat it as the spec:
 
-- layering, aggregates, ports, outbox: `.claude/skills/ddd-architecture/SKILL.md`
+- layering, aggregates, ports, outbox, core vs app: `.claude/skills/ddd-architecture/SKILL.md`
 - `apps/mobile/src/contexts/recording/`: `.claude/skills/gps-tracking/SKILL.md`
 - `packages/core/src/shared-kernel/` (TrackAnalyzer, measures):
   `.claude/skills/route-metrics/SKILL.md`
-- repositories, `apps/mobile/src/platform/`, GPX: `.claude/skills/route-storage/SKILL.md`
-- `packages/core/src/contexts/territory/` and `apps/mobile/src/contexts/territory/`:
-  `.claude/skills/turf-territory/SKILL.md` (what lives in core vs the app: `ddd-architecture`)
+- repositories, migrations, `apps/mobile/src/platform/`, GPX export (planned):
+  `.claude/skills/route-storage/SKILL.md`
+- `packages/core/src/contexts/territory/`, `packages/core/src/h3/` and
+  `apps/mobile/src/contexts/territory/`: `.claude/skills/turf-territory/SKILL.md`
 - tests: `.claude/skills/mobile-testing/SKILL.md`
 
 ## How you work
@@ -33,22 +40,34 @@ Before writing code, read the skill for the area you're touching. Treat it as th
 1. Write or extend the unit tests alongside the code. Domain and shared-kernel code is written
    test-first, using fixtures from `apps/mobile/tools/fixtures/` and comparing against
    `node apps/mobile/tools/route-stats.mjs <file> --json`.
-2. Keep per-activity tuning in the `TrackingProfile` value object
-   (`apps/mobile/src/contexts/recording/domain/tracking-profile.ts`). If you change a threshold,
-   change `apps/mobile/tools/lib/geo.mjs` `PROFILES` to match.
-3. Use `pnpm -C apps/mobile exec expo install <pkg>` for native packages, never plain `pnpm add`.
-4. Run `pnpm -C apps/mobile exec tsc --noEmit` and `pnpm -C apps/mobile exec jest` before you report
-   back.
-5. If you changed the background task, recording use cases, `ExpoLocationTracker` or permissions,
-   say explicitly that the change needs a simulator replay (the `mobile-testing` skill, layer 2) and
-   whether you ran one.
+2. Per-activity tuning lives in two places: the `TrackingProfile` value object
+   (`apps/mobile/src/contexts/recording/domain/tracking-profile.ts`: intervals, accuracy, max speed,
+   min step, auto-pause delay) and the core constants (`packages/core/src/constants/tracking.ts`:
+   `MOVING_SPEED_MPS`, `ELEV_HYSTERESIS_M`, `MAX_FIX_GAP_MS`). If you change a threshold, change
+   `apps/mobile/tools/lib/geo.mjs` `PROFILES` to match.
+3. Turf strength parity: `TURF_SATURATION_K` and the tier bounds in
+   `packages/core/src/contexts/territory/domain/strength.ts`, `apps/mobile/tools/lib/turf.mjs` and
+   `apps/mobile/tools/fixtures/turf-vectors.json` change together (checked by
+   `apps/mobile/tools/__tests__/turf-parity.test.mjs`).
+4. Use `pnpm -C apps/mobile exec expo install <pkg>` for native packages, never plain `pnpm add`.
+   Core (`packages/core`) takes no native, Expo or React dependency.
+5. Before you report back, run `pnpm -C apps/mobile run typecheck` and `pnpm -C apps/mobile test`
+   (dependency rules + Jest). If you touched `packages/core`, also run
+   `pnpm --filter @cityturfer/core run typecheck`, `run arch` and `run test:unit`. If you touched
+   `apps/mobile/tools/`, run `pnpm -C apps/mobile run test:tools`.
+6. If you changed any of the following, say explicitly that the change needs a simulator replay (the
+   `mobile-testing` skill, layer 2) and whether you ran one: `background-task.ts`,
+   `location-batch-handler.ts`, `background-activity-session.ts` or
+   `apps/mobile/modules/background-session`, `ExpoLocationTracker` / `ExpoPermissionGateway`,
+   `command-executor.ts`, the Recording use cases, or the `RecordingSession` aggregate.
 
 ## Non-negotiables
 
 - The background task handler never throws, never depends on React state, and commits points to
   SQLite in one transaction per batch.
-- No raw coordinates in `console.log` outside `__DEV__`.
-- SI units internally. Formatting happens only in each context's `ui/format.ts`.
+- No raw coordinates in `console.log` outside `__DEV__`, and never in `sys_diagnostics`.
+- SI units internally. Formatting happens only in UI formatting: `apps/mobile/src/ui-kit/format.ts`
+  (or a context's own `ui/format.ts` where one exists).
 - Invariants live inside the aggregate, not in use cases or repositories. Use cases orchestrate:
   load → call aggregate → save (with events) atomically.
 - Never edit a migration that has already been committed. Add a new one.

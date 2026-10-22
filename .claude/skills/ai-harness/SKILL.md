@@ -1,13 +1,9 @@
 ---
 name: ai-harness
-description:
-  How CityTurfer's Claude Code harness is built and kept honest — CLAUDE.md, skills, agents,
-  commands, the guard hooks (.claude/hooks + tools/harness/hook-rules.mjs), permissions in
-  .claude/settings.json, and the audits (pnpm run audit:harness, audit:docs). Covers where a new
-  rule belongs (hook vs lint vs skill vs CLAUDE.md), how to write a skill or agent that triggers
-  well, and how to test a hook. Use when adding or changing a skill, agent, command, hook or
-  permission, when a hook blocks something it should not (or misses something), when audit:harness
-  fails, or when the user asks to improve the AI setup.
+description: >-
+  How the Claude Code harness works: CLAUDE.md, skills, agents, hooks, settings and the audits;
+  where a new rule goes and how to test a hook. Use when changing a skill, agent, hook or
+  permission, when a hook blocks wrongly, when audit:harness fails, or to improve the AI setup.
 ---
 
 # The AI harness
@@ -33,13 +29,17 @@ description:
 - **PreToolUse Edit|Write|MultiEdit** `pre-edit.mjs` (deny): `CHANGELOG.md`; secret files (rules
   from `tools/check-secret-files.mjs`); the generated native folders (apps/mobile/ios and android,
   git-ignored); DDD dependency rule on imports the edit adds (mirror of
-  `apps/mobile/.dependency-cruiser.cjs`).
-- **PreToolUse Bash** `pre-bash.mjs`: deny push to main, force-push to scope/release, `git tag`,
-  `git commit --no-verify`, wrong PR title/base, squash merges; ask for `gh pr merge`,
-  `git reset --hard`, copying data off a physical iPhone.
+  `apps/mobile/.dependency-cruiser.cjs`; `packages/core` has only its gate).
+- **PreToolUse Bash** `pre-bash.mjs`: commands are tokenised (quotes, heredocs, `bash -c`, `git -c`,
+  wrappers), so text inside a message or body never counts. Deny push to main, force-push or delete
+  of main/scope/release (remote or local), `git tag`, `--no-verify` on commit or push, the release
+  (`pnpm run release`, `commit-and-tag-version`; `--dry-run` passes), wrong PR title/base on
+  `gh pr create` and `gh pr edit` (`--fill` still needs `--title`), squash merges; ask for
+  `gh pr merge`, `git reset --hard`, copying data off a physical iPhone.
 - **PostToolUse Edit|Write|MultiEdit** `format-ts.sh` (Prettier) and `post-edit.mjs`: block-feedback
   for `audit:logs` privacy findings and newly hard-coded brand hex; once-per-session reminders for
-  turf/geo parity, runtime fingerprint, migrations, background task, Health privacy.
+  turf/geo parity (`packages/core` and the app), runtime fingerprint, migrations, background task,
+  Health privacy.
 
 ## Where does a new rule go?
 
@@ -57,14 +57,30 @@ what the process forbids outright.
 ## Writing skills and agents
 
 - `name` = folder (skill) or file name (agent). `description` is the trigger: say what it covers
-  **and** when to use it, with the user's likely words ("tracking stops when screen is off"). Max
-  1024 characters.
+  **and** when to use it, with the user's likely words ("tracking stops when screen is off"). Aim
+  for ≤ 300 characters (audit:harness warns above, errors above 1024): every description is in every
+  session's context.
+- **The frontmatter must be valid YAML**, or Claude Code silently drops the file (it vanishes from
+  the agent or skill list). An unquoted `: ` or ` #` inside a plain value breaks it, so write
+  descriptions as a folded block, which Prettier keeps:
+
+  ```yaml
+  description: >-
+    What it covers: the details. Use when …
+  ```
+
+  audit:harness parses every frontmatter with the `yaml` package; after editing, also check the name
+  appears in the session's list.
+
 - Body: the decisions and the commands, not a tutorial. Point to files with repo-root paths in
   backticks (audit:docs checks they exist). Name other skills as "the `x` skill" and agents by name
   (audit:harness checks they exist).
 - Agents: `tools:` least privilege (reviewers and planners get no Write/Edit); `model: opus` for
   judgement-heavy work, `sonnet` for well-specified building.
 - Add the name to the matching bullet in `CLAUDE.md` → "Claude Code setup".
+- `memory: project` agents keep notes in `.claude/agent-memory/<name>/`, resolved from the session's
+  working directory. Launch agents from the repo root: from inside `.claude/` they write a stray
+  nested `.claude/agent-memory/` (audit:harness reports any nested `.claude/`).
 
 ## Changing a hook rule
 
@@ -77,7 +93,10 @@ what the process forbids outright.
    the message.
 
 Hooks fail open on their own crashes (non-zero exit without JSON is a non-blocking error), so a
-broken hook shows up as a warning, not a wall. The gate in CI still catches everything.
+broken hook shows up as a warning, not a wall. CI (`ci:quality`) still catches code rules (lint,
+dependency rules, tests, log audit), but not process rules: a push to main, a tag, a local release
+or a squash merge is stopped only by the hook (and GitHub branch protection, where it is set up).
+Keep those rules tested.
 
 ## Keep it healthy
 
@@ -87,5 +106,8 @@ pnpm run audit:docs        # dead paths and links, incl. .claude/*.md
 node --test tools/__tests__/hook-rules.test.mjs tools/__tests__/harness-audit.test.mjs
 ```
 
-Both run in `pnpm run ci:quality` (audit:harness) or on demand (`/audit-docs`). When the code moves
-(a renamed folder, a new context, a new script), update the skill that describes it in the same PR.
+Where they run: audit:harness and the tool tests are in `pnpm run ci:quality`, so CI fails on them.
+audit:docs is **not** (its findings include judgement calls): run it yourself after touching any
+`*.md`, or `/audit-docs` for a full review. It treats git-ignored paths (build outputs such as
+`apps/web/out`) as known and skips `.claude/worktrees/`. When the code moves (a renamed folder, a
+new context, a new script), update the skill that describes it in the same PR.
