@@ -22,6 +22,16 @@ const TOC_FILE = path.join(import.meta.dirname, 'swagger-toc.mjs');
 /** Brand files the page may load (packages/brand/svg): the tab icon and the light-surface wordmark. */
 export const BRAND_FILES = ['mark.svg', 'wordmark-light.svg'];
 
+/** Brand fonts the page may load (packages/brand/fonts), served as ./fonts/<name>; nothing else. */
+export const FONT_FILES = [
+  'BigShouldersDisplay-Black.woff2',
+  'BarlowSemiCondensed-ExtraBold.woff2',
+  'Barlow-Regular.woff2',
+  'Barlow-Medium.woff2',
+  'Barlow-SemiBold.woff2',
+  'Barlow-Bold.woff2',
+];
+
 /**
  * The Swagger UI page, under the site's header (the same bar as /en): assets next to it, the spec at ./openapi.json. `toolbar` adds the dev
  * toolbar (only for requests from this machine, see withSwagger).
@@ -144,6 +154,10 @@ export function swaggerTarget(distRoot, urlPath) {
     const name = rest.slice('/brand/'.length);
     return BRAND_FILES.includes(name) ? { kind: 'brand', name } : null;
   }
+  if (rest.startsWith('/fonts/')) {
+    const name = rest.slice('/fonts/'.length);
+    return FONT_FILES.includes(name) ? { kind: 'font', name } : null;
+  }
   const resolved = path.resolve(distRoot, rest.replace(/^\/+/, ''));
   if (!resolved.startsWith(`${distRoot}${path.sep}`)) {
     return null;
@@ -208,7 +222,7 @@ function proxy(req, res, apiUrl, targetPath) {
  * Wraps a request handler: /swagger serves Swagger UI and the spec, /api proxies to the API dev
  * server, everything else goes to `next`.
  *
- * - `webRoot` (apps/web) and `brandDir` (packages/brand/svg) feed the CityTurfer skin and logos.
+ * - `webRoot` (apps/web) and `brandDir` (packages/brand/svg) and `fontsDir` (packages/brand/fonts) feed the CityTurfer skin, logos and fonts.
  * - `isLocal(req)` says whether the request comes from this machine (the dev-toolbar package's
  *   `isLocalClient`, the rule the site uses); only then is the dev toolbar injected and served.
  * - `loadTheme()` / `loadToolbar()` / `loadAppHeader()` default to ./swagger-brand.mjs,
@@ -222,6 +236,7 @@ export function withSwagger(
     apiUrl = DEFAULT_API_URL,
     webRoot = process.cwd(),
     brandDir,
+    fontsDir,
     isLocal = () => false,
     loadTheme = async () => (await import('./swagger-brand.mjs')).swaggerThemeCss(webRoot),
     loadToolbar = async () => (await import('./swagger-toolbar.mjs')).toolbarAssets(webRoot),
@@ -277,6 +292,13 @@ export function withSwagger(
     }
     if (target.kind === 'brand') {
       if (!brandDir || !(await sendFile(res, path.join(brandDir, target.name), 'image/svg+xml'))) {
+        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('Not found.\n');
+      }
+      return undefined;
+    }
+    if (target.kind === 'font') {
+      if (!fontsDir || !(await sendFile(res, path.join(fontsDir, target.name), 'font/woff2'))) {
         res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
         res.end('Not found.\n');
       }

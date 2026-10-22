@@ -34,7 +34,7 @@ import { setRequestLocale } from 'next-intl/server';
 import type { CSSProperties, ReactNode } from 'react';
 
 import { AppHeader } from '../[locale]/app-header';
-import { displayFont, numericFont } from '../fonts';
+import { bodyFont, displayFont, numericFont } from '../fonts';
 import { WAITLIST } from '../waitlist-config';
 import { BrandNav } from './brand-nav';
 import {
@@ -98,7 +98,7 @@ export default async function BrandingPage() {
   return (
     <html
       lang='en'
-      className={`${displayFont.variable} ${numericFont.variable}`}
+      className={`${displayFont.variable} ${numericFont.variable} ${bodyFont.variable}`}
       style={cssVariables(SITE_SCHEME) as CSSProperties}
     >
       <head>
@@ -343,7 +343,7 @@ export default async function BrandingPage() {
             </div>
           </Section>
 
-          <Section id='type' title='Typography' note='Archivo (SIL Open Font License)'>
+          <Section id='type' title='Typography' note='Big Shoulders Display and Barlow (SIL Open Font License)'>
             <div className='brand-stack'>
               {FONTS.map((f) => (
                 <div key={f.role} className='brand-card brand-type'>
@@ -352,7 +352,13 @@ export default async function BrandingPage() {
                     <span>{f.family}</span>
                     <span className='brand-muted'>{f.use}</span>
                   </div>
-                  <p className='brand-type-sample' style={{ fontFamily: `var(${f.cssVar})` }}>
+                  <p
+                    className='brand-type-sample'
+                    style={{
+                      fontFamily: `var(${f.cssVar})`,
+                      textTransform: f.cssVar === '--display' ? 'var(--display-case)' : undefined,
+                    }}
+                  >
                     {f.sample}
                   </p>
                 </div>

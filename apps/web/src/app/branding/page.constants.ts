@@ -263,31 +263,32 @@ export type FontSpec = { role: string; family: string; cssVar: string; sample: s
 export const FONTS: readonly FontSpec[] = [
   {
     role: 'Display',
-    family: 'Archivo Expanded Black · width 125, weight 900',
+    family: 'Big Shoulders Display Black · condensed, set in capitals',
     cssVar: '--display',
     sample: 'Own your streets',
-    use: 'Wordmark, hero, screen titles',
+    use: 'Hero, screen titles and headings; always in capitals',
   },
   {
     role: 'Numeric',
-    family: 'Archivo ExtraBold · weight 800, tabular figures',
+    family: 'Barlow Semi Condensed ExtraBold · tabular figures',
     cssVar: '--numeric',
     sample: '12.48 km · 1:04:37',
     use: 'Big numbers: distance, time, area',
   },
   {
     role: 'Body',
-    family: 'System · SF Pro, Roboto',
-    cssVar: '--font-family-body',
+    family: 'Barlow on the web · system font in the app (SF Pro, Roboto)',
+    cssVar: '--body',
     sample: 'Every street you cover becomes yours.',
     use: 'Body text, labels, buttons',
   },
 ];
 export const TYPE_RULES: readonly string[] = [
-  'The weight is part of each Archivo font: never add font-weight or bold, or Android falls back to the system font.',
+  'The weight is part of the display and numeric fonts: never add font-weight or bold to them, or Android falls back to the system font.',
+  'Display text is always set in capitals (DISPLAY_CASE) with 0.4 px tracking; the face is condensed, so size headings about a third larger than a wide face would need.',
   'Numbers always use tabular figures, so live stats don’t jitter.',
   `Labels are uppercase system text, ${FONT_SIZE.label}–${FONT_SIZE.caption} px, weight 600–700, with ${LABEL_TRACKING} px tracking.`,
-  'Archivo Expanded is wide: use it sparingly, track it −2% to −4%, and check long Polish lines at 320–375 px.',
+  'Check long Polish headings in capitals at 320–375 px (for example “Zapisz się na listę oczekujących”).',
 ];
 
 /** One sample per type size, set in the face that uses it (display, numbers or the system font). */
@@ -357,8 +358,12 @@ export const ASSETS: readonly BrandAsset[] = [
   {
     name: 'Store screenshots',
     where: 'apps/mobile/assets/brand/out/store/',
-    note: 'App Store 1290×2796, Play 1080×2340. Rendered locally, not in git; the framed screens predate Archivo and the dark app, so recapture before submitting',
+    note: 'App Store 1290×2796, Play 1080×2340. Rendered locally, not in git; the framed screens predate the current typefaces and the dark app, so recapture before submitting',
   },
-  { name: 'Fonts (OFL)', where: 'packages/brand/fonts/', note: 'Archivo static cuts, TTF + WOFF2' },
+  {
+    name: 'Fonts (OFL)',
+    where: 'packages/brand/fonts/',
+    note: 'Big Shoulders Display Black, Barlow Semi Condensed ExtraBold (TTF + WOFF2), Barlow 400–700 (WOFF2, web only)',
+  },
 ];
 export const RENDER_COMMAND = 'node apps/mobile/tools/brand/render-assets.mjs';

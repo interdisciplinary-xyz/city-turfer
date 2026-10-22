@@ -19,7 +19,7 @@
   background: transparent;
   border-bottom: 1px solid transparent;
   color: var(--text);
-  font-family: var(--font-family-body);
+  font-family: var(--face-body, 'Barlow'), var(--font-family-body);
   font-size: 17px;
   line-height: 1.55;
   transition:
