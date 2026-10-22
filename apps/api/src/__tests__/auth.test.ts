@@ -128,6 +128,42 @@ describe('sign-in with an e-mailed code', () => {
     expect((await signIn('m20@example.com', '123456', { 'X-Real-IP': '198.51.100.40' })).status).toBe(429);
   });
 
+  it('cuts off a slow brute force: 10 failed sign-ins per address per day, across codes and IPs', async () => {
+    const wrongFor = (code: string) => (code === '000000' ? '111111' : '000000');
+    let failures = 0;
+    for (let round = 0; failures < 10; round++) {
+      expect((await requestCode(EMAIL, { 'X-Real-IP': `198.51.100.${round}` })).status).toBe(202);
+      const code = codeIn(h.mailer.lastTo(EMAIL)?.text);
+      for (let i = 0; i < 3 && failures < 10; i++, failures++) {
+        const res = await signIn(EMAIL, wrongFor(code), { 'X-Real-IP': `198.51.100.${round}` });
+        expect(res.status).toBe(401);
+      }
+      // Past every 10-minute window: only the daily cap is left to stop it.
+      h.clock.t += 11 * 60_000;
+    }
+    expect((await requestCode(EMAIL, { 'X-Real-IP': '203.0.113.99' })).status).toBe(202);
+    const code = codeIn(h.mailer.lastTo(EMAIL)?.text);
+    // Even the right code is refused now, without burning it.
+    const limited = await signIn(EMAIL, code, { 'X-Real-IP': '203.0.113.99' });
+    expect(limited.status).toBe(429);
+    expect(Number(limited.headers.get('retry-after'))).toBeGreaterThan(20 * 3600);
+
+    h.clock.t += 24 * 3600_000;
+    expect((await signIn(EMAIL, code, { 'X-Real-IP': '203.0.113.99' })).status).toBe(200);
+  });
+
+  it('caps codes at 10 per address per day', async () => {
+    for (let i = 0; i < 10; i++) {
+      expect((await requestCode(EMAIL, { 'X-Real-IP': `198.51.100.${i}` })).status).toBe(202);
+      h.clock.t += 11 * 60_000;
+    }
+    const limited = await requestCode(EMAIL, { 'X-Real-IP': '203.0.113.99' });
+    expect(limited.status).toBe(429);
+    expect(await limited.json()).toMatchObject({ code: 'auth.rate-limited' });
+    h.clock.t += 24 * 3600_000;
+    expect((await requestCode(EMAIL)).status).toBe(202);
+  });
+
   it('accepts AUTH_FIXED_CODE only for the reserved test domain; real addresses get random codes', async () => {
     const fixed = await backupApp({ fixedCode: '000000' });
     const tryFixed = async (email: string) => {

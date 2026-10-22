@@ -24,6 +24,7 @@ export class IdentityService {
   async requestCode(email: string, ip: string): Promise<void> {
     await this.limit('codes:ip', ipBucket(ip), AUTH_LIMITS.codesPerIp);
     await this.limit('codes:email', email, AUTH_LIMITS.codesPerEmail);
+    await this.limit('codes-day:email', email, AUTH_LIMITS.codesPerEmailPerDay);
     // A mail failure is logged (without the address) by createAuth's onMailError and answers 202
     // all the same: the phone shows "check your inbox" and the user can ask again.
     await this.auth.api.sendVerificationOTP({ body: { email, type: 'sign-in' } });
@@ -35,16 +36,24 @@ export class IdentityService {
     code: string,
     ip: string
   ): Promise<{ token: string; expiresAt: number; user: { id: string; email: string } }> {
-    // Per IP only failures count (CGNAT: many honest phones share one IPv4 address).
-    const failedFromIp = { scope: 'sign-in-failed:ip', subject: ipBucket(ip), limit: AUTH_LIMITS.failedSignInsPerIp };
-    await this.check(failedFromIp.scope, failedFromIp.subject, failedFromIp.limit);
+    // Failures are checked first and counted only when they happen: per IP because many honest
+    // phones share one IPv4 address (CGNAT), per address and day against a slow brute force.
+    const failures = [
+      { scope: 'sign-in-failed:ip', subject: ipBucket(ip), limit: AUTH_LIMITS.failedSignInsPerIp },
+      { scope: 'sign-in-failed-day:email', subject: email, limit: AUTH_LIMITS.failedSignInsPerEmailPerDay },
+    ];
+    for (const f of failures) {
+      await this.check(f.scope, f.subject, f.limit);
+    }
     await this.limit('sign-in:email', email, AUTH_LIMITS.signInsPerEmail);
     let signedIn: { headers: Headers; response: { user: { id: string; email: string } } };
     try {
       signedIn = await this.auth.api.signInEmailOTP({ body: { email, otp: code }, returnHeaders: true });
     } catch (error) {
       if (isClientError(error)) {
-        await this.count(failedFromIp.scope, failedFromIp.subject, failedFromIp.limit);
+        for (const f of failures) {
+          await this.count(f.scope, f.subject, f.limit);
+        }
         throw new AppError('auth.invalid-code');
       }
       throw error;

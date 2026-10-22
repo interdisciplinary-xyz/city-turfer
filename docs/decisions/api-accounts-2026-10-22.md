@@ -20,17 +20,17 @@ narrows D7 of `docs/decisions/api-sync-2026-10-20.md` (Sign in with Apple later)
 
 ## Decisions
 
-| #   | Decision         | Chosen                                                                                                                                                                                                                                                       | Rejected                                                            |
-| --- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| A1  | Sign-in          | 6-digit code by e-mail, 10 min, single use, 3 wrong tries burn it, stored hashed; account created on the first sign-in                                                                                                                                       | passwords; magic links (need deep links, a native change)           |
-| A2  | Library          | Better Auth 1.7 (`better-auth/minimal`, drizzle adapter, `bearer` + `emailOTP`), called via `auth.api.*` from our zod-openapi routes; telemetry and its logger off                                                                                           | mounting `auth.handler` (ungenerated spec, non-problem errors)      |
-| A3  | Tables           | `auth_users`, `auth_sessions`, `auth_accounts`, `auth_verifications` beside ours; the Better Auth user id **is** `users.id`                                                                                                                                  | Better Auth on `users` (mixes its columns with ours)                |
-| A4  | Sessions         | bearer token = the session token signed with `BETTER_AUTH_SECRET` (`requireSignature`: the stored token alone is refused; rotating the secret revokes all), 60 days, sliding (refreshed when older than a day), no IP or user agent stored                   | JWTs (no revocation)                                                |
-| A5  | Rate limits      | ours, in Postgres (`rate_limits`, fixed windows, HMAC keys): codes 3/e-mail and 30/IP, sign-ins 10/e-mail and 20 failed/IP, per 10 min → 429 `auth.rate-limited`; an IP is the IPv4 address or the IPv6 /64 (loose per IP: CGNAT)                            | Better Auth's (runs only in `auth.handler`); Upstash now (D9 later) |
-| A6  | Old tokens       | composite verifier: device tokens first (no database), then sessions                                                                                                                                                                                         | a hard cut-over                                                     |
-| A7  | Existing data    | `auth:adopt -- <userId> <email>` creates the Better Auth user with the existing id: no copy                                                                                                                                                                  | migrating rows to a new id                                          |
-| A8  | Test and dev     | `AUTH_FIXED_CODE` (six digits) outside production, **only for `@e2e.cityturfer.test` addresses** (checked server-side; real addresses always get random codes) for Maestro; the local server prints codes (ConsoleMailer); tests capture them (MemoryMailer) | a backdoor account                                                  |
-| A9  | Production guard | `VERCEL_ENV=production` refuses to boot without `BETTER_AUTH_SECRET` (≥ 32), `BREVO_API_KEY`, `MAIL_FROM`, `API_PUBLIC_URL`, or with `AUTH_FIXED_CODE`                                                                                                       | degrade silently                                                    |
+| #   | Decision         | Chosen                                                                                                                                                                                                                                                                                                   | Rejected                                                            |
+| --- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| A1  | Sign-in          | 6-digit code by e-mail, 10 min, single use, 3 wrong tries burn it, stored hashed; account created on the first sign-in                                                                                                                                                                                   | passwords; magic links (need deep links, a native change)           |
+| A2  | Library          | Better Auth 1.7 (`better-auth/minimal`, drizzle adapter, `bearer` + `emailOTP`), called via `auth.api.*` from our zod-openapi routes; telemetry and its logger off                                                                                                                                       | mounting `auth.handler` (ungenerated spec, non-problem errors)      |
+| A3  | Tables           | `auth_users`, `auth_sessions`, `auth_accounts`, `auth_verifications` beside ours; the Better Auth user id **is** `users.id`                                                                                                                                                                              | Better Auth on `users` (mixes its columns with ours)                |
+| A4  | Sessions         | bearer token = the session token signed with `BETTER_AUTH_SECRET` (`requireSignature`: the stored token alone is refused; rotating the secret revokes all), 60 days, sliding (refreshed when older than a day), no IP or user agent stored                                                               | JWTs (no revocation)                                                |
+| A5  | Rate limits      | ours, in Postgres (`rate_limits`, fixed windows, HMAC keys): codes 3/e-mail and 30/IP, sign-ins 10/e-mail and 20 failed/IP, per 10 min; per e-mail and day 10 codes and 10 failed sign-ins (slow brute force) → 429 `auth.rate-limited`; an IP is the IPv4 address or the IPv6 /64 (loose per IP: CGNAT) | Better Auth's (runs only in `auth.handler`); Upstash now (D9 later) |
+| A6  | Old tokens       | composite verifier: device tokens first (no database), then sessions                                                                                                                                                                                                                                     | a hard cut-over                                                     |
+| A7  | Existing data    | `auth:adopt -- <userId> <email>` creates the Better Auth user with the existing id: no copy                                                                                                                                                                                                              | migrating rows to a new id                                          |
+| A8  | Test and dev     | `AUTH_FIXED_CODE` (six digits) outside production, **only for `@e2e.cityturfer.test` addresses** (checked server-side; real addresses always get random codes) for Maestro; the local server prints codes (ConsoleMailer); tests capture them (MemoryMailer)                                             | a backdoor account                                                  |
+| A9  | Production guard | `VERCEL_ENV=production` refuses to boot without `BETTER_AUTH_SECRET` (≥ 32), `BREVO_API_KEY`, `MAIL_FROM`, `API_PUBLIC_URL`, or with `AUTH_FIXED_CODE`                                                                                                                                                   | degrade silently                                                    |
 
 ## Flow
 
@@ -46,9 +46,9 @@ narrows D7 of `docs/decisions/api-sync-2026-10-20.md` (Sign in with Apple later)
 
 E-mail addresses live in `auth_users` (and `users.email`) and, while a code is pending, in the
 identifier of `auth_verifications`. Codes are stored as SHA-256. Rate-limit keys are HMACs of the
-address or IP, deleted an hour after their window. Nothing logs an address, a code or a token; the
-local dev server prints codes to its own console only. A mail failure answers 202 and logs the event
-name only.
+address or IP, deleted 25 h after their window started (the longest window plus an hour). Nothing
+logs an address, a code or a token; the local dev server prints codes to its own console only. A
+mail failure answers 202 and logs the event name only.
 
 ## Account deletion
 
@@ -57,8 +57,8 @@ cascade), the pending codes for the address, and `users`, from which consents, a
 gap routes), tombstones, the Home City and exports cascade. Afterwards the session token answers
 401; signing in with the same address starts a new, empty account. A device token still
 authenticates until it is removed from `API_TOKENS` (its next request starts an empty account).
-Rate-limit rows are HMAC-keyed and expire within about 70 minutes. Database backups keep the rows
-for Neon's restore window (to be stated with the plan).
+Rate-limit rows are HMAC-keyed and expire within about 25 hours. Database backups keep the rows for
+Neon's restore window (to be stated with the plan).
 
 ## Data export
 

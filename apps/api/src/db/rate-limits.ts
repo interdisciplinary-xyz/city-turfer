@@ -33,7 +33,8 @@ export class PostgresRateLimiter implements RateLimiter {
         },
       })
       .returning({ hits: rateLimits.hits, windowStartedAt: rateLimits.windowStartedAt });
-    await this.db.delete(rateLimits).where(lt(rateLimits.windowStartedAt, new Date(now - windowMs - RETENTION_MS)));
+    // By the longest window, not this one: a short limit's hit must not delete a daily counter.
+    await this.db.delete(rateLimits).where(lt(rateLimits.windowStartedAt, new Date(now - STALE_RATE_LIMIT_MS)));
     return { ok: row.hits <= max, retryAfterS: retryAfter(row.windowStartedAt, windowMs, now) };
   }
 

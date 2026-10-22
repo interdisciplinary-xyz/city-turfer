@@ -41,7 +41,7 @@ export function registerIdentity(app: OpenAPIHono<AppEnv>): void {
       security: [],
       summary: 'E-mail me a sign-in code',
       description:
-        'Sends a 6-digit one-time code (valid 10 minutes) to the address (use case RequestSignInCode). Always `202 {}`, also for an address without an account: the account is created by the first successful sign-in. Limits: 3 codes per address and 30 per IP (an IPv6 /64 counts as one IP) per 10 minutes (`429 auth.rate-limited` with `Retry-After`). A new code replaces the previous one.',
+        'Sends a 6-digit one-time code (valid 10 minutes) to the address (use case RequestSignInCode). Always `202 {}`, also for an address without an account: the account is created by the first successful sign-in. Limits: 3 codes per address per 10 minutes and 10 per day, 30 per IP (an IPv6 /64 counts as one IP) per 10 minutes (`429 auth.rate-limited` with `Retry-After`). A new code replaces the previous one.',
       request: { body: { required: true, content: json(RequestCodeBody) } },
       responses: {
         202: { description: 'Code sent if the address can receive it.', content: json(CodeRequested) },
@@ -72,7 +72,7 @@ export function registerIdentity(app: OpenAPIHono<AppEnv>): void {
       security: [],
       summary: 'Sign in with the code',
       description:
-        'Exchanges the e-mailed code for a bearer session of about 60 days, sliding (use case SignIn; Better Auth). Creates the account on the first sign-in. A wrong or expired code is `401 auth.invalid-code`; three wrong tries burn the code (ask for a new one). Limits: 10 sign-ins per address and 20 failed sign-ins per IP (an IPv6 /64 counts as one IP) per 10 minutes.',
+        'Exchanges the e-mailed code for a bearer session of about 60 days, sliding (use case SignIn; Better Auth). Creates the account on the first sign-in. A wrong or expired code is `401 auth.invalid-code`; three wrong tries burn the code (ask for a new one). Limits: 10 sign-ins per address and 20 failed sign-ins per IP (an IPv6 /64 counts as one IP) per 10 minutes, and 10 failed sign-ins per address per day (then even the right code answers `429` until the day is over).',
       request: { body: { required: true, content: json(SignInBody) } },
       responses: {
         200: { description: 'Signed in.', content: json(Session) },
