@@ -346,6 +346,43 @@ test('merges and device data need the user; squash is denied', () => {
   assert.deepEqual(bashFindings('git status && git log --oneline -5', CTX), []);
 });
 
+test('gh release create/edit/delete count as hand-made tags; --squash=true is a squash', () => {
+  for (const cmd of [
+    'gh release create v0.9.0',
+    'gh release create v0.9.0 --generate-notes --target scope/v0.9.0',
+    'gh release new v0.9.0',
+    'gh release edit v0.9.0 --tag v0.9.1',
+    'gh release delete v0.9.0 --cleanup-tag --yes',
+    'gh -R o/r release create v0.9.0',
+  ]) {
+    assert.deepEqual(rules(bashFindings(cmd, CTX)), ['tag'], cmd);
+  }
+  for (const cmd of [
+    'gh pr merge 109 --squash=true',
+    'gh pr merge 109 --rebase=1',
+    'gh pr merge 109 -ds',
+    'gh pr merge 109 --auto --squash',
+  ]) {
+    assert.ok(
+      bashFindings(cmd, CTX).some((f) => f.rule === 'merge-style' && f.decision === 'deny'),
+      cmd
+    );
+  }
+  // false positives: reading releases, merge commits, squash turned off, a body mentioning -s
+  assert.deepEqual(bashFindings('gh release view v0.8.0', CTX), []);
+  assert.deepEqual(bashFindings('gh release list --limit 5', CTX), []);
+  assert.deepEqual(bashFindings('gh release download v0.8.0 -p "*.apk"', CTX), []);
+  for (const cmd of [
+    'gh pr merge 109 --merge',
+    'gh pr merge 109 --squash=false --merge',
+    'gh pr merge 109 -dm',
+    'gh pr merge 109 -m -b "-s happens"',
+    'gh pr merge 109 -bsquash',
+  ]) {
+    assert.deepEqual(rules(bashFindings(cmd, CTX)), ['pr-merge'], cmd);
+  }
+});
+
 test('expected PR base per branch type and newest scope', () => {
   assert.deepEqual(expectedBase('feat/recording', 'scope/v0.8.0'), ['scope/v0.8.0']);
   assert.deepEqual(expectedBase('scope/v0.8.0'), ['release/v0.8.0']);

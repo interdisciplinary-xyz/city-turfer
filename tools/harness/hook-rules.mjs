@@ -592,7 +592,7 @@ function hasFlag(flags, long, short, stopAt = '') {
       name === long ||
       (long.startsWith('--') && name.startsWith('--') && name.length >= 4 && long.startsWith(name))
     ) {
-      return true;
+      return !/=(false|f|0)$/i.test(f); // `--squash=false` (pflag) turns the option off
     }
     if (!short || !/^-[A-Za-z]+$/.test(f)) {
       return false;
@@ -762,6 +762,18 @@ function switchedTo(sub, args) {
     return undefined;
   }
   return target;
+}
+
+/** `gh <group> <action> …` past gh's own `-R/--repo` option, or null. */
+function ghCall(words) {
+  if (!/^(?:.*\/)?gh$/.test(words[0] ?? '')) {
+    return null;
+  }
+  let k = 1;
+  while (k < words.length && words[k].startsWith('-')) {
+    k += ['-R', '--repo'].includes(words[k]) ? 2 : 1;
+  }
+  return { group: words[k], action: words[k + 1], args: words.slice(k + 2) };
 }
 
 const PUSH_VALUE_OPTIONS = ['-o', '--push-option', '--repo', '--receive-pack', '--exec'];
@@ -948,16 +960,25 @@ export function bashFindings(line, ctx = {}) {
     }
 
     // gh pr …
-    if (words[0] === 'gh' && words[1] === 'pr') {
-      const action = words[2];
-      const args = words.slice(3);
+    const gh = ghCall(words);
+
+    // Releases (and their tags) are made only by release.yml.
+    if (gh?.group === 'release' && ['create', 'new', 'edit', 'delete'].includes(gh.action)) {
+      deny(
+        'tag',
+        `gh release ${gh.action} creates, moves or deletes a release tag. Tags and releases are made only by release.yml (commit-and-tag-version) on merge to main.`
+      );
+    }
+
+    if (gh?.group === 'pr') {
+      const { action, args } = gh;
 
       if (action === 'merge') {
         ask(
           'pr-merge',
           "PR merges are the founder's call (merge commits, never squash; main only by hand). Confirm this merge."
         );
-        if (args.some((a) => ['--squash', '-s', '--rebase', '-r'].includes(a))) {
+        if (hasFlag(args, '--squash', 's', 'btFA') || hasFlag(args, '--rebase', 'r', 'btFA')) {
           deny(
             'merge-style',
             'Use merge commits (--merge), never squash or rebase: the changelog is built from the conventional commits.'
