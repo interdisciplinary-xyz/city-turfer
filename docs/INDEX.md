@@ -178,5 +178,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   back-end release (opt-in backup, real accounts, restore to a new phone, delete account, export) —
   founder decisions of 2026-10-22, what feat/backend-sync built, and what is left before testers can
   use it
+- 🚧 [`plans/sync-chain-testing-2026-10-22.md`](plans/sync-chain-testing-2026-10-22.md): How to test
+  that the four apps stay one system — every scenario starts on the phone (the source of truth) and
+  is checked in the API, the web portal and the admin portal; built by its own session in its own
+  worktree, lighting up as the portal lanes land
 
 <!-- docs-index:end -->
