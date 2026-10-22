@@ -708,6 +708,42 @@ function configSetsHooksPath(args) {
   return writesByFlag || value || ['set', 'unset'].includes(args[0]);
 }
 
+/**
+ * The branch `git switch|checkout …` leaves HEAD on: the name, null when the line cannot tell
+ * (`-`, `@{-1}`, `--detach`), or undefined when it does not move HEAD (`checkout -- file`).
+ */
+function switchedTo(sub, args) {
+  const create = optionValue(args, sub === 'switch' ? '--create' : '-b', sub === 'switch' ? '-c' : '-b');
+  const force = optionValue(args, sub === 'switch' ? '--force-create' : '-B', sub === 'switch' ? '-C' : '-B');
+  const orphan = optionValue(args, '--orphan');
+  const created = create ?? force ?? orphan;
+  if (created) {
+    return created;
+  }
+  if (args.includes('--') || args.some((a) => /^(-p|--patch|--pathspec-from-file.*)$/.test(a))) {
+    return undefined; // restores files; HEAD stays
+  }
+  if (args.some((a) => /^(-d|--detach)$/.test(a))) {
+    return null;
+  }
+  const { positional } = splitArgs(args, []);
+  const target = positional[0];
+  if (target === undefined) {
+    return undefined;
+  }
+  if (target === '-' || /^@\{-\d+\}$/.test(target)) {
+    return null;
+  }
+  // `git checkout apps/x.ts` restores a file: a path, not a branch (versioned names are branches)
+  if (
+    sub === 'checkout' &&
+    (/^\.{0,2}\//.test(target) || (/\.[A-Za-z]{1,5}$/.test(target) && !/v\d+\.\d+\.\d+$/.test(target)))
+  ) {
+    return undefined;
+  }
+  return target;
+}
+
 const PUSH_VALUE_OPTIONS = ['-o', '--push-option', '--repo', '--receive-pack', '--exec'];
 const RELEASE_DRY_RUN = (words) => words.includes('--dry-run');
 
@@ -723,8 +759,17 @@ export function bashFindings(line, ctx = {}) {
 
   const { commands, assignments } = parseShell(line);
   const hooksOffByEnv = assignments.some((a) => HOOKS_OFF_ENV.test(a));
+  // The branch HEAD is on as the line runs: `git switch main && git push` pushes main.
+  // null = unknown (`git switch -`).
+  let branch = ctx.branch;
   for (const words of commands) {
     const git = gitCall(words);
+    if (git?.sub === 'switch' || git?.sub === 'checkout') {
+      const next = switchedTo(git.sub, git.args);
+      if (next !== undefined) {
+        branch = next;
+      }
+    }
 
     // Hooks turned off without --no-verify: HUSKY=0, `-c core.hooksPath=…`, GIT_CONFIG_* env.
     if (
@@ -762,7 +807,7 @@ export function bashFindings(line, ctx = {}) {
         hasFlag(flags, '--force-with-lease') ||
         refspecs.some((r) => r.startsWith('+'));
       const toBranch = (r) => {
-        const name = r === 'HEAD' && ctx.branch ? ctx.branch : r.replace(/^refs\/heads\//, '');
+        const name = r === 'HEAD' && branch ? branch : r.replace(/^refs\/heads\//, '');
         return name;
       };
       const deleted = [];
@@ -775,8 +820,15 @@ export function bashFindings(line, ctx = {}) {
           targets.push(dst);
         }
       }
-      if (!refspecs.length && ctx.branch && !deleting) {
-        targets.push(ctx.branch);
+      if (!refspecs.length && branch && !deleting) {
+        targets.push(branch);
+      }
+      const unknownHead = branch === null && (!refspecs.length || refspecs.some((r) => /^\+?HEAD(:|$)/.test(r)));
+      if (unknownHead && !deleting) {
+        deny(
+          'push-main',
+          'This push follows `git switch -` (or `@{-N}`), so its branch cannot be told from the line. Push the branch by name: git push origin <branch>.'
+        );
       }
       if (hasFlag(flags, '--no-verify')) {
         deny(
@@ -896,7 +948,7 @@ export function bashFindings(line, ctx = {}) {
       if (action === 'create' || action === 'edit') {
         let head;
         if (action === 'create') {
-          head = optionValue(args, '--head', '-H') ?? ctx.branch;
+          head = optionValue(args, '--head', '-H') ?? branch ?? undefined;
         } else {
           const { positional } = splitArgs(args, [
             '--title',
@@ -921,7 +973,7 @@ export function bashFindings(line, ctx = {}) {
             '-R',
           ]);
           const target = positional[0];
-          head = target === undefined ? ctx.branch : /^\d+$|^https?:/.test(target) ? undefined : target;
+          head = target === undefined ? (branch ?? undefined) : /^\d+$|^https?:/.test(target) ? undefined : target;
         }
         const base = optionValue(args, '--base', '-B');
         const title = optionValue(args, '--title', '-t');

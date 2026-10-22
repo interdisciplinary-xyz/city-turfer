@@ -234,6 +234,36 @@ test('git push: never to main, no force-push to integration branches', () => {
   assert.deepEqual(rules(bashFindings('pnpm test && git push origin main', CTX)), ['push-main']);
 });
 
+test('a bare push after git switch/checkout in the same line targets the new branch', () => {
+  const feat = { branch: 'feat/harness', activeScope: 'scope/v0.9.0' };
+  for (const cmd of [
+    'git checkout main && git push',
+    'git switch main && git push',
+    'git switch main && git pull && git merge --no-ff scope/v0.9.0 && git push',
+    'git checkout main; git push origin HEAD',
+    'git switch -c main && git push -u origin HEAD',
+    'git checkout -B main origin/main && git push',
+  ]) {
+    assert.deepEqual(rules(bashFindings(cmd, feat)), ['push-main'], cmd);
+  }
+  assert.deepEqual(rules(bashFindings('git switch scope/v0.9.0 && git push --force', feat)), ['force-push']);
+  assert.deepEqual(rules(bashFindings('git switch - && git push', feat)), ['push-main']);
+  assert.deepEqual(rules(bashFindings('git checkout @{-1} && git push', feat)), ['push-main']);
+  // false positives: switching to a feature branch, restoring files, naming the branch
+  assert.deepEqual(bashFindings('git switch feat/x && git push', feat), []);
+  assert.deepEqual(bashFindings('git checkout -b feat/y && git push -u origin feat/y', feat), []);
+  assert.deepEqual(bashFindings('git switch -c feat/y origin/main && git push -u origin HEAD', feat), []);
+  assert.deepEqual(bashFindings('git checkout main && git pull && git checkout feat/x && git push', feat), []);
+  assert.deepEqual(bashFindings('git checkout -- apps/mobile/src/x.ts && git push', feat), []);
+  assert.deepEqual(bashFindings('git checkout main -- package.json && git push', feat), []);
+  assert.deepEqual(bashFindings('git checkout apps/mobile/src/x.ts && git push', feat), []);
+  assert.deepEqual(bashFindings('git switch - && git push origin feat/harness', feat), []);
+  assert.deepEqual(
+    bashFindings('git switch -c feat/z && gh pr create --base scope/v0.9.0 --title "city-turfer - feat/z"', feat),
+    []
+  );
+});
+
 test('git push --all, --branches, --mirror and glob refspecs count as pushing main', () => {
   for (const cmd of [
     'git push --mirror origin',
