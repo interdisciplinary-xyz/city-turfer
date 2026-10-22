@@ -220,7 +220,6 @@ img {
 }
 
 .app-header-link {
-  display: none;
   color: var(--muted);
   font-size: var(--font-caption);
   font-weight: var(--font-weight-bold);
@@ -232,9 +231,17 @@ img {
   color: var(--text);
 }
 
+/* Phones get the short label ("Waitlist"); from 600px the full one. */
+.app-header-link-long {
+  display: none;
+}
+
 @media (min-width: 600px) {
-  .app-header-link {
+  .app-header-link-long {
     display: inline;
+  }
+  .app-header-link-short {
+    display: none;
   }
 }
 
