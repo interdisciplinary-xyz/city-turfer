@@ -4,6 +4,10 @@
     "description": "Walk, run or ride — every street you cover becomes your turf. Come back and watch it glow.",
     "ogAlt": "CityTurfer: glowing routes on a dark city map, with the tagline Surf your city. Own your streets."
   },
+  "header": {
+    "home": "CityTurfer, home",
+    "waitlist": "Join the waitlist"
+  },
   "hero": {
     "skip": "Skip to content",
     "taglineLead": "Surf your city.",

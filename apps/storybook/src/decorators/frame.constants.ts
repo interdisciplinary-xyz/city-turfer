@@ -11,6 +11,8 @@ export type FrameProps = {
   locale: Locale;
   /** Website stories: the site is always dark, whatever the toolbar says. */
   web?: boolean;
+  /** Website stories: mark the page as loaded (the site's boot script does this) so the entrance plays. */
+  pageLoaded?: boolean;
   children: ReactNode;
 };
 
