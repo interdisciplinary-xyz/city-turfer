@@ -795,6 +795,60 @@ test('read-only agents: anything that writes, mutates git or runs code is denied
   assert.match(readOnlyBashFindings('rm x')[0].message, /read-only/);
 });
 
+test('edit-allowlisted agents: Bash writes only into their paths, and may ship', () => {
+  const scope = {
+    writable: ['docs/product/', 'docs/plans/', '.claude/agent-memory/product-manager/'],
+    root: '/repo',
+    cwd: '',
+  };
+  const denied = (line, sc = scope) => readOnlyBashFindings(line, sc).length > 0;
+  for (const line of [
+    "cat > apps/mobile/src/app/index.tsx <<'EOF'\nx\nEOF",
+    "sed -i '' s/a/b/ CLAUDE.md",
+    'echo x > CLAUDE.md',
+    'echo x > docs/product/../../CLAUDE.md',
+    'echo x > /repo/apps/web/messages/en.json',
+    'echo x | tee docs/product/a.md',
+    'cp /tmp/x apps/web/messages/en.json',
+    'cd apps && echo x > docs/product/a.md',
+    'echo x > $HOME/docs/product/a.md',
+    "node -e \"require('fs').writeFileSync('CLAUDE.md', '')\"",
+    "python3 -c \"open('CLAUDE.md', 'w')\"",
+    'git checkout -- apps/mobile/src/x.ts',
+    'git checkout main',
+    'git reset --hard',
+    'git stash',
+    'git merge scope/v0.9.0',
+    'pnpm --filter @cityturfer/api run db:migrate',
+    'pnpm run audit:docs -- --write-index && echo x > NOTEBOOK.md',
+  ]) {
+    assert.ok(denied(line), line);
+  }
+  for (const line of [
+    'echo "# notes" > docs/product/scratch.md',
+    'gh pr view 115 --json body > docs/plans/pr-115.json',
+    'echo x >> /repo/docs/product/evidence.md',
+    'echo x > /repo/.claude/worktrees/pm/docs/product/a.md',
+    'git switch -c docs/product-v0-10 scope/v0.9.0',
+    'git checkout -b docs/product-v0-10',
+    'git add docs/product && git commit -m "docs(product): v0.10 pitch"',
+    'git push -u origin docs/product-v0-10',
+    'gh pr create --base scope/v0.9.0 --title "city-turfer - docs/product-v0-10" --body x',
+    'pnpm run audit:docs -- --write-index',
+    "git branch -a --list '*scope/v*' && git log --oneline -15",
+    'grep -rn "Turf Map" docs/product | head',
+  ]) {
+    assert.deepEqual(readOnlyBashFindings(line, scope), [], line);
+  }
+  assert.ok(denied('echo x > docs/product/a.md', { ...scope, cwd: null }), 'cwd outside the repo');
+  assert.equal(readOnlyBashFindings('echo x > CLAUDE.md', scope)[0].rule, 'bash-allowlist');
+  assert.match(readOnlyBashFindings('echo x > CLAUDE.md', scope)[0].message, /may write only docs\/product\//);
+  // read-only agents keep the strict mode: no shipping, no --write-index
+  assert.ok(blocked('git commit -m x'));
+  assert.ok(blocked('pnpm run audit:docs -- --write-index'));
+  assert.ok(blocked('echo x > docs/product/a.md'));
+});
+
 test('edit allowlist: folders by trailing slash, files exactly, nothing outside the repo', () => {
   const allow = ['docs/product/', 'NOTEBOOK.md'];
   assert.ok(editAllowed('docs/product/brief.md', allow));
@@ -819,6 +873,15 @@ test('read-only-bash and edit-allowlist hooks end to end', () => {
   const bash = (command) => runAgentHook('read-only-bash.mjs', [], { tool_name: 'Bash', tool_input: { command } });
   assert.equal(bash('git diff HEAD~1'), 'allow');
   assert.equal(bash('git diff > x.patch'), 'deny');
+  const pmArgs = ['--allow', 'docs/product/,docs/plans/'];
+  const pmBash = (command, cwd = ROOT) =>
+    runAgentHook('read-only-bash.mjs', pmArgs, { tool_name: 'Bash', cwd, tool_input: { command } });
+  assert.equal(pmBash('echo x > docs/product/probe.md'), 'allow');
+  assert.equal(pmBash('echo x > CLAUDE.md'), 'deny');
+  assert.equal(pmBash('echo x > product/probe.md', resolve(ROOT, 'docs')), 'allow');
+  assert.equal(pmBash('echo x > ../CLAUDE.md', resolve(ROOT, 'docs')), 'deny');
+  assert.equal(pmBash('git commit -m "docs(product): x"'), 'allow');
+  assert.equal(pmBash("sed -i '' s/a/b/ CLAUDE.md"), 'deny');
 
   const args = ['--allow', 'docs/product/,.claude/agent-memory/product-manager/', '--ask', 'NOTEBOOK.md'];
   const edit = (path) =>

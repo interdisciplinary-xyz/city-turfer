@@ -83,8 +83,10 @@ what the process forbids outright.
   - **`tools:` is an allowlist** (omitted = every tool, an audit error). "Read-only" in the
     description means no Write/Edit, no `memory` (it grants both), and Bash only behind the
     `.claude/hooks/read-only-bash.mjs` hook in the agent's own `hooks:`. An agent that may edit only
-    some paths gets `.claude/hooks/edit-allowlist.mjs` (`--allow` / `--ask`). `Agent(a, b)` limits
-    which agents it may spawn (main-session agents only).
+    some paths gets `.claude/hooks/edit-allowlist.mjs` (`--allow` / `--ask`) and, if it has Bash,
+    `read-only-bash.mjs --allow <the same paths>` (it may also branch, commit, push and open PRs;
+    audit:harness errors without it, since Bash would route around the allowlist). `Agent(a, b)`
+    limits which agents it may spawn (main-session agents only).
   - **Model by the cost of a silent mistake**, not the role's seniority: `opus` where an error is
     subtle and surfaces late (tracking, data, maps, privacy, architecture); a cheaper model only
     where output is visible or mechanically checked, recorded as a YAML comment on the `model:` line

@@ -219,6 +219,36 @@ test('agent tools: allowlist required, Agent(x) targets exist, read-only is enfo
     ),
   });
   assert.deepEqual(guarded, []);
+
+  const allowlistHook =
+    'hooks:\n  PreToolUse:\n    - matcher: Edit|Write\n      hooks:\n        - type: command\n          command: node "$CLAUDE_PROJECT_DIR"/.claude/hooks/edit-allowlist.mjs --allow docs/product/\n';
+  const bashHook =
+    '    - matcher: Bash\n      hooks:\n        - type: command\n          command: node "$CLAUDE_PROJECT_DIR"/.claude/hooks/read-only-bash.mjs --allow docs/product/\n';
+  const hooks = { '.claude/hooks/edit-allowlist.mjs': '', '.claude/hooks/read-only-bash.mjs': '' };
+  const scopedOpen = kinds({
+    ...hooks,
+    '.claude/agents/a-engineer.md': agent('a-engineer'),
+    '.claude/agents/b-reviewer.md': raw(
+      'b-reviewer',
+      `description: Owns docs.\ntools: Read, Edit, Bash\n${allowlistHook}`
+    ),
+  });
+  assert.deepEqual(scopedOpen, ['error:tools:agent with an edit allowlist has Bash wi'], scopedOpen.join('\n'));
+  const scopedGuarded = kinds({
+    ...hooks,
+    '.claude/agents/a-engineer.md': agent('a-engineer'),
+    '.claude/agents/b-reviewer.md': raw(
+      'b-reviewer',
+      `description: Owns docs.\ntools: Read, Edit, Bash\n${allowlistHook}${bashHook}`
+    ),
+  });
+  assert.deepEqual(scopedGuarded, []);
+  const scopedNoBash = kinds({
+    ...hooks,
+    '.claude/agents/a-engineer.md': agent('a-engineer'),
+    '.claude/agents/b-reviewer.md': raw('b-reviewer', `description: Owns docs.\ntools: Read, Edit\n${allowlistHook}`),
+  });
+  assert.deepEqual(scopedNoBash, []);
 });
 
 test('agent frontmatter typos and a missing Not verified report are warnings', () => {

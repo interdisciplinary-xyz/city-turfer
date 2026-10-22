@@ -1191,8 +1191,19 @@ function scripts(args, scriptFlag) {
   return [];
 }
 
-/** Why one simple command is not read-only, or null when it is. */
-function writeReason(words) {
+/**
+ * git subcommands an agent with an edit allowlist may also run: it ships its own docs (branch,
+ * commit, push), while pre-bash.mjs still applies the branch policy. No checkout of files, reset,
+ * restore, stash or merge: those rewrite other owners' files.
+ */
+const SCOPED_GIT = new Set(['add', 'commit', 'push', 'pull', 'switch']);
+const DOCS_INDEX = /^(pnpm|npm) (run )?audit:docs -- --write-index$/;
+
+/**
+ * Why one simple command is not read-only, or null when it is. `scoped`: the agent has an edit
+ * allowlist, so it may also branch, commit, push, open PRs and regenerate docs/INDEX.md.
+ */
+function writeReason(words, scoped = false) {
   if (!words.length || SHELL_ENDS.has(words[0]) || /^\w+\)$/.test(words[0])) {
     return null;
   }
@@ -1225,6 +1236,9 @@ function writeReason(words) {
   if (name === '[[') {
     return null;
   }
+  if (scoped && DOCS_INDEX.test(words.join(' '))) {
+    return null; // regenerates docs/INDEX.md from the docs' frontmatter
+  }
   if (args.some((a) => WRITE_ARG.test(a))) {
     return `\`${args.find((a) => WRITE_ARG.test(a))}\` writes files`;
   }
@@ -1235,7 +1249,10 @@ function writeReason(words) {
     }
     const { sub, args: a } = git;
     const listing = (ok) => (ok ? null : `\`git ${sub}\` with these arguments can change the repo`);
-    if (GIT_READ_ONLY.has(sub)) {
+    if (GIT_READ_ONLY.has(sub) || (scoped && SCOPED_GIT.has(sub))) {
+      return null;
+    }
+    if (scoped && sub === 'checkout' && a.some((x) => /^-[bB]/.test(x)) && !a.includes('--')) {
       return null;
     }
     if (sub === 'branch') {
@@ -1274,6 +1291,9 @@ function writeReason(words) {
       ['pr', 'issue', 'run', 'repo', 'release'].includes(group) &&
       ['view', 'diff', 'checks', 'list', 'status'].includes(action)
     ) {
+      return null;
+    }
+    if (scoped && group === 'pr' && ['create', 'edit'].includes(action)) {
       return null;
     }
     if (group === 'api') {
@@ -1343,26 +1363,40 @@ function writeReason(words) {
 /**
  * Findings for a Bash command run by a read-only agent: anything that could write a file, change
  * git state or run arbitrary code. Unknown commands are denied (allowlist).
+ *
+ * With `scope.writable` (an agent with an edit allowlist, e.g. product-manager) the same rules
+ * apply, except that redirections may write into those paths and the agent may branch, commit,
+ * push and open PRs: its Bash cannot write where its Edit/Write may not.
+ * @param {string} line
+ * @param {{ writable?: string[], cwd?: string | null, root?: string }} [scope]  `cwd`: the
+ *   repo-relative working directory (null when outside the repo); `root`: the repo's absolute path
  * @returns {{ decision: 'deny', rule: string, message: string }[]}
  */
-export function readOnlyBashFindings(line) {
+export function readOnlyBashFindings(line, scope = {}) {
+  const scoped = Array.isArray(scope.writable);
   const out = [];
   const seen = new Set();
   const deny = (message) => {
     if (!seen.has(message)) {
       seen.add(message);
-      out.push({ decision: 'deny', rule: 'read-only-agent', message });
+      out.push({ decision: 'deny', rule: scoped ? 'bash-allowlist' : 'read-only-agent', message });
     }
   };
   const visit = (text, depth) => {
     const { commands, redirects } = parseShell(text);
+    const moves = commands.some((w) => ['cd', 'pushd', 'popd'].includes(w[0]));
     for (const r of redirects) {
-      if (r.op.includes('>') && !DEV_NULL.test(r.target) && !TEMP_PATH.test(r.target)) {
+      if (
+        r.op.includes('>') &&
+        !DEV_NULL.test(r.target) &&
+        !TEMP_PATH.test(r.target) &&
+        !(scoped && writableTarget(r.target, scope, moves || depth > 0))
+      ) {
         deny(`redirect \`${r.op} ${r.target}\` writes a file`);
       }
     }
     for (const words of commands) {
-      const reason = writeReason(words);
+      const reason = writeReason(words, scoped);
       if (reason) {
         deny(reason);
       }
@@ -1374,10 +1408,32 @@ export function readOnlyBashFindings(line) {
     }
   };
   visit(line, 0);
-  return out.map((f) => ({
-    ...f,
-    message: `${f.message}. This agent is read-only: report the finding or the command for the main session to run (READ_ONLY_COMMANDS and PNPM_READ_ONLY_SCRIPT in tools/harness/hook-rules.mjs; widen it there, with a test, only for a command that cannot write).`,
-  }));
+  const why = scoped
+    ? `. This agent may write only ${scope.writable.join(', ')}, and Bash may not reach further: use Edit/Write there, or report the change for its owner (scoped mode of readOnlyBashFindings in tools/harness/hook-rules.mjs)`
+    : '. This agent is read-only: report the finding or the command for the main session to run (READ_ONLY_COMMANDS and PNPM_READ_ONLY_SCRIPT in tools/harness/hook-rules.mjs; widen it there, with a test, only for a command that cannot write)';
+  return out.map((f) => ({ ...f, message: `${f.message}${why}.` }));
+}
+
+/**
+ * Whether a redirection target lands inside the writable paths. Relative targets resolve against
+ * `scope.cwd`, and are refused when the line changes directory (`cd x && echo > y`) or the target
+ * starts with a variable or `~`.
+ */
+function writableTarget(target, scope, moved) {
+  let rel;
+  if (target.startsWith('/')) {
+    if (!scope.root) {
+      return false;
+    }
+    rel = posix.relative(scope.root, target);
+  } else {
+    if (moved || scope.cwd === null || scope.cwd === undefined || /^[~$]/.test(target)) {
+      return false;
+    }
+    rel = posix.join(scope.cwd, target);
+  }
+  rel = posix.normalize(rel).replace(/^\.claude\/worktrees\/[^/]+\//, '');
+  return editAllowed(rel, scope.writable);
 }
 
 /**
