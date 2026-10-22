@@ -1,0 +1,255 @@
+/**
+ * Cloud Backup correctness (contract 0.4.0) through the real wiring and SQL: changes made while
+ * backup was off are reconciled, another account or server starts from scratch, renames go up as
+ * PATCH, an empty gap-routes check goes up too, a withdrawn consent leaves "nothing on the server",
+ * a retry after travelling sends the same content, and the demo profile never sends a request.
+ */
+import { SqliteActivityRepository } from '@/contexts/activity-log/infrastructure/sqlite-activity-repository';
+import { phone, type PhoneContainer, walk } from '@/test-support/backup-phone';
+
+const ACCOUNT = { token: 'secret-token', accountId: 'acct-1' };
+
+async function backedUp(c: PhoneContainer) {
+  expect(await c.cloudBackup.enable.execute()).toEqual({ kind: 'ok' });
+  return c.cloudBackup.run.execute();
+}
+
+const rows = (t: ReturnType<typeof phone>) =>
+  t.db.all<{ id: string; status: string; op: string | null }>(
+    'SELECT activity_id AS id, status, op FROM cb_activities ORDER BY started_at'
+  );
+
+describe('Cloud Backup: changes made while backup was off', () => {
+  it('reconciles deletes, corrections, renames and gap checks on the next comparison', async () => {
+    const t = phone({ account: ACCOUNT });
+    const c = await t.container();
+    await c.add('rec-del', walk(0));
+    await c.add('rec-ren', walk(1));
+    await c.add('rec-fix', walk(2, 10)); // a 10-minute GPS gap inside segment 0: split later
+    await c.add('rec-gap', walk(3));
+    await c.add('rec-same', walk(4));
+    await backedUp(c);
+    expect(t.server.activities.size).toBe(5);
+    const fixedVersion = t.server.activities.get('rec-fix')!.version;
+
+    // Off, but the server can't be told (offline, then the app is in the background): its copy stays,
+    // and nothing is queued meanwhile.
+    t.server.failNext('setConsent', { kind: 'offline' }, 2);
+    await c.cloudBackup.disable.execute();
+    t.app.foreground = false;
+    await c.activityLog.remove.execute('rec-del');
+    await c.activityLog.rename.execute('rec-ren', 'Canal loop');
+    await c.activityLog.splitTrackGaps.execute();
+    await new SqliteActivityRepository(t.db).saveGapRoutes('rec-gap', [], Date.parse('2026-10-20T12:00:00Z'));
+    await c.dispatcher.dispatchPending();
+    expect(await rows(t)).toEqual(expect.arrayContaining([{ id: 'rec-del', status: 'backed-up', op: null }]));
+    const before = t.server.requests.length;
+
+    // On again before the withdrawal reached the server: compare everything.
+    t.app.foreground = true;
+    await backedUp(c);
+    const sent = t.server.requests.slice(before).filter((r) => r.method !== 'changes' && r.method !== 'setConsent');
+    expect(sent.map((r) => `${r.method} ${r.id}`).sort()).toEqual(
+      ['deleteActivity rec-del', 'putActivity rec-fix', 'putGapRoutes rec-gap', 'renameActivity rec-ren'].sort()
+    );
+    expect(t.server.tombstones.has('rec-del')).toBe(true);
+    expect(t.server.activities.get('rec-ren')!.name).toBe('Canal loop');
+    expect(t.server.activities.get('rec-fix')!.version).toBe(fixedVersion + 1);
+    expect(
+      t.server
+        .calls('putActivity')
+        .filter((r) => r.id === 'rec-fix')
+        .at(-1)!.ifMatch
+    ).toBe(fixedVersion);
+    // "Checked, no gaps" is sent as an empty list.
+    expect(t.server.activities.get('rec-gap')!.gapRoutes).toEqual({ checkedAt: expect.any(Number), count: 0 });
+    expect(await rows(t)).toEqual([
+      { id: 'rec-del', status: 'deleted', op: null },
+      { id: 'rec-ren', status: 'backed-up', op: null },
+      { id: 'rec-fix', status: 'backed-up', op: null },
+      { id: 'rec-gap', status: 'backed-up', op: null },
+      { id: 'rec-same', status: 'backed-up', op: null },
+    ]);
+
+    // Nothing left to do: another comparison sends nothing.
+    await c.cloudBackup.useServer.execute(null);
+    const after = t.server.requests.length;
+    await c.cloudBackup.run.execute({ now: true });
+    expect(t.server.requests.slice(after).filter((r) => r.method !== 'changes')).toEqual([]);
+  });
+
+  it('never deletes server copies this phone did not back up (e.g. before a restore)', async () => {
+    const t = phone({ account: ACCOUNT });
+    const c = await t.container();
+    await c.add('rec-1', walk(0));
+    t.server.seed('other-phone-1', 3);
+    await backedUp(c);
+    expect(t.server.calls('deleteActivity')).toEqual([]);
+    expect(t.server.activities.has('other-phone-1')).toBe(true);
+  });
+});
+
+describe('Cloud Backup: renames and gap checks while on', () => {
+  it('sends a rename as PATCH with its time, after the upload; once', async () => {
+    const t = phone({ account: ACCOUNT });
+    const c = await t.container();
+    await c.add('rec-1', walk(0));
+    await backedUp(c);
+    t.advance(60_000);
+    await c.activityLog.rename.execute('rec-1', 'Sunrise walk');
+    await c.dispatcher.dispatchPending();
+    await c.backUp();
+    expect(t.server.calls('renameActivity').map((r) => r.id)).toEqual(['rec-1']);
+    expect(t.server.activities.get('rec-1')).toMatchObject({
+      name: 'Sunrise walk',
+      renamedAt: Date.parse('2026-10-20T12:01:00Z'),
+    });
+    expect(t.server.uploads()).toEqual(['rec-1']); // the track was not sent again
+  });
+
+  it('a rename before the first upload rides on the upload (no PATCH)', async () => {
+    const t = phone({ account: ACCOUNT });
+    const c = await t.container();
+    await c.add('rec-1', walk(0));
+    await c.activityLog.rename.execute('rec-1', 'First light');
+    await c.dispatcher.dispatchPending();
+    await backedUp(c);
+    expect(t.server.activities.get('rec-1')!.name).toBe('First light');
+    expect(t.server.calls('renameActivity')).toEqual([]);
+  });
+
+  it('sends "checked, no gaps" (an empty list) right after the upload', async () => {
+    const t = phone({ account: ACCOUNT, gapRouting: true });
+    const c = await t.container();
+    await c.add('rec-1', walk(0));
+    await c.estimateGaps(); // no gaps worth routing: checked, empty
+    await backedUp(c);
+    expect(t.server.activities.get('rec-1')!.gapRoutes).toEqual({ checkedAt: expect.any(Number), count: 0 });
+  });
+});
+
+describe('Cloud Backup: another account or server', () => {
+  it('starts from scratch: backup off, no rows kept from the other account', async () => {
+    const t = phone({ account: ACCOUNT });
+    const c = await t.container();
+    await c.add('rec-1', walk(0));
+    await backedUp(c);
+    expect(await rows(t)).toHaveLength(1);
+
+    t.account.value = { token: 'secret-token', accountId: 'acct-2' }; // another account on this profile
+    expect(await c.cloudBackup.run.execute()).toEqual({ kind: 'skipped', reason: 'off' });
+    expect(await rows(t)).toEqual([]);
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ enabled: false, backedUp: 0, total: 1 });
+  });
+
+  it('the first account seen is adopted as is (state from before accounts were tracked)', async () => {
+    const t = phone({ account: ACCOUNT });
+    const c = await t.container();
+    await c.add('rec-1', walk(0));
+    await backedUp(c);
+    await t.db.run('UPDATE cb_state SET account_key = NULL');
+    await c.cloudBackup.run.execute();
+    expect(await rows(t)).toHaveLength(1);
+    expect(await t.db.first('SELECT account_key AS k FROM cb_state')).toEqual({
+      k: expect.stringContaining('|acct-1'),
+    });
+  });
+
+  it('a device token asks the server whose it is; the same account keeps its state', async () => {
+    const t = phone({ token: 'secret-token' });
+    const c = await t.container();
+    await c.add('rec-1', walk(0));
+    await backedUp(c);
+    expect(t.server.calls('me').length).toBeGreaterThan(0);
+    // Signing in with a code as the same account (the device-token user adopted the email).
+    t.account.value = ACCOUNT;
+    await c.cloudBackup.run.execute();
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ enabled: true, backedUp: 1 });
+  });
+});
+
+describe('Cloud Backup: withdrawing a consent', () => {
+  it('off: once the server has it, nothing is on the server; on again uploads everything anew', async () => {
+    const t = phone({ account: ACCOUNT });
+    const c = await t.container();
+    await c.add('rec-1', walk(0));
+    await c.add('rec-2', walk(1));
+    await c.territory.chooseHomeCity.execute('pl-gdansk');
+    await c.dispatcher.dispatchPending();
+    await backedUp(c);
+    expect(t.server.homeCity).not.toBeNull();
+
+    expect(await c.cloudBackup.disable.execute()).toEqual({ kind: 'ok' });
+    expect(t.server.activities.size).toBe(0);
+    expect(await rows(t)).toEqual([]);
+    // Nothing on the phone was touched.
+    expect((await c.activityLog.list.execute()).length).toBe(2);
+
+    await backedUp(c);
+    expect(t.server.uploads()).toEqual(['rec-1', 'rec-2', 'rec-1', 'rec-2']);
+    expect(t.server.homeCity).toMatchObject({ cityId: 'pl-gdansk' });
+  });
+
+  it('Apple Health off: only the hk-* copies are forgotten', async () => {
+    const t = phone({ account: ACCOUNT });
+    const c = await t.container();
+    await c.add('rec-1', walk(0));
+    await c.add('hk-1', walk(1));
+    await backedUp(c);
+    await c.cloudBackup.includeHealth.execute(true);
+    await c.cloudBackup.run.execute();
+    expect(t.server.activities.has('hk-1')).toBe(true);
+
+    await c.cloudBackup.includeHealth.execute(false);
+    expect(t.server.activities.has('hk-1')).toBe(false);
+    expect((await rows(t)).map((r) => r.id)).toEqual(['rec-1']);
+  });
+});
+
+describe('Cloud Backup: time zone', () => {
+  it('a retry after travelling sends the same content (the zone the Activity was saved in)', async () => {
+    const t = phone({ account: ACCOUNT });
+    const c = await t.container();
+    await c.add('rec-1', walk(0)); // saved in Warsaw
+    await backedUp(c);
+    expect(t.server.activities.get('rec-1')).toMatchObject({ version: 1, timeZone: 'Europe/Warsaw' });
+
+    t.app.timeZone = 'Asia/Tokyo';
+    // The phone never heard back from that upload (killed): it sends it again.
+    await t.db.run("UPDATE cb_activities SET status = 'none', op = 'upload' WHERE activity_id = 'rec-1'");
+    await c.cloudBackup.run.execute();
+    expect(t.server.uploads()).toEqual(['rec-1', 'rec-1']);
+    expect(t.server.activities.get('rec-1')).toMatchObject({ version: 1, timeZone: 'Europe/Warsaw' });
+    expect(t.server.calls('activityVersion')).toEqual([]);
+  });
+});
+
+describe('Cloud Backup: profiles without an account', () => {
+  it('the demo profile sends no request at all, whatever is configured', async () => {
+    const t = phone({ profile: 'demo', account: ACCOUNT });
+    const c = await t.container();
+    await c.add('demo-1', walk(0));
+    await c.add('rec-1', walk(1));
+    await c.territory.chooseHomeCity.execute('pl-gdansk');
+    await c.dispatcher.dispatchPending();
+    expect(await c.cloudBackup.enable.execute()).toEqual({ kind: 'failed', error: 'not-available' });
+    expect(await c.cloudBackup.includeHealth.execute(false)).toEqual({ kind: 'failed', error: 'not-available' });
+    expect(await c.cloudBackup.disable.execute()).toEqual({ kind: 'failed', error: 'not-available' });
+    await c.cloudBackup.saveToken.execute('secret-token');
+    expect(await c.cloudBackup.run.execute({ now: true })).toEqual({ kind: 'skipped', reason: 'not-available' });
+    await c.runLaunchMaintenance();
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ available: false, enabled: false, hasToken: false });
+    expect(t.server.requests).toEqual([]);
+    expect(t.account.reads).toBe(0);
+    expect(await rows(t)).toEqual([]);
+  });
+
+  it('a profile with no account and no token sends nothing either', async () => {
+    const t = phone({ token: null });
+    const c = await t.container();
+    await c.add('rec-1', walk(0));
+    expect(await c.cloudBackup.enable.execute()).toEqual({ kind: 'failed', error: 'no-token' });
+    await c.runLaunchMaintenance();
+    expect(t.server.requests).toEqual([]);
+  });
+});

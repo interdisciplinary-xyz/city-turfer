@@ -122,3 +122,23 @@ describe('migration v9 (time zone and rename time of an Activity)', () => {
     });
   });
 });
+
+describe('migration v10 (cloud backup accounts, renames, gap checks)', () => {
+  it('keeps backup rows of a v9 database and adds the new columns empty', async () => {
+    const db = openNodeDatabase();
+    await migrate(db, 9);
+    await db.run('INSERT INTO cb_state (id, enabled) VALUES (1, 1)');
+    await db.run("INSERT INTO cb_activities (activity_id, started_at, status) VALUES ('a', 1, 'backed-up')");
+    await migrate(db, 10);
+    expect(await db.first('SELECT enabled, account_key, home_city_sent_at FROM cb_state')).toEqual({
+      enabled: 1,
+      account_key: null,
+      home_city_sent_at: null,
+    });
+    expect(await db.first('SELECT status, rename_pending, gaps_sent_at FROM cb_activities')).toEqual({
+      status: 'backed-up',
+      rename_pending: 0,
+      gaps_sent_at: null,
+    });
+  });
+});

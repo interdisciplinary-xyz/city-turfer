@@ -14,6 +14,8 @@ interface StateRow {
   withdrawals_pending: string | null;
   last_run_at: number | null;
   last_error: string | null;
+  account_key: string | null;
+  home_city_sent_at: number | null;
 }
 
 interface ActivityRow {
@@ -22,6 +24,8 @@ interface ActivityRow {
   status: ServerCopy;
   op: BackupOp | null;
   gaps_pending: number;
+  rename_pending: number;
+  gaps_sent_at: number | null;
   rev: number;
   server_version: number | null;
   uploaded_at: number | null;
@@ -49,6 +53,8 @@ async function readSettings(ex: SqlExecutor): Promise<BackupSettings> {
       .filter((p): p is ConsentPurpose => (PURPOSES as readonly string[]).includes(p)),
     lastRunAt: r.last_run_at,
     lastError: r.last_error as BackupErrorCode | null,
+    accountKey: r.account_key,
+    homeCitySentAt: r.home_city_sent_at,
   });
 }
 
@@ -56,12 +62,13 @@ async function writeSettings(ex: SqlExecutor, settings: BackupSettings): Promise
   const s = settings.toState();
   await ex.run(
     `INSERT INTO cb_state (id, enabled, health_enabled, server_url, cursor, backfilled_at, home_city_pending,
-       withdrawals_pending, last_run_at, last_error)
-     VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       withdrawals_pending, last_run_at, last_error, account_key, home_city_sent_at)
+     VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET enabled = excluded.enabled, health_enabled = excluded.health_enabled,
        server_url = excluded.server_url, cursor = excluded.cursor, backfilled_at = excluded.backfilled_at,
        home_city_pending = excluded.home_city_pending, withdrawals_pending = excluded.withdrawals_pending,
-       last_run_at = excluded.last_run_at, last_error = excluded.last_error`,
+       last_run_at = excluded.last_run_at, last_error = excluded.last_error, account_key = excluded.account_key,
+       home_city_sent_at = excluded.home_city_sent_at`,
     [
       s.enabled ? 1 : 0,
       s.healthIncluded ? 1 : 0,
@@ -72,6 +79,8 @@ async function writeSettings(ex: SqlExecutor, settings: BackupSettings): Promise
       s.withdrawalsPending.length > 0 ? s.withdrawalsPending.join(',') : null,
       s.lastRunAt,
       s.lastError,
+      s.accountKey,
+      s.homeCitySentAt,
     ]
   );
 }
@@ -83,6 +92,8 @@ const toBackup = (r: ActivityRow): ActivityBackup =>
     status: r.status,
     op: r.op,
     gapsPending: r.gaps_pending === 1,
+    renamePending: r.rename_pending === 1,
+    gapsSentAt: r.gaps_sent_at,
     rev: r.rev,
     serverVersion: r.server_version,
     uploadedAt: r.uploaded_at,
@@ -100,10 +111,11 @@ async function writeBackup(ex: SqlExecutor, b: ActivityBackup): Promise<void> {
   const s = b.toState();
   await ex.run(
     `INSERT INTO cb_activities (activity_id, started_at, status, op, gaps_pending, rev, server_version, uploaded_at,
-       attempts, next_attempt_at, error_code)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       attempts, next_attempt_at, error_code, rename_pending, gaps_sent_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(activity_id) DO UPDATE SET started_at = excluded.started_at, status = excluded.status,
        op = excluded.op, gaps_pending = excluded.gaps_pending, rev = excluded.rev,
+       rename_pending = excluded.rename_pending, gaps_sent_at = excluded.gaps_sent_at,
        server_version = excluded.server_version, uploaded_at = excluded.uploaded_at, attempts = excluded.attempts,
        next_attempt_at = excluded.next_attempt_at, error_code = excluded.error_code`,
     [
@@ -118,11 +130,13 @@ async function writeBackup(ex: SqlExecutor, b: ActivityBackup): Promise<void> {
       s.attempts,
       s.nextAttemptAt,
       s.errorCode,
+      s.renamePending ? 1 : 0,
+      s.gapsSentAt,
     ]
   );
 }
 
-/** Tables cb_state (one row) and cb_activities (migration 8). Every change is a read-modify-write in one transaction. */
+/** Tables cb_state (one row) and cb_activities (migrations 8, 10). Every change is a read-modify-write in one transaction. */
 export class SqliteBackupRepository implements BackupRepository {
   constructor(private readonly db: Database) {}
 
@@ -139,8 +153,42 @@ export class SqliteBackupRepository implements BackupRepository {
     });
   }
 
+  useAccount(key: string): Promise<BackupSettings> {
+    return this.db.transaction(async (tx) => {
+      const s = await readSettings(tx);
+      if (s.useAccount(key)) {
+        await tx.run('DELETE FROM cb_activities');
+      }
+      await writeSettings(tx, s);
+      return s;
+    });
+  }
+
+  forgetServerCopies(
+    change: (s: BackupSettings) => void,
+    erased: (activityId: string) => boolean
+  ): Promise<BackupSettings> {
+    return this.db.transaction(async (tx) => {
+      const s = await readSettings(tx);
+      change(s);
+      for (const { id } of await tx.all<{ id: string }>('SELECT activity_id AS id FROM cb_activities')) {
+        if (erased(id)) {
+          await tx.run('DELETE FROM cb_activities WHERE activity_id = ?', [id]);
+        }
+      }
+      await writeSettings(tx, s);
+      return s;
+    });
+  }
+
   backupOf(activityId: string): Promise<ActivityBackup | null> {
     return readBackup(this.db, activityId);
+  }
+
+  async backups(): Promise<ActivityBackup[]> {
+    return (await this.db.all<ActivityRow>('SELECT * FROM cb_activities ORDER BY started_at, activity_id')).map(
+      toBackup
+    );
   }
 
   updateBackup(activityId: string, startedAt: number, change: (b: ActivityBackup) => void): Promise<ActivityBackup> {
@@ -167,7 +215,8 @@ export class SqliteBackupRepository implements BackupRepository {
 
   async withWork(): Promise<ActivityBackup[]> {
     const rows = await this.db.all<ActivityRow>(
-      'SELECT * FROM cb_activities WHERE op IS NOT NULL OR gaps_pending = 1 ORDER BY started_at, activity_id'
+      `SELECT * FROM cb_activities WHERE op IS NOT NULL OR gaps_pending = 1 OR rename_pending = 1
+       ORDER BY started_at, activity_id`
     );
     return rows.map(toBackup);
   }

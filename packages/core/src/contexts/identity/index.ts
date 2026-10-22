@@ -10,4 +10,4 @@ export function createIdentityApi(deps: IdentityDeps, isRecording: () => Promise
 }
 export type IdentityApi = ReturnType<typeof createIdentityApi>;
 export type { IdentityDeps } from './application/use-cases';
-export type { User } from './domain/user';
+export { isLocalOnlyProfile, type User } from './domain/user';

@@ -19,9 +19,9 @@ export function createCloudBackupApi(deps: CloudBackupDeps) {
     saveToken: new SaveDeviceToken(deps),
     removeToken: new RemoveDeviceToken(deps),
     useServer: new UseBackupServer(deps),
-    enable: new EnableBackup(deps),
+    enable: new EnableBackup(deps, () => run.whenIdle()),
     disable: new DisableBackup(deps),
-    includeHealth: new IncludeHealthWorkouts(deps),
+    includeHealth: new IncludeHealthWorkouts(deps, () => run.whenIdle()),
     run,
     /** Outbox handlers (local only, never the network). */
     queue: new QueueBackupChanges(deps),
@@ -34,12 +34,15 @@ export type {
   ApiClientFactory,
   ApiFailure,
   ApiResult,
+  BackupCredentials,
   BackupRunReport,
   ChangesPage,
   CloudBackupDeps,
   DeviceTokenStore,
   HomeCitySource,
   ServerAccess,
+  ServerActivityCopy,
+  Sha256,
 } from './application/ports';
 export type { BackupRunResult } from './application/run-backup';
 export type * from './contract';

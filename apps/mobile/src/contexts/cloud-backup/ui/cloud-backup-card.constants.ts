@@ -26,14 +26,15 @@ export const OFF_PENDING = "Backup is off. We'll let the server know next time y
 
 /** Why backup stopped, in plain words (no guilt, one next step). */
 export const ERROR_TEXT: Record<BackupErrorCode, string> = {
-  'no-token': 'Paste your device token first.',
-  auth: "The server didn't accept this device token. Paste a new one.",
+  'no-token': 'Sign in with your email to back up.',
+  auth: 'Your sign-in has expired. Sign in again to carry on backing up.',
   consent: 'The server has no backup consent from you yet. Turn backup off and on again.',
   offline: "No connection right now. We'll carry on when you're online.",
   server: "The server had a hiccup. We'll try again shortly.",
   'not-ready': "The backup server isn't ready yet. Your activities wait safely on this phone.",
   busy: "The server is busy. We'll try again in a moment.",
   outdated: 'Update CityTurfer to keep backing up.',
+  'not-available': 'The demo account stays on this phone: it is never backed up.',
 };
 
 /** Domain error codes of the card's actions, in plain words. */

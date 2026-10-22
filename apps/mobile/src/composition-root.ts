@@ -72,6 +72,7 @@ const adapters = {
       uploadTimeoutMs: API_UPLOAD_TIMEOUT_MS,
     }),
     tokens: (userId: string) => new SecureStoreDeviceTokenStore(userId),
+    sha256: (text: string) => Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, text),
   },
   timeZone: deviceTimeZone,
 };

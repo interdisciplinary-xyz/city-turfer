@@ -9,8 +9,10 @@ import type {
   ChangesPage,
   ConsentPurpose,
   ServerAccess,
+  ServerActivityCopy,
   UploadSource,
 } from '../application/ports';
+import { canonicalTrackPoints } from '../domain/backup-policy';
 
 export interface FetchApiClientOptions {
   /** `CityTurfer-Client` header, e.g. `ios/0.8.0`. */
@@ -31,6 +33,12 @@ const CHANGES_PAGE_SIZE = 500;
 const CODE_PATTERN = /^[a-z0-9][a-z0-9.-]{0,63}$/;
 
 const iso = (ms: number) => new Date(ms).toISOString();
+/** ISO date-time → epoch ms; null when absent or not a date. */
+const ms = (v: unknown): number | null => {
+  const t = typeof v === 'string' ? Date.parse(v) : NaN;
+  return Number.isFinite(t) ? t : null;
+};
+const isNumber = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 const ok = <T>(value: T): ApiResult<T> => ({ ok: true, value });
 const fail = <T>(failure: ApiFailure): ApiResult<T> => ({ ok: false, failure });
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
@@ -85,7 +93,7 @@ function failureOf(a: Answer | null): ApiFailure {
   }
 }
 
-/** The upload body of contract 0.2.0 (ActivityUpload). Track points: [lon, lat, t, segment, altM|null]. */
+/** The upload body of contract 0.4.0 (ActivityUpload). Track points: [lon, lat, t, segment, altM|null]. */
 export function uploadBody(a: ActivityArchive, meta: { source: UploadSource; timeZone: string | null }) {
   return {
     type: a.type,
@@ -95,7 +103,83 @@ export function uploadBody(a: ActivityArchive, meta: { source: UploadSource; tim
     endedAt: iso(a.endedAt),
     ...(meta.timeZone ? { timeZone: meta.timeZone } : {}),
     resumedSegments: a.resumedSegments,
-    track: { points: a.track.map((p) => [p.lon, p.lat, Math.round(p.t), p.segment, p.alt ?? null]) },
+    track: { points: canonicalTrackPoints(a.track) },
+  };
+}
+
+type Points = [number, number, number, number, number | null][];
+
+function isPoints(v: unknown): v is Points {
+  return (
+    Array.isArray(v) &&
+    v.every(
+      (p) =>
+        Array.isArray(p) &&
+        p.length >= 4 &&
+        isNumber(p[0]) &&
+        isNumber(p[1]) &&
+        isNumber(p[2]) &&
+        Number.isInteger(p[3]) &&
+        (p[4] == null || isNumber(p[4]))
+    )
+  );
+}
+
+/** GET /v1/activities/{id} (ActivityDetail) + …/track → the server copy, or null when malformed. */
+export function serverCopyOf(detail: unknown, track: unknown): ServerActivityCopy | null {
+  if (!isObject(detail) || !isObject(track) || !isPoints(track.points)) {
+    return null;
+  }
+  const { id, type, name, version } = detail;
+  const startedAt = ms(detail.startedAt);
+  const endedAt = ms(detail.endedAt);
+  if (
+    typeof id !== 'string' ||
+    (type !== 'walk' && type !== 'run' && type !== 'cycle') ||
+    typeof name !== 'string' ||
+    !isNumber(version) ||
+    startedAt == null ||
+    endedAt == null
+  ) {
+    return null;
+  }
+  const resumed = detail.resumedSegments;
+  const routes = Array.isArray(detail.gapRoutes) ? detail.gapRoutes : [];
+  return {
+    id,
+    type,
+    name,
+    version,
+    source: detail.source === 'apple-health' ? 'apple-health' : 'recording',
+    startedAt,
+    endedAt,
+    timeZone: typeof detail.timeZone === 'string' ? detail.timeZone : null,
+    renamedAt: ms(detail.renamedAt),
+    resumedSegments: Array.isArray(resumed) && resumed.every(Number.isInteger) ? (resumed as number[]) : null,
+    track: track.points.map(([lon, lat, t, segment, alt]) => ({
+      lon,
+      lat,
+      t,
+      segment,
+      alt: alt ?? null,
+      accuracy: null,
+      speed: null,
+    })),
+    gapRoutes: routes.filter(isObject).flatMap((r) =>
+      Number.isInteger(r.afterSegment) && isNumber(r.distanceM) && isNumber(r.movingS) && Array.isArray(r.coords)
+        ? [
+            {
+              afterSegment: r.afterSegment as number,
+              distanceM: r.distanceM,
+              movingS: r.movingS,
+              coords: (r.coords as unknown[]).filter(
+                (c): c is [number, number] => Array.isArray(c) && isNumber(c[0]) && isNumber(c[1])
+              ),
+            },
+          ]
+        : []
+    ),
+    gapsCheckedAt: ms(detail.gapsCheckedAt),
   };
 }
 
@@ -116,6 +200,16 @@ class FetchApiClient implements ApiClient {
     this.fetchImpl = opts.fetchImpl ?? ((...args) => fetch(...args));
   }
 
+  async me(): Promise<ApiResult<{ id: string }>> {
+    const a = await this.request('GET', '/v1/me');
+    if (a?.status !== 200) {
+      return fail(failureOf(a));
+    }
+    return isObject(a.json) && typeof a.json.id === 'string'
+      ? ok({ id: a.json.id })
+      : fail({ kind: 'unavailable', reason: 'server' });
+  }
+
   async setConsent(purpose: ConsentPurpose, granted: boolean, policyVersion: string): Promise<ApiResult<void>> {
     const a = await this.request('PUT', `/v1/me/consents/${purpose}`, { body: { granted, policyVersion } });
     return a?.status === 200 || a?.status === 204 ? ok(undefined) : fail(failureOf(a));
@@ -134,6 +228,7 @@ class FetchApiClient implements ApiClient {
     const page: ChangesPage = {
       upserted: [],
       deleted: [],
+      homeCity: null,
       nextCursor: body.nextCursor,
       hasMore: body.hasMore === true,
     };
@@ -143,9 +238,20 @@ class FetchApiClient implements ApiClient {
       }
       const activity = c.activity;
       if (c.type === 'activity.upserted' && isObject(activity) && typeof activity.id === 'string') {
-        page.upserted.push({ id: activity.id, version: typeof activity.version === 'number' ? activity.version : 0 });
+        page.upserted.push({
+          id: activity.id,
+          version: isNumber(activity.version) ? activity.version : 0,
+          startedAt: ms(activity.startedAt) ?? 0,
+          name: typeof activity.name === 'string' ? activity.name : '',
+          trackHash: typeof activity.trackHash === 'string' ? activity.trackHash : '',
+        });
       } else if (c.type === 'activity.deleted' && typeof c.activityId === 'string') {
         page.deleted.push(c.activityId);
+      } else if (c.type === 'home-city.chosen' && (typeof c.cityId === 'string' || c.cityId === null)) {
+        const chosenAt = ms(c.chosenAt);
+        if (chosenAt != null) {
+          page.homeCity = { cityId: c.cityId, chosenAt };
+        }
       }
     }
     return ok(page);
@@ -171,6 +277,31 @@ class FetchApiClient implements ApiClient {
   async deleteActivity(activityId: string): Promise<ApiResult<void>> {
     const a = await this.request('DELETE', `/v1/activities/${encodeURIComponent(activityId)}`);
     return a && a.status >= 200 && a.status < 300 ? ok(undefined) : fail(failureOf(a));
+  }
+
+  async renameActivity(
+    activityId: string,
+    name: string,
+    renamedAt: number
+  ): Promise<ApiResult<{ version: number | null }>> {
+    const a = await this.request('PATCH', `/v1/activities/${encodeURIComponent(activityId)}`, {
+      body: { name, renamedAt: iso(renamedAt) },
+    });
+    return a?.status === 200 ? ok({ version: versionOf(a) }) : fail(failureOf(a));
+  }
+
+  async activityCopy(activityId: string): Promise<ApiResult<ServerActivityCopy>> {
+    const path = `/v1/activities/${encodeURIComponent(activityId)}`;
+    const detail = await this.request('GET', path);
+    if (detail?.status !== 200) {
+      return fail(failureOf(detail));
+    }
+    const track = await this.request('GET', `${path}/track`, { timeoutMs: this.opts.uploadTimeoutMs });
+    if (track?.status !== 200) {
+      return fail(failureOf(track));
+    }
+    const copy = serverCopyOf(detail.json, track.json);
+    return copy ? ok(copy) : fail({ kind: 'rejected', code: 'restore.malformed' });
   }
 
   async putGapRoutes(

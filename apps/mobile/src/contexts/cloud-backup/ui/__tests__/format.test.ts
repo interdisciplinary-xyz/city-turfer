@@ -25,7 +25,7 @@ describe('cloud backup copy', () => {
       expect(text.length).toBeGreaterThan(10);
     }
     expect(Object.keys(ERROR_TEXT).sort()).toEqual(
-      ['auth', 'busy', 'consent', 'no-token', 'not-ready', 'offline', 'outdated', 'server'].sort()
+      ['auth', 'busy', 'consent', 'no-token', 'not-available', 'not-ready', 'offline', 'outdated', 'server'].sort()
     );
   });
 });

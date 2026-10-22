@@ -10,6 +10,7 @@ import {
   type ActivityDeleted,
   type ActivityDistanceEstimated,
   type ActivityRecorded,
+  type ActivityRenamed,
   type ActivityTrackCorrected,
   createActivityLogApi,
   type GapRoutingEnvironment,
@@ -18,18 +19,21 @@ import {
 import { SqliteActivityRepository } from '@/contexts/activity-log/infrastructure/sqlite-activity-repository';
 import {
   type ApiClientFactory,
+  type BackupCredentials,
   type CloudBackupDeps,
   createCloudBackupApi,
   type DeviceTokenStore,
+  type Sha256,
 } from '@/contexts/cloud-backup';
 import { SqliteBackupRepository } from '@/contexts/cloud-backup/infrastructure/sqlite-backup-repository';
 import { createHealthSyncApi, type HealthStore } from '@/contexts/health-sync';
 import { SqliteHealthSyncRepository } from '@/contexts/health-sync/infrastructure/sqlite-health-sync-repository';
 import { UNAVAILABLE_HEALTH_STORE } from '@/contexts/health-sync/infrastructure/unavailable-health-store';
+import { isLocalOnlyProfile } from '@/contexts/identity';
 import { createRecordingApi, SerialCommandExecutor, type SessionFinished } from '@/contexts/recording';
 import type { LiveSessionNotifier, LocationTracker, PermissionGateway } from '@/contexts/recording/application/ports';
 import { SqliteRecordingSessionRepository } from '@/contexts/recording/infrastructure/sqlite-recording-session-repository';
-import { createTerritoryApi } from '@/contexts/territory';
+import { createTerritoryApi, type HomeCityChosen } from '@/contexts/territory';
 import { SqliteHomeCityRepository } from '@/contexts/territory/infrastructure/sqlite-home-city-repository';
 import { SqliteTerritoryRepository } from '@/contexts/territory/infrastructure/sqlite-territory-repository';
 import type { Database } from '@/platform/database';
@@ -59,26 +63,45 @@ export interface DeviceAdapters {
 
 export interface CloudBackupAdapters {
   api: ApiClientFactory;
+  /** The Developer tools device token of a profile. */
   tokens: (userId: string) => DeviceTokenStore;
+  /**
+   * How a profile reaches the server (its signed-in account). Omitted: its device token, whose
+   * account the server names (GET /v1/me).
+   */
+  credentials?: (userId: string, deviceToken: DeviceTokenStore) => BackupCredentials;
+  sha256: Sha256;
   /** Default: API_BASE_URL. */
   serverUrl?: string;
 }
+
+/** A device token only (no signed-in account): the server says whose it is. */
+const deviceTokenCredentials = (tokens: DeviceTokenStore): BackupCredentials => ({
+  current: async () => {
+    const token = await tokens.read();
+    return token ? { token, accountId: null } : null;
+  },
+});
 
 /** No server configured (most tests): every request answers "offline", and there is never a token. */
 const NO_CLOUD_BACKUP: CloudBackupAdapters = {
   api: () => {
     const offline = async () => ({ ok: false as const, failure: { kind: 'offline' as const } });
     return {
+      me: offline,
       setConsent: offline,
       changes: offline,
       putActivity: offline,
       activityVersion: offline,
       deleteActivity: offline,
+      renameActivity: offline,
+      activityCopy: offline,
       putGapRoutes: offline,
       putHomeCity: offline,
     };
   },
   tokens: () => ({ read: async () => null, save: async () => undefined, clear: async () => undefined }),
+  sha256: async () => '',
 };
 
 /** No setting given (e.g. tests that don't exercise gaps): never call the router. */
@@ -148,10 +171,15 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
   });
 
   const backupAdapters = a.cloudBackup ?? NO_CLOUD_BACKUP;
+  const deviceToken = backupAdapters.tokens(userId);
   const cloudBackupDeps: CloudBackupDeps = {
+    // The demo profile never talks to the API, whatever is configured.
+    available: a.cloudBackup != null && !isLocalOnlyProfile(userId),
     repo: new SqliteBackupRepository(db),
     api: backupAdapters.api,
-    tokens: backupAdapters.tokens(userId),
+    tokens: deviceToken,
+    credentials: backupAdapters.credentials?.(userId, deviceToken) ?? deviceTokenCredentials(deviceToken),
+    sha256: backupAdapters.sha256,
     activities: {
       timeline: () => activityLog.archive.timeline(),
       archiveOf: (id) => activityLog.archive.of(id),
@@ -189,7 +217,8 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
   dispatcher.on('ActivityDistanceEstimated', (e: DomainEvent) =>
     cloudBackup.queue.gapRoutesEstimated(e as ActivityDistanceEstimated)
   );
-  dispatcher.on('HomeCityChosen', () => cloudBackup.queue.homeCityChosen());
+  dispatcher.on('ActivityRenamed', (e: DomainEvent) => cloudBackup.queue.activityRenamed(e as ActivityRenamed));
+  dispatcher.on('HomeCityChosen', (e: DomainEvent) => cloudBackup.queue.homeCityChosen(e as HomeCityChosen));
 
   // Best effort, outside the outbox (needs the network): route new recording gaps after every dispatch run.
   const estimateGaps = () => activityLog.estimateGapRoutes.execute().catch(() => 0);

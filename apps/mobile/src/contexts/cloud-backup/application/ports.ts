@@ -20,24 +20,41 @@ export type ApiFailure =
 
 export type ApiResult<T> = { ok: true; value: T } | { ok: false; failure: ApiFailure };
 
-/** One page of the server's changes feed, reduced to what a one-way backup needs. */
+/** An Activity as the changes feed lists it (no preview, no track). */
+export interface ServerActivity {
+  id: string;
+  version: number;
+  startedAt: number;
+  name: string;
+  /** SHA-256 of the canonical track (see canonicalTrackPoints). */
+  trackHash: string;
+}
+
+/** One page of the server's changes feed, reduced to what backup and restore need. */
 export interface ChangesPage {
-  /** Activities the server holds, with their version, in feed order. */
-  upserted: { id: string; version: number }[];
+  /** Activities the server holds, in feed order. */
+  upserted: ServerActivity[];
   /** Activities deleted on the server (tombstones). */
   deleted: string[];
+  /** The last Home City choice on this page, if any. */
+  homeCity: HomeCityChoice | null;
   nextCursor: string;
   hasMore: boolean;
 }
+
+/** An Activity's full server copy (GET /v1/activities/{id} + …/track), for Restore. */
+export type ServerActivityCopy = ActivityArchive & { version: number; source: UploadSource };
 
 /** Where an uploaded Activity came from (the server's `source`). */
 export type UploadSource = 'recording' | 'apple-health';
 
 /**
- * Port: the CityTurfer API (apps/api, contract 0.2.0), already authenticated. The adapter is the
+ * Port: the CityTurfer API (apps/api, contract 0.4.0), already authenticated. The adapter is the
  * anti-corruption layer: wire formats, headers and status codes stay inside it.
  */
 export interface ApiClient {
+  /** GET /v1/me: whose token this is. */
+  me(): Promise<ApiResult<{ id: string }>>;
   setConsent(purpose: ConsentPurpose, granted: boolean, policyVersion: string): Promise<ApiResult<void>>;
   /** GET /v1/sync/changes; `cursor` null: everything (the manifest). */
   changes(cursor: string | null): Promise<ApiResult<ChangesPage>>;
@@ -50,6 +67,11 @@ export interface ApiClient {
   /** The server's current version of an Activity (after a 412). */
   activityVersion(activityId: string): Promise<ApiResult<{ version: number }>>;
   deleteActivity(activityId: string): Promise<ApiResult<void>>;
+  /** PATCH the name; the server keeps the latest `renamedAt`. */
+  renameActivity(activityId: string, name: string, renamedAt: number): Promise<ApiResult<{ version: number | null }>>;
+  /** The whole server copy of one Activity (detail + track), for Restore. */
+  activityCopy(activityId: string): Promise<ApiResult<ServerActivityCopy>>;
+  /** Replaces the gap routes; an empty list means "checked, no gaps". */
   putGapRoutes(
     activityId: string,
     checkedAt: number,
@@ -73,12 +95,33 @@ export interface DeviceTokenStore {
   clear(): Promise<void>;
 }
 
+/**
+ * Port: how this profile reaches the server — the signed-in account's bearer token (Identity) or a
+ * device token pasted in Developer tools. `accountId` null: ask the server (GET /v1/me). Read only
+ * in the foreground; never logged.
+ */
+export interface BackupCredentials {
+  current(): Promise<{ token: string; accountId: string | null } | null>;
+}
+
+/** Port: SHA-256 (lowercase hex) of a UTF-8 string. */
+export type Sha256 = (text: string) => Promise<string>;
+
 /** Port: Cloud Backup's own storage (cb_state, cb_activities). */
 export interface BackupRepository {
   settings(): Promise<BackupSettings>;
   /** Atomic read-modify-write of the settings row; returns the result. */
   updateSettings(change: (s: BackupSettings) => void): Promise<BackupSettings>;
+  /** Atomic: switches to another server/account; a real switch forgets every Activity's row. */
+  useAccount(key: string): Promise<BackupSettings>;
+  /** Atomic: settings change + forget the rows of the Activities the server erased. */
+  forgetServerCopies(
+    change: (s: BackupSettings) => void,
+    erased: (activityId: string) => boolean
+  ): Promise<BackupSettings>;
   backupOf(activityId: string): Promise<ActivityBackup | null>;
+  /** Every Activity's row (also those no longer on the phone). */
+  backups(): Promise<ActivityBackup[]>;
   /** Atomic read-modify-write of one Activity's row (created when missing). */
   updateBackup(activityId: string, startedAt: number, change: (b: ActivityBackup) => void): Promise<ActivityBackup>;
   /** Like updateBackup for many Activities, in one transaction. */
@@ -117,9 +160,14 @@ export interface BackupRunReport {
 export type { ConsentPurpose };
 
 export interface CloudBackupDeps {
+  /** False for profiles that never talk to the API (the demo profile): no request of any kind. */
+  available: boolean;
   repo: BackupRepository;
   api: ApiClientFactory;
+  /** The Developer tools device token (until the Turfer signs in with a code). */
   tokens: DeviceTokenStore;
+  credentials: BackupCredentials;
+  sha256: Sha256;
   activities: ActivitySource;
   homeCity: HomeCitySource;
   clock: Clock;

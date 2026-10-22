@@ -1,4 +1,4 @@
-import { DomainError } from '@/shared-kernel';
+import { DomainError, type TrackPoint } from '@/shared-kernel';
 
 /**
  * What may leave the phone. Activity ids tell where an Activity came from (published language of
@@ -19,6 +19,17 @@ export function sourceOf(activityId: string): ActivitySourceKind {
   }
   return activityId.startsWith(APPLE_HEALTH_PREFIX) ? 'apple-health' : 'recording';
 }
+
+/**
+ * The track as the server stores and hashes it (contract: TrackPoint `[lon, lat, t, segment,
+ * altitudeM | null]`, t in whole ms). `trackHash` is SHA-256 of `JSON.stringify` of exactly this.
+ */
+export function canonicalTrackPoints(track: readonly TrackPoint[]): [number, number, number, number, number | null][] {
+  return track.map((p) => [p.lon, p.lat, Math.round(p.t), p.segment, p.alt ?? null]);
+}
+
+/** The text whose SHA-256 is the server's `trackHash`. */
+export const trackHashInput = (track: readonly TrackPoint[]): string => JSON.stringify(canonicalTrackPoints(track));
 
 /**
  * Demo history is never uploaded; Apple Health imports only with their own consent (decision D2).
