@@ -1,4 +1,4 @@
-import { swaggerUI } from '@hono/swagger-ui';
+import { swaggerUI, type SwaggerUIOptions } from '@hono/swagger-ui';
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { requestId } from 'hono/request-id';
 import { secureHeaders } from 'hono/secure-headers';
@@ -17,6 +17,16 @@ import { registerSync } from './routes/sync';
 import { registerTerritory } from './routes/territory';
 import { registerHeaders } from './schemas/common';
 import { OPENAPI_CONFIG, SPEC_PATH, SWAGGER_UI_OPTIONS } from './spec';
+
+/**
+ * SWAGGER_UI_OPTIONS for @hono/swagger-ui. Its 0.6.1 types declare `syntaxHighlight.theme` as
+ * `string[]`, but Swagger UI reads one theme name (it ships 'idea'), and the middleware passes the
+ * object through JSON.stringify unchanged; hence the one cast.
+ */
+function swaggerUiOptions(): Omit<SwaggerUIOptions, 'url'> {
+  const { syntaxHighlight, ...rest } = SWAGGER_UI_OPTIONS;
+  return { ...rest, syntaxHighlight: syntaxHighlight as unknown as SwaggerUIOptions['syntaxHighlight'] };
+}
 
 /**
  * The CityTurfer API (`api-design` skill, docs/decisions/api-sync-2026-10-20.md). Routes are
@@ -74,7 +84,7 @@ export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
   registerInternal(app);
 
   app.doc31(SPEC_PATH, OPENAPI_CONFIG);
-  app.get('/swagger', swaggerUI({ url: SPEC_PATH, title: 'CityTurfer API', ...SWAGGER_UI_OPTIONS }));
+  app.get('/swagger', swaggerUI({ url: SPEC_PATH, title: 'CityTurfer API', ...swaggerUiOptions() }));
 
   app.notFound((c) => problem(c, 'not-found'));
   app.onError((err, c) => {

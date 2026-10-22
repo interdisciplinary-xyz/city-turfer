@@ -13,9 +13,10 @@ const WEB = path.resolve(import.meta.dirname, '../../apps/web');
 const TOOLS = path.join(WEB, 'tools');
 const HEX = /#[0-9a-fA-F]{3,8}\b/;
 
-test('the theme stylesheet is the brand dark variables plus a skin that only uses them', async () => {
-  const { cssVariables } = await loadBrand(WEB);
-  const vars = cssVariables('dark');
+test('the theme stylesheet is the site scheme variables plus a skin that only uses them', async () => {
+  const { cssVariables, SITE_SCHEME } = await loadBrand(WEB);
+  assert.equal(SITE_SCHEME, 'light');
+  const vars = cssVariables(SITE_SCHEME);
   const css = await swaggerThemeCss(WEB);
   for (const [name, value] of Object.entries(vars)) {
     assert.ok(css.includes(`${name}: ${value};`), `${name} missing from the root variables`);
@@ -26,6 +27,17 @@ test('the theme stylesheet is the brand dark variables plus a skin that only use
   for (const name of used) {
     assert.ok(name in vars || own.has(name), `${name} is neither a brand variable nor defined in the skin`);
   }
+});
+
+test('the skin is light and names no scheme itself', async () => {
+  const skin = await readFile(path.join(TOOLS, 'swagger-theme.css'), 'utf8');
+  assert.match(skin, /color-scheme: light;/);
+  assert.doesNotMatch(skin, /color-scheme: dark/);
+  // The dark-only trick that flipped Swagger's white copy icon.
+  assert.doesNotMatch(skin, /invert\(/);
+  const loader = await readFile(path.join(TOOLS, 'swagger-brand.mjs'), 'utf8');
+  assert.match(loader, /cssVariables\(SITE_SCHEME\)/);
+  assert.doesNotMatch(loader, /cssVariables\('(dark|light)'\)/);
 });
 
 test('no colour literals in the swagger route, theme, brand loader or toolbar files', async () => {
@@ -45,7 +57,8 @@ test('the page has the CityTurfer header, tab icon and the theme, but no toolbar
   const html = swaggerHtml();
   assert.match(html, /<title>CityTurfer API<\/title>/);
   assert.match(html, /rel="icon"[^>]*brand\/mark\.svg/);
-  assert.match(html, /brand\/wordmark\.svg/);
+  assert.match(html, /brand\/wordmark-light\.svg/);
+  assert.doesNotMatch(html, /brand\/wordmark\.svg/);
   assert.match(html, /ct-theme\.css/);
   assert.doesNotMatch(html, /toolbar/);
 });
@@ -57,9 +70,14 @@ test('the page carries the dev toolbar only when asked', () => {
   assert.match(html, /__toolbar\.js/);
 });
 
-test('only the two logos are served as brand files', () => {
+test('only the mark and the light wordmark are served as brand files', () => {
   assert.deepEqual(swaggerTarget('/d', '/swagger/brand/mark.svg'), { kind: 'brand', name: 'mark.svg' });
-  assert.deepEqual(swaggerTarget('/d', '/swagger/brand/wordmark.svg'), { kind: 'brand', name: 'wordmark.svg' });
+  assert.deepEqual(swaggerTarget('/d', '/swagger/brand/wordmark-light.svg'), {
+    kind: 'brand',
+    name: 'wordmark-light.svg',
+  });
+  // The night wordmark is for dark panels; this page is light.
+  assert.equal(swaggerTarget('/d', '/swagger/brand/wordmark.svg'), null);
   assert.equal(swaggerTarget('/d', '/swagger/brand/../secret'), null);
   assert.equal(swaggerTarget('/d', '/swagger/brand/other.svg'), null);
 });
@@ -82,6 +100,7 @@ const listen = (s) =>
 before(async () => {
   dir = await mkdtemp(path.join(tmpdir(), 'swagger-brand-'));
   await writeFile(path.join(dir, 'mark.svg'), '<svg id="mark"/>');
+  await writeFile(path.join(dir, 'wordmark.svg'), '<svg id="night"/>');
   const handler = withSwagger((_req, res) => res.end('next'), {
     distRoot: dir,
     specFile: path.join(dir, 'openapi.json'),
@@ -131,5 +150,8 @@ test('serves the theme and the logos', async () => {
   const mark = await fetch(`${url}/swagger/brand/mark.svg`);
   assert.equal(mark.headers.get('content-type'), 'image/svg+xml');
   assert.equal(await mark.text(), '<svg id="mark"/>');
-  assert.equal((await fetch(`${url}/swagger/brand/wordmark.svg`)).status, 404);
+  // Exists on disk, but is not a file this page may load: not a Swagger path, so it goes to `next`.
+  assert.equal(await (await fetch(`${url}/swagger/brand/wordmark.svg`)).text(), 'next');
+  // Allowed, but missing from this brand folder.
+  assert.equal((await fetch(`${url}/swagger/brand/wordmark-light.svg`)).status, 404);
 });

@@ -20,6 +20,8 @@ export const SWAGGER_UI_OPTIONS = {
   persistAuthorization: true,
   showExtensions: true,
   docExpansion: 'list',
+  // Light code blocks, to match the site's light theme (SITE_SCHEME in @cityturfer/brand).
+  syntaxHighlight: { activated: true, theme: 'idea' },
 } as const;
 
 /** Local dev API (`pnpm --filter @cityturfer/api dev`). */
