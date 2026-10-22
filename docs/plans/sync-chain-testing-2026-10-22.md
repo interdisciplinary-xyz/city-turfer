@@ -56,22 +56,22 @@ the same address always hit the one-code-a-minute `429`).
 
 ## What each app can see today (2026-10-22)
 
-| App                 | State                                         | What a phone change can show there                                                                        | What it can do to the phone                                                    |
-| ------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| API                 | `scope/v0.10.0`, contract 0.4.0               | Everything: activities with recomputed numbers, tombstones, consents, Home City                           | —                                                                              |
-| Web portal, Slice 0 | PR #141 (`feat/web-portal`), contract 0.5.0   | Privacy & data: account e-mail, backup and Apple Health consent state with dates, signed-in devices       | Sign out one device, others or all (phones included); delete account; export   |
-| Account settings    | PR #142 (`feat/account-settings`), also 0.5.0 | Name and e-mail on `/v1/me` for every session                                                             | E-mail or password change signs out every **other** session, browsers included |
-| Web portal, Slice 1 | planned                                       | Activities list, detail, turf map (needs server turf, lane C)                                             | —                                                                              |
-| Admin               | PR #139 (`feat/admin-portal`): staff sign-in  | Nothing yet. Its own Payload database holds staff only; user data waits for `/internal/admin/v1` (lane D) | Later: erasure, block                                                          |
+| App                 | State                                                   | What a phone change can show there                                                                        | What it can do to the phone                                                    |
+| ------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| API                 | `scope/v0.10.0`, contract 0.5.0 (with account settings) | Everything: activities with recomputed numbers, tombstones, consents, Home City                           | —                                                                              |
+| Web portal, Slice 0 | PR #141 (`feat/web-portal`), contract 0.5.0             | Privacy & data: account e-mail, backup and Apple Health consent state with dates, signed-in devices       | Sign out one device, others or all (phones included); delete account; export   |
+| Account settings    | **Merged** into `scope/v0.10.0` (#142), contract 0.5.0  | Name and e-mail on `/v1/me` for every session                                                             | E-mail or password change signs out every **other** session, browsers included |
+| Web portal, Slice 1 | planned                                                 | Activities list, detail, turf map (needs server turf, lane C)                                             | —                                                                              |
+| Admin               | PR #139 (`feat/admin-portal`): staff sign-in            | Nothing yet. Its own Payload database holds staff only; user data waits for `/internal/admin/v1` (lane D) | Later: erasure, block                                                          |
 
 The web portal shows **no activities, counts, "last backed up", Home City or turf** in Slice 0
 ("what we store" is static copy). So a recording, rename, delete or Home City change has nothing to
 show on the web yet; those columns wait for Slice 1.
 
-**#141 and #142 conflict.** Both claim contract 0.5.0 and change the same eight API files (identity
-routes, schemas, use cases, wiring, errors, `openapi.json`). Whichever merges second needs a real
-resolution by api-engineer. The chain suite was run against each branch on its own (below), not
-against both together.
+**#141 must now be merged with #142's API.** Both claimed contract 0.5.0 and changed the same eight
+API files (identity routes, schemas, use cases, wiring, errors, `openapi.json`). #142 is in scope,
+so #141 needs a real resolution by api-engineer before it merges. W1–W4 were verified against #141
+on its own (below).
 
 ## Scenarios
 
@@ -153,11 +153,15 @@ minutes.
 
 ### Verified on 2026-10-22
 
-| API under test                                | Result                                                            |
-| --------------------------------------------- | ----------------------------------------------------------------- |
-| `scope/v0.10.0` + this branch                 | 22 passed; W1–W4 and A1–A3 pending (routes missing), turf pending |
-| + `feat/web-portal` (#141), local merge       | 22 passed; W1–W4 pass; A1–A3 and turf pending                     |
-| + `feat/account-settings` (#142), local merge | 22 passed; A1–A3 pass; W1–W4 and turf pending                     |
+| API under test                                      | Result                                                        |
+| --------------------------------------------------- | ------------------------------------------------------------- |
+| `scope/v0.10.0` with #142 merged + this branch      | 22 passed, five full runs; A1–A3 pass; W1–W4 and turf pending |
+| + `feat/web-portal` (#141), local merge before #142 | 22 passed; W1–W4 pass                                         |
+
+One earlier full run failed W4 and A3 once and the details were lost; it did not come back in six
+runs, also from a cold cache. Since then every scenario turns backup on with a helper that waits for
+any backup run the app started in the background, and checks the outcome on the server and in the
+backup status rather than in one run's report.
 
 Two things the runs taught: turning backup on records the consent but uploads nothing until the next
 run (the app starts one at once); and an export asked for on the phone uses up the website's export
@@ -173,8 +177,8 @@ for that day.
 
 | #   | What                                                                                                     | Owner (skill)                         | Needs             |
 | --- | -------------------------------------------------------------------------------------------------------- | ------------------------------------- | ----------------- |
-| N1  | A4 (account change signs the web out) once #141 and #142 are both in                                     | mobile-test-engineer (mobile-testing) | both merged       |
-| N2  | Switch account actions to `ApiAuthGateway`'s methods (they exist on #142) instead of raw requests        | mobile-test-engineer                  | #142 merged       |
+| N1  | A4 (account change signs the web out) once #141 is in                                                    | mobile-test-engineer (mobile-testing) | #141 merged       |
+| N2  | Switch account actions to `ApiAuthGateway`'s methods (on scope now) instead of raw requests              | mobile-test-engineer                  | —                 |
 | N3  | Web Slice 1 columns: list, detail, map show S1–S7, same numbers                                          | portal-engineer (web-portal)          | lane C, Slice 1   |
 | N4  | Admin observer: counts, audit row per staff read, no coordinates (G9); erasure and block reach the phone | admin-engineer (admin-portal)         | lane D routes, P2 |
 | N5  | Browser rendering checks (Playwright) once the portal has a Playwright setup                             | portal-engineer                       | apps/web E2E      |
