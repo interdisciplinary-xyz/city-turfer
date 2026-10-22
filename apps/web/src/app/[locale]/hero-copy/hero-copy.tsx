@@ -10,7 +10,7 @@ export function HeroCopy() {
   return (
     <div className='hero-copy'>
       <Image className='mark' data-anim='mark' src={mark} alt='' priority width={132} height={132} />
-      <Image className='wordmark' data-anim='wordmark' src={wordmark} alt={NAME} priority width={320} height={101} />
+      <Image className='wordmark' data-anim='wordmark' src={wordmark} alt={NAME} priority width={320} height={76} />
       <h1>
         <span className='line' data-anim='line'>
           {t('taglineLead')}

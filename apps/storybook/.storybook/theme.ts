@@ -8,7 +8,7 @@ const FONT = `'${BODY_FONT_FAMILY}', ${SYSTEM_FONT_STACK}`;
 const SITE = THEMES[SITE_SCHEME];
 
 /**
- * Sidebar logo: the brand mark plus the light wordmark ("City" in night ink, "Turfer" in the faint →
+ * Sidebar logo: the brand mark plus the light wordmark ("CITY" in night ink, "TURFER" in the faint →
  * glow part of the Ramp; blazing never sits on light), as HTML because Storybook shows
  * `brandTitle` as markup when there is no `brandImage`. Relative paths, so it also works under
  * https://cityturfer.local/storybook.

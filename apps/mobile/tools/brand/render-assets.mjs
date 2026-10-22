@@ -34,8 +34,8 @@ const TARGETS = [
   { solid: '#0B0D12', out: 'android-icon-background.png', size: 1024 },
   { src: 'mark-foreground.svg', out: 'splash-icon.png', size: 1024, transparent: true },
   { src: 'mark.svg', out: 'favicon.png', size: 64, transparent: false },
-  { src: 'wordmark.svg', out: 'wordmark.png', width: 1102, height: 192, transparent: true },
-  { src: 'wordmark-light.svg', out: 'wordmark-light.png', width: 1102, height: 192, transparent: true },
+  { src: 'wordmark.svg', out: 'wordmark.png', width: 813, height: 192, transparent: true },
+  { src: 'wordmark-light.svg', out: 'wordmark-light.png', width: 813, height: 192, transparent: true },
   {
     template: 'og-image.html',
     out: join(WEB_PUBLIC, 'og-image.png'),
