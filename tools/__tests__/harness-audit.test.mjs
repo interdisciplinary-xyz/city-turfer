@@ -5,7 +5,7 @@ import { dirname, join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { auditHarness, codeText, listedNames, scriptReferences } from '../harness-audit.mjs';
+import { auditHarness, codeText, listedNames, scriptReferences, yamlFrontmatter } from '../harness-audit.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -105,4 +105,71 @@ test('reads the names in a CLAUDE.md setup bullet', () => {
   assert.deepEqual(listedNames(md, 'Agents'), ['x', 'y']);
   assert.deepEqual(listedNames(md, 'Commands'), ['audit-docs', 'audit-docs']);
   assert.equal(listedNames(md, 'Hooks'), null);
+});
+
+test('frontmatter must be real YAML: a plain description with ": " is dropped by Claude Code', () => {
+  const broken =
+    '---\nname: web-engineer\ndescription:\n  Builds and reviews the server\n  side: apps/api and more.\ntools: Read\n---\n\nBody.\n';
+  const nested = '---\nname: web-engineer\ndescription:\n  Builds the server side: apps/api.\n---\n\nBody.\n';
+  const oneLine = '---\nname: web-engineer\ndescription: Builds the server side: apps/api.\n---\n\nBody.\n';
+  const folded =
+    '---\nname: web-engineer\ndescription: >-\n  Builds the server side: apps/api and more.\ntools: Read\n---\n\nBody.\n';
+  assert.match(yamlFrontmatter(broken).error, /./);
+  assert.match(yamlFrontmatter(oneLine).error, /./);
+  assert.equal(yamlFrontmatter(folded).data.description, 'Builds the server side: apps/api and more.');
+  assert.equal(yamlFrontmatter('no frontmatter'), null);
+  // valid YAML, but the description became a mapping
+  assert.equal(typeof yamlFrontmatter(nested).data.description, 'object');
+
+  const dir = fixture({
+    'package.json': PKG,
+    'CLAUDE.md': CLAUDE_MD([], ['web-engineer']),
+    '.claude/agents/web-engineer.md': broken,
+  });
+  const findings = auditHarness(dir);
+  assert.ok(
+    findings.some((f) => f.severity === 'error' && f.kind === 'frontmatter' && /invalid YAML/.test(f.message)),
+    JSON.stringify(findings)
+  );
+
+  // false positive: the same text as a folded scalar passes
+  const ok = fixture({
+    'package.json': PKG,
+    'CLAUDE.md': CLAUDE_MD([], ['web-engineer']),
+    '.claude/agents/web-engineer.md': folded,
+  });
+  assert.deepEqual(auditHarness(ok), []);
+
+  const asMapping = fixture({
+    'package.json': PKG,
+    'CLAUDE.md': CLAUDE_MD([], ['web-engineer']),
+    '.claude/agents/web-engineer.md': nested,
+  });
+  assert.ok(auditHarness(asMapping).some((f) => /description is not a string/.test(f.message)));
+});
+
+test('warns about descriptions over 300 characters, errors over 1024', () => {
+  const long = (n) => `---\nname: s\ndescription: >-\n  ${'x'.repeat(n)}\n---\n\nBody.\n`;
+  const at = (n) =>
+    auditHarness(
+      fixture({ 'package.json': PKG, 'CLAUDE.md': CLAUDE_MD(['s'], []), '.claude/skills/s/SKILL.md': long(n) })
+    ).map((f) => `${f.severity}:${f.kind}`);
+  assert.deepEqual(at(300), []);
+  assert.deepEqual(at(301), ['warn:frontmatter']);
+  assert.deepEqual(at(1025), ['error:frontmatter']);
+});
+
+test('a nested .claude/ folder inside .claude/ is an error; worktrees are skipped', () => {
+  const dir = fixture({
+    'package.json': PKG,
+    'CLAUDE.md': CLAUDE_MD([], ['web-engineer']),
+    '.claude/agents/web-engineer.md': agent('web-engineer'),
+    '.claude/agents/.claude/agent-memory/pm/MEMORY.md': 'x',
+    '.claude/worktrees/agent-1/.claude/agents/x.md': 'x',
+  });
+  const stray = auditHarness(dir).filter((f) => f.kind === 'stray-claude-dir');
+  assert.deepEqual(
+    stray.map((f) => f.file),
+    ['.claude/agents/.claude']
+  );
 });
