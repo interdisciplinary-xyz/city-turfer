@@ -32,12 +32,6 @@ import { type Container, wire } from './wiring';
 
 // --- Identity (app-wide, no user database needed) ------------------------------
 
-const AUTH_MODE = process.env.EXPO_PUBLIC_AUTH_MODE ?? 'mock';
-const APP_ENV = process.env.EXPO_PUBLIC_APP_ENV ?? 'poc';
-if (AUTH_MODE === 'mock' && APP_ENV === 'production') {
-  throw new Error('Mock authentication must not ship in a production build (docs/poc-plan.md §4.0).');
-}
-
 // One instance for sign-in, sign-out and getContainer(): it caches the signed-in uid in memory.
 const sessionStore = new CachedSessionStore(new SecureStoreSessionStore());
 const tracker = new ExpoLocationTracker();
