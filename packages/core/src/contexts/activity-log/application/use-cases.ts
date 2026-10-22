@@ -184,12 +184,18 @@ export class RestoreActivity {
   }
 }
 
-/** Data repair: Activities saved before the time zone was kept get the phone's current one, once. */
+/**
+ * Data repair: Activities saved before the time zone was kept get the phone's current one, once.
+ * Throws when the phone's zone can't be read, so a run-once job is not marked done and retries.
+ */
 export class AssignMissingTimeZones {
   constructor(private readonly d: ActivityLogDeps) {}
   async execute(): Promise<{ checked: number; assigned: number }> {
     const zone = zoneOf(this.d);
-    const ids = zone ? await this.d.activities.idsWithoutTimeZone() : [];
+    if (!zone) {
+      throw new Error('activity-log.time-zone-unknown');
+    }
+    const ids = await this.d.activities.idsWithoutTimeZone();
     let assigned = 0;
     for (const id of ids) {
       const a = await this.d.activities.get(id);

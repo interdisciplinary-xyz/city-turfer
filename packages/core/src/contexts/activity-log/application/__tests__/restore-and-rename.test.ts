@@ -131,7 +131,9 @@ describe('time zone of an Activity', () => {
     const t = setup(null);
     await new ImportActivity(t.deps).execute({ id: 'a', type: 'walk', points: line(T0, 3) });
     expect((await t.activities.get('a'))!.toState().timeZone).toBeNull();
-    expect(await new AssignMissingTimeZones(t.deps).execute()).toEqual({ checked: 0, assigned: 0 }); // zone unknown
+    // Zone unknown: fails, so the run-once job is not marked done and runs again next launch.
+    await expect(new AssignMissingTimeZones(t.deps).execute()).rejects.toThrow('activity-log.time-zone-unknown');
+    expect((await t.activities.get('a'))!.toState().timeZone).toBeNull();
     t.tz.zone = 'Europe/Berlin';
     expect(await new AssignMissingTimeZones(t.deps).execute()).toEqual({ checked: 1, assigned: 1 });
     expect((await t.activities.get('a'))!.toState().timeZone).toBe('Europe/Berlin');
