@@ -60,7 +60,7 @@ export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
     type: 'http',
     scheme: 'bearer',
     description:
-      'Device token: a random secret minted with `pnpm --filter @cityturfer/api run token:new -- <userId>`; the server knows only its SHA-256 (env `API_TOKENS`). A stopgap until Better Auth.',
+      'A session token from `POST /v1/auth/sign-in` (e-mailed code, about 60 days, sliding), or — for one more release — a device token minted with `pnpm --filter @cityturfer/api run token:new -- <userId>` (the server knows only its SHA-256, env `API_TOKENS`).',
   });
   registerHeaders(app.openAPIRegistry);
 

@@ -80,11 +80,16 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
 - **Headers:** `X-Request-Id` on every answer; `CityTurfer-Client` (426 `client.too-old`);
   `Retry-After` + `RateLimit` on 429; `Location` on 201/202.
 - **Auth:** `bearerAuth` (HTTP bearer). Every route needs it except `GET /v1/health`,
-  `POST /v1/auth/sign-in` (mock, dev only), `/openapi.json` and `/swagger`. Today: **device tokens**
-  (stopgap until Better Auth) — env `API_TOKENS` maps `sha256(token)` hex → user id, compared in
-  constant time; unknown → 401 `auth.invalid`. The user row is created on first sight. The
-  placeholder verifier (spec generation, planned-route tests) marks callers unverified, which live
-  routes refuse.
+  `POST /v1/auth/codes`, `POST /v1/auth/sign-in`, `/openapi.json` and `/swagger`. **Sign-in** =
+  e-mailed 6-digit code via Better Auth (`apps/api/src/identity/`: `better-auth.ts`, `use-cases.ts`
+  IdentityService, `mailer.ts` Mailer port with Brevo/Console/Memory/Null adapters); we call
+  `auth.api.*` from our own routes, never mount `auth.handler`. Our own rate limits in Postgres
+  (`rate_limits`, `apps/api/src/db/rate-limits.ts`). Tables `auth_*`; the Better Auth user id is
+  `users.id`. The verifier is composite: **device tokens** (`API_TOKENS`, sha256 → user id, constant
+  time; one more release) first, then sessions; unknown → 401 `auth.invalid`. The user row is
+  created on first sight. The placeholder verifier (spec generation, planned-route tests) marks
+  callers unverified, which live routes refuse. Decision:
+  `docs/decisions/api-accounts-2026-10-22.md`.
 - **Consent:** activity and Home City writes need `cloud-sync` granted (Apple Health activities also
   `apple-health-in-cloud-sync`), else 403 `consent.required`; `DELETE` never needs it. Withdrawing
   erases the server copy it covered (`eraseBackup`, no tombstones): `cloud-sync` → everything but
@@ -121,7 +126,12 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   `DATABASE_URL` it uses PGlite in `apps/api/.data/` (gitignored, migrated on start); without
   `API_TOKENS` and `DATABASE_URL` the token `dev-token` is user `admin` (never against Neon).
 - **Env (Vercel):** `DATABASE_URL` (Neon pooled), optional `DATABASE_URL_UNPOOLED` (migrations),
-  `API_TOKENS`. Runbook: `docs/operations/api-deploy.md`.
+  `BETTER_AUTH_SECRET`, `BREVO_API_KEY`, `MAIL_FROM`, `API_PUBLIC_URL`, `API_TOKENS`;
+  `AUTH_FIXED_CODE` on previews only (production refuses to boot with it, or without the others:
+  `checkProductionEnv` in `apps/api/src/wiring.ts`). Runbook: `docs/operations/api-deploy.md`.
+- **Codes locally:** the dev server prints them (ConsoleMailer); tests read them from MemoryMailer
+  (`h.signIn(email)` in `apps/api/src/__tests__/support.ts`). `auth:adopt -- <userId> <email>` gives
+  an existing data user an e-mail sign-in.
 - **Schema change:** edit `apps/api/src/db/schema.ts` (`user_id` first in every key), then
   `pnpm --filter @cityturfer/api run db:generate`, commit `apps/api/drizzle/`. Apply with
   `DATABASE_URL=… pnpm --filter @cityturfer/api run db:migrate` before deploying (not in the build).

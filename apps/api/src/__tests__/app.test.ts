@@ -12,10 +12,13 @@ import { backupApp, closeSharedDb, TOKENS } from './support';
 /** Spec and planned routes: no database, the placeholder auth (any bearer token, never verified). */
 const app = createApp(defaultDeps({ log: silentLog }));
 const AUTH = { Authorization: 'Bearer test-token' };
-const PUBLIC = new Set(['getHealth', 'signIn']);
+const PUBLIC = new Set(['getHealth', 'requestSignInCode', 'signIn']);
 /** The one-way backup (docs/decisions/api-sync-2026-10-20.md): live since 0.3.0. */
 const LIVE = new Set([
   'getHealth',
+  'requestSignInCode',
+  'signIn',
+  'signOut',
   'getMe',
   'listConsents',
   'setConsent',
@@ -218,7 +221,7 @@ describe('OpenAPI document', () => {
 
   it('is OpenAPI 3.1 with every route of the decision record', () => {
     expect(doc.openapi).toBe('3.1.0');
-    expect(ops).toHaveLength(22);
+    expect(ops).toHaveLength(23);
   });
 
   it('gives every operation a unique id and a bounded-context tag', () => {
@@ -241,7 +244,7 @@ describe('OpenAPI document', () => {
       const id = o.op.operationId!;
       if (LIVE.has(id)) {
         expect([id, o.op['x-cityturfer-status']]).toEqual([id, undefined]);
-        expect([id, Object.hasOwn(o.op.responses ?? {}, '503')]).toEqual([id, !PUBLIC.has(id)]);
+        expect([id, Object.hasOwn(o.op.responses ?? {}, '503')]).toEqual([id, id !== 'getHealth']);
       } else {
         expect([id, o.op['x-cityturfer-status']]).toEqual([id, 'planned']);
         expect(o.op.responses).toHaveProperty('501');

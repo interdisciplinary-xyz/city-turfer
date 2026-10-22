@@ -143,4 +143,99 @@ export const homeCities = pgTable('home_cities', {
   changeSeq: seq('change_seq').notNull(),
 });
 
-export const schema = { users, consents, activities, activityTracks, gapRoutes, tombstones, homeCities };
+// ---------------------------------------------------------------------------------------------
+// Better Auth (email one-time codes + bearer sessions). Its own tables, prefixed `auth_`, mapped
+// in src/identity/better-auth.ts. The Better Auth user id **is** `users.id` (no copy of the data);
+// `users` rows of device-token callers have no `auth_users` row. JS keys are Better Auth's fields.
+// ---------------------------------------------------------------------------------------------
+
+export const authUsers = pgTable('auth_users', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull().default(''),
+  email: text('email').notNull().unique(),
+  emailVerified: boolean('email_verified').notNull().default(false),
+  image: text('image'),
+  createdAt: ts('created_at').notNull().defaultNow(),
+  updatedAt: ts('updated_at').notNull().defaultNow(),
+});
+
+/** A signed-in phone: the bearer token is `token` (sliding expiry). No IP or user agent is stored. */
+export const authSessions = pgTable(
+  'auth_sessions',
+  {
+    id: text('id').primaryKey(),
+    expiresAt: ts('expires_at').notNull(),
+    token: text('token').notNull().unique(),
+    createdAt: ts('created_at').notNull().defaultNow(),
+    updatedAt: ts('updated_at').notNull().defaultNow(),
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
+    userId: text('user_id')
+      .notNull()
+      .references(() => authUsers.id, { onDelete: 'cascade' }),
+  },
+  (t) => [index('auth_sessions_user').on(t.userId)]
+);
+
+/** Better Auth's linked accounts (unused by email codes; required by its schema). */
+export const authAccounts = pgTable(
+  'auth_accounts',
+  {
+    id: text('id').primaryKey(),
+    accountId: text('account_id').notNull(),
+    providerId: text('provider_id').notNull(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => authUsers.id, { onDelete: 'cascade' }),
+    accessToken: text('access_token'),
+    refreshToken: text('refresh_token'),
+    idToken: text('id_token'),
+    accessTokenExpiresAt: ts('access_token_expires_at'),
+    refreshTokenExpiresAt: ts('refresh_token_expires_at'),
+    scope: text('scope'),
+    password: text('password'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+    updatedAt: ts('updated_at').notNull().defaultNow(),
+  },
+  (t) => [index('auth_accounts_user').on(t.userId)]
+);
+
+/** Pending one-time codes: `value` is the SHA-256 of the code plus the attempt count. */
+export const authVerifications = pgTable(
+  'auth_verifications',
+  {
+    id: text('id').primaryKey(),
+    identifier: text('identifier').notNull(),
+    value: text('value').notNull(),
+    expiresAt: ts('expires_at').notNull(),
+    createdAt: ts('created_at').notNull().defaultNow(),
+    updatedAt: ts('updated_at').notNull().defaultNow(),
+  },
+  (t) => [index('auth_verifications_identifier').on(t.identifier)]
+);
+
+/** Fixed-window counters of the auth rate limits. Keys are HMACs of the e-mail or IP, never plain. */
+export const rateLimits = pgTable(
+  'rate_limits',
+  {
+    key: text('key').primaryKey(),
+    windowStartedAt: ts('window_started_at').notNull(),
+    hits: integer('hits').notNull(),
+  },
+  (t) => [index('rate_limits_window').on(t.windowStartedAt)]
+);
+
+export const schema = {
+  users,
+  consents,
+  activities,
+  activityTracks,
+  gapRoutes,
+  tombstones,
+  homeCities,
+  authUsers,
+  authSessions,
+  authAccounts,
+  authVerifications,
+  rateLimits,
+};

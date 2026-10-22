@@ -48,7 +48,8 @@ export const OPENAPI_CONFIG = {
     { name: 'Platform', description: 'Liveness. Public.' },
     {
       name: 'Identity',
-      description: 'The signed-in user. Sign-in is a dev-only mock until Better Auth (its endpoints arrive with it).',
+      description:
+        'Sign-in with an e-mailed one-time code (Better Auth behind our own routes), sign-out and the signed-in user.',
     },
     {
       name: 'Privacy',

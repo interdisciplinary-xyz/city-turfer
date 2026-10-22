@@ -3,7 +3,7 @@
   "info": {
     "title": "CityTurfer API",
     "version": "0.4.0",
-    "description": "The CityTurfer HTTP API: the app's use cases over HTTP, to back up and sync a local-first phone and, later, other clients.\n\n## Getting started\n\n- **Base URL:** pick a server above. Locally, `pnpm --filter @cityturfer/api dev` runs the API on port 8787 and `pnpm run web:dev` serves this page at https://cityturfer.local/swagger with the API under `/api`.\n- **Status:** the one-way **backup** (phone → server) is live: health, `/v1/me`, consents, activity upload/read/delete, track, gap routes, the changes feed and the Home City. The rest is designed but **planned**: its summary starts with `[planned]`, it carries `x-cityturfer-status: planned` and answers `501` once auth and validation pass. Live data routes answer `503 storage.unavailable` when the server has no database.\n- **Auth:** send `Authorization: Bearer <device token>` (button **Authorize**). Tokens are random secrets minted per user (`pnpm --filter @cityturfer/api run token:new -- <userId>`); the server stores only their SHA-256. A stopgap until Better Auth. A missing token answers `401` *before* the input is validated. Locally, `dev-token` works for user `admin` when `API_TOKENS` is not set.\n- **Consent:** activity and Home City writes need `PUT /v1/me/consents/cloud-sync` with `granted: true` first (else `403 consent.required`); Apple Health activities also `apple-health-in-cloud-sync`.\n- **Headers you send:** `Content-Type: application/json`; `Content-Encoding: gzip` for long tracks; `If-Match` to change an existing activity; `CityTurfer-Client: ios/0.8.0+123` (old clients may get `426 client.too-old`).\n- **Headers you get:** `X-Request-Id` on every answer (quote it when reporting a problem), `ETag` on activities, `Location` on 201/202, `Retry-After` and `RateLimit` on 429.\n- **Limits:** request and response bodies ≤ 4.5 MB (Vercel); ≤ 40,000 points per track; gzip bodies inflate to ≤ 16 MB.\n\n## Sync flow (phone ↔ server)\n\nThe phone is local-first and authoritative for what it recorded; the server stores activities with their tracks and recomputes everything derived (summaries, turf). Writes are keyed by ids the phone mints, so every request can be retried.\n\n**First upload of an existing history**\n1. `PUT /v1/me/consents/cloud-sync` (and `apple-health-in-cloud-sync` to include Apple Health imports).\n2. `GET /v1/sync/changes` without a cursor, every page: what the server already has (the manifest).\n3. For each local activity, oldest first (never `demo-…`): absent → `PUT /v1/activities/{id}`; same `trackHash` → done; different → `PUT` with `If-Match`; tombstoned → delete it locally.\n4. `PUT /v1/activities/{id}/gap-routes` once the phone checked the gaps (an empty list when there are none); `PUT /v1/turf/home-city`.\n5. Keep the last `nextCursor`.\n\n**Restore to a new phone**\n1. Sign in; `GET /v1/sync/changes` without a cursor while `hasMore` (entries carry ids, names, versions and `trackHash`, no geometry; a page ends at `limit` or about 1 MB).\n2. Per activity: `GET /v1/activities/{id}` (summary, gap routes, `gapsCheckedAt`) and `GET /v1/activities/{id}/track`. Store them as restored: never upload them back.\n3. Apply tombstones and the Home City; keep the last `nextCursor`.\n\n**Every day after**\n- **Push** from the outbox: recorded → `PUT`; track corrected → `PUT` + `If-Match`; renamed → `PATCH`; deleted → `DELETE`; gaps estimated → `PUT …/gap-routes`; Home City → `PUT /v1/turf/home-city`.\n- **Pull** on launch and foreground: `GET /v1/sync/changes?cursor=…` while `hasMore`; fetch `GET /v1/activities/{id}/track` (with `If-None-Match`) only when `trackHash` is new; apply tombstones by deleting locally. Pull **before** importing from Apple Health, so a workout recorded on another phone is not imported twice.\n\n**Conflicts:** same content → `200` (replay). Stale `If-Match` → `412`: pull, re-apply, retry. Different content without `If-Match` → `428`. Deleted id → `410 activity.deleted`: delete wins. Renames and the Home City: last write wins. Invalid cursor → `410 sync.cursor-expired`: start again without one.\n\n## Errors\n\nEvery error is `application/problem+json` (RFC 9457) with a stable `code`. `detail` is for people and never repeats input values; a `400` lists JSON pointers in `errors[]`.\n\n| code | status | meaning |\n| --- | --- | --- |\n| `invalid-request` | 400 | Invalid request |\n| `auth.missing` | 401 | Missing bearer token |\n| `auth.invalid` | 401 | Invalid or expired token |\n| `consent.required` | 403 | Give the cloud-sync consent first |\n| `not-found` | 404 | Not found |\n| `activity.deleted` | 410 | Activity was deleted |\n| `sync.cursor-expired` | 410 | Sync cursor expired: sync again without a cursor |\n| `precondition-failed` | 412 | The resource changed since your version |\n| `payload-too-large` | 413 | Request body too large |\n| `unsupported-media-type` | 415 | Unsupported content type or encoding |\n| `activity.track-too-short` | 422 | A track needs at least two points |\n| `activity.ends-before-start` | 422 | The activity ends before it starts |\n| `activity.invalid-name` | 422 | Names are 1 to 80 characters |\n| `activity.track-hash-mismatch` | 422 | trackHash does not match the track |\n| `activity.source-mismatch` | 422 | source does not match the id (hk-… is apple-health) |\n| `home-city.unknown` | 422 | Not a catalogue city |\n| `client.too-old` | 426 | Update the app to sync |\n| `precondition-required` | 428 | Send If-Match to change an existing resource |\n| `rate-limited` | 429 | Too many requests |\n| `internal` | 500 | Something went wrong |\n| `not-implemented` | 501 | Not implemented yet |\n| `storage.unavailable` | 503 | Storage is not available: retry later |\n\n## Units and formats\n\nJSON in camelCase. SI units with a suffix (`distanceM`, `movingS`, `areaKm2`). Timestamps ISO 8601 UTC; an activity may carry its IANA `timeZone` for display — the server derives nothing from local time. Coordinates `[lon, lat]` (GeoJSON order); bounding boxes `[west, south, east, north]`. Track points `[lon, lat, t, segment, altitudeM]`. `trackHash` = SHA-256 hex of `JSON.stringify(track.points)` (no whitespace, ECMAScript number formatting, upload order); the server computes it, so sending it is optional. Turf cells are H3 indexes (resolution 11).\n\n## Privacy\n\nGPS tracks, turf cells and the Home City are personal data. Cloud sync needs the `cloud-sync` consent; everything can be exported (`POST /v1/me/exports`) and erased (`DELETE /v1/me`). Nothing of it is logged: logs hold the route pattern, status, duration, request id and user id. Examples on this page use public landmarks (Warsaw Old Town).",
+    "description": "The CityTurfer HTTP API: the app's use cases over HTTP, to back up and sync a local-first phone and, later, other clients.\n\n## Getting started\n\n- **Base URL:** pick a server above. Locally, `pnpm --filter @cityturfer/api dev` runs the API on port 8787 and `pnpm run web:dev` serves this page at https://cityturfer.local/swagger with the API under `/api`.\n- **Status:** sign-in, backup and restore are live: health, auth, `/v1/me`, consents, activity upload/read/rename/delete, track, gap routes, the changes feed and the Home City. The rest is designed but **planned**: its summary starts with `[planned]`, it carries `x-cityturfer-status: planned` and answers `501` once auth and validation pass. Live data routes answer `503 storage.unavailable` when the server has no database.\n- **Auth:** `POST /v1/auth/codes` with an e-mail, then `POST /v1/auth/sign-in` with the 6-digit code from the e-mail: the answer's `token` goes in `Authorization: Bearer <token>` (button **Authorize**) for about 60 days (sliding); `DELETE /v1/auth/session` signs out. Device tokens (`API_TOKENS`) keep working for one more release. A missing token answers `401` *before* the input is validated. Locally the dev server prints the code (and `AUTH_FIXED_CODE=000000` makes every code `000000`); `dev-token` works for user `admin` on PGlite.\n- **Consent:** activity and Home City writes need `PUT /v1/me/consents/cloud-sync` with `granted: true` first (else `403 consent.required`); Apple Health activities also `apple-health-in-cloud-sync`.\n- **Headers you send:** `Content-Type: application/json`; `Content-Encoding: gzip` for long tracks; `If-Match` to change an existing activity; `CityTurfer-Client: ios/0.8.0+123` (old clients may get `426 client.too-old`).\n- **Headers you get:** `X-Request-Id` on every answer (quote it when reporting a problem), `ETag` on activities, `Location` on 201/202, `Retry-After` and `RateLimit` on 429.\n- **Limits:** request and response bodies ≤ 4.5 MB (Vercel); ≤ 40,000 points per track; gzip bodies inflate to ≤ 16 MB.\n\n## Sync flow (phone ↔ server)\n\nThe phone is local-first and authoritative for what it recorded; the server stores activities with their tracks and recomputes everything derived (summaries, turf). Writes are keyed by ids the phone mints, so every request can be retried.\n\n**First upload of an existing history**\n1. `PUT /v1/me/consents/cloud-sync` (and `apple-health-in-cloud-sync` to include Apple Health imports).\n2. `GET /v1/sync/changes` without a cursor, every page: what the server already has (the manifest).\n3. For each local activity, oldest first (never `demo-…`): absent → `PUT /v1/activities/{id}`; same `trackHash` → done; different → `PUT` with `If-Match`; tombstoned → delete it locally.\n4. `PUT /v1/activities/{id}/gap-routes` once the phone checked the gaps (an empty list when there are none); `PUT /v1/turf/home-city`.\n5. Keep the last `nextCursor`.\n\n**Restore to a new phone**\n1. Sign in; `GET /v1/sync/changes` without a cursor while `hasMore` (entries carry ids, names, versions and `trackHash`, no geometry; a page ends at `limit` or about 1 MB).\n2. Per activity: `GET /v1/activities/{id}` (summary, gap routes, `gapsCheckedAt`) and `GET /v1/activities/{id}/track`. Store them as restored: never upload them back.\n3. Apply tombstones and the Home City; keep the last `nextCursor`.\n\n**Every day after**\n- **Push** from the outbox: recorded → `PUT`; track corrected → `PUT` + `If-Match`; renamed → `PATCH`; deleted → `DELETE`; gaps estimated → `PUT …/gap-routes`; Home City → `PUT /v1/turf/home-city`.\n- **Pull** on launch and foreground: `GET /v1/sync/changes?cursor=…` while `hasMore`; fetch `GET /v1/activities/{id}/track` (with `If-None-Match`) only when `trackHash` is new; apply tombstones by deleting locally. Pull **before** importing from Apple Health, so a workout recorded on another phone is not imported twice.\n\n**Conflicts:** same content → `200` (replay). Stale `If-Match` → `412`: pull, re-apply, retry. Different content without `If-Match` → `428`. Deleted id → `410 activity.deleted`: delete wins. Renames and the Home City: last write wins. Invalid cursor → `410 sync.cursor-expired`: start again without one.\n\n## Errors\n\nEvery error is `application/problem+json` (RFC 9457) with a stable `code`. `detail` is for people and never repeats input values; a `400` lists JSON pointers in `errors[]`.\n\n| code | status | meaning |\n| --- | --- | --- |\n| `invalid-request` | 400 | Invalid request |\n| `auth.missing` | 401 | Missing bearer token |\n| `auth.invalid` | 401 | Invalid or expired token |\n| `auth.invalid-code` | 401 | Wrong or expired code: ask for a new one |\n| `consent.required` | 403 | Give the cloud-sync consent first |\n| `not-found` | 404 | Not found |\n| `activity.deleted` | 410 | Activity was deleted |\n| `sync.cursor-expired` | 410 | Sync cursor expired: sync again without a cursor |\n| `precondition-failed` | 412 | The resource changed since your version |\n| `payload-too-large` | 413 | Request body too large |\n| `unsupported-media-type` | 415 | Unsupported content type or encoding |\n| `activity.track-too-short` | 422 | A track needs at least two points |\n| `activity.ends-before-start` | 422 | The activity ends before it starts |\n| `activity.invalid-name` | 422 | Names are 1 to 80 characters |\n| `activity.track-hash-mismatch` | 422 | trackHash does not match the track |\n| `activity.source-mismatch` | 422 | source does not match the id (hk-… is apple-health) |\n| `home-city.unknown` | 422 | Not a catalogue city |\n| `client.too-old` | 426 | Update the app to sync |\n| `precondition-required` | 428 | Send If-Match to change an existing resource |\n| `rate-limited` | 429 | Too many requests |\n| `auth.rate-limited` | 429 | Too many codes or sign-ins: wait and try again |\n| `internal` | 500 | Something went wrong |\n| `not-implemented` | 501 | Not implemented yet |\n| `storage.unavailable` | 503 | Storage is not available: retry later |\n\n## Units and formats\n\nJSON in camelCase. SI units with a suffix (`distanceM`, `movingS`, `areaKm2`). Timestamps ISO 8601 UTC; an activity may carry its IANA `timeZone` for display — the server derives nothing from local time. Coordinates `[lon, lat]` (GeoJSON order); bounding boxes `[west, south, east, north]`. Track points `[lon, lat, t, segment, altitudeM]`. `trackHash` = SHA-256 hex of `JSON.stringify(track.points)` (no whitespace, ECMAScript number formatting, upload order); the server computes it, so sending it is optional. Turf cells are H3 indexes (resolution 11).\n\n## Privacy\n\nGPS tracks, turf cells and the Home City are personal data. Cloud sync needs the `cloud-sync` consent; everything can be exported (`POST /v1/me/exports`) and erased (`DELETE /v1/me`). Nothing of it is logged: logs hold the route pattern, status, duration, request id and user id. Examples on this page use public landmarks (Warsaw Old Town).",
     "license": {
       "name": "Proprietary",
       "identifier": "LicenseRef-Proprietary"
@@ -30,7 +30,7 @@
     },
     {
       "name": "Identity",
-      "description": "The signed-in user. Sign-in is a dev-only mock until Better Auth (its endpoints arrive with it)."
+      "description": "Sign-in with an e-mailed one-time code (Better Auth behind our own routes), sign-out and the signed-in user."
     },
     {
       "name": "Privacy",
@@ -54,7 +54,7 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "description": "Device token: a random secret minted with `pnpm --filter @cityturfer/api run token:new -- <userId>`; the server knows only its SHA-256 (env `API_TOKENS`). A stopgap until Better Auth."
+        "description": "A session token from `POST /v1/auth/sign-in` (e-mailed code, about 60 days, sliding), or — for one more release — a device token minted with `pnpm --filter @cityturfer/api run token:new -- <userId>` (the server knows only its SHA-256, env `API_TOKENS`)."
       }
     },
     "headers": {
@@ -132,55 +132,10 @@
           "database"
         ]
       },
-      "Session": {
+      "CodeRequested": {
         "type": "object",
-        "properties": {
-          "token": {
-            "type": "string",
-            "description": "Bearer token for the Authorization header.",
-            "example": "ct_abc123"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-11-19T07:12:00Z"
-          },
-          "user": {
-            "$ref": "#/components/schemas/User"
-          }
-        },
-        "required": [
-          "token",
-          "expiresAt",
-          "user"
-        ]
-      },
-      "User": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "admin"
-          },
-          "email": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Null when the token configuration names no e-mail (device tokens).",
-            "example": "admin@cityturfer.com"
-          },
-          "displayName": {
-            "type": "string",
-            "description": "Falls back to the user id.",
-            "example": "Admin"
-          }
-        },
-        "required": [
-          "id",
-          "email",
-          "displayName"
-        ]
+        "properties": {},
+        "description": "Empty: the same answer whether or not the e-mail has an account."
       },
       "Problem": {
         "type": "object",
@@ -226,6 +181,7 @@
           "invalid-request",
           "auth.missing",
           "auth.invalid",
+          "auth.invalid-code",
           "consent.required",
           "not-found",
           "activity.deleted",
@@ -242,6 +198,7 @@
           "client.too-old",
           "precondition-required",
           "rate-limited",
+          "auth.rate-limited",
           "internal",
           "not-implemented",
           "storage.unavailable"
@@ -267,23 +224,122 @@
           "code"
         ]
       },
+      "RequestCodeBody": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "format": "email",
+            "description": "Compared in lower case.",
+            "example": "ania@example.com"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "Session": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Bearer token: send `Authorization: Bearer <token>`. Store it in the keychain; never log it.",
+            "example": "q8VbXf3T2LwN0aZr5sJyK1mHcP7dUe4G"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z",
+            "description": "About 60 days ahead; using the session after a day moves it 60 days on (sliding)."
+          },
+          "user": {
+            "$ref": "#/components/schemas/SessionUser"
+          }
+        },
+        "required": [
+          "token",
+          "expiresAt",
+          "user"
+        ]
+      },
+      "SessionUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "u_7Hq2kX9mPz"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "format": "email",
+            "description": "Compared in lower case.",
+            "example": "ania@example.com"
+          }
+        },
+        "required": [
+          "id",
+          "email"
+        ]
+      },
       "SignInBody": {
         "type": "object",
         "properties": {
           "email": {
             "type": "string",
+            "maxLength": 254,
             "format": "email",
-            "example": "admin@cityturfer.com"
+            "description": "Compared in lower case.",
+            "example": "ania@example.com"
           },
-          "password": {
+          "code": {
             "type": "string",
             "minLength": 1,
-            "example": "••••••••"
+            "maxLength": 16,
+            "description": "The 6-digit code from the e-mail (works once, 10 minutes).",
+            "example": "493027"
           }
         },
         "required": [
           "email",
-          "password"
+          "code"
+        ]
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "u_7Hq2kX9mPz"
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 254,
+            "format": "email",
+            "description": "Null for device-token users.",
+            "example": "ania@example.com"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Falls back to the user id.",
+            "example": "u_7Hq2kX9mPz"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z",
+            "description": "When the server first saw the account."
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "displayName",
+          "createdAt"
         ]
       },
       "ErasureJob": {
@@ -1424,6 +1480,107 @@
         }
       }
     },
+    "/v1/auth/codes": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "requestSignInCode",
+        "security": [],
+        "summary": "E-mail me a sign-in code",
+        "description": "Sends a 6-digit one-time code (valid 10 minutes) to the address (use case RequestSignInCode). Always `202 {}`, also for an address without an account: the account is created by the first successful sign-in. Limits: 3 codes per address and 10 per IP per 10 minutes (`429 auth.rate-limited` with `Retry-After`). A new code replaces the previous one.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestCodeBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Code sent if the address can receive it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodeRequested"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input. Codes: `invalid-request`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "invalid-request": {
+                    "summary": "invalid-request",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/invalid-request",
+                      "title": "Invalid request",
+                      "status": 400,
+                      "code": "invalid-request"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many codes or sign-ins: wait `Retry-After` seconds. Codes: `auth.rate-limited`.",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.rate-limited": {
+                    "summary": "auth.rate-limited",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.rate-limited",
+                      "title": "Too many codes or sign-ins: wait and try again",
+                      "status": 429,
+                      "code": "auth.rate-limited"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "No database configured or reachable: retry later. Codes: `storage.unavailable`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "storage.unavailable": {
+                    "summary": "storage.unavailable",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/storage.unavailable",
+                      "title": "Storage is not available: retry later",
+                      "status": 503,
+                      "code": "storage.unavailable"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/auth/sign-in": {
       "post": {
         "tags": [
@@ -1431,10 +1588,8 @@
         ],
         "operationId": "signIn",
         "security": [],
-        "x-cityturfer-env": "dev",
-        "summary": "[planned] Sign in (mock, dev only)",
-        "description": "Exchanges the mock `admin` credentials for a bearer token on local and preview servers only; production never seeds that account (decision D8). Better Auth brings its own sign-in endpoints later (D7).",
-        "x-cityturfer-status": "planned",
+        "summary": "Sign in with the code",
+        "description": "Exchanges the e-mailed code for a bearer session of about 60 days, sliding (use case SignIn; Better Auth). Creates the account on the first sign-in. A wrong or expired code is `401 auth.invalid-code`; three wrong tries burn the code (ask for a new one). Limits: 10 sign-ins per address and 10 per IP per 10 minutes.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1478,17 +1633,17 @@
             }
           },
           "401": {
-            "description": "Wrong email or password. Codes: `auth.invalid`.",
+            "description": "Wrong, expired or used-up code. Codes: `auth.invalid-code`.",
             "content": {
               "application/problem+json": {
                 "examples": {
-                  "auth.invalid": {
-                    "summary": "auth.invalid",
+                  "auth.invalid-code": {
+                    "summary": "auth.invalid-code",
                     "value": {
-                      "type": "https://cityturfer.app/problems/auth.invalid",
-                      "title": "Invalid or expired token",
+                      "type": "https://cityturfer.app/problems/auth.invalid-code",
+                      "title": "Wrong or expired code: ask for a new one",
                       "status": 401,
-                      "code": "auth.invalid"
+                      "code": "auth.invalid-code"
                     }
                   }
                 },
@@ -1499,28 +1654,22 @@
             }
           },
           "429": {
-            "description": "Too many requests: wait `Retry-After` seconds. Codes: `rate-limited`.",
+            "description": "Too many codes or sign-ins: wait `Retry-After` seconds. Codes: `auth.rate-limited`.",
             "headers": {
               "Retry-After": {
                 "$ref": "#/components/headers/RetryAfter"
-              },
-              "RateLimit": {
-                "$ref": "#/components/headers/RateLimit"
-              },
-              "RateLimit-Policy": {
-                "$ref": "#/components/headers/RateLimitPolicy"
               }
             },
             "content": {
               "application/problem+json": {
                 "examples": {
-                  "rate-limited": {
-                    "summary": "rate-limited",
+                  "auth.rate-limited": {
+                    "summary": "auth.rate-limited",
                     "value": {
-                      "type": "https://cityturfer.app/problems/rate-limited",
-                      "title": "Too many requests",
+                      "type": "https://cityturfer.app/problems/auth.rate-limited",
+                      "title": "Too many codes or sign-ins: wait and try again",
                       "status": 429,
-                      "code": "rate-limited"
+                      "code": "auth.rate-limited"
                     }
                   }
                 },
@@ -1530,18 +1679,18 @@
               }
             }
           },
-          "501": {
-            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
+          "503": {
+            "description": "No database configured or reachable: retry later. Codes: `storage.unavailable`.",
             "content": {
               "application/problem+json": {
                 "examples": {
-                  "not-implemented": {
-                    "summary": "not-implemented",
+                  "storage.unavailable": {
+                    "summary": "storage.unavailable",
                     "value": {
-                      "type": "https://cityturfer.app/problems/not-implemented",
-                      "title": "Not implemented yet",
-                      "status": 501,
-                      "code": "not-implemented"
+                      "type": "https://cityturfer.app/problems/storage.unavailable",
+                      "title": "Storage is not available: retry later",
+                      "status": 503,
+                      "code": "storage.unavailable"
                     }
                   }
                 },
@@ -1560,14 +1709,13 @@
           "Identity"
         ],
         "operationId": "signOut",
-        "summary": "[planned] Sign out",
-        "description": "Revokes the current token (use case SignOut).",
+        "summary": "Sign out",
+        "description": "Revokes the session of this bearer token (use case SignOut); the token answers `401` afterwards. Idempotent. A device token cannot be revoked here (remove it from `API_TOKENS`): `204` all the same.",
         "security": [
           {
             "bearerAuth": []
           }
         ],
-        "x-cityturfer-status": "planned",
         "responses": {
           "204": {
             "description": "Signed out."
@@ -1634,18 +1782,18 @@
               }
             }
           },
-          "501": {
-            "description": "Planned route, not implemented yet. Codes: `not-implemented`.",
+          "503": {
+            "description": "No database configured or reachable: retry later. Codes: `storage.unavailable`.",
             "content": {
               "application/problem+json": {
                 "examples": {
-                  "not-implemented": {
-                    "summary": "not-implemented",
+                  "storage.unavailable": {
+                    "summary": "storage.unavailable",
                     "value": {
-                      "type": "https://cityturfer.app/problems/not-implemented",
-                      "title": "Not implemented yet",
-                      "status": 501,
-                      "code": "not-implemented"
+                      "type": "https://cityturfer.app/problems/storage.unavailable",
+                      "title": "Storage is not available: retry later",
+                      "status": 503,
+                      "code": "storage.unavailable"
                     }
                   }
                 },
@@ -1665,7 +1813,7 @@
         ],
         "operationId": "getMe",
         "summary": "Current user",
-        "description": "The user the bearer token belongs to (use case GetCurrentUser); created on its first authenticated request. Consents, export and erasure live under Privacy.",
+        "description": "The user the bearer token belongs to (use case GetCurrentUser); the server row is created on the first authenticated request. Consents, export and erasure live under Privacy.",
         "security": [
           {
             "bearerAuth": []

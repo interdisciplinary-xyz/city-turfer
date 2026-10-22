@@ -37,9 +37,15 @@ describe('auth', () => {
 
   it('creates the user on first sight and answers /v1/me from the token configuration', async () => {
     const admin = await h.call('GET', '/v1/me');
-    expect(await admin.json()).toEqual({ id: 'admin', email: 'admin@cityturfer.com', displayName: 'Admin' });
+    const createdAt = expect.stringMatching(/^\d{4}-\d\d-\d\dT/);
+    expect(await admin.json()).toEqual({
+      id: 'admin',
+      email: 'admin@cityturfer.com',
+      displayName: 'Admin',
+      createdAt,
+    });
     const other = await h.call('GET', '/v1/me', { token: TOKENS.other });
-    expect(await other.json()).toEqual({ id: 'other', email: null, displayName: 'other' });
+    expect(await other.json()).toEqual({ id: 'other', email: null, displayName: 'other', createdAt });
   });
 
   it('answers live data routes 503 storage.unavailable without a database', async () => {

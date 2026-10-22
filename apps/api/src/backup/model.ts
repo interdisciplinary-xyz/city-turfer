@@ -80,6 +80,8 @@ export interface UserRecord {
   id: string;
   email: string | null;
   displayName: string | null;
+  /** When the server first saw the user (epoch ms); absent on writes. */
+  createdAt?: number;
 }
 
 /** One entry of the changes feed, in server order (`seq`). */

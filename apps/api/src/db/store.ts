@@ -72,7 +72,9 @@ class UserScope implements UserWriter {
 
   async user(): Promise<UserRecord | null> {
     const [row] = await this.db.select().from(users).where(eq(users.id, this.userId));
-    return row ? { id: row.id, email: row.email, displayName: row.displayName } : null;
+    return row
+      ? { id: row.id, email: row.email, displayName: row.displayName, createdAt: row.createdAt.getTime() }
+      : null;
   }
 
   async consents(): Promise<ConsentRecord[]> {

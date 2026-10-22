@@ -84,7 +84,13 @@ export const requireBearer: MiddlewareHandler<AppEnv> = async (c, next) => {
       headers: { 'WWW-Authenticate': 'Bearer' },
     });
   }
-  const principal = await c.var.deps.auth.verify(match[1]);
+  let principal;
+  try {
+    principal = await c.var.deps.auth.verify(match[1]);
+  } catch {
+    // Session tokens are checked in the database: when it does not answer, say so (not 401).
+    return problem(c, 'storage.unavailable', 'The database did not answer: retry later.');
+  }
   if (!principal) {
     return problem(c, 'auth.invalid', undefined, {
       headers: { 'WWW-Authenticate': 'Bearer error="invalid_token"' },

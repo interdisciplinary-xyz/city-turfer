@@ -69,6 +69,7 @@ export function deviceTokenAuth(entries: readonly TokenEntry[]): AuthVerifier {
         ? {
             userId: found.userId,
             verified: true,
+            kind: 'device',
             profile: { email: found.email, displayName: found.displayName },
           }
         : null;

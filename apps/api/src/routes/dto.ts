@@ -15,7 +15,12 @@ export const iso = (ms: number) => new Date(ms).toISOString();
 /** `Date.parse` of a validated ISO 8601 UTC string. */
 export const ms = (isoString: string) => Date.parse(isoString);
 
-export const userDto = (u: UserRecord) => ({ id: u.id, email: u.email, displayName: u.displayName ?? u.id });
+export const userDto = (u: UserRecord) => ({
+  id: u.id,
+  email: u.email,
+  displayName: u.displayName ?? u.id,
+  createdAt: iso(u.createdAt ?? 0),
+});
 
 export const consentListDto = (items: ConsentRecord[]) => ({
   items: items.map((c) => ({ purpose: c.purpose, granted: c.granted, policyVersion: c.policyVersion, at: iso(c.at) })),

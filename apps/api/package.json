@@ -11,6 +11,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/db-migrate.ts",
     "token:new": "tsx scripts/token-new.ts",
+    "auth:adopt": "tsx scripts/auth-adopt.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src scripts && redocly lint openapi.json --config redocly.yaml",
     "test:unit": "vitest run"
@@ -21,7 +22,9 @@
     "@hono/swagger-ui": "^0.6.1",
     "@hono/zod-openapi": "^1.6.3",
     "@neondatabase/serverless": "^1.2.0",
+    "better-auth": "1.7.7",
     "drizzle-orm": "^0.45.4",
+    "fflate": "0.8.3",
     "hono": "^4.13.13",
     "zod": "^4.6.7"
   },
