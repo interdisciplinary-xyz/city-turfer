@@ -134,10 +134,15 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   `DATABASE_URL` it uses PGlite in `apps/api/.data/` (gitignored, migrated on start); without
   `API_TOKENS` and `DATABASE_URL` the token `dev-token` is user `admin` (never against Neon).
 - **Env (Vercel):** `DATABASE_URL` (Neon pooled), optional `DATABASE_URL_UNPOOLED` (migrations),
-  `BETTER_AUTH_SECRET`, `BREVO_API_KEY`, `MAIL_FROM`, `API_PUBLIC_URL`, `API_TOKENS`;
+  `BETTER_AUTH_SECRET`, `BREVO_API_KEY`, `MAIL_FROM`, `API_PUBLIC_URL`, `CRON_SECRET`, `API_TOKENS`;
   `AUTH_FIXED_CODE` on previews only, and only for `@e2e.cityturfer.test` addresses (production
   refuses to boot with it, or without the others: `checkProductionEnv` in `apps/api/src/wiring.ts`).
-  Runbook: `docs/operations/api-deploy.md`.
+  Production also needs `DATABASE_URL` and `CRON_SECRET` (daily Vercel Cron
+  `GET /internal/cron/retention`, outside `/v1` and the spec, purges expired exports, codes,
+  sessions and rate-limit rows). Unexpected errors log one sanitised `request.error` line
+  (`describeError`, never the message). Runbook: `docs/operations/api-deploy.md`.
+- **Support (no admin panel):** `user:find -- <id|email>` (no coordinates) and
+  `user:delete -- <id> [--yes]` (same erase as `DELETE /v1/me`; dry run without `--yes`).
 - **Codes locally:** the dev server prints them (ConsoleMailer); tests read them from MemoryMailer
   (`h.signIn(email)` in `apps/api/src/__tests__/support.ts`). `auth:adopt -- <userId> <email>` gives
   an existing data user an e-mail sign-in.

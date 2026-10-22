@@ -59,6 +59,15 @@ accounts: `docs/decisions/api-accounts-2026-10-22.md`.
   the account ↔ profile map, delete account and export; restore with progress, resumable after a
   kill, paused while recording; the background GPS task kept offline by a dependency rule and a
   headless test. Still OTA: iOS fingerprint `4b7cea7c…` as on the scope.
+- **After the integration audit (2026-10-22):** the app points at the production API
+  (`EXPO_PUBLIC_API_URL`, default `https://city-turfer-api.vercel.app`) instead of the old v0.8.0
+  preview; rename on the activity screen; a restore is offered whenever the server holds activities
+  the phone lacks (never ones deleted here), "Not now" is remembered and the backup card always has
+  "Restore from backup"; after a restore the server's consents turn backup back on; the mock-auth
+  start guard that crashed production builds is gone (B6). Server: production refuses to boot
+  without `DATABASE_URL` or `CRON_SECRET`; unexpected errors log one sanitised line; a daily Vercel
+  Cron purges expired exports, codes, sessions and rate-limit rows; `user:find` and `user:delete`
+  answer support requests without an admin panel.
 
 ## Left before testers
 
@@ -67,10 +76,10 @@ accounts: `docs/decisions/api-accounts-2026-10-22.md`.
    and Home City; the keychain after a reinstall offers the restore; a background recording makes no
    network call (mobile-testing layer 2); the Maestro suite with the email-first sign-in.
 2. **Founder setup** (`docs/operations/api-deploy.md`): Brevo transactional mail with a verified
-   sender (SPF, DKIM) and DPA; Vercel env `BETTER_AUTH_SECRET`, `BREVO_API_KEY`, `MAIL_FROM`,
-   `API_PUBLIC_URL`; previews on their own Neon branch; `db:migrate` (0001–0003) before the deploy;
-   `auth:adopt -- admin <email>`; then remove `API_TOKENS`. Vercel Pro before testers (Hobby is
-   non-commercial).
+   sender (SPF, DKIM) and DPA; Vercel env `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BREVO_API_KEY`,
+   `MAIL_FROM`, `API_PUBLIC_URL`, `CRON_SECRET`; production branch `main`; previews on their own
+   Neon branch; `db:migrate` (0001–0003) before the deploy; `auth:adopt -- admin <email>`; then
+   remove `API_TOKENS`. Vercel Pro before testers (Hobby is non-commercial).
 3. **Deploy checks**: an export over 4.5 MB streams through Vercel; Better Auth cold start and
    bundle size; Neon WebSocket with large `bytea`.
 4. **Launch items**: privacy policy and terms (PL/EN) naming accounts, backup and the processors

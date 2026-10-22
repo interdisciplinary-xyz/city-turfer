@@ -63,8 +63,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`operations/android-release.md`](operations/android-release.md): Build the Android APK on EAS,
   publish it to the website download link, test it on an emulator
 - ✅ [`operations/api-deploy.md`](operations/api-deploy.md): Deploy the CityTurfer API — Vercel
-  project city-turfer-api (apps/api, fra1), env vars (Neon, Better Auth, Brevo), applying
-  migrations, adopting the admin data, device tokens, checking health
+  project city-turfer-api (apps/api, fra1), production branch, env vars (Neon, Better Auth, Brevo,
+  cron), migrations before the merge, the daily retention cron, adopting the admin data, device
+  tokens, support requests (find, delete), checking health
 - ✅ [`operations/apple-health.md`](operations/apple-health.md): Install the Apple Health build on
   the iPhone and check import and export with real data
 - ❔ [`operations/observability.md`](operations/observability.md): _no frontmatter_
