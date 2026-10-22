@@ -17,6 +17,8 @@ const archive: ActivityArchive = {
   ],
   gapRoutes: [],
   gapsCheckedAt: null,
+  timeZone: 'Europe/Warsaw',
+  renamedAt: null,
 };
 
 interface Call {
@@ -91,6 +93,25 @@ describe('FetchApiClient', () => {
     expect(body(calls[0]).source).toBe('apple-health');
   });
 
+  it('reads the server version with its name and rename time (before replacing, after a 412)', async () => {
+    const { api, calls } = setup(() => ({
+      status: 200,
+      body: { id: 'rec-1', version: 5, name: 'Renamed elsewhere', renamedAt: '2026-10-19T08:00:00.000Z' },
+    }));
+    expect(await api.activityVersion('rec-1')).toEqual({
+      ok: true,
+      value: { version: 5, name: 'Renamed elsewhere', renamedAt: Date.parse('2026-10-19T08:00:00Z') },
+    });
+    expect(calls[0].init.method).toBe('GET');
+    expect(calls[0].url).toBe('https://api.example.org/v1/activities/rec-1');
+
+    const never = setup(() => ({ status: 200, body: { version: 2, renamedAt: null }, etag: '"v2"' }));
+    expect(await never.api.activityVersion('rec-1')).toEqual({
+      ok: true,
+      value: { version: 2, name: null, renamedAt: null },
+    });
+  });
+
   it.each([
     [401, { kind: 'auth' }],
     [403, { kind: 'consent' }],
@@ -123,14 +144,20 @@ describe('FetchApiClient', () => {
     expect(await api.changes(null)).toEqual({ ok: false, failure: { kind: 'offline' } });
   });
 
-  it('reads the changes feed: upserts with versions, tombstones; ignores Home City changes', async () => {
+  it('reads the changes feed: upserts with version, start, name and track hash, tombstones, Home City', async () => {
+    const hash = 'a'.repeat(64);
     const { api, calls } = setup(() => ({
       status: 200,
       body: {
         changes: [
-          { type: 'activity.upserted', changedAt: 'x', activity: { id: 'a', version: 3 } },
+          {
+            type: 'activity.upserted',
+            changedAt: 'x',
+            activity: { id: 'a', version: 3, startedAt: '2026-10-19T07:12:00Z', name: 'Morning run', trackHash: hash },
+          },
           { type: 'activity.deleted', changedAt: 'x', activityId: 'b', deletedAt: 'x' },
-          { type: 'home-city.chosen', changedAt: 'x', cityId: 'pl-krakow', chosenAt: 'x' },
+          { type: 'home-city.chosen', changedAt: 'x', cityId: 'pl-krakow', chosenAt: '2026-10-19T07:12:00Z' },
+          { type: 'home-city.chosen', changedAt: 'x', cityId: 'pl-gdansk', chosenAt: 'not a date' },
         ],
         nextCursor: 'c/2',
         hasMore: true,
@@ -138,7 +165,13 @@ describe('FetchApiClient', () => {
     }));
     expect(await api.changes('c/1')).toEqual({
       ok: true,
-      value: { upserted: [{ id: 'a', version: 3 }], deleted: ['b'], nextCursor: 'c/2', hasMore: true },
+      value: {
+        upserted: [{ id: 'a', version: 3, startedAt: T0, name: 'Morning run', trackHash: hash }],
+        deleted: ['b'],
+        homeCity: { cityId: 'pl-krakow', chosenAt: T0 },
+        nextCursor: 'c/2',
+        hasMore: true,
+      },
     });
     expect(calls[0].url).toBe('https://api.example.org/v1/sync/changes?limit=500&cursor=c%2F1');
     expect(calls[0].init.method).toBe('GET');
@@ -183,5 +216,131 @@ describe('FetchApiClient', () => {
       ],
     });
     expect(body(calls[3])).toEqual({ cityId: 'pl-krakow', chosenAt: '2026-10-19T07:12:00.000Z' });
+  });
+});
+
+describe('FetchApiClient: account, rename and restore copies (contract 0.4.0)', () => {
+  it('asks whose token it is, and sends a rename with its time', async () => {
+    const { api, calls } = setup((c) =>
+      c.url.endsWith('/v1/me')
+        ? { status: 200, body: { id: 'u1', email: null } }
+        : { status: 200, body: { version: 5 } }
+    );
+    expect(await api.me()).toEqual({ ok: true, value: { id: 'u1' } });
+    expect(await api.renameActivity('rec-1', 'Hill repeats', T0)).toEqual({ ok: true, value: { version: 5 } });
+    expect(calls[1].init.method).toBe('PATCH');
+    expect(calls[1].url).toBe('https://api.example.org/v1/activities/rec-1');
+    expect(JSON.parse(String(calls[1].init.body))).toEqual({
+      name: 'Hill repeats',
+      renamedAt: '2026-10-19T07:12:00.000Z',
+    });
+  });
+
+  it('reads the consents, keeping only known purposes', async () => {
+    const answers = [
+      {
+        status: 200,
+        body: {
+          items: [
+            { purpose: 'cloud-sync', granted: true, policyVersion: '2026-10', at: '2026-10-19T07:12:00Z' },
+            {
+              purpose: 'apple-health-in-cloud-sync',
+              granted: false,
+              policyVersion: '2026-10',
+              at: '2026-10-19T07:13:00Z',
+            },
+            { purpose: 'marketing', granted: true },
+            { purpose: 'cloud-sync', granted: 'yes' },
+          ],
+        },
+      },
+      { status: 401 },
+      { status: 200, body: { nope: [] } },
+    ];
+    const { api, calls } = setup(() => answers.shift()!);
+    expect(await api.consents()).toEqual({
+      ok: true,
+      value: [
+        { purpose: 'cloud-sync', granted: true },
+        { purpose: 'apple-health-in-cloud-sync', granted: false },
+      ],
+    });
+    expect(calls[0].init.method).toBe('GET');
+    expect(calls[0].url).toBe('https://api.example.org/v1/me/consents');
+    expect(headers(calls[0]).Authorization).toBe('Bearer tok-123');
+    expect(await api.consents()).toEqual({ ok: false, failure: { kind: 'auth' } });
+    expect(await api.consents()).toEqual({ ok: false, failure: { kind: 'unavailable', reason: 'server' } });
+  });
+
+  it('maps rename failures: 410 gone, 404 not found, 422 rejected with its code', async () => {
+    const answers = [{ status: 410 }, { status: 404 }, { status: 422, body: { code: 'activity.invalid-name' } }];
+    const { api } = setup(() => answers.shift()!);
+    expect(await api.renameActivity('a', 'x', T0)).toEqual({ ok: false, failure: { kind: 'gone' } });
+    expect(await api.renameActivity('a', 'x', T0)).toEqual({ ok: false, failure: { kind: 'not-found' } });
+    expect(await api.renameActivity('a', 'x', T0)).toEqual({
+      ok: false,
+      failure: { kind: 'rejected', code: 'activity.invalid-name' },
+    });
+  });
+
+  it('reads a whole server copy (detail + track) for a restore', async () => {
+    const detail = {
+      id: 'rec-1',
+      type: 'run',
+      name: 'Morning run',
+      source: 'recording',
+      startedAt: '2026-10-19T07:12:00Z',
+      endedAt: '2026-10-19T07:12:10Z',
+      timeZone: 'Europe/Warsaw',
+      resumedSegments: [1],
+      version: 4,
+      gapRoutes: [
+        {
+          afterSegment: 0,
+          distanceM: 240,
+          movingS: 85,
+          coords: [
+            [21.0129, 52.2301],
+            [21.0141, 52.2307],
+          ],
+        },
+      ],
+      gapsCheckedAt: '2026-10-19T08:00:00Z',
+    };
+    const track = {
+      points: [
+        [21.0122, 52.2297, T0, 0, 98.5],
+        [21.0125, 52.2299, T0 + 10_000, 1, null],
+      ],
+    };
+    const { api, calls } = setup((c) => ({ status: 200, body: c.url.endsWith('/track') ? track : detail }));
+    const r = await api.activityCopy('rec-1');
+    expect(calls.map((c) => c.url.replace('https://api.example.org', ''))).toEqual([
+      '/v1/activities/rec-1',
+      '/v1/activities/rec-1/track',
+    ]);
+    expect(r).toEqual({
+      ok: true,
+      value: {
+        ...archive,
+        version: 4,
+        source: 'recording',
+        renamedAt: null,
+        track: archive.track.map((p) => ({ ...p, accuracy: null, speed: null })),
+        gapRoutes: detail.gapRoutes,
+        gapsCheckedAt: Date.parse('2026-10-19T08:00:00Z'),
+      },
+    });
+  });
+
+  it('refuses a malformed copy instead of restoring garbage', async () => {
+    const { api } = setup((c) => ({
+      status: 200,
+      body: c.url.endsWith('/track') ? { points: [[1, 2]] } : { id: 'x' },
+    }));
+    expect(await api.activityCopy('x')).toEqual({
+      ok: false,
+      failure: { kind: 'rejected', code: 'restore.malformed' },
+    });
   });
 });

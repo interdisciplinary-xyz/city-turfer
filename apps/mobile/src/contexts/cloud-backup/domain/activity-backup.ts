@@ -10,7 +10,7 @@ export type ServerCopy = 'none' | 'backed-up' | 'deleted' | 'gone' | 'too-large'
 
 /** What still has to be sent: create, replace (a corrected track, with If-Match) or delete. */
 export type BackupOp = 'upload' | 'replace' | 'delete';
-export type BackupStep = BackupOp | 'gap-routes';
+export type BackupStep = BackupOp | 'rename' | 'gap-routes';
 
 export interface ActivityBackupState {
   readonly activityId: string;
@@ -19,6 +19,10 @@ export interface ActivityBackupState {
   readonly op: BackupOp | null;
   /** The gap routes still have to be sent (after the Activity itself). */
   readonly gapsPending: boolean;
+  /** A rename still has to be sent (PATCH; an upload or replacement carries the name anyway). */
+  readonly renamePending: boolean;
+  /** The gap-routes check time the server has from us; null: none sent yet. */
+  readonly gapsSentAt: number | null;
   /** +1 for every queued change; a finished send only clears the work it started with. */
   readonly rev: number;
   readonly serverVersion: number | null;
@@ -44,6 +48,8 @@ export class ActivityBackup {
       status: 'none',
       op: null,
       gapsPending: false,
+      renamePending: false,
+      gapsSentAt: null,
       rev: 0,
       serverVersion: null,
       uploadedAt: null,
@@ -83,7 +89,13 @@ export class ActivityBackup {
     if (s.op) {
       return s.op;
     }
-    return s.gapsPending && s.status === 'backed-up' ? 'gap-routes' : null;
+    if (s.status !== 'backed-up') {
+      return null;
+    }
+    if (s.renamePending) {
+      return 'rename';
+    }
+    return s.gapsPending ? 'gap-routes' : null;
   }
 
   // --- queued changes (outbox handlers, planning) ----------------------------------------------
@@ -117,6 +129,14 @@ export class ActivityBackup {
     }
   }
 
+  /** Renamed on the phone: send the new name once the Activity is on the server. */
+  queueRename(): void {
+    if (this.isClosed || this.state.op === 'delete') {
+      return;
+    }
+    this.change({ renamePending: true });
+  }
+
   /** Gap routes were (re-)estimated: send them once the Activity is on the server. */
   queueGapRoutes(): void {
     if (this.isClosed || this.state.op === 'delete') {
@@ -130,7 +150,53 @@ export class ActivityBackup {
     if (this.isClosed) {
       return;
     }
-    this.change({ op: 'delete', gapsPending: false, attempts: 0, nextAttemptAt: null, errorCode: null });
+    this.change({
+      op: 'delete',
+      gapsPending: false,
+      renamePending: false,
+      attempts: 0,
+      nextAttemptAt: null,
+      errorCode: null,
+    });
+  }
+
+  // --- what the server's manifest says (comparing after backup was off, or on another server) ---
+
+  /**
+   * Compares the server's copy with the phone's (both already known to be there): a different track
+   * is replaced, a different name renamed — only when this phone renamed it (`renamedAt`): a name
+   * nobody renamed here is never pushed over the server's (it may be a newer rename from another
+   * phone; the server keeps the latest `renamedAt` of what is sent) — and gap routes checked since
+   * we last sent them are sent.
+   */
+  reconcile(
+    server: { trackHash: string; name: string },
+    local: { trackHash: string; name: string; renamedAt: number | null; gapsCheckedAt: number | null }
+  ): void {
+    if (this.isClosed || this.state.op === 'delete' || this.state.status !== 'backed-up') {
+      return;
+    }
+    if (server.trackHash !== local.trackHash) {
+      this.queueCorrection();
+      return; // the replacement picks the newer name (nameToUpload); gap routes follow it
+    }
+    if (server.name !== local.name && local.renamedAt != null) {
+      this.queueRename();
+    }
+    if (local.gapsCheckedAt != null && local.gapsCheckedAt !== this.state.gapsSentAt) {
+      this.queueGapRoutes();
+    }
+  }
+
+  /** Not on the phone any more but maybe still on the server (deleted while backup was off): delete it. */
+  deletedOnPhone(): void {
+    const s = this.state;
+    if (this.isClosed || s.op === 'delete') {
+      return;
+    }
+    if (s.status === 'backed-up' || s.op != null) {
+      this.queueDelete();
+    }
   }
 
   // --- what the server's manifest says (first upload) ----------------------------------------
@@ -161,14 +227,43 @@ export class ActivityBackup {
     }
   }
 
+  /**
+   * Restore: this Activity comes from the server copy at `version` (its gap check included), so
+   * nothing about it has to be sent back.
+   */
+  restoredFromServer(version: number, gapsCheckedAt: number | null, now: number): void {
+    this.state = {
+      ...this.state,
+      status: 'backed-up',
+      op: null,
+      gapsPending: false,
+      renamePending: false,
+      gapsSentAt: gapsCheckedAt,
+      serverVersion: version,
+      uploadedAt: now,
+      attempts: 0,
+      nextAttemptAt: null,
+      errorCode: null,
+    };
+  }
+
   /** The server has a tombstone (410 / 409, or in the manifest): delete wins, never resurrect. */
   goneOnServer(): void {
-    this.state = { ...this.state, status: 'gone', op: null, gapsPending: false, attempts: 0, nextAttemptAt: null };
+    this.state = {
+      ...this.state,
+      status: 'gone',
+      op: null,
+      gapsPending: false,
+      renamePending: false,
+      attempts: 0,
+      nextAttemptAt: null,
+    };
   }
 
   // --- results of a send that started at `sentRev` ---------------------------------------------
 
-  uploaded(sentRev: number, version: number, now: number, hasGapRoutes: boolean): void {
+  /** `gapsChecked`: the gap routes were checked (an empty list counts: "checked, no gaps"). */
+  uploaded(sentRev: number, version: number, now: number, gapsChecked: boolean): void {
     const s = this.state;
     const newer = s.rev !== sentRev;
     this.state = {
@@ -178,18 +273,36 @@ export class ActivityBackup {
       uploadedAt: now,
       // A correction queued while uploading must still replace what was just sent.
       op: newer ? (s.op === 'upload' ? 'replace' : s.op) : null,
-      gapsPending: s.gapsPending || hasGapRoutes,
+      // The upload carried the name; a rename queued meanwhile still goes.
+      renamePending: newer && s.renamePending,
+      // A new track on the server has no gap routes: whatever was sent before is gone with it.
+      gapsSentAt: null,
+      gapsPending: s.gapsPending || gapsChecked,
       attempts: 0,
       nextAttemptAt: null,
       errorCode: null,
     };
   }
 
-  gapRoutesSent(sentRev: number, version: number | null): void {
+  renamed(sentRev: number, version: number | null): void {
     const s = this.state;
     this.state = {
       ...s,
       serverVersion: version ?? s.serverVersion,
+      renamePending: s.rev !== sentRev ? s.renamePending : false,
+      attempts: 0,
+      nextAttemptAt: null,
+      errorCode: null,
+    };
+  }
+
+  /** `checkedAt` null: nothing to send any more (reset by a correction, re-estimated later). */
+  gapRoutesSent(sentRev: number, version: number | null, checkedAt: number | null): void {
+    const s = this.state;
+    this.state = {
+      ...s,
+      serverVersion: version ?? s.serverVersion,
+      gapsSentAt: checkedAt ?? s.gapsSentAt,
       gapsPending: s.rev !== sentRev ? s.gapsPending : false,
       attempts: 0,
       nextAttemptAt: null,
@@ -198,7 +311,15 @@ export class ActivityBackup {
   }
 
   deleted(): void {
-    this.state = { ...this.state, status: 'deleted', op: null, gapsPending: false, attempts: 0, nextAttemptAt: null };
+    this.state = {
+      ...this.state,
+      status: 'deleted',
+      op: null,
+      gapsPending: false,
+      renamePending: false,
+      attempts: 0,
+      nextAttemptAt: null,
+    };
   }
 
   /** The server refuses this content for good (too big, or invalid with `code`). */
@@ -212,12 +333,17 @@ export class ActivityBackup {
       this.state = { ...s, gapsPending: false, errorCode: code };
       return;
     }
+    if (step === 'rename') {
+      this.state = { ...s, renamePending: false, errorCode: code };
+      return;
+    }
     this.state = {
       ...s,
       // A refused replacement leaves the older copy on the server.
       status: s.status === 'backed-up' ? 'backed-up' : reason,
       op: null,
       gapsPending: false,
+      renamePending: false,
       attempts: 0,
       nextAttemptAt: null,
       errorCode: code,
@@ -227,8 +353,8 @@ export class ActivityBackup {
   /** Nothing to send any more (e.g. the Activity is no longer on the phone; its delete follows). */
   dropUpload(): void {
     const s = this.state;
-    if (s.op === 'upload' || s.op === 'replace') {
-      this.state = { ...s, op: null, gapsPending: false };
+    if (s.op === 'upload' || s.op === 'replace' || s.renamePending || s.gapsPending) {
+      this.state = { ...s, op: s.op === 'delete' ? s.op : null, gapsPending: false, renamePending: false };
     }
   }
 

@@ -50,6 +50,7 @@ export const DevToolbar = ({
   storagePrefix,
   languageSwitcher,
   switches = [],
+  requestLogger = true,
 }: DevToolbarProps) => {
   // First, before any hook or child reads storage keys / locale prefixes.
   configureDevToolbar({ storagePrefix, locales, defaultLocale });
@@ -112,9 +113,9 @@ export const DevToolbar = ({
   return (
     <>
       {/* In-flow spacer so the fixed bar never hides the page's last row. */}
-      <div aria-hidden style={{ height: DEV_TOOLBAR_ROW_HEIGHT_PX * 2 }} />
+      <div aria-hidden style={{ height: DEV_TOOLBAR_ROW_HEIGHT_PX * (requestLogger ? 2 : 1) }} />
       <div
-        className={`fixed inset-x-0 bottom-0 ${DEV_TOOLBAR_Z_INDEX} border-t border-white/10 bg-neutral-950 font-mono text-[11px] text-white/70`}
+        className={`fixed inset-x-0 bottom-0 ${DEV_TOOLBAR_Z_INDEX} border-t border-solid border-white bg-neutral-950 font-mono text-[11px] text-white/70`}
       >
         <div
           role='toolbar'
@@ -189,8 +190,8 @@ export const DevToolbar = ({
           </div>
         </div>
 
-        {/* Second row: the API logger (live requests / route map). */}
-        <RequestLogger />
+        {/* Second row: the API logger (live requests / route map), unless the host turns it off. */}
+        {requestLogger && <RequestLogger />}
       </div>
     </>
   );

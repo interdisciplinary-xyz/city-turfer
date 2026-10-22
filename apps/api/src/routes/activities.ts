@@ -38,7 +38,7 @@ type Id = z.infer<typeof ActivityIdParam>;
 const matchesTag = (header: string | undefined, etag: string) =>
   !!header && header.split(',').some((t) => t.trim().replace(/^W\//, '') === etag);
 
-/** Activity Log: list, upload, detail, rename (planned), delete, track, gap routes. */
+/** Activity Log: list, upload, detail, rename, delete, track, gap routes. */
 export function registerActivities(app: OpenAPIHono<AppEnv>): void {
   defineRoute(
     app,
@@ -82,6 +82,8 @@ export function registerActivities(app: OpenAPIHono<AppEnv>): void {
         '- **Different content** → send `If-Match` with the current `ETag`: `200` and version + 1; a stale one → `412`, none → `428` (both carry the current `ETag`). A new track drops the stored gap routes: send them again.',
         '- **Deleted id** → `410 activity.deleted`: delete the activity locally too.',
         '',
+        '`source` must match the id: `hk-…` ids are `apple-health` and only they may be (else `422 activity.source-mismatch`).',
+        '',
         'Bodies are limited to 4.5 MB: send long tracks with `Content-Encoding: gzip`.',
       ].join('\n'),
       request: {
@@ -109,7 +111,7 @@ export function registerActivities(app: OpenAPIHono<AppEnv>): void {
           'activity.ends-before-start',
           'activity.invalid-name',
           'activity.track-hash-mismatch',
-          'claim.in-future'
+          'activity.source-mismatch'
         ),
         428: problemResponse('The activity exists with different content: send `If-Match`.', 'precondition-required'),
       },
@@ -150,7 +152,8 @@ export function registerActivities(app: OpenAPIHono<AppEnv>): void {
       tags: TAG,
       operationId: 'getActivity',
       summary: 'Activity detail',
-      description: 'Summary, bounding box, km splits and gap routes (use case GetActivityDetail).',
+      description:
+        'Summary, bounding box, km splits, gap routes and when the gaps were checked (use case GetActivityDetail).',
       request: { params: ActivityIdParam },
       responses: {
         200: { description: 'The activity.', headers: ETAG_HEADER, content: json(ActivityDetail) },
@@ -169,30 +172,51 @@ export function registerActivities(app: OpenAPIHono<AppEnv>): void {
     }
   );
 
-  defineRoute(app, {
-    status: 'planned',
-    method: 'patch',
-    path: '/v1/activities/{activityId}',
-    tags: TAG,
-    operationId: 'renameActivity',
-    summary: 'Rename an activity',
-    description:
-      'Use case RenameActivity. Without `If-Match` the last write wins (decision D6); with it, a stale version answers `412`.',
-    request: {
-      params: ActivityIdParam,
-      headers: IF_MATCH,
-      body: { required: true, content: json(ActivityRename) },
+  defineRoute(
+    app,
+    {
+      status: 'live',
+      method: 'patch',
+      path: '/v1/activities/{activityId}',
+      tags: TAG,
+      operationId: 'renameActivity',
+      summary: 'Rename an activity',
+      description:
+        'Use case RenameActivity. The last write wins on `renamedAt` (decision D6): an equal or older rename answers `200` with the activity unchanged. A `renamedAt` more than 5 minutes ahead of the server is `422 activity.renamed-in-future`. A new name bumps the version and appears in the changes feed. (A `PUT` that replaces the activity with another name sets it but keeps `renamedAt`: rename with `PATCH`.) `If-Match` is optional; a stale one answers `412`. Needs the `cloud-sync` consent.',
+      request: {
+        params: ActivityIdParam,
+        headers: IF_MATCH,
+        body: { required: true, content: json(ActivityRename) },
+      },
+      responses: {
+        200: { description: 'Renamed (or unchanged).', headers: ETAG_HEADER, content: json(ActivityDetail) },
+        ...INVALID,
+        ...AUTH_ERRORS,
+        ...CONSENT_REQUIRED,
+        ...NOT_FOUND,
+        ...DELETED,
+        412: problemResponse('`If-Match` is stale.', 'precondition-failed'),
+        422: problemResponse(
+          'Invalid name, or `renamedAt` in the future.',
+          'activity.invalid-name',
+          'activity.renamed-in-future'
+        ),
+      },
     },
-    responses: {
-      200: { description: 'Renamed; version + 1.', headers: ETAG_HEADER, content: json(ActivitySummary) },
-      ...INVALID,
-      ...AUTH_ERRORS,
-      ...NOT_FOUND,
-      ...DELETED,
-      412: problemResponse('`If-Match` is stale.', 'precondition-failed'),
-      422: problemResponse('Invalid name.', 'activity.invalid-name'),
-    },
-  });
+    async (c) => {
+      const { activityId } = valid<Id>(c, 'param');
+      const body = valid<z.infer<typeof ActivityRename>>(c, 'json');
+      const activity = await c.var.backup.rename(
+        c.var.userId,
+        activityId,
+        { name: body.name, renamedAt: ms(body.renamedAt) },
+        c.req.header('if-match')
+      );
+      const { gapRoutes } = await c.var.backup.activity(c.var.userId, activityId);
+      c.header('ETag', etagOf(activity.version));
+      return c.json(activityDetailDto(activity, gapRoutes), 200);
+    }
+  );
 
   defineRoute(
     app,
@@ -268,7 +292,7 @@ export function registerActivities(app: OpenAPIHono<AppEnv>): void {
       operationId: 'saveGapRoutes',
       summary: 'Save the estimated gap routes',
       description:
-        'Replaces the street routes the phone estimated across GPS gaps (use case SaveGapRoutes; decision D3). Display only: they add to distance and moving time and are drawn dashed, never claimed as turf. Idempotent; version + 1 when they changed. Needs the `cloud-sync` consent.',
+        'Replaces the street routes the phone estimated across GPS gaps (use case SaveGapRoutes; decision D3) and records that the gaps were checked (`gapsCheckedAt` in the detail). Send an **empty** `routes` list when the phone checked and found no gaps. Display only: they add to distance and moving time and are drawn dashed, never claimed as turf. Idempotent; version + 1 when they changed or the activity had not been checked yet. Needs the `cloud-sync` consent.',
       request: {
         params: ActivityIdParam,
         body: { required: true, content: json(GapRoutesUpload) },

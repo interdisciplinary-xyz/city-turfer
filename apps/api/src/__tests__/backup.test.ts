@@ -1,10 +1,13 @@
 import { createHash } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
 
+import { sql } from 'drizzle-orm';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createApp } from '../app';
 import { trackHashOf } from '../backup/hashing';
+import type { BackupStore, UserWriter } from '../backup/ports';
+import { BackupService } from '../backup/use-cases';
 import { defaultDeps, silentLog } from '../deps';
 import { backupApp, closeSharedDb, TOKENS, track, upload } from './support';
 
@@ -37,9 +40,15 @@ describe('auth', () => {
 
   it('creates the user on first sight and answers /v1/me from the token configuration', async () => {
     const admin = await h.call('GET', '/v1/me');
-    expect(await admin.json()).toEqual({ id: 'admin', email: 'admin@cityturfer.com', displayName: 'Admin' });
+    const createdAt = expect.stringMatching(/^\d{4}-\d\d-\d\dT/);
+    expect(await admin.json()).toEqual({
+      id: 'admin',
+      email: 'admin@cityturfer.com',
+      displayName: 'Admin',
+      createdAt,
+    });
     const other = await h.call('GET', '/v1/me', { token: TOKENS.other });
-    expect(await other.json()).toEqual({ id: 'other', email: null, displayName: 'other' });
+    expect(await other.json()).toEqual({ id: 'other', email: null, displayName: 'other', createdAt });
   });
 
   it('answers live data routes 503 storage.unavailable without a database', async () => {
@@ -86,8 +95,160 @@ describe('consents', () => {
     expect((await put('a1', upload())).status).toBe(201);
     await h.call('PUT', '/v1/me/consents/cloud-sync', { body: { granted: false, policyVersion: '2026-10' } });
     expect((await put('a2', upload())).status).toBe(403);
-    // Withdrawing erases nothing.
-    expect((await h.call('GET', '/v1/activities/a1')).status).toBe(200);
+  });
+
+  const withdraw = (purpose: string) =>
+    h.call('PUT', `/v1/me/consents/${purpose}`, { body: { granted: false, policyVersion: '2026-10' } });
+
+  it('withdrawing cloud-sync erases the server copy without new tombstones; the account stays', async () => {
+    await grant();
+    await put('a1', upload());
+    await put('a2', upload());
+    await h.call('PUT', '/v1/activities/a1/gap-routes', { body: { checkedAt: '2026-10-19T08:00:00Z', routes: [] } });
+    await h.call('DELETE', '/v1/activities/a2');
+    await h.call('PUT', '/v1/turf/home-city', { body: { cityId: 'pl-warsaw', chosenAt: '2026-10-19T07:00:00Z' } });
+    const before = await (await h.call('GET', '/v1/sync/changes')).json();
+
+    expect((await withdraw('cloud-sync')).status).toBe(200);
+    expect((await h.call('GET', '/v1/activities/a1')).status).toBe(404);
+    // Only the earlier delete is left (an id and a time, no location data).
+    const all = await (await h.call('GET', '/v1/sync/changes')).json();
+    expect(all.changes).toMatchObject([{ type: 'activity.deleted', activityId: 'a2' }]);
+    expect(all.changes).toHaveLength(1);
+    // No new tombstone for what the withdrawal erased: the old cursor shows nothing new.
+    const since = await (await h.call('GET', `/v1/sync/changes?cursor=${before.nextCursor}`)).json();
+    expect(since.changes).toEqual([]);
+    expect(await (await h.call('GET', '/v1/turf/home-city')).json()).toEqual({ city: null, chosenAt: null });
+    expect((await h.call('GET', '/v1/me')).status).toBe(200);
+
+    // Backup on again: erased ids upload as new, but delete still wins (D5) — a phone still
+    // holding the deleted activity gets 410 instead of bringing it back.
+    await grant();
+    expect((await put('a1', upload())).status).toBe(201);
+    const deleted = await put('a2', upload());
+    expect(deleted.status).toBe(410);
+    expect(await deleted.json()).toMatchObject({ code: 'activity.deleted' });
+  });
+
+  it('erases tombstones only with the account', async () => {
+    await grant();
+    await put('a1', upload());
+    await h.call('DELETE', '/v1/activities/a1');
+    await withdraw('cloud-sync');
+    const count = async () =>
+      (
+        (await h.db.execute(sql`SELECT count(*)::int AS n FROM tombstones`)) as unknown as {
+          rows: { n: number }[];
+        }
+      ).rows[0].n;
+    expect(await count()).toBe(1);
+    await h.call('DELETE', '/v1/me');
+    expect(await count()).toBe(0);
+  });
+
+  it('reads consent only after taking the user lock (a withdrawal erases under that lock)', async () => {
+    await grant();
+    await grant(TOKENS.admin, 'apple-health-in-cloud-sync');
+    await put('a1', upload());
+    // Record the order of the transaction's calls in every write use case.
+    const calls: string[] = [];
+    const service = new BackupService(
+      Object.assign(Object.create(h.store) as BackupStore, {
+        write: <T>(userId: string, fn: (tx: UserWriter) => Promise<T>) =>
+          h.store.write(userId, (tx) =>
+            fn(
+              new Proxy(tx, {
+                get(target, prop, receiver) {
+                  const value: unknown = Reflect.get(target, prop, receiver);
+                  if (typeof value !== 'function') {
+                    return value;
+                  }
+                  return (...args: unknown[]) => {
+                    calls.push(String(prop));
+                    return (value as (...a: unknown[]) => unknown).apply(target, args);
+                  };
+                },
+              })
+            )
+          ),
+      }),
+      h.clock
+    );
+    const lockedBeforeConsent = () => {
+      const lock = calls.indexOf('lock');
+      const consent = calls.indexOf('consents');
+      calls.length = 0;
+      return lock !== -1 && consent !== -1 && lock < consent;
+    };
+    const points = track();
+    const input = {
+      type: 'run' as const,
+      name: 'Morning run',
+      source: 'apple-health' as const,
+      startedAt: points[0][2],
+      endedAt: points.at(-1)![2],
+      timeZone: 'Europe/Warsaw',
+      resumedSegments: null,
+      points,
+    };
+    await service.upload('admin', 'hk-1', input, undefined);
+    expect(lockedBeforeConsent()).toBe(true);
+    await service.rename('admin', 'a1', { name: 'Evening run', renamedAt: h.clock.now() }, undefined);
+    expect(lockedBeforeConsent()).toBe(true);
+    await service.saveGapRoutes('admin', 'a1', { checkedAt: h.clock.now(), routes: [] });
+    expect(lockedBeforeConsent()).toBe(true);
+    await service.chooseHomeCity('admin', { cityId: 'pl-warsaw', chosenAt: h.clock.now() });
+    expect(lockedBeforeConsent()).toBe(true);
+  });
+
+  it('withdrawing a consent deletes stored export files and expires their links in the same go', async () => {
+    await grant();
+    await put('a1', upload());
+    await h.call('POST', '/v1/me/exports');
+    const link = /(\/v1\/exports\/[A-Za-z0-9_-]+)/.exec(h.mailer.lastTo('admin@cityturfer.com')!.text)![1];
+    expect((await h.call('GET', link, { token: null })).status).toBe(200);
+
+    await withdraw('cloud-sync');
+    const count = async (table: string) =>
+      (
+        (await h.db.execute(sql.raw(`SELECT count(*)::int AS n FROM "${table}"`))) as unknown as {
+          rows: { n: number }[];
+        }
+      ).rows[0].n;
+    expect(await count('stored_files')).toBe(0);
+    expect((await h.call('GET', link, { token: null })).status).toBe(410);
+    // The expired export no longer blocks a new one (after backing up again).
+    await grant();
+    expect((await h.call('POST', '/v1/me/exports')).status).toBe(202);
+  });
+
+  it('withdrawing apple-health-in-cloud-sync erases only the Apple Health activities', async () => {
+    await grant();
+    await grant(TOKENS.admin, 'apple-health-in-cloud-sync');
+    await put('hk-1', upload({ source: 'apple-health' }));
+    await put('run-1', upload());
+    await grant(TOKENS.other);
+    await grant(TOKENS.other, 'apple-health-in-cloud-sync');
+    await put('hk-1', upload({ source: 'apple-health' }), {}, TOKENS.other);
+
+    await withdraw('apple-health-in-cloud-sync');
+    expect((await h.call('GET', '/v1/activities/hk-1')).status).toBe(404);
+    expect((await h.call('GET', '/v1/activities/hk-1/track')).status).toBe(404);
+    expect((await h.call('GET', '/v1/activities/run-1')).status).toBe(200);
+    const feed = await (await h.call('GET', '/v1/sync/changes')).json();
+    expect(feed.changes.map((c: { type: string }) => c.type)).toEqual(['activity.upserted']);
+    // Another user's copy is untouched.
+    expect((await h.call('GET', '/v1/activities/hk-1', { token: TOKENS.other })).status).toBe(200);
+  });
+
+  it('derives the source from the id: hk-… is apple-health, nothing else is (422)', async () => {
+    await grant();
+    await grant(TOKENS.admin, 'apple-health-in-cloud-sync');
+    const disguised = await put('hk-2', upload({ source: 'recording' }));
+    expect(disguised.status).toBe(422);
+    expect(await disguised.json()).toMatchObject({ code: 'activity.source-mismatch' });
+    expect((await put('run-9', upload({ source: 'apple-health' }))).status).toBe(422);
+    expect((await put('imp-1', upload({ source: 'import' }))).status).toBe(201);
   });
 
   it('needs apple-health-in-cloud-sync for Apple Health activities', async () => {
@@ -180,6 +341,55 @@ describe('PUT /v1/activities/{id}', () => {
     const res = await put('run-1', upload({ track: { points } }));
     expect(res.status).toBe(400);
     expect(JSON.stringify(await res.json())).not.toContain('52.2297');
+  });
+});
+
+describe('PATCH /v1/activities/{id}', () => {
+  beforeEach(async () => {
+    await grant();
+    await put('run-1', upload());
+  });
+
+  const rename = (name: string, renamedAt: string, headers: Record<string, string> = {}, id = 'run-1') =>
+    h.call('PATCH', `/v1/activities/${id}`, { body: { name, renamedAt }, headers });
+
+  it('renames with last write wins on renamedAt, bumping the version once', async () => {
+    const res = await rename('  Old Town loop ', '2026-10-19T09:00:00Z');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('etag')).toBe('"v2"');
+    expect(await res.json()).toMatchObject({
+      name: 'Old Town loop',
+      version: 2,
+      renamedAt: '2026-10-19T09:00:00.000Z',
+      gapRoutes: [],
+    });
+    const older = await rename('Older name', '2026-10-19T08:00:00Z');
+    expect(older.status).toBe(200);
+    expect(await older.json()).toMatchObject({ name: 'Old Town loop', version: 2 });
+    const same = await rename('Old Town loop', '2026-10-19T10:00:00Z');
+    expect(await same.json()).toMatchObject({ version: 2, renamedAt: '2026-10-19T10:00:00.000Z' });
+
+    // The feed shows the new name; an upload carrying it is a replay.
+    const feed = await (await h.call('GET', '/v1/sync/changes')).json();
+    expect(feed.changes[0].activity).toMatchObject({ name: 'Old Town loop', version: 2 });
+    expect((await put('run-1', upload({ name: 'Old Town loop' }))).status).toBe(200);
+  });
+
+  it('answers 422 for an invalid name, 412 for a stale If-Match, 404 and 410', async () => {
+    const empty = await rename('   ', '2026-10-19T09:00:00Z');
+    expect(empty.status).toBe(422);
+    expect(await empty.json()).toMatchObject({ code: 'activity.invalid-name' });
+    expect((await rename('x'.repeat(81), '2026-10-19T09:00:00Z')).status).toBe(422);
+    expect((await rename('New', '2026-10-19T09:00:00Z', { 'If-Match': '"v9"' })).status).toBe(412);
+    expect((await rename('New', '2026-10-19T09:00:00Z', { 'If-Match': '"v1"' })).status).toBe(200);
+    expect((await rename('New', '2026-10-19T09:00:00Z', {}, 'nope')).status).toBe(404);
+    // The server's clock is 2026-10-20T08:00Z: up to 5 minutes ahead is fine, more is refused.
+    expect((await rename('Soon', '2026-10-20T08:04:00Z')).status).toBe(200);
+    const future = await rename('Later', '2026-10-20T08:06:00Z');
+    expect(future.status).toBe(422);
+    expect(await future.json()).toMatchObject({ code: 'activity.renamed-in-future' });
+    await h.call('DELETE', '/v1/activities/run-1');
+    expect((await rename('New', '2026-10-19T11:00:00Z')).status).toBe(410);
   });
 });
 
@@ -280,6 +490,23 @@ describe('gap routes', () => {
   it('answers 404 for an unknown activity', async () => {
     expect((await h.call('PUT', '/v1/activities/nope/gap-routes', { body: routes })).status).toBe(404);
   });
+
+  it('records an empty list as checked (gapsCheckedAt), once; a new track clears it', async () => {
+    expect((await (await h.call('GET', '/v1/activities/run-1')).json()).gapsCheckedAt).toBeNull();
+    const none = { checkedAt: '2026-10-19T08:00:00Z', routes: [] };
+    const res = await h.call('PUT', '/v1/activities/run-1/gap-routes', { body: none });
+    expect(res.headers.get('etag')).toBe('"v2"');
+    const replay = await h.call('PUT', '/v1/activities/run-1/gap-routes', { body: none });
+    expect(replay.headers.get('etag')).toBe('"v2"');
+    const detail = await (await h.call('GET', '/v1/activities/run-1')).json();
+    expect(detail).toMatchObject({ gapsCheckedAt: '2026-10-19T08:00:00.000Z', gapRoutes: [], estimatedDistanceM: 0 });
+
+    const longer = { points: track(41) };
+    await put('run-1', upload({ track: longer, endedAt: new Date(longer.points[40][2]).toISOString() }), {
+      'If-Match': '"v2"',
+    });
+    expect((await (await h.call('GET', '/v1/activities/run-1')).json()).gapsCheckedAt).toBeNull();
+  });
 });
 
 describe('GET /v1/sync/changes', () => {
@@ -342,6 +569,18 @@ describe('Home City', () => {
     const unknown = await choose('xx-nowhere', '2026-10-19T10:00:00Z');
     expect(unknown.status).toBe(422);
     expect(await unknown.json()).toMatchObject({ code: 'home-city.unknown' });
+  });
+});
+
+describe('a user erased on another function instance', () => {
+  it('re-creates the account row on the next write instead of failing', async () => {
+    await grant();
+    expect((await put('a1', upload())).status).toBe(201);
+    // Another instance erased the user; this one still has it in its cache.
+    await h.db.execute(sql`DELETE FROM users WHERE id = 'admin'`);
+    expect((await put('a2', upload())).status).toBe(403);
+    expect((await grant()).status).toBe(200);
+    expect((await put('a2', upload())).status).toBe(201);
   });
 });
 

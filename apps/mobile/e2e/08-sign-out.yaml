@@ -6,4 +6,4 @@ tags: [auth]
 - tapOn: { id: 'tab-me' }
 - tapOn: { id: 'me-menu-account' }
 - tapOn: { id: 'sign-out' }
-- extendedWaitUntil: { visible: { id: 'sign-in-submit' }, timeout: 10000 }
+- extendedWaitUntil: { visible: { id: 'sign-in-email' }, timeout: 10000 }

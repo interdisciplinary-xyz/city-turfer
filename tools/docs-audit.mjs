@@ -55,7 +55,6 @@ const PLANNED_PATHS = new Set([
   'docs/spikes.md', // poc-plan.md M2: MapLibre spike decision record
   'docs/poc-report.md', // poc-plan.md M6: the PoC report
   'docs/roadmap.md', // add-feature skill: created after the PoC milestones
-  'docs/plans/', // product-manager: product specs, created with the first one
 ]);
 
 /** Index sections in reading order: folder → [heading, what lives here]. */

@@ -55,7 +55,13 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
 - **Sync:** Activities carry `version`, `trackHash` and an `ETag` (`"v<version>"`). Replacing an
   existing Activity with different content needs `If-Match` (412 stale, 428 missing); a deleted id
   answers **410 `activity.deleted`** (tombstones, delete wins). `GET /v1/sync/changes` is the one
-  feed of upserts, tombstones and the Home City; without a cursor it is the full manifest.
+  feed of upserts, tombstones and the Home City; without a cursor it is the full manifest. Feed
+  entries carry no geometry (no `preview`) and a page stops at `limit` or ~1 MB (`MAX_PAGE_BYTES`);
+  restore = manifest, then detail + track per activity (test:
+  `apps/api/src/__tests__/restore.test.ts`). `source` is derived from the id (`hk-…` ⇒
+  `apple-health`, 422 `activity.source-mismatch`). `PUT …/gap-routes` with an empty list sets
+  `gapsCheckedAt` ("checked, no gaps"). Rename = `PATCH` `{ name, renamedAt }`, last write wins on
+  `renamedAt` (like the Home City on `chosenAt`); more than 5 min ahead of the server → 422.
 - **JSON:** camelCase. Units are SI with a suffix, like the domain: `distanceM`, `movingS`,
   `areaKm2` only where the domain already uses km². Timestamps are **ISO 8601 UTC strings**
   (`startedAt: "2026-10-19T07:12:00Z"`, `z.iso.datetime()`); an Activity may carry its IANA
@@ -69,17 +75,26 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   `{ changes, nextCursor, hasMore }`).
 - **Errors:** `application/problem+json` (RFC 9457): `type`, `title`, `status`, `detail`, our `code`
   from the catalogue in `apps/api/src/errors.ts` (domain codes like `home-city.unknown` included),
-  and for 400 an `errors[]` of JSON pointers — never input values.
+  and for 400 an `errors[]` of JSON pointers (at most 20) — never input values.
 - **Headers:** `X-Request-Id` on every answer; `CityTurfer-Client` (426 `client.too-old`);
   `Retry-After` + `RateLimit` on 429; `Location` on 201/202.
 - **Auth:** `bearerAuth` (HTTP bearer). Every route needs it except `GET /v1/health`,
-  `POST /v1/auth/sign-in` (mock, dev only), `/openapi.json` and `/swagger`. Today: **device tokens**
-  (stopgap until Better Auth) — env `API_TOKENS` maps `sha256(token)` hex → user id, compared in
-  constant time; unknown → 401 `auth.invalid`. The user row is created on first sight. The
-  placeholder verifier (spec generation, planned-route tests) marks callers unverified, which live
-  routes refuse.
+  `POST /v1/auth/codes`, `POST /v1/auth/sign-in`, `GET /v1/exports/{key}` (the key is the
+  credential), `/openapi.json` and `/swagger`. **Sign-in** = e-mailed 6-digit code via Better Auth
+  (`apps/api/src/identity/`: `better-auth.ts`, `use-cases.ts` IdentityService, `mailer.ts` Mailer
+  port with Brevo/Console/Memory/Null adapters); we call `auth.api.*` from our own routes, never
+  mount `auth.handler`. Our own rate limits in Postgres (`rate_limits`,
+  `apps/api/src/db/rate-limits.ts`). Tables `auth_*`; the Better Auth user id is `users.id`. The
+  verifier is composite: **device tokens** (`API_TOKENS`, sha256 → user id, constant time; one more
+  release) first, then sessions; unknown → 401 `auth.invalid`. The user row is created on first
+  sight. The placeholder verifier (spec generation, planned-route tests) marks callers unverified,
+  which live routes refuse. Decision: `docs/decisions/api-accounts-2026-10-22.md`.
 - **Consent:** activity and Home City writes need `cloud-sync` granted (Apple Health activities also
-  `apple-health-in-cloud-sync`), else 403 `consent.required`; `DELETE` never needs it.
+  `apple-health-in-cloud-sync`), else 403 `consent.required`; `DELETE` never needs it. Withdrawing
+  erases the server copy it covered (`eraseBackup`, no new tombstones): `cloud-sync` → everything
+  but the account, consents and existing tombstones (kept so delete wins, D5; they go with the
+  account), `apple-health-in-cloud-sync` → the `hk-…` activities. Use cases read consent **after**
+  `tx.lock()` (transactions are READ COMMITTED), so a write cannot land after a withdrawal's erase.
 - **Planned routes** are declared with full schemas, answer `501` (`code: "not-implemented"`), carry
   `x-cityturfer-status: planned` and a `[planned]` summary prefix, so Swagger shows the whole API
   before it is built.
@@ -88,8 +103,16 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
 
 - GPS tracks are personal data. The server may store full tracks (founder's decision, 2026-10-20),
   owned by the user, after an opt-in consent (`cloud-sync`; Apple Health imports need
-  `apple-health-in-cloud-sync`): exports (`POST /v1/me/exports`) and erasure (`DELETE /v1/me`) must
-  cover every table, tombstones and consents included.
+  `apple-health-in-cloud-sync`): exports (`POST /v1/me/exports`) and erasure (`DELETE /v1/me`, 204,
+  one transaction: `eraseAccount` in `apps/api/src/db/store.ts`) must cover every table, tombstones,
+  consents and the `auth_*` rows included. A new table hangs off `users` with `ON DELETE CASCADE`
+  (or is deleted in `eraseAccount`) — `apps/api/src/__tests__/erase.test.ts` counts the rows.
+- **Export** (`apps/api/src/privacy/`): `POST /v1/me/exports` reserves a `pending` row under the
+  user lock (one per 24 h), streams the zip into fflate (`data.json` + GPX 1.1 per activity, ≤ 50
+  MB), stores it behind the `FileStorage` port (Postgres `bytea`, `apps/api/src/db/exports.ts`;
+  Vercel Blob later) and e-mails a link `GET /v1/exports/{key}` (public; only the key's SHA-256 is
+  stored; repeatable until it expires after 24 h; streamed). Failures leave `failed` and no file.
+  Consent withdrawal deletes export files too.
 - **Never** log request bodies, coordinates, track points, cell ids or Home City; log route, status,
   duration and user id only. No coordinates in error `detail`.
 - **OpenAPI examples** use public landmarks (Warsaw Old Town, 21.0122 / 52.2297) and made-up ids,
@@ -110,9 +133,20 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
 
 - **Local:** `pnpm --filter @cityturfer/api dev` (port 8787; `PORT=8788 …` for another). Without
   `DATABASE_URL` it uses PGlite in `apps/api/.data/` (gitignored, migrated on start); without
-  `API_TOKENS` the token `dev-token` is user `admin`.
+  `API_TOKENS` and `DATABASE_URL` the token `dev-token` is user `admin` (never against Neon).
 - **Env (Vercel):** `DATABASE_URL` (Neon pooled), optional `DATABASE_URL_UNPOOLED` (migrations),
-  `API_TOKENS`. Runbook: `docs/operations/api-deploy.md`.
+  `BETTER_AUTH_SECRET`, `BREVO_API_KEY`, `MAIL_FROM`, `API_PUBLIC_URL`, `CRON_SECRET`, `API_TOKENS`;
+  `AUTH_FIXED_CODE` on previews only, and only for `@e2e.cityturfer.test` addresses (production
+  refuses to boot with it, or without the others: `checkProductionEnv` in `apps/api/src/wiring.ts`).
+  Production also needs `DATABASE_URL` and `CRON_SECRET` (daily Vercel Cron
+  `GET /internal/cron/retention`, outside `/v1` and the spec, purges expired exports, codes,
+  sessions and rate-limit rows). Unexpected errors log one sanitised `request.error` line
+  (`describeError`, never the message). Runbook: `docs/operations/api-deploy.md`.
+- **Support (no admin panel):** `user:find -- <id|email>` (no coordinates) and
+  `user:delete -- <id> [--yes]` (same erase as `DELETE /v1/me`; dry run without `--yes`).
+- **Codes locally:** the dev server prints them (ConsoleMailer); tests read them from MemoryMailer
+  (`h.signIn(email)` in `apps/api/src/__tests__/support.ts`). `auth:adopt -- <userId> <email>` gives
+  an existing data user an e-mail sign-in.
 - **Schema change:** edit `apps/api/src/db/schema.ts` (`user_id` first in every key), then
   `pnpm --filter @cityturfer/api run db:generate`, commit `apps/api/drizzle/`. Apply with
   `DATABASE_URL=… pnpm --filter @cityturfer/api run db:migrate` before deploying (not in the build).

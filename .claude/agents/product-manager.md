@@ -49,8 +49,8 @@ written down.
   the `brand-system` skill (voice, vocabulary, store copy), the `add-feature` skill (how pitches
   become code). Commit your docs per `docs/process/release-manager.md`.
 - Your working set: `docs/product/` (brief, strategy, discovery board, market landscape, launch
-  readiness), `docs/plans/` (specs; create it with the first one), `NOTEBOOK.md` (backlog — may lag
-  the newest `scope/v*` branch), `docs/engineering/features.md`, `docs/sessions/`.
+  readiness), `docs/plans/` (specs; other teams' plans there are theirs), `NOTEBOOK.md` (backlog —
+  may lag the newest `scope/v*` branch), `docs/engineering/features.md`, `docs/sessions/`.
 
 ## Memory
 

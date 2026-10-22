@@ -14,6 +14,8 @@ export interface TurfReleased extends DomainEvent<'TurfReleased'> {
 /** The Turfer chose (or cleared, `cityId: null`) their Home City. Carries no coordinates. */
 export interface HomeCityChosen extends DomainEvent<'HomeCityChosen'> {
   cityId: string | null;
+  /** When the Turfer made the choice (epoch ms). Absent on events written before v0.9.0: `at`. */
+  chosenAt?: number;
 }
 
 /** The Turfer's last Home City decision (`cityId: null`: cleared) and when it was made (epoch ms). */

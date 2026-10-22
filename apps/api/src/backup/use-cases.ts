@@ -16,7 +16,7 @@ import type {
   UserRecord,
 } from './model';
 import type { BackupStore, UserReader } from './ports';
-import { gapTotals, summarizeUpload } from './summary';
+import { gapTotals, renamed, summarizeUpload } from './summary';
 
 /**
  * One-way backup phone → server (docs/decisions/api-sync-2026-10-20.md, "Sync protocol"): the
@@ -31,12 +31,21 @@ export interface Clock {
 
 export const etagOf = (version: number) => `"v${version}"`;
 
+/** How far a phone's clock may run ahead of the server's for a last-write-wins time (`renamedAt`). */
+export const MAX_CLOCK_SKEW_MS = 5 * 60_000;
+
 /** `If-Match` names this version (`"v3"`, `W/"v3"` or a list containing it)? */
 export function matchesVersion(ifMatch: string, version: number): boolean {
   const wanted = etagOf(version);
   return ifMatch.split(',').some((tag) => tag.trim().replace(/^W\//, '') === wanted);
 }
 
+/**
+ * Refuses a write without the consent. Call it **after `tx.lock()`**: a withdrawal erases the
+ * server copy under the same lock, so a consent read before the lock may be stale by the time the
+ * write runs (it would store data after the erasure committed). Transactions are READ COMMITTED
+ * (`DrizzleBackupStore.write`): a read after the lock sees the withdrawal that held it.
+ */
 async function requireConsent(reader: UserReader, purpose: ConsentPurposeName): Promise<void> {
   const consent = (await reader.consents()).find((c) => c.purpose === purpose);
   if (!consent?.granted) {
@@ -77,18 +86,33 @@ export class BackupService {
     return (await this.store.read(userId).user()) ?? { id: userId, email: null, displayName: null };
   }
 
+  /** EraseAccount (GDPR art. 17): every row of the user, at once. Phones keep their own copies. */
+  eraseAccount(userId: string): Promise<void> {
+    return this.store.eraseAccount(userId);
+  }
+
   consents(userId: string): Promise<ConsentRecord[]> {
     return this.store.read(userId).consents();
   }
 
-  /** Gives or withdraws a consent. Withdrawing stops writes; it erases nothing (that is DELETE /v1/me). */
+  /**
+   * GiveOrWithdrawConsent. Withdrawing deletes the **server copy** it covered, in the same
+   * transaction and without new tombstones or feed entries (phones keep theirs): `cloud-sync` →
+   * every activity, track, gap route and the Home City (the account, consents and existing
+   * tombstones stay — ids and times only, so delete still wins after backup is turned on again);
+   * `apple-health-in-cloud-sync` → the Apple Health activities. Idempotent.
+   */
   async setConsent(
     userId: string,
     purpose: ConsentPurposeName,
     decision: { granted: boolean; policyVersion: string }
   ): Promise<ConsentRecord[]> {
     return this.store.write(userId, async (tx) => {
+      await tx.lock();
       await tx.putConsent({ purpose, ...decision, at: this.clock.now() });
+      if (!decision.granted) {
+        await tx.eraseBackup(purpose === 'cloud-sync' ? 'all' : 'apple-health');
+      }
       return tx.consents();
     });
   }
@@ -107,6 +131,9 @@ export class BackupService {
     ifMatch: string | undefined
   ): Promise<{ created: boolean; activity: ActivityRecord }> {
     const now = this.clock.now();
+    if (input.source !== sourceOf(id, input.source)) {
+      throw new AppError('activity.source-mismatch');
+    }
     const trackHash = trackHashOf(input.points);
     if (input.trackHash !== undefined && input.trackHash !== trackHash) {
       throw new AppError('activity.track-hash-mismatch');
@@ -116,11 +143,11 @@ export class BackupService {
     const contentHash = contentHashOf({ ...input, name, timeZone, trackHash });
 
     return this.store.write(userId, async (tx) => {
+      await tx.lock();
       await requireConsent(tx, 'cloud-sync');
       if (input.source === 'apple-health') {
         await requireConsent(tx, 'apple-health-in-cloud-sync');
       }
-      await tx.lock();
       if (await tx.tombstone(id)) {
         throw new AppError('activity.deleted');
       }
@@ -139,6 +166,7 @@ export class BackupService {
         id,
         type: input.type,
         name,
+        renamedAt: existing?.renamedAt ?? null,
         source: input.source,
         startedAt: input.startedAt,
         endedAt: input.endedAt,
@@ -169,6 +197,55 @@ export class BackupService {
   }
 
   /**
+   * RenameActivity: last write wins on `renamedAt` (the phone's time of the rename) — an equal or
+   * older rename answers the current activity, unchanged. The name follows the core's rule (422).
+   * `If-Match` is optional; a stale one is 412. Version + 1 and a feed entry when the name changed.
+   * The stored content hash follows the new name, so the phone's next upload with it is a replay.
+   * A `renamedAt` more than MAX_CLOCK_SKEW_MS ahead of the server is 422. A PUT that replaces the
+   * activity (with `If-Match`) and carries another name sets that name but keeps `renamedAt`:
+   * renames belong to PATCH; a later PATCH still wins only with a newer `renamedAt`.
+   */
+  async rename(
+    userId: string,
+    id: string,
+    input: { name: string; renamedAt: number },
+    ifMatch: string | undefined
+  ): Promise<ActivityRecord> {
+    // A clock far ahead would win every later rename: refuse it rather than let it stick.
+    if (input.renamedAt > this.clock.now() + MAX_CLOCK_SKEW_MS) {
+      throw new AppError('activity.renamed-in-future');
+    }
+    return this.store.write(userId, async (tx) => {
+      await tx.lock();
+      await requireConsent(tx, 'cloud-sync');
+      const existing = await existingActivity(tx, id);
+      if (ifMatch && !matchesVersion(ifMatch, existing.version)) {
+        throw new AppError('precondition-failed', { ETag: etagOf(existing.version) });
+      }
+      if (existing.renamedAt !== null && existing.renamedAt >= input.renamedAt) {
+        return existing;
+      }
+      const name = renamed(existing, input.name);
+      if (name === existing.name) {
+        const record = { ...existing, renamedAt: input.renamedAt };
+        await tx.updateActivity(record);
+        return record;
+      }
+      const record: ActivityRecord = {
+        ...existing,
+        name,
+        renamedAt: input.renamedAt,
+        contentHash: contentHashOf({ ...existing, name }),
+        version: existing.version + 1,
+        updatedAt: this.clock.now(),
+        changeSeq: await tx.nextSeq(),
+      };
+      await tx.updateActivity(record);
+      return record;
+    });
+  }
+
+  /**
    * DeleteActivity: removes the activity, its track and gap routes and leaves a tombstone
    * (delete wins, D5). Idempotent. Allowed without consent: it only removes data.
    */
@@ -184,18 +261,22 @@ export class BackupService {
     });
   }
 
-  /** SaveGapRoutes: replaces the phone's estimates (display only); version + 1 when they changed. */
+  /**
+   * SaveGapRoutes: replaces the phone's estimates (display only) and records that the activity's
+   * gaps were checked (`gapsCheckedAt`; an empty list = checked, no gaps). Version + 1 when the
+   * routes changed or the activity had not been checked yet; a replay changes nothing.
+   */
   async saveGapRoutes(
     userId: string,
     id: string,
     input: { checkedAt: number; routes: StoredGapRoute[] }
   ): Promise<ActivityRecord> {
     return this.store.write(userId, async (tx) => {
-      await requireConsent(tx, 'cloud-sync');
       await tx.lock();
+      await requireConsent(tx, 'cloud-sync');
       const existing = await existingActivity(tx, id);
       const current = await tx.gapRoutes(id);
-      if (sameRoutes(current?.routes ?? [], input.routes)) {
+      if (current && sameRoutes(current.routes, input.routes)) {
         return existing;
       }
       const totals = gapTotals(input.routes);
@@ -207,7 +288,7 @@ export class BackupService {
         updatedAt: this.clock.now(),
         changeSeq: await tx.nextSeq(),
       };
-      await tx.putGapRoutes(id, input.routes.length > 0 ? input : null);
+      await tx.putGapRoutes(id, input);
       await tx.updateActivity(record);
       return record;
     });
@@ -248,10 +329,15 @@ export class BackupService {
 
   // ------------------------------------------------------------------ Sync
 
-  /** ListChanges: upserts, tombstones and the Home City above the cursor; no cursor = everything. */
+  /**
+   * ListChanges: upserts, tombstones and the Home City above the cursor; no cursor = everything. A
+   * page ends after `limit` changes or once `budget.maxBytes` (as measured by `budget.sizeOf`, the
+   * route's JSON) would be exceeded — at least one change per page.
+   */
   async changes(
     userId: string,
-    q: { cursor?: string; limit: number }
+    q: { cursor?: string; limit: number },
+    budget?: { maxBytes: number; sizeOf: (change: ChangeRecord) => number }
   ): Promise<{ changes: ChangeRecord[]; nextCursor: string; hasMore: boolean }> {
     const reader = this.store.read(userId);
     let after = 0;
@@ -263,11 +349,19 @@ export class BackupService {
       after = position.seq;
     }
     const rows = await reader.changesSince(after, q.limit + 1);
-    const changes = rows.slice(0, q.limit);
+    let changes = rows.slice(0, q.limit);
+    if (budget) {
+      let bytes = 0;
+      const fit = changes.findIndex((change, i) => {
+        bytes += budget.sizeOf(change);
+        return i > 0 && bytes > budget.maxBytes;
+      });
+      changes = fit === -1 ? changes : changes.slice(0, fit);
+    }
     return {
       changes,
       nextCursor: encodeCursor({ seq: changes.at(-1)?.seq ?? after }),
-      hasMore: rows.length > q.limit,
+      hasMore: rows.length > changes.length,
     };
   }
 
@@ -283,8 +377,8 @@ export class BackupService {
       catalogueCityView(input.cityId);
     }
     return this.store.write(userId, async (tx) => {
-      await requireConsent(tx, 'cloud-sync');
       await tx.lock();
+      await requireConsent(tx, 'cloud-sync');
       const current = await tx.homeCity();
       if (current && current.chosenAt >= input.chosenAt) {
         return current;
@@ -294,6 +388,21 @@ export class BackupService {
       return next;
     });
   }
+}
+
+/** Apple Health imports are the `hk-…` ids; nothing else may claim to come from Apple Health. */
+const APPLE_HEALTH_ID = /^hk-/;
+
+/**
+ * The source an upload must carry, derived from its id: `hk-…` ⇒ `apple-health` (so the Apple
+ * Health consent cannot be skipped by mislabelling), any other id ⇒ what was sent unless that is
+ * `apple-health`. A mismatch is 422 `activity.source-mismatch`.
+ */
+export function sourceOf(id: string, sent: ActivitySourceName): ActivitySourceName | null {
+  if (APPLE_HEALTH_ID.test(id)) {
+    return 'apple-health';
+  }
+  return sent === 'apple-health' ? null : sent;
 }
 
 /** Equal gap routes, whatever the key order (jsonb does not keep it). */

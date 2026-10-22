@@ -48,25 +48,26 @@ export const ExportIdParam = z.object({
 
 export const DataExportJob = z
   .object({
-    id: z.string().openapi({ example: 'exp_01' }),
-    status: z.enum(['pending', 'ready', 'failed', 'expired']).openapi({ example: 'ready' }),
+    id: z.string().openapi({ example: 'exp_4fJq9TzW1kXv8bNc' }),
+    status: z.enum(['pending', 'ready', 'downloaded', 'expired', 'failed']).openapi({
+      description:
+        '`pending`: being built; `ready`: the link was e-mailed; `downloaded`: fetched at least once (still works until `expiresAt`); `expired`: 24 h passed, or a consent was withdrawn; `failed`: nothing was sent, ask again at once.',
+      example: 'ready',
+    }),
     requestedAt: IsoDateTime,
     readyAt: IsoDateTime.nullable(),
-    url: z.url().nullable().openapi({
-      description:
-        'Short-lived signed link to a zip: `data.json` (account, consents, activities, tombstones, Home City) and one GPX file per activity. Only while `ready`.',
-      example: 'https://files.cityturfer.app/exports/exp_01.zip?signature=abc123',
-    }),
-    expiresAt: IsoDateTime.nullable().openapi({ description: 'The link stops working 24 h after it is ready.' }),
+    expiresAt: IsoDateTime.nullable().openapi({ description: 'The e-mailed link works until then (24 h).' }),
   })
-  .openapi('DataExportJob');
-
-export const ErasureJob = z
-  .object({
-    status: z.literal('scheduled'),
-    requestedAt: IsoDateTime,
-  })
-  .openapi('ErasureJob', {
+  .openapi('DataExportJob', {
     description:
-      'Sessions are revoked at once; rows and stored files follow. Database backups keep data for the provider’s restore window.',
+      'An export of everything the server holds for the account: a zip with `data.json` (account, consents, activities with tracks and gap routes, tombstones, Home City) and one GPX 1.1 file per activity. The download link is only in the e-mail and works until `expiresAt`.',
   });
+
+export const DownloadKeyParam = z.object({
+  key: z
+    .string()
+    .min(20)
+    .max(100)
+    .regex(/^[A-Za-z0-9_-]+$/)
+    .openapi({ param: { name: 'key', in: 'path' }, example: 'Zm9vYmFyYmF6cXV4cXV1eHF1dXgxMjM0NTY3ODkw' }),
+});

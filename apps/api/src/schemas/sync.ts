@@ -1,6 +1,6 @@
 import { z } from '@hono/zod-openapi';
 
-import { ActivitySummary } from './activities';
+import { ActivityFeedEntry } from './activities';
 import { Cursor, IsoDateTime } from './common';
 
 /**
@@ -14,7 +14,7 @@ export const ActivityUpserted = z
   .object({
     type: z.literal('activity.upserted'),
     changedAt,
-    activity: ActivitySummary,
+    activity: ActivityFeedEntry,
   })
   .openapi('ActivityUpserted', {
     description:
@@ -52,7 +52,10 @@ export const ChangesPage = z
       description: 'Always present: store it and pass it next time, even when `hasMore` is false.',
       example: 'eyJzIjoxMjh9',
     }),
-    hasMore: z.boolean().openapi({ description: 'True: ask again now with `nextCursor`.', example: false }),
+    hasMore: z.boolean().openapi({
+      description: 'True: ask again now with `nextCursor`. A page ends at `limit` changes or about 1 MB.',
+      example: false,
+    }),
   })
   .openapi('ChangesPage');
 

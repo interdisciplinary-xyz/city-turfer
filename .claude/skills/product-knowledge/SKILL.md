@@ -69,8 +69,8 @@ it, where the other sources are, and how to keep them honest.
   verified, and how we'll know it worked.
 - Hand the spec to `rn-architect` for the technical plan (the `add-feature` skill), and copy and
   look to `brand-designer`.
-- Live specs go in `docs/plans/` (create it with the first one if missing), product direction in
-  `docs/product/`, both with docs frontmatter (`docs/process/docs-conventions.md`).
+- Live specs go in `docs/plans/`, product direction in `docs/product/`, both with docs frontmatter
+  (`docs/process/docs-conventions.md`).
 
 ## Keeping the brief honest
 

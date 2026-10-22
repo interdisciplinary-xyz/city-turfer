@@ -1,4 +1,4 @@
-import { DomainError } from '@/shared-kernel';
+import { DomainError, type TrackPoint } from '@/shared-kernel';
 
 /**
  * What may leave the phone. Activity ids tell where an Activity came from (published language of
@@ -21,6 +21,17 @@ export function sourceOf(activityId: string): ActivitySourceKind {
 }
 
 /**
+ * The track as the server stores and hashes it (contract: TrackPoint `[lon, lat, t, segment,
+ * altitudeM | null]`, t in whole ms). `trackHash` is SHA-256 of `JSON.stringify` of exactly this.
+ */
+export function canonicalTrackPoints(track: readonly TrackPoint[]): [number, number, number, number, number | null][] {
+  return track.map((p) => [p.lon, p.lat, Math.round(p.t), p.segment, p.alt ?? null]);
+}
+
+/** The text whose SHA-256 is the server's `trackHash`. */
+export const trackHashInput = (track: readonly TrackPoint[]): string => JSON.stringify(canonicalTrackPoints(track));
+
+/**
  * Demo history is never uploaded; Apple Health imports only with their own consent (decision D2).
  */
 export function mayUpload(activityId: string, healthIncluded: boolean): boolean {
@@ -40,4 +51,23 @@ export function deviceToken(raw: string): string {
     throw new DomainError('backup.invalid-token');
   }
   return t;
+}
+
+/** A name with the time it was set by a rename (null: never renamed, or not known). */
+export interface NameStamp {
+  name: string;
+  renamedAt: number | null;
+}
+
+/**
+ * Which name a full upload (PUT) should carry when the server already has the Activity: last write
+ * wins on `renamedAt` (decision D6), as the server decides for a PATCH. The server's name wins ties
+ * and whenever only the server knows a rename time; the phone's otherwise (the phone stays
+ * authoritative for content nobody renamed).
+ */
+export function nameToUpload(local: NameStamp, server: NameStamp): string {
+  if (server.renamedAt != null && (local.renamedAt == null || server.renamedAt >= local.renamedAt)) {
+    return server.name;
+  }
+  return local.name;
 }

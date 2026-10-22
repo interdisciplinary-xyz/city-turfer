@@ -48,7 +48,7 @@ describe('SqliteActivityRepository: why segments start', () => {
     await repo.save(record(null), points);
     expect((await repo.get('a'))!.toState().resumedSegments).toBeNull();
     const a = (await repo.get('a'))!;
-    a.rename('Lunch walk');
+    a.rename('Lunch walk', T0);
     await repo.save(a);
     expect((await repo.get('a'))!.toState()).toMatchObject({ name: 'Lunch walk', resumedSegments: null });
   });
@@ -91,5 +91,94 @@ describe('SqliteActivityRepository: timeline', () => {
       { id: 'a', startedAt: T0, endedAt: T0 + 180_000 },
       { id: 'b', startedAt: T0 + 86_400_000, endedAt: T0 + 86_580_000 },
     ]);
+  });
+});
+
+describe('SqliteActivityRepository: rename, time zone, restore', () => {
+  const outbox = (db: ReturnType<typeof openNodeDatabase>) =>
+    db.all<{ type: string; payload: string }>('SELECT type, payload FROM sys_outbox ORDER BY id');
+
+  it('saves a rename and its ActivityRenamed event together, with when it happened', async () => {
+    const { db, repo } = await setup();
+    await repo.save(record(null), points);
+    const a = (await repo.get('a'))!;
+    a.rename('  Lunch walk ', T0 + 1_000);
+    await repo.save(a);
+    expect((await repo.get('a'))!.toState()).toMatchObject({ name: 'Lunch walk', renamedAt: T0 + 1_000 });
+    const events = await outbox(db);
+    expect(events.map((e) => e.type)).toEqual(['ActivityRecorded', 'ActivityRenamed']);
+    expect(JSON.parse(events[1].payload)).toEqual({
+      type: 'ActivityRenamed',
+      v: 1,
+      at: T0 + 1_000,
+      activityId: 'a',
+      name: 'Lunch walk',
+      renamedAt: T0 + 1_000,
+    });
+  });
+
+  it('keeps the time zone the Activity was saved in; the repair fills only missing ones', async () => {
+    const { repo } = await setup();
+    await repo.save(
+      Activity.record({
+        id: 'z',
+        type: 'walk',
+        startedAt: T0,
+        endedAt: T0 + 180_000,
+        track: trackFromPoints(points),
+        now: T0,
+        timeZone: 'Europe/Warsaw',
+      }),
+      points
+    );
+    await repo.save(record(null), points);
+    expect((await repo.get('z'))!.toState().timeZone).toBe('Europe/Warsaw');
+    expect(await repo.idsWithoutTimeZone()).toEqual(['a']);
+    const a = (await repo.get('a'))!;
+    expect(a.assignTimeZone('Asia/Tokyo')).toBe(true);
+    await repo.save(a);
+    expect(await repo.idsWithoutTimeZone()).toEqual([]);
+    const z = (await repo.get('z'))!;
+    expect(z.assignTimeZone('Asia/Tokyo')).toBe(false);
+  });
+
+  it('saves a restored Activity with its gap routes and check time in one transaction', async () => {
+    const { db, repo } = await setup();
+    const restored = Activity.restore({
+      id: 'r',
+      type: 'walk',
+      name: 'Old town loop',
+      startedAt: T0,
+      endedAt: T0 + 180_000,
+      track: trackFromPoints(points),
+      resumedSegments: null,
+      timeZone: 'Europe/Warsaw',
+      renamedAt: T0 - 5,
+      now: T0 + 9,
+    });
+    const route = {
+      afterSegment: 0,
+      distanceM: 120,
+      movingS: 80,
+      coords: [
+        [21, 52.2],
+        [21, 52.201],
+      ] as [number, number][],
+    };
+    await repo.save(restored, points, { routes: [route], checkedAt: T0 + 7 });
+    expect(await repo.gapsCheckedAt('r')).toBe(T0 + 7);
+    expect(await repo.gapRoutesOf('r')).toEqual([route]);
+    expect(await repo.idsWithUncheckedGaps()).toEqual([]);
+    expect((await repo.list(5))[0]).toMatchObject({ id: 'r', name: 'Old town loop', estimatedDistanceM: 120 });
+    const events = await outbox(db);
+    expect(events.map((e) => e.type)).toEqual(['ActivityRecorded']);
+    expect(JSON.parse(events[0].payload)).toMatchObject({ origin: 'restore', activityId: 'r' });
+
+    // A failing insert rolls everything back: no half-restored Activity.
+    const broken = Activity.restore({ ...restored.toState(), id: 'r2', track: trackFromPoints(points), now: T0 });
+    await expect(
+      repo.save(broken, points, { routes: [route, route], checkedAt: T0 + 7 }) // duplicate primary key
+    ).rejects.toThrow();
+    expect(await repo.exists('r2')).toBe(false);
   });
 });
