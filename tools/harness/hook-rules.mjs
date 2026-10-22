@@ -899,7 +899,7 @@ const GIT_READ_ONLY = new Set(
 const DEV_NULL = /^\/dev\/(null|stdout|stderr)$/;
 /** pnpm scripts that rewrite tracked files, install, release or start long-running servers. */
 const PNPM_WRITE_SCRIPT =
-  /^(format|standard:format|openapi|cache:clean|release.*|ios|android|start(:.*)?|web:dev|dev|install|i|add|remove|rm|update|up|upgrade|dlx|create|link|unlink|patch.*|import|prune|publish|pack|setup)$|fix|write/;
+  /^(format|openapi|cache:clean|release.*|ios|android|start(:.*)?|web:dev|dev|install|i|add|remove|rm|update|up|upgrade|dlx|create|link|unlink|patch.*|import|prune|publish|pack|setup)$|fix|write/;
 const WRITE_ARG = /^(--fix|--write(?!-tree).*|--update.*|--out(put)?(=.*)?|--in-place.*)$/;
 /** Temp folders: a read-only agent may park command output there (it never reaches the repo). */
 const TEMP_PATH = /^(\/private)?\/tmp\/|^\/var\/folders\/|^\$\{?TMPDIR\}?\//;

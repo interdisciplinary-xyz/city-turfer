@@ -18,8 +18,8 @@ function fixture(files) {
   return dir;
 }
 
-const agent = (name, extra = '') =>
-  `---\nname: ${name}\ndescription: Does ${name} things.\ntools: Read, Grep\nmodel: sonnet\n${extra}---\n\nBody.\n`;
+const agent = (name, extra = '', body = '## Report\n\nChanged · Verified · Not verified.') =>
+  `---\nname: ${name}\ndescription: Does ${name} things.\ntools: Read, Grep\nmodel: sonnet\n${extra}---\n\n${body}\n`;
 const skill = (name, body = '') => `---\nname: ${name}\ndescription: How to ${name}.\n---\n\n${body}\n`;
 const CLAUDE_MD = (skills, agents) =>
   `# X\n\n## Claude Code setup\n\n- Skills (\`.claude/skills/\`): ${skills.map((s) => `\`${s}\``).join(', ')}.\n- Agents (\`.claude/agents/\`): ${agents.map((s) => `\`${s}\``).join(', ')}.\n\n## Docs\n`;
@@ -113,7 +113,7 @@ test('frontmatter must be real YAML: a plain description with ": " is dropped by
   const nested = '---\nname: web-engineer\ndescription:\n  Builds the server side: apps/api.\n---\n\nBody.\n';
   const oneLine = '---\nname: web-engineer\ndescription: Builds the server side: apps/api.\n---\n\nBody.\n';
   const folded =
-    '---\nname: web-engineer\ndescription: >-\n  Builds the server side: apps/api and more.\ntools: Read\n---\n\nBody.\n';
+    '---\nname: web-engineer\ndescription: >-\n  Builds the server side: apps/api and more.\ntools: Read\n---\n\n## Report\n\nNot verified.\n';
   assert.match(yamlFrontmatter(broken).error, /./);
   assert.match(yamlFrontmatter(oneLine).error, /./);
   assert.equal(yamlFrontmatter(folded).data.description, 'Builds the server side: apps/api and more.');
@@ -172,4 +172,62 @@ test('a nested .claude/ folder inside .claude/ is an error; worktrees are skippe
     stray.map((f) => f.file),
     ['.claude/agents/.claude']
   );
+});
+
+test('agent tools: allowlist required, Agent(x) targets exist, read-only is enforced', () => {
+  const base = { 'package.json': PKG, 'CLAUDE.md': CLAUDE_MD([], ['a-engineer', 'b-reviewer']) };
+  const raw = (name, fm) => `---\nname: ${name}\n${fm}---\n\n## Report\n\nNot verified.\n`;
+  const kinds = (files) =>
+    auditHarness(fixture({ ...base, ...files })).map((f) => `${f.severity}:${f.kind}:${f.message.slice(0, 40)}`);
+
+  const noTools = kinds({
+    '.claude/agents/a-engineer.md': raw('a-engineer', 'description: x\n'),
+    '.claude/agents/b-reviewer.md': agent('b-reviewer'),
+  });
+  assert.ok(
+    noTools.some((k) => k.startsWith('error:tools:no `tools:`')),
+    noTools.join('\n')
+  );
+
+  const spawn = kinds({
+    '.claude/agents/a-engineer.md': raw(
+      'a-engineer',
+      'description: x\ntools: Read, Agent(b-reviewer, ghost-engineer)\n'
+    ),
+    '.claude/agents/b-reviewer.md': agent('b-reviewer'),
+  });
+  assert.deepEqual(
+    spawn.filter((k) => k.includes('tools')),
+    ['error:tools:`Agent(ghost-engineer)` names an agent t']
+  );
+
+  const readOnly = kinds({
+    '.claude/agents/a-engineer.md': agent('a-engineer'),
+    '.claude/agents/b-reviewer.md': raw(
+      'b-reviewer',
+      'description: Reviews diffs. Read-only.\ntools: Read, Edit, Bash\nmemory: project\n'
+    ),
+  });
+  assert.equal(readOnly.filter((k) => k.startsWith('error:tools:read-only')).length, 3, readOnly.join('\n'));
+
+  const guarded = kinds({
+    '.claude/agents/a-engineer.md': agent('a-engineer'),
+    '.claude/hooks/read-only-bash.mjs': '',
+    '.claude/agents/b-reviewer.md': raw(
+      'b-reviewer',
+      'description: Reviews diffs. Read-only.\ntools: Read, Bash\nhooks:\n  PreToolUse:\n    - matcher: Bash\n      hooks:\n        - type: command\n          command: node "$CLAUDE_PROJECT_DIR"/.claude/hooks/read-only-bash.mjs\n'
+    ),
+  });
+  assert.deepEqual(guarded, []);
+});
+
+test('agent frontmatter typos and a missing Not verified report are warnings', () => {
+  const found = auditHarness(
+    fixture({
+      'package.json': PKG,
+      'CLAUDE.md': CLAUDE_MD([], ['a-engineer']),
+      '.claude/agents/a-engineer.md': agent('a-engineer', 'disallowedTool: Write\n', '## Report\n\nFiles changed.'),
+    })
+  ).map((f) => `${f.severity}:${f.kind}`);
+  assert.deepEqual(found.sort(), ['warn:frontmatter', 'warn:report']);
 });

@@ -13,8 +13,14 @@
  *   - `pnpm run <script>` / `pnpm --filter <pkg> <script>` / `pnpm -C <dir> run <script>` naming a
  *     script that does not exist
  *   - a `<name>-engineer|architect|reviewer|designer` agent or a `<name>` skill that does not exist
+ *   - agent tools: no `tools:` (it would inherit every tool), an `Agent(x)` naming a missing agent;
+ *     a read-only agent (description says "read-only") with Write/Edit, with `memory` (which grants
+ *     Write/Edit) or with Bash but no PreToolUse Bash hook in its frontmatter; a frontmatter hook
+ *     script that does not exist
  * Warnings: the old product name in agent/skill text; a description over 300 characters (it is
- * loaded into every session's context, so keep it a short trigger).
+ * loaded into every session's context, so keep it a short trigger); an unknown agent frontmatter
+ * field (Claude Code ignores it silently, so it is usually a typo); an agent body without a
+ * `## Report` section that asks for "Not verified".
  *
  *   pnpm run audit:harness            report, exit 1 on errors
  *   pnpm run audit:harness -- --json  machine-readable findings
@@ -46,6 +52,52 @@ export const KNOWN_TOOLS = new Set([
 export const DESCRIPTION_SOFT_LIMIT = 300;
 export const KNOWN_MODELS = new Set(['opus', 'sonnet', 'haiku', 'fable', 'inherit']);
 const AGENT_SUFFIX = /\b([a-z][a-z0-9]*(?:-[a-z0-9]+)*-(?:engineer|architect|reviewer|designer))\b/g;
+/** Subagent frontmatter fields Claude Code reads (https://code.claude.com/docs/en/sub-agents). */
+export const AGENT_FIELDS = new Set([
+  'name',
+  'description',
+  'tools',
+  'disallowedTools',
+  'model',
+  'effort',
+  'permissionMode',
+  'maxTurns',
+  'autoCompactWindow',
+  'skills',
+  'mcpServers',
+  'hooks',
+  'memory',
+  'background',
+  'omitClaudeMd',
+  'isolation',
+  'color',
+  'initialPrompt',
+  'experimental',
+]);
+const WRITE_TOOLS = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit']);
+
+/** `Read, Agent(a, b), Bash` → ['Read', 'Agent(a, b)', 'Bash'] (commas inside parentheses stay). */
+export function toolList(value) {
+  if (Array.isArray(value)) {
+    return value.map((t) => String(t).trim()).filter(Boolean);
+  }
+  return (String(value ?? '').match(/[^,(]+(?:\([^)]*\))?/g) ?? []).map((t) => t.trim()).filter(Boolean);
+}
+
+/** Script paths (`.claude/hooks/x.mjs`) that a hooks map runs, by event. */
+function hookScripts(hooks) {
+  const out = [];
+  for (const [event, groups] of Object.entries(hooks ?? {})) {
+    for (const group of Array.isArray(groups) ? groups : []) {
+      for (const hook of group?.hooks ?? []) {
+        for (const m of String(hook?.command ?? '').matchAll(/\$\{?CLAUDE_PROJECT_DIR\}?"?\/([^\s"']+)/g)) {
+          out.push({ event, matcher: String(group.matcher ?? ''), script: m[1], command: String(hook.command) });
+        }
+      }
+    }
+  }
+  return out;
+}
 const STALE_NAMES = [{ re: /\bTurfTrack\b/, now: 'CityTurfer' }];
 /**
  * Skills the harness may name that live outside .claude/skills/ (user-level skills, built-ins).
@@ -236,11 +288,59 @@ export function auditHarness(root) {
       add('error', file, 'frontmatter', `name \`${fm.name}\` ≠ file name \`${name}\``);
     }
     checkDescription(file, fm);
-    const tools = Array.isArray(fm.tools) ? fm.tools : String(fm.tools ?? '').split(',');
-    for (const tool of tools.map((t) => String(t).trim()).filter(Boolean)) {
-      if (!KNOWN_TOOLS.has(tool) && !tool.startsWith('mcp__')) {
+    for (const key of Object.keys(fm).filter((k) => !AGENT_FIELDS.has(k))) {
+      add(
+        'warn',
+        file,
+        'frontmatter',
+        `unknown field \`${key}\` (Claude Code ignores it silently; check the spelling)`
+      );
+    }
+    if (fm.tools === undefined) {
+      add('error', file, 'tools', 'no `tools:` allowlist, so the agent inherits every tool; grant the smallest set');
+    }
+    const tools = toolList(fm.tools);
+    for (const tool of tools) {
+      const spawn = tool.match(/^(Agent|Task)\((.*)\)$/);
+      if (spawn) {
+        for (const target of spawn[2]
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean)) {
+          if (!agents.includes(target)) {
+            add('error', file, 'tools', `\`${spawn[1]}(${target})\` names an agent that does not exist`);
+          }
+        }
+      } else if (!KNOWN_TOOLS.has(tool) && !tool.startsWith('mcp__')) {
         add('error', file, 'frontmatter', `unknown tool \`${tool}\``);
       }
+    }
+    const scripts = hookScripts(fm.hooks);
+    for (const { event, script } of scripts) {
+      if (!existsSync(join(root, script))) {
+        add('error', file, 'hook', `${event} hook runs \`${script}\`, which does not exist`);
+      }
+    }
+    if (/read-only/i.test(String(fm.description ?? ''))) {
+      for (const tool of tools.filter((t) => WRITE_TOOLS.has(t))) {
+        add('error', file, 'tools', `read-only agent has \`${tool}\``);
+      }
+      if (fm.memory) {
+        add('error', file, 'tools', 'read-only agent has `memory`, which grants Write and Edit');
+      }
+      if (tools.includes('Bash') && !scripts.some((h) => h.event === 'PreToolUse' && /Bash/.test(h.matcher))) {
+        add(
+          'error',
+          file,
+          'tools',
+          'read-only agent has Bash without a PreToolUse Bash hook; Bash can write (add `.claude/hooks/read-only-bash.mjs` under `hooks:`)'
+        );
+      }
+    }
+    const body = text.replace(/^---\n[\s\S]*?\n---\n/, '');
+    const report = body.match(/^## Report\b[\s\S]*/m)?.[0] ?? '';
+    if (!/not verified/i.test(report)) {
+      add('warn', file, 'report', 'no `## Report` section asking for "Not verified" (what the agent could not prove)');
     }
     if (fm.model && typeof fm.model === 'string' && !KNOWN_MODELS.has(fm.model) && !fm.model.startsWith('claude-')) {
       add('error', file, 'frontmatter', `unknown model \`${fm.model}\``);
