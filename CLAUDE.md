@@ -159,6 +159,8 @@ pnpm --filter @cityturfer/api dev                       # API on :8787 (PGlite +
 pnpm --filter @cityturfer/api run db:generate           # SQL migration from apps/api/src/db/schema.ts (commit apps/api/drizzle/)
 DATABASE_URL=… pnpm --filter @cityturfer/api run db:migrate   # apply migrations to Neon (docs/operations/api-deploy.md)
 pnpm --filter @cityturfer/api run token:new -- <userId>       # device token + API_TOKENS entry (stopgap auth)
+pnpm start:dev                   # web:dev, building Storybook first if storybook-static is missing
+pnpm cache:clean                 # delete node_modules, .turbo, .next, out, .expo (then pnpm install)
 pnpm --filter @cityturfer/storybook dev     # Storybook at http://localhost:6006 (app components + website pieces)
 pnpm --filter @cityturfer/storybook build   # static Storybook in apps/storybook/storybook-static
 pnpm --filter @cityturfer/api dev           # API on http://localhost:8787 (Swagger at /swagger); web:dev proxies /api/* to it

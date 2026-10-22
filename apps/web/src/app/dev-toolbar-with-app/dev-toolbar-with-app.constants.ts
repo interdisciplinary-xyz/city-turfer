@@ -1,18 +1,18 @@
 import type { DevToolbarLink } from '@interdisciplinary/dev-toolbar/react';
-import type { ReactNode } from 'react';
 
 /** Namespace for the toolbar's localStorage / sessionStorage keys. */
 export const DEV_TOOLBAR_STORAGE_PREFIX = 'cityturfer';
 
 export type DevToolbarWithAppProps = {
-  /** The page's language (`[locale]` segment). */
-  locale: string;
-  /** The landing page's language switcher, rendered by the server layout and slotted in. */
-  languageSwitcher?: ReactNode;
+  /** The page's language (`[locale]` segment); pages outside it (/branding) omit it. */
+  locale?: string;
 };
 
 /** Quick links in the toolbar's action row (opened in a new tab). */
 export const DEV_TOOLBAR_LINKS: readonly DevToolbarLink[] = [
+  // Served by server.mjs on the same origin (pnpm run web:dev).
+  { label: 'Swagger', href: '/swagger' },
+  { label: 'Storybook', href: '/storybook' },
   // The brand definition page (src/app/branding), served by the site itself.
   { label: 'Branding', href: '/branding' },
   { label: 'GitHub', href: 'https://github.com/interdisciplinary-xyz/city-turfer' },

@@ -15,6 +15,9 @@ export const SWAGGER_PREFIX = '/swagger';
 export const API_PREFIX = '/api';
 export const DEFAULT_API_URL = 'http://localhost:8787';
 
+/** The table of contents script (a browser module next to this file), served as ./ct-toc.mjs. */
+const TOC_FILE = path.join(import.meta.dirname, 'swagger-toc.mjs');
+
 /** Brand files the page may load (packages/brand/svg): the header and the tab icon. */
 export const BRAND_FILES = ['mark.svg', 'wordmark.svg'];
 
@@ -45,10 +48,37 @@ export function swaggerHtml({ toolbar = false } = {}) {
         <p class="ct-tagline">Local API docs · planned routes answer 501</p>
       </div>
     </header>
-    <div id="swagger-ui"></div>${toolbar ? '\n    <div id="dev-toolbar-root"></div>' : ''}
+    <div class="ct-layout">
+      <nav id="ct-toc" class="ct-toc" aria-label="Contents" hidden></nav>
+      <div id="swagger-ui"></div>
+    </div>${toolbar ? '\n    <div id="dev-toolbar-root"></div>' : ''}
     <script src="./swagger-ui-bundle.js"></script>
     <script src="./swagger-ui-standalone-preset.js"></script>
     <script>
+      // The guide (info.description: getting started, sync flow, errors, units, privacy) goes
+      // after the endpoints and schemas, so the page opens on the title and then Platform.
+      const GuideLast = () => ({
+        // OAS 3.1's info block reads the description through this selector, not its props.
+        statePlugins: { spec: { wrapSelectors: { selectInfoDescriptionField: () => () => null } } },
+        wrapComponents: {
+          info: (Original, system) => (props) =>
+            system.React.createElement(Original, { ...props, info: props.info.delete('description') }),
+          Models: (Original, system) => (props) => {
+            const h = system.React.createElement;
+            const description = system.specSelectors.info().get('description');
+            const Markdown = system.getComponent('Markdown', true);
+            return h(
+              'div',
+              null,
+              h(Original, props),
+              description
+                ? h('section', { className: 'info ct-guide', 'aria-label': 'Guide' },
+                    h('div', { className: 'description' }, h(Markdown, { source: description })))
+                : null,
+            );
+          },
+        },
+      });
       window.ui = SwaggerUIBundle({
         url: './openapi.json',
         dom_id: '#swagger-ui',
@@ -58,9 +88,16 @@ export function swaggerHtml({ toolbar = false } = {}) {
         showExtensions: true,
         docExpansion: 'list',
         presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+        plugins: [GuideLast],
         layout: 'StandaloneLayout',
+        // The table of contents (./ct-toc.mjs) builds itself once the spec is in.
+        onComplete: () => {
+          window.ctSwaggerReady = true;
+          window.dispatchEvent(new Event('ct:swagger-ready'));
+        },
       });
-    </script>${toolbar ? '\n    <script src="./__toolbar.js"></script>' : ''}
+    </script>
+    <script type="module" src="./ct-toc.mjs"></script>${toolbar ? '\n    <script src="./__toolbar.js"></script>' : ''}
   </body>
 </html>
 `;
@@ -88,6 +125,9 @@ export function swaggerTarget(distRoot, urlPath) {
   }
   if (rest === '/ct-theme.css') {
     return { kind: 'theme' };
+  }
+  if (rest === '/ct-toc.mjs') {
+    return { kind: 'toc' };
   }
   if (rest === '/__toolbar.js' || rest === '/__toolbar.css') {
     return { kind: 'toolbar', ext: rest.slice(rest.lastIndexOf('.') + 1) };
@@ -205,6 +245,10 @@ export function withSwagger(
     }
     if (target.kind === 'theme') {
       send(res, 'text/css; charset=utf-8', await loadTheme());
+      return undefined;
+    }
+    if (target.kind === 'toc') {
+      await sendFile(res, TOC_FILE, 'text/javascript; charset=utf-8');
       return undefined;
     }
     if (target.kind === 'toolbar') {
