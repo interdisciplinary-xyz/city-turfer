@@ -18,24 +18,43 @@ import type { AppContextValue, AuthState } from './app-context.constants';
 
 const Ctx = createContext<AppContextValue | null>(null);
 
+const sameUser = (a: User, b: User) =>
+  a.email === b.email && a.name === b.name && a.displayName === b.displayName && a.accountId === b.accountId;
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [auth, setAuth] = useState<AuthState>({ status: 'loading' });
   const [dataVersion, setDataVersion] = useState(0);
 
-  /** `fresh`: a sign-in (not the session restored at launch) — finish a deletion pending for this profile first. */
-  const enter = useCallback(async (user: User, fresh = true) => {
-    if (fresh) {
-      await finishProfileDeletion(user.id);
-    }
-    const container = await getContainer();
-    if (!container) {
-      return setAuth({ status: 'signed-out' });
-    }
-    await container.recording.recover.execute().catch(() => undefined);
-    setAuth({ status: 'signed-in', user, container });
-    // Demo account only: fills in Gdańsk demo data on first use; screens refresh as it lands.
-    void prepareDemoAccount(user, container).catch(() => undefined);
+  /** Stable (screens call it from effects); a no-op when nothing shown changed. */
+  const updateUser = useCallback((user: User) => {
+    setAuth((a) => (a.status === 'signed-in' && a.user.id === user.id && !sameUser(a.user, user) ? { ...a, user } : a));
   }, []);
+
+  /** `fresh`: a sign-in (not the session restored at launch) — finish a deletion pending for this profile first. */
+  const enter = useCallback(
+    async (user: User, fresh = true) => {
+      if (fresh) {
+        await finishProfileDeletion(user.id);
+      }
+      const container = await getContainer();
+      if (!container) {
+        return setAuth({ status: 'signed-out' });
+      }
+      await container.recording.recover.execute().catch(() => undefined);
+      setAuth({ status: 'signed-in', user, container });
+      // Demo account only: fills in Gdańsk demo data on first use; screens refresh as it lands.
+      void prepareDemoAccount(user, container).catch(() => undefined);
+      if (user.accountId) {
+        // Best effort: the account's name (and an email changed on the web) from the server.
+        void identity.accountSettings
+          .execute()
+          .then((r) => (r.kind === 'account' ? identity.currentUser.execute() : null))
+          .then((u) => u && updateUser(u))
+          .catch(() => undefined);
+      }
+    },
+    [updateUser]
+  );
 
   useEffect(() => {
     // Data the Turfer deleted from this phone whose deletion failed last time goes first.
@@ -78,6 +97,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return 'ok';
       },
       startSignIn: (email) => identity.startSignIn.execute(email),
+      async signInWithPassword(email, password) {
+        const r = await identity.signInWithPassword.execute(email, password);
+        if (r.kind !== 'signed-in') {
+          return r;
+        }
+        await enter(r.user);
+        return { kind: 'ok' };
+      },
+      updateUser,
       requestDataExport: () => identity.requestDataExport.execute(),
       async verifyCode(email, code) {
         const r = await identity.verifyCode.execute(email, code);
@@ -123,7 +151,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return localDeleted ? { kind: 'ok' } : { kind: 'ok-local-pending' };
       },
     }),
-    [auth, dataVersion, enter]
+    [auth, dataVersion, enter, updateUser]
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

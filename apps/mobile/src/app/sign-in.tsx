@@ -31,9 +31,9 @@ function failureText(f: AccountFailure | { kind: 'accounts-unavailable' }): stri
         ? `Too many tries. Wait ${Math.max(1, Math.ceil(f.retryAfterS / 60))} min and try again.`
         : 'Too many tries. Wait a few minutes and try again.';
     case 'offline':
-      return 'No connection. Signing in with a code needs the internet once; after that the app works offline.';
+      return 'No connection. Signing in needs the internet once; after that the app works offline.';
     case 'accounts-unavailable':
-      return 'Signing in with a code is not available in this build.';
+      return 'Signing in to an account is not available in this build.';
     default:
       return 'Our server had a hiccup. Try again in a moment.';
   }
@@ -53,12 +53,15 @@ const askHistory = () =>
 
 /**
  * Sign in: the email first. The local profiles (admin, demo) then ask for their password; any other
- * email gets a 6-digit code by email (which also creates the account on first use).
+ * email gets a 6-digit code by email (which also creates the account on first use). "Use a password
+ * instead" signs an account in with its optional account password; the code stays the default.
  */
 export default function SignIn() {
   useLightStatusBar();
-  const { signIn, startSignIn, verifyCode, chooseHistory } = useApp();
+  const { signInWithPassword, startSignIn, verifyCode, chooseHistory } = useApp();
   const [step, setStep] = useState<Step>('email');
+  /** The Turfer chose "Use a password instead" (not a local profile's own password step). */
+  const [chosePassword, setChosePassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
@@ -100,13 +103,37 @@ export default function SignIn() {
 
   const submitPassword = () =>
     busyWhile(async () => {
-      const r = await signIn(email, password);
-      if (r === 'invalid') {
-        setError('Wrong email or password.');
-      } else if (r === 'linked-to-account') {
+      const r = await signInWithPassword(email, password);
+      if (r.kind === 'choose-history') {
+        if ((await chooseHistory(await askHistory())) === 'no-pending') {
+          setPassword('');
+          setError('That took a while. Sign in again.');
+        }
+      } else if (r.kind === 'invalid-credentials') {
+        setError(
+          chosePassword
+            ? 'Wrong email or password. No account password yet? Sign in with an email code, then set one in Me › Account.'
+            : 'Wrong email or password.'
+        );
+      } else if (r.kind === 'linked-to-account') {
         setError('This phone’s history now belongs to your CityTurfer account. Sign in with that account’s email.');
+      } else if (r.kind === 'invalid-email') {
+        setError('That doesn’t look like an email address.');
+      } else if (r.kind !== 'ok') {
+        setError(failureText(r));
       }
     });
+
+  const switchToPassword = (on: boolean) => {
+    setChosePassword(on);
+    setStep(on ? 'password' : 'email');
+    setPassword('');
+    setCode('');
+    setError(null);
+    if (on) {
+      setTimeout(() => secondRef.current?.focus(), 50);
+    }
+  };
 
   const submitCode = () =>
     busyWhile(async () => {
@@ -128,7 +155,7 @@ export default function SignIn() {
 
   const editEmail = (text: string) => {
     setEmail(text);
-    if (step !== 'email') {
+    if (step !== 'email' && !chosePassword) {
       setStep('email'); // another email: start again
       setPassword('');
       setCode('');
@@ -161,7 +188,7 @@ export default function SignIn() {
           textContentType='username'
           returnKeyType='next'
           submitBehavior='submit'
-          onSubmitEditing={submitEmail}
+          onSubmitEditing={chosePassword ? () => secondRef.current?.focus() : submitEmail}
           value={email}
           onChangeText={editEmail}
         />
@@ -170,7 +197,8 @@ export default function SignIn() {
             ref={secondRef}
             testID='sign-in-password'
             style={s.input}
-            placeholder='Password'
+            placeholder={chosePassword ? 'Account password' : 'Password'}
+            accessibilityLabel={chosePassword ? 'Account password' : 'Password'}
             placeholderTextColor={DARK.muted}
             secureTextEntry
             autoCorrect={false}
@@ -209,24 +237,50 @@ export default function SignIn() {
           </Text>
         )}
         {step === 'email' && (
-          <Button
-            testID='sign-in-continue'
-            label='Continue'
-            color={ACCENT}
-            onPress={submitEmail}
-            busy={busy}
-            disabled={!email.trim()}
-          />
+          <>
+            <Button
+              testID='sign-in-continue'
+              label='Continue'
+              color={ACCENT}
+              onPress={submitEmail}
+              busy={busy}
+              disabled={!email.trim()}
+            />
+            <Pressable
+              testID='sign-in-use-password'
+              accessibilityRole='button'
+              accessibilityLabel='Use a password instead'
+              onPress={() => switchToPassword(true)}
+              disabled={busy}
+              style={s.linkTarget}
+            >
+              <Text style={s.link}>Use a password instead</Text>
+            </Pressable>
+          </>
         )}
         {step === 'password' && (
-          <Button
-            testID='sign-in-submit'
-            label='Sign in'
-            color={ACCENT}
-            onPress={submitPassword}
-            busy={busy}
-            disabled={!password}
-          />
+          <>
+            <Button
+              testID='sign-in-submit'
+              label='Sign in'
+              color={ACCENT}
+              onPress={submitPassword}
+              busy={busy}
+              disabled={!password || !email.trim()}
+            />
+            {chosePassword && (
+              <Pressable
+                testID='sign-in-use-code'
+                accessibilityRole='button'
+                accessibilityLabel='Use an email code instead'
+                onPress={() => switchToPassword(false)}
+                disabled={busy}
+                style={s.linkTarget}
+              >
+                <Text style={s.link}>Use an email code instead</Text>
+              </Pressable>
+            )}
+          </>
         )}
         {step === 'code' && (
           <>

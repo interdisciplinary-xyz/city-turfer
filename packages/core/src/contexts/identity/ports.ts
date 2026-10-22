@@ -2,13 +2,16 @@
 // the user value types they build. Only this context's adapters, test doubles and composition
 // roots import it; everything else uses the public API (@cityturfer/core/identity).
 export type {
+  AccountDetails,
   AccountFailure,
   AccountGateway,
   AccountProfileStore,
   AccountSession,
   AuthGateway,
   CredentialStore,
+  FieldRefused,
   ProfileHistory,
+  ProfileNameStore,
   SessionStore,
   SignInOutcome,
 } from './application/ports';

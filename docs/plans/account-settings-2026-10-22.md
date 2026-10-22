@@ -175,6 +175,19 @@ each slice.
 - `apps/api/src/middleware.ts` is not changed; step-up is a use-case check, not a middleware.
 - The web Profile section is a hand-off to the web-portal session, not built from here.
 
+### Hand-off to the web-portal session
+
+Built on `feat/account-settings`: the 0.5.0 routes (decision record above), the field rules in
+`@cityturfer/core/identity` (`displayName`, `newEmail`, `newPassword`, `accountFieldError`) and the
+phone screens. The web portal adds, once this branch is in `scope/v0.10.0`:
+
+1. A Profile section at the top of `/[locale]/account`: Name, Email, Password, Sign-in rows with the
+   phone's flows (step-up code first for e-mail and password).
+2. "Use a password instead" on the portal sign-in, with `client: "browser"`.
+3. Validation with the core rules; error copy keyed by the problem `code`.
+4. `portal.account.*` keys in `apps/web/messages/en.json` and `pl.json`, stories per state,
+   Playwright for rename, e-mail change and password set/use/remove on `@e2e.cityturfer.test`.
+
 ## Done means
 
 1. On phone and web, a Turfer can rename, change e-mail and (if AC1 = yes) set, change, use and

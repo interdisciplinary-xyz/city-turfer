@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ACCENT, FONT_FAMILY, ON_ACCENT } from '@/constants/colors';
 
 import { useApp } from './app-context';
+import { shownName } from './format';
 import { CLOSE_DRAG_PX, DURATION_MS, ITEMS } from './me-menu.constants';
 import { usePalette } from './theme';
 
@@ -130,7 +131,7 @@ function MeDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   };
 
   const translateX = Animated.add(progress.interpolate({ inputRange: [0, 1], outputRange: [width, 0] }), drag);
-  const name = user?.displayName ?? 'You';
+  const name = shownName(user);
 
   return (
     <Modal visible={mounted} transparent animationType='none' onRequestClose={onClose} statusBarTranslucent>

@@ -23,7 +23,13 @@ export interface User {
   /** The local profile (one database per profile). */
   readonly id: UserId;
   readonly email: string;
+  /** Legacy label (mock name or the email's local part). UIs show `name` instead. */
   readonly displayName: string;
+  /**
+   * The Turfer's chosen name: on the server for an account, on this phone for a local profile.
+   * Null: none chosen; undefined: not known yet. Either way the UIs show "You", never an id.
+   */
+  readonly name?: string | null;
   /** The CityTurfer account signed in on this profile; absent: a local profile (mock admin, demo). */
   readonly accountId?: string;
 }
