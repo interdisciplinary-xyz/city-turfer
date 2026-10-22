@@ -1,0 +1,48 @@
+{
+  "name": "@cityturfer/admin",
+  "version": "0.10.0",
+  "private": true,
+  "type": "module",
+  "description": "CityTurfer staff admin portal: Payload CMS 3 on Next.js. Staff accounts live in its own database; user data only through the audited /internal/admin API (not built yet).",
+  "scripts": {
+    "dev": "portless run --name admin.cityturfer -- next dev",
+    "build": "next build",
+    "start": "next start",
+    "payload": "payload",
+    "migrate": "payload migrate",
+    "migrate:create": "payload migrate:create",
+    "generate": "payload generate:types && payload generate:importmap && prettier --write src/payload-types.ts \"src/app/(payload)/admin/importMap.js\"",
+    "generate:check": "pnpm run generate && git diff --exit-code -- src/payload-types.ts \"src/app/(payload)/admin/importMap.js\"",
+    "staff:create": "payload run scripts/staff-create.ts",
+    "typecheck": "next typegen && tsc --noEmit",
+    "lint": "eslint src scripts next.config.ts",
+    "arch": "depcruise src scripts --config .dependency-cruiser.cjs",
+    "test:unit": "vitest run"
+  },
+  "dependencies": {
+    "@payloadcms/db-postgres": "3.91.0",
+    "@payloadcms/next": "3.91.0",
+    "@payloadcms/ui": "3.91.0",
+    "graphql": "16.14.2",
+    "next": "16.4.2",
+    "payload": "3.91.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  },
+  "devDependencies": {
+    "@cityturfer/config": "workspace:*",
+    "@interdisciplinary/eslint-config": "workspace:*",
+    "@next/eslint-plugin-next": "^16.4.2",
+    "@types/node": "^22.15.0",
+    "@types/react": "~19.2.2",
+    "@types/react-dom": "~19.2.2",
+    "dependency-cruiser": "^18.6.0",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^16.5.0",
+    "portless": "^0.12.0",
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.12"
+  }
+}
