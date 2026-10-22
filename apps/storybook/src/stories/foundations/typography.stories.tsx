@@ -73,7 +73,7 @@ const meta = {
     docs: {
       description: {
         component:
-          '"Street Plate": Big Shoulders Display Black for screen titles, always in capitals (`DISPLAY_CASE`, `DISPLAY_TRACKING`), and Barlow Semi Condensed ExtraBold for big numbers with tabular figures. Both OFL, static fonts with the weight baked in, so never combine them with `fontWeight`. In the app body text and labels stay on the system font; the website sets them in Barlow. The wordmark stays outlined Archivo.',
+          '"Street Plate": Big Shoulders Display Black for screen titles, always in capitals (`DISPLAY_CASE`, `DISPLAY_TRACKING`), and Barlow Semi Condensed ExtraBold for big numbers with tabular figures. Both OFL, static fonts with the weight baked in, so never combine them with `fontWeight`. In the app body text and labels stay on the system font; the website sets them in Barlow. The wordmark is the display face too, outlined: CITY Medium + TURFER Black.',
       },
     },
   },

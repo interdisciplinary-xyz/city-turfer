@@ -39,7 +39,7 @@ if (host) {
           Fragment,
           null,
           h('img', { className: 'app-header-mark', src: mark, alt: '', width: 32, height: 32 }),
-          h('img', { className: 'app-header-wordmark', src: wordmark, alt: '', width: 115, height: 20 })
+          h('img', { className: 'app-header-wordmark', src: wordmark, alt: '', width: 85, height: 20 })
         ),
         waitlist: WAITLIST
           ? { href: `/${LOCALE}#waitlist`, label: en.header.waitlist, shortLabel: en.header.waitlistShort }

@@ -258,8 +258,8 @@ export default function SignIn() {
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: DARK.bg },
   inner: { flex: 1, justifyContent: 'center', padding: 24, gap: 14 },
-  // Outlined wordmark for dark backgrounds (packages/brand/svg/wordmark.svg, rendered to 1102 × 192).
-  logo: { width: '100%', maxWidth: 280, height: undefined, aspectRatio: 1102 / 192, alignSelf: 'center' },
+  // Outlined wordmark for dark backgrounds (packages/brand/svg/wordmark.svg, rendered to 813 × 192).
+  logo: { width: '100%', maxWidth: 220, height: undefined, aspectRatio: 813 / 192, alignSelf: 'center' },
   tag: { color: DARK.muted, textAlign: 'center', marginBottom: 24 },
   input: {
     backgroundColor: DARK.card,

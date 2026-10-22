@@ -219,7 +219,7 @@ img {
     margin-bottom: 16px;
   }
   .hero-copy .wordmark {
-    width: 260px;
+    width: 220px;
     margin-bottom: 20px;
   }
 }
@@ -243,7 +243,7 @@ img {
 }
 
 .wordmark {
-  width: clamp(200px, 62vw, 320px);
+  width: clamp(180px, 54vw, 280px);
   margin: 0 auto 28px;
 }
 
@@ -544,7 +544,7 @@ h1 {
     margin-bottom: 12px;
   }
   .wordmark {
-    width: 200px;
+    width: 170px;
     margin-bottom: 16px;
   }
 }
