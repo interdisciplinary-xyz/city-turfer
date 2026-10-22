@@ -163,6 +163,20 @@ describe('RestoreActivity', () => {
     expect(await t.activities.allIds()).toEqual(['rec-1']);
   });
 
+  it('rethrows an error that is no broken rule instead of calling the content invalid', async () => {
+    const t = setup();
+    const broken = {
+      ...t.deps,
+      clock: {
+        now: () => {
+          throw new TypeError('boom');
+        },
+      },
+    };
+    await expect(new RestoreActivity(broken).execute(archived())).rejects.toThrow(TypeError);
+    expect(await t.activities.allIds()).toEqual([]);
+  });
+
   it('leaves gaps unchecked when the backup had not checked them (estimated later on this phone)', async () => {
     const t = setup();
     await new RestoreActivity(t.deps).execute(archived({ gapRoutes: [], gapsCheckedAt: null }));

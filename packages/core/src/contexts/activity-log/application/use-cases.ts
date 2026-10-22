@@ -1,6 +1,7 @@
 import {
   type ActivityType,
   type Clock,
+  DomainError,
   type GeoPoint,
   segmentCount,
   splitAtGaps,
@@ -171,7 +172,10 @@ export class RestoreActivity {
         renamedAt: input.renamedAt,
         now: this.d.clock.now(),
       });
-    } catch {
+    } catch (e) {
+      if (!(e instanceof DomainError)) {
+        throw e; // a bug, not bad content: fail loudly, so the item is not declined for good
+      }
       return 'invalid'; // content this version can't hold (e.g. a name it doesn't accept)
     }
     const gaps =
