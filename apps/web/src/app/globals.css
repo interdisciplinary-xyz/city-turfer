@@ -34,7 +34,7 @@ html {
 
 /* Page loader (page-loader): covers the page from the first paint, fades out when <html> gets
    `loaded`. Safety net: if the boot script never runs, the `page-loader-out` animation hides it
-   after 4 s anyway, so it can never get stuck. */
+   after 2.5 s anyway, so it can never get stuck. */
 .page-loader {
   position: fixed;
   inset: 0;
@@ -42,7 +42,7 @@ html {
   display: grid;
   place-items: center;
   background: var(--bg);
-  animation: page-loader-out 0.4s ease-out 4s forwards;
+  animation: page-loader-out 0.4s ease-out 2.5s forwards;
   transition:
     opacity 0.4s ease-out,
     visibility 0s linear 0.4s;
