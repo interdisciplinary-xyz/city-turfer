@@ -34,6 +34,11 @@ export default buildConfig({
     user: Staff.slug,
     importMap: { baseDir: dirname },
     meta: { titleSuffix: ' · CityTurfer admin' },
+    // Brand look (src/brand): tokens from @cityturfer/brand mapped onto Payload's theme, the logos.
+    components: {
+      providers: ['/brand/brand-theme#BrandTheme'],
+      graphics: { Logo: '/brand/logo#Logo', Icon: '/brand/icon#Icon' },
+    },
   },
   collections: [Staff],
   db: postgresAdapter({

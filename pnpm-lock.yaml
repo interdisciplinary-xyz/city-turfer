@@ -50,6 +50,9 @@ importers:
 
   apps/admin:
     dependencies:
+      '@cityturfer/brand':
+        specifier: workspace:*
+        version: link:../../packages/brand
       '@payloadcms/db-postgres':
         specifier: 3.91.0
         version: 3.91.0(@electric-sql/pglite@0.5.10)(@neondatabase/serverless@1.2.0)(@types/better-sqlite3@9.6.0)(better-sqlite3@13.0.3)(expo-sqlite@57.0.4(expo@57.0.29)(react-native@0.86.3(@react-native/jest-preset@0.86.3(@babel/core@7.29.7)(react@19.2.3))(@types/react@19.2.18)(react@19.2.3))(react@19.2.3))(kysely@0.29.7)(payload@3.91.0(graphql@16.14.2)(typescript@6.0.3))

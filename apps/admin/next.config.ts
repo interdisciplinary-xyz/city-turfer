@@ -17,6 +17,8 @@ const SECURITY_HEADERS = [
 const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Plain TS source (tokens, copy) and SVG logos.
+  transpilePackages: ['@cityturfer/brand'],
   // The hoisted node_modules live at the repo root.
   turbopack: { root: path.resolve(dirname, '../..') },
   // Dev only: the portless URL (`pnpm --filter @cityturfer/admin dev` -> https://admin.cityturfer.local).

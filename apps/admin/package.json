@@ -20,6 +20,7 @@
     "test:unit": "vitest run"
   },
   "dependencies": {
+    "@cityturfer/brand": "workspace:*",
     "@payloadcms/db-postgres": "3.91.0",
     "@payloadcms/next": "3.91.0",
     "@payloadcms/ui": "3.91.0",
