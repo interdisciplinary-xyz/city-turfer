@@ -102,10 +102,10 @@ Bounded contexts: <!-- probe:contexts -->7<!-- /probe -->
 - `achievements`: `id:` entries in `packages/core/src/contexts/achievements/domain/achievements.ts`
   (<!-- probe:achievements -->12<!-- /probe -->)
 - `e2e-flows`: `flowsOrder` entries in `apps/mobile/e2e/config.yaml`
-  (<!-- probe:e2e-flows -->14<!-- /probe -->)
+  (<!-- probe:e2e-flows -->15<!-- /probe -->)
 - `migrations`: `version:` entries in `apps/mobile/src/platform/migrations.ts`
   (<!-- probe:migrations -->12<!-- /probe -->)
-- `docs`: markdown files under `docs/` (<!-- probe:docs -->45<!-- /probe -->)
+- `docs`: markdown files under `docs/` (<!-- probe:docs -->47<!-- /probe -->)
 - `api-operations`: HTTP operations in `apps/api/openapi.json`
   (<!-- probe:api-operations -->30<!-- /probe -->)
 
