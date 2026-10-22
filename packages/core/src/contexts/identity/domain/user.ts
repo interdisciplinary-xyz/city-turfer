@@ -20,7 +20,17 @@ export function email(raw: string): Email {
 }
 
 export interface User {
+  /** The local profile (one database per profile). */
   readonly id: UserId;
   readonly email: string;
   readonly displayName: string;
+  /** The CityTurfer account signed in on this profile; absent: a local profile (mock admin, demo). */
+  readonly accountId?: string;
 }
+
+/**
+ * Local profiles that never have an account and never talk to the API (the demo profile with its
+ * generated Gdańsk history). Every other profile reaches the server only once it has credentials.
+ */
+const LOCAL_ONLY_PROFILES: readonly string[] = ['demo'];
+export const isLocalOnlyProfile = (profileId: string): boolean => LOCAL_ONLY_PROFILES.includes(profileId);

@@ -8,6 +8,27 @@
       "when": 1792495204104,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792656148366,
+      "tag": "0001_activity_renamed_at",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792656486948,
+      "tag": "0002_auth",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792657113958,
+      "tag": "0003_exports",
+      "breakpoints": true
     }
   ]
 }

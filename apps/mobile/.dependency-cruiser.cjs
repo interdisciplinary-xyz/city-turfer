@@ -80,6 +80,20 @@ module.exports = {
       from: { path: ctx },
       to: { path: coreSrc + 'contexts/([^/]+)/ports\\.ts$', pathNot: coreSrc + 'contexts/$1/ports\\.ts$' },
     },
+    {
+      name: 'background-task-stays-offline',
+      severity: 'error',
+      comment:
+        'The background location task (and its batch handler) never talks to the server or reads account tokens: no Cloud Backup, no Identity network or keychain code, no fetch clients. It reaches the rest only through getContainer().',
+      from: { path: '^src/contexts/recording/infrastructure/(background-task|location-batch-handler)\\.ts$' },
+      to: {
+        path: [
+          '^src/contexts/cloud-backup/',
+          '^src/contexts/identity/infrastructure/(api-auth-gateway|secure-store-credential-store)\\.ts$',
+          '^src/contexts/[^/]+/infrastructure/(fetch-|api-|osm-)',
+        ],
+      },
+    },
     { name: 'no-circular', severity: 'error', from: {}, to: { circular: true } },
   ],
   options: {

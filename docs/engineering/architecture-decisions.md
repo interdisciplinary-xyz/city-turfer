@@ -256,9 +256,10 @@ background recording work?) gets answered first, not last.
 **Status:** Accepted. Email updated 2026-10-17 (see the first entry).
 
 **Decision:** `MockAuthGateway` behind the `AuthGateway` port, one account, session in
-`expo-secure-store`. No Firebase. Data stays on the device, one database per user. The app refuses
-to start with mock auth when `EXPO_PUBLIC_APP_ENV` is `production`
-(`apps/mobile/src/composition-root.ts`).
+`expo-secure-store`. No Firebase. Data stays on the device, one database per user. Superseded in
+part on 2026-10-22 (decision B6, `docs/plans/backend-plan-2026-10-22.md`): the mock `admin` and
+`demo` profiles stay in every build, next to real accounts by e-mailed code; the production start
+guard was removed.
 
 **Rationale:** Auth is a generic subdomain; the PoC is about recording and turf. The port means a
 real provider later is one adapter.

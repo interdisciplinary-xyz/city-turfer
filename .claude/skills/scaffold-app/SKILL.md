@@ -90,9 +90,9 @@ Install `pnpm add -D dependency-cruiser` and add the rules from the `ddd-archite
   only `admin@cityturfer.com` / `admin1234` (case-insensitive email, trimmed) and returns
   `UserId("admin")`. Everything else returns `AuthError('invalid-credentials')`. The credentials
   appear in this one file and its test, nowhere else.
-- Select it in the composition root when `EXPO_PUBLIC_AUTH_MODE` is `mock` (the default). If a
-  production build (`!__DEV__` and the release channel is production) starts in mock mode, throw at
-  startup.
+- The composition root always wires it for the local profiles (decision B6 in
+  `docs/plans/backend-plan-2026-10-22.md`); real accounts sign in by e-mailed code through
+  `ApiAuthGateway`. There is no mock-mode switch or production start guard any more.
 - On sign-in: store the uid in `expo-secure-store` and open `turftrack-<uid>.db`. On sign-out:
   refuse while a recording is active, then clear the stored uid and close the DB.
 - The sign-in screen has `testID`s `sign-in-email`, `sign-in-password`, `sign-in-submit`,

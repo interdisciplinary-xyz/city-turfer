@@ -13,7 +13,6 @@ import { routing } from '@/i18n/routing';
 import { displayFont, numericFont } from '../fonts';
 import { SITE_URL } from '../site-url';
 import { MOTION_BOOT_SCRIPT } from './hero-motion';
-import { LanguageSwitcher } from './language-switcher';
 import { OG_IMAGE_HEIGHT, OG_IMAGE_PATH, OG_IMAGE_WIDTH } from './layout.constants';
 
 /** Every language is prerendered by the static export. */
@@ -71,7 +70,7 @@ export default async function LocaleLayout({
     const { shouldRenderDevToolbar } = await import('@interdisciplinary/dev-toolbar/next');
     if (await shouldRenderDevToolbar()) {
       const { DevToolbarWithApp } = await import('../dev-toolbar-with-app');
-      devToolbar = <DevToolbarWithApp locale={locale} languageSwitcher={<LanguageSwitcher locale={locale} />} />;
+      devToolbar = <DevToolbarWithApp locale={locale} />;
     }
   }
 
@@ -88,8 +87,8 @@ export default async function LocaleLayout({
         <script dangerouslySetInnerHTML={{ __html: MOTION_BOOT_SCRIPT }} />
       </head>
       <body>
-        {/* next-intl's Link (language switcher, also slotted into the dev toolbar) is a client
-            component and reads the locale from this provider. */}
+        {/* next-intl's Link (language switcher) is a client component and reads the locale from
+            this provider. */}
         <NextIntlClientProvider>
           {children}
           {devToolbar}

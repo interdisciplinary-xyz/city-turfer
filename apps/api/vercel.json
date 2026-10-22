@@ -3,5 +3,6 @@
   "regions": ["fra1"],
   "buildCommand": "pnpm run build",
   "outputDirectory": "dist",
+  "crons": [{ "path": "/internal/cron/retention", "schedule": "0 3 * * *" }],
   "ignoreCommand": "npx turbo-ignore @cityturfer/api --fallback=HEAD^1"
 }

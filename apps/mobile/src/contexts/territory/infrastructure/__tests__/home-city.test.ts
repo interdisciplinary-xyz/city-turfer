@@ -46,7 +46,13 @@ describe('Home City', () => {
     expect(events).toHaveLength(1);
     expect(events[0].type).toBe('HomeCityChosen');
     // The event names the city only: no coordinates in the outbox.
-    expect(JSON.parse(events[0].payload)).toEqual({ type: 'HomeCityChosen', v: 1, at: NOW, cityId: 'pl-krakow' });
+    expect(JSON.parse(events[0].payload)).toEqual({
+      type: 'HomeCityChosen',
+      v: 1,
+      at: NOW,
+      cityId: 'pl-krakow',
+      chosenAt: NOW,
+    });
     expect(afterCommit).toHaveBeenCalledTimes(1);
   });
 
@@ -66,6 +72,19 @@ describe('Home City', () => {
     expect((await get.execute())?.id).toBe('pl-gdansk');
     await choose.execute(null);
     expect(await get.execute()).toBeNull();
+  });
+
+  it('keeps when a restored choice was made; an older one never replaces a newer one', async () => {
+    const { db, choose, choice } = await setup();
+    await choose.execute('pl-gdansk', NOW - 86_400_000);
+    expect(await choice.execute()).toEqual({ cityId: 'pl-gdansk', chosenAt: NOW - 86_400_000 });
+    expect(JSON.parse((await outbox(db))[0].payload)).toMatchObject({ at: NOW, chosenAt: NOW - 86_400_000 });
+
+    await choose.execute('pl-krakow', NOW - 2 * 86_400_000); // older: ignored
+    expect(await choice.execute()).toEqual({ cityId: 'pl-gdansk', chosenAt: NOW - 86_400_000 });
+    await choose.execute('pl-warsaw'); // the Turfer's own choice, now: always counts
+    expect(await choice.execute()).toEqual({ cityId: 'pl-warsaw', chosenAt: NOW });
+    expect(await outbox(db)).toHaveLength(2);
   });
 
   it('does nothing when the same city is chosen again', async () => {

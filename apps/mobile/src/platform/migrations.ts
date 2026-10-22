@@ -225,7 +225,71 @@ const MIGRATIONS: { version: number; sql: string }[] = [
       CREATE INDEX idx_cb_activities_work ON cb_activities(started_at) WHERE op IS NOT NULL OR gaps_pending = 1;
     `,
   },
+  {
+    version: 9,
+    sql: `
+      -- Activity Log: the IANA zone the phone was in when the Activity was saved (NULL: unknown,
+      -- filled once by a repair job) and when the Turfer last renamed it (NULL: never).
+      ALTER TABLE log_activities ADD COLUMN time_zone TEXT;
+      ALTER TABLE log_activities ADD COLUMN renamed_at INTEGER;
+    `,
+  },
+  {
+    version: 10,
+    sql: `
+      -- Cloud Backup: which server and account the state is about ('<server>|<account id>'; NULL:
+      -- not known yet, adopted on the next run) and the chosenAt of the Home City the server has.
+      ALTER TABLE cb_state ADD COLUMN account_key TEXT;
+      ALTER TABLE cb_state ADD COLUMN home_city_sent_at INTEGER;
+      -- A rename still to send (PATCH), and the gap-routes check time the server has from us.
+      ALTER TABLE cb_activities ADD COLUMN rename_pending INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE cb_activities ADD COLUMN gaps_sent_at INTEGER;
+      DROP INDEX idx_cb_activities_work;
+      CREATE INDEX idx_cb_activities_work ON cb_activities(started_at)
+        WHERE op IS NOT NULL OR gaps_pending = 1 OR rename_pending = 1;
+    `,
+  },
+  {
+    version: 11,
+    sql: `
+      -- Cloud Backup: Restore from the backup (one row), resumable after the app was killed.
+      CREATE TABLE cb_restore (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        status TEXT NOT NULL CHECK (status IN ('idle', 'running', 'done')),
+        total INTEGER NOT NULL DEFAULT 0,
+        done INTEGER NOT NULL DEFAULT 0,
+        has_home_city INTEGER NOT NULL DEFAULT 0,
+        home_city_id TEXT,             -- a catalogue id (never coordinates); NULL with has_home_city: cleared
+        home_city_chosen_at INTEGER,
+        started_at INTEGER
+      );
+      -- The Activities still to bring back, from the server's manifest (deleted when handled).
+      CREATE TABLE cb_restore_items (
+        activity_id TEXT PRIMARY KEY,
+        started_at INTEGER NOT NULL,   -- restore order: oldest first
+        version INTEGER NOT NULL
+      );
+    `,
+  },
+  {
+    version: 12,
+    sql: `
+      -- Cloud Backup: Activities on the server the Turfer said "Not now" to restoring (or that a
+      -- restore had to skip), so the restore offer only comes back for new ones. Ids only.
+      CREATE TABLE cb_restore_declined (
+        activity_id TEXT PRIMARY KEY
+      );
+      -- Cloud Backup: Activities deleted on this phone, kept across account switches (which clear
+      -- cb_activities), so a restore never brings one back. Ids only.
+      CREATE TABLE cb_deleted_here (
+        activity_id TEXT PRIMARY KEY
+      );
+    `,
+  },
 ];
+
+/** The newest schema version this build knows. */
+export const LATEST_SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1].version;
 
 /** `upTo` stops at a schema version (tests seeding an older database). */
 export async function migrate(db: Database, upTo = Infinity): Promise<void> {

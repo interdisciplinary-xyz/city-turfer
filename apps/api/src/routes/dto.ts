@@ -7,6 +7,7 @@ import type {
   UserRecord,
 } from '../backup/model';
 import { cityViewOf } from '../backup/use-cases';
+import type { ExportRecord } from '../privacy/ports';
 
 /** Records of the backup → the JSON of the contract (ISO 8601 UTC times, totals incl. gap routes). */
 
@@ -15,7 +16,12 @@ export const iso = (ms: number) => new Date(ms).toISOString();
 /** `Date.parse` of a validated ISO 8601 UTC string. */
 export const ms = (isoString: string) => Date.parse(isoString);
 
-export const userDto = (u: UserRecord) => ({ id: u.id, email: u.email, displayName: u.displayName ?? u.id });
+export const userDto = (u: UserRecord) => ({
+  id: u.id,
+  email: u.email,
+  displayName: u.displayName ?? u.id,
+  createdAt: iso(u.createdAt ?? 0),
+});
 
 export const consentListDto = (items: ConsentRecord[]) => ({
   items: items.map((c) => ({ purpose: c.purpose, granted: c.granted, policyVersion: c.policyVersion, at: iso(c.at) })),
@@ -51,6 +57,20 @@ export const activityDetailDto = (a: ActivityRecord, gapRoutes: GapRoutesRecord 
   splits: a.summary.splits,
   resumedSegments: a.resumedSegments,
   gapRoutes: gapRoutes?.routes ?? [],
+  renamedAt: a.renamedAt === null ? null : iso(a.renamedAt),
+  gapsCheckedAt: gapRoutes ? iso(gapRoutes.checkedAt) : null,
+});
+
+/** The feed's view of an activity: no preview or numbers. */
+export const activityFeedDto = (a: ActivityRecord) => ({
+  id: a.id,
+  type: a.type,
+  source: a.source,
+  name: a.name,
+  startedAt: iso(a.startedAt),
+  version: a.version,
+  trackHash: a.trackHash,
+  updatedAt: iso(a.updatedAt),
 });
 
 export const homeCityDto = (h: HomeCityRecord | null) => ({
@@ -64,7 +84,7 @@ export function changeDto(change: ChangeRecord) {
       return {
         type: 'activity.upserted' as const,
         changedAt: iso(change.activity.updatedAt),
-        activity: activitySummaryDto(change.activity),
+        activity: activityFeedDto(change.activity),
       };
     case 'tombstone':
       return {
@@ -82,3 +102,11 @@ export function changeDto(change: ChangeRecord) {
       };
   }
 }
+
+export const exportJobDto = (e: ExportRecord) => ({
+  id: e.id,
+  status: e.status,
+  requestedAt: iso(e.requestedAt),
+  readyAt: e.readyAt === null ? null : iso(e.readyAt),
+  expiresAt: e.expiresAt === null ? null : iso(e.expiresAt),
+});

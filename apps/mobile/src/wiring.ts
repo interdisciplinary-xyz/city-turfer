@@ -10,6 +10,7 @@ import {
   type ActivityDeleted,
   type ActivityDistanceEstimated,
   type ActivityRecorded,
+  type ActivityRenamed,
   type ActivityTrackCorrected,
   createActivityLogApi,
   type GapRoutingEnvironment,
@@ -18,18 +19,21 @@ import {
 import { SqliteActivityRepository } from '@/contexts/activity-log/infrastructure/sqlite-activity-repository';
 import {
   type ApiClientFactory,
+  type BackupCredentials,
   type CloudBackupDeps,
   createCloudBackupApi,
   type DeviceTokenStore,
+  type Sha256,
 } from '@/contexts/cloud-backup';
 import { SqliteBackupRepository } from '@/contexts/cloud-backup/infrastructure/sqlite-backup-repository';
 import { createHealthSyncApi, type HealthStore } from '@/contexts/health-sync';
 import { SqliteHealthSyncRepository } from '@/contexts/health-sync/infrastructure/sqlite-health-sync-repository';
 import { UNAVAILABLE_HEALTH_STORE } from '@/contexts/health-sync/infrastructure/unavailable-health-store';
+import { isLocalOnlyProfile } from '@/contexts/identity';
 import { createRecordingApi, SerialCommandExecutor, type SessionFinished } from '@/contexts/recording';
 import type { LiveSessionNotifier, LocationTracker, PermissionGateway } from '@/contexts/recording/application/ports';
 import { SqliteRecordingSessionRepository } from '@/contexts/recording/infrastructure/sqlite-recording-session-repository';
-import { createTerritoryApi } from '@/contexts/territory';
+import { createTerritoryApi, type HomeCityChosen } from '@/contexts/territory';
 import { SqliteHomeCityRepository } from '@/contexts/territory/infrastructure/sqlite-home-city-repository';
 import { SqliteTerritoryRepository } from '@/contexts/territory/infrastructure/sqlite-territory-repository';
 import type { Database } from '@/platform/database';
@@ -52,32 +56,53 @@ export interface DeviceAdapters {
   isForeground?: () => boolean;
   /** Cloud Backup's HTTP client and per-user token store. Omitted: no server (backup can't be turned on). */
   cloudBackup?: CloudBackupAdapters;
+  /** The device's IANA time zone now (kept with each new Activity). Omitted: unknown. */
+  timeZone?: () => string | null;
   clock?: Clock;
 }
 
 export interface CloudBackupAdapters {
   api: ApiClientFactory;
+  /** The Developer tools device token of a profile. */
   tokens: (userId: string) => DeviceTokenStore;
-  timeZone?: () => string | null;
+  /**
+   * How a profile reaches the server (its signed-in account). Omitted: its device token, whose
+   * account the server names (GET /v1/me).
+   */
+  credentials?: (userId: string, deviceToken: DeviceTokenStore) => BackupCredentials;
+  sha256: Sha256;
   /** Default: API_BASE_URL. */
   serverUrl?: string;
 }
+
+/** A device token only (no signed-in account): the server says whose it is. */
+const deviceTokenCredentials = (tokens: DeviceTokenStore): BackupCredentials => ({
+  current: async () => {
+    const token = await tokens.read();
+    return token ? { token, accountId: null } : null;
+  },
+});
 
 /** No server configured (most tests): every request answers "offline", and there is never a token. */
 const NO_CLOUD_BACKUP: CloudBackupAdapters = {
   api: () => {
     const offline = async () => ({ ok: false as const, failure: { kind: 'offline' as const } });
     return {
+      me: offline,
       setConsent: offline,
+      consents: offline,
       changes: offline,
       putActivity: offline,
       activityVersion: offline,
       deleteActivity: offline,
+      renameActivity: offline,
+      activityCopy: offline,
       putGapRoutes: offline,
       putHomeCity: offline,
     };
   },
   tokens: () => ({ read: async () => null, save: async () => undefined, clear: async () => undefined }),
+  sha256: async () => '',
 };
 
 /** No setting given (e.g. tests that don't exercise gaps): never call the router. */
@@ -96,6 +121,11 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     onDeadLetter: (d) => diagnostics.log('task-error', { code: 'outbox.dead-letter', ...d }),
   });
   const afterCommit = () => void dispatcher.dispatchPending();
+  /** Is a restore from the cloud backup running? (Cloud Backup is wired below.) */
+  let restoring: () => boolean = () => false;
+
+  /** Is a Recording Session active (recording, paused or auto-paused)? Gates sign-out and restore. */
+  const hasActiveSession = async () => (await recording.liveSnapshot.execute()) != null;
 
   const recording = createRecordingApi({
     sessions: new SqliteRecordingSessionRepository(db),
@@ -116,6 +146,7 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     gapRouting: a.gapRouting ?? GAP_ROUTING_OFF,
     clock,
     afterCommit,
+    timeZone: a.timeZone,
   });
 
   const territory = createTerritoryApi({
@@ -141,25 +172,35 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
       overlapping: (type, startedAt, endedAt) => activityLog.overlapping.execute(type, startedAt, endedAt),
     },
     clock,
-    isForeground: a.isForeground ?? (() => true),
+    // Apple Health import waits while a restore brings the backup back (no duplicates meanwhile).
+    isForeground: () => (a.isForeground?.() ?? true) && !restoring(),
     onExportError: (code) => diagnostics.log('task-error', { code }),
   });
 
   const backupAdapters = a.cloudBackup ?? NO_CLOUD_BACKUP;
+  const deviceToken = backupAdapters.tokens(userId);
   const cloudBackupDeps: CloudBackupDeps = {
+    // The demo profile never talks to the API, whatever is configured.
+    available: a.cloudBackup != null && !isLocalOnlyProfile(userId),
     repo: new SqliteBackupRepository(db),
     api: backupAdapters.api,
-    tokens: backupAdapters.tokens(userId),
+    tokens: deviceToken,
+    credentials: backupAdapters.credentials?.(userId, deviceToken) ?? deviceTokenCredentials(deviceToken),
+    sha256: backupAdapters.sha256,
     activities: {
       timeline: () => activityLog.archive.timeline(),
       archiveOf: (id) => activityLog.archive.of(id),
     },
-    homeCity: { choice: () => territory.homeCityChoice.execute() },
+    homeCity: {
+      choice: () => territory.homeCityChoice.execute(),
+      restore: (choice) => territory.chooseHomeCity.execute(choice.cityId, choice.chosenAt),
+    },
+    restoredActivities: { restore: (copy) => activityLog.restoreActivity.execute(copy) },
+    isRecording: () => hasActiveSession().catch(() => true), // unknown: don't restore under a recording
     clock,
     isForeground: a.isForeground ?? (() => true),
     defaultServerUrl: backupAdapters.serverUrl ?? API_BASE_URL,
     policyVersion: CLOUD_BACKUP_POLICY_VERSION,
-    timeZone: backupAdapters.timeZone ?? (() => null),
     // Counts and codes only: no ids, names or coordinates.
     onRunFinished: (r) => {
       if (r.uploaded + r.deleted + r.failed + r.refused > 0 || r.error) {
@@ -168,6 +209,7 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     },
   };
   const cloudBackup = createCloudBackupApi(cloudBackupDeps);
+  restoring = () => cloudBackup.restore.isRunning;
 
   // Context map (docs/poc-plan.md §3): Recording → Activity Log → Territory; Activity Log ↔ Health Sync.
   dispatcher.on('SessionFinished', (e: DomainEvent) => activityLog.recordFromSession.execute(e as SessionFinished));
@@ -188,7 +230,8 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
   dispatcher.on('ActivityDistanceEstimated', (e: DomainEvent) =>
     cloudBackup.queue.gapRoutesEstimated(e as ActivityDistanceEstimated)
   );
-  dispatcher.on('HomeCityChosen', () => cloudBackup.queue.homeCityChosen());
+  dispatcher.on('ActivityRenamed', (e: DomainEvent) => cloudBackup.queue.activityRenamed(e as ActivityRenamed));
+  dispatcher.on('HomeCityChosen', (e: DomainEvent) => cloudBackup.queue.homeCityChosen(e as HomeCityChosen));
 
   // Best effort, outside the outbox (needs the network): route new recording gaps after every dispatch run.
   const estimateGaps = () => activityLog.estimateGapRoutes.execute().catch(() => 0);
@@ -218,6 +261,10 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     if (capped) {
       diagnostics.log('maintenance', { job: 'cap-gap-moving-time-v1', ...capped });
     }
+    const zoned = await runOnce(db, 'activity-time-zones-v1', () => activityLog.assignMissingTimeZones.execute());
+    if (zoned) {
+      diagnostics.log('maintenance', { job: 'activity-time-zones-v1', ...zoned });
+    }
     const scrubbed = await runOnce(db, 'scrub-closed-sessions-v2', () => recording.scrubClosedSessions.execute());
     if (scrubbed) {
       diagnostics.log('maintenance', { job: 'scrub-closed-sessions-v2', ...scrubbed });
@@ -236,9 +283,6 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     await syncHealth();
     await backUp();
   }
-
-  /** Is a Recording Session active (recording, paused or auto-paused)? Gates sign-out. */
-  const hasActiveSession = async () => (await recording.liveSnapshot.execute()) != null;
 
   return {
     userId,

@@ -34,6 +34,8 @@ export interface ActivityRecord {
   id: string;
   type: ActivityTypeName;
   name: string;
+  /** When a `PATCH` last renamed it (phone time); null when never renamed. Last write wins. */
+  renamedAt: number | null;
   source: ActivitySourceName;
   startedAt: number;
   endedAt: number;
@@ -78,6 +80,8 @@ export interface UserRecord {
   id: string;
   email: string | null;
   displayName: string | null;
+  /** When the server first saw the user (epoch ms); absent on writes. */
+  createdAt?: number;
 }
 
 /** One entry of the changes feed, in server order (`seq`). */
