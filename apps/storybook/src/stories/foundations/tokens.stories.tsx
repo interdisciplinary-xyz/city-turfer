@@ -1,9 +1,12 @@
 import {
   ACCENT,
+  DARK,
   FONT_FAMILY,
   FONT_SIZE,
   RADIUS,
+  SITE_SCHEME,
   SPACE,
+  THEMES,
   TIER_COLOR,
   TIER_LABEL,
   TIER_ORDER,
@@ -13,6 +16,8 @@ import { usePalette } from '@cityturfer/ui';
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
+
+import { NightPanel } from '../../decorators/frame';
 
 function Swatch({ name, value }: { name: string; value: string }) {
   const p = usePalette();
@@ -39,27 +44,50 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-/** Every token from @cityturfer/brand, for the scheme chosen in the toolbar. */
+/** The six base roles; every other Palette key is a text or graphic variant of a brand fill. */
+const BASE_KEYS = new Set(['bg', 'card', 'text', 'muted', 'border', 'danger']);
+
+/** Every token from @cityturfer/brand: the site's light theme, then the app's dark one on night. */
 function Tokens() {
   const p = usePalette();
+  const site = THEMES[SITE_SCHEME];
+  const entries = Object.entries(site);
   return (
     <View>
-      <Section title='Turf strength ramp (the brand palette)'>
+      <Section title='Turf strength ramp (the brand palette; fills only on light)'>
         {TIER_ORDER.map((t) => (
           <Swatch key={t} name={TIER_LABEL[t]} value={TIER_COLOR[t]} />
         ))}
         <Swatch name='Accent' value={ACCENT} />
       </Section>
-      <Section title='Activity types'>
+      <Section title='Activity types (fills; text and lines use the variants below)'>
         <Swatch name='Walk' value={TYPE_COLOR.walk} />
         <Swatch name='Run' value={TYPE_COLOR.run} />
         <Swatch name='Ride' value={TYPE_COLOR.cycle} />
       </Section>
-      <Section title='Theme'>
-        {Object.entries(p).map(([name, value]) => (
-          <Swatch key={name} name={name} value={value} />
-        ))}
+      <Section title={`Theme: ${SITE_SCHEME} (website, Swagger, Storybook)`}>
+        {entries
+          .filter(([name]) => BASE_KEYS.has(name))
+          .map(([name, value]) => (
+            <Swatch key={name} name={name} value={value} />
+          ))}
       </Section>
+      <Section title={`Theme: ${SITE_SCHEME}, AA variants (text ≥ 4.5:1, graphics and edges ≥ 3:1)`}>
+        {entries
+          .filter(([name]) => !BASE_KEYS.has(name))
+          .map(([name, value]) => (
+            <Swatch key={name} name={name} value={value} />
+          ))}
+      </Section>
+      <View style={{ marginBottom: 28 }}>
+        <NightPanel>
+          <Section title='Theme: dark (the app and every map; added keys repeat the brand fills)'>
+            {Object.entries(DARK).map(([name, value]) => (
+              <Swatch key={name} name={name} value={value} />
+            ))}
+          </Section>
+        </NightPanel>
+      </View>
       <Section title='Spacing'>
         {Object.entries(SPACE).map(([name, value]) => (
           <View key={name} style={{ alignItems: 'center', gap: 4 }}>
@@ -103,7 +131,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'One source for both apps: the app reads these in TS, the website gets them as CSS variables from `cssVariables()`.',
+          'One source for both apps: the app reads these in TS (dark), the website gets them as CSS variables from `cssVariables(SITE_SCHEME)` (light). On light, brand fills stay fills; text and lines use the `-Text` / `-Graphic` keys (`docs/decisions/brand-light-theme-2026-10-22.md`).',
       },
     },
   },

@@ -1,54 +1,60 @@
-import { ACCENT, DARK, ON_ACCENT, TIER_COLOR } from '@cityturfer/brand';
+import { ACCENT, SITE_SCHEME, THEMES } from '@cityturfer/brand';
 import { create } from 'storybook/theming';
 
 /** Same stack as the website (apps/web/src/app/globals.css). */
 const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, 'Helvetica Neue', Arial, sans-serif";
 
+/** The website's scheme (light): Storybook's own UI matches the pages it documents. */
+const SITE = THEMES[SITE_SCHEME];
+
 /**
- * Sidebar logo: the brand mark plus the wordmark ("City" cream, "Turfer" in the glow ramp), as
- * HTML because Storybook shows `brandTitle` as markup when there is no `brandImage`. Relative
- * paths, so it also works under https://cityturfer.local/storybook.
+ * Sidebar logo: the brand mark plus the light wordmark ("City" in night ink, "Turfer" in the faint →
+ * glow part of the Ramp; blazing never sits on light), as HTML because Storybook shows
+ * `brandTitle` as markup when there is no `brandImage`. Relative paths, so it also works under
+ * https://cityturfer.local/storybook.
  */
 const BRAND_TITLE = `<span style="display:inline-flex;align-items:center;gap:10px">
 <img src="./brand/mark.svg" width="34" height="34" alt="" style="border-radius:8px"/>
-<span style="font-family:${FONT};font-size:20px;font-weight:800;letter-spacing:-0.5px;color:${TIER_COLOR.blazing}">City<span style="background:linear-gradient(90deg,${TIER_COLOR.glowing},${TIER_COLOR.strong} 70%,${TIER_COLOR.blazing});-webkit-background-clip:text;background-clip:text;color:transparent">Turfer</span></span>
+<img src="./brand/wordmark-light.svg" height="20" alt="CityTurfer"/>
 </span>`;
 
-/** Storybook's own UI (sidebar, toolbar, panels, docs pages) in the app's dark palette. */
+/** Storybook's own UI (sidebar, toolbar, panels, docs pages) in the site's light palette. */
 export const cityTurferTheme = create({
-  base: 'dark',
+  base: SITE_SCHEME,
   brandTitle: BRAND_TITLE,
   brandUrl: './',
   brandTarget: '_self',
 
-  colorPrimary: ACCENT,
-  colorSecondary: ACCENT,
+  // Pink as text (selected story, links, toolbar highlights) needs the AA text variant on light.
+  colorPrimary: SITE.accentText,
+  colorSecondary: SITE.accentText,
 
-  appBg: DARK.bg,
-  appContentBg: DARK.bg,
-  appPreviewBg: DARK.bg,
-  appBorderColor: DARK.border,
+  appBg: SITE.bg,
+  appContentBg: SITE.card,
+  appPreviewBg: SITE.bg,
+  appBorderColor: SITE.border,
   appBorderRadius: 12,
 
   fontBase: FONT,
   fontCode: "ui-monospace, 'SF Mono', Menlo, monospace",
 
-  textColor: DARK.text,
-  textMutedColor: DARK.muted,
-  textInverseColor: ON_ACCENT,
+  textColor: SITE.text,
+  textMutedColor: SITE.muted,
+  textInverseColor: SITE.onAccent,
 
-  barBg: DARK.card,
-  barTextColor: DARK.muted,
-  barHoverColor: ACCENT,
-  barSelectedColor: ACCENT,
+  barBg: SITE.card,
+  barTextColor: SITE.muted,
+  barHoverColor: SITE.accentText,
+  barSelectedColor: SITE.accentText,
 
-  buttonBg: DARK.card,
-  buttonBorder: DARK.border,
-  booleanBg: DARK.bg,
+  buttonBg: SITE.card,
+  buttonBorder: SITE.borderControl,
+  // A filled toggle: the pink fill, its label in textInverseColor (onAccent).
+  booleanBg: SITE.bg,
   booleanSelectedBg: ACCENT,
 
-  inputBg: DARK.bg,
-  inputBorder: DARK.border,
-  inputTextColor: DARK.text,
+  inputBg: SITE.card,
+  inputBorder: SITE.borderControl,
+  inputTextColor: SITE.text,
   inputBorderRadius: 8,
 });
