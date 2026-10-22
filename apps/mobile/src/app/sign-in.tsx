@@ -65,8 +65,14 @@ export default function SignIn() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const secondRef = useRef<TextInput>(null);
+  // A ref, not the state: a second keyboard submit in the same frame must see the first one.
+  const inFlight = useRef(false);
 
   const busyWhile = async (work: () => Promise<void>) => {
+    if (inFlight.current) {
+      return; // a double tap on Go: the code is sent (or checked) once
+    }
+    inFlight.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -74,6 +80,7 @@ export default function SignIn() {
     } catch {
       setError('Something went wrong. Try again.');
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   };
