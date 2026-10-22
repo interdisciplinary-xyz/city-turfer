@@ -3,8 +3,9 @@ import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { ApiLog } from '../deps';
 import { BREACH_CHECK_TIMEOUT_MS, HibpBreachedPasswords } from '../identity/breached-passwords';
+import { OneTimeCodes } from '../identity/codes';
 import { MemoryMailer } from '../identity/mailer';
-import { backupApp, closeSharedDb, codeIn, TOKENS } from './support';
+import { backupApp, closeSharedDb, codeIn, TEST_AUTH_SECRET, TOKENS } from './support';
 
 /**
  * Account settings (contract 0.5.0, docs/decisions/account-settings-2026-10-22.md): name, e-mail,
@@ -32,7 +33,7 @@ const MINUTE = 61_000;
 type Row = Record<string, unknown>;
 const rows = async (query: ReturnType<typeof sql>) => ((await h.db.execute(query)) as unknown as { rows: Row[] }).rows;
 
-/** Signs in and moves past the one-code-a-minute limit, so a step-up code may follow. */
+/** Signs in and moves the clock a minute on (so a second sign-in code for the address may follow). */
 async function account(email = ANIA, ip?: string): Promise<string> {
   const token = await h.signIn(email, ip);
   h.clock.t += MINUTE;
@@ -93,6 +94,10 @@ describe('GET and PATCH /v1/me: the name', () => {
     const control = await h.call('PATCH', '/v1/me', { token, body: { name: 'Ania\u0007' } });
     expect(control.status).toBe(422);
     expect(await control.json()).toMatchObject({ code: 'display-name.invalid' });
+    // Far past 40 the core rule still answers (the schema's cap only bounds the body).
+    const longer = await h.call('PATCH', '/v1/me', { token, body: { name: 'a'.repeat(300) } });
+    expect(longer.status).toBe(422);
+    expect(await longer.json()).toMatchObject({ code: 'display-name.too-long' });
     // 40 code points (emoji are two UTF-16 units each) are fine.
     expect((await h.call('PATCH', '/v1/me', { token, body: { name: '🏃'.repeat(40) } })).status).toBe(200);
   });
@@ -139,9 +144,10 @@ describe('POST /v1/me/step-up/codes', () => {
     expect(String(stored[0].value)).not.toContain(code);
   });
 
-  it('shares the sign-in code limits of the address (A5): one mail a minute, 3 per 10 minutes', async () => {
+  it('has its own one-a-minute bucket but shares the 10-minute cap with sign-in codes (A5)', async () => {
     const token = await h.signIn(ANIA);
-    // The sign-in code went out this minute.
+    // The sign-in code went out this minute; a step-up code may still follow at once.
+    expect((await h.call('POST', '/v1/me/step-up/codes', { token })).status).toBe(202);
     const soon = await h.call('POST', '/v1/me/step-up/codes', { token });
     expect(soon.status).toBe(429);
     expect(await soon.json()).toMatchObject({ code: 'auth.rate-limited' });
@@ -149,10 +155,45 @@ describe('POST /v1/me/step-up/codes', () => {
     h.clock.t += MINUTE;
     expect((await h.call('POST', '/v1/me/step-up/codes', { token })).status).toBe(202);
     h.clock.t += MINUTE;
-    expect((await h.call('POST', '/v1/me/step-up/codes', { token })).status).toBe(202);
-    h.clock.t += MINUTE;
-    // Sign-in code + two step-up codes in 10 minutes: the fourth is refused.
+    // Sign-in code + two step-up codes in 10 minutes: a fourth code of either kind is refused.
     expect((await h.call('POST', '/v1/me/step-up/codes', { token })).status).toBe(429);
+    const signInCode = await h.call('POST', '/v1/auth/codes', { token: null, body: { email: ANIA } });
+    expect(signInCode.status).toBe(429);
+    expect(h.mailer.sent.filter((m) => m.to === ANIA)).toHaveLength(3);
+  });
+
+  it('lets the first sensitive change follow a code sign-in at once', async () => {
+    const token = await h.signIn(ANIA);
+    const res = await h.call('POST', '/v1/me/step-up/codes', { token });
+    expect(res.status).toBe(202);
+    const stepUpCode = codeIn(h.mailer.lastTo(ANIA)?.text);
+    expect(
+      (await h.call('PUT', '/v1/me/password', { token, body: { newPassword: PASSWORD, stepUpCode } })).status
+    ).toBe(204);
+  });
+
+  it('counts concurrent wrong codes one by one: three at once burn the code', async () => {
+    const token = await account();
+    const code = await stepUp(token);
+    const results = await Promise.all(
+      [0, 1, 2].map(() => h.call('DELETE', '/v1/me/password', { token, body: { stepUpCode: wrong(code) } }))
+    );
+    expect(results.map((r) => r.status)).toEqual([401, 401, 401]);
+    expect((await h.call('DELETE', '/v1/me/password', { token, body: { stepUpCode: code } })).status).toBe(401);
+    expect(await rows(sql`SELECT id FROM auth_verifications WHERE identifier LIKE 'step-up-%'`)).toHaveLength(0);
+  });
+
+  it('keeps the try count in place when the same code is mailed again', async () => {
+    const token = await account();
+    const first = await stepUp(token);
+    await h.call('DELETE', '/v1/me/password', { token, body: { stepUpCode: wrong(first) } });
+    // The same code is mailed again while valid; its try count is kept in place, one row only.
+    const again = await stepUp(token);
+    expect(again).toBe(first);
+    const stored = await rows(sql`SELECT value FROM auth_verifications WHERE identifier LIKE 'step-up-%'`);
+    expect(stored).toHaveLength(1);
+    expect(String(stored[0].value)).toMatch(/:1$/);
+    expect((await h.call('DELETE', '/v1/me/password', { token, body: { stepUpCode: first } })).status).toBe(204);
   });
 
   it('logs the mail failure by kind only and still answers 202', async () => {
@@ -406,6 +447,46 @@ describe('passwords', () => {
     expect((await signInWithPassword(ANIA, '🔑'.repeat(128))).status).toBe(200);
   });
 
+  it('answers a locked-out caller 429 before any breach check', async () => {
+    const token = await account();
+    const stepUpCode = await stepUp(token);
+    // 10 failed sign-ins for the address today (two 10-minute windows, many IPs).
+    for (let i = 0; i < 10; i++) {
+      const res = await h.call('POST', '/v1/auth/sign-in', {
+        token: null,
+        body: { email: ANIA, code: '123456' },
+        headers: { 'X-Real-IP': `198.51.100.${i}` },
+      });
+      expect(res.status).toBe(401);
+      if (i === 4) {
+        h.clock.t += 11 * MINUTE;
+      }
+    }
+    const checks = h.breached.checks;
+    for (const newPassword of ['password1234', PASSWORD]) {
+      const res = await setPassword(token, newPassword, stepUpCode);
+      expect(res.status).toBe(429);
+      expect(await res.json()).toMatchObject({ code: 'auth.rate-limited' });
+    }
+    expect(h.breached.checks).toBe(checks);
+  });
+
+  it('caps breach checks at 10 per account per 10 minutes', async () => {
+    const token = await account();
+    const stepUpCode = await stepUp(token);
+    const checks = h.breached.checks;
+    for (let i = 0; i < 10; i++) {
+      expect((await setPassword(token, 'password1234', stepUpCode)).status).toBe(422);
+    }
+    const capped = await setPassword(token, PASSWORD, stepUpCode);
+    expect(capped.status).toBe(429);
+    expect(await capped.json()).toMatchObject({ code: 'auth.rate-limited' });
+    expect(h.breached.checks).toBe(checks + 10);
+    // The refusals did not spend the step-up code (code times run on the real clock: still valid).
+    h.clock.t += 10 * MINUTE;
+    expect((await setPassword(token, PASSWORD, stepUpCode)).status).toBe(204);
+  });
+
   it('refuses a wrong or reused step-up code (401)', async () => {
     const token = await account();
     const stepUpCode = await stepUp(token);
@@ -537,6 +618,46 @@ describe('DELETE /v1/me', () => {
     expect(
       (await h.call('POST', '/v1/auth/sign-in', { token: null, body: { email: ANIA, password: PASSWORD } })).status
     ).toBe(401);
+  });
+});
+
+describe('OneTimeCodes under concurrent writes', () => {
+  const ID = 'step-up-otp-ania@example.com';
+
+  /** Runs `meanwhile` once, right before the next try-count write (inside the read-then-write gap). */
+  async function beforeNextSwap(meanwhile: () => Promise<unknown>) {
+    const { adapter } = await h.auth.$context;
+    const original = adapter.updateMany;
+    adapter.updateMany = async (data) => {
+      adapter.updateMany = original;
+      await meanwhile();
+      return original(data);
+    };
+  }
+
+  it('leaves a code issued during a wrong try usable', async () => {
+    const codes = new OneTimeCodes(h.auth, TEST_AUTH_SECRET);
+    const first = await codes.issue(ID, '111111');
+    let fresh = '';
+    await beforeNextSwap(async () => {
+      // The first code is replaced in the gap (as after it burnt or expired) and the new one mailed.
+      await h.db.execute(sql`DELETE FROM auth_verifications`);
+      fresh = await codes.issue(ID, '222222');
+    });
+    expect(await codes.consume(ID, wrong(first))).toBe(false);
+    expect(fresh).toBe('222222');
+    expect(await rows(sql`SELECT id FROM auth_verifications`)).toHaveLength(1);
+    expect(await codes.consume(ID, fresh)).toBe(true);
+  });
+
+  it('counts both of two interleaved wrong tries', async () => {
+    const codes = new OneTimeCodes(h.auth, TEST_AUTH_SECRET);
+    const code = await codes.issue(ID, '111111');
+    await beforeNextSwap(() => codes.consume(ID, '000001'));
+    expect(await codes.consume(ID, '000002')).toBe(false);
+    // Two tries spent: the third wrong one burns the code.
+    expect(await codes.consume(ID, '000003')).toBe(false);
+    expect(await codes.consume(ID, code)).toBe(false);
   });
 });
 

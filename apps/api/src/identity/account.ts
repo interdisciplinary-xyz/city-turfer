@@ -106,9 +106,12 @@ export class AccountService {
     await this.deps.repo.rename(caller.userId, displayName(raw), this.deps.clock.now());
   }
 
-  /** RequestStepUpCode: mails a code to the current address (A5 code limits). */
+  /**
+   * RequestStepUpCode: mails a code to the current address (A5 code limits; its own one-a-minute
+   * bucket, so it may follow the sign-in code at once).
+   */
   async requestStepUpCode(caller: AccountCaller, ip: string): Promise<void> {
-    await this.deps.limits.codeMail(caller.email, ipBucket(ip));
+    await this.deps.limits.codeMail(caller.email, ipBucket(ip), 'step-up');
     const code = await this.deps.codes.issue(this.deps.codes.stepUpId(caller.email), this.fixedFor(caller.email));
     await this.send(stepUpCodeMail(caller.email, code), 'code');
   }
@@ -121,10 +124,12 @@ export class AccountService {
   async requestEmailChange(caller: AccountCaller, rawNewEmail: string, stepUpCode: string, ip: string): Promise<void> {
     const to = newEmail(rawNewEmail, caller.email);
     // The new address's code limits refuse before the step-up code is spent, and count only once a
-    // mail goes out (wrong step-up codes do not use up a stranger's quota).
-    await this.deps.limits.checkCodeMail(to, ipBucket(ip));
+    // mail goes out (wrong step-up codes do not use up a stranger's quota). Known race, accepted: a
+    // concurrent request for the same address can fill its bucket between the peek and the count,
+    // so this request spends its step-up code and still answers 429 (the user asks for a new code).
+    await this.deps.limits.checkCodeMail(to, ipBucket(ip), 'new-address');
     await this.spendStepUp(caller, stepUpCode, ip);
-    await this.deps.limits.codeMail(to, ipBucket(ip));
+    await this.deps.limits.codeMail(to, ipBucket(ip), 'new-address');
     if (await this.deps.repo.emailTaken(to, caller.userId)) {
       await this.send(addressInUseMail(to), 'notice');
       return;
@@ -160,16 +165,19 @@ export class AccountService {
   }
 
   /**
-   * SetPassword: sets or replaces the password (core length rule, then the breach check, then the
-   * step-up code: a refused password does not spend the code), revokes the other sessions, mails
-   * the account.
+   * SetPassword: sets or replaces the password (core length rule, then the failed-attempt caps, then
+   * the breach check, then the step-up code: a refused password does not spend the code), revokes
+   * the other sessions, mails the account. A locked-out caller gets 429 before any outbound call,
+   * and breach checks are capped per account (A5 `breachChecksPerUser`).
    */
   async setPassword(caller: AccountCaller, rawPassword: string, stepUpCode: string, ip: string): Promise<void> {
     const password = newPassword(rawPassword);
+    const attempt = await this.deps.limits.beforeAttempt(caller.email, ipBucket(ip));
+    await this.deps.limits.breachCheck(caller.userId);
     if (await this.deps.breached.isBreached(password)) {
       throw new AppError('password.breached');
     }
-    await this.spendStepUp(caller, stepUpCode, ip);
+    await this.spendStepUp(caller, stepUpCode, ip, attempt);
     const hash = await this.deps.hashPassword(password);
     const at = this.deps.clock.now();
     const result = await this.deps.repo.setPassword({
@@ -190,8 +198,13 @@ export class AccountService {
   }
 
   /** The step-up check (AC4): a wrong code counts as a failed sign-in for the account's address. */
-  private async spendStepUp(caller: AccountCaller, code: string, ip: string): Promise<void> {
-    const attempt = await this.deps.limits.beforeAttempt(caller.email, ipBucket(ip));
+  private async spendStepUp(
+    caller: AccountCaller,
+    code: string,
+    ip: string,
+    checked?: { failed: () => Promise<void> }
+  ): Promise<void> {
+    const attempt = checked ?? (await this.deps.limits.beforeAttempt(caller.email, ipBucket(ip)));
     if (!(await this.deps.codes.consume(this.deps.codes.stepUpId(caller.email), code))) {
       await attempt.failed();
       throw new AppError('auth.invalid-code');

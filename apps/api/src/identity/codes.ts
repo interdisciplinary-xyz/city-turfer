@@ -13,7 +13,7 @@ export const CODE_ATTEMPTS = 3;
  * while one is valid mails the same code again. Built here rather than with Better Auth's emailOTP
  * change-email flow, which mails nothing for a taken address, writes only `auth_users`, revokes no
  * session and wants a fresh cookie session; the rows go through Better Auth's internal adapter
- * (`consumeVerificationValue` makes the use single and race-free).
+ * (`consume` writes with compare-and-swap statements, so the use is single and race-free).
  *
  * Identifiers: `step-up-otp-<current address>` (so `eraseAccount`'s `%-otp-<address>` clean-up and
  * an e-mail change clear it), and `email-change-otp-<user id>:<HMAC of the new address>` (the new
@@ -64,29 +64,46 @@ export class OneTimeCodes {
   /**
    * Spends the code: true once for the right code within 10 minutes. A wrong code costs one of the
    * three tries; the third wrong one burns the code. Expired, burnt or missing: false.
+   *
+   * Every write is one compare-and-swap statement on the row that was read (its id and its value):
+   * the right code deletes exactly that row, a wrong one bumps its try count in place. Of two
+   * concurrent requests only one spends the code, and a code issued in between (a new row) is
+   * never touched. A lost swap means the row changed under us: read it again (a few times at most).
    */
   async consume(identifier: string, code: string): Promise<boolean> {
-    const { internalAdapter } = await this.auth.$context;
-    // Atomic: of two concurrent requests only one gets the row (expired rows come back null).
-    const row = await internalAdapter.consumeVerificationValue(identifier);
-    if (!row) {
-      return false;
-    }
-    const [sealed, attempts] = splitAtLastColon(row.value);
-    const used = Number(attempts || '0');
-    if (used >= CODE_ATTEMPTS) {
-      return false;
-    }
-    const plain = await this.cipher.decrypt(sealed);
-    if (plain !== '' && sameCode(plain, code)) {
-      return true;
-    }
-    if (used + 1 < CODE_ATTEMPTS) {
-      await internalAdapter.createVerificationValue({
-        identifier,
-        value: `${sealed}:${used + 1}`,
-        expiresAt: row.expiresAt,
-      });
+    const { internalAdapter, adapter } = await this.auth.$context;
+    for (let round = 0; round < CODE_ATTEMPTS + 1; round++) {
+      const row = await internalAdapter.findVerificationValue(identifier);
+      if (!row || row.expiresAt <= new Date()) {
+        return false;
+      }
+      const [sealed, attempts] = splitAtLastColon(row.value);
+      const used = Number(attempts || '0');
+      if (used >= CODE_ATTEMPTS) {
+        return false;
+      }
+      const same = [
+        { field: 'id', value: row.id },
+        { field: 'value', value: row.value },
+      ];
+      const plain = await this.cipher.decrypt(sealed);
+      if (plain !== '' && sameCode(plain, code)) {
+        if (await adapter.consumeOne({ model: 'verification', where: same })) {
+          return true;
+        }
+        continue;
+      }
+      const swapped =
+        used + 1 < CODE_ATTEMPTS
+          ? await adapter.updateMany({
+              model: 'verification',
+              where: same,
+              update: { value: `${sealed}:${used + 1}`, updatedAt: new Date() },
+            })
+          : await adapter.deleteMany({ model: 'verification', where: same });
+      if (swapped > 0) {
+        return false;
+      }
     }
     return false;
   }

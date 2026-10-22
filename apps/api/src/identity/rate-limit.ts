@@ -10,6 +10,9 @@ export interface RateLimiter {
   peek(key: string, max: number, windowMs: number, now: number): Promise<{ ok: boolean; retryAfterS: number }>;
 }
 
+/** Which code a mail carries: step-up codes have their own one-a-minute bucket. */
+export type CodeKind = 'sign-in' | 'new-address' | 'step-up';
+
 export interface Limit {
   max: number;
   windowMs: number;
@@ -21,7 +24,8 @@ const ONE_DAY = 24 * 60 * 60_000;
 
 /**
  * The contract's auth limits (backend contract 0.4.0; 0.5.0 counts step-up and new-address codes
- * and password sign-ins in the same buckets). Per-IP buckets are the IPv4 address or the
+ * and password sign-ins in the same buckets, except that step-up codes have their own one-a-minute
+ * bucket, so the first sensitive change right after a code sign-in is not refused). Per-IP buckets are the IPv4 address or the
  * IPv6 /64 (ipBucket). The per-address limits are the real protection; the per-IP ones are loose
  * because mobile carriers put many phones behind one IPv4 address (CGNAT), and for sign-ins they
  * count only failed attempts.
@@ -31,18 +35,22 @@ const ONE_DAY = 24 * 60 * 60_000;
  * address takes at most 10 guesses a day against the 10^6 codes (about 0.4 % a year). The price: a
  * stranger who knows the address can block its sign-in for up to a day.
  *
- * Mails per address: at most one a minute and 10 a day (inbox spam, Brevo cost). A request while a
+ * Mails per address: at most one sign-in (or new-address) code and one step-up code a minute, 3 of
+ * any kind per 10 minutes and 10 a day (inbox spam, Brevo cost). A request while a
  * code is still valid mails that same code (`resendStrategy: 'reuse'`), so asking for codes never
  * voids the one the user already has.
  */
 export const AUTH_LIMITS = {
   codesPerEmailPerMinute: { max: 1, windowMs: ONE_MINUTE },
+  stepUpCodesPerEmailPerMinute: { max: 1, windowMs: ONE_MINUTE },
   codesPerEmail: { max: 3, windowMs: TEN_MINUTES },
   codesPerEmailPerDay: { max: 10, windowMs: ONE_DAY },
   codesPerIp: { max: 30, windowMs: TEN_MINUTES },
   signInsPerEmail: { max: 10, windowMs: TEN_MINUTES },
   failedSignInsPerEmailPerDay: { max: 10, windowMs: ONE_DAY },
   failedSignInsPerIp: { max: 20, windowMs: TEN_MINUTES },
+  /** Outbound breach checks (HIBP) per account, so `PUT /v1/me/password` cannot be used to pump them. */
+  breachChecksPerUser: { max: 10, windowMs: TEN_MINUTES },
 } satisfies Record<string, Limit>;
 
 /**
@@ -57,24 +65,37 @@ export class AuthRateLimits {
     private readonly clock: { now(): number }
   ) {}
 
-  /** Before mailing a code to `email`: per IP, and per address a minute, 10 minutes and a day. */
-  async codeMail(email: string, ipBucket: string): Promise<void> {
-    for (const [scope, subject, limit] of this.codeMailBuckets(email, ipBucket)) {
+  /**
+   * Before mailing a code to `email`: per IP, and per address a minute, 10 minutes and a day. The
+   * minute bucket is per kind: a step-up code may follow the sign-in code at once; the 10-minute and
+   * daily caps are shared by every code mailed to the address.
+   */
+  async codeMail(email: string, ipBucket: string, kind: CodeKind = 'sign-in'): Promise<void> {
+    for (const [scope, subject, limit] of this.codeMailBuckets(email, ipBucket, kind)) {
       await this.limit(scope, subject, limit);
     }
   }
 
   /** Like `codeMail` without counting: refuses (429) when a code mail would be refused now. */
-  async checkCodeMail(email: string, ipBucket: string): Promise<void> {
-    for (const [scope, subject, limit] of this.codeMailBuckets(email, ipBucket)) {
+  async checkCodeMail(email: string, ipBucket: string, kind: CodeKind = 'sign-in'): Promise<void> {
+    for (const [scope, subject, limit] of this.codeMailBuckets(email, ipBucket, kind)) {
       await this.check(scope, subject, limit);
     }
   }
 
-  private codeMailBuckets(email: string, ipBucket: string): [string, string, Limit][] {
+  /** Before an outbound breach check for `userId`: counts it, 429 past the per-account cap. */
+  async breachCheck(userId: string): Promise<void> {
+    await this.limit('breach-checks:user', userId, AUTH_LIMITS.breachChecksPerUser);
+  }
+
+  private codeMailBuckets(email: string, ipBucket: string, kind: CodeKind): [string, string, Limit][] {
+    const perMinute: [string, string, Limit] =
+      kind === 'step-up'
+        ? ['step-up-codes-minute:email', email, AUTH_LIMITS.stepUpCodesPerEmailPerMinute]
+        : ['codes-minute:email', email, AUTH_LIMITS.codesPerEmailPerMinute];
     return [
       ['codes:ip', ipBucket, AUTH_LIMITS.codesPerIp],
-      ['codes-minute:email', email, AUTH_LIMITS.codesPerEmailPerMinute],
+      perMinute,
       ['codes:email', email, AUTH_LIMITS.codesPerEmail],
       ['codes-day:email', email, AUTH_LIMITS.codesPerEmailPerDay],
     ];

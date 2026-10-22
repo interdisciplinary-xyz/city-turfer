@@ -91,7 +91,8 @@ export const Session = z
 
 export const UpdateMeBody = z
   .object({
-    name: z.string().max(200).openapi({
+    // The 1000 cap only bounds the body; the core rule (40 characters) answers 422 below it.
+    name: z.string().max(1000).openapi({
       description: 'Trimmed, at most 40 characters, no control characters; blank clears it.',
       example: 'Ania',
     }),

@@ -419,7 +419,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "maxLength": 200,
+            "maxLength": 1000,
             "description": "Trimmed, at most 40 characters, no control characters; blank clears it.",
             "example": "Ania"
           }

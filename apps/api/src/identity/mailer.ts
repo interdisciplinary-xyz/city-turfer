@@ -77,7 +77,7 @@ export const signInCodeMail = (to: string, code: string): MailMessage => ({
   text: [
     `Your CityTurfer sign-in code is ${code}.`,
     '',
-    'It works once, for 10 minutes. If you did not ask for it, ignore this e-mail.',
+    'It works once, for 10 minutes. Didn’t ask for it? Ignore this email.',
   ].join('\n'),
 });
 

@@ -57,9 +57,13 @@ export class HibpBreachedPasswords implements BreachedPasswords {
 
 /** Tests and the local dev server: breached means "in this list". */
 export class FakeBreachedPasswords implements BreachedPasswords {
+  /** How many checks were asked for (tests: a refused request must not reach the check). */
+  checks = 0;
+
   constructor(private readonly breached: readonly string[] = DEV_BREACHED_PASSWORDS) {}
 
   isBreached(password: string): Promise<boolean> {
+    this.checks++;
     return Promise.resolve(this.breached.includes(password));
   }
 }

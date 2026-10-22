@@ -90,13 +90,14 @@ export async function backupApp(
   });
   const identity = new IdentityService(auth, new PostgresRateLimiter(db), TEST_AUTH_SECRET, clock);
   const log = options.log ?? silentLog;
+  const breached = new FakeBreachedPasswords(options.breached);
   const accounts = accountService({
     db,
     auth,
     identity,
     secret: TEST_AUTH_SECRET,
     mailer,
-    breached: new FakeBreachedPasswords(options.breached),
+    breached,
     clock,
     fixedCode: options.fixedCode ?? null,
     log,
@@ -150,7 +151,7 @@ export async function backupApp(
     });
     return ((await res.json()) as { token: string }).token;
   };
-  return { app, store, db, clock, call, close, mailer, identity, accounts, signIn };
+  return { app, store, db, clock, call, close, mailer, auth, identity, accounts, breached, signIn };
 }
 
 /** A made-up run around Warsaw Old Town (public landmark): `n` points, 3 s and ~7 m apart. */
