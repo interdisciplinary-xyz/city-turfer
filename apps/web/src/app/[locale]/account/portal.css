@@ -97,6 +97,8 @@
 
 .portal-title {
   margin: 0;
+  max-width: none; /* not the landing h1 measure */
+  letter-spacing: normal;
   font-family: var(--display);
   font-size: clamp(1.5rem, 5vw, 2rem);
   font-weight: normal;

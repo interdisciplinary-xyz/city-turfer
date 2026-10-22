@@ -1,3 +1,5 @@
+// The shared header sheet holds --header-h and the language switcher (.lang) the portal frame uses.
+import '../app-header/app-header.css';
 import './portal.css';
 
 import type { Metadata } from 'next';
