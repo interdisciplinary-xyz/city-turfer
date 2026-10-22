@@ -56,6 +56,8 @@ export class FakeApiServer {
   validToken = 'secret-token';
   /** Account id of a token (GET /v1/me); any other valid token is 'acct-1'. */
   readonly accounts = new Map<string, string>([['secret-token', 'acct-1']]);
+  /** More valid tokens, with their account (another account on the same server). */
+  readonly moreTokens = new Map<string, string>();
   readonly activities = new Map<string, StoredActivity>();
   readonly tombstones = new Set<string>();
   readonly consents = new Map<ConsentPurpose, { granted: boolean; policyVersion: string }>();
@@ -143,7 +145,7 @@ export class FakeApiServer {
       try {
         await new Promise((resolve) => setTimeout(resolve, this.latencyMs));
         this.onRequest?.(logged);
-        if (access.token !== this.validToken) {
+        if (access.token !== this.validToken && !this.moreTokens.has(access.token)) {
           return fail<T>({ kind: 'auth' });
         }
         const injected = this.failures.get(method)?.shift();
@@ -160,7 +162,7 @@ export class FakeApiServer {
     return {
       me: () =>
         call('me', {}, () => {
-          return ok({ id: this.accounts.get(access.token) ?? 'acct-1' });
+          return ok({ id: this.moreTokens.get(access.token) ?? this.accounts.get(access.token) ?? 'acct-1' });
         }),
       setConsent: (purpose, granted, policyVersion) =>
         call('setConsent', {}, () => {

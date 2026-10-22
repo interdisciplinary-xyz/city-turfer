@@ -340,6 +340,17 @@ describe('BackupSettings: accounts, withdrawals, Home City', () => {
     });
   });
 
+  it('keeps the token until the server has heard about a withdrawal', () => {
+    const s = BackupSettings.initial();
+    s.enable();
+    expect(() => s.ensureTokenRemovable()).toThrow(expect.objectContaining({ code: 'backup.on' }));
+    s.disable();
+    expect(() => s.ensureTokenRemovable()).toThrow(expect.objectContaining({ code: 'backup.withdrawal-pending' }));
+    s.withdrawalDelivered('cloud-sync');
+    s.withdrawalDelivered('apple-health-in-cloud-sync');
+    expect(() => s.ensureTokenRemovable()).not.toThrow();
+  });
+
   it('queues a Home City choice only when the server does not have that one', () => {
     const s = BackupSettings.initial();
     s.enable();

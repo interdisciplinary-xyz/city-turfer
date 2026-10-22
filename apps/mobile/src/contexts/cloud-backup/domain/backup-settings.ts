@@ -160,6 +160,7 @@ export class BackupSettings {
    * Which server and account the backup talks to now. The first one is adopted (state from before
    * this was tracked), with a fresh comparison; another one means nothing of this state is true there: backup goes
    * off (that account has not consented) and starts from scratch. Returns whether it was reset.
+   * Pending withdrawals are reset too: deliver them to the previous account first (see connect).
    */
   useAccount(key: string): boolean {
     const s = this.state;
@@ -209,10 +210,16 @@ export class BackupSettings {
     this.state = { ...this.state, serverUrl: trimmed, backfilledAt: null, cursor: null, lastError: null };
   }
 
-  /** The token may only be forgotten while backup is off: turning backup off needs it to tell the server. */
+  /**
+   * The token may only be forgotten while backup is off and the server has heard about it: turning
+   * backup off needs the token to tell the server (also after switching to another account).
+   */
   ensureTokenRemovable(): void {
     if (this.state.enabled) {
       throw new DomainError('backup.on');
+    }
+    if (this.state.withdrawalsPending.length > 0) {
+      throw new DomainError('backup.withdrawal-pending');
     }
   }
 

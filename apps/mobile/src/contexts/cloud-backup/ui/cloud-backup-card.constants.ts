@@ -55,6 +55,7 @@ export const ACTION_ERRORS: Record<string, string> = {
   'backup.invalid-server-url': 'Use a full address starting with https:// (or http:// on your own network).',
   'backup.on': 'Turn backup off first.',
   'backup.off': 'Turn backup on first.',
+  'backup.withdrawal-pending': "The server hasn't deleted your backup copy yet. Try again once you're online.",
 };
 
 export const ACTION_FAILED = 'Something went wrong. Try again.';
