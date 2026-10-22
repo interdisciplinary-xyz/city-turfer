@@ -49,12 +49,23 @@ export function portalPages(outDir, locales) {
 }
 
 /** Returns a list of findings (empty = the boundary holds). */
-export function checkExport(outDir, { locales = ['en', 'pl'] } = {}) {
+export function checkExport(outDir, { locales = ['en', 'pl'], nextDir = path.join(outDir, '..', '.next') } = {}) {
   const findings = [];
   const read = (file) => readFileSync(file, 'utf8');
+  const missing = new Set();
+  // A chunk is read from the export, else from Next's build folder (Vercel's build step can move
+  // out/_next away). A chunk found in neither is a finding: reading it as empty would pass silently.
   const chunk = (ref) => {
-    const file = path.join(outDir, ref);
-    return existsSync(file) ? read(file) : '';
+    const candidates = [path.join(outDir, ref), path.join(nextDir, ref.replace(/^\/_next\//, ''))];
+    const file = candidates.find((candidate) => existsSync(candidate));
+    if (!file) {
+      if (!missing.has(ref)) {
+        missing.add(ref);
+        findings.push(`chunk ${ref} not found in out/ or .next/: the check cannot read it`);
+      }
+      return '';
+    }
+    return read(file);
   };
   const rel = (file) => path.relative(outDir, file);
 

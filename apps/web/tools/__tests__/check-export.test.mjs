@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
@@ -76,5 +76,23 @@ test('a portal page in the sitemap fails', () => {
 test('the positive control: no API client marker anywhere fails', () => {
   withExport({ portalChunk: 'nothing here' }, (dir) => {
     assert.match(checkExport(dir).join('\n'), /the check would see nothing/);
+  });
+});
+
+test('chunks moved out of out/ are read from .next/static (Vercel build step)', () => {
+  withExport({}, (dir) => {
+    const nextDir = path.join(dir, '.next-moved');
+    mkdirSync(path.join(nextDir, 'static'), { recursive: true });
+    renameSync(path.join(dir, '_next/static/chunks'), path.join(nextDir, 'static/chunks'));
+    assert.deepEqual(checkExport(dir, { nextDir }), []);
+  });
+});
+
+test('a chunk found nowhere is a finding, not an empty file', () => {
+  withExport({}, (dir) => {
+    rmSync(path.join(dir, '_next'), { recursive: true });
+    const findings = checkExport(dir, { nextDir: path.join(dir, 'no-such-dir') }).join('\n');
+    assert.match(findings, /chunk \/_next\/static\/chunks\/landing\.js not found/);
+    assert.match(findings, /chunk \/_next\/static\/chunks\/portal\.js not found/);
   });
 });
