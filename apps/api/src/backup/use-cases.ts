@@ -31,6 +31,9 @@ export interface Clock {
 
 export const etagOf = (version: number) => `"v${version}"`;
 
+/** How far a phone's clock may run ahead of the server's for a last-write-wins time (`renamedAt`). */
+export const MAX_CLOCK_SKEW_MS = 5 * 60_000;
+
 /** `If-Match` names this version (`"v3"`, `W/"v3"` or a list containing it)? */
 export function matchesVersion(ifMatch: string, version: number): boolean {
   const wanted = etagOf(version);
@@ -191,6 +194,9 @@ export class BackupService {
    * older rename answers the current activity, unchanged. The name follows the core's rule (422).
    * `If-Match` is optional; a stale one is 412. Version + 1 and a feed entry when the name changed.
    * The stored content hash follows the new name, so the phone's next upload with it is a replay.
+   * A `renamedAt` more than MAX_CLOCK_SKEW_MS ahead of the server is 422. A PUT that replaces the
+   * activity (with `If-Match`) and carries another name sets that name but keeps `renamedAt`:
+   * renames belong to PATCH; a later PATCH still wins only with a newer `renamedAt`.
    */
   async rename(
     userId: string,
@@ -198,6 +204,10 @@ export class BackupService {
     input: { name: string; renamedAt: number },
     ifMatch: string | undefined
   ): Promise<ActivityRecord> {
+    // A clock far ahead would win every later rename: refuse it rather than let it stick.
+    if (input.renamedAt > this.clock.now() + MAX_CLOCK_SKEW_MS) {
+      throw new AppError('activity.renamed-in-future');
+    }
     return this.store.write(userId, async (tx) => {
       await requireConsent(tx, 'cloud-sync');
       await tx.lock();

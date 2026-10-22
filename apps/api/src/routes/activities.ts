@@ -182,7 +182,7 @@ export function registerActivities(app: OpenAPIHono<AppEnv>): void {
       operationId: 'renameActivity',
       summary: 'Rename an activity',
       description:
-        'Use case RenameActivity. The last write wins on `renamedAt` (decision D6): an equal or older rename answers `200` with the activity unchanged. A new name bumps the version and appears in the changes feed. `If-Match` is optional; a stale one answers `412`. Needs the `cloud-sync` consent.',
+        'Use case RenameActivity. The last write wins on `renamedAt` (decision D6): an equal or older rename answers `200` with the activity unchanged. A `renamedAt` more than 5 minutes ahead of the server is `422 activity.renamed-in-future`. A new name bumps the version and appears in the changes feed. (A `PUT` that replaces the activity with another name sets it but keeps `renamedAt`: rename with `PATCH`.) `If-Match` is optional; a stale one answers `412`. Needs the `cloud-sync` consent.',
       request: {
         params: ActivityIdParam,
         headers: IF_MATCH,
@@ -196,7 +196,11 @@ export function registerActivities(app: OpenAPIHono<AppEnv>): void {
         ...NOT_FOUND,
         ...DELETED,
         412: problemResponse('`If-Match` is stale.', 'precondition-failed'),
-        422: problemResponse('Invalid name.', 'activity.invalid-name'),
+        422: problemResponse(
+          'Invalid name, or `renamedAt` in the future.',
+          'activity.invalid-name',
+          'activity.renamed-in-future'
+        ),
       },
     },
     async (c) => {

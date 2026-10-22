@@ -304,6 +304,11 @@ describe('PATCH /v1/activities/{id}', () => {
     expect((await rename('New', '2026-10-19T09:00:00Z', { 'If-Match': '"v9"' })).status).toBe(412);
     expect((await rename('New', '2026-10-19T09:00:00Z', { 'If-Match': '"v1"' })).status).toBe(200);
     expect((await rename('New', '2026-10-19T09:00:00Z', {}, 'nope')).status).toBe(404);
+    // The server's clock is 2026-10-20T08:00Z: up to 5 minutes ahead is fine, more is refused.
+    expect((await rename('Soon', '2026-10-20T08:04:00Z')).status).toBe(200);
+    const future = await rename('Later', '2026-10-20T08:06:00Z');
+    expect(future.status).toBe(422);
+    expect(await future.json()).toMatchObject({ code: 'activity.renamed-in-future' });
     await h.call('DELETE', '/v1/activities/run-1');
     expect((await rename('New', '2026-10-19T11:00:00Z')).status).toBe(410);
   });

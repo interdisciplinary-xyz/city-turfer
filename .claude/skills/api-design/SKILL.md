@@ -62,7 +62,7 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   `apps/api/src/__tests__/restore.test.ts`). `source` is derived from the id (`hk-…` ⇒
   `apple-health`, 422 `activity.source-mismatch`). `PUT …/gap-routes` with an empty list sets
   `gapsCheckedAt` ("checked, no gaps"). Rename = `PATCH` `{ name, renamedAt }`, last write wins on
-  `renamedAt` (like the Home City on `chosenAt`).
+  `renamedAt` (like the Home City on `chosenAt`); more than 5 min ahead of the server → 422.
 - **JSON:** camelCase. Units are SI with a suffix, like the domain: `distanceM`, `movingS`,
   `areaKm2` only where the domain already uses km². Timestamps are **ISO 8601 UTC strings**
   (`startedAt: "2026-10-19T07:12:00Z"`, `z.iso.datetime()`); an Activity may carry its IANA

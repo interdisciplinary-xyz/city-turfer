@@ -76,6 +76,40 @@ describe('GET /v1/sync/changes entries', () => {
   });
 });
 
+describe('feed paging across byte-budget cuts', () => {
+  it('pages interleaved upserts, tombstones and Home City changes without skips or duplicates', async () => {
+    for (let i = 0; i < 8; i++) {
+      await h.call('PUT', `/v1/activities/w${i}`, { body: activity(i) });
+      if (i % 3 === 1) {
+        await h.call('DELETE', `/v1/activities/w${i - 1}`);
+      }
+      if (i % 4 === 2) {
+        await h.call('PUT', '/v1/turf/home-city', {
+          body: { cityId: i === 2 ? 'pl-warsaw' : 'pl-krakow', chosenAt: `2026-10-0${i}T07:00:00Z` },
+        });
+      }
+    }
+    const service = new BackupService(h.store, h.clock);
+    const all = await service.changes('admin', { limit: 500 });
+    // Uneven sizes (tombstones small, Home City medium, upserts large) cut pages at odd places.
+    const sizeOf = (c: { kind: string }) => ({ activity: 300, tombstone: 80, 'home-city': 150 })[c.kind] ?? 100;
+    for (const maxBytes of [1, 299, 380, 450, 700, 10_000]) {
+      const seen: number[] = [];
+      let cursor: string | undefined;
+      for (let guard = 0; guard < 100; guard++) {
+        const page = await service.changes('admin', { limit: 3, cursor }, { maxBytes, sizeOf });
+        seen.push(...page.changes.map((c) => c.seq));
+        cursor = page.nextCursor;
+        if (!page.hasMore) {
+          break;
+        }
+      }
+      expect([maxBytes, seen]).toEqual([maxBytes, all.changes.map((c) => c.seq)]);
+    }
+    expect(new Set(all.changes.map((c) => c.kind))).toEqual(new Set(['activity', 'tombstone', 'home-city']));
+  });
+});
+
 describe('restore to a new phone', () => {
   it('rebuilds every activity, track, gap check and the Home City from the manifest', async () => {
     const uploaded = new Map<string, ReturnType<typeof activity>>();
