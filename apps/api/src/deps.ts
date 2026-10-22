@@ -1,6 +1,7 @@
 import type { BackupStore } from './backup/ports';
 import type { BackupService } from './backup/use-cases';
 import type { IdentityService } from './identity/use-cases';
+import type { RetentionService } from './privacy/retention';
 import type { ExportService } from './privacy/use-cases';
 
 /**
@@ -50,6 +51,10 @@ export interface ApiDeps {
   identity: IdentityService | null;
   /** Data exports (zip + e-mailed link); null without a database (503). */
   exports: ExportService | null;
+  /** Purges expired export files, codes, sessions and rate-limit rows; null without a database (503). */
+  retention: RetentionService | null;
+  /** The bearer Vercel Cron sends (`CRON_SECRET`); null → the cron route answers 404. */
+  cronSecret: string | null;
 }
 
 /**
@@ -75,6 +80,8 @@ export function defaultDeps(overrides: Partial<ApiDeps> = {}): ApiDeps {
     store: null,
     identity: null,
     exports: null,
+    retention: null,
+    cronSecret: null,
     ...overrides,
   };
 }

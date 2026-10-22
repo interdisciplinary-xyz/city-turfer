@@ -24,6 +24,55 @@ export const logRequests: MiddlewareHandler<AppEnv> = async (c, next) => {
   });
 };
 
+const SAFE_NAME = /^[A-Za-z][\w.]{0,63}$/;
+const SAFE_CODE = /^[A-Za-z0-9_.-]{1,40}$/;
+/** `…/file.ts:12:34` in a stack frame (`at fn (path:line:col)` or `at path:line:col`). */
+const FRAME = /^\s+at\s.*?([\w.-]+\.[cm]?[jt]s):(\d+):(\d+)\)?\s*$/;
+
+/** A code that is a short identifier (`23505`, `ECONNRESET`), else nothing. */
+function safeCode(value: unknown): string | undefined {
+  const code = typeof value === 'number' ? String(value) : value;
+  return typeof code === 'string' && SAFE_CODE.test(code) ? code : undefined;
+}
+
+/**
+ * What the log may say about an unexpected error: its class name, a short code, the same for its
+ * `cause` (Drizzle wraps the driver's error), and the file:line:column of the first stack frame in a
+ * .js/.ts file —
+ * **never the message**: database and validation messages quote the query parameters and input
+ * (e-mails, coordinates, tokens). The frame keeps only the file's base name.
+ */
+export function describeError(err: unknown): Record<string, string> {
+  const out: Record<string, string> = {};
+  const e = err instanceof Error ? err : null;
+  out.error = e && SAFE_NAME.test(e.name) ? e.name : 'Error';
+  const code = safeCode((err as { code?: unknown } | null)?.code);
+  if (code) {
+    out.code = code;
+  }
+  const cause = e?.cause;
+  if (cause instanceof Error) {
+    out.cause = SAFE_NAME.test(cause.name) ? cause.name : 'Error';
+    const causeCode = safeCode((cause as { code?: unknown }).code);
+    if (causeCode) {
+      out.causeCode = causeCode;
+    }
+  }
+  // Frames only: the stack starts with `<name>: <message>` (the name at construction time), and the
+  // message may span lines — read only what follows it, or nothing when it cannot be found.
+  const full = e?.stack ?? '';
+  const end = e?.message ? full.indexOf(e.message) : full.indexOf('\n');
+  const stack = end < 0 ? '' : full.slice(end + (e?.message.length ?? 0));
+  for (const line of stack.split('\n')) {
+    const m = FRAME.exec(line);
+    if (m) {
+      out.at = `${m[1]}:${m[2]}:${m[3]}`;
+      break;
+    }
+  }
+  return out;
+}
+
 /** 413 `payload-too-large` past MAX_BODY_BYTES (Content-Length or streamed). */
 export const limitBody: MiddlewareHandler<AppEnv> = bodyLimit({
   maxSize: MAX_BODY_BYTES,

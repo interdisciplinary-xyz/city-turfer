@@ -6,10 +6,11 @@ import { secureHeaders } from 'hono/secure-headers';
 import { AppError } from './backup/app-error';
 import { type ApiDeps, type AppEnv, defaultDeps } from './deps';
 import { isProblemCode } from './errors';
-import { inflateGzip, limitBody, logRequests } from './middleware';
+import { describeError, inflateGzip, limitBody, logRequests } from './middleware';
 import { MAX_FIELD_ERRORS, problem } from './problem';
 import { registerActivities } from './routes/activities';
 import { registerIdentity } from './routes/identity';
+import { registerInternal } from './routes/internal';
 import { registerPlatform } from './routes/platform';
 import { registerPrivacy } from './routes/privacy';
 import { registerSync } from './routes/sync';
@@ -70,6 +71,7 @@ export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
   registerSync(app);
   registerActivities(app);
   registerTerritory(app);
+  registerInternal(app);
 
   app.doc31(SPEC_PATH, OPENAPI_CONFIG);
   app.get('/swagger', swaggerUI({ url: SPEC_PATH, title: 'CityTurfer API', ...SWAGGER_UI_OPTIONS }));
@@ -77,7 +79,8 @@ export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
   app.notFound((c) => problem(c, 'not-found'));
   app.onError((err, c) => {
     // A use case's refusal (AppError) or a broken domain rule (DomainError from @cityturfer/core)
-    // carries a catalogue code: answer it, e.g. 403/410/412/422. Anything else is a 500 that says nothing.
+    // carries a catalogue code: answer it, e.g. 403/410/412/422. Anything else is a 500 that says
+    // nothing to the caller and logs one sanitised line (describeError: no message, no data).
     if (err instanceof AppError) {
       return problem(c, err.code, undefined, { headers: err.headers });
     }
@@ -85,6 +88,13 @@ export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
     if (err.name === 'DomainError' && isProblemCode(code)) {
       return problem(c, code);
     }
+    c.var.deps.log.event?.({
+      msg: 'request.error',
+      requestId: c.var.requestId,
+      method: c.req.method,
+      route: c.req.routePath,
+      ...describeError(err),
+    });
     return problem(c, 'internal');
   });
   return app;

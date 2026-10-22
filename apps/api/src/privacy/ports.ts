@@ -44,6 +44,23 @@ export interface FileStorage {
   put(key: string, bytes: Uint8Array, meta: { ownerId: string; contentType: string; expiresAt: number }): Promise<void>;
   get(key: string): Promise<{ bytes: Uint8Array; contentType: string } | null>;
   delete(key: string): Promise<void>;
-  /** Deletes files past their expiry. */
-  purgeExpired(now: number): Promise<void>;
+  /** Deletes files past their expiry; answers how many. */
+  purgeExpired(now: number): Promise<number>;
+}
+
+/** How many rows a retention run deleted, per kind (counts only: nothing personal). */
+export interface RetentionReport {
+  /** Export zips past `expiresAt` (they hold GPS tracks). */
+  exportFiles: number;
+  /** Sign-in codes past their expiry. */
+  signInCodes: number;
+  /** Sessions past their expiry. */
+  sessions: number;
+  /** Rate-limit counters whose window ended long ago (pseudonymous keys). */
+  rateLimits: number;
+}
+
+/** Port: deletes everything that outlived its retention. Idempotent: a second run deletes nothing. */
+export interface RetentionStore {
+  purgeExpired(now: number): Promise<RetentionReport>;
 }

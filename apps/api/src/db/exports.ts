@@ -116,6 +116,10 @@ export class PostgresFileStorage implements FileStorage {
   }
 
   async purgeExpired(now: number) {
-    await this.db.delete(storedFiles).where(lt(storedFiles.expiresAt, new Date(now)));
+    const gone = await this.db
+      .delete(storedFiles)
+      .where(lt(storedFiles.expiresAt, new Date(now)))
+      .returning({ key: storedFiles.key });
+    return gone.length;
   }
 }

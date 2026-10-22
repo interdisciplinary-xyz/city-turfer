@@ -194,6 +194,9 @@ describe('configuration', () => {
     BREVO_API_KEY: 'brevo-test-key',
     MAIL_FROM: 'CityTurfer <hello@example.com>',
     API_PUBLIC_URL: 'https://api.example.com',
+    // Never contacted: checkProductionEnv only checks that it is set.
+    DATABASE_URL: 'postgres://user:pass@db.example.com/cityturfer',
+    CRON_SECRET: 'test-cron-secret-0123456789',
   };
 
   it('refuses to boot production without the secrets, or with AUTH_FIXED_CODE', () => {
@@ -202,6 +205,9 @@ describe('configuration', () => {
     expect(() => checkProductionEnv({ ...PROD, BETTER_AUTH_SECRET: 'short' })).toThrow(/BETTER_AUTH_SECRET/);
     expect(() => checkProductionEnv({ ...PROD, BREVO_API_KEY: '' })).toThrow(/BREVO_API_KEY/);
     expect(() => checkProductionEnv({ ...PROD, MAIL_FROM: '' })).toThrow(/MAIL_FROM/);
+    expect(() => checkProductionEnv({ ...PROD, DATABASE_URL: '' })).toThrow(/DATABASE_URL/);
+    expect(() => checkProductionEnv({ ...PROD, CRON_SECRET: undefined })).toThrow(/CRON_SECRET/);
+    expect(() => checkProductionEnv({ ...PROD, CRON_SECRET: 'short' })).toThrow(/CRON_SECRET/);
     expect(() => checkProductionEnv({ VERCEL_ENV: 'preview' })).not.toThrow();
   });
 
@@ -211,6 +217,7 @@ describe('configuration', () => {
     } catch (error) {
       expect(String(error)).not.toContain('424242');
       expect(String(error)).not.toContain('tiny-secret');
+      expect(String(error)).not.toContain('db.example.com');
     }
   });
 

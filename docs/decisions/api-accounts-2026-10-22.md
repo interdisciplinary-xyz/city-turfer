@@ -76,10 +76,11 @@ only the SHA-256 stored). No e-mail on the account → `422 export.no-email`.
 **The link works repeatedly until it expires (24 h)**, not once: mail link scanners fetch links
 before people do, and a broken download must be retryable. `GET /v1/me/exports/{id}` reports
 `pending`, `ready`, `downloaded` (fetched at least once, still valid), `expired` or `failed`.
-Expired files are purged on the next export request. If building, storing or mailing fails, the
-export is `failed`, its file deleted, and the user may ask again at once. Withdrawing a consent
-deletes the user's export files and expires their links in the same transaction (they copy the
-withdrawn data).
+Expired files are purged daily (Vercel Cron, `GET /internal/cron/retention`, with expired codes,
+sessions and stale rate-limit rows) and on the next export request. If building, storing or mailing
+fails, the export is `failed`, its file deleted, and the user may ask again at once. Withdrawing a
+consent deletes the user's export files and expires their links in the same transaction (they copy
+the withdrawn data).
 
 The download streams 256 KiB chunks without `Content-Length`. **Unverified until a deploy:** that
 Vercel lets a streamed response exceed its 4.5 MB buffered-response cap. Duration: Fluid compute's

@@ -2,22 +2,27 @@ import { deviceTokenAuth, parseApiTokens } from './auth/device-tokens';
 import { DrizzleExportStore, PostgresFileStorage } from './db/exports';
 import { createNeonDb } from './db/neon';
 import { PostgresRateLimiter } from './db/rate-limits';
+import { DrizzleRetentionStore } from './db/retention';
 import { type Db, DrizzleBackupStore } from './db/store';
 import { type ApiDeps, defaultDeps, jsonLineLog } from './deps';
 import { createAuth } from './identity/better-auth';
 import { BrevoMailer, type Mailer, nullMailer, parseMailFrom } from './identity/mailer';
 import { compositeVerifier, IdentityService } from './identity/use-cases';
+import { RetentionService } from './privacy/retention';
 import { ExportService } from './privacy/use-cases';
 import { LOCAL_API_PORT } from './spec';
 
 /**
  * Production wiring from environment variables (Vercel → Settings → Environment Variables;
  * runbook: docs/operations/api-deploy.md):
- * - `DATABASE_URL`: Neon pooled connection string (missing → live data routes answer 503).
+ * - `DATABASE_URL`: Neon pooled connection string (required in production; elsewhere missing →
+ *   live data routes answer 503).
  * - `API_TOKENS`: JSON object sha256(token) hex → userId (device tokens, one more release).
  * - `BETTER_AUTH_SECRET` (≥ 32 characters): turns on sign-in with e-mailed codes.
  * - `BREVO_API_KEY` + `MAIL_FROM` (`CityTurfer <hello@…>`): sends the codes and export links.
  * - `API_PUBLIC_URL`: the API's public base URL (export links in e-mails).
+ * - `CRON_SECRET` (≥ 16 characters): Vercel Cron's bearer for `GET /internal/cron/retention`
+ *   (without it the route answers 404).
  * - `AUTH_FIXED_CODE`: the code for `@e2e.cityturfer.test` addresses only —
  *   never in production (boot fails); real addresses always get random codes.
  * Production = `VERCEL_ENV=production`: missing secrets fail the boot instead of degrading.
@@ -48,6 +53,12 @@ export function checkProductionEnv(env: NodeJS.ProcessEnv): void {
     return;
   }
   const problems: string[] = [];
+  if (!env.DATABASE_URL) {
+    problems.push('DATABASE_URL is required');
+  }
+  if (!cronSecretOf(env)) {
+    problems.push(`CRON_SECRET (at least ${MIN_CRON_SECRET_LENGTH} characters) is required`);
+  }
   if (env.AUTH_FIXED_CODE) {
     problems.push('AUTH_FIXED_CODE must not be set in production');
   }
@@ -66,6 +77,15 @@ export function checkProductionEnv(env: NodeJS.ProcessEnv): void {
   if (problems.length > 0) {
     throw new ConfigError(`Production configuration: ${problems.join('; ')}.`);
   }
+}
+
+/** The shortest CRON_SECRET accepted (Vercel suggests a random string of 16+ characters). */
+export const MIN_CRON_SECRET_LENGTH = 16;
+
+/** CRON_SECRET when it is long enough, else null (the cron route then answers 404). */
+export function cronSecretOf(env: NodeJS.ProcessEnv): string | null {
+  const secret = env.CRON_SECRET?.trim();
+  return secret && secret.length >= MIN_CRON_SECRET_LENGTH ? secret : null;
 }
 
 /** The API's public base URL, without a trailing slash. */
@@ -116,6 +136,7 @@ export function productionDeps(env: NodeJS.ProcessEnv, overrides: WiringOverride
       signIn: !!identity,
       mail: mailer !== nullMailer,
       fixedCode: !!fixedCode,
+      cron: !!cronSecretOf(env),
       apiTokens: tokens.entries.length,
       apiTokensSkipped: tokens.skipped,
     })}\n`
@@ -139,5 +160,7 @@ export function productionDeps(env: NodeJS.ProcessEnv, overrides: WiringOverride
             base.log
           )
         : null,
+    retention: db ? new RetentionService(new DrizzleRetentionStore(db), base.clock, base.log) : null,
+    cronSecret: cronSecretOf(env),
   };
 }

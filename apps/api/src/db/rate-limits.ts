@@ -1,11 +1,14 @@
 import { lt, sql } from 'drizzle-orm';
 
-import type { RateLimiter } from '../identity/rate-limit';
+import { AUTH_LIMITS, type RateLimiter } from '../identity/rate-limit';
 import { rateLimits } from './schema';
 import type { Db } from './store';
 
 /** Rows whose window ended this long ago are deleted (keys are pseudonymous, still personal data). */
 const RETENTION_MS = 60 * 60_000;
+
+/** Past this age a counter is stale under every limit (longest window + RETENTION_MS). */
+export const STALE_RATE_LIMIT_MS = Math.max(...Object.values(AUTH_LIMITS).map((l) => l.windowMs)) + RETENTION_MS;
 
 /**
  * Fixed-window rate limits in Postgres (`rate_limits`): one atomic upsert per hit, so concurrent
