@@ -5,3 +5,5 @@ Index of the Product Owner's own notes (one line per note file). Product facts l
 
 - 2026-10-20: role created. Strategy in `docs/product/strategy.md` is a desk-research draft; no
   founder decisions on it yet. Evidence log is empty — first goal is 5 non-friend interviews.
+- [No-account gap 2026-10-22](no-account-mode-gap-2026-10-22.md) — strangers must create an
+  e-mail-code account on v0.9.0; contradicts B1 and "no account" copy
