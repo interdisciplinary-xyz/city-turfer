@@ -4,8 +4,8 @@ import type { DevToolbarLink } from '@interdisciplinary/dev-toolbar/react';
 export const DEV_TOOLBAR_STORAGE_PREFIX = 'cityturfer';
 
 export type DevToolbarWithAppProps = {
-  /** The page's language (`[locale]` segment). */
-  locale: string;
+  /** The page's language (`[locale]` segment); pages outside it (/branding) omit it. */
+  locale?: string;
 };
 
 /** Quick links in the toolbar's action row (opened in a new tab). */
