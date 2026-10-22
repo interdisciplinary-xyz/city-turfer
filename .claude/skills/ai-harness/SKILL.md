@@ -75,8 +75,29 @@ what the process forbids outright.
 - Body: the decisions and the commands, not a tutorial. Point to files with repo-root paths in
   backticks (audit:docs checks they exist). Name other skills as "the `x` skill" and agents by name
   (audit:harness checks they exist).
-- Agents: `tools:` least privilege (reviewers and planners get no Write/Edit); `model: opus` for
-  judgement-heavy work, `sonnet` for well-specified building.
+- **Agents** (the standard; audit:harness checks the mechanical parts):
+  - Only for judgement with its own verification loop, or to keep high-volume output out of the main
+    context. Otherwise a gate, hook or skill holds the rule more cheaply.
+  - **One owner per path:** the map is the `add-feature` skill's §2 table. The body says "you own X;
+    you hand off Y to Z", and Z exists.
+  - **`tools:` is an allowlist** (omitted = every tool, an audit error). "Read-only" in the
+    description means no Write/Edit, no `memory` (it grants both), and Bash only behind the
+    `.claude/hooks/read-only-bash.mjs` hook in the agent's own `hooks:`. An agent that may edit only
+    some paths gets `.claude/hooks/edit-allowlist.mjs` (`--allow` / `--ask`). `Agent(a, b)` limits
+    which agents it may spawn (main-session agents only).
+  - **Model by the cost of a silent mistake**, not the role's seniority: `opus` where an error is
+    subtle and surfaces late (tracking, data, maps, privacy, architecture); a cheaper model only
+    where output is visible or mechanically checked, recorded as a YAML comment on the `model:` line
+    (`model: sonnet # deliberate cost choice: …`).
+  - **Body order:** identity and priorities → what you own → Read first (skills and decision records
+    by reference, never pasted) → How you work → What good looks like → Non-negotiables (each earned
+    from a real failure) → a "don't trust your training data" procedure for its fast-moving
+    libraries (version in `package.json` → installed source → versioned docs, cite which) → Before
+    you report back (exact commands, plus one "never report works on X alone") → `## Report`.
+  - **`## Report`** asks for Changed · Verified · **Not verified** · Decisions taken · Needs a
+    human.
+  - Never repeat a rule a gate enforces (lint, dependency rules, brand hex, `packages/ui` imports),
+    and never make an agent read another agent's file as its rules: shared rules go in a skill.
 - Add the name to the matching bullet in `CLAUDE.md` → "Claude Code setup".
 - `memory: project` agents keep notes in `.claude/agent-memory/<name>/`, resolved from the session's
   working directory. Launch agents from the repo root: from inside `.claude/` they write a stray

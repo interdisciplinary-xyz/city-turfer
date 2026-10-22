@@ -25,28 +25,34 @@ feature that touches more than three files, show the plan to the user before wri
 
 ## 2. Build (specialists, in dependency order)
 
-Paths under `contexts/` are in `apps/mobile/src/contexts/`; the shared domain of Territory, Activity
-Log, Achievements and Identity (domain + application) lives in `packages/core/src/contexts/`.
+This table is the **ownership map**: one owner per path, and every agent's "what you own" points
+here. Paths under `contexts/` are in `apps/mobile/src/contexts/`; the shared domain of Territory,
+Activity Log, Achievements and Identity (domain + application) lives in
+`packages/core/src/contexts/`. The implementing agent writes the unit tests for its own code.
 
-| Path                                                                     | Agent                  | Skills it follows                |
-| ------------------------------------------------------------------------ | ---------------------- | -------------------------------- |
-| `packages/core/` (shared kernel, core contexts, constants, `h3/`)        | `location-engineer`    | ddd-architecture, route-metrics  |
-| `contexts/recording/{domain,application,infrastructure}`                 | `location-engineer`    | ddd-architecture, gps-tracking   |
-| `contexts/activity-log/{domain,application,infrastructure}`, `platform/` | `location-engineer`    | ddd-architecture, route-storage  |
-| `contexts/territory/{domain,application,infrastructure}`                 | `location-engineer`    | ddd-architecture, turf-territory |
-| `contexts/achievements/infrastructure` (+ its domain in `packages/core`) | `location-engineer`    | ddd-architecture                 |
-| `contexts/health-sync/` (all layers, incl. its card)                     | `health-engineer`      | apple-health                     |
-| `contexts/cloud-backup/{domain,application,infrastructure}`              | `api-engineer`         | api-design, ddd-architecture     |
-| `apps/api/` (routes, schemas, server side of cloud backup and sync)      | `api-engineer`         | api-design                       |
-| `apps/mobile/src/app/`, `contexts/*/ui/`, maps (incl. Turf Map), styling | `mobile-ui-engineer`   | turf-territory (Turf Map)        |
-| `packages/ui/`, Storybook stories                                        | `mobile-ui-engineer`   | design-system                    |
-| `packages/brand/` (tokens, copy), user-facing copy                       | `brand-designer`       | brand-system, design-system      |
-| `apps/web/`                                                              | `web-engineer`         | web-motion                       |
-| tests, fixtures, simulator runs, Maestro                                 | `mobile-test-engineer` | mobile-testing                   |
+| Path                                                                                                                      | Owner                  | Skills it follows                |
+| ------------------------------------------------------------------------------------------------------------------------- | ---------------------- | -------------------------------- |
+| `packages/core/` (shared kernel, core contexts, constants, `h3/`)                                                         | `location-engineer`    | ddd-architecture, route-metrics  |
+| `contexts/recording/{domain,application,infrastructure}`, `apps/mobile/modules/background-session/`                       | `location-engineer`    | ddd-architecture, gps-tracking   |
+| `contexts/activity-log/{domain,application,infrastructure}`, `platform/`, `wiring.ts`, `composition-root.ts`              | `location-engineer`    | ddd-architecture, route-storage  |
+| `contexts/territory/{domain,application,infrastructure}`, `apps/mobile/tools/lib/`, `turf-preview.mjs`                    | `location-engineer`    | ddd-architecture, turf-territory |
+| `contexts/{achievements,identity}/` (non-ui), `apps/mobile/src/constants/` (not `colors.ts`), `apps/mobile/src/dev/`      | `location-engineer`    | ddd-architecture                 |
+| `apps/mobile/app.json` and `apps/mobile/plugins/`, except the entries named below                                         | `location-engineer`    | gps-tracking                     |
+| `contexts/health-sync/` (all layers, incl. its card), the HealthKit plugin entry, `react-native.config.js`                | `health-engineer`      | apple-health                     |
+| `contexts/cloud-backup/{domain,application,infrastructure}`                                                               | `api-engineer`         | api-design, ddd-architecture     |
+| `apps/api/` (routes, schemas, server side of cloud backup and sync), its decision records                                 | `api-engineer`         | api-design                       |
+| `apps/mobile/src/app/`, `contexts/*/ui/` (not health-sync), `ui-kit/`, maps, `apps/mobile/plugins/with-local-maplibre.js` | `mobile-ui-engineer`   | turf-territory (Turf Map)        |
+| `packages/ui/`, `apps/storybook/` config, app and ui stories                                                              | `mobile-ui-engineer`   | design-system                    |
+| `packages/brand/`, `constants/colors.ts`, icons and splash in `app.json`, `apps/mobile/tools/brand/`, copy                | `brand-designer`       | brand-system, design-system      |
+| `apps/web/`, `packages/dev-toolbar/`, website stories                                                                     | `web-engineer`         | web-motion                       |
+| `apps/mobile/e2e/`, `apps/mobile/src/test-support/`, `apps/mobile/tools/` fixtures and replay scripts, `docs/quality/`    | `mobile-test-engineer` | mobile-testing                   |
+| `.claude/`, `tools/` (audits, harness, release), `packages/config/`, `packages/eslint-config/`, CI, `.husky/`             | `harness-engineer`     | ai-harness                       |
+| `docs/product/`, product specs in `docs/plans/`                                                                           | `product-manager`      | product-knowledge                |
 
-Cloud Backup belongs to `api-engineer` on both sides (the app-side context and the API contract it
-talks to; agree the contract first); only its `ui/` card is `mobile-ui-engineer`'s. If an agent is
-unavailable, follow its skills directly in the main session.
+Other `docs/` files belong to the owner of the area they describe. **Integration:** the main session
+commits and opens the PR (`ship-branch` skill); the founder merges. Cloud Backup belongs to
+`api-engineer` on both sides (agree the contract first); only its `ui/` card is
+`mobile-ui-engineer`'s. If an agent is unavailable, follow its skills directly in the main session.
 
 Inside-out: shared kernel → domain → application → infrastructure → UI. Independent pieces (for
 example, a metrics function and a UI component built against its typed signature) can run as

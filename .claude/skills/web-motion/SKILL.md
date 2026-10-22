@@ -1,12 +1,43 @@
 ---
 name: web-motion
 description: >-
-  "make the page feel alive", "add GSAP", "animate the hero", jank, flash or layout shift on the
-  landing page. GSAP + @gsap/react conventions for apps/web (static export), motion language,
-  reduced motion, pre-paint boot script, pointer tilt, verifying motion. Use before any animation.
+  "make the page feel alive", "animate the hero", jank, flash or layout shift on the landing page;
+  any change to apps/web. The site's ground rules (static export, waitlist privacy, en/pl copy,
+  stories, Vercel) and its GSAP motion: language, reduced motion, boot script, verifying motion.
 ---
 
 # Web motion (apps/web)
+
+The site's ground rules come first (they bind every change to `apps/web`, not only motion); the
+motion rules follow. Both the `web-engineer` and the `mobile-reviewer` work from this file.
+
+## Site ground rules
+
+- **Static export** (`output: 'export'` in production): no API routes, server actions, cookies,
+  analytics or third-party scripts. Nothing dev-only (dev toolbar, test URLs) and no secrets in
+  `apps/web/out`.
+- **Copy** lives in `apps/web/messages/en.json` and `pl.json` with identical keys; never hard-code
+  user-facing text. Polish is a real translation, not a calque. The wording is the
+  `brand-designer`'s; the `web-engineer` adds keys and wires them.
+- **Waitlist = personal data.** The email goes straight to Brevo (EU) with double opt-in. Keep the
+  required, unticked consent checkbox, the privacy note naming the controller and the removal
+  contact (`NEXT_PUBLIC_WAITLIST_CONTROLLER`, `NEXT_PUBLIC_CONTACT_EMAIL`) and the honeypot; the
+  form renders only when all its `NEXT_PUBLIC_*` variables are set. No extra fields, pixels or
+  embeds.
+- **Shared tokens:** colours and the brand name come from `@cityturfer/brand` (CSS variables from
+  `cssVariables()` in `[locale]/layout.tsx`). A change in `packages/brand` also changes the mobile
+  app.
+- **Stories:** every component in `apps/web/src/app/[locale]/` has a story in
+  `apps/storybook/src/stories/website/`, except pure motion wrappers (`hero-motion`) and dev-only
+  pieces (`dev-toolbar-with-app`). Website pieces stay synchronous (`useTranslations`, not
+  `await getTranslations`): Storybook cannot render async server components.
+- **Accessibility:** real labels, visible focus, `prefers-reduced-motion` respected, no horizontal
+  scroll from 320 px, text contrast on the dark background.
+- **Hosting:** Vercel project `city-turfer-web`, root `apps/web`. `apps/web/vercel.json` holds the
+  `/` → `/en` or `/pl` redirect and a `turbo-ignore` build skip: a new workspace dependency must
+  appear in turbo's graph or deploys skip it. `NEXT_PUBLIC_*` values are build-time: set on Vercel
+  (or an untracked `apps/web/.env.local`), never committed. The APK link follows
+  `docs/operations/android-release.md`.
 
 Read the general GSAP + React rules in the `gsap-react` skill first (useGSAP, scope, contextSafe,
 cleanup, SSR). This skill adds what is specific to CityTurfer.
