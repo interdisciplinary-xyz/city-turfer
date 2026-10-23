@@ -1,25 +1,33 @@
-# Smoke test: iPhone checklist
+---
+status: canonical
+verified: 2026-10-23
+owner: founder
+scope: [apps/mobile/src/contexts/recording, apps/mobile/src/app, apps/mobile/messages]
+summary:
+  Manual physical-iPhone checklist before scope → release (screen-off walk, kill mid-run, OTA)
+---
 
-**Last reviewed:** 2026-10-17
+# Smoke test: iPhone checklist
 
 Manual checks on a **physical iPhone** with a development or release build. Simulator runs and unit
 tests do not prove background tracking (see `CLAUDE.md`). Run this before promoting `scope/vX.Y.Z`
 to `release/vX.Y.Z`, and again on the OTA build before telling testers. Automated coverage is in
 [`e2e.md`](./e2e.md).
 
-Adapted from empatalk's `docs/quality/SMOKE_TEST.md`. Tick the boxes in a copy of this list in the
-release PR, not in this file.
+Adapted from empatalk's smoke test (quality/SMOKE_TEST.md in that repo). Tick the boxes in a copy of
+this list in the release PR, not in this file.
 
 ## 0. Setup
 
 - [ ] Build under test noted (version, EAS update ID or commit): ________
 - [ ] Location permission is "Always" and Precise Location is on (Settings, CityTurfer)
-- [ ] Fresh install or `seed-demo` history available (Me, Info, Seed demo history)
+- [ ] Fresh install or `seed-demo` history available (Me, Info, developer tools, Seed demo history;
+      or sign in as `demo@cityturfer.com` / `demo1234`, which fills Gdańsk demo data)
 - [ ] Phone has a real GPS fix outdoors; battery above 30 percent, Low Power Mode off
 
 ## 1. Sign in
 
-- [ ] Wrong password shows the error; `admin@turftrack.com` / `admin1234` signs in
+- [ ] Wrong password shows the error; `admin@cityturfer.com` / `admin1234` signs in
 - [ ] Force-quit and reopen: still signed in
 
 ## 2. Screen-off walk (CP-3)
@@ -65,6 +73,12 @@ release PR, not in this file.
 
 - [ ] Dashboard greeting, this-week distance and recent activities render; achievements card opens
 - [ ] Me tab opens the drawer; tapping outside closes it; Profile, Account and Info open
+
+## 9. Language (CP-13)
+
+- [ ] Me, Info, Language, Polish: Info, Dashboard, Stats and Record show Polish; plurals read right
+      (1 / 2-4 / 5+ activities)
+- [ ] Force-quit and reopen: still Polish; System brings English back (leave it on System)
 
 ## Result
 

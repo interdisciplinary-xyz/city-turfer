@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-17
+verified: 2026-10-23
 owner: founder
 scope:
   [
@@ -52,6 +52,9 @@ apps/mobile/tools/device-diagnose.sh <device-udid>        # copies Documents/SQL
 node apps/mobile/tools/diagnose-recording.mjs ~/ct-phone/turftrack-admin.db --session <id>
 ```
 
+One database per profile: `turftrack-<profileId>.db` (`admin`, `demo`, or the profile an account
+signed in to).
+
 The timeline (no coordinates) shows, minute by minute: location batches with their app state and
 source, fixes received / accepted / rejected, worst accuracy, app-state changes, launches and task
 errors. Each `launch` row records `locationAlways`, `preciseLocation`, `bgSessionAvailable`,
@@ -89,9 +92,11 @@ the activity is missing from History, or its turf never appears.
 
 Finishing writes the session and a `SessionFinished` event to `sys_outbox` in one transaction; the
 `EventDispatcher` (`apps/mobile/src/platform/outbox.ts`) then hands it to Activity Log, whose
-`ActivityRecorded` event goes to Territory. A handler that throws leaves its event pending, and the
-dispatcher stops at the **first** pending event, so everything after it waits too. Failures are only
-`console.warn`ed in dev builds; they are not in `sys_diagnostics`.
+`ActivityRecorded` event goes to Territory (and Health Sync and Cloud Backup's queue). Delivery is
+strict FIFO: a handler that throws blocks the queue while its event is retried with backoff; after 5
+attempts (at once for a `DomainError` or an unreadable payload) it is dead-lettered
+(`dead_lettered_at`) and delivery carries on past it. A dead letter logs a `task-error` diagnostic
+with code `outbox.dead-letter`; single failures are only `console.warn`ed in dev builds.
 
 **Triage**
 
@@ -99,8 +104,8 @@ dispatcher stops at the **first** pending event, so everything after it waits to
 # Simulator: the database lives in the app's data container
 DB="$(xcrun simctl get_app_container booted com.turftrack.poc data)/Documents/SQLite/turftrack-admin.db"
 # iPhone (ask first): apps/mobile/tools/device-diagnose.sh <udid>, then DB=~/ct-phone/turftrack-admin.db
-sqlite3 "$DB" "SELECT id, type, datetime(created_at/1000,'unixepoch','localtime') FROM sys_outbox
-               WHERE processed_at IS NULL ORDER BY id;"
+sqlite3 "$DB" "SELECT id, type, attempts, dead_lettered_at, datetime(created_at/1000,'unixepoch','localtime')
+               FROM sys_outbox WHERE processed_at IS NULL ORDER BY id;"
 sqlite3 "$DB" "SELECT datetime(at/1000,'unixepoch','localtime'), kind, data FROM sys_diagnostics
                WHERE kind IN ('task-error','maintenance') ORDER BY at DESC LIMIT 20;"
 ```
@@ -115,9 +120,9 @@ Event payloads hold ids, activity types and timestamps, no coordinates.
    (`pnpm start`) to see the `[outbox] handler failed for <type>` warning, then reproduce it in Jest
    (`apps/mobile/src/__tests__/end-to-end.test.ts` drives the full chain on real SQL).
 3. **Don't mark outbox rows processed by hand.** That skips the activity or its turf for good. Fix
-   the handler and ship it (OTA if JS-only); the pending event is delivered on the next launch.
-4. `fix/outbox-and-retention` (#30, in review) changes outbox handling; re-check this section after
-   it merges.
+   the handler and ship it (OTA if JS-only); a pending event is delivered on the next launch. A
+   dead-lettered one is not retried by the dispatcher: after the fix, it needs its own repair (a
+   one-off job in `apps/mobile/src/wiring.ts`, like the maintenance jobs there).
 
 ---
 
@@ -145,8 +150,11 @@ pnpm -C apps/mobile exec expo-updates fingerprint:generate --platform ios       
 - **Same runtime, old id on screen:** with `ON_LOAD` and a zero timeout the update downloads in the
   background and applies on the **next cold start**. Kill and reopen the app, or tap **Me → Info →
   Check for updates** (fetches and reloads).
+- **Release commit moved the fingerprint:** a phone built from `scope/…` or `release/…` before the
+  release commit has the old `app.json` version, so updates published from `main` afterwards don't
+  match it (`docs/operations/ota-release.md`). Reinstall from the release tag.
 - **Wrong channel:** the Info line must end in `production`, and the publish must use
-  `--channel production` (README "Releases & OTA updates").
+  `--channel production` (README "Releases and OTA updates").
 - **Dev build:** dev builds load JS from Metro, not OTA.
 
 ---
@@ -200,7 +208,7 @@ downloading MapLibre and never finishes.
 
 ```bash
 cat apps/mobile/vendor/maplibre-spm/.version 2>/dev/null || echo "MapLibre not vendored"
-grep -n "with-local-maplibre" ios/Podfile    # the plugin's marker; missing = prebuilt without the plugin
+grep -n "with-local-maplibre" apps/mobile/ios/Podfile    # the plugin's marker; missing = prebuilt without the plugin
 xcodebuild -version                          # Expo SDK 57 needs Xcode 26.4+
 ```
 
@@ -226,7 +234,7 @@ activities, or it stops right after sign-in with iOS's "Save Password?" sheet on
 ```bash
 xcrun simctl list devices booted                     # exactly one booted simulator?
 curl -fs http://127.0.0.1:8081/status && echo metro  # Metro running → flows open the dev build via DEV_URL
-ls -t e2e-results | head -1                          # newest run: junit report + screenshots
+ls -t apps/mobile/e2e-results | head -1              # newest run: junit report + screenshots
 ```
 
 **Fix**
@@ -238,17 +246,18 @@ ls -t e2e-results | head -1                          # newest run: junit report 
 - **Wrong build:** with Metro running, flows open the dev client through `DEV_URL`; to test the
   installed release build instead, stop Metro or run `DEV_URL= apps/mobile/e2e/run.sh`.
 - **Save Password sheet:** iOS offers to save the password after a successful sign-in, and the next
-  step can't see the app under it. `chore/ci-quality-gates` (#28, in review) adds a
-  `when: { visible: 'Not Now' }` tap to `apps/mobile/e2e/subflows/sign-in.yaml` (commit `52e6a2f`).
-  Until it merges, cherry-pick that commit onto your local branch before running the suite.
+  step can't see the app under it. `apps/mobile/e2e/subflows/sign-in.yaml` taps "Not Now" when the
+  sheet shows (`when: { visible: 'Not Now' }`); if it still blocks, the sheet's wording changed.
+- **`15-account-settings` skipped:** it needs the local API with `AUTH_FIXED_CODE`; `run.sh` skips
+  the `account` tag (with a warning) when the API doesn't answer.
 
 ---
 
 ## #7 — The app won't open: free Apple ID signing expired
 
 **Symptom:** The app on the iPhone closes immediately or iOS says it can't be verified. Builds
-signed with a free Apple ID expire after 7 days; the current install expires **2026-10-23** (session
-log v0.1.0).
+signed with a free Apple ID expire after 7 days. The current install is a Release build of `549c873`
+(scope v0.10.0, before the release commit), installed 2026-10-23: it expires around **2026-10-30**.
 
 **Triage**
 
@@ -263,9 +272,18 @@ its database, and with it every activity and all turf.
 
 ```bash
 apps/mobile/tools/fetch-maplibre-ios.sh                                     # once per machine (incident #5)
+pnpm -C apps/mobile exec expo prebuild --platform ios --clean               # after a native change: fonts, plugins, app.json, native deps
 pnpm -C apps/mobile exec expo run:ios --configuration Release --device <device-udid>
 ```
 
+**Re-run prebuild with `--clean` after a font or other native change.** `apps/mobile/ios/` is
+generated and not regenerated by `expo run:ios` once it exists. On 2026-10-23 a stale `ios/` still
+referenced the old Archivo font after the Street Plate typefaces (#140) replaced it in `app.json`;
+`expo prebuild --platform ios --clean` fixed the build. `--clean` deletes `ios/` and the vendored
+MapLibre path is re-applied by the plugin (incident #5).
+
 A reinstall is also the moment for anything that changes the runtime fingerprint (pending native
-changes, the `app.json` version pin). After it, OTAs must be published from a checkout with the new
-fingerprint (incident #3).
+changes, the `app.json` version pin). After it, OTAs must be published from a checkout with the same
+fingerprint (incident #3). The `549c873` install predates the v0.10.0 release commit's `app.json`
+bump (fingerprint iOS `1b3ffa48…`), so updates published from `main` at or after `8f21e57` won't
+reach it: reinstall from tag `v0.10.0` or later first.

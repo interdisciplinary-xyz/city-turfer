@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-19
+verified: 2026-10-23
 owner: founder
 scope: [packages/brand, packages/ui, apps/storybook, apps/mobile/src/ui-kit, apps/web/src/app]
 summary:
@@ -81,3 +81,6 @@ of the runtime fingerprint, so the release commit itself makes OTA updates stop 
 builds, whatever the release contains. v0.5.0 doesn't change this (the founder decides); options:
 drop `app.json` from `bumpFiles` and bump it only with a native reinstall, or pin `runtimeVersion`
 by hand instead of the `fingerprint` policy.
+
+Still open as of v0.10.0: `app.json` is still in `bumpFiles` and the policy is still `fingerprint`;
+the v0.10.0 release commit moved `expo.version` to 0.10.0 and with it the fingerprint.

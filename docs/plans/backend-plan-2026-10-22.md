@@ -1,6 +1,6 @@
 ---
-status: proposed
-verified: 2026-10-22
+status: canonical
+verified: 2026-10-23
 owner: founder
 scope:
   [
@@ -14,8 +14,8 @@ scope:
   ]
 summary:
   Plan for the first back-end release (opt-in backup, real accounts, restore to a new phone, delete
-  account, export) — founder decisions of 2026-10-22, what feat/backend-sync built, and what is left
-  before testers can use it
+  account, export) — founder decisions of 2026-10-22, what feat/backend-sync built (shipped in
+  v0.9.0), what changed since, and what is left before testers can use it
 ---
 
 # Back-end plan: backup, accounts and restore
@@ -25,6 +25,22 @@ mobile-reviewer, location-engineer, mobile-test-engineer) and built on `feat/bac
 `scope/v0.9.0`. It continues the one-way backup of v0.8.0 (`docs/sessions/v0.8.0.md`,
 `docs/decisions/api-device-tokens-2026-10-20.md`). Contract: 0.4.0 in `apps/api/openapi.json`;
 accounts: `docs/decisions/api-accounts-2026-10-22.md`.
+
+## Status (2026-10-23)
+
+Built and shipped in v0.9.0 (#112, #121). Since then, in v0.10.0:
+
+- **Passwords:** B3's "no passwords" was reversed by decision AC1
+  (`docs/decisions/account-settings-2026-10-22.md`, #142): an optional account password beside the
+  code, contract 0.5.0.
+- **Server turf is built** (#149, contract 0.6.0): `/v1/turf/cells`, `/v1/turf/summary` and
+  `/v1/activity-totals` answer instead of 501; migrations 0005 and 0006.
+- **Web portal Slice 0** (#141): browser sign-in, what the server holds, export, delete, devices;
+  migration 0004.
+- Device tokens (`API_TOKENS`) are still accepted.
+
+The "Left before testers" list below is still open. Whether the production setup ran (Neon
+migrations, Vercel env, `auth:adopt`) is not visible in the repo: pending (founder).
 
 ## The job of this release
 
@@ -78,8 +94,9 @@ accounts: `docs/decisions/api-accounts-2026-10-22.md`.
 2. **Founder setup** (`docs/operations/api-deploy.md`): Brevo transactional mail with a verified
    sender (SPF, DKIM) and DPA; Vercel env `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BREVO_API_KEY`,
    `MAIL_FROM`, `API_PUBLIC_URL`, `CRON_SECRET`; production branch `main`; previews on their own
-   Neon branch; `db:migrate` (0001–0003) before the deploy; `auth:adopt -- admin <email>`; then
-   remove `API_TOKENS`. Vercel Pro before testers (Hobby is non-commercial).
+   Neon branch; `db:migrate` (0001–0003 then; 0004–0006 since v0.10.0) before the deploy;
+   `auth:adopt -- admin <email>`; then remove `API_TOKENS`. Vercel Pro before testers (Hobby is
+   non-commercial).
 3. **Deploy checks**: an export over 4.5 MB streams through Vercel; Better Auth cold start and
    bundle size; Neon WebSocket with large `bytea`.
 4. **Launch items**: privacy policy and terms (PL/EN) naming accounts, backup and the processors
@@ -91,5 +108,7 @@ accounts: `docs/decisions/api-accounts-2026-10-22.md`.
 
 ## Later
 
-Two phones in step (`If-Match` corrections from both sides, `trackVersion`), server turf
-(`/v1/turf/*` stay 501), background sync, Sign in with Apple — each a separate go from the founder.
+Two phones in step (`If-Match` corrections from both sides, `trackVersion`), background sync, Sign
+in with Apple — each a separate go from the founder. Server turf was planned here as later; it was
+built in #149. The phone pulling changes and a web delete that reaches every phone are proposed in
+`docs/decisions/data-flow-2026-10-23.md` (F1–F4, not built).

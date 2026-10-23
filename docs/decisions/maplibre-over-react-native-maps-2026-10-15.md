@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-17
+verified: 2026-10-23
 owner: founder
 scope:
   [
@@ -61,7 +61,9 @@ API key.
 
 Option **B**. Styles are `MAP_STYLE_LIGHT` and `MAP_STYLE_DARK` in
 `apps/mobile/src/constants/map.ts` (OpenFreeMap `liberty` and `dark`); the Turf Map always uses the
-dark one (`apps/mobile/src/contexts/territory/ui/turf-map-view.tsx`).
+dark one (`apps/mobile/src/contexts/territory/ui/turf-map-view.tsx`). Today the Record map is dark
+too (`apps/mobile/src/contexts/recording/ui/record-view.tsx`); only the activity detail map follows
+the phone's scheme.
 
 ## 4. Consequences
 
@@ -72,5 +74,6 @@ dark one (`apps/mobile/src/contexts/territory/ui/turf-map-view.tsx`).
 - **Following the user:** the record map uses MapLibre's `onTrackUserLocationChange` (fixed in
   v0.1.0, session log).
 - **Not yet verified:** the planned M2 spike on both platforms was never written up as a separate
-  record, and MapLibre has not run on Android. The Q4 performance budget is still unmeasured.
+  record. MapLibre runs on the Android emulator (EAS APK since v0.4.0), not yet on a physical
+  Android phone. The Q4 performance budget is still unmeasured.
 - The reference look is `apps/mobile/tools/turf-preview.mjs`, an HTML preview of the same layers.

@@ -1,6 +1,6 @@
 ---
 status: historical
-verified: 2026-10-15
+verified: 2026-10-23
 owner: founder
 scope: [apps/mobile/src/contexts, packages/core/src, apps/mobile/src/platform]
 summary:
@@ -13,6 +13,16 @@ summary:
 Status: draft v5 · 2026-10-15 · v5: mock sign-in instead of Firebase · v4: vertical-slice milestones
 · v2 added **Turf** (the main feature) and switched maps to MapLibre · v3: turf is permanent,
 platform and theme decisions (§9).
+
+> [!NOTE] **Where things stand (2026-10-23).** This is the plan as written; read it for the language
+> (§2) and the context map (§3), not for today's code. M1–M5 shipped. M6: iOS Q1 passed on a device,
+> Q2 and Q5 are covered by tests, Android Q1 and Q4 are unmeasured, and the report
+> (`docs/poc-report.md`) isn't written. M7: GPX export isn't built; the turf toggle on the Record
+> map (#94, v0.8.0) shows your turf under the live track. Several "after the PoC" items exist now:
+> accounts signed in by e-mailed code against `apps/api`, opt-in one-way Cloud backup, server turf
+> and the web portal's Slice 0. The domain and use cases of Identity, Activity Log, Territory and
+> Achievements moved to `packages/core`. Current layout: `CLAUDE.md` and
+> [domain architecture](./engineering/domain-architecture.md).
 
 ## 0. The product in one paragraph
 

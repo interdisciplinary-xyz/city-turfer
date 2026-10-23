@@ -1,6 +1,12 @@
-# E2E: critical paths and flow inventory
+---
+status: canonical
+verified: 2026-10-23
+owner: founder
+scope: [apps/mobile/e2e, apps/mobile/tools/e2e]
+summary: Maestro critical paths, flow inventory, known gaps and how to add a flow
+---
 
-**Last reviewed:** 2026-10-18
+# E2E: critical paths and flow inventory
 
 The Maestro suite in `apps/mobile/e2e/` is the regression lock for what a runner does with the app.
 Run it with `pnpm run test:e2e` (`apps/mobile/e2e/run.sh`, iOS Simulator, location pre-granted,
@@ -8,7 +14,7 @@ flows run in the order of `apps/mobile/e2e/config.yaml`). `pnpm run e2e:audit` (
 `ci:quality`) statically checks that this document, `config.yaml`, the flows and the `testID`s in
 `apps/mobile/src/` agree. It does not run the app.
 
-Adapted from empatalk's `docs/quality/E2E.md`.
+Adapted from empatalk's E2E doc (quality/E2E.md in that repo).
 
 ## 1. Critical paths
 
@@ -36,7 +42,7 @@ none; the audit enforces this. Gaps are listed honestly in section 3.
 
 | Flow                      | Tag(s)                | Purpose                                                                                           |
 | ------------------------- | --------------------- | ------------------------------------------------------------------------------------------------- |
-| `01-auth`                 | auth                  | Wrong password rejected, demo account accepted, session persists                                  |
+| `01-auth`                 | auth                  | Wrong password rejected, admin account accepted, session persists                                 |
 | `02-record-run`           | recording             | Live distance grows, pause/resume, finish, turf gained                                            |
 | `03-background-recording` | recording, background | Home button, simulated 220 m walk, distance grew after foregrounding                              |
 | `04-too-short`            | recording             | Fewer than 2 points: finish refused, Discard offered                                              |
@@ -90,12 +96,15 @@ step-up code and spends about 2 minutes asleep on purpose.
   `apps/mobile/src/__tests__/apple-health.test.ts` and was verified once on the Simulator (the
   `hs_links` export row, and the next import skipping our own workout). Apple Watch workouts can
   only be tested on a device.
+- **CP-12 fails on iOS 26.1.** `15-account-settings` stops at `hideKeyboard` on the numeric keypad
+  of the iOS 26.1 simulator (seen in #158, unrelated to language). Not fixed yet.
 - Android has no Maestro run today.
 
 ## 4. Adding a flow
 
-1. Add `apps/mobile/e2e/NN-name.yaml` with `tags: [...]` from the allowed set. Prefer `id:`
-   selectors; add the `testID` in `apps/mobile/src/` first.
+1. Add a flow file to `apps/mobile/e2e/` (named NN-name.yaml, the next free number) with
+   `tags: [...]` from the allowed set. Prefer `id:` selectors; add the `testID` in
+   `apps/mobile/src/` first.
 2. Add it to `flowsOrder` in `apps/mobile/e2e/config.yaml` (keep `08-sign-out` last).
 3. Map it to a critical path in section 1 (or add a CP row), then run `pnpm run e2e:audit`.
 4. No commented-out steps: delete them or fix the flow.
