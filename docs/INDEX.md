@@ -181,6 +181,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   type changes from Archivo to the "Street Plate" pairing: Big Shoulders Display Black in capitals
   for headings, Barlow Semi Condensed ExtraBold for numbers, Barlow for website body text; the
   wordmark is redrawn in Big Shoulders Display (CITY Medium + TURFER Black)
+- 🚧 [`decisions/data-flow-2026-10-23.md`](decisions/data-flow-2026-10-23.md): Founder decisions
+  2026-10-23 on how data flows between the phone, the API, the web portal and the admin portal —
+  records are created on the phone, managed (deleted) on the web, adjusted (all but tracks) by
+  staff, and the phone pulls those changes; built in v0.11.0
 - ✅ [`decisions/design-system-2026-10-19.md`](decisions/design-system-2026-10-19.md): v0.5.0 design
   system — tokens in @cityturfer/brand (TS + CSS variables), React Native components in
   @cityturfer/ui, one Storybook (react-native-web) for the app and the website, shipped OTA
