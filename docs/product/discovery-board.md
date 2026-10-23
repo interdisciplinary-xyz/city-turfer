@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-20
+verified: 2026-10-23
 owner: founder
 scope: [docs/product]
 summary:
@@ -24,8 +24,8 @@ export). Baseline: unknown.
 | Id  | Date | Source (type, segment, relation) | What happened / verbatim | Opportunities touched | Commitment |
 | --- | ---- | -------------------------------- | ------------------------ | --------------------- | ---------- |
 
-_Empty — no interviews, surveys or tester reports recorded yet (2026-10-20). The founder's own use
-of the app is real but counts as `founder`, not as market evidence._
+_Empty — no interviews, surveys or tester reports recorded yet (checked 2026-10-23). The founder's
+own use of the app is real but counts as `founder`, not as market evidence._
 
 ## Assumption map
 
@@ -44,6 +44,9 @@ Importance and evidence are 1–5. Test high importance + low evidence first. Al
 | A8  | Permanent turf (no decay) keeps people engaged better than decay would               | Desirability | 3   | 1   | Interview probe on Turf/INTVL users' feelings about losing turf      | Pattern across ≥5 interviews                      | open   |
 | A10 | Turfers want cloud backup / multi-device sync enough to accept an account and upload | Desirability | 5   | 0   | Interview probe + website fake door "Back up your turf" (disclosed)  | ≥3/5 interviewees raise loss/new-phone unprompted | open   |
 | A9  | A share image of your turf brings new users without hurting privacy                  | Viability    | 3   | 0   | Concierge: founder makes images for 5 testers; count shares/sign-ups | ≥2 sign-ups attributed                            | later  |
+
+A10 is untested although backup, accounts and restore shipped (v0.8.0–v0.9.0): the website has no
+"Back up your turf" fake door yet and no interview has run.
 
 ## Opportunity tree
 

@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-17
+verified: 2026-10-23
 owner: founder
 scope: [tools/docs-audit.mjs, docs, .claude/commands/audit-docs.md]
 summary:
@@ -52,11 +52,12 @@ and agents have their own), but the audit still checks their paths, links and pr
 
 ## 2. Where a doc lives
 
-`docs/` root holds only `README.md` (curated) and `INDEX.md` (generated). Everything else lives in a
-folder named for the reader's job. Create a folder only when a doc goes into it.
+`docs/` root holds only `INDEX.md` (generated) and, if one is written, a curated `README.md` (none
+yet). Everything else lives in a folder named for the reader's job. Create a folder only when a doc
+goes into it (`archive/` doesn't exist yet).
 
 - `engineering/`: How the system is built — architecture, decisions, feature inventory
-- `product/`: What we build and why — direction, roadmap
+- `product/`: What we build and why — brief, direction, roadmap
 - `operations/`: Running it — runbook, OTA releases, device diagnostics
 - `quality/`: Testing and QA — e2e inventory, QA policy
 - `process/`: How we work — release policy, session migration, these conventions
@@ -102,10 +103,10 @@ Bounded contexts: <!-- probe:contexts -->7<!-- /probe -->
 - `achievements`: `id:` entries in `packages/core/src/contexts/achievements/domain/achievements.ts`
   (<!-- probe:achievements -->20<!-- /probe -->)
 - `e2e-flows`: `flowsOrder` entries in `apps/mobile/e2e/config.yaml`
-  (<!-- probe:e2e-flows -->15<!-- /probe -->)
+  (<!-- probe:e2e-flows -->16<!-- /probe -->)
 - `migrations`: `version:` entries in `apps/mobile/src/platform/migrations.ts`
   (<!-- probe:migrations -->13<!-- /probe -->)
-- `docs`: markdown files under `docs/` (<!-- probe:docs -->53<!-- /probe -->)
+- `docs`: markdown files under `docs/` (<!-- probe:docs -->55<!-- /probe -->)
 - `api-operations`: HTTP operations in `apps/api/openapi.json`
   (<!-- probe:api-operations -->34<!-- /probe -->)
 

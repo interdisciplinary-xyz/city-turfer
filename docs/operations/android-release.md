@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-18
+verified: 2026-10-23
 owner: founder
 scope:
   [
@@ -55,11 +55,14 @@ Check at least: launch, sign-in, a recording with the foreground-service notific
 Background tracking still needs a real phone with the screen off.
 
 Against the release APK the suite runs through 05 and then stops at 06: its demo-history seeder is a
-dev tool, hidden in release builds. Run 07–09 on their own (`maestro test e2e/<flow>.yaml`); 10
-needs that seeded history. Start each run from a clean app (`adb shell pm clear com.turftrack.poc`,
-then grant the permissions again). Otherwise a recording left over from an earlier run blocks
-sign-out. If Maestro times out (`eraseText`, `DEADLINE_EXCEEDED`), the emulator is overloaded. Cold
-boot it (`-no-snapshot-load`) and wait until it is idle.
+dev tool, hidden in release builds until five long presses on the version in Info. Run 07–09 on
+their own (`maestro test e2e/<flow>.yaml`); 10 needs that seeded history. Flows 12–16 came after the
+last emulator run (2026-10-18) and have not run on Android; 11 is iOS only, and 15 needs the local
+API (`apps/mobile/e2e/run.sh` skips it when the API is down). Start each run from a clean app
+(`adb shell pm clear com.turftrack.poc`, then grant the permissions again). Otherwise a recording
+left over from an earlier run blocks sign-out. If Maestro times out (`eraseText`,
+`DEADLINE_EXCEEDED`), the emulator is overloaded. Cold boot it (`-no-snapshot-load`) and wait until
+it is idle.
 
 ## Publish
 
@@ -77,7 +80,8 @@ link, 60 s cache) plus `android/cityturfer-<version>-<versionCode>.apk` (history
   (or both). Installed APKs on the same runtime fingerprint pick it up on launch.
 - **Native changes** (fingerprint moved, e.g. `app.json`, plugins, native dependencies): build and
   publish a new APK; people download it again and it installs over the old one (same signing key,
-  higher version code).
+  higher version code). v0.10.0 is one: the bundled typefaces and the release commit's `app.json`
+  version bump both moved the fingerprint, so an APK built before it gets no v0.10.0 OTA.
 
 ## Known issues found
 

@@ -27,6 +27,11 @@ summary:
 Design: `docs/decisions/api-sync-2026-10-20.md` and
 `docs/decisions/api-device-tokens-2026-10-20.md`.
 
+**Status (2026-10-23):** v0.10.0 ships API contract 0.6.0. Whether production has had its steps
+(Neon `db:migrate` 0004–0006, `WEB_EDGE_SECRET` on both Vercel projects, `WEB_ORIGIN`, the turf
+backfill) is not recorded anywhere in the repo: **pending (founder)** until checked.
+`GET /v1/health` on production answers the deployed version.
+
 ## Vercel project
 
 - Project `city-turfer-api`, Git repo of the monorepo, **Root Directory `apps/api`**, framework
@@ -129,8 +134,8 @@ front; it never says a client-sent `x-vercel-forwarded-for` is stripped. So a di
 phone, or anyone calling `city-turfer-api.vercel.app`) is bucketed by the last `x-forwarded-for`
 entry, then `x-real-ip`; `x-vercel-forwarded-for` counts only when the request carries
 `cityturfer-edge: $WEB_EDGE_SECRET`, which the website's route sets (a `routes` transform with
-`op: "set"`, so a visitor's own value is replaced). That needs this change in `apps/web/vercel.json`
-(owned by the website; not done here): replace the `rewrites` entry for `/api/v1/:path*` with
+`op: "set"`, so a visitor's own value is replaced). `apps/web/vercel.json` has that route since
+v0.10.0:
 
 ```json
 "routes": [
@@ -150,9 +155,9 @@ entry, then `x-real-ip`; `x-vercel-forwarded-for` counts only when the request c
 ]
 ```
 
-and add `WEB_EDGE_SECRET` to the website's Vercel project (Production and Preview, the same values
-as on this API). Until both are deployed, web visitors fall back to the address that reaches the API
-(probably a Vercel one, shared by all of them): the per-address limits still hold.
+It needs `WEB_EDGE_SECRET` on the website's Vercel project too (Production and Preview, the same
+values as on this API). Until both are set, web visitors fall back to the address that reaches the
+API (probably a Vercel one, shared by all of them): the per-address limits still hold.
 
 **The preview pair.** `apps/web/vercel.json` always routes to the **production** API
 (`city-turfer-api.vercel.app`), so a web preview built from a normal branch never reaches an API
@@ -160,7 +165,7 @@ preview: testing the portal on such a preview tests it against production. To te
 
 1. **API preview.** Push the API branch. In the API project, set for that branch only (Settings →
    Environment Variables → Preview → the branch): `DATABASE_URL` of its own Neon branch (migrations
-   up to `0004` applied, see above), `BETTER_AUTH_SECRET`, `AUTH_FIXED_CODE` if Maestro needs it,
+   up to `0006` applied, see above), `BETTER_AUTH_SECRET`, `AUTH_FIXED_CODE` if Maestro needs it,
    `WEB_EDGE_SECRET` (a preview value), and `WEB_ORIGIN` = the web preview's branch URL from step 2.
    Redeploy. Note the API's **branch URL** (`city-turfer-api-git-<branch>-<team>.vercel.app`; it
    stays the same across pushes; copy it from the dashboard, long names are shortened).
@@ -337,11 +342,12 @@ only hashes and never logs tokens.
 
 ## Support requests
 
-There is no admin panel; support runs two scripts from a trusted machine against the production
-database (`DATABASE_URL_UNPOOLED` or `DATABASE_URL` in your shell; without one they use the local
-PGlite — stop the dev server first). They print ids, e-mails, counts, times and consents only: never
-coordinates, tracks, activity names or the Home City. Don't paste their output into tickets or chats
-beyond what the request needs.
+The staff admin portal (`apps/admin`) is a scaffold with staff sign-in only and is not deployed; it
+has no user data until the audited `/internal/admin` routes exist. Support runs two scripts from a
+trusted machine against the production database (`DATABASE_URL_UNPOOLED` or `DATABASE_URL` in your
+shell; without one they use the local PGlite — stop the dev server first). They print ids, e-mails,
+counts, times and consents only: never coordinates, tracks, activity names or the Home City. Don't
+paste their output into tickets or chats beyond what the request needs.
 
 ```bash
 pnpm --filter @cityturfer/api run user:find -- <userId|email>
@@ -380,7 +386,8 @@ history and download the e-mailed link; confirm a zip over 4.5 MB arrives whole 
 without `Content-Length`; untested on Vercel). If Vercel cuts it, move `FileStorage` to Vercel Blob
 (D11). Building an export uses Fluid compute's default duration (300 s).
 
-- `GET /v1/health` → `{"status":"ok","version":"0.5.0","coreVersion":"0.10.0","database":"ok"}`
+- `GET /v1/health` → `{"status":"ok","version":"0.6.0","coreVersion":"0.10.0","database":"ok"}` for
+  the v0.10.0 release (`version` is the contract, `coreVersion` the `@cityturfer/core` package)
   (`not-configured` without `DATABASE_URL`, `unreachable` when Neon does not answer).
 - `GET /v1/me` with `Authorization: Bearer <token>` → the user; 401 `auth.invalid` when the hash is
   not in `API_TOKENS`.

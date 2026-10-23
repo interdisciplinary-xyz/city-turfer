@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-17
+verified: 2026-10-23
 owner: founder
 scope:
   [
@@ -24,7 +24,62 @@ they are before changing them. Format adapted from empatalk's `ARCHITECTURE_DECI
 **Rationale** and **Trade-off**. A replaced decision keeps its entry under a ⚠️ superseded banner.
 Decisions big enough for a full write-up get a record in `docs/decisions/` and a short entry here.
 
-The dated entries from the PoC plan's decisions log (`docs/poc-plan.md` §9) live here now.
+The dated entries from the PoC plan's decisions log (`docs/poc-plan.md` §9) live here now. Later
+decisions with a full record (API, sync, accounts, web portal, brand, Apple Health, monorepo) are in
+`docs/decisions/`, listed in `docs/INDEX.md`; only the ones that change how the app itself is built
+have an entry here.
+
+---
+
+## Why the app's languages ship over the air (2026-10-23)
+
+**Status:** Accepted, shipped in v0.10.0 (#158). Full record:
+[`decisions/mobile-i18n-2026-10-23.md`](../decisions/mobile-i18n-2026-10-23.md).
+
+**Decision:** English and Polish through `use-intl`, catalogue in
+`apps/mobile/messages/<locale>/<namespace>.json`, language from Info › Language (System, English,
+Polski) else the phone. Core takes its words from the caller (default activity names, city search),
+so `packages/core` stays free of copy. Checked by `pnpm run audit:i18n` and a no-raw-text lint rule.
+
+**Rationale:** JS only, so the languages reach installed phones by OTA.
+
+**Trade-off:** iOS permission prompts and the app's language in iOS Settings need native strings: a
+later binary release (L10).
+
+---
+
+## Why the brand typefaces are bundled in the binary (2026-10-22)
+
+**Status:** Accepted, shipped in v0.10.0 (#140). Full record:
+[`decisions/brand-typography-2026-10-22.md`](../decisions/brand-typography-2026-10-22.md).
+
+**Decision:** Big Shoulders Display and Barlow Semi Condensed are embedded with the `expo-font`
+config plugin (`apps/mobile/app.json`, files in `packages/brand/fonts/`), not loaded at runtime.
+
+**Rationale:** Headings and numbers render in the brand face from the first frame, with no network
+and no flash of a fallback font.
+
+**Trade-off:** `app.json` changed, so the runtime fingerprint changed: v0.10.0 is a native release,
+and a phone needs a new build (after `expo prebuild --clean`, `docs/operations/runbook.md`) before
+OTAs reach it.
+
+---
+
+## Why the server runs the phone's turf rules (2026-10-23)
+
+**Status:** Accepted, shipped in v0.10.0 (#149, API contract 0.6.0). Full record:
+[`decisions/api-server-turf-2026-10-23.md`](../decisions/api-server-turf-2026-10-23.md).
+
+**Decision:** The API derives turf from uploaded tracks with the same use cases from
+`@cityturfer/core/territory` and the same H3 adapter, inside the upload's transaction. A parity
+golden is checked in core, on the phone (real SQL) and through the API.
+
+**Rationale:** The web map (portal Slice 1) must show the same turf as the phone; one rule set in
+`packages/core` can't drift.
+
+**Trade-off:** The phone stays the source of truth and doesn't read server turf. For a late Apple
+Health import the phone's "new cells" can differ from the server's canonical first claimer (pinned
+by a test).
 
 ---
 
@@ -40,6 +95,9 @@ the password stays `admin1234` and the user ID stays `admin`
 
 **Trade-off:** None for data: the database file is keyed by user ID (`turftrack-admin.db`), so
 existing activities and the stored session carry over.
+
+**Update (2026-10-22):** a second local profile, `demo@cityturfer.com` / `demo1234`, fills its own
+database with Gdańsk demo data for screenshots and never backs up.
 
 ---
 
@@ -154,7 +212,8 @@ back down into the next scope.
 
 ## Why local-first SQLite, one database per user (2026-10-15)
 
-**Status:** Accepted. No backend in v1.
+**Status:** Accepted. Since v0.8.0 an opt-in, one-way cloud backup to `apps/api` sits on top; the
+phone stays the source of truth.
 
 **Decision:** `expo-sqlite` is the source of truth. Each user gets their own database file, opened
 and migrated in `getContainer()` (`apps/mobile/src/composition-root.ts`). Tables are prefixed by
@@ -166,8 +225,8 @@ one batch; a network round trip would be a reliability risk, and location data i
 should stay on the device. One file per user makes sign-out and a future multi-user or sync step
 simple.
 
-**Trade-off:** No sync or backup: losing the phone loses the history. A future backend means a sync
-design, not a swap.
+**Trade-off:** Without the backup, losing the phone loses the history. The backup is a copy, not a
+sync: the phone doesn't pull changes yet (`docs/decisions/data-flow-2026-10-23.md`, proposed).
 
 ---
 
@@ -197,8 +256,9 @@ viewport queries. Changing the resolution later means re-claiming every activity
 **Decision:** An aggregate change and its domain events are written in one SQLite transaction
 (`appendToOutbox` into `sys_outbox`, `apps/mobile/src/platform/outbox.ts`). The `EventDispatcher`
 delivers them after commit and on every app start to idempotent handlers: `SessionFinished` →
-Activity Log, `ActivityRecorded` / `ActivityDeleted` / `ActivityTrackCorrected` → Territory
-(`apps/mobile/src/wiring.ts`).
+Activity Log, `ActivityRecorded` / `ActivityDeleted` / `ActivityTrackCorrected` → Territory, and
+later Activity Log and Territory events → Health Sync (export to Apple Health) and Cloud Backup's
+local queue (`apps/mobile/src/wiring.ts`).
 
 **Update (2026-10-17, #30): retries and dead letters.** Delivery is strict FIFO. A failing event
 blocks the queue while it is retried with exponential backoff (5 s base); it is dead-lettered
@@ -222,11 +282,14 @@ predecessor, because a dead-lettered event no longer stops the ones after it.
 **Status:** Accepted, a hard requirement (`CLAUDE.md`).
 
 **Decision:** Code is split into bounded contexts under `apps/mobile/src/contexts/*` (identity,
-recording, activity-log, territory, achievements) with `domain/`, `application/`, `infrastructure/`
-and `ui/` layers and a public `index.ts` (plus `contract.ts` for published language).
-`pnpm run test:arch` (`.dependency-cruiser.cjs`) fails the build when domain code imports React,
-Expo, h3-js, MapLibre or infrastructure, when a context reaches into another's layers, when a screen
-bypasses a context's `ui/`, or on any cycle.
+recording, activity-log, territory, achievements, health-sync, cloud-backup) with `domain/`,
+`application/`, `infrastructure/` and `ui/` layers and a public `index.ts` (plus `contract.ts` for
+published language). Since the monorepo (2026-10-18) the domain and application layers of Territory,
+Activity Log, Achievements and Identity live in `packages/core`, so the API runs the same rules; the
+app keeps re-export shims. `pnpm run test:arch` (each workspace's `.dependency-cruiser.cjs`, e.g.
+`apps/mobile/.dependency-cruiser.cjs`, `packages/core/.dependency-cruiser.cjs`) fails the build when
+domain code imports React, Expo, h3-js, MapLibre or infrastructure, when a context reaches into
+another's layers, when a screen bypasses a context's `ui/`, or on any cycle.
 
 **Rationale:** The PoC had to prove (Q5) that DDD works with Expo's background-task model: the
 background task runs the same use cases as the UI because the domain doesn't depend on either.
@@ -264,8 +327,9 @@ guard was removed.
 **Rationale:** Auth is a generic subdomain; the PoC is about recording and turf. The port means a
 real provider later is one adapter.
 
-**Trade-off:** No real accounts until a provider is chosen (Sign in with Apple or no login is an
-open App Store question).
+**Trade-off:** No real accounts until a provider is chosen. Since v0.9.0 accounts sign in by
+e-mailed code through the API (Better Auth; `ApiAuthGateway`), with an optional account password
+since v0.10.0. Sign in with Apple or a no-account mode is still an open App Store question.
 
 ---
 
@@ -323,7 +387,8 @@ you never walked.
 **Status:** Accepted.
 
 **Decision:** The Turf Map always uses the dark style (`MAP_STYLE_DARK`,
-`apps/mobile/src/contexts/territory/ui/turf-map-view.tsx`). Other screens follow the system theme.
+`apps/mobile/src/contexts/territory/ui/turf-map-view.tsx`). Other screens followed the system theme
+until 2026-10-20 (see "The whole app is dark, like the website").
 
 **Rationale:** The glow — the reason to open the map — only reads on a dark basemap.
 
@@ -357,8 +422,8 @@ honours `userInterfaceStyle` with `expo-system-ui` installed.
 
 **Decision:** Claimed cells never fade or get lost. Strength depends only on the number of visits:
 `strength = 1 − exp(−visits / 3)` (`packages/core/src/contexts/territory/domain/strength.ts`,
-identical in `apps/mobile/tools/turf-preview.mjs`). Deleting an activity is the only way turf
-shrinks.
+identical in `apps/mobile/tools/lib/turf.mjs`, which `turf-preview.mjs` uses; pinned by
+`apps/mobile/tools/fixtures/turf-vectors.json`). Deleting an activity is the only way turf shrinks.
 
 **Rationale:** Turf is a record of where you've been, not a chore to maintain. "Recent activity"
 belongs in summaries (new turf this week), not in Strength.
@@ -370,8 +435,9 @@ before it comes back.
 
 ## Why iOS and Android are both first-class (2026-10-15)
 
-**Status:** Accepted as the target; **only iOS is built and verified so far** (no Android SDK on the
-dev Mac, session log v0.1.0). Android has never run on a device.
+**Status:** Accepted as the target; **only iOS is verified on a device so far**. Since v0.4.0 an
+Android APK is built on EAS and sideloaded from the website; it ran on an emulator
+(`docs/operations/android-release.md`), never on a phone.
 
 **Decision:** Both platforms are first-class. Field tests (Q1, Q4) need one physical device per
 platform; the Android should be mid-range (e.g. a Samsung Galaxy A-series), not a flagship.
