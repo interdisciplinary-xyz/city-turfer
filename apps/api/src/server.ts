@@ -57,12 +57,16 @@ if (local) {
 const deps = productionDeps(env, { db, mailer: consoleMailer, breached: new FakeBreachedPasswords() });
 
 const port = Number(process.env.PORT ?? LOCAL_API_PORT);
-// HOST=127.0.0.1 keeps a test run (fixed sign-in code) off the local network.
-serve({ fetch: createApp(deps).fetch, port, hostname: process.env.HOST }, (info) => {
+// API_HOST=127.0.0.1 keeps a test run (fixed sign-in code) off the local network. Not HOST: some
+// shells and CI images export that as the machine's name.
+const hostname = process.env.API_HOST;
+serve({ fetch: createApp(deps).fetch, port, hostname }, (info) => {
   const notes = [
     local ? `database: PGlite (${env.PGLITE_DIR ?? 'apps/api/.data'})` : 'database: DATABASE_URL',
     devToken ? `token: Bearer ${DEV_TOKEN} (user admin)` : env.API_TOKENS ? 'tokens: API_TOKENS' : 'no device tokens',
     deps.identity ? 'sign-in codes: printed here' : 'sign-in: off (set BETTER_AUTH_SECRET)',
   ];
-  process.stdout.write(`CityTurfer API on http://localhost:${info.port} (docs: /swagger; ${notes.join('; ')})\n`);
+  process.stdout.write(
+    `CityTurfer API on http://${hostname ?? 'localhost'}:${info.port} (docs: /swagger; ${notes.join('; ')})\n`
+  );
 });
