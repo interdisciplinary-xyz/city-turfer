@@ -1,4 +1,5 @@
-import { SIGN_IN_COPY, type SignInFocus, type SignInStep } from './sign-in-steps.constants';
+import type { ErrorMessage } from './account-settings.constants';
+import type { SignInFocus, SignInStep } from './sign-in-steps.constants';
 
 /**
  * "Use a password instead" (on) or "Use an email code instead" (off). On: the password step, the
@@ -25,6 +26,6 @@ export function emailEditRestarts(step: SignInStep, chosePassword: boolean): boo
 }
 
 /** A wrong password: a chosen account password also says how to get one. */
-export function wrongPasswordText(chosePassword: boolean): string {
-  return chosePassword ? SIGN_IN_COPY.wrongChosenPassword : SIGN_IN_COPY.wrongPassword;
+export function wrongPasswordMessage(chosePassword: boolean): ErrorMessage {
+  return { key: chosePassword ? 'wrongChosenPassword' : 'wrongPassword' };
 }

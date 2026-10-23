@@ -1,0 +1,16 @@
+{
+  "appVersion": "Wersja aplikacji",
+  "versionLine": "{id, select, embedded {Aktualizacja wbudowana} other {Aktualizacja {id}}} · {created, select, builtIn {z instalacji} other {{created}}}{channel, select, none {} other { · {channel}}}",
+  "developmentBuild": "Wersja deweloperska (aktualizacje z Metro)",
+  "checkForUpdates": "Sprawdź aktualizacje",
+  "checking": "Sprawdzam…",
+  "upToDate": "Aktualna wersja",
+  "updateFailedTitle": "Aktualizacja nie powiodła się",
+  "updateFailedBody": "Nie udało się pobrać aktualizacji. Sprawdź połączenie i spróbuj ponownie.",
+  "yourData": "Twoje dane",
+  "yourDataBody": "Aktywności i turf są zapisane na tym telefonie. Na nasz serwer trafiają tylko wtedy, gdy włączysz niżej kopię w chmurze. Gdy GPS zgubi sygnał, wysyłamy do usługi tras OpenStreetMap tylko dwa końce luki, żeby odtworzyć drogę ulicami — nigdy całego śladu.",
+  "estimateGaps": "Uzupełniaj luki GPS wzdłuż ulic",
+  "estimateGapsOff": "Wyłączone: żadne zapytania nie wychodzą z telefonu, a luki zostają prostymi liniami przerywanymi.",
+  "settingNotSaved": "Ustawienie się nie zmieniło. Spróbuj ponownie.",
+  "footer": "{name} · Surfuj po mieście. Ulice są Twoje."
+}

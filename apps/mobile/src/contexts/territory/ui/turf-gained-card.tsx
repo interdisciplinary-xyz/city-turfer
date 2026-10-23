@@ -1,28 +1,38 @@
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { FONT_FAMILY, TIER_COLOR } from '@/constants/colors';
+import { useT } from '@/i18n';
 import { Card } from '@/ui-kit/components';
-import { formatArea } from '@/ui-kit/format';
+import { fixed, formatArea } from '@/ui-kit/format';
 import { usePalette } from '@/ui-kit/theme';
 
 import type { ClaimView } from '../contract';
 
 export function TurfGainedCard({ claim }: { claim: ClaimView | null }) {
   const p = usePalette();
+  const t = useT('turf');
+  const reinforced = claim ? claim.cellCount - claim.newCellCount : 0;
   return (
     <Card style={{ borderColor: TIER_COLOR.glowing, borderWidth: 1.5 }}>
-      <Text style={[s.h, { color: p.text }]}>Turf gained</Text>
+      <Text style={[s.h, { color: p.text }]}>{t('gained.title')}</Text>
       {claim ? (
         <View style={{ gap: 2 }} testID='turf-gained'>
-          <Text style={[s.big, { color: TIER_COLOR.glowing }]}>+{formatArea(claim.newAreaKm2)} new turf</Text>
+          <Text style={[s.big, { color: TIER_COLOR.glowing }]}>
+            {t('gained.newTurf', { area: formatArea(claim.newAreaKm2) })}
+          </Text>
           <Text style={{ color: p.muted }}>
-            {claim.newCellCount} new cells · {claim.cellCount - claim.newCellCount} reinforced
+            {t('gained.cells', {
+              addedCount: claim.newCellCount,
+              added: fixed(claim.newCellCount, 0),
+              reinforcedCount: reinforced,
+              reinforced: fixed(reinforced, 0),
+            })}
           </Text>
         </View>
       ) : (
         <View style={s.row}>
           <ActivityIndicator />
-          <Text style={{ color: p.muted }}>Claiming your turf…</Text>
+          <Text style={{ color: p.muted }}>{t('gained.claiming')}</Text>
         </View>
       )}
     </Card>

@@ -1,6 +1,7 @@
 import { ActivityRow as ActivityRowView, usePalette } from '@cityturfer/ui';
 
 import { TYPE_GLYPH } from '@/constants/activity';
+import { useT } from '@/i18n';
 import { distanceText, formatDate, formatDuration, formatPaceOrSpeed } from '@/ui-kit/format';
 import { ActivitySymbol } from '@/ui-kit/symbol';
 
@@ -17,6 +18,7 @@ export function ActivityRow({
   testID?: string;
 }) {
   const p = usePalette();
+  const t = useT('activity');
   const pace = formatPaceOrSpeed(item.type, item.distanceM, item.movingS);
   const estimated = item.estimatedDistanceM > 0;
   return (
@@ -28,7 +30,12 @@ export function ActivityRow({
       subtitle={formatDate(item.startedAt)}
       value={`${estimated ? '≈ ' : ''}${distanceText(item.distanceM)}`}
       detail={`${formatDuration(item.movingS)} · ${pace.value}${pace.unit}`}
-      accessibilityLabel={`${item.name}, ${formatDate(item.startedAt)}, ${estimated ? 'about ' : ''}${distanceText(item.distanceM)}`}
+      accessibilityLabel={t('rowLabel', {
+        estimated: estimated ? 'yes' : 'no',
+        name: item.name,
+        date: formatDate(item.startedAt),
+        distance: distanceText(item.distanceM),
+      })}
       onPress={onPress}
       testID={testID}
     />

@@ -1,0 +1,18 @@
+{
+  "title": "Stats",
+  "thisWeek": "This week",
+  "distance": "Distance",
+  "time": "Time",
+  "activities": "Activities",
+  "weeksChartLabel": "{weeks, plural, one {Distance per week, last week} other {Distance per week, last # weeks}}",
+  "turf": "Turf",
+  "area": "Area",
+  "cells": "Cells",
+  "allTime": "All time",
+  "typeRow": "{count} · {distance} · {known, select, yes {{cells, plural, one {{cellsText} cell} other {{cellsText} cells}}} other {— cells}}",
+  "total": "Total",
+  "totalRow": "{count} · {distance} · {duration}",
+  "allActivities": "All activities",
+  "seeAll": "See all ›",
+  "seeAllLabel": "See all activities"
+}

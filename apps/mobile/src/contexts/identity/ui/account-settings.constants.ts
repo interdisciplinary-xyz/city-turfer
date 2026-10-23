@@ -11,6 +11,7 @@ import {
   PASSWORD_MIN,
   type User,
 } from '@/contexts/identity';
+import type { T } from '@/i18n';
 
 /** What Me › Account knows about the account right now. */
 export type AccountSettingsState =
@@ -31,7 +32,7 @@ export type AccountSettingsState =
 /** The server's answer for Me › Account, or `unavailable` when asking it threw. */
 export type AccountSettingsAnswer = AccountSettings | NotSignedIn | AccountFailure | { kind: 'unavailable' };
 
-/** A refused account request, worded by `failureText` (a rate limit may also start a wait). */
+/** A refused account request, worded by `failureMessage` (a rate limit may also start a wait). */
 export type AccountRefusal = AccountFailure | NotSignedIn | { kind: 'unavailable' };
 
 /**
@@ -39,8 +40,8 @@ export type AccountRefusal = AccountFailure | NotSignedIn | { kind: 'unavailable
  * an error to show there), stay and show an error, or word a refusal.
  */
 export type FlowOutcome<Step extends string> =
-  | { kind: 'go'; step: Step; error?: string; sentTo?: string; clear?: 'code' | 'step-up-code' }
-  | { kind: 'error'; error: string }
+  | { kind: 'go'; step: Step; error?: ErrorMessage; sentTo?: string; clear?: 'code' | 'step-up-code' }
+  | { kind: 'error'; error: ErrorMessage }
   | { kind: 'refused'; failure: AccountRefusal };
 
 /** The signed-in account's settings, once the server answered (the deep-linked flows need them). */
@@ -64,7 +65,7 @@ export type SettingsRowProps = {
 export type AccountOverviewProps = {
   user: User;
   state: AccountSettingsState;
-  /** "On this phone, backed up (42 of 42)", from Cloud Backup (the screen composes it). */
+  /** "On this phone, backed up (42 of 42)" (the screen composes it from Cloud Backup's status). */
   dataText: string;
   onName: () => void;
   onEmail: () => void;
@@ -92,153 +93,26 @@ export type NameFormProps = { onDone: () => void };
 export type EmailChangeFlowProps = { onDone: () => void };
 export type PasswordFlowProps = { action: PasswordAction; onDone: () => void };
 
-// --- Copy (CityTurfer voice: plain, calm; "Email" as in the rest of the app) -------------------
+// --- Copy: the words live in the catalogue (`account`, `errors`); here only their keys ---------
 
-export const ROW = {
-  name: 'Name',
-  email: 'Email',
-  password: 'Account password',
-  signIn: 'Sign-in',
-  data: 'Data',
-} as const;
-
-export const VALUE = {
-  notSet: 'Not set',
-  set: 'Set',
-  setOn: (day: string) => `Set · ${day}`,
-  needsInternet: 'Needs internet',
-  checking: 'Checking…',
-  createAccount: 'Create an account to back up and sign in anywhere',
-  localProfile: 'Local profile on this phone',
-  codeOnly: 'Email code',
-  codeAndPassword: 'Email code · account password',
-  signInAgain: 'Sign in again to change this',
-  couldNotLoad: 'Couldn’t load. Try again',
-} as const;
-
-export const HINT = {
-  name: 'Changes the name shown in the app',
-  email: 'Starts changing your email',
-  password: 'Opens your account password options',
-} as const;
-
-export const RETRY = 'Try again';
-
-/** The account flows opened without an account to change (a local profile, or a deep link). */
-export const GATE_COPY = {
-  local: 'This is a local profile on this phone, so there’s no account email or password to change.',
-  noPassword: 'There’s no account password to remove. You sign in with an email code.',
-  back: 'Back',
-} as const;
-
-export const NAME_COPY = {
-  label: 'Your name',
-  save: 'Save',
-  local: 'Optional. Kept on this phone only.',
-  account: 'Optional. Saved to your CityTurfer account.',
-  saved: 'Saved',
-} as const;
-
-export const NAME_ERROR: Record<'display-name.too-long' | 'display-name.invalid', string> = {
-  'display-name.too-long': `Keep it to ${DISPLAY_NAME_MAX} characters.`,
-  'display-name.invalid': 'That name has characters we can’t show.',
-};
-
-export const CODE_COPY = {
-  label: 'Code',
-  resend: 'Send a new code',
-  sendCode: 'Send code',
-  continue: 'Continue',
-} as const;
-
-export const EMAIL_COPY = {
-  intro: (current: string) =>
-    `To keep your account safe, we’ll first email a code to your current address, ${current}.`,
-  currentSent: (current: string) => `We emailed a 6-digit code to ${current}. It works for 10 minutes.`,
-  newLabel: 'New email',
-  newHint: 'We’ll email a code there to check it’s yours.',
-  sendNew: 'Send code to new email',
-  newSent: (next: string) => `We emailed a 6-digit code to ${next}. Enter it to finish.`,
-  confirm: 'Change email',
-  restart: 'Start again',
-  done: (next: string) =>
-    `Your email is now ${next}. Use it to sign in. Other phones and browsers were signed out; we sent a note to your old address.`,
-  doneButton: 'Done',
-  taken: 'That email already has a CityTurfer account. Try another one.',
-  newInvalid: (next: string) => `That code didn’t work. Check the latest email to ${next}, or start again.`,
-} as const;
-
-export const PASSWORD_COPY = {
-  intro: {
-    set: 'An account password is optional: you can always sign in with an email code instead.',
-    change: 'Choose a new account password. Email codes keep working too.',
-    remove: 'Without an account password, you sign in with an email code.',
-  },
-  stepUp: (email: string) => `First we’ll email a code to ${email}, to check it’s you.`,
-  sent: (email: string) => `We emailed a 6-digit code to ${email}. It works for 10 minutes.`,
-  newLabel: 'New account password',
-  newHint: `At least ${PASSWORD_MIN} characters. A few words you’ll remember work well.`,
-  save: { set: 'Set account password', change: 'Change account password', remove: 'Remove account password' },
-  done: {
-    set: 'Your account password is set. Other phones and browsers were signed out.',
-    change: 'Your account password has been changed. Other phones and browsers were signed out.',
-    remove: 'Your account password has been removed. Sign in with an email code from now on.',
-  },
-  doneButton: 'Done',
-  breached: 'That password appears in leaked password lists, so it’s easy to guess. Choose another one.',
-  show: 'Show password',
-  hide: 'Hide password',
-  actionTitle: 'Account password',
-  actionText: 'Change it, or remove it and sign in with email codes only.',
-  change: 'Change password',
-  remove: 'Remove password',
-} as const;
+/** An error's message in the `errors` namespace, with its values; worded by the component on render. */
+export type ErrorKey = Parameters<T<'errors'>>[0];
+export type ErrorMessage = { key: ErrorKey; values?: Record<string, string | number> };
 
 /** The shared field rules' messages (same codes as the API's). */
-export const FIELD_ERROR_TEXT: Record<AccountFieldError, string> = {
-  ...NAME_ERROR,
-  'email.invalid': 'That doesn’t look like an email address.',
-  'email.unchanged': 'That’s already your email.',
-  'password.too-short': `Use at least ${PASSWORD_MIN} characters.`,
-  'password.too-long': `Use at most ${PASSWORD_MAX} characters.`,
+export const FIELD_ERROR: Record<AccountFieldError, ErrorMessage> = {
+  'display-name.too-long': { key: 'field.displayNameTooLong', values: { max: DISPLAY_NAME_MAX } },
+  'display-name.invalid': { key: 'field.displayNameInvalid' },
+  'email.invalid': { key: 'field.emailInvalid' },
+  'email.unchanged': { key: 'field.emailUnchanged' },
+  'password.too-short': { key: 'field.passwordTooShort', values: { min: PASSWORD_MIN } },
+  'password.too-long': { key: 'field.passwordTooLong', values: { max: PASSWORD_MAX } },
 };
+
+export const INVALID_CODE: ErrorMessage = { key: 'invalidCode' };
+
+/** A Retry-After wait in the unit it is said in (seconds under a minute, …), rounded up. */
+export type Wait = { unit: 'seconds' | 'minutes' | 'hours'; count: number };
 
 /** How often a Retry-After wait is checked again (timers pause in the background). */
 export const COOLDOWN_CHECK_MS = 60_000;
-
-export const INVALID_CODE = 'That code didn’t work. Check the latest email, or send a new code.';
-
-const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? '' : 's'}`;
-
-/**
- * How long to wait, spelled out: seconds under a minute, minutes under an hour, otherwise hours
- * (always rounded up, so the Turfer never tries a moment too early).
- */
-export function waitText(retryAfterS: number): string {
-  const s = Math.max(1, Math.ceil(retryAfterS));
-  if (s < 60) {
-    return plural(s, 'second');
-  }
-  const min = Math.ceil(s / 60);
-  if (min < 60) {
-    return plural(min, 'minute');
-  }
-  return plural(Math.ceil(s / 3600), 'hour');
-}
-
-/** Why an account request failed, in plain words (nothing was changed or queued). */
-export function failureText(f: AccountFailure | NotSignedIn | { kind: 'unavailable' }): string {
-  switch (f.kind) {
-    case 'offline':
-      return 'No connection. Changes to your account need the internet; nothing was changed.';
-    case 'rate-limited':
-      return f.retryAfterS
-        ? `Too many tries. Wait ${waitText(f.retryAfterS)} and try again.`
-        : 'Too many tries. Wait a few minutes and try again.';
-    case 'auth':
-    case 'not-signed-in':
-      return 'This phone isn’t signed in to your account any more. Sign out, then sign in with your email.';
-    default:
-      return 'Our server had a hiccup. Try again in a moment.';
-  }
-}

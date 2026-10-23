@@ -136,7 +136,7 @@
         "healthOn": "Treningi z Apple Health są w kopii od {date}.",
         "healthOff": "Treningi z Apple Health zostają na Twoim telefonie. Twój turf może tu wyglądać na mniejszy.",
         "policy": "Wersja polityki prywatności {version}",
-        "changeInApp": "Aby zmienić te ustawienia, otwórz aplikację: Info › Cloud backup."
+        "changeInApp": "Aby zmienić te ustawienia, otwórz aplikację: Informacje › Kopia w chmurze."
       },
       "stored": {
         "title": "Co przechowujemy",

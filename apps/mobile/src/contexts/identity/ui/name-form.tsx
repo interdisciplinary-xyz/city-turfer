@@ -4,21 +4,23 @@ import { StyleSheet, View } from 'react-native';
 
 import { ACCENT } from '@/constants/colors';
 import { accountFieldError, displayName } from '@/contexts/identity';
+import { useT } from '@/i18n';
 import { useApp } from '@/ui-kit/app-context';
 import { Button } from '@/ui-kit/components';
 
 import { AccountField } from './account-field';
-import { failureText, FIELD_ERROR_TEXT, NAME_COPY, type NameFormProps } from './account-settings.constants';
+import { failureMessage } from './account-messages';
+import { type ErrorMessage, FIELD_ERROR, type NameFormProps } from './account-settings.constants';
 import { useAccountActions } from './hooks';
 
 /** The rule's message for a draft name, or null when it can be saved (blank clears the name). */
-function problemOf(draft: string): string | null {
+function problemOf(draft: string): ErrorMessage | null {
   try {
     displayName(draft);
     return null;
   } catch (e) {
     const code = accountFieldError(e);
-    return code ? FIELD_ERROR_TEXT[code] : null;
+    return code ? FIELD_ERROR[code] : null;
   }
 }
 
@@ -27,14 +29,18 @@ function problemOf(draft: string): string | null {
  * name is saved on the server (online only); a local profile's stays on this phone.
  */
 export function NameForm({ onDone }: NameFormProps) {
+  const t = useT('account');
+  const tc = useT('common');
+  const te = useT('errors');
   const { auth } = useApp();
   const { updateName } = useAccountActions();
   const user = auth.status === 'signed-in' ? auth.user : null;
   const [draft, setDraft] = useState(user?.name ?? '');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ErrorMessage | null>(null);
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
   const problem = problemOf(draft);
+  const shown = problem ?? error;
 
   const save = async () => {
     if (problem || inFlight.current) {
@@ -48,12 +54,12 @@ export function NameForm({ onDone }: NameFormProps) {
       if (r.kind === 'saved') {
         onDone();
       } else if (r.kind === 'field-error') {
-        setError(FIELD_ERROR_TEXT[r.code]);
+        setError(FIELD_ERROR[r.code]);
       } else {
-        setError(failureText(r));
+        setError(failureMessage(r));
       }
     } catch {
-      setError(failureText({ kind: 'unavailable' }));
+      setError(failureMessage({ kind: 'unavailable' }));
     } finally {
       inFlight.current = false;
       setBusy(false);
@@ -64,7 +70,7 @@ export function NameForm({ onDone }: NameFormProps) {
     <View style={s.root}>
       <AccountField
         testID='account-name-input'
-        label={NAME_COPY.label}
+        label={t('name.label')}
         value={draft}
         onChangeText={(text) => {
           setDraft(text);
@@ -77,12 +83,12 @@ export function NameForm({ onDone }: NameFormProps) {
         textContentType='name'
         returnKeyType='done'
         editable={!busy}
-        error={problem ?? error}
-        hint={user?.accountId ? NAME_COPY.account : NAME_COPY.local}
+        error={shown ? te(shown.key, shown.values) : null}
+        hint={user?.accountId ? t('name.account') : t('name.local')}
       />
       <Button
         testID='account-name-save'
-        label={NAME_COPY.save}
+        label={tc('save')}
         color={ACCENT}
         busy={busy}
         disabled={problem != null}

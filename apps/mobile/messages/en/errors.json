@@ -1,0 +1,51 @@
+{
+  "generic": "Something went wrong. Try again.",
+  "invalidCode": "That code didn’t work. Check the latest email, or send a new code.",
+  "invalidEmail": "That doesn’t look like an email address.",
+  "field": {
+    "displayNameTooLong": "Keep it to {max} characters.",
+    "displayNameInvalid": "That name has characters we can’t show.",
+    "emailInvalid": "That doesn’t look like an email address.",
+    "emailUnchanged": "That’s already your email.",
+    "passwordTooShort": "Use at least {min} characters.",
+    "passwordTooLong": "Use at most {max} characters."
+  },
+  "emailTaken": "That email already has a CityTurfer account. Try another one.",
+  "emailCodeInvalid": "That code didn’t work. Check the latest email to {email}, or start again.",
+  "passwordBreached": "That password appears in leaked password lists, so it’s easy to guess. Choose another one.",
+  "accountOffline": "No connection. Changes to your account need the internet; nothing was changed.",
+  "signInOffline": "No connection. Signing in needs the internet once; after that the app works offline.",
+  "rateLimited": "Too many tries. Wait a few minutes and try again.",
+  "rateLimitedSeconds": "Too many tries. Wait {count, plural, one {# second} other {# seconds}} and try again.",
+  "rateLimitedMinutes": "Too many tries. Wait {count, plural, one {# minute} other {# minutes}} and try again.",
+  "rateLimitedHours": "Too many tries. Wait {count, plural, one {# hour} other {# hours}} and try again.",
+  "signedOut": "This phone isn’t signed in to your account any more. Sign out, then sign in with your email.",
+  "server": "Our server had a hiccup. Try again in a moment.",
+  "accountsUnavailable": "Signing in to an account is not available in this build.",
+  "wrongPassword": "Wrong email or password.",
+  "wrongChosenPassword": "Wrong email or password. No account password yet? Sign in with an email code, then set one in Me › Account.",
+  "tookLongPassword": "That took a while. Sign in again.",
+  "tookLongCode": "That took a while. Send a new code and sign in again.",
+  "linkedToAccount": "This phone’s history now belongs to your CityTurfer account. Sign in with that account’s email.",
+  "backup": {
+    "no-token": "Sign in with your email to back up.",
+    "auth": "Your sign-in has expired. Sign in again to carry on backing up.",
+    "consent": "The server has no backup consent from you yet. Turn backup off and on again.",
+    "offline": "No connection right now. We'll carry on when you're online.",
+    "server": "The server had a hiccup. We'll try again shortly.",
+    "not-ready": "The backup server isn't ready yet. Your activities wait safely on this phone.",
+    "busy": "The server is busy. We'll try again in a moment.",
+    "outdated": "Update CityTurfer to keep backing up.",
+    "not-available": "The demo account stays on this phone: it is never backed up.",
+    "needs-device-token": "A testing server needs a device token. Add one in Developer tools, or go back to the built-in server."
+  },
+  "backupOffPending": "Backup is off. We'll let the server know next time you're online.",
+  "backupWaitingForRestore": "Restoring your backup first. Backing up carries on once it has finished.",
+  "backupAction": {
+    "invalid-token": "That doesn't look like a device token. Paste it again.",
+    "invalid-server-url": "Use a full address starting with https:// (or http:// on your own network).",
+    "on": "Turn backup off first.",
+    "off": "Turn backup on first.",
+    "withdrawal-pending": "The server hasn't deleted your backup copy yet. Try again once you're online."
+  }
+}

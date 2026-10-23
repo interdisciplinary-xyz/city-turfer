@@ -1,6 +1,6 @@
 import type { ConfirmEmailChangeResult, RequestEmailChangeResult } from '@/contexts/identity';
 
-import { type AccountRefusal, EMAIL_COPY, FIELD_ERROR_TEXT, INVALID_CODE } from './account-settings.constants';
+import { type AccountRefusal, FIELD_ERROR, INVALID_CODE } from './account-settings.constants';
 import type { EmailOutcome } from './email-change-flow.constants';
 
 /** Step 1: the code to the current address was sent (or refused). */
@@ -21,7 +21,7 @@ export function afterEmailChangeRequest(r: RequestEmailChangeResult): EmailOutco
     case 'invalid-code':
       return { kind: 'go', step: 'current-code', clear: 'step-up-code', error: INVALID_CODE };
     case 'field-error':
-      return { kind: 'error', error: FIELD_ERROR_TEXT[r.code] };
+      return { kind: 'error', error: FIELD_ERROR[r.code] };
     default:
       return { kind: 'refused', failure: r };
   }
@@ -33,11 +33,11 @@ export function afterEmailConfirm(r: ConfirmEmailChangeResult, sentTo: string): 
     case 'changed':
       return { kind: 'go', step: 'done' };
     case 'invalid-code':
-      return { kind: 'error', error: EMAIL_COPY.newInvalid(sentTo) };
+      return { kind: 'error', error: { key: 'emailCodeInvalid', values: { email: sentTo } } };
     case 'email-taken':
-      return { kind: 'error', error: EMAIL_COPY.taken };
+      return { kind: 'error', error: { key: 'emailTaken' } };
     case 'field-error':
-      return { kind: 'error', error: FIELD_ERROR_TEXT[r.code] };
+      return { kind: 'error', error: FIELD_ERROR[r.code] };
     default:
       return { kind: 'refused', failure: r };
   }

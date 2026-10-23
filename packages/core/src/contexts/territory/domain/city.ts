@@ -42,24 +42,48 @@ export function foldForSearch(text: string): string {
 }
 
 /**
- * Cities matching a query, accent-insensitive. Names starting with the query come first, then names
- * with a word starting with it, then names containing it; within each group the catalogue order
- * (biggest cities first) is kept. An empty query returns the whole catalogue.
+ * Other names a city is known by, by city id (e.g. the app's localised "Warszawa" for `pl-warsaw`).
+ * Search matches them like the catalogue name; they are never stored.
  */
-export function searchCities(catalog: readonly City[], query: string): City[] {
+export type CityAliases = (cityId: string) => readonly string[];
+
+/** How well one name matches a folded query: 0 starts with it, 1 a word starts with it, 2 contains it, -1 no. */
+function nameRank(name: string, q: string): number {
+  const n = foldForSearch(name);
+  if (n.startsWith(q)) {
+    return 0;
+  }
+  if (n.split(/[\s-]+/).some((w) => w.startsWith(q))) {
+    return 1;
+  }
+  return n.includes(q) ? 2 : -1;
+}
+
+/**
+ * Cities matching a query, accent-insensitive, on the catalogue name and any `aliases`. Names
+ * starting with the query come first, then names with a word starting with it, then names containing
+ * it (a city ranks by its best-matching name); within each group the catalogue order (biggest cities
+ * first) is kept. An empty query returns the whole catalogue.
+ */
+export function searchCities(catalog: readonly City[], query: string, aliases?: CityAliases): City[] {
   const q = foldForSearch(query);
   if (!q) {
     return [...catalog];
   }
+  const namesOf = (c: City): readonly string[] => {
+    let extra: readonly string[] = [];
+    try {
+      extra = aliases?.(c.id) ?? [];
+    } catch {
+      extra = []; // a failing alias source never breaks the catalogue search
+    }
+    return [c.name, ...extra];
+  };
   const rank = (c: City): number => {
-    const name = foldForSearch(c.name);
-    if (name.startsWith(q)) {
-      return 0;
-    }
-    if (name.split(/[\s-]+/).some((w) => w.startsWith(q))) {
-      return 1;
-    }
-    return name.includes(q) ? 2 : -1;
+    const ranks = namesOf(c)
+      .map((n) => nameRank(n, q))
+      .filter((r) => r >= 0);
+    return ranks.length > 0 ? Math.min(...ranks) : -1;
   };
   return catalog
     .map((c, i) => ({ c, i, r: rank(c) }))

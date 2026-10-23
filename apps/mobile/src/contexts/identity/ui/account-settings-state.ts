@@ -1,4 +1,5 @@
-import { type AccountSettingsAnswer, type AccountSettingsState, failureText } from './account-settings.constants';
+import { failureMessage } from './account-messages';
+import type { AccountSettingsAnswer, AccountSettingsState, ErrorMessage } from './account-settings.constants';
 
 /**
  * Asking the server again: a `ready` answer becomes stale (rows that depend on `hasPassword` wait),
@@ -38,13 +39,13 @@ export function latestRequest() {
   };
 }
 
-/** Why an account flow can't open now (offline, or the server refused), in plain words; null: it can. */
-export function unreachableText(state: AccountSettingsState): string | null {
+/** Why an account flow can't open now (offline, or the server refused); null: it can. */
+export function unreachableMessage(state: AccountSettingsState): ErrorMessage | null {
   if (state.status === 'offline') {
-    return failureText({ kind: 'offline' });
+    return failureMessage({ kind: 'offline' });
   }
   if (state.status === 'failed') {
-    return failureText(
+    return failureMessage(
       state.reason === 'rate-limited' ? { kind: state.reason, retryAfterS: null } : { kind: state.reason }
     );
   }

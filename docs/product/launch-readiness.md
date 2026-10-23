@@ -41,7 +41,7 @@ iPhone (free Apple ID) and a sideloaded Android APK.
 | 14  | 🟡 App works with location denied (Apple 5.1.2(i)): history, Turf Map, Health import still usable; useful empty state on a fresh install (4.2)                                                                                              | To verify on device                                                     |
 | 15  | 🟡 Store listings PL + EN: name/subtitle 30, keywords 100 bytes (Polish diacritics are 2 bytes), promo 170; screenshots lead with the Turf Map; category Health & Fitness                                                                   | Draft keywords only (`brand-system` skill)                              |
 | 16  | 🟢 Rating prompt after a positive moment (first claimed street, a tier up) — max 3 per 365 days on iOS                                                                                                                                      | Not built                                                               |
-| 17  | 🟢 App i18n (PL) — the website already redirects Polish browsers to `/pl`                                                                                                                                                                   | App is English-only                                                     |
+| 17  | 🟢 App i18n (PL) — the website already redirects Polish browsers to `/pl`                                                                                                                                                                   | In-app copy EN + PL (v0.10.0); iOS permission prompts still English     |
 
 ## What leaves the phone today (for the policy and labels)
 

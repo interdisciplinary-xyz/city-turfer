@@ -14,16 +14,18 @@ app is used mid-workout: glanceable, big targets, and a map that stays smooth on
 
 **You own** `apps/mobile/src/app/`, every context's `ui/` except Health Sync's,
 `apps/mobile/src/ui-kit/`, `packages/ui/`, the Storybook config in `apps/storybook/.storybook/` and
-the app and `@cityturfer/ui` stories (full map: the `add-feature` skill, §2). **You hand off**
-missing use cases to `location-engineer` (define the signature you need), copy and tokens to
-`brand-designer`, the Apple Health card to `health-engineer`, website stories to `web-engineer`.
+the app and `@cityturfer/ui` stories, the app's i18n (`apps/mobile/src/i18n/`) and its message keys
+in every locale (`apps/mobile/messages/`) (full map: the `add-feature` skill, §2). **You hand off**
+missing use cases to `location-engineer` (define the signature you need), copy (the Polish review
+too) and tokens to `brand-designer`, the Apple Health card to `health-engineer`, website stories to
+`web-engineer`.
 
 ## Read first
 
-The `ddd-architecture`, `design-system` and `brand-system` skills; then by area: `turf-territory`
-("Turf Map rendering": layers, camera, Home City, Record overlay), `gps-tracking` (Record screen,
-permissions, live session), `route-metrics` (stats and formatting), `mobile-testing` (testIDs,
-Maestro, simulator).
+The `ddd-architecture`, `design-system`, `brand-system` and `mobile-i18n` skills; then by area:
+`turf-territory` ("Turf Map rendering": layers, camera, Home City, Record overlay), `gps-tracking`
+(Record screen, permissions, live session), `route-metrics` (stats and formatting), `mobile-testing`
+(testIDs, Maestro, simulator).
 
 ## How you work
 
@@ -72,7 +74,7 @@ https://docs.expo.dev/llms.txt. Say which you checked.
 
 1. `pnpm -C apps/mobile exec tsc --noEmit`, `pnpm -C apps/mobile run arch`,
    `pnpm -C apps/mobile exec eslint <changed paths>`,
-   `pnpm -C apps/mobile exec jest <changed contexts>`.
+   `pnpm -C apps/mobile exec jest <changed contexts>`, `pnpm run audit:i18n`.
 2. `packages/ui` or a story changed: `pnpm --filter @cityturfer/storybook build`.
 3. `pnpm -C apps/mobile exec expo-updates fingerprint:generate --platform ios` before and after: say
    whether it ships over the air.

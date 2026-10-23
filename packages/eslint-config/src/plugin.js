@@ -1,7 +1,7 @@
 /**
  * The `local-rules` ESLint plugin: the shared, app-agnostic hand-written rules
  * (`enforce-types-in-constants`, `no-duplicate-imports`,
- * `enforce-tailwind-arbitrary`).
+ * `enforce-tailwind-arbitrary`, `no-raw-text`).
  *
  * Register it under the `local-rules` key — every rule id (config +
  * `eslint-disable` comments) is `local-rules/<name>`:
@@ -11,8 +11,8 @@
  * The `base` preset registers it for you. A consumer with rules of its own
  * (an app's layout-specific rules) passes them as `base({ localRules })`;
  * they are merged into the same `local-rules` namespace, so their ids stay
- * `local-rules/<name>`. `enforce-tailwind-arbitrary` ships but is not enabled
- * by any preset.
+ * `local-rules/<name>`. `enforce-tailwind-arbitrary` and `no-raw-text` ship
+ * but no preset enables them: a consumer opts in.
  */
 
 import rules from './rules/index.js';

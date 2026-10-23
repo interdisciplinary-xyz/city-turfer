@@ -4,10 +4,10 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AccountGate } from '@/contexts/identity/ui/account-gate';
-import { GATE_COPY, PASSWORD_COPY } from '@/contexts/identity/ui/account-settings.constants';
 import { PasswordFlow } from '@/contexts/identity/ui/password-flow';
 import { passwordActionFor } from '@/contexts/identity/ui/password-steps';
 import { useAnnounce } from '@/contexts/identity/ui/use-announce';
+import { useT } from '@/i18n';
 import { Button } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
 
@@ -18,17 +18,19 @@ import { usePalette } from '@/ui-kit/theme';
  */
 function PasswordScreen({ requested, hasPassword }: { requested: string | undefined; hasPassword: boolean }) {
   const p = usePalette();
+  const t = useT('account');
+  const tc = useT('common');
   const [action] = useState(() => passwordActionFor(requested, hasPassword));
-  useAnnounce(action === 'nothing-to-remove' && GATE_COPY.noPassword);
+  useAnnounce(action === 'nothing-to-remove' && t('gate.noPassword'));
   if (action === 'nothing-to-remove') {
     return (
       <View style={{ gap: SPACE.lg }}>
         <Text testID='account-password-none' accessibilityLiveRegion='polite' style={[s.text, { color: p.text }]}>
-          {GATE_COPY.noPassword}
+          {t('gate.noPassword')}
         </Text>
         <Button
           testID='account-gate-back'
-          label={GATE_COPY.back}
+          label={tc('back')}
           color={p.border}
           textColor={p.text}
           onPress={() => router.back()}
@@ -38,7 +40,7 @@ function PasswordScreen({ requested, hasPassword }: { requested: string | undefi
   }
   return (
     <>
-      <Stack.Screen options={{ title: PASSWORD_COPY.save[action] }} />
+      <Stack.Screen options={{ title: t(`passwordSave.${action}`) }} />
       <PasswordFlow action={action} onDone={() => router.back()} />
     </>
   );

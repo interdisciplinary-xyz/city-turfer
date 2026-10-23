@@ -1,0 +1,46 @@
+{
+  "title": "Kopia w chmurze",
+  "pitch": "Trzymaj kopię swoich spacerów, biegów i przejażdżek na serwerze CityTurfer, żeby nowy telefon nigdy nie oznaczał budowania turfu od zera.",
+  "switchLabel": "Kopiuj do chmury CityTurfer",
+  "privacy": "Twoje trasy są przechowywane na naszym serwerze w UE. Wyłączenie usuwa tę kopię, ale nic na tym telefonie.",
+  "offConfirmTitle": "Wyłączyć kopię w chmurze?",
+  "offConfirmText": "Kopia Twoich aktywności na naszym serwerze zostanie usunięta. Wszystko zostaje na tym telefonie, a kopię możesz włączyć ponownie w każdej chwili.",
+  "turnOff": "Wyłącz",
+  "healthSwitchLabel": "Dołącz treningi z Apple Health",
+  "healthNote": "Wyłączone: treningi zaimportowane z Apple Health zostają na tym telefonie (i znikają z serwera).",
+  "backingUp": "Tworzenie kopii…",
+  "backUpNow": "Kopiuj teraz",
+  "refused": "{count, plural, one {Nie da się zapisać w kopii # aktywności (jest za długa lub nieczytelna).} few {Nie da się zapisać w kopii # aktywności (są za długie lub nieczytelne).} many {Nie da się zapisać w kopii # aktywności (są za długie lub nieczytelne).} other {Nie da się zapisać w kopii # aktywności (są za długie lub nieczytelne).}}",
+  "progress": "W kopii {backedUp} z {total, plural, one {# aktywności} few {# aktywności} many {# aktywności} other {# aktywności}}",
+  "progressLastRun": "W kopii {backedUp} z {total, plural, one {# aktywności} few {# aktywności} many {# aktywności} other {# aktywności}} · ostatnio {lastRun}",
+  "lastRun": {
+    "justNow": "przed chwilą",
+    "minutesAgo": "{count} min temu",
+    "today": "dziś {time}"
+  },
+  "restore": {
+    "title": "Witaj z powrotem",
+    "offer": "{count, plural, one {W Twojej kopii jest # aktywność, której nie ma na tym telefonie. Przenieś ją, a Twój turf wróci razem z nią. Nic tutaj nie zostanie zastąpione.} few {W Twojej kopii są # aktywności, których nie ma na tym telefonie. Przenieś je, a Twój turf wróci razem z nimi. Nic tutaj nie zostanie zastąpione.} many {W Twojej kopii jest # aktywności, których nie ma na tym telefonie. Przenieś je, a Twój turf wróci razem z nimi. Nic tutaj nie zostanie zastąpione.} other {W Twojej kopii jest # aktywności, których nie ma na tym telefonie. Przenieś je, a Twój turf wróci razem z nimi. Nic tutaj nie zostanie zastąpione.}}",
+    "resume": "Przywracanie kopii zatrzymało się na {done} z {total} aktywności. Dokończ od tego miejsca.",
+    "action": "Przywróć z kopii",
+    "actionNote": "Przenosi wszystko z Twojej kopii, czego nie ma na tym telefonie. Nic tutaj nie zostanie zastąpione ani zdublowane.",
+    "backupOff": "Kopia w chmurze jest wyłączona na tym telefonie. Włącz ją, aby nowe aktywności też były bezpieczne.",
+    "turnOnBackup": "Włącz kopię",
+    "progress": "Przywracanie {current} z {total}…",
+    "running": "Przywracanie…",
+    "healthOff": "Treningi z Apple Health nie trafiają do kopii z tego telefonu. Możesz to włączyć tutaj: Informacje › Kopia w chmurze.",
+    "restoredSkipped": "Przywrócono: {restored}. {skipped, plural, one {# aktywności nie dało się odczytać, więc została na serwerze.} few {# aktywności nie dało się odczytać, więc zostały na serwerze.} many {# aktywności nie dało się odczytać, więc zostały na serwerze.} other {# aktywności nie dało się odczytać, więc zostały na serwerze.}}",
+    "nothingToRestore": "Ten telefon ma już wszystko z Twojej kopii.",
+    "restored": "Przywrócono {count, plural, one {# aktywność} few {# aktywności} many {# aktywności} other {# aktywności}}.",
+    "signInFirst": "Zaloguj się adresem e-mail, aby przywrócić kopię.",
+    "start": "Przywróć",
+    "notNow": "Nie teraz"
+  },
+  "paused": {
+    "recording": "Najpierw zakończ nagrywanie. Przywracanie ruszy potem dalej.",
+    "background": "Przywracanie zatrzymało się, gdy CityTurfer działał w tle. Stuknij Przywróć, aby kontynuować.",
+    "offline": "Brak połączenia. Stuknij Przywróć, gdy będziesz online; przywracanie ruszy od miejsca, w którym stanęło.",
+    "server": "Serwer miał chwilową czkawkę. Stuknij Przywróć, aby spróbować ponownie.",
+    "auth": "Twoje logowanie wygasło. Zaloguj się ponownie, aby przywrócić kopię."
+  }
+}

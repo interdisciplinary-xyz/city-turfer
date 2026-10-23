@@ -198,6 +198,12 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅
   [`decisions/maplibre-over-react-native-maps-2026-10-15.md`](decisions/maplibre-over-react-native-maps-2026-10-15.md):
   Decision record — MapLibre + OpenFreeMap for every map instead of react-native-maps
+- 🚧 [`decisions/mobile-i18n-2026-10-23.md`](decisions/mobile-i18n-2026-10-23.md): The app speaks
+  English and Polish — use-intl (the core of the website's next-intl, ICU messages, same JSON style)
+  with the catalogue in apps/mobile/messages/<locale>/<namespace>.json, language from an in-app
+  setting (System, English, Polski) else the phone, locale-aware numbers and dates, checked by
+  audit:i18n and a no-raw-text lint rule; JS only (ships over the air), native strings (permission
+  prompts) are a later binary release
 - ✅ [`decisions/monorepo-turborepo-2026-10-18.md`](decisions/monorepo-turborepo-2026-10-18.md):
   v0.3.0 moves the repo to a pnpm + Turborepo monorepo — apps/mobile (Expo), apps/web (Next.js
   landing page), packages/brand and packages/config — in three PRs

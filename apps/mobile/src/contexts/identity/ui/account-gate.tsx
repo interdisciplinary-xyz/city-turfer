@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { ACCENT } from '@/constants/colors';
+import { useT } from '@/i18n';
 import { Button } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
 
-import { type AccountGateProps, type AccountReady, GATE_COPY, RETRY, VALUE } from './account-settings.constants';
-import { unreachableText } from './account-settings-state';
+import type { AccountGateProps, AccountReady } from './account-settings.constants';
+import { unreachableMessage } from './account-settings-state';
 import { useAccountSettings } from './hooks';
 import { useAnnounce } from './use-announce';
 
@@ -20,16 +21,20 @@ import { useAnnounce } from './use-announce';
  */
 export function AccountGate({ children }: AccountGateProps) {
   const p = usePalette();
+  const t = useT('account');
+  const tc = useT('common');
+  const te = useT('errors');
   const { state, refresh } = useAccountSettings();
   const checking =
     state.status === 'loading' ||
     (state.status === 'ready' && state.refreshing === true) ||
     ((state.status === 'offline' || state.status === 'failed') && state.retrying === true);
-  const blocked = unreachableText(state);
+  const unreachable = unreachableMessage(state);
+  const blocked = unreachable ? te(unreachable.key, unreachable.values) : null;
   const note = checking
     ? null
     : state.status === 'ready' && state.settings.kind === 'local'
-      ? GATE_COPY.local
+      ? t('gate.local')
       : blocked;
   useAnnounce(note);
   const [opened, setOpened] = useState<AccountReady | null>(null);
@@ -45,7 +50,7 @@ export function AccountGate({ children }: AccountGateProps) {
   const back = (
     <Button
       testID='account-gate-back'
-      label={GATE_COPY.back}
+      label={tc('back')}
       color={p.border}
       textColor={p.text}
       onPress={() => router.back()}
@@ -54,7 +59,7 @@ export function AccountGate({ children }: AccountGateProps) {
   if (checking) {
     return (
       <Text testID='account-gate-checking' accessibilityLiveRegion='polite' style={[s.text, { color: p.muted }]}>
-        {VALUE.checking}
+        {t('value.checking')}
       </Text>
     );
   }
@@ -63,7 +68,9 @@ export function AccountGate({ children }: AccountGateProps) {
       <Text testID='account-gate-note' accessibilityLiveRegion='polite' style={[s.text, { color: p.text }]}>
         {note}
       </Text>
-      {blocked && <Button testID='account-gate-retry' label={RETRY} color={ACCENT} onPress={() => void refresh()} />}
+      {blocked && (
+        <Button testID='account-gate-retry' label={t('retry')} color={ACCENT} onPress={() => void refresh()} />
+      )}
       {back}
     </View>
   );

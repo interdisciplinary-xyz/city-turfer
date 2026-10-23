@@ -1,0 +1,21 @@
+{
+  "tabs": {
+    "dashboard": "Pulpit",
+    "turf": "Turf",
+    "record": "Nagraj",
+    "stats": "Statystyki",
+    "me": "Ja"
+  },
+  "screens": {
+    "activity": "Aktywność",
+    "history": "Historia",
+    "profile": "Profil",
+    "achievements": "Osiągnięcia",
+    "account": "Konto",
+    "accountName": "Imię",
+    "accountEmail": "E-mail",
+    "accountPassword": "Hasło do konta",
+    "info": "Informacje",
+    "city": "Twoje miasto"
+  }
+}

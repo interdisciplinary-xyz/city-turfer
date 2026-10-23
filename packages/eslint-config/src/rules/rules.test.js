@@ -1,7 +1,8 @@
 /**
  * Smoke tests for the shared `local-rules` plugin: at least one valid + one
- * invalid case per rule a preset enables. `enforce-tailwind-arbitrary` ships
- * but is enabled nowhere, so it is not covered here. Consumer-owned rules
+ * invalid case per rule a preset enables, plus the opt-in `no-raw-text`.
+ * `enforce-tailwind-arbitrary` ships but is enabled nowhere, so it is not
+ * covered here. Consumer-owned rules
  * (merged in through `base({ localRules })`) are tested where they live.
  */
 
@@ -29,7 +30,8 @@ describe('local-rules plugin', () => {
   it('exposes every rule under `rules`', () => {
     const names = Object.keys(plugin.rules).sort();
     if (
-      names.join(',') !== ['enforce-tailwind-arbitrary', 'enforce-types-in-constants', 'no-duplicate-imports'].join(',')
+      names.join(',') !==
+      ['enforce-tailwind-arbitrary', 'enforce-types-in-constants', 'no-duplicate-imports', 'no-raw-text'].join(',')
     ) {
       throw new Error(`unexpected rule set: ${names.join(', ')}`);
     }
@@ -106,6 +108,59 @@ ruleTester.run('no-duplicate-imports', plugin.rules['no-duplicate-imports'], {
       code: "import x from 'm';\nimport { a } from 'm';\n",
       output: null,
       errors: [{ messageId: 'duplicate' }],
+    },
+  ],
+});
+
+const raw = [{ messageId: 'rawText' }];
+
+ruleTester.run('no-raw-text', plugin.rules['no-raw-text'], {
+  valid: [
+    // Translated text, and text without a letter: separators, numbers, symbols, whitespace.
+    { code: "const a = <Text>{t('start')}</Text>;" },
+    { code: 'const a = <Text> · </Text>;' },
+    { code: 'const a = <Text>{distance} / {pace}</Text>;' },
+    { code: 'const a = <Text>12 — 3</Text>;' },
+    { code: 'const a = (\n  <View>\n    <Text>{label}</Text>\n  </View>\n);' },
+    { code: "const a = <Text>{'·'}</Text>;" },
+    { code: "const a = <View>{mode === 'paused' && <Badge />}</View>;" },
+    // Props that are not user-facing, even with words in them.
+    { code: 'const a = <View testID="start-button" style={s} />;' },
+    { code: 'const a = <Icon name="arrow-left" accessibilityRole="button" />;' },
+    { code: "const a = <Button title={t('start')} accessibilityLabel={t('startHint')} />;" },
+    { code: 'const a = <Button label={`${count}`} />;' },
+    { code: "const a = <Button title={paused ? t('resume') : t('pause')} />;" },
+    // A string used for logic inside a child expression is not rendered text.
+    { code: "const a = <Text>{type === 'walk' ? t('walk') : t('other')}</Text>;" },
+    // Alert with translated text; other `.alert` calls are not React Native's Alert.
+    { code: "Alert.alert(t('title'), t('body'), [{ text: t('ok') }]);" },
+    { code: "window.alert('Hello');" },
+    { code: "logger.alert('Disk full');" },
+    // Option: a narrower prop list.
+    { code: 'const a = <Screen title="Turf" />;', options: [{ props: ['label'] }] },
+  ],
+  invalid: [
+    { code: 'const a = <Text>Start</Text>;', errors: raw },
+    { code: 'const a = <Text>Zacznij spacer</Text>;', errors: raw },
+    { code: 'const a = <Text>{distance} km</Text>;', errors: raw },
+    { code: "const a = <Text>{'Start'}</Text>;", errors: raw },
+    { code: "const a = <View>{gpsLost && 'GPS lost'}</View>;", errors: raw },
+    { code: 'const a = <Text>{`Hi ${name}`}</Text>;', errors: raw },
+    { code: 'const a = <>Hello</>;', errors: raw },
+    { code: 'const a = <Button title="Start" />;', errors: raw },
+    { code: "const a = <Button title={'Start'} />;", errors: raw },
+    { code: 'const a = <Button accessibilityLabel={`Start ${type}`} />;', errors: raw },
+    { code: "const a = <Button label={paused ? 'Resume' : t('pause')} />;", errors: raw },
+    { code: "const a = <Input placeholder={value || 'Search cities'} />;", errors: raw },
+    {
+      code: 'const a = <Tabs.Screen options={{}} headerTitle="Turf" tabBarLabel="Map" accessibilityHint="Opens" />;',
+      errors: [raw[0], raw[0], raw[0]],
+    },
+    { code: 'const a = <Screen title="Turf" label=\'x\' />;', options: [{ props: ['title'] }], errors: raw },
+    { code: "Alert.alert('Delete activity?', `It is gone for good`);", errors: [raw[0], raw[0]] },
+    {
+      code: "Alert.alert(t('title'), undefined, [{ text: 'Cancel', style: 'cancel' }, { text: t('ok') }]);",
+      errors: raw,
     },
   ],
 });

@@ -1,3 +1,5 @@
+import { DomainError } from '@/shared-kernel';
+
 import type { HealthStore } from '../application/ports';
 
 /** No Apple Health here (Android, tests that don't need it): Health Sync does nothing. */
@@ -8,6 +10,6 @@ export const UNAVAILABLE_HEALTH_STORE: HealthStore = {
   routeOf: async () => [],
   findSavedWorkout: async () => null,
   saveWorkout: async () => {
-    throw new Error('Apple Health is not available');
+    throw new DomainError('health.unavailable');
   },
 };

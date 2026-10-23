@@ -1,6 +1,6 @@
 import type { Clock } from '../../../shared-kernel';
 import type { CityView, HomeCityChoice, HomeCityChosen } from '../contract';
-import { type City, cityBounds, searchCities } from '../domain/city';
+import { type City, type CityAliases, cityBounds, searchCities } from '../domain/city';
 import { CITY_CATALOG, cityById, homeCityFromCatalogue } from '../domain/city-catalog';
 import type { HomeCityRepository } from '../domain/home-city-repository';
 
@@ -68,9 +68,12 @@ export class ChooseHomeCity {
   }
 }
 
-/** Catalogue search for the city picker (accent-insensitive; empty query = every city). */
+/**
+ * Catalogue search for the city picker (accent-insensitive; empty query = every city). `aliases`
+ * adds names to match per city id (the app's localised names); views keep the catalogue name.
+ */
 export class SearchCities {
-  execute(query: string): CityView[] {
-    return searchCities(CITY_CATALOG, query).map(toCityView);
+  execute(query: string, aliases?: CityAliases): CityView[] {
+    return searchCities(CITY_CATALOG, query, aliases).map(toCityView);
   }
 }

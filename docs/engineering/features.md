@@ -147,6 +147,11 @@ The Me tab doesn't open a screen: it slides in a drawer from the right with **Pr
 - **Diagnostics**: `sys_diagnostics` timeline without coordinates, read by
   `apps/mobile/tools/device-diagnose.sh` and `apps/mobile/tools/diagnose-recording.mjs`.
 - **OTA**: `expo-updates` checks on load; channel `production`.
+- **Languages**: English and Polish (`apps/mobile/src/i18n/`, catalogue
+  `apps/mobile/messages/<locale>/<namespace>.json`). Info › Language: System (the phone's language),
+  English or Polski, applied at once. Numbers and dates follow the app language (`2,50 km` in
+  Polish); new activities get their default name in the language active when they are created; city
+  search finds Polish and English names. Design: `docs/decisions/mobile-i18n-2026-10-23.md`.
 - **Apple Health sync** (iOS): imports new walks, hikes, runs and rides with routes whenever the app
   comes to the foreground (full history the first time) and saves each new recording to Health with
   its route. No duplicates: `hs_links` remembers every workout in both directions.
@@ -173,6 +178,9 @@ The Me tab doesn't open a screen: it slides in a drawer from the right with **Pr
   aggregate in memory. "All time" undercounts past that.
 - **The live track is re-read in full** from SQLite after each location batch (`GetLiveTrack` in
   `recording/application/use-cases.ts`), so long recordings get slower to draw.
+- **System prompts stay English.** iOS permission prompts (location, Health) and the app's language
+  in iOS Settings need native strings: a later binary release (decision L10 in
+  `docs/decisions/mobile-i18n-2026-10-23.md`). Store listings are English only.
 - **No city coverage.** There is no "% of your city" gauge; what 100 % means is undecided.
 - **The PoC report (M6) isn't written** and the Q4 performance budget (a year of history on a
   mid-range Android) is unmeasured.

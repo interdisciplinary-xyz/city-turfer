@@ -4,13 +4,18 @@ import { ActivityIndicator, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ACCENT, DARK, DISPLAY_CASE, DISPLAY_TRACKING, FONT_FAMILY } from '@/constants/colors';
+import { I18nProvider, useLanguageSetting, useT } from '@/i18n';
 import { AppProvider, useApp } from '@/ui-kit/app-context';
 import { usePalette } from '@/ui-kit/theme';
 
 function Gate() {
   const { auth } = useApp();
+  const [language] = useLanguageSetting();
+  const t = useT('nav');
+  const back = useT('common')('back');
   const p = usePalette();
-  if (auth.status === 'loading') {
+  // The saved language is read alongside the session, so the first screen never flashes in the wrong one.
+  if (auth.status === 'loading' || !language.ready) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: DARK.bg }}>
         <ActivityIndicator color={ACCENT} />
@@ -53,23 +58,38 @@ function Gate() {
         <Stack.Screen name='(tabs)' />
         <Stack.Screen
           name='activity/[id]'
-          options={{ headerShown: true, title: 'Activity', headerBackTitle: 'Back' }}
+          options={{ headerShown: true, title: t('screens.activity'), headerBackTitle: back }}
         />
-        <Stack.Screen name='history' options={{ headerShown: true, title: 'History', headerBackTitle: 'Back' }} />
-        <Stack.Screen name='profile' options={{ headerShown: true, title: 'Profile', headerBackTitle: 'Back' }} />
+        <Stack.Screen
+          name='history'
+          options={{ headerShown: true, title: t('screens.history'), headerBackTitle: back }}
+        />
+        <Stack.Screen
+          name='profile'
+          options={{ headerShown: true, title: t('screens.profile'), headerBackTitle: back }}
+        />
         <Stack.Screen
           name='achievements'
-          options={{ headerShown: true, title: 'Achievements', headerBackTitle: 'Back' }}
+          options={{ headerShown: true, title: t('screens.achievements'), headerBackTitle: back }}
         />
-        <Stack.Screen name='account' options={{ headerShown: true, title: 'Account', headerBackTitle: 'Back' }} />
-        <Stack.Screen name='account-name' options={{ headerShown: true, title: 'Name', headerBackTitle: 'Back' }} />
-        <Stack.Screen name='account-email' options={{ headerShown: true, title: 'Email', headerBackTitle: 'Back' }} />
+        <Stack.Screen
+          name='account'
+          options={{ headerShown: true, title: t('screens.account'), headerBackTitle: back }}
+        />
+        <Stack.Screen
+          name='account-name'
+          options={{ headerShown: true, title: t('screens.accountName'), headerBackTitle: back }}
+        />
+        <Stack.Screen
+          name='account-email'
+          options={{ headerShown: true, title: t('screens.accountEmail'), headerBackTitle: back }}
+        />
         <Stack.Screen
           name='account-password'
-          options={{ headerShown: true, title: 'Account password', headerBackTitle: 'Back' }}
+          options={{ headerShown: true, title: t('screens.accountPassword'), headerBackTitle: back }}
         />
-        <Stack.Screen name='info' options={{ headerShown: true, title: 'Info', headerBackTitle: 'Back' }} />
-        <Stack.Screen name='city' options={{ headerShown: true, title: 'Your city', headerBackTitle: 'Back' }} />
+        <Stack.Screen name='info' options={{ headerShown: true, title: t('screens.info'), headerBackTitle: back }} />
+        <Stack.Screen name='city' options={{ headerShown: true, title: t('screens.city'), headerBackTitle: back }} />
       </Stack.Protected>
     </Stack>
   );
@@ -78,10 +98,12 @@ function Gate() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <AppProvider>
-        <StatusBar style='auto' />
-        <Gate />
-      </AppProvider>
+      <I18nProvider>
+        <AppProvider>
+          <StatusBar style='auto' />
+          <Gate />
+        </AppProvider>
+      </I18nProvider>
     </SafeAreaProvider>
   );
 }

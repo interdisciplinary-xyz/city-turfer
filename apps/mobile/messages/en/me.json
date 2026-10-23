@@ -1,0 +1,12 @@
+{
+  "you": "You",
+  "closeMenu": "Close menu",
+  "headerLabel": "{name}, {email}. Open profile.",
+  "items": {
+    "profile": "Profile",
+    "account": "Account",
+    "city": "City",
+    "info": "Info"
+  },
+  "footerUpdate": "{name} · update {id}"
+}

@@ -1,0 +1,17 @@
+{
+  "tagline": "Surfuj po mieście. Ulice są Twoje.",
+  "emailPlaceholder": "E-mail",
+  "passwordPlaceholder": "Hasło",
+  "accountPasswordPlaceholder": "Hasło do konta",
+  "codePlaceholder": "Kod",
+  "codeSent": "Wysłaliśmy 6-cyfrowy kod na adres {email}. Działa przez 10 minut.",
+  "usePassword": "Użyj hasła",
+  "useCode": "Użyj kodu z e-maila",
+  "submit": "Zaloguj się",
+  "resend": "Wyślij nowy kod",
+  "note": "Twoje aktywności zostają na tym telefonie. Kopia w chmurze jest opcjonalna.",
+  "historyTitle": "Użyć historii z tego telefonu?",
+  "historyText": "Na tym telefonie są już aktywności i turf. Dołączyć je do Twojego konta? Nic nie jest kopiowane: zostają tutaj, ale już jako część Twojego konta.",
+  "keepApart": "Nie dołączaj",
+  "useThem": "Dołącz"
+}
