@@ -184,7 +184,8 @@ describe('consents', () => {
             )
           ),
       }),
-      h.clock
+      h.clock,
+      h.grid
     );
     const lockedBeforeConsent = () => {
       const lock = calls.indexOf('lock');

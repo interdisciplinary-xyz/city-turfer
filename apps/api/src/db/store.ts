@@ -1,3 +1,4 @@
+import type { CellGrid } from '@cityturfer/core/territory/ports';
 import { and, asc, desc, eq, gt, inArray, like, lt, notInArray, or, sql } from 'drizzle-orm';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 
@@ -16,6 +17,8 @@ import type {
 } from '../backup/model';
 import type { BackupStore, UserReader, UserWriter } from '../backup/ports';
 import { emailChangePrefix } from '../identity/codes';
+import { DrizzleTerritoryRepository } from '../territory/drizzle-territory-repository';
+import type { TurfRepository } from '../territory/ports';
 import {
   activities,
   activityTracks,
@@ -81,10 +84,15 @@ const activityRow = (userId: string, a: ActivityRecord) => ({
 
 /** Every query of one user, on a database or inside a transaction. */
 class UserScope implements UserWriter {
+  readonly turf: TurfRepository;
+
   constructor(
     private readonly db: Db,
-    private readonly userId: string
-  ) {}
+    private readonly userId: string,
+    grid: CellGrid
+  ) {
+    this.turf = new DrizzleTerritoryRepository(db, userId, grid);
+  }
 
   async user(): Promise<UserRecord | null> {
     const [row] = await this.db.select().from(users).where(eq(users.id, this.userId));
@@ -323,6 +331,13 @@ class UserScope implements UserWriter {
       .where(scope === 'all' ? mine : and(mine, or(like(activities.id, 'hk-%'), eq(activities.source, 'apple-health'))))
       .returning({ id: activities.id });
     if (scope === 'all') {
+      // The claims went with their activities; the Turf Cells go too.
+      await this.turf.eraseAll();
+    } else if (gone.length > 0) {
+      // Their claims went with them (cascade): recompute the cells, first claimers included.
+      await this.turf.rebuildAll();
+    }
+    if (scope === 'all') {
       // Tombstones stay (ids and times only, no location data): delete wins (D5) across a
       // withdrawal, so a phone still holding a deleted activity gets 410 instead of re-uploading
       // it. They go with the account (eraseAccount).
@@ -354,10 +369,14 @@ class UserScope implements UserWriter {
 
 /** The BackupStore adapter over Drizzle. Queries always carry the user id (multi-tenant). */
 export class DrizzleBackupStore implements BackupStore {
-  constructor(private readonly db: Db) {}
+  /** `grid`: Territory's CellGrid (H3 from src/wiring.ts), for the turf repository's areas and centroids. */
+  constructor(
+    private readonly db: Db,
+    private readonly grid: CellGrid
+  ) {}
 
   read(userId: string): UserReader {
-    return new UserScope(this.db, userId);
+    return new UserScope(this.db, userId, this.grid);
   }
 
   /**
@@ -367,7 +386,7 @@ export class DrizzleBackupStore implements BackupStore {
    * level (REPEATABLE READ) would keep the reads from before the lock wait.
    */
   write<T>(userId: string, fn: (tx: UserWriter) => Promise<T>): Promise<T> {
-    return this.db.transaction((tx) => fn(new UserScope(tx as unknown as Db, userId)), {
+    return this.db.transaction((tx) => fn(new UserScope(tx as unknown as Db, userId, this.grid)), {
       isolationLevel: 'read committed',
     });
   }
@@ -385,8 +404,8 @@ export class DrizzleBackupStore implements BackupStore {
       await tx
         .delete(authVerifications)
         .where(like(authVerifications.identifier, `${likeEscaped(emailChangePrefix(userId))}%`));
-      // Everything else hangs off users (ON DELETE CASCADE): consents, activities → tracks and gap
-      // routes, tombstones, the Home City, exports. Sessions and the password (auth_accounts) went
+      // Everything else hangs off users (ON DELETE CASCADE): consents, activities → tracks, gap
+      // routes and turf claims, Turf Cells, tombstones, the Home City, exports. Sessions and the password (auth_accounts) went
       // with auth_users.
       await tx.delete(users).where(eq(users.id, userId));
     });

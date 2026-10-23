@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 
+import { H3CellGrid } from '@cityturfer/core/h3';
 import { sql } from 'drizzle-orm';
 
 import { createApp } from '../app';
@@ -81,7 +82,8 @@ export async function backupApp(
   await emptyTables(db);
   // The shared database outlives each test; `closeSharedDb()` closes it once per file.
   const close = async () => undefined;
-  const store = new DrizzleBackupStore(db);
+  const grid = new H3CellGrid();
+  const store = new DrizzleBackupStore(db, grid);
   const clock = { t: Date.parse('2026-10-20T08:00:00Z'), now: () => clock.t };
   const mailer = options.mailer ?? new MemoryMailer();
   const auth = createAuth({
@@ -118,6 +120,7 @@ export async function backupApp(
       clock,
       log,
       store,
+      grid,
       identity,
       accounts,
       exports: new ExportService(
@@ -163,7 +166,7 @@ export async function backupApp(
     });
     return ((await res.json()) as { token: string }).token;
   };
-  return { app, store, db, clock, call, close, mailer, auth, identity, accounts, breached, signIn };
+  return { app, store, grid, db, clock, call, close, mailer, auth, identity, accounts, breached, signIn };
 }
 
 /** A made-up run around Warsaw Old Town (public landmark): `n` points, 3 s and ~7 m apart. */

@@ -1,5 +1,7 @@
 import { catalogueCityView } from '@cityturfer/core/territory';
+import type { CellGrid } from '@cityturfer/core/territory/ports';
 
+import { TurfProjection } from '../territory/projection';
 import { AppError } from './app-error';
 import { contentHashOf, trackHashOf } from './hashing';
 import type {
@@ -15,7 +17,7 @@ import type {
   StoredGapRoute,
   UserRecord,
 } from './model';
-import type { BackupStore, UserReader } from './ports';
+import type { BackupStore, UserReader, UserWriter } from './ports';
 import { gapTotals, renamed, summarizeUpload } from './summary';
 
 /**
@@ -75,10 +77,17 @@ export interface UploadInput {
 }
 
 export class BackupService {
+  /** `grid`: Territory's CellGrid (H3, from src/wiring.ts): the server claims turf from uploads. */
   constructor(
     private readonly store: BackupStore,
-    private readonly clock: Clock
+    private readonly clock: Clock,
+    private readonly grid: CellGrid
   ) {}
+
+  /** The user's turf projection inside this write's transaction (after `lock()`). */
+  private turf(tx: UserWriter): TurfProjection {
+    return new TurfProjection({ repo: tx.turf, grid: this.grid, clock: this.clock, storedTrack: (id) => tx.track(id) });
+  }
 
   // ------------------------------------------------------------------ Identity and consents
 
@@ -122,7 +131,9 @@ export class BackupService {
   /**
    * UploadActivity: create (201), replay (200, unchanged), replace with `If-Match` (200, version
    * + 1; 428 without it, 412 when stale), 410 after a delete. The summary is recomputed with the
-   * core; a `trackHash` the client sent must match the canonical one (422).
+   * core; a `trackHash` the client sent must match the canonical one (422). Turf is claimed from
+   * the track in the same transaction: on create, and again (reclaim) when the track, type or
+   * start changed; a replay does no turf work. A start in the future is stored unclaimed.
    */
   async upload(
     userId: string,
@@ -182,8 +193,10 @@ export class BackupService {
         updatedAt: now,
         changeSeq: await tx.nextSeq(),
       };
+      const turf = this.turf(tx);
       if (!existing) {
         await tx.insertActivity(record, input.points);
+        await turf.claim(record, input.points);
         return { created: true, activity: record };
       }
       if (trackChanged) {
@@ -191,6 +204,12 @@ export class BackupService {
         await tx.updateActivity(record, input.points);
       } else {
         await tx.updateActivity(record);
+      }
+      if (trackChanged || existing.type !== record.type || existing.startedAt !== record.startedAt) {
+        await turf.reclaim(record, input.points);
+      } else {
+        // Same turf: claims only if it never was (deferred or before the backfill); else a no-op.
+        await turf.claim(record, input.points);
       }
       return { created: false, activity: record };
     });
@@ -246,8 +265,8 @@ export class BackupService {
   }
 
   /**
-   * DeleteActivity: removes the activity, its track and gap routes and leaves a tombstone
-   * (delete wins, D5). Idempotent. Allowed without consent: it only removes data.
+   * DeleteActivity: removes the activity, its track, gap routes and turf claim and leaves a
+   * tombstone (delete wins, D5). Idempotent. Allowed without consent: it only removes data.
    */
   async remove(userId: string, id: string): Promise<void> {
     await this.store.write(userId, async (tx) => {
@@ -256,6 +275,8 @@ export class BackupService {
         return;
       }
       const changeSeq = await tx.nextSeq();
+      // Release first: the cascade would drop the claim and with it the cells to recompute.
+      await this.turf(tx).release(id);
       await tx.deleteActivity(id);
       await tx.putTombstone({ activityId: id, deletedAt: this.clock.now(), changeSeq });
     });
@@ -363,6 +384,20 @@ export class BackupService {
       nextCursor: encodeCursor({ seq: changes.at(-1)?.seq ?? after }),
       hasMore: rows.length > changes.length,
     };
+  }
+
+  // ------------------------------------------------------------------ Turf
+
+  /**
+   * CatchUpTurf: claims up to `limit` of the user's activities that have no claim yet (deferred
+   * future starts; the backfill of activities uploaded before the server claimed turf), oldest
+   * first, under the user lock. Idempotent.
+   */
+  catchUpTurf(userId: string, limit: number): Promise<{ claimed: number; deferred: number }> {
+    return this.store.write(userId, async (tx) => {
+      await tx.lock();
+      return this.turf(tx).claimMissing(limit);
+    });
   }
 
   // ------------------------------------------------------------------ Home City

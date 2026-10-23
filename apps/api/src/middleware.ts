@@ -232,8 +232,8 @@ export const requireStore: MiddlewareHandler<AppEnv> = async (c, next) => {
       headers: { 'WWW-Authenticate': 'Bearer error="invalid_token"' },
     });
   }
-  const { store } = deps;
-  if (!store) {
+  const { store, grid } = deps;
+  if (!store || !grid) {
     return problem(c, 'storage.unavailable', 'No database is configured.');
   }
   const userId = principal.userId;
@@ -252,6 +252,6 @@ export const requireStore: MiddlewareHandler<AppEnv> = async (c, next) => {
     seen.add(userId);
   }
   c.set('userId', userId);
-  c.set('backup', new BackupService(store, deps.clock));
+  c.set('backup', new BackupService(store, deps.clock, grid));
   return next();
 };

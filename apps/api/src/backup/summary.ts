@@ -14,6 +14,11 @@ import type {
 /** Version of the shared core that computes the numbers (answered as `coreVersion`). */
 export const CORE_VERSION: string = corePackage.version;
 
+/** Compact upload points `[lon, lat, t, segment, alt]` as the shared kernel's Track Points. */
+export function toTrackPoints(points: readonly CompactPoint[]): TrackPoint[] {
+  return points.map(([lon, lat, t, segment, alt]) => ({ lon, lat, t, segment, alt, accuracy: null, speed: null }));
+}
+
 /**
  * Runs the Activity Log's own rules on an upload: `Activity.record` (track at least two points,
  * end not before start; distance, moving time, splits, elevation, bbox and preview from the
@@ -31,15 +36,7 @@ export function summarizeUpload(input: {
   points: readonly CompactPoint[];
   now: number;
 }): { name: string; summary: StoredSummary } {
-  const points: TrackPoint[] = input.points.map(([lon, lat, t, segment, alt]) => ({
-    lon,
-    lat,
-    t,
-    segment,
-    alt,
-    accuracy: null,
-    speed: null,
-  }));
+  const points = toTrackPoints(input.points);
   const activity = Activity.record({
     id: input.id,
     type: input.type,

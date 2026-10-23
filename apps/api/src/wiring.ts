@@ -1,3 +1,5 @@
+import { H3CellGrid } from '@cityturfer/core/h3';
+
 import { deviceTokenAuth, parseApiTokens } from './auth/device-tokens';
 import { MIN_WEB_EDGE_SECRET_LENGTH } from './client-ip';
 import { DrizzleAccountRepository } from './db/accounts';
@@ -247,9 +249,11 @@ export function productionDeps(env: NodeJS.ProcessEnv, overrides: WiringOverride
     })}\n`
   );
   const devices = deviceTokenAuth(tokens.entries);
-  const store = db ? new DrizzleBackupStore(db) : null;
+  const grid = new H3CellGrid();
+  const store = db ? new DrizzleBackupStore(db, grid) : null;
   return {
     ...base,
+    grid,
     auth: identity ? compositeVerifier(devices, identity.verifier) : devices,
     store,
     identity,

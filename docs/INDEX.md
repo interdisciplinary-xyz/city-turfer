@@ -148,6 +148,11 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   Stopgap for the first live backup — secret device tokens (API_TOKENS holds only SHA-256 hashes)
   instead of Better Auth, one-way backup phone → server on Neon Postgres via Drizzle, canonical
   trackHash computed by the server (contract 0.3.0)
+- ✅ [`decisions/api-server-turf-2026-10-23.md`](decisions/api-server-turf-2026-10-23.md): The
+  server derives turf from uploaded tracks with core's own use cases, in the upload's locked
+  transaction — tables turf_claims (cells as text[]) and turf_cells (per-type counts, canonical
+  first claimer D4, COLLATE "C"), users.turf_version, no decay stored, future starts deferred,
+  export excluded for v0.10.0; phase 1 (projection), routes are phase 2
 - ✅ [`decisions/api-sync-2026-10-20.md`](decisions/api-sync-2026-10-20.md): Sync-first v1 API
   contract — the phone pushes Activities (versions, ETags, If-Match, tombstones) and pulls one
   changes feed; route table, sync protocol, error catalogue and the founder's decisions D1–D13;

@@ -55,7 +55,7 @@ describe('GET /v1/sync/changes entries', () => {
     for (let i = 0; i < 5; i++) {
       await h.call('PUT', `/v1/activities/w${i}`, { body: activity(i) });
     }
-    const service = new BackupService(h.store, h.clock);
+    const service = new BackupService(h.store, h.clock, h.grid);
     const budget = { maxBytes: 250, sizeOf: () => 100 };
     const first = await service.changes('admin', { limit: 50 }, budget);
     expect(first.changes).toHaveLength(2);
@@ -89,7 +89,7 @@ describe('feed paging across byte-budget cuts', () => {
         });
       }
     }
-    const service = new BackupService(h.store, h.clock);
+    const service = new BackupService(h.store, h.clock, h.grid);
     const all = await service.changes('admin', { limit: 500 });
     // Uneven sizes (tombstones small, Home City medium, upserts large) cut pages at odd places.
     const sizeOf = (c: { kind: string }) => ({ activity: 300, tombstone: 80, 'home-city': 150 })[c.kind] ?? 100;

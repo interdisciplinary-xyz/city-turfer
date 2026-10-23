@@ -1,3 +1,4 @@
+import type { TurfRepository } from '../territory/ports';
 import type {
   ActivityRecord,
   ActivityTypeName,
@@ -12,6 +13,11 @@ import type {
 
 /** Reads scoped to one user: every query filters on the user id (object-level authorisation). */
 export interface UserReader {
+  /**
+   * The user's turf projection, on the same connection or transaction as this reader: inside
+   * `write` after `lock()`, claims commit with the activity they come from.
+   */
+  readonly turf: TurfRepository;
   user(): Promise<UserRecord | null>;
   consents(): Promise<ConsentRecord[]>;
   activity(id: string): Promise<ActivityRecord | null>;
@@ -59,7 +65,9 @@ export interface UserWriter extends UserReader {
    * Apple Health activities (`hk-…` or source `apple-health`) with their tracks and gap routes;
    * `all` removes every activity, track, gap route and the Home City. Existing tombstones stay (ids
    * and times, no location data: delete wins across a withdrawal, D5). Either way the
-   * user's stored export files go and their exports expire (they copy that data). Returns how many
+   * user's stored export files go and their exports expire (they copy that data). Turf follows:
+   * `all` deletes every claim and Turf Cell, `apple-health` rebuilds the cells from the claims that
+   * remain (nothing derived from Apple Health stays, first claimers included). Returns how many
    * activities went.
    */
   eraseBackup(scope: 'apple-health' | 'all'): Promise<number>;
