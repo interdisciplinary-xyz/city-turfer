@@ -54,6 +54,18 @@ export interface TurfSummaryView {
   byType: Record<ActivityType, number>; // cells touched per type
 }
 
+/** One Turf Cell's visit counts per type: `[h3Id, walk, run, cycle]` (no coordinates, no time). */
+export type TurfCellCounts = [id: string, walk: number, run: number, cycle: number];
+
+/** A page of the Turfer's Turf Cells, sorted by id (JS string order). */
+export interface TurfCellPage {
+  cells: TurfCellCounts[];
+  /** Cells in the whole projection (not just this page). */
+  total: number;
+  /** Offset of the next page, or null when this page is the last. */
+  nextOffset: number | null;
+}
+
 export interface ClaimView {
   activityId: string;
   cellCount: number;

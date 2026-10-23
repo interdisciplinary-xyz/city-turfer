@@ -11,19 +11,32 @@ import {
   GetClaimForActivity,
   GetTurfInViewport,
   GetTurfSummary,
+  ListTurfCells,
   ReclaimTurfOfActivity,
   ReleaseTurfOfActivity,
   type TerritoryDeps,
 } from './application/use-cases';
 
-export function createTerritoryApi(deps: TerritoryDeps & HomeCityDeps) {
+/**
+ * The turf use cases alone (claims, the projection's reads), without the Home City: what a server
+ * projection needs. `createTerritoryApi` is this plus the viewport query and the Home City.
+ */
+export function createTurfApi(deps: TerritoryDeps) {
   return {
     claimFromActivity: new ClaimTurfFromActivity(deps),
     release: new ReleaseTurfOfActivity(deps),
     reclaim: new ReclaimTurfOfActivity(deps),
-    viewport: new GetTurfInViewport(deps),
     summary: new GetTurfSummary(deps),
     claimOf: new GetClaimForActivity(deps),
+    cells: new ListTurfCells(deps),
+  };
+}
+export type TurfApi = ReturnType<typeof createTurfApi>;
+
+export function createTerritoryApi(deps: TerritoryDeps & HomeCityDeps) {
+  return {
+    ...createTurfApi(deps),
+    viewport: new GetTurfInViewport(deps),
     homeCity: new GetHomeCity(deps),
     homeCityChoice: new HomeCityChoiceQuery(deps),
     chooseHomeCity: new ChooseHomeCity(deps),

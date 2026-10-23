@@ -100,6 +100,19 @@ export class SqliteTerritoryRepository implements TerritoryRepository {
         [activityId]
       );
       await tx.run('DELETE FROM ter_cells WHERE visits <= 0');
+      // Surviving cells take first_at / last_at from the claims that remain: the released claim may
+      // have been their earliest (or latest) one. Keeps "new this week / month" right after a delete.
+      await tx.run(
+        `UPDATE ter_cells SET first_at = m.first_at, last_at = m.last_at
+         FROM (
+           SELECT cc.cell AS cell, MIN(c.claimed_at) AS first_at, MAX(c.claimed_at) AS last_at
+           FROM ter_claim_cells cc JOIN ter_claims c ON c.activity_id = cc.activity_id
+           WHERE cc.activity_id != ? AND cc.cell IN (SELECT cell FROM ter_claim_cells WHERE activity_id = ?)
+           GROUP BY cc.cell
+         ) AS m
+         WHERE ter_cells.cell = m.cell`,
+        [activityId, activityId]
+      );
       await tx.run('DELETE FROM ter_claim_cells WHERE activity_id = ?', [activityId]);
       await tx.run('DELETE FROM ter_claims WHERE activity_id = ?', [activityId]);
       await appendToOutbox(tx, [event], now);

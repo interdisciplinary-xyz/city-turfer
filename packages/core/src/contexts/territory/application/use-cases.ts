@@ -4,10 +4,11 @@ import {
   type ActivityType,
   type BoundingBox,
   type Clock,
+  DomainError,
   trackFromPoints,
   type TrackPoint,
 } from '../../../shared-kernel';
-import type { ClaimView, TurfCellView, TurfSummaryView } from '../contract';
+import type { ClaimView, TurfCellCounts, TurfCellPage, TurfCellView, TurfSummaryView } from '../contract';
 import type { CellGrid, CellId } from '../domain/cell-grid';
 import { Claim } from '../domain/claim';
 import { isStrong, strengthOf, tierOf } from '../domain/strength';
@@ -186,5 +187,25 @@ export class GetClaimForActivity {
       newAreaKm2: c.newAreaM2 / 1e6,
       cells: c.cells.map((x) => ({ id: x.cell, isNew: x.isNew, ring: ring(this.d.grid, x.cell) })),
     };
+  }
+}
+
+/**
+ * Every Turf Cell's per-type visit counts, a page at a time, sorted by cell id (JS string order,
+ * stable across calls while the projection is unchanged). Visits, strength and tier derive from the
+ * counts on the reader's side (`strengthOf`, `tierOf`).
+ */
+export class ListTurfCells {
+  constructor(private readonly d: Pick<TerritoryDeps, 'repo'>) {}
+  async execute(page: { offset: number; limit: number }): Promise<TurfCellPage> {
+    const { offset, limit } = page;
+    if (!Number.isInteger(offset) || offset < 0 || !Number.isInteger(limit) || limit < 1) {
+      throw new DomainError('turf.invalid-page');
+    }
+    const rows = await this.d.repo.allCells();
+    rows.sort((a, b) => (a.cell < b.cell ? -1 : a.cell > b.cell ? 1 : 0));
+    const cells = rows.slice(offset, offset + limit).map((r): TurfCellCounts => [r.cell, r.walk, r.run, r.cycle]);
+    const end = offset + cells.length;
+    return { cells, total: rows.length, nextOffset: end < rows.length ? end : null };
   }
 }
