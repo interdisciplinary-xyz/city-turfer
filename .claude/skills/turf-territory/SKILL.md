@@ -1,9 +1,10 @@
 ---
 name: turf-territory
 description: >-
-  Use for turf: Claims, H3 Turf Cells, Strength, the Territory projection, viewport queries, Turf
-  Map and Record-map turf layers, Home City, "turf gained", turf tuning or performance. Code:
-  packages/core/src/contexts/territory/, packages/core/src/h3/, apps/mobile/src/contexts/territory/.
+  Use for turf: Claims, H3 Turf Cells, Strength, the Territory projection (phone and server),
+  viewport, Turf Map layers, Home City, "turf gained", parity golden, tuning. Code:
+  packages/core/src/contexts/territory/, packages/core/src/h3/, apps/mobile/src/contexts/territory/,
+  apps/api/src/territory/.
 ---
 
 # Turf & Territory
@@ -16,7 +17,8 @@ Reference implementation of the formula: `apps/mobile/tools/lib/turf.mjs` (used 
 `packages/core/src/contexts/territory/` (`@cityturfer/core/territory`; adapters import
 `@cityturfer/core/territory/ports`). The SQLite projection (`SqliteTerritoryRepository`,
 `SqliteHomeCityRepository`), the overlay preference and the Turf Map UI stay in
-`apps/mobile/src/contexts/territory/`. The server will claim turf with the same core code.
+`apps/mobile/src/contexts/territory/`. The server keeps its own projection with the same core use
+cases (`createTurfApi`) in `apps/api/src/territory/`: see "Server turf" below.
 
 ## Model in one picture
 
@@ -194,6 +196,50 @@ After Finish, and on the activity detail: `GetClaimForActivity` → "+0.12 km² 
 reinforced", plus a mini-map of only that claim's cells (new cells highlighted). Use plain, exact
 numbers. Don't invent gamified scores that aren't in the model.
 
+## Server turf (`apps/api/src/territory/`, contract 0.6.0)
+
+Decision: `docs/decisions/api-server-turf-2026-10-23.md`; routes and deploy order: the `api-design`
+skill.
+
+- **Same rules, other store.** `TurfProjection` (`projection.ts`) runs `createTurfApi(deps)` from
+  `@cityturfer/core/territory` (claim, release, reclaim, summary, claimOf, `ListTurfCells`; no
+  viewport, no Home City) over `DrizzleTerritoryRepository` (`drizzle-territory-repository.ts`,
+  tables `turf_claims` with `cells text[]` and `turf_cells` with per-type counts, migration
+  `0005_turf`) and the `H3CellGrid` built once in `apps/api/src/wiring.ts`. `TurfService`
+  (`turf-service.ts`) serves the reads; `backfill.ts` claims activities uploaded before.
+- It runs **inside the upload's locked transaction** (upload, replace, delete, consent withdrawal);
+  no events, no outbox (`afterCommit` is a no-op).
+- **No decay and no `last_at` stored** on the server; strength is computed on read, as on the phone.
+- **D4, canonical first claimer:** a cell is _new_ for the claim with the earliest
+  `(claimedAt, activityId)`, ids in JS string order (`COLLATE "C"` in every SQL comparison: Neon may
+  be linguistic). Releasing a claim recomputes `first_*` from the remaining claims (the phone's
+  `releaseClaim` now also recomputes `first_at` / `last_at`).
+- **Known gap (by design):** phone and server agree on the summary and every cell (counts,
+  `firstAt`), **not** on a claim's "new" cells (`isNew`, `newCellCount`, `newAreaKm2`): the phone
+  fixes them at arrival and never revises them. Pinned by the "known gap" case in
+  `apps/mobile/src/contexts/territory/infrastructure/__tests__/turf-parity.test.ts`. The web takes
+  "new turf" from the server (`/v1/turf/claims/…`), never from the phone's card.
+- **`ListTurfCells`** pages every cell `[h3Id, walk, run, cycle]` sorted by id (JS order) by offset;
+  the API wraps the offset in a version-bound cursor (never a cell id: cell ids are location data).
+
+### Phone/server parity golden (G2)
+
+`packages/core/src/contexts/territory/__fixtures__/turf-parity.json` (operations on synthetic Gdańsk
+landmark tracks) and `turf-parity.expected.json` (per cell counts and `firstAt` by D4, the summary
+at a fixed `now`, each surviving claim's canonical new cells), both built by
+`turf-parity.generate.ts`. Asserted by core
+(`packages/core/src/contexts/territory/application/__tests__/turf-parity.test.ts`, which also checks
+the committed files equal the generator's output), the phone (SQLite repository, test above) and the
+API (`apps/api/src/__tests__/turf-parity.test.ts`). After a deliberate change to claims, strength or
+the generator, regenerate and review the diff:
+
+```bash
+WRITE_TURF_PARITY=1 pnpm --filter @cityturfer/core exec jest turf-parity
+pnpm exec prettier --write packages/core/src/contexts/territory/__fixtures__
+```
+
+Never regenerate to make a failing phone or API test pass: that hides drift between the two stores.
+
 ## Tuning workflow
 
 ```bash
@@ -211,4 +257,5 @@ Claim: no skipped cells on a fast cycle fixture · a cell counted once per activ
 across a segment gap · empty track rejected. Strength matches the vectors · a cell never disappears
 except when every Claim containing it is released. The projection is identical after (a) an in-order
 import, (b) a reverse-order import, (c) a delete followed by rebuild. Claiming a 2-hour ride takes <
-300 ms. A viewport query over a seeded year stays under the budget.
+300 ms. A viewport query over a seeded year stays under the budget. The parity golden passes in
+core, the phone and the API.

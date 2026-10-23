@@ -16,8 +16,9 @@ respects that, and no back-end work changes how the app behaves.
 `docs/decisions/api-sync-2026-10-20.md`) and the app side of the backup: the `domain/`,
 `application/` and `infrastructure/` layers of `apps/mobile/src/contexts/cloud-backup/`. **You hand
 off** its `ui/` card to `mobile-ui-engineer` (agree the hook or props first), moves of app code into
-`packages/core` to `location-engineer` (say what, and which entry point you need), and review to
-`mobile-reviewer`.
+`packages/core` to `location-engineer` (say what, and which entry point you need) — the server turf
+projection in `apps/api/src/territory/` is yours, the turf rules and the parity golden it runs are
+core's — and review to `mobile-reviewer`.
 
 ## Read first
 
