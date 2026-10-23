@@ -705,11 +705,20 @@ describe('client IP for the sign-in limits', () => {
 });
 
 describe('WEB_ORIGIN', () => {
-  it('defaults to the local site off Vercel, is off on Vercel when unset, and must be a bare https origin', () => {
+  it('defaults to the local site off Vercel, is off on Vercel when unset or without the edge secret, and must be a bare https origin', () => {
     expect(webOriginOf({})).toBe(DEV_WEB_ORIGIN);
     expect(webOriginOf({ VERCEL_ENV: 'preview' })).toBeNull();
-    expect(webOriginOf({ VERCEL_ENV: 'production', WEB_ORIGIN: 'https://cityturfer.app/' })).toBe(
+    const edge = { WEB_EDGE_SECRET: 'e'.repeat(32) };
+    expect(webOriginOf({ VERCEL_ENV: 'production', WEB_ORIGIN: 'https://cityturfer.app/', ...edge })).toBe(
       'https://cityturfer.app'
+    );
+    // On Vercel without the edge secret, every visitor would share the website edge's IP bucket.
+    expect(webOriginOf({ VERCEL_ENV: 'preview', WEB_ORIGIN: 'https://web-git-x.vercel.app' })).toBeNull();
+    expect(
+      webOriginOf({ VERCEL_ENV: 'preview', WEB_ORIGIN: 'https://web-git-x.vercel.app', WEB_EDGE_SECRET: 'short' })
+    ).toBeNull();
+    expect(webOriginOf({ VERCEL_ENV: 'preview', WEB_ORIGIN: 'https://web-git-x.vercel.app', ...edge })).toBe(
+      'https://web-git-x.vercel.app'
     );
     for (const bad of ['http://cityturfer.app', 'https://cityturfer.app/en', 'cityturfer.app', '*']) {
       expect(() => webOriginOf({ WEB_ORIGIN: bad })).toThrow(ConfigError);

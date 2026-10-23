@@ -35,7 +35,8 @@ import { LOCAL_API_PORT } from './spec';
  *   new-address codes) — never in production (boot fails); real addresses always get random codes.
  * - `WEB_ORIGIN` (`https://…`, no path): the website whose `/api/v1/*` rewrite reaches this API.
  *   Browser sign-in and cookie writes must come from it (CSRF guard). Off Vercel it defaults to
- *   https://cityturfer.local; on Vercel, unset → browser sessions are off (phones unaffected).
+ *   https://cityturfer.local; on Vercel, unset or without WEB_EDGE_SECRET → browser sessions are
+ *   off (phones unaffected).
  * - `WEB_EDGE_SECRET` (≥ 32 characters): the same value as on the website's Vercel project, whose
  *   `/api/v1/*` route sends it in the `cityturfer-edge` header; only then is the visitor's
  *   `x-vercel-forwarded-for` trusted for the per-IP sign-in limits (src/client-ip.ts). Required in
@@ -145,7 +146,9 @@ export function cronSecretOf(env: NodeJS.ProcessEnv): string | null {
 /**
  * WEB_ORIGIN as an origin (`https://host[:port]`), or the local site off Vercel, or null (browser
  * sessions off). A value that is not a bare https origin fails the boot: a typo would otherwise
- * refuse every browser silently.
+ * refuse every browser silently. On Vercel it also needs WEB_EDGE_SECRET (production fails the
+ * boot without it, `checkProductionEnv`): without the secret every website visitor would arrive
+ * from the website edge's address and share one per-IP sign-in bucket, so browser sessions stay off.
  */
 export function webOriginOf(env: NodeJS.ProcessEnv): string | null {
   const raw = env.WEB_ORIGIN?.trim();
@@ -160,6 +163,9 @@ export function webOriginOf(env: NodeJS.ProcessEnv): string | null {
   }
   if (!url || url.protocol !== 'https:' || url.origin !== raw.replace(/\/+$/, '')) {
     throw new ConfigError('WEB_ORIGIN must be an https origin without a path, e.g. https://example.com.');
+  }
+  if (env.VERCEL_ENV && !webEdgeSecretOf(env)) {
+    return null;
   }
   return url.origin;
 }
