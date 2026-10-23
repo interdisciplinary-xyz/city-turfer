@@ -30,12 +30,12 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   `docs/decisions/api-device-tokens-2026-10-20.md`.
 - **Server turf (contract 0.6.0):** `apps/api/src/territory/` — `TurfProjection` (core's
   `createTurfApi` over `DrizzleTerritoryRepository`, tables `turf_claims` / `turf_cells`,
-  `users.turf_version`, migration `0005_turf`), `TurfService` (reads), `backfill.ts`, `rebuild.ts`.
-  The projection is written in the **same locked transaction** as upload, replace, delete and
-  consent withdrawal (a replay changes nothing; only `claim.in-future` is swallowed: stored
-  unclaimed, caught up later). Canonical first claimer per cell (D4) with `COLLATE "C"` on every id
-  comparison; no decay stored. Rules: the `turf-territory` skill; decision
-  `docs/decisions/api-server-turf-2026-10-23.md`.
+  `users.turf_version`, migrations `0005_turf`, `0006_turf_claim_track_hash`), `TurfService`
+  (reads), `backfill.ts`, `rebuild.ts`. The projection is written in the **same locked transaction**
+  as upload, replace, delete and consent withdrawal (a replay changes nothing; only
+  `claim.in-future` is swallowed: stored unclaimed, caught up later). Canonical first claimer per
+  cell (D4) with `COLLATE "C"` on every id comparison; no decay stored. Rules: the `turf-territory`
+  skill; decision `docs/decisions/api-server-turf-2026-10-23.md`.
 - Routes per bounded context in `apps/api/src/routes/<context>.ts` (identity, privacy, sync,
   activities, territory, and `platform` for `GET /v1/health`), records → JSON mappers in
   `apps/api/src/routes/dto.ts`, declared through `defineRoute()` (`routes/define.ts`) with
@@ -72,15 +72,17 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   `renamedAt` (like the Home City on `chosenAt`); more than 5 min ahead of the server → 422.
   `GET /v1/activities` filters by `startedAfter` (inclusive) / `startedBefore` (exclusive);
   `GET /v1/activity-totals` sums recorded + gap-estimated distance like the phone's stats.
-- **Turf reads:** `GET /v1/turf/cells` pages every cell (`[h3Id, walk, run, cycle]`, 20,000 per
-  page, ≤ 50,000; the web draws locally, no bbox route), `GET /v1/turf/summary` (`no-store`, depends
-  on now), `GET /v1/turf/claims/{activityId}` (canonical "new" cells; 404 without a claim). The
-  cells **cursor never holds a cell id** (location data in URLs and logs): it is base64url
-  `{ v, c, o }` = turf version, account `createdAt` (base 36), offset. A cursor from another version
-  or account incarnation → **410 `turf.changed`** (start again; not `sync.cursor-expired`, which
-  belongs to the changes feed). ETag `"t<turfVersion>-<createdAt base 36>"` read first, so
-  `If-None-Match` → 304 without loading rows; `private, no-store` (location data never in a browser
-  cache: shared computers; the ETag serves clients that keep the cells in memory).
+- **Turf reads:** `GET /v1/turf/cells` pages every cell (`[h3Id, walk, run, cycle]`, 50,000 per page
+  by default and at most, paged in SQL; the web draws locally, no bbox route),
+  `GET /v1/turf/summary` (`no-store`, depends on now), `GET /v1/turf/claims/{activityId}` (canonical
+  "new" cells; 404 without a claim). The cells **cursor never holds a cell id** (location data in
+  URLs and logs): it is base64url `{ v, c, o }` = turf version, opaque account epoch (hash, never
+  `createdAt`), offset. A cursor from another version or account incarnation → **410
+  `turf.changed`** (start again; not `sync.cursor-expired`, which belongs to the changes feed); a
+  first page the turf keeps changing under → **503 `turf.busy`** + `Retry-After`. ETag
+  `"t<turfVersion>-<epoch>"` read first, so `If-None-Match` → 304 without loading rows, **on the
+  first page only**; `private, no-store` (location data never in a browser cache: shared computers;
+  the ETag serves clients that keep the cells in memory).
 - **JSON:** camelCase. Units are SI with a suffix, like the domain: `distanceM`, `movingS`,
   `areaKm2` only where the domain already uses km². Timestamps are **ISO 8601 UTC strings**
   (`startedAt: "2026-10-19T07:12:00Z"`, `z.iso.datetime()`); an Activity may carry its IANA
@@ -187,15 +189,17 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   and the spec, purges expired exports, codes, sessions and rate-limit rows). Unexpected errors log
   one sanitised `request.error` line (`describeError`, never the message). Runbook:
   `docs/operations/api-deploy.md`.
-- **Server turf rollout** (`docs/operations/api-deploy.md`, "Server turf"): migrate `0005_turf`
-  **before** the merge that deploys 0.6.0 (it reads `users.turf_version`: else `/v1/me`, uploads and
-  turf 500), deploy, then the founder runs
+- **Server turf rollout** (`docs/operations/api-deploy.md`, "Server turf"): migrate `0005_turf` and
+  `0006_turf_claim_track_hash` **before** the merge that deploys 0.6.0 (it reads
+  `users.turf_version`: else `/v1/me`, uploads and turf 500), deploy, then the founder runs
   `turf:backfill -- [--user <id>] [--dry-run] [--max <n>] [--minutes <n>]` (one activity per locked
   transaction, idempotent, resumable, bounded, counts only; activities without a track are
   `skipped`, never attempted), and only then ship the web turf map. The daily retention cron also
   catches up ≤ 25 unclaimed activities (~60 s) after the purge. After any rollback to 0.5.0:
-  `turf:rebuild -- [--user <id>] [--dry-run]` before the backfill (0.5.0 leaves cells of deleted
-  activities). Background jobs lock with `lockExisting()` (never re-create an erased account).
+  `turf:rebuild -- [--user <id>] [--dry-run]` straight after the redeploy, before the backfill and
+  the web turf pages (0.5.0 leaves cells of deleted activities, and claims of tracks it replaced in
+  place: the claim's `track_hash` finds them). Background jobs lock with `lockExisting()` (never
+  re-create an erased account).
 - **Support (no admin panel):** `user:find -- <id|email>` (no coordinates; turf claim counts) and
   `user:delete -- <id> [--yes]` (same erase as `DELETE /v1/me`; dry run without `--yes`).
 - **Codes locally:** the dev server prints them (ConsoleMailer); tests read them from MemoryMailer

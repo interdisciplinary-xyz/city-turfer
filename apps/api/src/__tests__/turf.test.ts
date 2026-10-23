@@ -225,7 +225,7 @@ describe('turf on upload', () => {
     etag = await putOk('a1', body(moved, { type: 'cycle' }), etag);
     expect((await claimOf('a1'))!.type).toBe('cycle');
     const cells = await expectConsistent();
-    expect(cells.filter(([id]) => moved && coreCells(moved).includes(id)).every((c) => c[3] === 1)).toBe(true);
+    expect(cells.filter(([id]) => coreCells(moved).includes(id)).every((c) => c[3] === 1)).toBe(true);
 
     // Start: claimed_at follows, so do the first claimers' times.
     const earlier = moved[0][2] - 2 * 86_400_000;
@@ -389,7 +389,11 @@ describe('turf on consent withdrawal and erasure', () => {
     await putOk('a1', body(points, { type: 'run' }), undefined, TOKENS.other);
     await h.call('DELETE', '/v1/activities/a1');
     expect(await cellsOf('admin')).toEqual([]);
-    expect((await cellsOf('other')).every((c) => c[2] === 1)).toBe(true);
+    const others = await cellsOf('other');
+    // Not vacuous: the other user keeps every cell of their run.
+    expect(others.length).toBe(coreCells(points).length);
+    expect(others.every((c) => c[2] === 1)).toBe(true);
+    await expectConsistent('other');
   });
 });
 
@@ -442,35 +446,38 @@ describe('privacy', () => {
     expect(deleted.status).toBe(410);
     expect(etag).toBe('"v1"');
 
-    // A database failure inside the turf write: a 500 that says nothing, logs nothing of it.
-    const failing = Object.assign(Object.create(h.store) as BackupStore, {
-      write: <T>(userId: string, fn: (tx: UserWriter) => Promise<T>) =>
-        h.store.write(userId, (tx) =>
-          fn(
-            Object.assign(Object.create(tx) as UserWriter, {
-              turf: Object.assign(Object.create(tx.turf), {
-                saveClaim: () => Promise.reject(new Error(`insert failed for 8b1f53c9a2b1fff at 21.0122,52.2297`)),
-              }),
-            })
-          )
-        ),
+    const text = [...logged, ...problems].join('\n');
+    expect(text).not.toMatch(H3_ID);
+    expect(text).not.toMatch(/21\.01|52\.2/);
+  });
+
+  it('a database failure inside the turf write: a 500 over HTTP that says and logs nothing of it', async () => {
+    // The real routes and error handler over a store whose turf write fails with location data in
+    // the error message (as a driver error might quote a value).
+    h = await backupApp({
+      log,
+      wrapStore: (store) =>
+        Object.assign(Object.create(store) as BackupStore, {
+          write: <T>(userId: string, fn: (tx: UserWriter) => Promise<T>) =>
+            store.write(userId, (tx) =>
+              fn(
+                Object.assign(Object.create(tx) as UserWriter, {
+                  turf: Object.assign(Object.create(tx.turf), {
+                    saveClaim: () => Promise.reject(new Error(`insert failed for 8b1f53c9a2b1fff at 21.0122,52.2297`)),
+                  }),
+                })
+              )
+            ),
+        }),
     });
-    const service = new BackupService(failing, h.clock, h.grid);
-    const input: UploadInput = {
-      type: 'walk',
-      name: 'Walk',
-      source: 'recording',
-      startedAt: points[0][2],
-      endedAt: points.at(-1)![2],
-      timeZone: null,
-      resumedSegments: null,
-      points,
-    };
-    await expect(service.upload('admin', 'a2', input, undefined)).rejects.toThrow();
+    await grant();
+    const res = await put('a2', body(line({})));
+    expect(res.status).toBe(500);
+    const problem = await res.text();
     // Nothing of the failed upload was committed (the activity rolls back with its claim).
     expect(await h.store.read('admin').activity('a2')).toBeNull();
-
-    const text = [...logged, ...problems].join('\n');
+    expect(logged.some((l) => l.includes('500'))).toBe(true);
+    const text = [problem, ...logged].join('\n');
     expect(text).not.toMatch(H3_ID);
     expect(text).not.toMatch(/21\.01|52\.2/);
   });

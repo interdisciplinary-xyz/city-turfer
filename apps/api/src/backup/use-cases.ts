@@ -433,34 +433,47 @@ export class BackupService {
   /**
    * CatchUpTurf: claims up to `limit` of the user's activities that have no claim yet (deferred
    * future starts; the backfill of activities uploaded before the server claimed turf), oldest
-   * first, under the user lock. Idempotent.
+   * first, under the user lock. Idempotent. `offset` passes over the oldest ones (a backfill run
+   * skipping activities whose claim failed earlier in the run).
    */
-  catchUpTurf(userId: string, limit: number): Promise<CatchUpCounts & { gone: boolean }> {
+  catchUpTurf(userId: string, limit: number, offset = 0): Promise<CatchUpCounts & { gone: boolean }> {
     return this.store.write(userId, async (tx) => {
       // A background job: never re-create an account erased since the backlog was read.
       if (!(await tx.lockExisting())) {
         return { claimed: 0, deferred: 0, skipped: 0, gone: true };
       }
-      return { ...(await this.turf(tx).claimMissing(limit)), gone: false };
+      return { ...(await this.turf(tx).claimMissing(limit, offset)), gone: false };
     });
   }
 
   /**
-   * RebuildTurf (repair, `turf:rebuild`): recomputes every Turf Cell of the user from the claims
-   * that remain, under the user lock, when any cell differs (`drift`); a user without claims loses
-   * every cell. `dryRun` only counts. Skips an erased user (never re-creates the row).
+   * RebuildTurf (repair, `turf:rebuild`), under the user lock: recomputes every Turf Cell from the
+   * claims that remain when any cell differs (`drift`: claims an older API cascaded away; a user
+   * without claims loses every cell), then re-claims every claim that no longer matches its activity
+   * (`staleClaims`: an older API replaced the track, type or start in place). `dryRun` only counts.
+   * Skips an erased user (never re-creates the row).
    */
-  rebuildTurf(userId: string, options: { dryRun?: boolean } = {}): Promise<{ drift: number; gone: boolean }> {
+  rebuildTurf(
+    userId: string,
+    options: { dryRun?: boolean } = {}
+  ): Promise<{ drift: number; staleClaims: number; gone: boolean }> {
     return this.store.write(userId, async (tx) => {
       if (!(await tx.lockExisting())) {
-        return { drift: 0, gone: true };
+        return { drift: 0, staleClaims: 0, gone: true };
       }
       const turf = this.turf(tx);
       const drift = await turf.drift();
-      if (drift > 0 && !options.dryRun) {
-        await turf.rebuildAll();
+      const stale = await turf.staleClaims();
+      if (!options.dryRun) {
+        if (drift > 0) {
+          await turf.rebuildAll();
+        }
+        for (const a of stale) {
+          // From the stored track; a start now in the future is left unclaimed for the catch-up.
+          await turf.reclaim(a);
+        }
       }
-      return { drift, gone: false };
+      return { drift, staleClaims: stale.length, gone: false };
     });
   }
 

@@ -163,6 +163,12 @@ export const turfClaims = pgTable(
     /** The activity's start (the Claim's time), not when the server claimed it. */
     claimedAt: ts('claimed_at').notNull(),
     cells: text('cells').array().notNull(),
+    /**
+     * The activity's `track_hash` when it was claimed. A claim whose hash, type or start no longer
+     * matches its activity is stale (an API without server turf replaced the activity in place):
+     * `turf:rebuild` re-claims it. '' = claimed before migration 0006 (re-claimed too).
+     */
+    trackHash: text('track_hash').notNull().default(''),
   },
   (t) => [
     primaryKey({ columns: [t.userId, t.activityId] }),

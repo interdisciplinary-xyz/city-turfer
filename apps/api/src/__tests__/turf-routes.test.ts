@@ -112,7 +112,7 @@ describe('GET /v1/turf/cells', () => {
       expect(p).toMatchObject({ turfVersion: version, total: expected.length });
     }
     // One page with the default limit is the same download.
-    expect((await download(20_000)).flatMap((p) => p.cells)).toEqual(expected);
+    expect((await download(50_000)).flatMap((p) => p.cells)).toEqual(expected);
   });
 
   it('answers an empty turf with one empty page', async () => {
@@ -122,12 +122,15 @@ describe('GET /v1/turf/cells', () => {
     expect(await res.json()).toEqual({ turfVersion: 0, total: 0, cells: [], nextCursor: null });
   });
 
-  it('tags the version (ETag "t<v>-<created>"), answers 304 to If-None-Match, 200 after a change', async () => {
+  it('tags the version (ETag "t<v>-<epoch>"), answers 304 to If-None-Match, 200 after a change', async () => {
     await seed();
     const first = await h.call('GET', '/v1/turf/cells');
     const etag = first.headers.get('etag')!;
     const version = await h.store.read('admin').turf.version();
-    expect(etag).toMatch(new RegExp(`^"t${version}-[0-9a-z]+"$`));
+    expect(etag).toMatch(new RegExp(`^"t${version}-[A-Za-z0-9_-]{12}"$`));
+    // The epoch is opaque: not the account's creation time (it would travel in every cursor).
+    const [user] = await rows<{ created_at: Date }>(sql`SELECT created_at FROM users WHERE id = 'admin'`);
+    expect(etag).not.toContain(new Date(user.created_at).getTime().toString(36));
     expect(first.headers.get('cache-control')).toBe('private, no-store');
 
     const again = await h.call('GET', '/v1/turf/cells', { headers: { 'If-None-Match': etag } });
@@ -150,9 +153,9 @@ describe('GET /v1/turf/cells', () => {
       read: (userId: string): UserReader => {
         const reader = h.store.read(userId);
         const turf = Object.assign(Object.create(reader.turf) as UserReader['turf'], {
-          allCells: () => {
+          cellCounts: (page: Parameters<UserReader['turf']['cellCounts']>[0]) => {
             loads++;
-            return reader.turf.allCells();
+            return reader.turf.cellCounts(page);
           },
         });
         return Object.assign(Object.create(reader) as UserReader, { turf });
@@ -164,6 +167,83 @@ describe('GET /v1/turf/cells', () => {
     const answer = await service.cells('admin', { limit: 10, ifNoneMatch: page.etag });
     expect(answer).toEqual({ notModified: true, etag: page.etag });
     expect(loads).toBe(1);
+  });
+
+  it('only the first page answers 304: a later page with the shared tag still gets its cells', async () => {
+    await seed();
+    const first = await h.call('GET', '/v1/turf/cells?limit=3');
+    const etag = first.headers.get('etag')!;
+    const { nextCursor } = (await first.json()) as CellsPage;
+    const second = await h.call('GET', `/v1/turf/cells?limit=3&cursor=${nextCursor}`, {
+      headers: { 'If-None-Match': etag },
+    });
+    expect(second.status).toBe(200);
+    expect(((await second.json()) as CellsPage).cells).toEqual((await storedCells()).slice(3, 6));
+  });
+
+  /** A TurfService whose page read lets `during(call)` commit a write while the page is read. */
+  function racing(during: (call: number) => Promise<unknown>) {
+    let calls = 0;
+    const store = Object.assign(Object.create(h.store) as BackupStore, {
+      read: (userId: string): UserReader => {
+        const reader = h.store.read(userId);
+        const turf = Object.assign(Object.create(reader.turf) as UserReader['turf'], {
+          cellCounts: async (page: Parameters<UserReader['turf']['cellCounts']>[0]) => {
+            const result = await reader.turf.cellCounts(page);
+            await during(++calls);
+            return result;
+          },
+        });
+        return Object.assign(Object.create(reader) as UserReader, { turf });
+      },
+    });
+    return new TurfService(store, h.clock, h.grid);
+  }
+  let moved = 0;
+  // Starts in the past: a future start would be left unclaimed and change no turf.
+  const upload = () =>
+    putOk(`m${++moved}`, body(line({ lat: 52.2309 + moved * 1e-4, start: T0 - moved * 86_400_000 })));
+
+  it('a page never mixes two versions: a write during the read is re-read, 410 with a cursor', async () => {
+    await seed();
+    const once = racing(async (call) => {
+      if (call === 1) {
+        await upload();
+      }
+    });
+    const before = await h.store.read('admin').turf.version();
+    const page = await once.cells('admin', { limit: 3 });
+    const version = await h.store.read('admin').turf.version();
+    expect(version).toBeGreaterThan(before);
+    expect(page).toMatchObject({ notModified: false, turfVersion: version });
+    expect(page.notModified === false && page.cells).toEqual((await storedCells()).slice(0, 3));
+
+    const always = racing(upload);
+    const cursor = page.notModified === false ? page.nextCursor! : '';
+    await expect(always.cells('admin', { limit: 3, cursor })).rejects.toMatchObject({ code: 'turf.changed' });
+  });
+
+  it('a first page the turf keeps changing under is 503 turf.busy with Retry-After', async () => {
+    await seed();
+    await expect(racing(upload).cells('admin', { limit: 3 })).rejects.toMatchObject({
+      code: 'turf.busy',
+      headers: { 'Retry-After': '5' },
+    });
+  });
+
+  it('a page reads only its rows, never the whole projection', async () => {
+    await seed();
+    const store = Object.assign(Object.create(h.store) as BackupStore, {
+      read: (userId: string): UserReader => {
+        const reader = h.store.read(userId);
+        const turf = Object.assign(Object.create(reader.turf) as UserReader['turf'], {
+          allCells: () => Promise.reject(new Error('a page must not load every cell')),
+        });
+        return Object.assign(Object.create(reader) as UserReader, { turf });
+      },
+    });
+    const page = await new TurfService(store, h.clock, h.grid).cells('admin', { limit: 3 });
+    expect(page.notModified === false && page.cells).toEqual((await storedCells()).slice(0, 3));
   });
 
   it('a cursor of an older version is 410 turf.changed; a malformed one 400', async () => {

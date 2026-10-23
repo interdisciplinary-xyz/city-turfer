@@ -11,7 +11,7 @@ import {
 import type { ClaimView, TurfCellCounts, TurfCellPage, TurfCellView, TurfSummaryView } from '../contract';
 import type { CellGrid, CellId } from '../domain/cell-grid';
 import { Claim } from '../domain/claim';
-import { isStrong, strengthOf, tierOf, visitsOf } from '../domain/strength';
+import { isStrong, strengthOf, tierOf } from '../domain/strength';
 import type { CellRow, TerritoryRepository } from '../domain/territory-repository';
 
 /** Port: Activity Log's open-host track query. */
@@ -82,7 +82,9 @@ export class ReclaimTurfOfActivity {
   }
 }
 
-const visitsFor = (r: CellRow, types: readonly ActivityType[]) => visitsOf([r.cell, r.walk, r.run, r.cycle], types);
+// The same sum as `visitsOf` (strength-public-api.test.ts pins them equal), without building a
+// tuple per row: the viewport query runs this over every cell in view on each camera idle.
+const visitsFor = (r: CellRow, types: readonly ActivityType[]) => types.reduce((s, t) => s + r[t], 0);
 const ring = (grid: CellGrid, c: CellId): [number, number][] => {
   const b = grid.boundary(c).map((p) => [p.lon, p.lat] as [number, number]);
   return [...b, b[0]];
@@ -202,10 +204,10 @@ export class ListTurfCells {
     if (!Number.isInteger(offset) || offset < 0 || !Number.isInteger(limit) || limit < 1) {
       throw new DomainError('turf.invalid-page');
     }
-    const rows = await this.d.repo.allCells();
-    rows.sort((a, b) => (a.cell < b.cell ? -1 : a.cell > b.cell ? 1 : 0));
-    const cells = rows.slice(offset, offset + limit).map((r): TurfCellCounts => [r.cell, r.walk, r.run, r.cycle]);
+    // The repository pages in its own query: a page costs its rows, not the whole projection.
+    const { rows, total } = await this.d.repo.cellCounts({ offset, limit });
+    const cells = rows.map((r): TurfCellCounts => [r.cell, r.walk, r.run, r.cycle]);
     const end = offset + cells.length;
-    return { cells, total: rows.length, nextOffset: end < rows.length ? end : null };
+    return { cells, total, nextOffset: end < total ? end : null };
   }
 }

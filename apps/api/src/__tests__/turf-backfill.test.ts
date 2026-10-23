@@ -8,7 +8,7 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { createApp } from '../app';
 import type { CompactPoint } from '../backup/model';
-import type { BackupStore } from '../backup/ports';
+import type { BackupStore, UserWriter } from '../backup/ports';
 import { BackupService } from '../backup/use-cases';
 import { DrizzleRetentionStore } from '../db/retention';
 import { findAccount } from '../db/support';
@@ -151,6 +151,10 @@ describe('turf backfill', () => {
     expect(await run()).toMatchObject({ claimed: 1, deferred: 0, remaining: 0 });
   });
 
+  // Interleaving only: PGlite runs every transaction on one session behind a mutex, so these
+  // transactions take turns and the user lock (`SELECT … FOR UPDATE`) never contends here. This
+  // proves the end state for any order of whole transactions, not the lock: concurrent upload +
+  // backfill is part of the Neon check (PR test plan).
   it('is safe alongside uploads: the same end state, no claim twice', async () => {
     await uploads(TOKENS.admin, 4);
     await forgetTurf();
@@ -181,14 +185,41 @@ describe('turf backfill', () => {
     await forgetTurf();
     const failing = new BackupService(h.store, h.clock, h.grid);
     const real = failing.catchUpTurf.bind(failing);
-    failing.catchUpTurf = (userId, limit) =>
+    failing.catchUpTurf = (userId, limit, offset) =>
       userId === 'admin'
         ? Promise.reject(new TypeError('cell 8b1f53c9a2b1fff at 21.0122,52.2297'))
-        : real(userId, limit);
+        : real(userId, limit, offset);
     const errors: string[] = [];
     const report = await backfillTurf({ store: h.store, backup: failing, onFailure: (e) => errors.push(e) });
-    expect(report).toMatchObject({ claimed: 2, failed: 1, remaining: 2 });
-    expect(errors).toEqual(['TypeError']);
+    expect(report).toMatchObject({ claimed: 2, failed: 2, remaining: 2 });
+    expect(errors).toEqual(['TypeError', 'TypeError']);
+  });
+
+  it("one activity that keeps failing doesn't hold back the user's newer ones", async () => {
+    await uploads(TOKENS.admin, 3);
+    await forgetTurf();
+    // The oldest activity's claim fails inside its transaction (a statement timeout, say).
+    const store = Object.assign(Object.create(h.store) as BackupStore, {
+      write: <T>(userId: string, fn: (tx: UserWriter) => Promise<T>) =>
+        h.store.write(userId, (tx) =>
+          fn(
+            Object.assign(Object.create(tx) as UserWriter, {
+              turf: Object.assign(Object.create(tx.turf), {
+                saveClaim: (...args: Parameters<UserWriter['turf']['saveClaim']>) =>
+                  args[0].state.activityId === 'a0'
+                    ? Promise.reject(new Error('statement timeout'))
+                    : tx.turf.saveClaim(...args),
+              }),
+            })
+          )
+        ),
+    });
+    const report = await backfillTurf({ store, backup: new BackupService(store, h.clock, h.grid) });
+    expect(report).toMatchObject({ claimed: 2, failed: 1, remaining: 1 });
+    const claimed = await rows<{ id: string }>(sql`SELECT activity_id AS id FROM turf_claims ORDER BY 1`);
+    expect(claimed.map((r) => r.id)).toEqual(['a1', 'a2']);
+    // The next run tries it first again (and here it works).
+    expect(await run()).toMatchObject({ claimed: 1, failed: 0, remaining: 0 });
   });
 
   it('an activity without a track is skipped once, never retried, and does not hold up other users', async () => {

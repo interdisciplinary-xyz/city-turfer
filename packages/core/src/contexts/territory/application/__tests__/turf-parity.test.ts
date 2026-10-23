@@ -119,6 +119,12 @@ class D4TerritoryRepository implements TerritoryRepository {
       firstAt: r.firstAt,
     }));
   }
+  async cellCounts({ offset, limit }: { offset: number; limit: number }) {
+    const rows = [...this.cells.values()]
+      .sort((a, b) => (a.cell < b.cell ? -1 : a.cell > b.cell ? 1 : 0))
+      .map((r) => ({ cell: r.cell, walk: r.walk, run: r.run, cycle: r.cycle }));
+    return { rows: rows.slice(offset, offset + limit), total: rows.length };
+  }
   async claimOf(activityId: string) {
     const claim = this.claims.get(activityId);
     if (!claim) {

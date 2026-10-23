@@ -50,8 +50,8 @@ export const TurfCellsQuery = z.object({
     .int()
     .min(1)
     .max(50_000)
-    .default(20_000)
-    .openapi({ param: { name: 'limit', in: 'query' }, description: 'Cells per page.', example: 20_000 }),
+    .default(50_000)
+    .openapi({ param: { name: 'limit', in: 'query' }, description: 'Cells per page.', example: 50_000 }),
 });
 
 export const TurfSummary = z

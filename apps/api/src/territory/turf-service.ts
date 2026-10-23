@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import type { Clock } from '@cityturfer/core/shared-kernel';
 import { createTurfApi, type TurfApi } from '@cityturfer/core/territory';
 import type { CellGrid } from '@cityturfer/core/territory/ports';
@@ -7,17 +9,23 @@ import type { BackupStore, UserReader } from '../backup/ports';
 import { existingActivity } from '../backup/use-cases';
 import { decodeCursor, encodeCursor } from '../cursor';
 
-/** Default and largest page of `GET /v1/turf/cells` (a 50k page is ~1.5 MB of JSON). */
-export const TURF_PAGE_DEFAULT = 20_000;
+/**
+ * Default and largest page of `GET /v1/turf/cells` (a 50k page is ~1.5 MB of JSON): most users get
+ * their whole turf in one page, which no upload can invalidate halfway through a download.
+ */
+export const TURF_PAGE_DEFAULT = 50_000;
 export const TURF_PAGE_MAX = 50_000;
+
+/** `Retry-After` (seconds) of `503 turf.busy`: the turf kept changing under a first page. */
+export const TURF_BUSY_RETRY_S = 5;
 
 /** One Turf Cell as the API lists it: `[h3Id, walk, run, cycle]` visit counts. */
 export type TurfCellRow = [cell: string, walk: number, run: number, cycle: number];
 
 /**
- * Where a cell download stands: the turf version (`v`) and the account's creation time (`c`, base
- * 36: a re-created account restarts its versions at 0) it was paged at, and the offset (`o`). Never
- * a cell id: cursors end up in URLs and logs of proxies, and cell ids are location data.
+ * Where a cell download stands: the turf version (`v`) and the account's epoch (`c`: a re-created
+ * account restarts its versions at 0) it was paged at, and the offset (`o`). Never a cell id, and
+ * nothing decodable about the account: cursors end up in URLs and logs of proxies.
  */
 interface CellsPosition {
   v: number;
@@ -38,7 +46,7 @@ const isCellsPosition = (x: unknown): x is CellsPosition => {
   );
 };
 
-/** The turf entity tag: `"t<turfVersion>-<users.createdAt base 36>"`. */
+/** The turf entity tag: `"t<turfVersion>-<account epoch>"`. */
 export const turfEtagOf = (version: number, created: string) => `"t${version}-${created}"`;
 
 /** Does an `If-None-Match` header name this entity tag (`*`, weak tags and lists included)? */
@@ -48,6 +56,13 @@ export const matchesTag = (header: string | undefined, etag: string) =>
     const tag = t.trim();
     return tag === '*' || tag.replace(/^W\//, '') === etag;
   });
+
+/**
+ * An opaque id of this incarnation of the account: changes when an erased account is re-created,
+ * reveals neither its id nor when it was created (`created` in a cursor would be both).
+ */
+const accountEpoch = (userId: string, createdAt: number) =>
+  createHash('sha256').update(`${userId}:${createdAt}`).digest('base64url').slice(0, 12);
 
 export type CellsAnswer =
   | { notModified: true; etag: string }
@@ -87,17 +102,19 @@ export class TurfService {
     });
   }
 
-  /** The tag of the user's turf now (version + account creation). */
-  private async tag(reader: UserReader): Promise<{ version: number; created: string; etag: string }> {
+  /** The tag of the user's turf now (version + account epoch). */
+  private async tag(userId: string, reader: UserReader): Promise<{ version: number; created: string; etag: string }> {
     const [version, user] = await Promise.all([reader.turf.version(), reader.user()]);
-    const created = (user?.createdAt ?? 0).toString(36);
+    const created = accountEpoch(userId, user?.createdAt ?? 0);
     return { version, created, etag: turfEtagOf(version, created) };
   }
 
   /**
-   * ListTurfCells, a page at a time in cell id order. The version is read first: `ifNoneMatch`
-   * naming it answers "not modified" without loading a row; a cursor from another version is
-   * `410 turf.changed` (start again from the first page).
+   * ListTurfCells, a page at a time in cell id order. The version is read first: on the first page,
+   * `ifNoneMatch` naming it answers "not modified" without loading a row (later pages share the tag
+   * but not the body, so they never answer 304); a cursor from another version is `410
+   * turf.changed` (start again from the first page). A first page the turf keeps changing under
+   * (a backup uploading) is `503 turf.busy` with `Retry-After`.
    */
   async cells(userId: string, q: { cursor?: string; limit: number; ifNoneMatch?: string }): Promise<CellsAnswer> {
     const reader = this.store.read(userId);
@@ -106,16 +123,16 @@ export class TurfService {
       throw new AppError('invalid-request');
     }
     for (let attempt = 0; attempt < CONSISTENT_READ_TRIES; attempt++) {
-      const now = await this.tag(reader);
+      const now = await this.tag(userId, reader);
       if (position && (position.v !== now.version || position.c !== now.created)) {
         throw new AppError('turf.changed');
       }
-      if (matchesTag(q.ifNoneMatch, now.etag)) {
+      if (!position && matchesTag(q.ifNoneMatch, now.etag)) {
         return { notModified: true, etag: now.etag };
       }
       const offset = position?.o ?? 0;
       const page = await this.api(reader).cells.execute({ offset, limit: q.limit });
-      const after = await this.tag(reader);
+      const after = await this.tag(userId, reader);
       if (after.etag !== now.etag) {
         // A write committed while the page was read: read it again at the new version (a cursor
         // of the old one is stale by now).
@@ -134,7 +151,8 @@ export class TurfService {
           page.nextOffset === null ? null : encodeCursor({ v: now.version, c: now.created, o: page.nextOffset }),
       };
     }
-    throw new AppError('turf.changed');
+    // Only a first page gets here (a later one is 410 at once): ask again shortly.
+    throw new AppError('turf.busy', { 'Retry-After': String(TURF_BUSY_RETRY_S) });
   }
 
   /** GetTurfSummary at the server's now (new this week and month are rolling windows). */

@@ -1,6 +1,6 @@
 import type { ActivityType, BoundingBox } from '@cityturfer/core/shared-kernel';
 import type { CellGrid, CellId, CellRow, Claim } from '@cityturfer/core/territory/ports';
-import { and, asc, eq, notExists, sql, type SQLWrapper } from 'drizzle-orm';
+import { and, asc, eq, ne, notExists, or, sql, type SQLWrapper } from 'drizzle-orm';
 
 import type { ActivityTypeName } from '../backup/model';
 import { activities, turfCells, turfClaims, users } from '../db/schema';
@@ -10,7 +10,8 @@ import type { TurfRepository, UnclaimedActivity } from './ports';
 /**
  * A Postgres array literal of text (`{"a","b"}`), bound as **one** parameter and cast `::text[]`:
  * Drizzle's `sql` template would expand a JS array into one parameter per element (a 50k-cell
- * claim would exceed Postgres' 65,535 bind parameters). Works the same on Neon and PGlite.
+ * claim would exceed Postgres' 65,535 bind parameters). Checked on PGlite; drizzle binds it the same
+ * way for the Neon driver (not run on Neon yet).
  */
 export function textArray(values: Iterable<string>): string {
   const quoted: string[] = [];
@@ -19,6 +20,9 @@ export function textArray(values: Iterable<string>): string {
   }
   return `{${quoted.join(',')}}`;
 }
+
+/** Below this stored size a track is opened to count its points (`[]` is a few bytes). */
+const TINY_TRACK_BYTES = 64;
 
 const rowsOf = <T>(result: unknown): T[] => (result as { rows: T[] }).rows;
 
@@ -38,7 +42,7 @@ const recomputedRows = (userId: string, only: string | null) => sql`
     (array_agg(k.activity_id ORDER BY k.claimed_at, k.activity_id COLLATE "C"))[1] AS first_activity_id
   FROM turf_claims k CROSS JOIN LATERAL unnest(k.cells) AS c(cell)
   WHERE k.user_id = ${userId}
-    ${only === null ? sql`` : sql`AND c.cell IN (SELECT unnest(${only}::text[]))`}
+    ${only === null ? sql`` : sql`AND k.cells && ${only}::text[] AND c.cell IN (SELECT unnest(${only}::text[]))`}
   GROUP BY c.cell`;
 
 const recomputed = (userId: string, only: string | null) => sql`
@@ -48,10 +52,14 @@ const recomputed = (userId: string, only: string | null) => sql`
 /**
  * The activity (its `user_id` and `id` columns) has a track to claim from: a track row with at least
  * one point. Uploads always carry ≥ 2; without one the core's claim returns without saving anything.
+ * `pg_column_size` reads the stored size without fetching a toasted value, so only a tiny track (an
+ * empty array, a repair case) is opened to count its points: `jsonb_array_length` on every track
+ * would read and decompress each one in full (MBs) on every backlog query.
  */
 export const hasTrack = (userId: SQLWrapper, activityId: SQLWrapper) => sql`EXISTS (
   SELECT 1 FROM activity_tracks t
-  WHERE t.user_id = ${userId} AND t.activity_id = ${activityId} AND jsonb_array_length(t.points) > 0)`;
+  WHERE t.user_id = ${userId} AND t.activity_id = ${activityId}
+    AND CASE WHEN pg_column_size(t.points) > ${TINY_TRACK_BYTES} THEN true ELSE jsonb_array_length(t.points) > 0 END)`;
 
 /**
  * Territory's `TerritoryRepository` on Postgres, for one user inside that user's locked transaction
@@ -101,6 +109,8 @@ export class DrizzleTerritoryRepository implements TurfRepository {
       type,
       claimedAt: new Date(claimedAt),
       cells: sorted,
+      // The track this claim was made from: the activity row is written before its claim.
+      trackHash: sql`(SELECT a.track_hash FROM activities a WHERE a.user_id = ${this.userId} AND a.id = ${activityId})`,
     });
     const earlier = sql`(excluded.first_at, excluded.first_activity_id COLLATE "C")
       < (turf_cells.first_at, turf_cells.first_activity_id COLLATE "C")`;
@@ -179,6 +189,22 @@ export class DrizzleTerritoryRepository implements TurfRepository {
     });
   }
 
+  async cellCounts({ offset, limit }: { offset: number; limit: number }) {
+    // Ids in JS string order: `COLLATE "C"` (Neon's default collation is linguistic).
+    const rows = await this.db
+      .select({ cell: turfCells.cell, walk: turfCells.walk, run: turfCells.run, cycle: turfCells.cycle })
+      .from(turfCells)
+      .where(eq(turfCells.userId, this.userId))
+      .orderBy(sql`${turfCells.cell} COLLATE "C"`)
+      .limit(limit)
+      .offset(offset);
+    const [count] = await this.db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(turfCells)
+      .where(eq(turfCells.userId, this.userId));
+    return { rows, total: Number(count?.n ?? 0) };
+  }
+
   async claimOf(activityId: string): Promise<{
     cellCount: number;
     newCellCount: number;
@@ -228,7 +254,7 @@ export class DrizzleTerritoryRepository implements TurfRepository {
     await this.bump();
   }
 
-  async unclaimed(limit: number): Promise<UnclaimedActivity[]> {
+  async unclaimed(limit: number, offset = 0): Promise<UnclaimedActivity[]> {
     const rows = await this.db
       .select({ id: activities.id, type: activities.type, startedAt: activities.startedAt })
       .from(activities)
@@ -245,7 +271,27 @@ export class DrizzleTerritoryRepository implements TurfRepository {
         )
       )
       .orderBy(asc(activities.startedAt), sql`${activities.id} COLLATE "C"`)
-      .limit(limit);
+      .limit(limit)
+      .offset(offset);
+    return rows.map((r) => ({ id: r.id, type: r.type as ActivityTypeName, startedAt: r.startedAt.getTime() }));
+  }
+
+  async staleClaims(): Promise<UnclaimedActivity[]> {
+    const rows = await this.db
+      .select({ id: activities.id, type: activities.type, startedAt: activities.startedAt })
+      .from(turfClaims)
+      .innerJoin(activities, and(eq(activities.userId, turfClaims.userId), eq(activities.id, turfClaims.activityId)))
+      .where(
+        and(
+          eq(turfClaims.userId, this.userId),
+          or(
+            ne(turfClaims.trackHash, activities.trackHash),
+            ne(turfClaims.type, activities.type),
+            ne(turfClaims.claimedAt, activities.startedAt)
+          )
+        )
+      )
+      .orderBy(asc(activities.startedAt), sql`${activities.id} COLLATE "C"`);
     return rows.map((r) => ({ id: r.id, type: r.type as ActivityTypeName, startedAt: r.startedAt.getTime() }));
   }
 

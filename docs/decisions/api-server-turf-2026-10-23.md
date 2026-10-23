@@ -9,6 +9,7 @@ scope:
     apps/api/src/db/schema.ts,
     apps/api/src/db/store.ts,
     apps/api/drizzle/0005_turf.sql,
+    apps/api/drizzle/0006_turf_claim_track_hash.sql,
     apps/api/src/routes/territory.ts,
     apps/api/src/schemas/territory.ts,
     apps/api/scripts/turf-backfill.ts,
@@ -21,7 +22,7 @@ summary:
   export excluded for v0.10.0; phase 2 serves it (contract 0.6.0) — every cell paged with a
   version-bound cursor and ETag/304 (no-store), summary, claims, activity totals — plus a resumable
   backfill script that skips trackless activities, a bounded catch-up in the daily cron, and
-  turf:rebuild for the repair after a rollback
+  turf:rebuild for the repair after a rollback (stale cells and claims replaced in place)
 ---
 
 # Server turf projection and reads
@@ -53,13 +54,13 @@ Closes D10 of `docs/decisions/api-sync-2026-10-20.md`.
 - **Version.** `users.turf_version` + 1 on every change of the projection (claim, release, rebuild,
   erase); a replay leaves it alone. Phase 2 uses it for the cells ETag and cursor.
 
-## Tables (migration `0005_turf`)
+## Tables (migrations `0005_turf`, `0006_turf_claim_track_hash`)
 
-| Table         | Key                      | Columns                                                                                                       |
-| ------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| `turf_claims` | `(user_id, activity_id)` | `type`, `claimed_at` (= activity start), `cells text[]` (sorted, unique); FK → `activities` ON DELETE CASCADE |
-| `turf_cells`  | `(user_id, cell)`        | `walk`, `run`, `cycle` visit counts, `first_at`, `first_activity_id`; FK → `users` ON DELETE CASCADE          |
-| `users`       |                          | `turf_version bigint` (new column)                                                                            |
+| Table         | Key                      | Columns                                                                                                                                                         |
+| ------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `turf_claims` | `(user_id, activity_id)` | `type`, `claimed_at` (= activity start), `cells text[]` (sorted, unique), `track_hash` (the activity's when claimed, 0006); FK → `activities` ON DELETE CASCADE |
+| `turf_cells`  | `(user_id, cell)`        | `walk`, `run`, `cycle` visit counts, `first_at`, `first_activity_id`; FK → `users` ON DELETE CASCADE                                                            |
+| `users`       |                          | `turf_version bigint` (new column)                                                                                                                              |
 
 No coordinates (the grid derives centroids), no `last_at`, no decay: strength is
 `1 − exp(−visits/3)` computed on read and only the summary's "new this week/month" depends on now.
@@ -72,8 +73,11 @@ order. `saveClaim` upserts the cells and replaces `first_*` when the new claim s
 `releaseClaim` deletes the claim and recomputes its cells from the remaining claims (counts,
 `first_at` and the first claimer). The id tie-break is **JS string order**: every comparison carries
 `COLLATE "C"`. PGlite's default collation is C, Neon's databases may be linguistic (en_US): without
-the explicit collation `a1…` would beat `B7…` on Neon and lose on the phone. The tests prove it by
-switching the id columns to ICU `und-x-icu` (fails without `COLLATE "C"`).
+the explicit collation `a1…` would beat `B7…` on Neon and lose on the phone. The tests prove it for
+the first-claimer tie-break by switching `turf_claims.activity_id` and
+`turf_cells.first_activity_id` to ICU `und-x-icu` (fails without `COLLATE "C"`). The other orderings
+(backlog by user id, unclaimed by activity id, cell pages by cell id) carry `COLLATE "C"` too but
+are not re-collated in the tests: a real linguistic database is part of the Neon check.
 
 **Known gap, phone vs server.** For the same operations the phone and the server agree on the
 summary and on every cell (counts, first time) — G2, `turf-parity.json` in core, asserted by core,
@@ -121,20 +125,26 @@ server's clock. Nothing is computed in the API but paging and tags.
 
 - **`GET /v1/turf/cells?cursor=&limit=`** — the web downloads **every** cell once and draws it
   locally (the web portal plan: no viewport queries). Rows `[h3Id, walk, run, cycle]` by id (JS
-  order), pages of 20,000, at most 50,000 (~1.5 MB; a test keeps 50k under Vercel's 4.5 MB), answer
-  `{ turfVersion, total, cells, nextCursor }`. Visits, strength and tier derive from the counts with
-  core on the reader's side.
-- **Cursor** = base64url `{ v, c, o }`: turf version, the account's `createdAt` in base 36 and the
-  offset. **Never a cell id** (cursors land in URLs, proxy logs, browser history; cell ids are
-  location data). A cursor from another version, or another incarnation of the account (erased and
-  re-created: versions restart at 0), answers **`410 turf.changed`** — a new code rather than
-  `sync.cursor-expired`, whose remedy ("sync again without a cursor") belongs to the changes feed.
-  Malformed → 400.
-- **ETag** `"t<turfVersion>-<createdAt base 36>"`, `Cache-Control: private, no-store` (see "Caching"
-  below). The version and `createdAt` are read **first**: `If-None-Match` naming them answers `304`
-  without loading a row. Reads take no lock: the tag is read again after the page, and a page whose
-  version moved is re-read (first page) or refused with `410` (later pages), so a page never mixes
-  two versions.
+  order), pages of **50,000** by default and at most (~1.5 MB; a test keeps 50k under Vercel's 4.5
+  MB), answer `{ turfVersion, total, cells, nextCursor }`. Visits, strength and tier derive from the
+  counts with core on the reader's side. A page is one `ORDER BY cell COLLATE "C" LIMIT/OFFSET`
+  query plus a count (`TerritoryRepository.cellCounts`): it costs its rows, never the whole
+  projection. Most users get their whole turf in one page, which no upload can invalidate halfway.
+- **Cursor** = base64url `{ v, c, o }`: turf version, an opaque **account epoch** (12 characters of
+  `sha256(userId:createdAt)`: changes when an erased account is re-created, reveals neither the id
+  nor the creation time) and the offset. **Never a cell id** (cursors land in URLs, proxy logs,
+  browser history; cell ids are location data). A cursor from another version, or another
+  incarnation of the account (erased and re-created: versions restart at 0), answers
+  **`410 turf.changed`** — a new code rather than `sync.cursor-expired`, whose remedy ("sync again
+  without a cursor") belongs to the changes feed. Malformed → 400.
+- **ETag** `"t<turfVersion>-<epoch>"`, `Cache-Control: private, no-store` (see "Caching" below). The
+  version and epoch are read **first**: on the **first page**, `If-None-Match` naming them answers
+  `304` without loading a row. Later pages share the tag but not the body, so they never answer 304
+  (a client re-sending the tag on page 2 would otherwise get no cells). Reads take no lock: the tag
+  is read again after the page, and a page whose version moved is re-read (first page) or refused
+  with `410` (later pages), so a page never mixes two versions (tested by committing a write during
+  the read). A first page the turf changes under on every try (3, a phone backup uploading) answers
+  **`503 turf.busy`** with `Retry-After: 5`; clients pause briefly before restarting after a `410`.
 - **`GET /v1/turf/summary`** — `private, no-store` (new this week/month depend on now).
 - **`GET /v1/turf/claims/{activityId}`** — 404 `not-found` / 410 `activity.deleted` as every
   activity route; 404 also when the activity has no claim (a deferred start, not backfilled); cells
@@ -170,8 +180,12 @@ order), then per user calls `BackupService.catchUpTurf(userId, 1)` until nothing
 activity per locked transaction (one track in memory, no long lock), oldest first by
 `(started_at, id)`. Idempotent (a claimed activity is no longer unclaimed), resumable (stop any
 time), safe next to uploads (the user lock serialises them; an activity an upload claimed meanwhile
-just drops out). A user stops at the first deferred start (later starts are later still) or at a
-failure (error class reported, the run goes on with the next user). Output: counts only.
+just drops out). The tests cannot prove the lock itself: PGlite runs every transaction on one
+session behind a mutex, so concurrent transactions there never contend; concurrent upload + backfill
+is part of the Neon check. A user stops at the first deferred start (later starts are later still).
+A failed claim is counted (error class reported) and passed over for the rest of the run, by
+position, so one activity that keeps failing never holds back the user's newer ones; the next run
+tries it first again. Output: counts only.
 
 **Activities without a track (review, 2026-10-23).** The core's claim returns without saving when
 the track has no point, so an activity row without an `activity_tracks` row (or with an empty one)
@@ -199,18 +213,28 @@ Rollout order and the founder's production run: `docs/operations/api-deploy.md` 
 
 ## Rebuild after a rollback
 
-0.5.0 does not maintain the projection: while it runs, deletes, replaces and withdrawals cascade
-claims away with their activities but leave their Turf Cells, so cells derived from erased or
-withdrawn data would survive a redeploy of 0.6.0 (B5). `rebuildTurf`
-(`apps/api/src/territory/rebuild.ts`,
+0.5.0 does not maintain the projection. While it runs:
+
+- deletes and withdrawals cascade claims away with their activities but leave their Turf Cells, so
+  cells derived from erased or withdrawn data would survive a redeploy of 0.6.0 (B5);
+- replaces update the activity and its track **in place** (an `UPDATE`, no cascade), so the claim
+  keeps the old track's cells, type and start: turf the user trimmed away would stay for good, and a
+  rebuild from the claims would faithfully restore it (review, 2026-10-23).
+
+Each claim therefore records the activity's `track_hash` (migration 0006); a claim whose hash, type
+or start no longer matches its activity is stale (`staleClaims`) and the rebuild re-claims it from
+the stored track. `rebuildTurf` (`apps/api/src/territory/rebuild.ts`,
 `pnpm --filter @cityturfer/api run turf:rebuild -- [--user <id>] [--dry-run]`) walks every user with
 claims or cells, and per user, under `lockExisting()`, compares `turf_cells` with a recomputation
 from `turf_claims` (`drift`: rows that differ either way) and calls `rebuildAll` only when they
-differ — a user with cells and no claims loses them all; a consistent user is left alone (no turf
-version bump, no needless 304 → 200 for the web). Counts only. The runbook makes it mandatory after
-any rollback, before `turf:backfill`. Rejected: rebuilding every user unconditionally (bumps every
-ETag); a trigger on `activities` delete (0.5.0 code would not know about it either way, and triggers
-are invisible to the core's rules).
+differ — a user with cells and no claims loses them all — then re-claims the stale claims; a
+consistent user is left alone (no turf version bump, no needless 304 → 200 for the web). Counts
+only. The runbook makes it mandatory **immediately** after redeploying 0.6.0 after any rollback,
+before `turf:backfill` and before the web turf pages are back on. 0006 is a new migration rather
+than an edit of 0005, so it is right whether or not 0005 was already applied; claims from before it
+carry `''` and are re-claimed once by the first rebuild. Rejected: rebuilding every user
+unconditionally (bumps every ETag); a trigger on `activities` delete (0.5.0 code would not know
+about it either way, and triggers are invisible to the core's rules).
 
 ## Export
 

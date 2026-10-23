@@ -1,8 +1,8 @@
-// Recomputes every Turf Cell from the claims that remain, per user, where they differ (one locked
-// transaction per user); users with cells and no claims lose them all. Run it after any rollback
-// to an API older than contract 0.6.0, before `turf:backfill`: while the old API ran, deletes,
-// replaces and withdrawals cascaded claims away but left their cells. Idempotent, safe while the
-// API takes uploads.
+// Repairs the turf projection after any rollback to an API older than contract 0.6.0 (one locked
+// transaction per user), before `turf:backfill`. While the old API ran, deletes and withdrawals
+// cascaded claims away but left their cells (recomputed from the claims that remain; users with
+// cells and no claims lose them all), and replaces changed tracks in place under an old claim
+// (re-claimed from the stored track). Idempotent, safe while the API takes uploads.
 //   DATABASE_URL_UNPOOLED=… pnpm --filter @cityturfer/api run turf:rebuild -- --dry-run
 //   DATABASE_URL_UNPOOLED=… pnpm --filter @cityturfer/api run turf:rebuild -- [--user <userId>]
 // Prints counts only: no user, activity or cell ids, no coordinates.
@@ -37,7 +37,9 @@ try {
       backup: new BackupService(store, { now: () => Date.now() }, grid),
       onProgress: (p) => {
         if (p.user % 100 === 0 || p.user === p.users) {
-          console.log(`user ${p.user}/${p.users}: ${p.stale} stale so far (${p.drift} cell rows)`);
+          console.log(
+            `user ${p.user}/${p.users}: ${p.stale} stale so far (${p.drift} cell rows, ${p.staleClaims} claims)`
+          );
         }
       },
       onFailure: (error) => console.error(`a rebuild failed (${error}); run again`),
@@ -46,7 +48,7 @@ try {
   );
   const secs = ((Date.now() - started) / 1000).toFixed(1);
   console.log(
-    `${dryRun ? 'Dry run' : 'Done'} (${where}, ${secs} s): ${report.users} users with turf, ${report.stale} ${dryRun ? 'would be rebuilt' : 'rebuilt'} (${report.drift} cell rows differed), ${report.gone} erased meanwhile, ${report.failed} failed.`
+    `${dryRun ? 'Dry run' : 'Done'} (${where}, ${secs} s): ${report.users} users with turf, ${report.stale} ${dryRun ? 'would be rebuilt' : 'rebuilt'} (${report.drift} cell rows differed, ${report.staleClaims} claims re-claimed), ${report.gone} erased meanwhile, ${report.failed} failed.`
   );
   process.exitCode = report.failed > 0 ? 1 : 0;
 } catch (error) {

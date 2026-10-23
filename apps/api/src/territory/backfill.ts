@@ -77,8 +77,9 @@ async function backlogOf(store: BackupStore, userId: string | undefined, pageSiz
  * **one activity per locked transaction** (`BackupService.catchUpTurf(userId, 1)`: one track in
  * memory, never a long lock), so it is idempotent, resumable after any stop, and safe next to
  * uploads — an activity claimed meanwhile is simply no longer unclaimed. A user stops at their
- * first deferred start (every later one is later still), skipped activity, failure, or erasure,
- * and after as many attempts as they had pending (so a run always ends, whatever a claim returns).
+ * first deferred start (every later one is later still), skipped activity, or erasure, and after
+ * as many attempts as they had pending (so a run always ends, whatever a claim returns). A failed
+ * claim is counted and passed over for the rest of the run; the next run tries it again first.
  * Activities without a track are counted as `skipped` and never attempted.
  */
 export async function backfillTurf(deps: BackfillDeps, options: BackfillOptions = {}): Promise<BackfillReport> {
@@ -111,6 +112,9 @@ export async function backfillTurf(deps: BackfillDeps, options: BackfillOptions 
     return null;
   };
   outer: for (const [i, entry] of backlog.entries()) {
+    // Activities of this user whose claim failed in this run: still unclaimed and the oldest, so the
+    // next attempt passes over them (by position: no activity id leaves the database).
+    let failedHere = 0;
     for (let tries = 0; tries < entry.unclaimed; tries++) {
       const stop = stopBefore();
       if (stop) {
@@ -120,11 +124,13 @@ export async function backfillTurf(deps: BackfillDeps, options: BackfillOptions 
       attempts++;
       let result: Awaited<ReturnType<BackupService['catchUpTurf']>>;
       try {
-        result = await deps.backup.catchUpTurf(entry.userId, 1);
+        result = await deps.backup.catchUpTurf(entry.userId, 1, failedHere);
       } catch (e) {
+        // One activity that keeps failing must not hold back the user's newer ones.
         report.failed++;
+        failedHere++;
         deps.onFailure?.(e instanceof Error ? e.name : 'unknown');
-        break;
+        continue;
       }
       report.claimed += result.claimed;
       report.deferred += result.deferred;

@@ -4,7 +4,7 @@
  * upload, replace and delete routes give the golden projection — summary, every cell with its
  * counts and first time, and each claim's canonical "new" cells (D4). The phone and core assert the
  * same golden. Read through the use cases (`createTurfApi` over the repository) and through the
- * routes (`/v1/turf/summary`, the paged `/v1/turf/cells`, `/v1/turf/claims/…`). Runs twice: on PGlite's C collation and with linguistic id columns (as on Neon).
+ * routes (`/v1/turf/summary`, the paged `/v1/turf/cells`, `/v1/turf/claims/…`). Runs twice: on PGlite's C collation and with the two first-claimer id columns linguistic (ICU), as they may be on Neon; the other orderings are left to the Neon check.
  */
 import { readFileSync } from 'node:fs';
 import path from 'node:path';

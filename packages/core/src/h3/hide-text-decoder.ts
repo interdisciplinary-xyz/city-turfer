@@ -13,3 +13,7 @@ import { SAVED_TEXT_DECODER } from './text-decoder.constants';
 const g = globalThis as Record<PropertyKey, unknown>;
 g[SAVED_TEXT_DECODER] = { value: g.TextDecoder };
 g.TextDecoder = undefined;
+// Accepted: if h3-js throws while it loads (e.g. its WebAssembly-free heap cannot be allocated),
+// ./h3.ts never runs its restore and TextDecoder stays undefined for the process. ESM has no
+// try/finally around an import; the require-based loader before it had the same failure mode, and
+// a process whose h3-js failed to load cannot claim turf anyway.

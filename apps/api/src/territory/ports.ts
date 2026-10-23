@@ -24,9 +24,14 @@ export interface TurfRepository extends TerritoryRepository {
   /**
    * Activities without a claim that have a track (a row with points), oldest first by
    * `(startedAt, id)`. Activities without one cannot be claimed and are never returned (else they
-   * would head the queue for ever).
+   * would head the queue for ever). `offset` skips the first ones (those that failed this run).
    */
-  unclaimed(limit: number): Promise<UnclaimedActivity[]>;
+  unclaimed(limit: number, offset?: number): Promise<UnclaimedActivity[]>;
+  /**
+   * Claims that no longer match their activity (track hash, type or start), oldest first: left by
+   * an API without server turf, which replaced activities in place. `turf:rebuild` re-claims them.
+   */
+  staleClaims(): Promise<UnclaimedActivity[]>;
   /**
    * How many of the user's Turf Cells differ from a recomputation from the claims (stale rows,
    * missing rows, wrong counts or first claimer): what `rebuildAll` would fix. Reads only.

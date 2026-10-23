@@ -17,9 +17,9 @@ scope:
 summary:
   Deploy the CityTurfer API — Vercel project city-turfer-api (apps/api, fra1), production branch,
   env vars (Neon, Better Auth, Brevo, cron), migrations before the merge, the server turf rollout
-  (migrate 0005 before the merge, deploy, turf:backfill, then the web map; turf:rebuild after a
-  rollback), the daily retention cron with its turf catch-up, adopting the admin data, device
-  tokens, support requests (find, delete), checking health
+  (migrate 0005 and 0006 before the merge, deploy, turf:backfill, then the web map; turf:rebuild
+  straight after redeploying from a rollback), the daily retention cron with its turf catch-up,
+  adopting the admin data, device tokens, support requests (find, delete), checking health
 ---
 
 # API deploy runbook
@@ -85,14 +85,15 @@ server (`apps/api/src/server.ts`) adds the `dev-token` for user `admin` only whe
 
 ## Migrations
 
-| Migration                  | Contract | What                                              |
-| -------------------------- | -------- | ------------------------------------------------- |
-| `0000_init`                | 0.3.0    | users, consents, activities, tracks, gap routes … |
-| `0001_activity_renamed_at` | 0.4.0    | `activities.renamed_at` (rename, last write wins) |
-| `0002_auth`                | 0.4.0    | Better Auth `auth_*` tables, `rate_limits`        |
-| `0003_exports`             | 0.4.0    | `data_exports`, `stored_files` (export zips)      |
-| `0004_browser_sessions`    | 0.5.0    | `auth_sessions.client`, `absolute_expires_at`     |
-| `0005_turf`                | 0.6.0    | `turf_claims`, `turf_cells`, `users.turf_version` |
+| Migration                    | Contract | What                                              |
+| ---------------------------- | -------- | ------------------------------------------------- |
+| `0000_init`                  | 0.3.0    | users, consents, activities, tracks, gap routes … |
+| `0001_activity_renamed_at`   | 0.4.0    | `activities.renamed_at` (rename, last write wins) |
+| `0002_auth`                  | 0.4.0    | Better Auth `auth_*` tables, `rate_limits`        |
+| `0003_exports`               | 0.4.0    | `data_exports`, `stored_files` (export zips)      |
+| `0004_browser_sessions`      | 0.5.0    | `auth_sessions.client`, `absolute_expires_at`     |
+| `0005_turf`                  | 0.6.0    | `turf_claims`, `turf_cells`, `users.turf_version` |
+| `0006_turf_claim_track_hash` | 0.6.0    | `turf_claims.track_hash` (rollback repair)        |
 
 Migrations are SQL files in `apps/api/drizzle/`, generated from `apps/api/src/db/schema.ts` with
 `pnpm --filter @cityturfer/api run db:generate` and committed. Apply them to the production database
@@ -231,15 +232,15 @@ From 0.6.0 the server claims turf in every upload's transaction and serves it (`
 Activities uploaded before have no claim until the backfill. **The founder runs the production
 backfill.**
 
-> **Migrate `0005_turf` before merging `release/vX.Y.Z` → `main`.** That merge deploys 0.6.0, which
-> reads `users.turf_version` on every request that loads the account: without the migration
-> `/v1/me`, every upload and every turf route answer **500**. Check `GET /v1/health` on the current
-> deployment after migrating, then merge.
+> **Migrate `0005_turf` and `0006_turf_claim_track_hash` before merging `release/vX.Y.Z` → `main`.**
+> That merge deploys 0.6.0, which reads `users.turf_version` on every request that loads the
+> account: without the migration `/v1/me`, every upload and every turf route answer **500**. Check
+> `GET /v1/health` on the current deployment after migrating, then merge.
 
 Order:
 
-1. **Migrate** production to `0005_turf` (section above) **before the merge**: additive, the running
-   0.5.0 code ignores the new tables.
+1. **Migrate** production to `0006_turf_claim_track_hash` (section above) **before the merge**:
+   additive, the running 0.5.0 code ignores the new tables and column.
 2. **Deploy** (merge `release/vX.Y.Z` → `main`); check `GET /v1/health` answers `version: 0.6.0`,
    `database: ok`. New uploads claim from now on.
 3. **Backfill** from a trusted machine, against the direct (unpooled) connection. First see what
@@ -270,18 +271,23 @@ Order:
    future (a phone clock ahead): the daily cron claims it once due. `skipped` = activities without a
    track (the query above): never attempted, by this run, later runs or the cron, so they cannot
    keep either busy; they are reported on every run until support repairs or erases them (a later
-   upload with a track claims at once). `failed` > 0 exits 1: re-run; if it stays, look at the error
-   class it printed. `user:find` shows "turf: N claims, M activities unclaimed, K without a track"
-   per account. The backfill never re-creates an account erased while it runs.
+   upload with a track claims at once). `failed` > 0 exits 1: a failed claim is passed over for the
+   rest of the run (the user's newer activities still claim) and tried first by the next. Re-run; if
+   it stays, look at the error class it printed and find the account with `user:find` (its unclaimed
+   count stays above 0 after a full run). `user:find` shows "turf: N claims, M activities unclaimed,
+   K without a track" per account. The backfill never re-creates an account erased while it runs.
 
 4. **Then the web map** (the website's turf pages) may ship: before the backfill, users who uploaded
    earlier see partial turf.
 
 **Rollback** (redeploy 0.5.0 code): the turf tables stay but 0.5.0 does not maintain them. Its
-deletes, replaces and withdrawals cascade claims away with their activities **but leave their Turf
-Cells**, so cells derived from erased or withdrawn data would stay and be served again (personal
-data that must be gone, decision B5). After any rollback, once 0.6.0 is redeployed, **run
-`turf:rebuild` before `turf:backfill`**:
+deletes and withdrawals cascade claims away with their activities **but leave their Turf Cells**,
+and its replaces change the track, type or start in place **under the old claim**, so turf derived
+from erased, withdrawn or trimmed-away data would stay and be served again (personal data that must
+be gone, decision B5). Size the repair with `turf:rebuild -- --dry-run` before redeploying 0.6.0;
+keep the web turf pages off; then, **immediately after the redeploy**, run `turf:rebuild` and then
+`turf:backfill`, and only then turn the web turf pages back on (until the rebuild, `/v1/turf/*`
+serves the stale turf):
 
 ```bash
 DATABASE_URL_UNPOOLED='<neon production url>' pnpm --filter @cityturfer/api run turf:rebuild -- --dry-run
@@ -291,9 +297,10 @@ DATABASE_URL_UNPOOLED='<neon production url>' pnpm --filter @cityturfer/api run 
 ```
 
 `turf:rebuild` recomputes each user's Turf Cells from the claims that remain, one locked transaction
-per user, only where they differ (a user with cells and no claims loses them all); a second run
-finds nothing (`0 rebuilt`) and changes no turf version. Counts only; it skips accounts erased
-meanwhile without re-creating them; `failed` > 0 exits 1. Then the backfill claims what 0.5.0
+per user, only where they differ (a user with cells and no claims loses them all), then re-claims
+every claim whose activity's track hash, type or start no longer matches (`N claims re-claimed`); a
+second run finds nothing (`0 rebuilt`) and changes no turf version. Counts only; it skips accounts
+erased meanwhile without re-creating them; `failed` > 0 exits 1. Then the backfill claims what 0.5.0
 uploaded (the cron would too, 25 a day).
 
 ## Retention cron

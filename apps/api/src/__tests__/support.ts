@@ -5,6 +5,7 @@ import { sql } from 'drizzle-orm';
 
 import { createApp } from '../app';
 import { deviceTokenAuth, parseApiTokens } from '../auth/device-tokens';
+import type { BackupStore } from '../backup/ports';
 import { DrizzleAccountRepository } from '../db/accounts';
 import { DrizzleExportStore, PostgresFileStorage } from '../db/exports';
 import { createPgliteDb } from '../db/pglite';
@@ -75,6 +76,8 @@ export async function backupApp(
     webEdgeSecret?: string | null;
     /** Passwords the fake breach check refuses (default: `password1234`, …). */
     breached?: readonly string[];
+    /** Wraps the store the app uses (a failure injected behind the real routes); `h.store` stays real. */
+    wrapStore?: (store: BackupStore) => BackupStore;
   } = {}
 ) {
   shared ??= createPgliteDb();
@@ -119,7 +122,7 @@ export async function backupApp(
       auth: compositeVerifier(deviceTokenAuth(parseApiTokens(API_TOKENS).entries), identity.verifier),
       clock,
       log,
-      store,
+      store: options.wrapStore ? options.wrapStore(store) : store,
       grid,
       identity,
       accounts,

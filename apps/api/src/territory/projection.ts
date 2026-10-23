@@ -92,9 +92,9 @@ export class TurfProjection {
    * without saving when the track has no point, and such an activity is `skipped` (the repository's
    * `unclaimed` already leaves out activities without a track; this guards the rest).
    */
-  async claimMissing(limit: number): Promise<CatchUpCounts> {
+  async claimMissing(limit: number, offset = 0): Promise<CatchUpCounts> {
     const counts: CatchUpCounts = { claimed: 0, deferred: 0, skipped: 0 };
-    for (const a of await this.d.repo.unclaimed(limit)) {
+    for (const a of await this.d.repo.unclaimed(limit, offset)) {
       if (!(await this.claim(a))) {
         counts.deferred++;
       } else if (await this.d.repo.claimExists(a.id)) {
@@ -104,6 +104,11 @@ export class TurfProjection {
       }
     }
     return counts;
+  }
+
+  /** Claims that no longer match their activity (reads only). */
+  staleClaims() {
+    return this.d.repo.staleClaims();
   }
 
   /** How many Turf Cells a rebuild would change (reads only). */

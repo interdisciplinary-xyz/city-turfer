@@ -56,8 +56,8 @@ export function registerTerritory(app: OpenAPIHono<AppEnv>): void {
       description: [
         'Every Turf Cell of the user with its visits per type, sorted by cell id, a page at a time (use case ListTurfCells): the web map downloads the whole turf once and draws it locally. No bounding box and no coordinates in the URL — only an opaque cursor.',
         '',
-        '- **Pages:** follow `nextCursor` until null. The cursor is bound to `turfVersion`: if the turf changes meanwhile (an upload, a delete), the next page answers `410 turf.changed` — start again without a cursor.',
-        '- **Caching:** `Cache-Control: private, no-store`: cells are location data, never stored by a browser or proxy (shared computers). `ETag` names the turf version: a client that keeps the cells itself (in memory) sends it as `If-None-Match` to get `304` (no body) when nothing changed.',
+        '- **Pages:** 50,000 cells by default, so most turf comes in one page. Follow `nextCursor` until null. The cursor is bound to `turfVersion`: if the turf changes meanwhile (an upload, a delete), the next page answers `410 turf.changed` — start again without a cursor, after a short pause (a backup may still be uploading). A first page that the turf keeps changing under answers `503 turf.busy`: wait `Retry-After` seconds.',
+        '- **Caching:** `Cache-Control: private, no-store`: cells are location data, never stored by a browser or proxy (shared computers). `ETag` names the turf version: a client that keeps the cells itself (in memory) sends it as `If-None-Match` on the **first** page to get `304` (no body) when nothing changed. Pages after the first share the tag but never answer `304`.',
       ].join('\n'),
       request: { query: TurfCellsQuery, headers: IF_NONE_MATCH },
       responses: {
@@ -66,6 +66,14 @@ export function registerTerritory(app: OpenAPIHono<AppEnv>): void {
         ...INVALID,
         ...AUTH_ERRORS,
         410: problemResponse('The turf changed since this cursor: start again without one.', 'turf.changed'),
+        503: {
+          ...problemResponse(
+            'The turf kept changing while the first page was read (wait `Retry-After` seconds), or no database.',
+            'turf.busy',
+            'storage.unavailable'
+          ),
+          headers: { 'Retry-After': { $ref: '#/components/headers/RetryAfter' } },
+        },
       },
     },
     async (c) => {

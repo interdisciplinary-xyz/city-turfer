@@ -75,7 +75,7 @@ export function defineRoute(app: OpenAPIHono<AppEnv>, spec: RouteSpec, handler?:
     ...config,
     security,
     ...(planned ? { ...PLANNED, summary: `[planned] ${config.summary ?? ''}`.trim() } : {}),
-    responses: planned ? { ...responses, ...NOT_IMPLEMENTED } : isPublic ? responses : { ...responses, ...UNAVAILABLE },
+    responses: planned ? { ...responses, ...NOT_IMPLEMENTED } : isPublic ? responses : { ...UNAVAILABLE, ...responses },
     // Live protected routes also need a verified user and the database (else 401 / 503).
     middleware: isPublic ? [] : planned ? [requireCaller] : [requireCaller, requireStore],
   });

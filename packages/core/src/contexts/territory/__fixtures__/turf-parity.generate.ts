@@ -16,6 +16,13 @@
  * result: per cell the visit counts by type and `firstAt`, the start of its first claimer (D4, the
  * earliest `(startedAt, activityId)` with ids in JS string order, whatever the upload order), plus
  * the summary at the fixed `now` and each surviving claim's canonical new cells.
+ *
+ * What it does **not** pin: rasterisation. Each claim's cell set comes from `Claim.fromTrack` and
+ * strong cells from `strengthOf` / `isStrong`, the code under test, so a change to the corridor
+ * (width, gap bridging) is re-blessed by WRITE_TURF_PARITY=1 on all three sides and shows up only
+ * as a diff of `turf-parity.expected.json` in review. Strength is pinned independently, by
+ * apps/mobile/tools/fixtures/turf-vectors.json (tools/lib/turf.mjs); the corridor is not (the
+ * tools have no rasteriser of their own): review a regenerated golden's cell counts.
  */
 import { ACTIVITY_TYPES } from '../../../constants/activity';
 import { H3CellGrid } from '../../../h3';
