@@ -7,6 +7,7 @@ import type { AppEnv, Credential } from './deps';
 import { problem } from './problem';
 import { SESSION_COOKIE, SESSION_COOKIE_ATTRIBUTES } from './session-cookie';
 import { TurfService } from './territory/turf-service';
+import { isUnsafeMethod } from './unsafe-methods';
 
 /** Vercel Functions take request bodies up to 4.5 MB; refuse bigger ones before reading them. */
 export const MAX_BODY_BYTES = 4_500_000;
@@ -124,8 +125,6 @@ export const inflateGzip: MiddlewareHandler<AppEnv> = async (c, next) => {
   return next();
 };
 
-const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
-
 /** `CityTurfer-Client` of the website: `web/<version>` (e.g. `web/0.10.0`). */
 const WEB_CLIENT = /^web\/[0-9A-Za-z.+-]{1,32}$/;
 
@@ -169,7 +168,7 @@ export const requireCaller: MiddlewareHandler<AppEnv> = async (c, next) => {
     });
   }
   const credential: Credential = bearer ? 'bearer' : 'cookie';
-  if (credential === 'cookie' && UNSAFE_METHODS.has(c.req.method) && !isFromWebsite(c)) {
+  if (credential === 'cookie' && isUnsafeMethod(c.req.method) && !isFromWebsite(c)) {
     return problem(c, 'auth.csrf', "Changes with the session cookie need the website's Origin and client header.");
   }
   let principal;
@@ -235,7 +234,7 @@ export const requireStore: MiddlewareHandler<AppEnv> = async (c, next) => {
     });
   }
   const { store, grid } = deps;
-  if (!store || !grid) {
+  if (!store) {
     return problem(c, 'storage.unavailable', 'No database is configured.');
   }
   const userId = principal.userId;

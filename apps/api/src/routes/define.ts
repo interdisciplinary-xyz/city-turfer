@@ -12,6 +12,7 @@ import {
   problemResponse,
   UNAVAILABLE,
 } from '../schemas/common';
+import { isUnsafeMethod } from '../unsafe-methods';
 
 export type RouteStatus = 'planned' | 'live';
 
@@ -26,8 +27,6 @@ type Handler = (c: Context<AppEnv>) => Response | Promise<Response>;
 export function valid<T>(c: Context<AppEnv>, target: 'json' | 'param' | 'query' | 'header'): T {
   return c.req.valid(target as never) as T;
 }
-
-const UNSAFE = new Set(['post', 'put', 'patch', 'delete']);
 
 type Responses = RouteConfig['responses'];
 
@@ -67,7 +66,7 @@ export function defineRoute(app: OpenAPIHono<AppEnv>, spec: RouteSpec, handler?:
   const security = config.security ?? CALLER_AUTH;
   const isPublic = security.length === 0;
   const planned = status === 'planned';
-  const responses = !isPublic && UNSAFE.has(config.method) ? withCsrf(config.responses) : config.responses;
+  const responses = !isPublic && isUnsafeMethod(config.method) ? withCsrf(config.responses) : config.responses;
   if (!planned && !handler) {
     throw new Error(`live route ${config.method.toUpperCase()} ${config.path} needs a handler`);
   }
