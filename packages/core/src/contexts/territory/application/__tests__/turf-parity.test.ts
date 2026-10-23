@@ -199,13 +199,18 @@ describe('G2 turf parity fixture', () => {
     expect(Math.abs(rebuilt.summary.areaKm2 - expected.summary.areaKm2)).toBeLessThan(1e-12);
   });
 
-  it('exercises what it claims to: out-of-order import, tie under D4, delete, replace, type change', () => {
+  it('exercises what it claims to: out-of-order import, tie under D4, delete, replace, type change, all three types', () => {
     const g = expected;
     const hk = g.claims.find((c) => c.activityId.startsWith('hk-'))!;
     expect(hk.newCellCount).toBeGreaterThan(0); // first claimer although it arrived last
     const tie = g.claims.filter((c) => c.activityId.startsWith('B7') || c.activityId.startsWith('a1'));
     expect(tie.map((c) => c.newCellCount > 0)).toEqual([true, false]); // 'B7…' < 'a1…' in JS order
-    expect(g.summary.byType.cycle).toBe(0); // the only ride became a run
+    // The crane ride became a run; the Long Market ride survives as a cycle, so every cycle cell
+    // is its own, and some cells count a walk, a run and a ride (the cycle column is pinned).
+    const ride = g.claims.find((c) => c.activityId.startsWith('e9'))!;
+    expect(g.summary.byType.cycle).toBe(ride.cellCount);
+    expect(g.cells.filter((c) => c[3] > 0)).toHaveLength(ride.cellCount);
+    expect(g.cells.some(([, walk, run, cycle]) => walk > 0 && run > 0 && cycle > 0)).toBe(true);
     expect(g.summary.strongCells).toBeGreaterThan(0);
     expect(g.summary.newThisWeekKm2).toBeGreaterThan(0);
     expect(g.summary.newThisMonthKm2).toBeGreaterThan(g.summary.newThisWeekKm2);

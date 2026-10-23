@@ -150,6 +150,7 @@ const ID = {
   longLane: '7e2d9c1b-3a4f-4e5d-9b6c-0a1b2c3d4e5f',
   waterfrontRun: '0d5a7b3c-1e2f-4a6b-8c9d-3e4f5a6b7c8d',
   craneRide: 'c3b2a190-8f7e-4d6c-b5a4-9382716f5e4d',
+  longMarketRide: 'e9f8a7b6-5c4d-4e3f-a2b1-0c9d8e7f6a5b',
   tieRecording: 'a1d40c2e-6b0f-4c39-9d7e-2f5b8e1c3a90',
   tieImport: 'B7E2F9A0-3C4D-4E5F-8A6B-1C2D3E4F5A6B',
   appleHealth: 'hk-5F0C2B9E-71A4-4D3B-9E8F-6A7B8C9D0E1F',
@@ -197,6 +198,14 @@ export function buildParityInput(): ParityInput {
       },
       // Type change: the ride was a run (same track and start).
       { op: 'change-type', activity: { ...craneRide, type: 'run' } },
+      // The ride that survives: Long Market and the Green Gate, over cells a walk and a run also
+      // claim, so some cells count all three types (pins the cycle column on both sides).
+      {
+        op: 'create',
+        activity: activity(ID.longMarketRide, 'cycle', 'recording', NOW - 2 * DAY, [
+          ['townHall', 'neptune', 'greenGate', 'waterfrontSouth'],
+        ]),
+      },
       { op: 'delete', id: ID.longLaneEarly },
       // An older Apple Health walk arriving last: first claimer of Long Market whatever the order.
       {
