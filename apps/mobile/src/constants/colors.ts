@@ -3,12 +3,14 @@ import type { BrandActivityType } from '@cityturfer/brand';
 import type { ActivityTypeName } from './activity';
 
 /**
- * Brand colour tokens live in `@cityturfer/brand` (packages/brand), shared with the web landing
+ * Brand colour and type tokens live in `@cityturfer/brand` (packages/brand), shared with the web landing
  * page. Re-exported here so the app keeps one import path.
  */
 export {
   ACCENT,
   DARK,
+  DISPLAY_CASE,
+  DISPLAY_TRACKING,
   FONT_FAMILY,
   LIGHT,
   ON_ACCENT,

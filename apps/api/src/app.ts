@@ -1,12 +1,13 @@
-import { swaggerUI } from '@hono/swagger-ui';
+import { swaggerUI, type SwaggerUIOptions } from '@hono/swagger-ui';
 import { OpenAPIHono } from '@hono/zod-openapi';
+import { HTTPException } from 'hono/http-exception';
 import { requestId } from 'hono/request-id';
 import { secureHeaders } from 'hono/secure-headers';
 
 import { AppError } from './backup/app-error';
 import { type ApiDeps, type AppEnv, defaultDeps } from './deps';
 import { isProblemCode } from './errors';
-import { describeError, inflateGzip, limitBody, logRequests } from './middleware';
+import { describeError, inflateGzip, limitBody, logRequests, personalCaching } from './middleware';
 import { MAX_FIELD_ERRORS, problem } from './problem';
 import { registerActivities } from './routes/activities';
 import { registerIdentity } from './routes/identity';
@@ -16,13 +17,25 @@ import { registerPrivacy } from './routes/privacy';
 import { registerSync } from './routes/sync';
 import { registerTerritory } from './routes/territory';
 import { registerHeaders } from './schemas/common';
+import { SESSION_COOKIE } from './session-cookie';
 import { OPENAPI_CONFIG, SPEC_PATH, SWAGGER_UI_OPTIONS } from './spec';
+
+/**
+ * SWAGGER_UI_OPTIONS for @hono/swagger-ui. Its 0.6.1 types declare `syntaxHighlight.theme` as
+ * `string[]`, but Swagger UI reads one theme name (it ships 'idea'), and the middleware passes the
+ * object through JSON.stringify unchanged; hence the one cast.
+ */
+function swaggerUiOptions(): Omit<SwaggerUIOptions, 'url'> {
+  const { syntaxHighlight, ...rest } = SWAGGER_UI_OPTIONS;
+  return { ...rest, syntaxHighlight: syntaxHighlight as unknown as SwaggerUIOptions['syntaxHighlight'] };
+}
 
 /**
  * The CityTurfer API (`api-design` skill, docs/decisions/api-sync-2026-10-20.md). Routes are
  * driving adapters over the app's use cases (backup: src/backup/); the rest are declared and
- * documented but still planned (501). Order per request: request id → log → secure headers → body
- * limit → gzip → (route) auth → (live routes) database + user → validation → handler.
+ * documented but still planned (501). Order per request: request id → log → secure headers →
+ * caching default → body limit → gzip → (route) auth → (live routes) database + user → validation →
+ * handler.
  */
 export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
   const app = new OpenAPIHono<AppEnv>({
@@ -54,6 +67,7 @@ export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
   });
   app.use('*', logRequests);
   app.use('*', secureHeaders());
+  app.use('/v1/*', personalCaching);
   app.use('/v1/*', limitBody);
   app.use('/v1/*', inflateGzip);
 
@@ -61,7 +75,14 @@ export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
     type: 'http',
     scheme: 'bearer',
     description:
-      'A session token from `POST /v1/auth/sign-in` (e-mailed code, about 60 days, sliding), or — for one more release — a device token minted with `pnpm --filter @cityturfer/api run token:new -- <userId>` (the server knows only its SHA-256, env `API_TOKENS`).',
+      'A session token from `POST /v1/auth/sign-in` (e-mailed code, about 60 days, sliding), or — for one more release — a device token minted with `pnpm --filter @cityturfer/api run token:new -- <userId>` (the server knows only its SHA-256, env `API_TOKENS`). Sent with `Authorization`, it wins over the cookie.',
+  });
+  app.openAPIRegistry.registerComponent('securitySchemes', 'cookieAuth', {
+    type: 'apiKey',
+    in: 'cookie',
+    name: SESSION_COOKIE,
+    description:
+      'The website\'s session (`POST /v1/auth/sign-in` with `client: "browser"`): `HttpOnly; Secure; SameSite=Strict; Path=/`, host-only, set on the website\'s host through its `/api/v1/*` rewrite. 14 days sliding, at most 30 days; on a shared computer a browser-session cookie and 8 hours. Requests that change something also need `Origin` = the website, `Sec-Fetch-Site: same-origin` when sent, and `CityTurfer-Client: web/<version>` (else `403 auth.csrf`).',
   });
   registerHeaders(app.openAPIRegistry);
 
@@ -74,7 +95,7 @@ export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
   registerInternal(app);
 
   app.doc31(SPEC_PATH, OPENAPI_CONFIG);
-  app.get('/swagger', swaggerUI({ url: SPEC_PATH, title: 'CityTurfer API', ...SWAGGER_UI_OPTIONS }));
+  app.get('/swagger', swaggerUI({ url: SPEC_PATH, title: 'CityTurfer API', ...swaggerUiOptions() }));
 
   app.notFound((c) => problem(c, 'not-found'));
   app.onError((err, c) => {
@@ -83,6 +104,10 @@ export function createApp(deps: ApiDeps = defaultDeps()): OpenAPIHono<AppEnv> {
     // nothing to the caller and logs one sanitised line (describeError: no message, no data).
     if (err instanceof AppError) {
       return problem(c, err.code, undefined, { headers: err.headers });
+    }
+    // Hono's validator refuses a body that is not JSON before zod sees it.
+    if (err instanceof HTTPException && err.status === 400) {
+      return problem(c, 'invalid-request', 'The body is not valid JSON.');
     }
     const code = (err as { code?: unknown }).code;
     if (err.name === 'DomainError' && isProblemCode(code)) {

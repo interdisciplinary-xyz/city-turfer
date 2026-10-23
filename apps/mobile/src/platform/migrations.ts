@@ -286,6 +286,15 @@ const MIGRATIONS: { version: number; sql: string }[] = [
       );
     `,
   },
+  {
+    version: 13,
+    sql: `
+      -- Territory: the claims covering a cell (the primary key starts with activity_id). A release
+      -- recomputes first_at / last_at of the cells it touched from the other claims of those cells;
+      -- without this it read every claim cell of the user.
+      CREATE INDEX idx_ter_claim_cells_cell ON ter_claim_cells(cell);
+    `,
+  },
 ];
 
 /** The newest schema version this build knows. */

@@ -3,17 +3,19 @@ import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { ACCENT, FONT_FAMILY, ON_ACCENT } from '@/constants/colors';
+import { ACCENT, DISPLAY_CASE, DISPLAY_TRACKING, FONT_FAMILY, ON_ACCENT } from '@/constants/colors';
 import { evaluateAchievements } from '@/contexts/achievements';
 import { useActivities } from '@/contexts/activity-log/ui/hooks';
 import { useTurfSummary } from '@/contexts/territory/ui/hooks';
+import { useT } from '@/i18n';
 import { useApp } from '@/ui-kit/app-context';
 import { Card, Stat } from '@/ui-kit/components';
-import { formatArea, formatDistance } from '@/ui-kit/format';
+import { formatArea, formatDistance, shownName } from '@/ui-kit/format';
 import { usePalette } from '@/ui-kit/theme';
 
 export default function ProfileScreen() {
   const p = usePalette();
+  const t = useT('profile');
   const { auth } = useApp();
   const user = auth.status === 'signed-in' ? auth.user : null;
   const activities = useActivities();
@@ -31,7 +33,7 @@ export default function ProfileScreen() {
     [activities, summary]
   );
   const unlocked = achievements.filter((a) => a.unlocked).length;
-  const name = user?.displayName ?? 'You';
+  const name = shownName(user);
 
   return (
     <ScrollView style={{ backgroundColor: p.bg }} contentContainerStyle={{ padding: SPACE.lg, gap: 14 }}>
@@ -46,16 +48,21 @@ export default function ProfileScreen() {
       </View>
       <Card>
         <View style={{ flexDirection: 'row' }}>
-          <Stat label='Activities' value={String(activities?.length ?? '—')} />
-          <Stat label='Distance' value={total.value} unit={total.unit} />
-          <Stat label='Turf' value={area[0]} unit={area[1]} />
+          <Stat label={t('activities')} value={String(activities?.length ?? '—')} />
+          <Stat label={t('distance')} value={total.value} unit={total.unit} />
+          <Stat label={t('turf')} value={area[0]} unit={area[1]} />
         </View>
       </Card>
-      <Pressable testID='profile-achievements' onPress={() => router.push('/achievements')}>
+      <Pressable
+        testID='profile-achievements'
+        onPress={() => router.push('/achievements')}
+        accessibilityRole='button'
+        accessibilityLabel={t('achievementsLabel', { unlocked: String(unlocked), total: String(achievements.length) })}
+      >
         <Card style={s.link}>
-          <Text style={[s.linkText, { color: p.text }]}>Achievements</Text>
+          <Text style={[s.linkText, { color: p.text }]}>{t('achievements')}</Text>
           <Text style={{ color: ACCENT, fontWeight: '700' }}>
-            {unlocked} / {achievements.length} ›
+            {t('achievementsCount', { unlocked: String(unlocked), total: String(achievements.length) })}
           </Text>
         </Card>
       </Pressable>
@@ -74,8 +81,14 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 6,
   },
-  initial: { color: ON_ACCENT, fontSize: 34, fontFamily: FONT_FAMILY.display },
-  name: { fontSize: 24, fontFamily: FONT_FAMILY.display, letterSpacing: -0.5 },
+  initial: { color: ON_ACCENT, fontSize: 34, fontFamily: FONT_FAMILY.display, textTransform: DISPLAY_CASE },
+  name: {
+    fontSize: 30,
+    lineHeight: 34,
+    fontFamily: FONT_FAMILY.display,
+    textTransform: DISPLAY_CASE,
+    letterSpacing: DISPLAY_TRACKING,
+  },
   link: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   linkText: { fontSize: 17, fontWeight: '800' },
 });

@@ -1,0 +1,30 @@
+{
+  "emptyHistory": "No activities yet. Record your first walk!",
+  "recentTitle": "Recent activities",
+  "seeAllLabel": "See all activities",
+  "seeAll": "See all ›",
+  "rowLabel": "{estimated, select, yes {{name}, {date}, about {distance}} other {{name}, {date}, {distance}}}",
+  "saving": "Saving your activity…",
+  "fromAppleHealth": "From Apple Health",
+  "stat": {
+    "distance": "Distance",
+    "movingTime": "Moving time",
+    "average": "{type, select, cycle {Avg speed} other {Avg pace}}",
+    "elapsed": "Elapsed",
+    "elevation": "Elevation ≈"
+  },
+  "estimatedNote": "Includes {distance} estimated along streets where GPS was lost (dashed). Estimated parts don't claim turf.",
+  "splitsTitle": "Splits",
+  "splitKm": "km {km}",
+  "deleteButton": "Delete activity",
+  "deleteTitle": "Delete activity?",
+  "deleteBody": "Its turf will be released too.",
+  "rename": {
+    "action": "Rename",
+    "title": "Rename activity",
+    "label": "Activity name",
+    "failed": "Couldn't save the new name. Try again.",
+    "empty": "Give it a name.",
+    "tooLong": "{max, plural, one {Keep it to # character.} other {Keep it to # characters.}}"
+  }
+}

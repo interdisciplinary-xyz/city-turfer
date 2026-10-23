@@ -41,7 +41,7 @@ iPhone (free Apple ID) and a sideloaded Android APK.
 | 14  | 🟡 App works with location denied (Apple 5.1.2(i)): history, Turf Map, Health import still usable; useful empty state on a fresh install (4.2)                                                                                              | To verify on device                                                     |
 | 15  | 🟡 Store listings PL + EN: name/subtitle 30, keywords 100 bytes (Polish diacritics are 2 bytes), promo 170; screenshots lead with the Turf Map; category Health & Fitness                                                                   | Draft keywords only (`brand-system` skill)                              |
 | 16  | 🟢 Rating prompt after a positive moment (first claimed street, a tier up) — max 3 per 365 days on iOS                                                                                                                                      | Not built                                                               |
-| 17  | 🟢 App i18n (PL) — the website already redirects Polish browsers to `/pl`                                                                                                                                                                   | App is English-only                                                     |
+| 17  | 🟢 App i18n (PL) — the website already redirects Polish browsers to `/pl`                                                                                                                                                                   | In-app copy EN + PL (v0.10.0); iOS permission prompts still English     |
 
 ## What leaves the phone today (for the policy and labels)
 
@@ -51,7 +51,7 @@ iPhone (free Apple ID) and a sideloaded Android APK.
 | Gap estimation (optional) | Two endpoints of each GPS gap + IP + UA                                                                                                      | routing.openstreetmap.de     | Logged by the operator; 1 req/s; skipped near start/end  |
 | Update check              | App/runtime version + IP                                                                                                                     | EAS Update (Expo)            | —                                                        |
 | Waitlist (website)        | Email + consent                                                                                                                              | Brevo (EU)                   | Double opt-in                                            |
-| Website hosting           | IP, request                                                                                                                                  | Vercel                       | Static site, no cookies                                  |
+| Website hosting           | IP, request                                                                                                                                  | Vercel                       | Public pages: no cookies; portal: 1 session cookie       |
 | Cloud backup (opt-in)     | Activities with full tracks, names, times, time zone, gap routes, Home City id; Apple Health imports only with a second switch; device token | CityTurfer API (Vercel fra1) | Consent with policy version; one-way; never demo history |
 
 Without Cloud backup, routes, turf and Apple Health data stay in the on-device SQLite database. The

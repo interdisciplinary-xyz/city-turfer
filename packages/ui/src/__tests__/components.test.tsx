@@ -1,4 +1,4 @@
-import { ACCENT, DARK, LIGHT, ON_ACCENT, RAMP, TIER_LABEL, TYPE_COLOR } from '@cityturfer/brand';
+import { ACCENT, DARK, LIGHT, ON_ACCENT, ON_LIGHT, RAMP, TIER_LABEL, TYPE_COLOR } from '@cityturfer/brand';
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { act, create, type ReactTestInstance, type ReactTestRenderer } from 'react-test-renderer';
@@ -45,13 +45,37 @@ describe('theme', () => {
 });
 
 describe('Button', () => {
-  it('calls onPress and defaults to the accent with its text colour', () => {
+  it('calls onPress and, on dark (the app), keeps the accent fill with a white label', () => {
     const onPress = jest.fn();
-    const tree = render(<Button label='Start' onPress={onPress} testID='go' />);
+    const tree = render(
+      <ThemeProvider scheme='dark'>
+        <Button label='Start' onPress={onPress} testID='go' />
+      </ThemeProvider>
+    );
     act(() => pressable(tree).props.onPress());
     expect(onPress).toHaveBeenCalledTimes(1);
     expect(flat(host(tree, 'go').props.style).backgroundColor).toBe(ACCENT);
     expect(flat(tree.root.findByType(Text).props.style).color).toBe(ON_ACCENT);
+    expect(ON_ACCENT).toBe('#FFFFFF');
+  });
+
+  it('on light keeps the same pink fill with a night label (AA)', () => {
+    const tree = render(
+      <ThemeProvider scheme='light'>
+        <Button label='Start' onPress={() => {}} testID='go' />
+      </ThemeProvider>
+    );
+    expect(flat(host(tree, 'go').props.style).backgroundColor).toBe(ACCENT);
+    expect(flat(tree.root.findByType(Text).props.style).color).toBe(ON_LIGHT);
+  });
+
+  it('lets an explicit textColor win in either scheme', () => {
+    const tree = render(
+      <ThemeProvider scheme='light'>
+        <Button label='Ride' onPress={() => {}} color={TYPE_COLOR.cycle} textColor={DARK.bg} />
+      </ThemeProvider>
+    );
+    expect(flat(tree.root.findByType(Text).props.style).color).toBe(DARK.bg);
   });
 
   it('is disabled and shows no label while busy', () => {
@@ -81,6 +105,17 @@ describe('Card', () => {
       </ThemeProvider>
     );
     expect(flat(host(tree, 'c').props.style).backgroundColor).toBe(DARK.card);
+  });
+
+  it('uses the light card colour on light', () => {
+    const tree = render(
+      <ThemeProvider scheme='light'>
+        <Card testID='c'>
+          <View />
+        </Card>
+      </ThemeProvider>
+    );
+    expect(flat(host(tree, 'c').props.style).backgroundColor).toBe(LIGHT.card);
   });
 });
 
@@ -114,6 +149,35 @@ describe('ActivityRow', () => {
     act(() => pressable(tree).props.onPress());
     expect(onPress).toHaveBeenCalled();
   });
+
+  function badgeFill(scheme: 'dark' | 'light') {
+    const tree = render(
+      <ThemeProvider scheme={scheme}>
+        <ActivityRow
+          type='run'
+          glyph='🏃'
+          title='Run'
+          subtitle='Sun'
+          value='5 km'
+          detail='28:14'
+          accessibilityLabel='Run'
+          onPress={() => {}}
+        />
+      </ThemeProvider>
+    );
+    return tree.root
+      .findAllByType(View)
+      .map((v) => flat(v.props.style).width === 44 && flat(v.props.style).backgroundColor)
+      .find(Boolean);
+  }
+
+  it('tints the badge with the activity colour on dark (the app, unchanged)', () => {
+    expect(badgeFill('dark')).toBe(tint(TYPE_COLOR.run));
+  });
+
+  it('tints the badge with the light graphic variant on light', () => {
+    expect(badgeFill('light')).toBe(tint(LIGHT.runGraphic));
+  });
 });
 
 describe('TurfLegend', () => {
@@ -132,6 +196,12 @@ describe('TurfLegend', () => {
       'Turf strength',
       ...Object.values(TIER_LABEL),
     ]);
+  });
+
+  it('takes a translated screen-reader sentence', () => {
+    const label = 'Siła turfu: Blady, Świecący, Mocny, Płonący, od najsłabszego do najmocniejszego';
+    const tree = render(<TurfLegend testID='legend' accessibilityLabel={label} />);
+    expect(host(tree, 'legend').props.accessibilityLabel).toBe(label);
   });
 
   it('shows only the swatches when compact', () => {

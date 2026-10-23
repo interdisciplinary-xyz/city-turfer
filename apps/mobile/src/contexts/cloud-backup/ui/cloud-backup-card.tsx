@@ -3,46 +3,29 @@ import { useState } from 'react';
 import { Alert, Platform, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { ACCENT } from '@/constants/colors';
+import { translator, useT } from '@/i18n';
 import { Button, Card } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
 
 import type { BackupCommandResult } from '../contract';
-import {
-  ACTION_ERRORS,
-  ACTION_FAILED,
-  BACKUP_PRIVACY,
-  BACKUP_SWITCH_LABEL,
-  CLOUD_BACKUP_PITCH,
-  CLOUD_BACKUP_TITLE,
-  describeRefused,
-  ERROR_TEXT,
-  ERROR_TITLE,
-  HEALTH_NOTE,
-  HEALTH_SWITCH_LABEL,
-  OFF_CONFIRM_TEXT,
-  OFF_CONFIRM_TITLE,
-  OFF_PENDING,
-  WAITING_FOR_RESTORE,
-} from './cloud-backup-card.constants';
-import { describeProgress } from './format';
+import { ACTION_ERROR_KEY, type BackupErrorKey, ERROR_KEY } from './cloud-backup-card.constants';
+import { describeProgress, describeRefused, describeRestoreProgress, describeRestoreResult } from './format';
 import { useCloudBackup, useRestore } from './hooks';
-import {
-  describeProgress as describeRestoreProgress,
-  describeResult as describeRestoreResult,
-  RESTORE_ACTION,
-  RESTORE_ACTION_NOTE,
-} from './restore-card.constants';
 
 /** Turning backup off erases the server copy: ask first. */
-const confirmOff = (off: () => void) =>
-  Alert.alert(OFF_CONFIRM_TITLE, OFF_CONFIRM_TEXT, [
-    { text: 'Cancel', style: 'cancel' },
-    { text: 'Turn off', style: 'destructive', onPress: off },
+const confirmOff = (off: () => void) => {
+  const t = translator('backup');
+  Alert.alert(t('offConfirmTitle'), t('offConfirmText'), [
+    { text: translator('common')('cancel'), style: 'cancel' },
+    { text: t('turnOff'), style: 'destructive', onPress: off },
   ]);
+};
 
+/** A failed action: its domain code's message, else a generic one (never the raw error text). */
 const showError = (e: unknown) => {
   const code = (e as { code?: string })?.code;
-  Alert.alert(ERROR_TITLE, (code && ACTION_ERRORS[code]) || ACTION_FAILED);
+  const te = translator('errors');
+  Alert.alert(translator('backup')('title'), te((code && ACTION_ERROR_KEY[code]) || 'generic'));
 };
 
 /**
@@ -51,10 +34,12 @@ const showError = (e: unknown) => {
  */
 export function CloudBackupCard() {
   const p = usePalette();
+  const t = useT('backup');
+  const te = useT('errors');
   const { status, refresh, setEnabled, setHealthIncluded, backUpNow } = useCloudBackup();
   const restore = useRestore({ ask: false });
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<BackupErrorKey | null>(null);
 
   if (!status) {
     return null;
@@ -62,9 +47,9 @@ export function CloudBackupCard() {
   if (!status.available) {
     return (
       <Card style={{ gap: SPACE.md }}>
-        <Text style={[s.h2, { color: p.text }]}>{CLOUD_BACKUP_TITLE}</Text>
+        <Text style={[s.h2, { color: p.text }]}>{t('title')}</Text>
         <Text testID='backup-not-available' style={{ color: p.muted }}>
-          {ERROR_TEXT['not-available']}
+          {te(ERROR_KEY['not-available'])}
         </Text>
       </Card>
     );
@@ -80,28 +65,29 @@ export function CloudBackupCard() {
 
   const switched = (r: BackupCommandResult, turningOn: boolean) => {
     if (r.kind === 'failed') {
-      setNotice(turningOn ? ERROR_TEXT[r.error] : OFF_PENDING);
+      setNotice(turningOn ? ERROR_KEY[r.error] : 'backupOffPending');
     }
   };
 
-  const restoreMessage = describeRestoreResult(restore.result, { health: Platform.OS === 'ios' });
-  const error = notice ?? (status.enabled && status.lastError ? ERROR_TEXT[status.lastError] : null);
+  const restoreMessage = describeRestoreResult(restore.result, t, { health: Platform.OS === 'ios' });
+  const errorKey = notice ?? (status.enabled && status.lastError ? ERROR_KEY[status.lastError] : null);
+  const error = errorKey ? te(errorKey) : null;
 
   return (
     <Card style={{ gap: SPACE.md }}>
-      <Text style={[s.h2, { color: p.text }]}>{CLOUD_BACKUP_TITLE}</Text>
-      <Text style={{ color: p.muted }}>{CLOUD_BACKUP_PITCH}</Text>
+      <Text style={[s.h2, { color: p.text }]}>{t('title')}</Text>
+      <Text style={{ color: p.muted }}>{t('pitch')}</Text>
       {!status.hasToken && (
         <Text testID='backup-sign-in-first' style={{ color: p.text }}>
-          {ERROR_TEXT['no-token']}
+          {te(ERROR_KEY['no-token'])}
         </Text>
       )}
 
       <View style={s.row}>
-        <Text style={[s.label, s.grow, { color: p.text }]}>{BACKUP_SWITCH_LABEL}</Text>
+        <Text style={[s.label, s.grow, { color: p.text }]}>{t('switchLabel')}</Text>
         <Switch
           testID='backup-switch'
-          accessibilityLabel={BACKUP_SWITCH_LABEL}
+          accessibilityLabel={t('switchLabel')}
           value={status.enabled}
           disabled={busy || (!status.enabled && !status.hasToken)}
           onValueChange={(on) =>
@@ -112,33 +98,33 @@ export function CloudBackupCard() {
           trackColor={{ true: ACCENT, false: p.border }}
         />
       </View>
-      <Text style={{ color: p.muted, fontSize: FONT_SIZE.caption }}>{BACKUP_PRIVACY}</Text>
+      <Text style={{ color: p.muted, fontSize: FONT_SIZE.caption }}>{t('privacy')}</Text>
 
       {status.enabled && Platform.OS === 'ios' && (
         <>
           <View style={s.row}>
-            <Text style={[s.label, s.grow, { color: p.text }]}>{HEALTH_SWITCH_LABEL}</Text>
+            <Text style={[s.label, s.grow, { color: p.text }]}>{t('healthSwitchLabel')}</Text>
             <Switch
               testID='backup-health-switch'
-              accessibilityLabel={HEALTH_SWITCH_LABEL}
+              accessibilityLabel={t('healthSwitchLabel')}
               value={status.healthIncluded}
               disabled={busy}
               onValueChange={(on) => run(async () => switched(await setHealthIncluded(on), on))}
               trackColor={{ true: ACCENT, false: p.border }}
             />
           </View>
-          <Text style={{ color: p.muted, fontSize: FONT_SIZE.caption }}>{HEALTH_NOTE}</Text>
+          <Text style={{ color: p.muted, fontSize: FONT_SIZE.caption }}>{t('healthNote')}</Text>
         </>
       )}
 
       {status.enabled && (
         <Text testID='backup-status' style={{ color: p.muted, fontSize: FONT_SIZE.caption }}>
-          {status.running ? 'Backing up…' : describeProgress(status, Date.now())}
+          {status.running ? t('backingUp') : describeProgress(status, Date.now(), t)}
         </Text>
       )}
       {status.enabled && status.refused > 0 && (
         <Text testID='backup-refused' style={{ color: p.muted, fontSize: FONT_SIZE.caption }}>
-          {describeRefused(status.refused)}
+          {describeRefused(status.refused, t)}
         </Text>
       )}
       {error && (
@@ -149,7 +135,7 @@ export function CloudBackupCard() {
       {status.enabled && (
         <Button
           testID='backup-now'
-          label='Back up now'
+          label={t('backUpNow')}
           color={p.border}
           textColor={p.text}
           busy={status.running}
@@ -158,7 +144,7 @@ export function CloudBackupCard() {
             run(async () => {
               const r = await backUpNow();
               if (r?.kind === 'skipped' && r.reason === 'busy') {
-                setNotice(WAITING_FOR_RESTORE);
+                setNotice('backupWaitingForRestore');
               }
             })
           }
@@ -167,10 +153,10 @@ export function CloudBackupCard() {
 
       {status.hasToken && (
         <>
-          <Text style={{ color: p.muted, fontSize: FONT_SIZE.caption }}>{RESTORE_ACTION_NOTE}</Text>
+          <Text style={{ color: p.muted, fontSize: FONT_SIZE.caption }}>{t('restore.actionNote')}</Text>
           {restore.running && (
             <Text testID='backup-restore-progress' style={{ color: p.text, fontSize: FONT_SIZE.caption }}>
-              {describeRestoreProgress(restore.progress)}
+              {describeRestoreProgress(restore.progress, t)}
             </Text>
           )}
           {!restore.running && restoreMessage && (
@@ -180,7 +166,7 @@ export function CloudBackupCard() {
           )}
           <Button
             testID='backup-restore'
-            label={RESTORE_ACTION}
+            label={t('restore.action')}
             color={p.border}
             textColor={p.text}
             busy={restore.running}

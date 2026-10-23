@@ -1,4 +1,4 @@
-import { NAME, RADIUS, SPACE, TAGLINE } from '@cityturfer/brand';
+import { NAME, RADIUS, SPACE } from '@cityturfer/brand';
 import { useRef, useState } from 'react';
 import {
   Alert,
@@ -13,7 +13,17 @@ import {
 } from 'react-native';
 
 import { ACCENT, DARK } from '@/constants/colors';
-import type { AccountFailure } from '@/contexts/identity';
+import { signInFailureMessage } from '@/contexts/identity/ui/account-messages';
+import type { ErrorMessage } from '@/contexts/identity/ui/account-settings.constants';
+import {
+  emailEditRestarts,
+  onEmailSubmit,
+  switchSignIn,
+  wrongPasswordMessage,
+} from '@/contexts/identity/ui/sign-in-steps';
+import type { SignInStep } from '@/contexts/identity/ui/sign-in-steps.constants';
+import { useAnnounce } from '@/contexts/identity/ui/use-announce';
+import { translator, useT } from '@/i18n';
 import { useApp } from '@/ui-kit/app-context';
 import { Button } from '@/ui-kit/components';
 import { useLightStatusBar } from '@/ui-kit/use-light-status-bar';
@@ -21,49 +31,38 @@ import { useLightStatusBar } from '@/ui-kit/use-light-status-bar';
 // eslint-disable-next-line @typescript-eslint/no-require-imports -- Metro asset; the app has no *.png type declarations.
 const WORDMARK = require('../../assets/brand/out/wordmark.png');
 
-type Step = 'email' | 'password' | 'code';
-
-/** Why a request to the account server failed, in plain words. */
-function failureText(f: AccountFailure | { kind: 'accounts-unavailable' }): string {
-  switch (f.kind) {
-    case 'rate-limited':
-      return f.retryAfterS
-        ? `Too many tries. Wait ${Math.max(1, Math.ceil(f.retryAfterS / 60))} min and try again.`
-        : 'Too many tries. Wait a few minutes and try again.';
-    case 'offline':
-      return 'No connection. Signing in with a code needs the internet once; after that the app works offline.';
-    case 'accounts-unavailable':
-      return 'Signing in with a code is not available in this build.';
-    default:
-      return 'Our server had a hiccup. Try again in a moment.';
-  }
-}
-
 const askHistory = () =>
-  new Promise<boolean>((resolve) =>
-    Alert.alert(
-      'Use this phone’s history?',
-      'This phone already has activities and turf. Make them part of your account? Nothing is copied: they stay right here, now with your account.',
-      [
-        { text: 'Keep apart', style: 'cancel', onPress: () => resolve(false) },
-        { text: 'Use them', onPress: () => resolve(true) },
-      ]
-    )
-  );
+  new Promise<boolean>((resolve) => {
+    const t = translator('signIn');
+    Alert.alert(t('historyTitle'), t('historyText'), [
+      { text: t('keepApart'), style: 'cancel', onPress: () => resolve(false) },
+      { text: t('useThem'), onPress: () => resolve(true) },
+    ]);
+  });
 
 /**
  * Sign in: the email first. The local profiles (admin, demo) then ask for their password; any other
- * email gets a 6-digit code by email (which also creates the account on first use).
+ * email gets a 6-digit code by email (which also creates the account on first use). "Use a password
+ * instead" signs an account in with its optional account password; the code stays the default.
  */
 export default function SignIn() {
   useLightStatusBar();
-  const { signIn, startSignIn, verifyCode, chooseHistory } = useApp();
-  const [step, setStep] = useState<Step>('email');
+  const t = useT('signIn');
+  const te = useT('errors');
+  const tc = useT('common');
+  const { signInWithPassword, startSignIn, verifyCode, chooseHistory } = useApp();
+  const [step, setStep] = useState<SignInStep>('email');
+  /** The Turfer chose "Use a password instead" (not a local profile's own password step). */
+  const [chosePassword, setChosePassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [errorMessage, setError] = useState<ErrorMessage | null>(null);
   const [busy, setBusy] = useState(false);
+  const error = errorMessage ? te(errorMessage.key, errorMessage.values) : null;
+  // VoiceOver hears the error (TalkBack reads its live region).
+  useAnnounce(error);
+  const emailRef = useRef<TextInput>(null);
   const secondRef = useRef<TextInput>(null);
   // A ref, not the state: a second keyboard submit in the same frame must see the first one.
   const inFlight = useRef(false);
@@ -78,7 +77,7 @@ export default function SignIn() {
     try {
       await work();
     } catch {
-      setError('Something went wrong. Try again.');
+      setError({ key: 'generic' });
     } finally {
       inFlight.current = false;
       setBusy(false);
@@ -92,21 +91,43 @@ export default function SignIn() {
         setStep(r.kind === 'password' ? 'password' : 'code');
         setTimeout(() => secondRef.current?.focus(), 50);
       } else if (r.kind === 'invalid-email') {
-        setError('That doesn’t look like an email address.');
+        setError({ key: 'invalidEmail' });
       } else {
-        setError(failureText(r));
+        setError(signInFailureMessage(r));
       }
     });
 
   const submitPassword = () =>
     busyWhile(async () => {
-      const r = await signIn(email, password);
-      if (r === 'invalid') {
-        setError('Wrong email or password.');
-      } else if (r === 'linked-to-account') {
-        setError('This phone’s history now belongs to your CityTurfer account. Sign in with that account’s email.');
+      const r = await signInWithPassword(email, password);
+      if (r.kind === 'choose-history') {
+        if ((await chooseHistory(await askHistory())) === 'no-pending') {
+          setPassword('');
+          setError({ key: 'tookLongPassword' });
+        }
+      } else if (r.kind === 'invalid-credentials') {
+        setError(wrongPasswordMessage(chosePassword));
+      } else if (r.kind === 'linked-to-account') {
+        setError({ key: 'linkedToAccount' });
+      } else if (r.kind === 'invalid-email') {
+        setError({ key: 'invalidEmail' });
+      } else if (r.kind !== 'ok') {
+        setError(signInFailureMessage(r));
       }
     });
+
+  const switchToPassword = (on: boolean) => {
+    const next = switchSignIn(on, email);
+    setChosePassword(next.chosePassword);
+    setStep(next.step);
+    setPassword('');
+    setCode('');
+    setError(null);
+    if (next.focus) {
+      // The email first while it's empty; the password field mounts with this render.
+      setTimeout(() => (next.focus === 'email' ? emailRef : secondRef).current?.focus(), 50);
+    }
+  };
 
   const submitCode = () =>
     busyWhile(async () => {
@@ -115,20 +136,20 @@ export default function SignIn() {
         if ((await chooseHistory(await askHistory())) === 'no-pending') {
           setStep('email');
           setCode('');
-          setError('That took a while. Send a new code and sign in again.');
+          setError({ key: 'tookLongCode' });
         }
       } else if (r.kind === 'invalid-code') {
-        setError('That code didn’t work. Check the latest email, or send a new code.');
+        setError({ key: 'invalidCode' });
       } else if (r.kind === 'invalid-email') {
-        setError('That doesn’t look like an email address.');
+        setError({ key: 'invalidEmail' });
       } else if (r.kind !== 'ok') {
-        setError(failureText(r));
+        setError(signInFailureMessage(r));
       }
     });
 
   const editEmail = (text: string) => {
     setEmail(text);
-    if (step !== 'email') {
+    if (emailEditRestarts(step, chosePassword)) {
       setStep('email'); // another email: start again
       setPassword('');
       setCode('');
@@ -147,11 +168,12 @@ export default function SignIn() {
           accessibilityRole='image'
           accessibilityLabel={NAME}
         />
-        <Text style={s.tag}>{TAGLINE}</Text>
+        <Text style={s.tag}>{t('tagline')}</Text>
         <TextInput
+          ref={emailRef}
           testID='sign-in-email'
           style={s.input}
-          placeholder='Email'
+          placeholder={t('emailPlaceholder')}
           placeholderTextColor={DARK.muted}
           autoCapitalize='none'
           autoComplete='email'
@@ -161,7 +183,9 @@ export default function SignIn() {
           textContentType='username'
           returnKeyType='next'
           submitBehavior='submit'
-          onSubmitEditing={submitEmail}
+          onSubmitEditing={
+            onEmailSubmit(chosePassword) === 'focus-password' ? () => secondRef.current?.focus() : submitEmail
+          }
           value={email}
           onChangeText={editEmail}
         />
@@ -170,7 +194,8 @@ export default function SignIn() {
             ref={secondRef}
             testID='sign-in-password'
             style={s.input}
-            placeholder='Password'
+            placeholder={chosePassword ? t('accountPasswordPlaceholder') : t('passwordPlaceholder')}
+            accessibilityLabel={chosePassword ? t('accountPasswordPlaceholder') : t('passwordPlaceholder')}
             placeholderTextColor={DARK.muted}
             secureTextEntry
             autoCorrect={false}
@@ -184,13 +209,13 @@ export default function SignIn() {
         {step === 'code' && (
           <>
             <Text testID='sign-in-code-sent' style={s.hint}>
-              We emailed a 6-digit code to {email.trim()}. It works for 10 minutes.
+              {t('codeSent', { email: email.trim() })}
             </Text>
             <TextInput
               ref={secondRef}
               testID='sign-in-code'
               style={[s.input, s.code]}
-              placeholder='Code'
+              placeholder={t('codePlaceholder')}
               placeholderTextColor={DARK.muted}
               keyboardType='number-pad'
               textContentType='oneTimeCode'
@@ -204,35 +229,61 @@ export default function SignIn() {
           </>
         )}
         {error && (
-          <Text testID='sign-in-error' style={s.error}>
+          <Text testID='sign-in-error' accessibilityLiveRegion='polite' style={s.error}>
             {error}
           </Text>
         )}
         {step === 'email' && (
-          <Button
-            testID='sign-in-continue'
-            label='Continue'
-            color={ACCENT}
-            onPress={submitEmail}
-            busy={busy}
-            disabled={!email.trim()}
-          />
+          <>
+            <Button
+              testID='sign-in-continue'
+              label={tc('continue')}
+              color={ACCENT}
+              onPress={submitEmail}
+              busy={busy}
+              disabled={!email.trim()}
+            />
+            <Pressable
+              testID='sign-in-use-password'
+              accessibilityRole='button'
+              accessibilityLabel={t('usePassword')}
+              onPress={() => switchToPassword(true)}
+              disabled={busy}
+              style={s.linkTarget}
+            >
+              <Text style={s.link}>{t('usePassword')}</Text>
+            </Pressable>
+          </>
         )}
         {step === 'password' && (
-          <Button
-            testID='sign-in-submit'
-            label='Sign in'
-            color={ACCENT}
-            onPress={submitPassword}
-            busy={busy}
-            disabled={!password}
-          />
+          <>
+            <Button
+              testID='sign-in-submit'
+              label={t('submit')}
+              color={ACCENT}
+              onPress={submitPassword}
+              busy={busy}
+              disabled={!password || !email.trim()}
+            />
+            {chosePassword && (
+              <Pressable
+                testID='sign-in-use-code'
+                accessibilityRole='button'
+                accessibilityLabel={t('useCode')}
+                onPress={() => switchToPassword(false)}
+                disabled={busy}
+                style={s.linkTarget}
+              >
+                <Text style={s.link}>{t('useCode')}</Text>
+              </Pressable>
+            )}
+          </>
         )}
         {step === 'code' && (
           <>
             <Button
               testID='sign-in-verify'
-              label='Sign in'
+              label={t('submit')}
               color={ACCENT}
               onPress={submitCode}
               busy={busy}
@@ -241,15 +292,16 @@ export default function SignIn() {
             <Pressable
               testID='sign-in-resend'
               accessibilityRole='button'
+              accessibilityLabel={t('resend')}
               onPress={submitEmail}
               disabled={busy}
               style={s.linkTarget}
             >
-              <Text style={s.link}>Send a new code</Text>
+              <Text style={s.link}>{t('resend')}</Text>
             </Pressable>
           </>
         )}
-        <Text style={s.note}>Your activities stay on this phone. Cloud backup is optional.</Text>
+        <Text style={s.note}>{t('note')}</Text>
       </View>
     </KeyboardAvoidingView>
   );
@@ -258,8 +310,8 @@ export default function SignIn() {
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: DARK.bg },
   inner: { flex: 1, justifyContent: 'center', padding: 24, gap: 14 },
-  // Outlined wordmark for dark backgrounds (packages/brand/svg/wordmark.svg, rendered to 1102 × 192).
-  logo: { width: '100%', maxWidth: 280, height: undefined, aspectRatio: 1102 / 192, alignSelf: 'center' },
+  // Outlined wordmark for dark backgrounds (packages/brand/svg/wordmark.svg, rendered to 894 × 192).
+  logo: { width: '100%', maxWidth: 230, height: undefined, aspectRatio: 894 / 192, alignSelf: 'center' },
   tag: { color: DARK.muted, textAlign: 'center', marginBottom: 24 },
   input: {
     backgroundColor: DARK.card,

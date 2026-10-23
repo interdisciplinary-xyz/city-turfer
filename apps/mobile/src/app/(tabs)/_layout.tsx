@@ -4,6 +4,7 @@ import { type SFSymbol, SymbolView } from 'expo-symbols';
 import { type ColorValue, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ACCENT, ON_ACCENT } from '@/constants/colors';
+import { useT } from '@/i18n';
 import { MeTabButton } from '@/ui-kit/me-menu';
 import { usePalette } from '@/ui-kit/theme';
 
@@ -24,6 +25,7 @@ const icon =
 /** The raised round Record button in the middle of the tab bar. */
 function RecordTabButton({ onPress, onLongPress, testID, 'aria-selected': selected }: BottomTabBarButtonProps) {
   const p = usePalette();
+  const t = useT('nav');
   const focused = !!selected;
   return (
     <Pressable
@@ -31,7 +33,7 @@ function RecordTabButton({ onPress, onLongPress, testID, 'aria-selected': select
       onLongPress={onLongPress}
       testID={testID}
       accessibilityRole='button'
-      accessibilityLabel='Record'
+      accessibilityLabel={t('tabs.record')}
       accessibilityState={{ selected: focused }}
       style={s.recordSlot}
     >
@@ -44,13 +46,14 @@ function RecordTabButton({ onPress, onLongPress, testID, 'aria-selected': select
           fallback={<Text style={{ fontSize: 26, color: ON_ACCENT }}>●</Text>}
         />
       </View>
-      <Text style={[s.recordLabel, { color: focused ? ACCENT : p.muted }]}>Record</Text>
+      <Text style={[s.recordLabel, { color: focused ? ACCENT : p.muted }]}>{t('tabs.record')}</Text>
     </Pressable>
   );
 }
 
 export default function TabsLayout() {
   const p = usePalette();
+  const t = useT('nav');
   return (
     <Tabs
       screenOptions={{
@@ -64,23 +67,27 @@ export default function TabsLayout() {
       <Tabs.Screen
         name='index'
         options={{
-          title: 'Dashboard',
+          title: t('tabs.dashboard'),
           tabBarIcon: icon('house', 'house.fill', '⌂'),
           tabBarButtonTestID: 'tab-dashboard',
         }}
       />
       <Tabs.Screen
         name='turf'
-        options={{ title: 'Turf', tabBarIcon: icon('hexagon', 'hexagon.fill', '⬢'), tabBarButtonTestID: 'tab-turf' }}
+        options={{
+          title: t('tabs.turf'),
+          tabBarIcon: icon('hexagon', 'hexagon.fill', '⬢'),
+          tabBarButtonTestID: 'tab-turf',
+        }}
       />
       <Tabs.Screen
         name='record'
-        options={{ title: 'Record', tabBarButton: RecordTabButton, tabBarButtonTestID: 'tab-record' }}
+        options={{ title: t('tabs.record'), tabBarButton: RecordTabButton, tabBarButtonTestID: 'tab-record' }}
       />
       <Tabs.Screen
         name='stats'
         options={{
-          title: 'Stats',
+          title: t('tabs.stats'),
           tabBarIcon: icon('chart.bar', 'chart.bar.fill', '▤'),
           tabBarButtonTestID: 'tab-stats',
         }}
@@ -88,7 +95,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name='me'
         options={{
-          title: 'Me',
+          title: t('tabs.me'),
           tabBarButton: ({ testID }) => <MeTabButton testID={testID} />,
           tabBarButtonTestID: 'tab-me',
         }}

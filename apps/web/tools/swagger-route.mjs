@@ -9,6 +9,7 @@ import { stat } from 'node:fs/promises';
 import { request as httpRequest } from 'node:http';
 import path from 'node:path';
 
+import { APP_HEADER_SCRIPT, APP_HEADER_STYLES, appHeaderMarkup, appHeaderStylesheet } from './app-header-assets.mjs';
 import { contentTypeOf } from './storybook-route.mjs';
 
 export const SWAGGER_PREFIX = '/swagger';
@@ -18,11 +19,21 @@ export const DEFAULT_API_URL = 'http://localhost:8787';
 /** The table of contents script (a browser module next to this file), served as ./ct-toc.mjs. */
 const TOC_FILE = path.join(import.meta.dirname, 'swagger-toc.mjs');
 
-/** Brand files the page may load (packages/brand/svg): the header and the tab icon. */
-export const BRAND_FILES = ['mark.svg', 'wordmark.svg'];
+/** Brand files the page may load (packages/brand/svg): the tab icon and the light-surface wordmark. */
+export const BRAND_FILES = ['mark.svg', 'wordmark-light.svg'];
+
+/** Brand fonts the page may load (packages/brand/fonts), served as ./fonts/<name>; nothing else. */
+export const FONT_FILES = [
+  'BigShouldersDisplay-Black.woff2',
+  'BarlowSemiCondensed-ExtraBold.woff2',
+  'Barlow-Regular.woff2',
+  'Barlow-Medium.woff2',
+  'Barlow-SemiBold.woff2',
+  'Barlow-Bold.woff2',
+];
 
 /**
- * The Swagger UI page: assets next to it, the spec at ./openapi.json. `toolbar` adds the dev
+ * The Swagger UI page, under the site's header (the same bar as /en): assets next to it, the spec at ./openapi.json. `toolbar` adds the dev
  * toolbar (only for requests from this machine, see withSwagger).
  */
 export function swaggerHtml({ toolbar = false } = {}) {
@@ -31,18 +42,20 @@ export function swaggerHtml({ toolbar = false } = {}) {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="color-scheme" content="light" />
     <title>CityTurfer API</title>
     <link rel="icon" type="image/svg+xml" href="./brand/mark.svg" />
     <link rel="stylesheet" href="./swagger-ui.css" />
-    <link rel="stylesheet" href="./ct-theme.css" />${toolbar ? '\n    <link rel="stylesheet" href="./__toolbar.css" />' : ''}
+    <link rel="stylesheet" href="./ct-theme.css" />
+    ${appHeaderStylesheet()}${toolbar ? '\n    <link rel="stylesheet" href="./__toolbar.css" />' : ''}
   </head>
   <body>
+    ${appHeaderMarkup()}
     <header class="ct-header">
       <div class="ct-header-inner">
         <h1>
           <img class="ct-mark" src="./brand/mark.svg" alt="" width="44" height="44" />
-          <img class="ct-wordmark" src="./brand/wordmark.svg" alt="CityTurfer" height="22" />
+          <img class="ct-wordmark" src="./brand/wordmark-light.svg" alt="CityTurfer" height="22" />
           <span>API</span>
         </h1>
         <p class="ct-tagline">Local API docs · planned routes answer 501</p>
@@ -87,6 +100,8 @@ export function swaggerHtml({ toolbar = false } = {}) {
         persistAuthorization: true,
         showExtensions: true,
         docExpansion: 'list',
+        // Light code blocks for the light theme (same as apps/api/src/spec.ts SWAGGER_UI_OPTIONS).
+        syntaxHighlight: { activated: true, theme: 'idea' },
         presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
         plugins: [GuideLast],
         layout: 'StandaloneLayout',
@@ -129,12 +144,19 @@ export function swaggerTarget(distRoot, urlPath) {
   if (rest === '/ct-toc.mjs') {
     return { kind: 'toc' };
   }
+  if (rest === `/${APP_HEADER_SCRIPT}` || rest === `/${APP_HEADER_STYLES}`) {
+    return { kind: 'appHeader', ext: rest.slice(rest.lastIndexOf('.') + 1) };
+  }
   if (rest === '/__toolbar.js' || rest === '/__toolbar.css') {
     return { kind: 'toolbar', ext: rest.slice(rest.lastIndexOf('.') + 1) };
   }
   if (rest.startsWith('/brand/')) {
     const name = rest.slice('/brand/'.length);
     return BRAND_FILES.includes(name) ? { kind: 'brand', name } : null;
+  }
+  if (rest.startsWith('/fonts/')) {
+    const name = rest.slice('/fonts/'.length);
+    return FONT_FILES.includes(name) ? { kind: 'font', name } : null;
   }
   const resolved = path.resolve(distRoot, rest.replace(/^\/+/, ''));
   if (!resolved.startsWith(`${distRoot}${path.sep}`)) {
@@ -200,11 +222,11 @@ function proxy(req, res, apiUrl, targetPath) {
  * Wraps a request handler: /swagger serves Swagger UI and the spec, /api proxies to the API dev
  * server, everything else goes to `next`.
  *
- * - `webRoot` (apps/web) and `brandDir` (packages/brand/svg) feed the CityTurfer skin and logos.
+ * - `webRoot` (apps/web) and `brandDir` (packages/brand/svg) and `fontsDir` (packages/brand/fonts) feed the CityTurfer skin, logos and fonts.
  * - `isLocal(req)` says whether the request comes from this machine (the dev-toolbar package's
  *   `isLocalClient`, the rule the site uses); only then is the dev toolbar injected and served.
- * - `loadTheme()` / `loadToolbar()` default to ./swagger-brand.mjs and ./swagger-toolbar.mjs,
- *   loaded on first use; tests pass fakes.
+ * - `loadTheme()` / `loadToolbar()` / `loadAppHeader()` default to ./swagger-brand.mjs,
+ *   ./swagger-toolbar.mjs and ./app-header-assets.mjs, loaded on first use; tests pass fakes.
  */
 export function withSwagger(
   next,
@@ -214,9 +236,11 @@ export function withSwagger(
     apiUrl = DEFAULT_API_URL,
     webRoot = process.cwd(),
     brandDir,
+    fontsDir,
     isLocal = () => false,
     loadTheme = async () => (await import('./swagger-brand.mjs')).swaggerThemeCss(webRoot),
     loadToolbar = async () => (await import('./swagger-toolbar.mjs')).toolbarAssets(webRoot),
+    loadAppHeader = async () => (await import('./app-header-assets.mjs')).appHeaderAssets(webRoot),
   }
 ) {
   const absDist = path.resolve(distRoot);
@@ -251,6 +275,11 @@ export function withSwagger(
       await sendFile(res, TOC_FILE, 'text/javascript; charset=utf-8');
       return undefined;
     }
+    if (target.kind === 'appHeader') {
+      const assets = await loadAppHeader();
+      send(res, target.ext === 'js' ? 'text/javascript; charset=utf-8' : 'text/css; charset=utf-8', assets[target.ext]);
+      return undefined;
+    }
     if (target.kind === 'toolbar') {
       if (!isLocal(req)) {
         res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
@@ -263,6 +292,13 @@ export function withSwagger(
     }
     if (target.kind === 'brand') {
       if (!brandDir || !(await sendFile(res, path.join(brandDir, target.name), 'image/svg+xml'))) {
+        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('Not found.\n');
+      }
+      return undefined;
+    }
+    if (target.kind === 'font') {
+      if (!fontsDir || !(await sendFile(res, path.join(fontsDir, target.name), 'font/woff2'))) {
         res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
         res.end('Not found.\n');
       }

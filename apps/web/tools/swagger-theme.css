@@ -1,12 +1,60 @@
 /* CityTurfer skin for Swagger UI (dev only). No colour literals here: every colour is a variable
-   from @cityturfer/brand's cssVariables('dark'), which swagger-brand.mjs puts in :root when it
-   serves this file. Swagger's own stylesheet loads first; the `.swagger-ui` prefix wins. */
+   from @cityturfer/brand's cssVariables(SITE_SCHEME) (light, docs/decisions/brand-light-theme-2026-10-22.md),
+   which swagger-brand.mjs puts in :root when it serves this file. Swagger's own stylesheet loads
+   first; the `.swagger-ui` prefix wins. On light, pink and amber text use the -text variants; the
+   raw brand fills (--glow, --strong, --faint) only fill badges and buttons or draw edges. Label/fill
+   pairs are checked for AA by tools/__tests__/swagger-contrast.test.mjs. */
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
   --ct-ramp: linear-gradient(45deg, var(--ramp-stops));
   --ct-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   --ct-focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--glow);
+  /* The contents' current entry: a pink tint, apart from the grey hover. */
+  --ct-toc-current: color-mix(in srgb, var(--glow) 12%, var(--card));
+}
+
+@font-face {
+  font-family: 'Barlow';
+  src: url('./fonts/Barlow-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Barlow';
+  src: url('./fonts/Barlow-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Barlow';
+  src: url('./fonts/Barlow-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Barlow';
+  src: url('./fonts/Barlow-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'BigShouldersDisplay-Black';
+  src: url('./fonts/BigShouldersDisplay-Black.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'BarlowSemiCondensed-ExtraBold';
+  src: url('./fonts/BarlowSemiCondensed-ExtraBold.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
 }
 
 *,
@@ -18,6 +66,8 @@
 html {
   -webkit-text-size-adjust: 100%;
   background: var(--bg);
+  /* Deep links and contents jumps land below the sticky site header. */
+  scroll-padding-top: var(--header-h, 0px);
 }
 
 body {
@@ -31,7 +81,7 @@ body {
 }
 
 a {
-  color: var(--glow);
+  color: var(--accent-text);
 }
 
 /* The dev toolbar keeps its own look: its links are not page links. */
@@ -60,9 +110,13 @@ a {
   display: flex;
   align-items: center;
   gap: var(--space-md);
-  font-size: 1.25rem;
-  font-weight: var(--font-weight-heavy);
-  letter-spacing: -0.02em;
+  font-family: var(--font-family-display);
+  font-size: 1.7rem;
+  font-weight: normal;
+  font-synthesis: none;
+  line-height: 1;
+  text-transform: var(--display-case);
+  letter-spacing: var(--display-tracking);
   color: var(--text);
 }
 .ct-mark {
@@ -114,8 +168,13 @@ a {
   color: var(--text);
 }
 .swagger-ui .info .title {
-  font-weight: var(--font-weight-heavy);
-  letter-spacing: -0.02em;
+  font-family: var(--font-family-display);
+  font-size: 2.6rem;
+  font-weight: normal;
+  font-synthesis: none;
+  line-height: 0.95;
+  text-transform: var(--display-case);
+  letter-spacing: var(--display-tracking);
 }
 .swagger-ui .info .title small {
   background: var(--card);
@@ -128,7 +187,7 @@ a {
   border: 1px solid var(--glow);
 }
 .swagger-ui .info .title small.version-stamp pre {
-  color: var(--glow);
+  color: var(--accent-text);
 }
 .swagger-ui .info .title small pre {
   color: var(--muted);
@@ -137,7 +196,7 @@ a {
 .swagger-ui .info .base-url,
 .swagger-ui a.nostyle,
 .swagger-ui .renderedMarkdown a {
-  color: var(--glow);
+  color: var(--accent-text);
 }
 .swagger-ui .info .base-url {
   color: var(--muted);
@@ -148,7 +207,7 @@ a {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 6px;
-  color: var(--blazing);
+  color: var(--strong-text);
   font-family: var(--ct-mono);
   padding: 1px 6px;
 }
@@ -294,7 +353,7 @@ a {
   font-family: var(--ct-mono);
 }
 .swagger-ui .prop-type {
-  color: var(--strong);
+  color: var(--strong-text);
 }
 
 /* Inputs. */
@@ -306,7 +365,7 @@ a {
 .swagger-ui input[type='file'],
 .swagger-ui textarea {
   background: var(--bg);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-sm);
   box-shadow: none;
   min-height: 40px;
@@ -361,10 +420,10 @@ a {
   box-shadow: var(--ct-focus);
 }
 
-/* Buttons: ghost by default, glow-filled for the main action (dark text: AA on glow). */
+/* Buttons: ghost by default, glow-filled for the main action (night label: AA on glow). */
 .swagger-ui .btn {
   background: transparent;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-sm);
   box-shadow: none;
   color: var(--text);
@@ -383,7 +442,7 @@ a {
 .swagger-ui .btn.modal-btn.auth.authorize {
   background: var(--glow);
   border-color: var(--glow);
-  color: var(--bg);
+  color: var(--on-accent);
 }
 .swagger-ui .btn.authorize {
   display: inline-flex;
@@ -391,15 +450,18 @@ a {
   gap: var(--space-sm);
 }
 .swagger-ui .btn.authorize svg {
-  fill: var(--bg);
+  /* Swagger draws the lock in currentColor (its default is green). */
+  color: var(--on-accent);
+  fill: var(--on-accent);
 }
 .swagger-ui .btn.authorize span {
-  color: var(--bg);
+  color: var(--on-accent);
 }
+/* Blazing is near white on a light page, so hover warms to strong (night label 10:1). */
 .swagger-ui .btn.execute:hover,
 .swagger-ui .btn.authorize:hover {
-  background: var(--blazing);
-  border-color: var(--blazing);
+  background: var(--strong);
+  border-color: var(--strong);
 }
 .swagger-ui .btn.cancel,
 .swagger-ui .btn.btn-clear,
@@ -410,31 +472,43 @@ a {
 }
 .swagger-ui .btn.try-out__btn {
   border-color: var(--glow);
-  color: var(--glow);
+  color: var(--accent-text);
 }
 .swagger-ui .btn.authorize.unlocked {
   background: transparent;
-  color: var(--glow);
+  color: var(--accent-text);
 }
 .swagger-ui .btn.authorize.unlocked span {
-  color: var(--glow);
+  color: var(--accent-text);
 }
 .swagger-ui .btn.authorize.unlocked svg {
-  fill: var(--glow);
+  color: var(--accent-text);
+  fill: var(--accent-text);
 }
-.swagger-ui .copy-to-clipboard {
-  background: var(--card);
-  border: 1px solid var(--border);
+/* Swagger's copy icon and Download label are white: they sit on a muted fill (6:1). */
+.swagger-ui .copy-to-clipboard,
+.swagger-ui .download-contents {
+  background: var(--muted);
+  border: 0;
   border-radius: var(--radius-sm);
-}
-.swagger-ui .copy-to-clipboard button {
-  filter: invert(1);
+  color: var(--card);
 }
 
 /* Tags. */
 .swagger-ui .opblock-tag {
   border-bottom: 1px solid var(--border);
-  font-weight: var(--font-weight-bold);
+  font-family: var(--font-family-display);
+  font-size: 1.5rem;
+  font-weight: normal;
+  font-synthesis: none;
+  text-transform: var(--display-case);
+  letter-spacing: var(--display-tracking);
+}
+.swagger-ui .opblock-tag small {
+  font-family: var(--font-family-body);
+  font-size: 0.9rem;
+  text-transform: none;
+  letter-spacing: normal;
 }
 .swagger-ui .opblock-tag:hover {
   background: var(--card);
@@ -482,10 +556,6 @@ a {
   border-radius: var(--radius-sm);
   color: var(--text) !important;
 }
-.swagger-ui .opblock-body pre.microlight span,
-.swagger-ui .highlight-code .microlight span {
-  color: inherit !important;
-}
 .swagger-ui .opblock-body pre.microlight .headerline {
   color: var(--muted) !important;
 }
@@ -495,9 +565,9 @@ a {
 
 .swagger-ui .opblock .opblock-summary-method {
   border-radius: var(--radius-sm);
-  color: var(--bg);
+  color: var(--ct-method-label, var(--card));
   font-family: var(--font-family-body);
-  font-weight: var(--font-weight-heavy);
+  font-weight: var(--font-weight-bold);
   letter-spacing: var(--label-tracking);
   min-width: 72px;
   text-shadow: none;
@@ -506,32 +576,35 @@ a {
 .swagger-ui .opblock.opblock-get .opblock-summary-method,
 .swagger-ui .opblock.opblock-get .tab-header .tab-item.active h4 span::after {
   --ct-method: var(--text);
+  --ct-method-label: var(--card);
 }
+/* Each method: its badge fill and the label drawn on it (≥ 4.5:1, swagger-contrast.test.mjs). */
 .swagger-ui .opblock.opblock-post {
   --ct-method: var(--glow);
+  --ct-method-label: var(--on-glow);
 }
 .swagger-ui .opblock.opblock-put {
   --ct-method: var(--strong);
+  --ct-method-label: var(--text);
 }
 .swagger-ui .opblock.opblock-patch {
   --ct-method: var(--faint);
+  --ct-method-label: var(--card);
 }
 .swagger-ui .opblock.opblock-delete {
   --ct-method: var(--danger);
+  --ct-method-label: var(--card);
 }
 .swagger-ui .opblock.opblock-head,
 .swagger-ui .opblock.opblock-options {
   --ct-method: var(--muted);
+  --ct-method-label: var(--card);
 }
 .swagger-ui .opblock {
   border-left-color: var(--ct-method, var(--border));
 }
 .swagger-ui .opblock .opblock-summary-method {
   background: var(--ct-method, var(--muted));
-}
-/* Patch's faint violet is only 3:1 on cards, so its badge text is the light text colour. */
-.swagger-ui .opblock.opblock-patch .opblock-summary-method {
-  color: var(--blazing);
 }
 
 /* Planned routes (x-cityturfer-status), shown by showExtensions. */
@@ -543,7 +616,7 @@ a {
 }
 .swagger-ui .opblock table.extension,
 .swagger-ui .opblock-extension-row td {
-  color: var(--strong);
+  color: var(--strong-text);
 }
 
 /* Responses. */
@@ -583,7 +656,7 @@ a {
   background: none;
 }
 .swagger-ui .tab li button.tablinks.active {
-  color: var(--glow);
+  color: var(--accent-text);
 }
 .swagger-ui .opblock-body select {
   background-color: var(--bg);
@@ -646,8 +719,8 @@ a {
 
 /* Authorize dialog. */
 .swagger-ui .dialog-ux .backdrop-ux {
-  background: var(--bg);
-  opacity: 0.8;
+  background: var(--text);
+  opacity: 0.45;
 }
 .swagger-ui .dialog-ux .modal-ux {
   background: var(--card);
@@ -684,7 +757,7 @@ a {
   text-transform: uppercase;
 }
 .swagger-ui .link {
-  color: var(--glow);
+  color: var(--accent-text);
 }
 .swagger-ui .opblock-summary-control {
   align-items: center;
@@ -715,7 +788,12 @@ a {
 .swagger-ui .authorization__btn svg,
 .swagger-ui .authorization__btn.locked svg,
 .swagger-ui .authorization__btn.unlocked svg {
+  color: var(--muted);
   fill: var(--muted);
+}
+/* The open and closed lock differ in shape; Swagger's 40 % fade would leave the open one at 2:1. */
+.swagger-ui .authorization__btn .unlocked {
+  opacity: 1;
 }
 .swagger-ui .lock-btn {
   background: none;
@@ -785,10 +863,7 @@ a {
   )
   .opblock-summary-method {
   background: var(--ct-method);
-  color: var(--bg);
-}
-.swagger-ui .opblock.opblock-patch .opblock-summary-method {
-  color: var(--blazing);
+  color: var(--ct-method-label);
 }
 .swagger-ui
   .opblock:is(
@@ -889,11 +964,11 @@ a {
   box-shadow: var(--ct-focus);
 }
 .ct-toc-link[aria-current='true'] {
-  background: var(--border);
+  background: var(--ct-toc-current);
   color: var(--text);
-  box-shadow: inset 2px 0 0 var(--glow);
+  box-shadow: inset 3px 0 0 var(--glow);
 }
-/* On the --border highlight the coloured method labels fall under 4.5:1 (POST 4.05:1): plain text. */
+/* On the highlights the coloured method labels fall under 4.5:1 (PUT 4.35:1 on --border): plain text. */
 .ct-toc-link:hover .ct-toc-method,
 .ct-toc-link[aria-current='true'] .ct-toc-method {
   color: var(--text);
@@ -912,15 +987,16 @@ a {
   font-weight: var(--font-weight-bold);
   color: var(--text);
 }
+/* Method labels as text (≥ 4.5:1 on --bg and --card, swagger-contrast.test.mjs). */
 .ct-toc-method-post {
-  color: var(--glow);
+  color: var(--accent-text);
 }
 .ct-toc-method-put {
-  color: var(--strong);
+  color: var(--strong-text);
 }
-/* Faint violet alone is too dark as text on the dark background. */
+/* No violet text token: faint deepened towards the text colour. */
 .ct-toc-method-patch {
-  color: color-mix(in srgb, var(--faint) 55%, var(--text));
+  color: color-mix(in srgb, var(--faint) 80%, var(--text));
 }
 .ct-toc-method-delete {
   color: var(--danger);
@@ -939,8 +1015,9 @@ a {
   }
   .ct-toc {
     position: sticky;
-    top: 0;
-    max-height: 100vh;
+    /* Under the site header (__app-header.css sets --header-h). */
+    top: var(--header-h, 0px);
+    max-height: calc(100vh - var(--header-h, 0px));
     overflow-y: auto;
     /* Bottom room for the dev toolbar, which sits fixed over the page's foot. */
     padding: var(--space-xxxl) 0 96px var(--space-xl);

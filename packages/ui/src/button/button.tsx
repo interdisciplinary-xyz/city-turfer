@@ -1,19 +1,16 @@
-import { ACCENT, FONT_SIZE, FONT_WEIGHT, ON_ACCENT, RADIUS, SPACE } from '@cityturfer/brand';
+import { ACCENT, FONT_SIZE, FONT_WEIGHT, RADIUS, SPACE } from '@cityturfer/brand';
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 
+import { usePalette } from '../theme/theme';
 import { type ButtonProps, DISABLED_OPACITY, PRESSED_OPACITY } from './button.constants';
 
-/** Full-width call to action. The label doubles as the accessibility label. */
-export function Button({
-  label,
-  onPress,
-  color = ACCENT,
-  textColor = ON_ACCENT,
-  disabled,
-  busy,
-  testID,
-  style,
-}: ButtonProps) {
+/**
+ * Full-width call to action. The label doubles as the accessibility label. The default label
+ * colour is the palette's `onAccent`: white in the app (dark), night on light surfaces.
+ */
+export function Button({ label, onPress, color = ACCENT, textColor, disabled, busy, testID, style }: ButtonProps) {
+  const p = usePalette();
+  const ink = textColor ?? p.onAccent;
   return (
     <Pressable
       testID={testID}
@@ -28,7 +25,7 @@ export function Button({
         style,
       ]}
     >
-      {busy ? <ActivityIndicator color={textColor} /> : <Text style={[s.label, { color: textColor }]}>{label}</Text>}
+      {busy ? <ActivityIndicator color={ink} /> : <Text style={[s.label, { color: ink }]}>{label}</Text>}
     </Pressable>
   );
 }

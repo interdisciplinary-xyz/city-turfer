@@ -1,0 +1,1 @@
+ALTER TABLE "turf_claims" ADD COLUMN "track_hash" text DEFAULT '' NOT NULL;

@@ -43,8 +43,8 @@
         "expo-font",
         {
           "fonts": [
-            "../../packages/brand/fonts/ArchivoExpanded-Black.ttf",
-            "../../packages/brand/fonts/Archivo-ExtraBold.ttf"
+            "../../packages/brand/fonts/BigShouldersDisplay-Black.ttf",
+            "../../packages/brand/fonts/BarlowSemiCondensed-ExtraBold.ttf"
           ]
         }
       ],

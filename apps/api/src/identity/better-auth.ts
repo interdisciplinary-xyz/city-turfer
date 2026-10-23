@@ -1,5 +1,6 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 
+import { PASSWORD_MIN } from '@cityturfer/core/identity';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { betterAuth } from 'better-auth/minimal';
 import { bearer } from 'better-auth/plugins/bearer';
@@ -10,18 +11,35 @@ import type { Db } from '../db/store';
 import { type Mailer, signInCodeMail } from './mailer';
 
 /**
- * Better Auth for sign-in with an e-mailed one-time code (docs/decisions/api-accounts-2026-10-22.md).
+ * Better Auth for sign-in with an e-mailed one-time code (docs/decisions/api-accounts-2026-10-22.md)
+ * or an optional password (docs/decisions/account-settings-2026-10-22.md).
  * Used only through `auth.api.*` from our own zod-openapi routes (src/routes/identity.ts), never
  * `auth.handler`: the spec stays generated, errors stay problem+json, and Better Auth's own routes
- * (password, OAuth, …) are not reachable. Its rate limiter only runs inside `auth.handler`, so the
+ * (sign-up, password reset, OAuth, …) are not reachable. Its rate limiter only runs inside `auth.handler`, so the
  * limits live in IdentityService. No telemetry, no logger (its messages can hold e-mail addresses),
  * no IP or user agent on sessions.
  */
 
-/** Sessions last 60 days and slide: a session used after a day gets 60 more. */
-export const SESSION_TTL_S = 60 * 24 * 60 * 60;
-export const SESSION_UPDATE_AGE_S = 24 * 60 * 60;
+const DAY_S = 24 * 60 * 60;
+
+/** Phone sessions last 60 days and slide: a session used after a day gets 60 more. */
+export const SESSION_TTL_S = 60 * DAY_S;
+export const SESSION_UPDATE_AGE_S = DAY_S;
 export const CODE_TTL_S = 10 * 60;
+/** The longest password body accepted, in UTF-16 units (128 code points are at most 256). */
+export const MAX_PASSWORD_UNITS = 1024;
+
+/**
+ * Browser sessions (founder decision D4, docs/decisions/api-web-sessions-2026-10-22.md): 14 days
+ * sliding, never past 30 days after sign-in; on a shared computer 8 hours, not sliding, and the
+ * cookie ends with the browser session. They slide at most once a day, like phones.
+ */
+export const BROWSER_SESSION = {
+  ttlS: 14 * DAY_S,
+  absoluteS: 30 * DAY_S,
+  sharedAbsoluteS: 8 * 60 * 60,
+  updateAgeS: DAY_S,
+} as const;
 
 export interface AuthConfig {
   db: Db;
@@ -40,6 +58,11 @@ export interface AuthConfig {
    * that points at a real database cannot be used to sign in as anyone.
    */
   fixedCode?: string | null;
+  /**
+   * More addresses that get `fixedCode`: the local dev server's mock accounts (admin@ and
+   * demo@cityturfer.com, PGlite only). Without `fixedCode` (always so in production) it does nothing.
+   */
+  fixedCodeEmails?: readonly string[];
   /** Called when the mailer throws (Better Auth swallows it): no address or code is passed. */
   onMailError?: () => void;
 }
@@ -48,6 +71,10 @@ export interface AuthConfig {
 export const TEST_EMAIL_DOMAIN = 'e2e.cityturfer.test';
 
 export const isTestEmail = (email: string) => email.toLowerCase().endsWith(`@${TEST_EMAIL_DOMAIN}`);
+
+/** Whether `email` signs in with the fixed code: the test domain, or one of `extra` (local mocks). */
+export const usesFixedCode = (email: string, extra: readonly string[] = []) =>
+  isTestEmail(email) || extra.includes(email.toLowerCase());
 
 export function createAuth(config: AuthConfig) {
   return betterAuth({
@@ -64,14 +91,41 @@ export function createAuth(config: AuthConfig) {
       },
     }),
     user: { modelName: 'auth_users' },
-    session: { modelName: 'auth_sessions', expiresIn: SESSION_TTL_S, updateAge: SESSION_UPDATE_AGE_S },
+    session: {
+      modelName: 'auth_sessions',
+      expiresIn: SESSION_TTL_S,
+      updateAge: SESSION_UPDATE_AGE_S,
+      // IdentityService slides sessions itself (phones 60 days, browsers 14 days under a cap).
+      disableSessionRefresh: true,
+      additionalFields: {
+        client: { type: 'string', required: false, defaultValue: 'phone', input: false },
+        absoluteExpiresAt: { type: 'date', required: false, input: false },
+      },
+    },
     account: { modelName: 'auth_accounts' },
     verification: { modelName: 'auth_verifications' },
-    emailAndPassword: { enabled: false },
+    // Optional passwords beside codes (AC1): only `auth.api.signInEmail` and the scrypt hasher are
+    // used. Accounts are still created only by a code (no sign-up), and with `auth.handler` never
+    // mounted, Better Auth's own password routes (sign-up, reset, change) stay unreachable.
+    // Lengths are checked by the core rule (code points); these bounds are UTF-16 units, wide
+    // enough never to refuse a password the rule accepts.
+    emailAndPassword: {
+      enabled: true,
+      disableSignUp: true,
+      minPasswordLength: PASSWORD_MIN,
+      maxPasswordLength: MAX_PASSWORD_UNITS,
+    },
     rateLimit: { enabled: false },
     telemetry: { enabled: false },
     logger: { disabled: true },
     advanced: { ipAddress: { disableIpTracking: true } },
+    // No IP address or user agent on a session (decision A4, W6). Better Auth writes `''` for both
+    // even with IP tracking off; store NULL so "nothing recorded" is unambiguous.
+    databaseHooks: {
+      session: {
+        create: { before: (session) => Promise.resolve({ data: { ...session, ipAddress: null, userAgent: null } }) },
+      },
+    },
     plugins: [
       // Only signed tokens (`<session token>.<HMAC>`, see IdentityService.signIn): the raw token in
       // `auth_sessions` is not enough to sign in, and rotating BETTER_AUTH_SECRET revokes them all.
@@ -85,7 +139,8 @@ export function createAuth(config: AuthConfig) {
         // typing. `reuse` needs a recoverable code, hence encrypted rather than hashed.
         resendStrategy: 'reuse',
         storeOTP: codeCipher(config.secret),
-        generateOTP: ({ email }) => (config.fixedCode && isTestEmail(email) ? config.fixedCode : undefined),
+        generateOTP: ({ email }) =>
+          config.fixedCode && usesFixedCode(email, config.fixedCodeEmails) ? config.fixedCode : undefined,
         sendVerificationOTP: async ({ email, otp }) => {
           if (isTestEmail(email)) {
             return; // Nobody reads mail at the reserved test domain.

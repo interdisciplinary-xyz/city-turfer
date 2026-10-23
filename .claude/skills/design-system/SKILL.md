@@ -41,9 +41,11 @@ logo) stay in the `brand-system` skill; this skill is about the code that carrie
 5. **The app imports through `@/ui-kit/components` and `@/ui-kit/theme`** (re-exports), so screens
    don't change when a component moves. Domain, shared kernel and application layers may not import
    `@cityturfer/ui` (dependency-cruiser).
-6. **Website CSS uses variables** from `cssVariables('dark')` (`--bg`, `--card`, `--glow`,
-   `--space-lg`, `--radius-panel`, `--font-hero`…). Add a token in `tokens.ts` and it appears on the
-   site and in Storybook; never hand-copy values into `globals.css`.
+6. **Website CSS uses variables** from `cssVariables(SITE_SCHEME)` (`--bg`, `--card`,
+   `--accent-text`, `--walk-graphic`, `--space-lg`, `--radius-panel`, `--font-hero`…). The site is
+   light, the app dark: `SITE_SCHEME` is the only place the site's scheme is named. Add a token in
+   `tokens.ts` and it appears on the site and in Storybook; never hand-copy values into
+   `globals.css`.
 7. Repo lint rules apply: props types and SCREAMING constants in `<name>.constants.ts`, one import
    per module, `curly: all`.
 
@@ -53,8 +55,9 @@ logo) stay in the `brand-system` skill; this skill is about the code that carrie
    `packages/ui/src/index.ts`.
 2. Test it in `packages/ui/src/__tests__/` (react-test-renderer; find native views by `testID` with
    the `host()` helper, presses with `pressable()`).
-3. A story in `apps/storybook/src/stories/app/<name>.stories.tsx`: default, each state, light and
-   dark through the toolbar.
+3. A story in `apps/storybook/src/stories/app/<name>.stories.tsx`: default and each state. Stories
+   render in `SITE_SCHEME` (light); the app's dark look is checked in the app (`mobile-testing`
+   skill), not through a Storybook switch.
 4. If the app should use it: re-export from `apps/mobile/src/ui-kit/components.tsx`, switch the
    screen, and prove "no visible change" (same sizes, colours, text, testIDs, accessibility labels).
 5. Check the fingerprint (below).
@@ -70,8 +73,9 @@ pnpm --filter @cityturfer/storybook build    # apps/storybook/storybook-static (
 # branch to the hostname; `npx portless alias cityturfer <port>` maps the plain name.
 ```
 
-- Toolbar: **Theme** (dark/light; app components only, website stories stay dark) and **Language**
-  (en/pl; website copy from `apps/web/messages`).
+- Every story renders with `SITE_SCHEME` (light), like the website; there is no theme toolbar.
+  Toolbar: **Language** (en/pl; website copy from `apps/web/messages`). A map inside a story sits on
+  a night panel, as on the site.
 - Website components come from `apps/web/src` through the `@/` alias. `next/image` and next-intl's
   `Link` are shimmed (`apps/storybook/src/shims/`); async server components can't render, so keep
   website pieces synchronous (`useTranslations`, not `await getTranslations`).
@@ -83,16 +87,17 @@ pnpm --filter @cityturfer/storybook build    # apps/storybook/storybook-static (
   container (`contexts/*/ui/`) are not in Storybook. They join when their presentational part moves
   to `packages/ui`.
 - **Branded Storybook UI:** `.storybook/theme.ts` (`create()` from `storybook/theming`, colours from
-  `@cityturfer/brand` `DARK` and `ACCENT`). It's used by `manager.ts` for the sidebar and toolbar,
-  and by `parameters.docs.theme` for the docs pages. The sidebar logo is `brandTitle` HTML: the mark
-  plus the "City/Turfer" wordmark. `manager-head.html` sets the tab icon. Brand SVGs are served at
-  `brand/` (a `staticDirs` entry). Keep every URL relative, so it works under `/storybook`.
+  `@cityturfer/brand`: the `SITE_SCHEME` theme and `ACCENT`, never hex). It's used by `manager.ts`
+  for the sidebar and toolbar, and by `parameters.docs.theme` for the docs pages. The sidebar logo
+  is `brandTitle` HTML: the mark plus the "City/Turfer" wordmark. `manager-head.html` sets the tab
+  icon. Brand SVGs are served at `brand/` (a `staticDirs` entry). Keep every URL relative, so it
+  works under `/storybook`.
 - **Docs pages:** `tags: ['autodocs']` in `preview.tsx` (`@storybook/addon-docs`). Each component's
   `parameters.docs.description.component` is its intro.
 - Screenshots: serve `storybook-static` with a server that keeps query strings
   (`python3 -m http.server`; `serve` redirects `iframe.html?…` to `/iframe` and drops them) and load
-  `iframe.html?id=<story-id>&viewMode=story&globals=scheme:light` inside an iframe of the exact size
-  (headless Chrome's viewport doesn't match `--window-size`; same trick as
+  `iframe.html?id=<story-id>&viewMode=story` (add `&globals=locale:pl` for Polish) inside an iframe
+  of the exact size (headless Chrome's viewport doesn't match `--window-size`; same trick as
   `apps/web/tools/viewports.mjs`).
 
 ## Shipping over the air

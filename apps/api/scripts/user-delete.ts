@@ -5,6 +5,8 @@
 //   DATABASE_URL=… pnpm --filter @cityturfer/api run user:delete -- <userId> --yes    # erase
 // Takes the id only (find it with user:find), so a typo in an e-mail cannot pick another account.
 // Runbook: docs/operations/api-deploy.md ("Support requests").
+import { H3CellGrid } from '@cityturfer/core/h3';
+
 import { BackupService } from '../src/backup/use-cases';
 import { DrizzleBackupStore } from '../src/db/store';
 import { findAccount } from '../src/db/support';
@@ -19,6 +21,7 @@ if (!userId || !/^[A-Za-z0-9_-]{1,64}$/.test(userId) || args.length > (yes ? 2 :
 }
 
 const { db, close, where } = await openDb();
+const grid = new H3CellGrid();
 try {
   const account = await findAccount(db, userId);
   if (!account || account.id !== userId) {
@@ -29,7 +32,7 @@ try {
     if (!yes) {
       console.log(`Dry run (${where}): this account and all its data would be erased. Add --yes to erase it.`);
     } else {
-      await new BackupService(new DrizzleBackupStore(db), { now: () => Date.now() }).eraseAccount(userId);
+      await new BackupService(new DrizzleBackupStore(db, grid), { now: () => Date.now() }, grid).eraseAccount(userId);
       const left = await findAccount(db, userId);
       console.log(left ? 'Erase failed: the account is still there.' : `Erased account ${userId} (${where}).`);
       // A warm function still "knows" the user (one upsert per cold start): the redeploy resets that.

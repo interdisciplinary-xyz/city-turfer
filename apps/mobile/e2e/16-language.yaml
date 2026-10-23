@@ -1,0 +1,66 @@
+# Language setting: Polish on Info, Dashboard, Stats and Record, then back to System (English).
+# Leaves the app on Language = System, even when an assertion fails (onFlowComplete), and starts by
+# resetting it so a rerun after a crash recovers.
+appId: com.turftrack.poc
+tags: [me]
+onFlowComplete:
+  - runFlow: subflows/reset-language.yaml
+---
+- runFlow: subflows/launch.yaml
+- runFlow:
+    when: { visible: { id: 'sign-in-email' } }
+    commands:
+      - runFlow: { file: subflows/sign-in.yaml, env: { EMAIL: 'admin@cityturfer.com', PASSWORD: 'admin1234' } }
+- extendedWaitUntil: { visible: { id: 'dashboard-greeting' }, timeout: 20000 }
+- runFlow: subflows/reset-language.yaml # ends on Me > Info
+
+# --- English first ---
+- scrollUntilVisible: { element: { id: 'language-row' }, timeout: 20000 }
+- assertVisible: 'Language'
+- assertVisible: 'System language.*'
+- takeScreenshot: 16-info-english
+
+# --- Polish ---
+- tapOn: { id: 'language-pl' }
+- extendedWaitUntil: { visible: 'Język', timeout: 5000 }
+- assertVisible: 'Język systemu.*'
+- assertNotVisible: 'Language'
+- scrollUntilVisible: { element: 'Twoje dane', direction: UP, timeout: 20000 }
+- assertVisible: 'Wersja aplikacji'
+- assertNotVisible: 'Your data'
+- scrollUntilVisible: { element: { id: 'language-row' }, timeout: 20000 }
+- assertVisible: { id: 'language-pl', selected: true }
+- takeScreenshot: 16-info-polish
+
+# The choice survives a restart; the other screens speak Polish.
+- stopApp
+- runFlow: subflows/launch.yaml
+- extendedWaitUntil: { visible: { id: 'dashboard-greeting' }, timeout: 20000 }
+- assertVisible: 'Pulpit.*'
+- assertVisible: 'W tym tygodniu'
+- assertNotVisible: 'This week'
+- takeScreenshot: 16-dashboard-polish
+- tapOn: { id: 'tab-stats' }
+- assertVisible: 'Statystyki.*'
+- assertVisible: 'W tym tygodniu'
+- assertVisible: 'Od początku'
+- takeScreenshot: 16-stats-polish
+- tapOn: { id: 'tab-record' }
+- assertVisible: 'Zacznij .*'
+- assertNotVisible: 'Start .*'
+- takeScreenshot: 16-record-polish
+
+# --- Back to System: English returns ---
+- tapOn: { id: 'tab-me' }
+- tapOn: { id: 'me-menu-info' }
+- scrollUntilVisible: { element: { id: 'language-system' }, timeout: 20000 }
+- tapOn: { id: 'language-system' }
+- extendedWaitUntil: { visible: 'Language', timeout: 5000 }
+- assertNotVisible: 'Język'
+- assertVisible: { id: 'language-system', selected: true }
+- runFlow: subflows/back.yaml
+- tapOn: { id: 'tab-stats' }
+- assertVisible: 'This week'
+- assertVisible: 'Stats.*'
+- assertNotVisible: 'W tym tygodniu'
+- takeScreenshot: 16-stats-english

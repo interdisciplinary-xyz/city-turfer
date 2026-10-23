@@ -1,21 +1,24 @@
-import { FONT_SIZE, SPACE, TIER_LABEL } from '@cityturfer/brand';
+import { FONT_SIZE, SPACE } from '@cityturfer/brand';
 import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ACTIVITY_TYPES, TYPE_LABEL } from '@/constants/activity';
-import { ACCENT, FONT_FAMILY, TYPE_COLOR } from '@/constants/colors';
+import { ACTIVITY_TYPES } from '@/constants/activity';
+import { ACCENT, DISPLAY_CASE, DISPLAY_TRACKING, FONT_FAMILY, TYPE_COLOR } from '@/constants/colors';
 import { activityStats } from '@/contexts/activity-log/ui/activity-stats';
 import { useActivities } from '@/contexts/activity-log/ui/hooks';
 import { useTurfSummary } from '@/contexts/territory/ui/hooks';
+import { useT } from '@/i18n';
 import { Card, Stat } from '@/ui-kit/components';
-import { distanceText, formatArea, formatDistance, formatDuration } from '@/ui-kit/format';
+import { distanceText, formatArea, formatDayMonth, formatDistance, formatDuration } from '@/ui-kit/format';
 import { usePalette } from '@/ui-kit/theme';
 
 /** Composes Activity Log (distance, time) and Territory (turf) totals. */
 export default function StatsScreen() {
   const p = usePalette();
+  const t = useT('stats');
+  const tc = useT('common');
   const insets = useSafeAreaInsets();
   const activities = useActivities();
   const summary = useTurfSummary();
@@ -29,16 +32,16 @@ export default function StatsScreen() {
       style={{ backgroundColor: p.bg }}
       contentContainerStyle={{ padding: SPACE.lg, paddingTop: insets.top + SPACE.lg, gap: 14 }}
     >
-      <Text style={[s.h1, { color: p.text }]}>Stats</Text>
+      <Text style={[s.h1, { color: p.text }]}>{t('title')}</Text>
 
       <Card style={{ gap: 12 }}>
-        <Text style={[s.h2, { color: p.text }]}>This week</Text>
+        <Text style={[s.h2, { color: p.text }]}>{t('thisWeek')}</Text>
         <View style={{ flexDirection: 'row' }}>
-          <Stat testID='week-distance' label='Distance' value={week.value} unit={week.unit} />
-          <Stat label='Time' value={formatDuration(stats.thisWeek.movingS)} />
-          <Stat label='Activities' value={String(stats.thisWeek.count)} />
+          <Stat testID='week-distance' label={t('distance')} value={week.value} unit={week.unit} />
+          <Stat label={t('time')} value={formatDuration(stats.thisWeek.movingS)} />
+          <Stat label={t('activities')} value={String(stats.thisWeek.count)} />
         </View>
-        <View style={s.bars} accessible accessibilityLabel='Distance per week, last 8 weeks'>
+        <View style={s.bars} accessible accessibilityLabel={t('weeksChartLabel', { weeks: stats.weeks.length })}>
           {stats.weeks.map((w, i) => (
             <View key={w.weekStart} style={s.barCol}>
               <View
@@ -50,41 +53,50 @@ export default function StatsScreen() {
                   },
                 ]}
               />
-              <Text style={[s.barLabel, { color: p.muted }]}>
-                {new Date(w.weekStart).toLocaleDateString(undefined, { day: 'numeric', month: 'numeric' })}
-              </Text>
+              <Text style={[s.barLabel, { color: p.muted }]}>{formatDayMonth(w.weekStart)}</Text>
             </View>
           ))}
         </View>
       </Card>
 
       <Card style={{ gap: 12 }}>
-        <Text style={[s.h2, { color: p.text }]}>Turf</Text>
+        <Text style={[s.h2, { color: p.text }]}>{t('turf')}</Text>
         <View style={{ flexDirection: 'row' }}>
-          <Stat label='Area' value={area[0]} unit={area[1]} />
-          <Stat label='Cells' value={summary ? String(summary.cellCount) : '—'} />
-          <Stat label={TIER_LABEL.strong} value={summary ? String(summary.strongCells) : '—'} />
+          <Stat label={t('area')} value={area[0]} unit={area[1]} />
+          <Stat label={t('cells')} value={summary ? String(summary.cellCount) : '—'} />
+          <Stat label={tc('tier.strong')} value={summary ? String(summary.strongCells) : '—'} />
         </View>
       </Card>
 
       <Card style={{ gap: 10 }}>
-        <Text style={[s.h2, { color: p.text }]}>All time</Text>
-        {ACTIVITY_TYPES.map((t) => {
-          const tot = stats.byType[t];
+        <Text style={[s.h2, { color: p.text }]}>{t('allTime')}</Text>
+        {ACTIVITY_TYPES.map((type) => {
+          const tot = stats.byType[type];
+          const cells = summary ? summary.byType[type] : 0;
           return (
-            <View key={t} style={s.row}>
-              <View style={[s.dot, { backgroundColor: TYPE_COLOR[t] }]} />
-              <Text style={[s.rowLabel, { color: p.text }]}>{TYPE_LABEL[t]}</Text>
+            <View key={type} style={s.row}>
+              <View style={[s.dot, { backgroundColor: TYPE_COLOR[type] }]} />
+              <Text style={[s.rowLabel, { color: p.text }]}>{tc(`activityType.${type}`)}</Text>
               <Text style={[s.rowValue, { color: p.muted }]}>
-                {tot.count} · {distanceText(tot.distanceM)} · {summary ? summary.byType[t] : '—'} cells
+                {t('typeRow', {
+                  count: String(tot.count),
+                  distance: distanceText(tot.distanceM),
+                  known: summary ? 'yes' : 'no',
+                  cells,
+                  cellsText: String(cells),
+                })}
               </Text>
             </View>
           );
         })}
         <View style={[s.row, s.totalRow, { borderTopColor: p.border }]}>
-          <Text style={[s.rowLabel, { color: p.text, marginLeft: 0 }]}>Total</Text>
+          <Text style={[s.rowLabel, { color: p.text, marginLeft: 0 }]}>{t('total')}</Text>
           <Text style={[s.rowValue, { color: p.text }]}>
-            {stats.allTime.count} · {distanceText(stats.allTime.distanceM)} · {formatDuration(stats.allTime.movingS)}
+            {t('totalRow', {
+              count: String(stats.allTime.count),
+              distance: distanceText(stats.allTime.distanceM),
+              duration: formatDuration(stats.allTime.movingS),
+            })}
           </Text>
         </View>
       </Card>
@@ -92,11 +104,11 @@ export default function StatsScreen() {
         testID='stats-see-history'
         onPress={() => router.push('/history')}
         accessibilityRole='link'
-        accessibilityLabel='See all activities'
+        accessibilityLabel={t('seeAllLabel')}
       >
         <Card style={s.link}>
-          <Text style={[s.h2, { color: p.text }]}>All activities</Text>
-          <Text style={{ color: ACCENT, fontWeight: '700' }}>See all ›</Text>
+          <Text style={[s.h2, { color: p.text }]}>{t('allActivities')}</Text>
+          <Text style={{ color: ACCENT, fontWeight: '700' }}>{t('seeAll')}</Text>
         </Card>
       </Pressable>
     </ScrollView>
@@ -104,7 +116,13 @@ export default function StatsScreen() {
 }
 
 const s = StyleSheet.create({
-  h1: { fontSize: 28, fontFamily: FONT_FAMILY.display, letterSpacing: -0.5 },
+  h1: {
+    fontSize: 35,
+    lineHeight: 38,
+    fontFamily: FONT_FAMILY.display,
+    textTransform: DISPLAY_CASE,
+    letterSpacing: DISPLAY_TRACKING,
+  },
   h2: { fontSize: 17, fontWeight: '800' },
   link: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   bars: { flexDirection: 'row', alignItems: 'flex-end', height: 104, gap: 6 },

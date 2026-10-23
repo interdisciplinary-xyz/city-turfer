@@ -1,5 +1,8 @@
 import { catalogueCityView } from '@cityturfer/core/territory';
+import type { CellGrid } from '@cityturfer/core/territory/ports';
 
+import { decodeCursor, encodeCursor } from '../cursor';
+import { type CatchUpCounts, TurfProjection } from '../territory/projection';
 import { AppError } from './app-error';
 import { contentHashOf, trackHashOf } from './hashing';
 import type {
@@ -15,7 +18,7 @@ import type {
   StoredGapRoute,
   UserRecord,
 } from './model';
-import type { BackupStore, UserReader } from './ports';
+import type { BackupStore, UserReader, UserWriter } from './ports';
 import { gapTotals, renamed, summarizeUpload } from './summary';
 
 /**
@@ -54,7 +57,7 @@ async function requireConsent(reader: UserReader, purpose: ConsentPurposeName): 
 }
 
 /** The activity, or 404 when the user never had it and 410 when it was deleted. */
-async function existingActivity(reader: UserReader, id: string): Promise<ActivityRecord> {
+export async function existingActivity(reader: UserReader, id: string): Promise<ActivityRecord> {
   const activity = await reader.activity(id);
   if (activity) {
     return activity;
@@ -74,11 +77,25 @@ export interface UploadInput {
   points: CompactPoint[];
 }
 
+/** Count, distance (m) and moving time (s) of a set of activities, gap estimates included. */
+export interface Totals {
+  count: number;
+  distanceM: number;
+  movingS: number;
+}
+
 export class BackupService {
+  /** `grid`: Territory's CellGrid (H3, from src/wiring.ts): the server claims turf from uploads. */
   constructor(
     private readonly store: BackupStore,
-    private readonly clock: Clock
+    private readonly clock: Clock,
+    private readonly grid: CellGrid
   ) {}
+
+  /** The user's turf projection inside this write's transaction (after `lock()`). */
+  private turf(tx: UserWriter): TurfProjection {
+    return new TurfProjection({ repo: tx.turf, grid: this.grid, clock: this.clock, storedTrack: (id) => tx.track(id) });
+  }
 
   // ------------------------------------------------------------------ Identity and consents
 
@@ -122,7 +139,9 @@ export class BackupService {
   /**
    * UploadActivity: create (201), replay (200, unchanged), replace with `If-Match` (200, version
    * + 1; 428 without it, 412 when stale), 410 after a delete. The summary is recomputed with the
-   * core; a `trackHash` the client sent must match the canonical one (422).
+   * core; a `trackHash` the client sent must match the canonical one (422). Turf is claimed from
+   * the track in the same transaction: on create, and again (reclaim) when the track, type or
+   * start changed; a replay does no turf work. A start in the future is stored unclaimed.
    */
   async upload(
     userId: string,
@@ -182,8 +201,10 @@ export class BackupService {
         updatedAt: now,
         changeSeq: await tx.nextSeq(),
       };
+      const turf = this.turf(tx);
       if (!existing) {
         await tx.insertActivity(record, input.points);
+        await turf.claim(record, input.points);
         return { created: true, activity: record };
       }
       if (trackChanged) {
@@ -191,6 +212,12 @@ export class BackupService {
         await tx.updateActivity(record, input.points);
       } else {
         await tx.updateActivity(record);
+      }
+      if (trackChanged || existing.type !== record.type || existing.startedAt !== record.startedAt) {
+        await turf.reclaim(record, input.points);
+      } else {
+        // Same turf: claims only if it never was (deferred or before the backfill); else a no-op.
+        await turf.claim(record, input.points);
       }
       return { created: false, activity: record };
     });
@@ -246,8 +273,8 @@ export class BackupService {
   }
 
   /**
-   * DeleteActivity: removes the activity, its track and gap routes and leaves a tombstone
-   * (delete wins, D5). Idempotent. Allowed without consent: it only removes data.
+   * DeleteActivity: removes the activity, its track, gap routes and turf claim and leaves a
+   * tombstone (delete wins, D5). Idempotent. Allowed without consent: it only removes data.
    */
   async remove(userId: string, id: string): Promise<void> {
     await this.store.write(userId, async (tx) => {
@@ -256,6 +283,8 @@ export class BackupService {
         return;
       }
       const changeSeq = await tx.nextSeq();
+      // Release first: the cascade would drop the claim and with it the cells to recompute.
+      await this.turf(tx).release(id);
       await tx.deleteActivity(id);
       await tx.putTombstone({ activityId: id, deletedAt: this.clock.now(), changeSeq });
     });
@@ -310,21 +339,55 @@ export class BackupService {
     return { activity, points };
   }
 
+  /**
+   * ListActivities, newest first. `startedAfter` (inclusive) and `startedBefore` (exclusive) bound
+   * `startedAt`; the cursor is the same as without them (send the same filters with every page).
+   */
   async list(
     userId: string,
-    q: { limit: number; type?: ActivityTypeName; cursor?: string }
+    q: { limit: number; type?: ActivityTypeName; cursor?: string; startedAfter?: number; startedBefore?: number }
   ): Promise<{ items: ActivityRecord[]; nextCursor: string | null }> {
     const before = q.cursor ? (decodeCursor(q.cursor, isListPosition) ?? undefined) : undefined;
     if (q.cursor && !before) {
       throw new AppError('invalid-request');
     }
-    const rows = await this.store.read(userId).listActivities({ limit: q.limit + 1, type: q.type, before });
+    const rows = await this.store.read(userId).listActivities({
+      limit: q.limit + 1,
+      type: q.type,
+      before,
+      startedAfter: q.startedAfter,
+      startedBefore: q.startedBefore,
+    });
     const items = rows.slice(0, q.limit);
     const last = items.at(-1);
     return {
       items,
       nextCursor: rows.length > q.limit && last ? encodeCursor({ startedAt: last.startedAt, id: last.id }) : null,
     };
+  }
+
+  /**
+   * ActivityTotals: count, distance and moving time of every activity, all time and per type. As
+   * the phone's Stats tab (`activityStats`): distance and moving time include the street estimates
+   * across GPS gaps.
+   */
+  async totals(userId: string): Promise<{ allTime: Totals; byType: Record<ActivityTypeName, Totals> }> {
+    const sums = await this.store.read(userId).activityTotals();
+    const byType = {} as Record<ActivityTypeName, Totals>;
+    const allTime: Totals = { count: 0, distanceM: 0, movingS: 0 };
+    for (const type of ['walk', 'run', 'cycle'] as const) {
+      const s = sums[type];
+      const t: Totals = {
+        count: s?.count ?? 0,
+        distanceM: (s?.distanceM ?? 0) + (s?.estimatedDistanceM ?? 0),
+        movingS: (s?.movingS ?? 0) + (s?.estimatedMovingS ?? 0),
+      };
+      byType[type] = t;
+      allTime.count += t.count;
+      allTime.distanceM += t.distanceM;
+      allTime.movingS += t.movingS;
+    }
+    return { allTime, byType };
   }
 
   // ------------------------------------------------------------------ Sync
@@ -363,6 +426,55 @@ export class BackupService {
       nextCursor: encodeCursor({ seq: changes.at(-1)?.seq ?? after }),
       hasMore: rows.length > changes.length,
     };
+  }
+
+  // ------------------------------------------------------------------ Turf
+
+  /**
+   * CatchUpTurf: claims up to `limit` of the user's activities that have no claim yet (deferred
+   * future starts; the backfill of activities uploaded before the server claimed turf), oldest
+   * first, under the user lock. Idempotent. `offset` passes over the oldest ones (a backfill run
+   * skipping activities whose claim failed earlier in the run).
+   */
+  catchUpTurf(userId: string, limit: number, offset = 0): Promise<CatchUpCounts & { gone: boolean }> {
+    return this.store.write(userId, async (tx) => {
+      // A background job: never re-create an account erased since the backlog was read.
+      if (!(await tx.lockExisting())) {
+        return { claimed: 0, deferred: 0, skipped: 0, gone: true };
+      }
+      return { ...(await this.turf(tx).claimMissing(limit, offset)), gone: false };
+    });
+  }
+
+  /**
+   * RebuildTurf (repair, `turf:rebuild`), under the user lock: recomputes every Turf Cell from the
+   * claims that remain when any cell differs (`drift`: claims an older API cascaded away; a user
+   * without claims loses every cell), then re-claims every claim that no longer matches its activity
+   * (`staleClaims`: an older API replaced the track, type or start in place). `dryRun` only counts.
+   * Skips an erased user (never re-creates the row).
+   */
+  rebuildTurf(
+    userId: string,
+    options: { dryRun?: boolean } = {}
+  ): Promise<{ drift: number; staleClaims: number; gone: boolean }> {
+    return this.store.write(userId, async (tx) => {
+      if (!(await tx.lockExisting())) {
+        return { drift: 0, staleClaims: 0, gone: true };
+      }
+      const turf = this.turf(tx);
+      const drift = await turf.drift();
+      const stale = await turf.staleClaims();
+      if (!options.dryRun) {
+        if (drift > 0) {
+          await turf.rebuildAll();
+        }
+        for (const a of stale) {
+          // From the stored track; a start now in the future is left unclaimed for the catch-up.
+          await turf.reclaim(a);
+        }
+      }
+      return { drift, staleClaims: stale.length, gone: false };
+    });
   }
 
   // ------------------------------------------------------------------ Home City
@@ -434,16 +546,3 @@ const isListPosition = (v: unknown): v is { startedAt: number; id: string } =>
 
 const isFeedPosition = (v: unknown): v is { seq: number } =>
   !!v && typeof v === 'object' && Number.isSafeInteger((v as { seq?: unknown }).seq) && (v as { seq: number }).seq >= 0;
-
-function encodeCursor(value: object): string {
-  return Buffer.from(JSON.stringify(value), 'utf8').toString('base64url');
-}
-
-function decodeCursor<T>(cursor: string, guard: (v: unknown) => v is T): T | null {
-  try {
-    const value: unknown = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'));
-    return guard(value) ? value : null;
-  } catch {
-    return null;
-  }
-}

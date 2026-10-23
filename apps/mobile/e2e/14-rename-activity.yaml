@@ -15,7 +15,7 @@ tags: [history]
 - inputText: 'Riverside loop'
 - tapOn: { id: 'rename-save' }
 - assertNotVisible: { id: 'rename-dialog' }
-- assertVisible: 'Riverside loop'
+- assertVisible: 'Riverside loop.*'
 - runFlow: subflows/back.yaml
-- assertVisible: 'Riverside loop'
+- assertVisible: 'Riverside loop.*'
 - runFlow: subflows/back.yaml

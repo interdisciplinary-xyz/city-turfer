@@ -10,6 +10,7 @@ import { AppState, Platform } from 'react-native';
 
 import { API_BASE_URL, API_TIMEOUT_MS, API_UPLOAD_TIMEOUT_MS } from '@/constants/api';
 import { onboardingDismissal } from '@/contexts/achievements/infrastructure/onboarding-dismissal';
+import { currentDefaultNameWords } from '@/contexts/activity-log/infrastructure/catalogue-default-name-words';
 import { OsmRouteEstimator } from '@/contexts/activity-log/infrastructure/osm-route-estimator';
 import { SecureStoreGapEstimationSetting } from '@/contexts/activity-log/infrastructure/secure-store-gap-estimation-setting';
 import type { DeviceTokenStore } from '@/contexts/cloud-backup';
@@ -22,6 +23,7 @@ import { CachedSessionStore } from '@/contexts/identity/infrastructure/cached-se
 import { MockAuthGateway } from '@/contexts/identity/infrastructure/mock-auth-gateway';
 import { SecureStoreAccountProfileStore } from '@/contexts/identity/infrastructure/secure-store-account-profile-store';
 import { SecureStoreCredentialStore } from '@/contexts/identity/infrastructure/secure-store-credential-store';
+import { SecureStoreProfileNameStore } from '@/contexts/identity/infrastructure/secure-store-profile-name-store';
 import { SecureStoreSessionStore } from '@/contexts/identity/infrastructure/secure-store-session-store';
 import { backgroundActivitySession } from '@/contexts/recording/infrastructure/background-activity-session';
 import { ExpoLocationTracker, ExpoPermissionGateway } from '@/contexts/recording/infrastructure/expo-location-tracker';
@@ -39,6 +41,7 @@ import { type Container, wire } from './wiring';
 // One instance for sign-in, sign-out and getContainer(): it caches the signed-in uid in memory.
 const sessionStore = new CachedSessionStore(new SecureStoreSessionStore());
 const tracker = new ExpoLocationTracker();
+const profileNames = new SecureStoreProfileNameStore();
 
 const CLIENT = `${Platform.OS}/${Constants.expoConfig?.version ?? 'dev'}`;
 const databaseName = (profileId: string) => `turftrack-${profileId}.db`;
@@ -58,6 +61,7 @@ export const identity = createIdentityApi(
       profiles: new SecureStoreAccountProfileStore(),
       history: { hasActivities: profileHasActivities },
     },
+    names: profileNames,
   },
   isRecording
 );
@@ -103,6 +107,7 @@ async function eraseProfile(profileId: string): Promise<void> {
   await new SecureStoreDeviceTokenStore(profileId).clear();
   await onboardingDismissal.forget(profileId);
   await turfOverlayPreference.forget(profileId);
+  await profileNames.forget(profileId);
 }
 
 /** Profile deletions that must finish (ids only, in the keychain: they survive a restart). */
@@ -190,6 +195,8 @@ const adapters = {
     sha256: (text: string) => Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, text),
   },
   timeZone: deviceTimeZone,
+  // Read at creation, in the language active then (the saved setting is loaded first: headless too).
+  defaultNameWords: currentDefaultNameWords,
 };
 
 /** The device's IANA zone, kept with each new Activity (older ones get the current zone once). */

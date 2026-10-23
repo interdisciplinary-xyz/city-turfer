@@ -5,15 +5,16 @@
   Replace the screen with a full-resolution simulator screenshot before submitting.
 -->
 <style>
-  @font-face { font-family: 'ArchivoExpanded-Black'; src: url({{FONT_DISPLAY}}) format('woff2'); }
+  @font-face { font-family: 'BigShouldersDisplay-Black'; src: url({{FONT_DISPLAY}}) format('woff2'); }
+  @font-face { font-family: 'Barlow'; src: url({{FONT_BODY}}) format('woff2'); }
   .frame {
     position: relative; overflow: hidden; width: {{W}}px; height: {{H}}px; box-sizing: border-box;
     background: radial-gradient(90% 55% at 50% 70%, #2A1238 0%, #0B0D12 72%);
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, sans-serif; color: #EEF1F7;
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, sans-serif; color: #EEF1F7;
     --u: calc({{W}}px / 100);
   }
   .copy { position: absolute; left: calc(var(--u) * 8); right: calc(var(--u) * 8); top: calc(var(--u) * 11); text-align: center; }
-  .headline { margin: 0; font-family: 'ArchivoExpanded-Black', sans-serif; font-size: calc(var(--u) * 8.4); line-height: 1.06; letter-spacing: calc(var(--u) * -0.2); color: #FFF3C4; }
+  .headline { margin: 0; font-family: 'BigShouldersDisplay-Black', sans-serif; font-size: calc(var(--u) * 11); line-height: 0.92; letter-spacing: calc(var(--u) * 0.05); text-transform: uppercase; color: #FFF3C4; }
   .headline em { font-style: normal; background: linear-gradient(45deg, #F72FA8, #FFB02E 70%, #FFF3C4); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .sub { margin: calc(var(--u) * 3.6) auto 0; font-size: calc(var(--u) * 3.6); line-height: 1.35; color: #9AA3B5; max-width: calc(var(--u) * 76); }
   .phone {

@@ -1,0 +1,19 @@
+{
+  "title": "Your turf",
+  "summary": "{cellCount, plural, one {{cells} cell} other {{cells} cells}} · {strongCount, plural, one {{strong} strong} other {{strong} strong}} · +{area} this week",
+  "filterLabel": "{type, select, walk {Walk turf} run {Run turf} cycle {Ride turf} other {Turf}}",
+  "showCity": "Show {city}",
+  "cityHint": "Long press to choose another city",
+  "chooseAnotherCity": "Choose another city",
+  "chooseCity": "Choose your city",
+  "yourCity": "Your city",
+  "showAllLabel": "Show all turf",
+  "showAll": "All",
+  "empty": "Record a walk, run or ride — every street you cover becomes yours.",
+  "gained": {
+    "title": "Turf gained",
+    "newTurf": "+{area} new turf",
+    "cells": "{addedCount, plural, one {{added} new cell} other {{added} new cells}} · {reinforcedCount, plural, one {{reinforced} reinforced} other {{reinforced} reinforced}}",
+    "claiming": "Claiming your turf…"
+  }
+}

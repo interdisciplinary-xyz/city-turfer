@@ -1,0 +1,12 @@
+{
+  "you": "Ty",
+  "closeMenu": "Zamknij menu",
+  "headerLabel": "{name}, {email}. Otwórz profil.",
+  "items": {
+    "profile": "Profil",
+    "account": "Konto",
+    "city": "Miasto",
+    "info": "Informacje"
+  },
+  "footerUpdate": "{name} · aktualizacja {id}"
+}

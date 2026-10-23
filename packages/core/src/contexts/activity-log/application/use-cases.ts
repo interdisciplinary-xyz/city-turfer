@@ -9,7 +9,7 @@ import {
   type TrackPoint,
 } from '../../../shared-kernel';
 import type { ActivityArchive, ActivityDetail, ActivityListItem, RestoredActivity, RestoreOutcome } from '../contract';
-import { Activity } from '../domain/activity';
+import { Activity, type DefaultNameWords } from '../domain/activity';
 import type { ActivityRepository } from '../domain/activity-repository';
 import { estimatedTotals, type GapRoute } from '../domain/gap-route';
 import { OFFLINE_RETRY_MS, RouterBudget } from './router-budget';
@@ -73,6 +73,11 @@ export interface ActivityLogDeps {
   afterCommit: () => void;
   /** The phone's IANA zone now, kept with each new Activity. Omitted: unknown (null). */
   timeZone?: () => string | null;
+  /**
+   * Words of a new Activity's default name, in the language active now (asked once per new
+   * Activity, at creation). Omitted, failing or rejecting: English.
+   */
+  defaultNameWords?: () => DefaultNameWords | Promise<DefaultNameWords>;
 }
 
 const zoneOf = (d: Pick<ActivityLogDeps, 'timeZone'>): string | null => {
@@ -80,6 +85,14 @@ const zoneOf = (d: Pick<ActivityLogDeps, 'timeZone'>): string | null => {
     return d.timeZone?.() ?? null;
   } catch {
     return null;
+  }
+};
+
+const nameWordsOf = async (d: Pick<ActivityLogDeps, 'defaultNameWords'>): Promise<DefaultNameWords | undefined> => {
+  try {
+    return (await d.defaultNameWords?.()) ?? undefined;
+  } catch {
+    return undefined; // English: a translation never stops an Activity from being saved
   }
 };
 
@@ -103,6 +116,7 @@ export class RecordActivityFromSession {
     if (!points || points.length < 2) {
       return;
     } // nothing to record
+    const nameWords = await nameWordsOf(this.d);
     const activity = Activity.record({
       id: e.sessionId,
       type: e.activityType,
@@ -112,6 +126,7 @@ export class RecordActivityFromSession {
       now: this.d.clock.now(),
       resumedSegments: e.resumedSegments ?? null,
       timeZone: zoneOf(this.d),
+      nameWords,
     });
     await this.d.activities.save(activity, points);
     this.d.afterCommit();
@@ -125,6 +140,7 @@ export class ImportActivity {
     if (input.points.length < 2 || (await this.d.activities.exists(input.id))) {
       return false;
     }
+    const nameWords = await nameWordsOf(this.d);
     const activity = Activity.record({
       id: input.id,
       type: input.type,
@@ -134,6 +150,7 @@ export class ImportActivity {
       now: this.d.clock.now(),
       origin: 'import',
       timeZone: zoneOf(this.d),
+      nameWords,
     });
     await this.d.activities.save(activity, input.points);
     this.d.afterCommit();

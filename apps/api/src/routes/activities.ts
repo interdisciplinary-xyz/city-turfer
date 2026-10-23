@@ -9,6 +9,7 @@ import {
   ActivityListQuery,
   ActivityRename,
   ActivitySummary,
+  ActivityTotals,
   ActivityUpload,
   GapRoutesUpload,
   Track,
@@ -50,7 +51,7 @@ export function registerActivities(app: OpenAPIHono<AppEnv>): void {
       operationId: 'listActivities',
       summary: 'List activities',
       description:
-        'Newest first (`startedAt`, then id), paged with an opaque `cursor` (use case ListActivities). Deleted activities are not listed: sync clients read tombstones from `GET /v1/sync/changes`.',
+        'Newest first (`startedAt`, then id), paged with an opaque `cursor` (use case ListActivities); `startedAfter` (inclusive) and `startedBefore` (exclusive) narrow it to a time range — send them with every page. Deleted activities are not listed: sync clients read tombstones from `GET /v1/sync/changes`.',
       request: { query: ActivityListQuery },
       responses: {
         200: { description: 'A page of activities.', content: json(ActivityList) },
@@ -60,9 +61,34 @@ export function registerActivities(app: OpenAPIHono<AppEnv>): void {
     },
     async (c) => {
       const q = valid<z.infer<typeof ActivityListQuery>>(c, 'query');
-      const page = await c.var.backup.list(c.var.userId, q);
+      const page = await c.var.backup.list(c.var.userId, {
+        limit: q.limit,
+        cursor: q.cursor,
+        type: q.type,
+        startedAfter: q.startedAfter === undefined ? undefined : ms(q.startedAfter),
+        startedBefore: q.startedBefore === undefined ? undefined : ms(q.startedBefore),
+      });
       return c.json({ items: page.items.map(activitySummaryDto), nextCursor: page.nextCursor }, 200);
     }
+  );
+
+  defineRoute(
+    app,
+    {
+      status: 'live',
+      method: 'get',
+      path: '/v1/activity-totals',
+      tags: TAG,
+      operationId: 'getActivityTotals',
+      summary: 'Activity totals',
+      description:
+        "How many activities, how far and how long, all time and per type (use case ActivityTotals): what the phone's Stats tab shows, gap estimates included. Deleted activities do not count.",
+      responses: {
+        200: { description: 'The totals.', content: json(ActivityTotals) },
+        ...AUTH_ERRORS,
+      },
+    },
+    async (c) => c.json(await c.var.backup.totals(c.var.userId), 200)
   );
 
   defineRoute(
@@ -167,7 +193,7 @@ export function registerActivities(app: OpenAPIHono<AppEnv>): void {
       const { activityId } = valid<Id>(c, 'param');
       const { activity, gapRoutes } = await c.var.backup.activity(c.var.userId, activityId);
       c.header('ETag', etagOf(activity.version));
-      c.header('Cache-Control', 'private, no-cache');
+      c.header('Cache-Control', 'private, no-store');
       return c.json(activityDetailDto(activity, gapRoutes), 200);
     }
   );
@@ -249,7 +275,7 @@ export function registerActivities(app: OpenAPIHono<AppEnv>): void {
       operationId: 'getActivityTrack',
       summary: 'Activity track',
       description:
-        'Every track point, compact, as uploaded (use case ActivityTrackQuery). The `ETag` is the `trackHash` in quotes: send it as `If-None-Match` to get `304` when the track has not changed. Personal data: `Cache-Control: private, no-cache`.',
+        'Every track point, compact, as uploaded (use case ActivityTrackQuery). The `ETag` is the `trackHash` in quotes: send it as `If-None-Match` to get `304` when the track has not changed. Personal data: `Cache-Control: private, no-store` (never stored by a browser or proxy: shared computers); a client that keeps the body itself can still send `If-None-Match`.',
       request: {
         params: ActivityIdParam,
         headers: z.object({
@@ -274,7 +300,7 @@ export function registerActivities(app: OpenAPIHono<AppEnv>): void {
       const { activity, points } = await c.var.backup.track(c.var.userId, activityId);
       const etag = `"${activity.trackHash}"`;
       c.header('ETag', etag);
-      c.header('Cache-Control', 'private, no-cache');
+      c.header('Cache-Control', 'private, no-store');
       if (matchesTag(c.req.header('if-none-match'), etag)) {
         return c.body(null, 304);
       }

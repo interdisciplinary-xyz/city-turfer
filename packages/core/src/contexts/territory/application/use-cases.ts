@@ -4,10 +4,11 @@ import {
   type ActivityType,
   type BoundingBox,
   type Clock,
+  DomainError,
   trackFromPoints,
   type TrackPoint,
 } from '../../../shared-kernel';
-import type { ClaimView, TurfCellView, TurfSummaryView } from '../contract';
+import type { ClaimView, TurfCellCounts, TurfCellPage, TurfCellView, TurfSummaryView } from '../contract';
 import type { CellGrid, CellId } from '../domain/cell-grid';
 import { Claim } from '../domain/claim';
 import { isStrong, strengthOf, tierOf } from '../domain/strength';
@@ -81,6 +82,8 @@ export class ReclaimTurfOfActivity {
   }
 }
 
+// The same sum as `visitsOf` (strength-public-api.test.ts pins them equal), without building a
+// tuple per row: the viewport query runs this over every cell in view on each camera idle.
 const visitsFor = (r: CellRow, types: readonly ActivityType[]) => types.reduce((s, t) => s + r[t], 0);
 const ring = (grid: CellGrid, c: CellId): [number, number][] => {
   const b = grid.boundary(c).map((p) => [p.lon, p.lat] as [number, number]);
@@ -186,5 +189,25 @@ export class GetClaimForActivity {
       newAreaKm2: c.newAreaM2 / 1e6,
       cells: c.cells.map((x) => ({ id: x.cell, isNew: x.isNew, ring: ring(this.d.grid, x.cell) })),
     };
+  }
+}
+
+/**
+ * Every Turf Cell's per-type visit counts, a page at a time, sorted by cell id (JS string order,
+ * stable across calls while the projection is unchanged). Visits, strength and tier derive from the
+ * counts on the reader's side (`strengthOf`, `tierOf`).
+ */
+export class ListTurfCells {
+  constructor(private readonly d: Pick<TerritoryDeps, 'repo'>) {}
+  async execute(page: { offset: number; limit: number }): Promise<TurfCellPage> {
+    const { offset, limit } = page;
+    if (!Number.isInteger(offset) || offset < 0 || !Number.isInteger(limit) || limit < 1) {
+      throw new DomainError('turf.invalid-page');
+    }
+    // The repository pages in its own query: a page costs its rows, not the whole projection.
+    const { rows, total } = await this.d.repo.cellCounts({ offset, limit });
+    const cells = rows.map((r): TurfCellCounts => [r.cell, r.walk, r.run, r.cycle]);
+    const end = offset + cells.length;
+    return { cells, total, nextOffset: end < total ? end : null };
   }
 }

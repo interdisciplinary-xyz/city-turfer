@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ACCENT, FONT_FAMILY } from '@/constants/colors';
+import { ACCENT, DISPLAY_CASE, DISPLAY_TRACKING, FONT_FAMILY } from '@/constants/colors';
 import { evaluateAchievements, type OnboardingStepId, summarizeAchievements } from '@/contexts/achievements';
 import { AchievementsCard } from '@/contexts/achievements/ui/achievements-card';
 import { OnboardingCard } from '@/contexts/achievements/ui/onboarding-card';
@@ -15,6 +15,7 @@ import { RestoreCard } from '@/contexts/cloud-backup/ui/restore-card';
 import { LiveSessionBanner } from '@/contexts/recording/ui/live-session-banner';
 import { useLiveSession } from '@/contexts/recording/ui/use-live-session';
 import { useTurfSummary } from '@/contexts/territory/ui/hooks';
+import { useT } from '@/i18n';
 import { useApp } from '@/ui-kit/app-context';
 import { Button, Card, Stat } from '@/ui-kit/components';
 import { formatArea, formatDistance, formatDuration } from '@/ui-kit/format';
@@ -32,8 +33,11 @@ const ONBOARDING_ROUTE: Record<OnboardingStepId, '/record' | '/turf' | '/achieve
 export default function DashboardScreen() {
   const p = usePalette();
   const insets = useSafeAreaInsets();
+  const t = useT('dashboard');
+  const ts = useT('stats');
   const { auth } = useApp();
-  const name = auth.status === 'signed-in' ? auth.user.displayName : '';
+  // The chosen name; without one, a friendly "Turfer" (never an id or the email).
+  const name = auth.status === 'signed-in' ? auth.user.name : '';
   const activities = useActivities();
   const summary = useTurfSummary();
   const live = useLiveSession();
@@ -75,13 +79,13 @@ export default function DashboardScreen() {
       <LiveSessionBanner live={live} onPress={() => router.navigate('/record')} />
       <View style={{ gap: 4 }}>
         <Text testID='dashboard-greeting' style={[s.h1, { color: p.text }]}>
-          Hello, {name}
+          {t('greeting', { hasName: name ? 'yes' : 'no', name: name ?? '' })}
         </Text>
         <Text style={{ color: p.muted }}>
           {empty
-            ? 'Your turf starts with your first walk.'
+            ? t('emptySubtitle')
             : summary
-              ? `${formatArea(summary.areaKm2)} of turf · +${formatArea(summary.newThisWeekKm2)} this week`
+              ? t('turfSubtitle', { area: formatArea(summary.areaKm2), newArea: formatArea(summary.newThisWeekKm2) })
               : ' '}
         </Text>
       </View>
@@ -96,17 +100,17 @@ export default function DashboardScreen() {
       {empty && !live && (
         <Button
           testID='dashboard-start'
-          label='Start recording'
+          label={t('startRecording')}
           color={ACCENT}
           onPress={() => router.navigate('/record')}
         />
       )}
       <Card style={{ gap: 12 }}>
-        <Text style={[s.h2, { color: p.text }]}>This week</Text>
+        <Text style={[s.h2, { color: p.text }]}>{ts('thisWeek')}</Text>
         <View style={{ flexDirection: 'row' }}>
-          <Stat testID='dashboard-week-distance' label='Distance' value={distance.value} unit={distance.unit} />
-          <Stat label='Time' value={formatDuration(week.movingS)} />
-          <Stat label='Activities' value={String(week.count)} />
+          <Stat testID='dashboard-week-distance' label={ts('distance')} value={distance.value} unit={distance.unit} />
+          <Stat label={ts('time')} value={formatDuration(week.movingS)} />
+          <Stat label={ts('activities')} value={String(week.count)} />
         </View>
       </Card>
       {!empty && (
@@ -122,6 +126,12 @@ export default function DashboardScreen() {
 }
 
 const s = StyleSheet.create({
-  h1: { fontSize: 28, fontFamily: FONT_FAMILY.display, letterSpacing: -0.5 },
+  h1: {
+    fontSize: 35,
+    lineHeight: 38,
+    fontFamily: FONT_FAMILY.display,
+    textTransform: DISPLAY_CASE,
+    letterSpacing: DISPLAY_TRACKING,
+  },
   h2: { fontSize: 17, fontWeight: '800' },
 });

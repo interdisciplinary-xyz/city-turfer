@@ -17,9 +17,11 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ACCENT, FONT_FAMILY, ON_ACCENT } from '@/constants/colors';
+import { ACCENT, DISPLAY_CASE, DISPLAY_TRACKING, FONT_FAMILY, ON_ACCENT } from '@/constants/colors';
+import { useT } from '@/i18n';
 
 import { useApp } from './app-context';
+import { shownName } from './format';
 import { CLOSE_DRAG_PX, DURATION_MS, ITEMS } from './me-menu.constants';
 import { usePalette } from './theme';
 
@@ -43,6 +45,7 @@ function useReduceMotion(): boolean {
 /** The "Me" tab: slides in a drawer from the right instead of opening a screen. */
 export function MeTabButton({ testID }: { testID?: string }) {
   const p = usePalette();
+  const t = useT('nav');
   const [open, setOpen] = useState(false);
   const color = open ? ACCENT : p.muted;
   return (
@@ -51,7 +54,7 @@ export function MeTabButton({ testID }: { testID?: string }) {
         testID={testID}
         onPress={() => setOpen(true)}
         accessibilityRole='button'
-        accessibilityLabel='Me'
+        accessibilityLabel={t('tabs.me')}
         accessibilityState={{ expanded: open }}
         style={s.tab}
       >
@@ -61,7 +64,7 @@ export function MeTabButton({ testID }: { testID?: string }) {
           size={24}
           fallback={<Text style={{ fontSize: 20, color }}>◉</Text>}
         />
-        <Text style={[s.tabLabel, { color }]}>Me</Text>
+        <Text style={[s.tabLabel, { color }]}>{t('tabs.me')}</Text>
       </Pressable>
       <MeDrawer open={open} onClose={() => setOpen(false)} />
     </>
@@ -70,6 +73,7 @@ export function MeTabButton({ testID }: { testID?: string }) {
 
 function MeDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const p = usePalette();
+  const t = useT('me');
   const insets = useSafeAreaInsets();
   const { width: screenW } = useWindowDimensions();
   const width = Math.min(320, Math.round(screenW * 0.82));
@@ -130,14 +134,14 @@ function MeDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   };
 
   const translateX = Animated.add(progress.interpolate({ inputRange: [0, 1], outputRange: [width, 0] }), drag);
-  const name = user?.displayName ?? 'You';
+  const name = shownName(user);
 
   return (
     <Modal visible={mounted} transparent animationType='none' onRequestClose={onClose} statusBarTranslucent>
       <View style={StyleSheet.absoluteFill}>
         {/* Sibling, not parent, of the drawer: an accessible parent would hide the items from VoiceOver. */}
         <Animated.View style={[StyleSheet.absoluteFill, s.backdrop, { opacity: progress }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel='Close menu' />
+          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel={t('closeMenu')} />
         </Animated.View>
         <Animated.View
           testID='me-drawer'
@@ -159,7 +163,7 @@ function MeDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
             testID='me-drawer-header'
             onPress={() => go('/profile')}
             accessibilityRole='button'
-            accessibilityLabel={`${name}, ${user?.email ?? ''}. Open profile.`}
+            accessibilityLabel={t('headerLabel', { name, email: user?.email ?? '' })}
             style={s.header}
           >
             <View style={s.avatar}>
@@ -175,7 +179,7 @@ function MeDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
           <View style={[s.list, { borderTopColor: p.border }]} accessibilityRole='menu'>
             {ITEMS.map((it) => (
               <Pressable
-                key={it.label}
+                key={it.key}
                 testID={it.testID}
                 onPress={() => go(it.href)}
                 accessibilityRole='menuitem'
@@ -187,14 +191,15 @@ function MeDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
                   size={22}
                   fallback={<Text style={{ fontSize: 20, color: ACCENT }}>{it.glyph}</Text>}
                 />
-                <Text style={[s.itemLabel, { color: p.text }]}>{it.label}</Text>
+                <Text style={[s.itemLabel, { color: p.text }]}>{t(`items.${it.key}`)}</Text>
                 <Text style={{ color: p.muted, fontSize: 20 }}>›</Text>
               </Pressable>
             ))}
           </View>
           <Text style={[s.footer, { color: p.muted }]}>
-            {NAME}
-            {Updates.isEnabled && Updates.updateId ? ` · update ${Updates.updateId.slice(0, 8)}` : ''}
+            {Updates.isEnabled && Updates.updateId
+              ? t('footerUpdate', { name: NAME, id: Updates.updateId.slice(0, 8) })
+              : NAME}
           </Text>
         </Animated.View>
       </View>
@@ -230,8 +235,14 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 8,
   },
-  initial: { color: ON_ACCENT, fontSize: 28, fontFamily: FONT_FAMILY.display },
-  name: { fontSize: 20, fontFamily: FONT_FAMILY.display, letterSpacing: -0.5 },
+  initial: { color: ON_ACCENT, fontSize: 28, fontFamily: FONT_FAMILY.display, textTransform: DISPLAY_CASE },
+  name: {
+    fontSize: 25,
+    lineHeight: 28,
+    fontFamily: FONT_FAMILY.display,
+    textTransform: DISPLAY_CASE,
+    letterSpacing: DISPLAY_TRACKING,
+  },
   list: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 8 },
   item: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 20, paddingVertical: 16 },
   itemLabel: { flex: 1, fontSize: 17, fontWeight: '600' },

@@ -3,7 +3,8 @@ const ctx = '^src/contexts/([^/]+)/';
 const notTests = '(__tests__|test-support)/';
 // @cityturfer/core (packages/core) is used through its published entry points only.
 const coreSrc = '(^|/)packages/core/src/';
-const coreEntry = coreSrc + '(constants/index|shared-kernel/index|h3/index|contexts/[^/]+/(index|ports))\\.ts$';
+const coreEntry =
+  coreSrc + '(constants/index|shared-kernel/index|h3/index|demo/index|contexts/[^/]+/(index|ports))\\.ts$';
 module.exports = {
   forbidden: [
     {

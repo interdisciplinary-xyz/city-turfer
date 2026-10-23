@@ -12,7 +12,17 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const ALLOWED_TAGS = ['auth', 'recording', 'background', 'history', 'turf', 'me', 'dashboard', 'health'];
+export const ALLOWED_TAGS = [
+  'auth',
+  'recording',
+  'background',
+  'history',
+  'turf',
+  'me',
+  'dashboard',
+  'health',
+  'account',
+];
 export const LAST_FLOW = '08-sign-out';
 
 /** Flow names (no extension) of top-level e2e/*.yaml, excluding config, dotfiles and subflows. */
@@ -105,6 +115,12 @@ export function collectSourceTestIds(srcText) {
   const re = /(?:testID|tabBarButtonTestID)\s*[=:]\s*(?:\{\s*)?(['"`])([^'"`]+)\1/g;
   for (const m of srcText.matchAll(re)) {
     add(m[2]);
+  }
+  // `testID={cond ? 'a' : 'b'}`: every quoted literal inside the braces is a possible id.
+  for (const m of srcText.matchAll(/testID\s*=\s*\{([^{}]*\?[^{}]*)\}/g)) {
+    for (const q of m[1].matchAll(/(['"])([\w-]+)\1/g)) {
+      add(q[2]);
+    }
   }
   return { literals, patterns };
 }

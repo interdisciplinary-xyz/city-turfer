@@ -1,22 +1,34 @@
+import type { T } from '@/i18n';
+
 import type { BackupErrorCode } from '../contract';
 
-export const CLOUD_BACKUP_TITLE = 'Cloud backup';
+/** A message in the `errors` namespace (the card words it on render, so it follows a language change). */
+export type BackupErrorKey = Parameters<T<'errors'>>[0];
 
-export const CLOUD_BACKUP_PITCH =
-  'Keep a copy of your walks, runs and rides on the CityTurfer server, so a new phone never means starting your turf again.';
+/** Why backup stopped, by code: `errors.backup.<code>`. */
+export const ERROR_KEY: Record<BackupErrorCode, BackupErrorKey> = {
+  'no-token': 'backup.no-token',
+  auth: 'backup.auth',
+  consent: 'backup.consent',
+  offline: 'backup.offline',
+  server: 'backup.server',
+  'not-ready': 'backup.not-ready',
+  busy: 'backup.busy',
+  outdated: 'backup.outdated',
+  'not-available': 'backup.not-available',
+  'needs-device-token': 'backup.needs-device-token',
+};
 
-export const BACKUP_SWITCH_LABEL = 'Back up to CityTurfer cloud';
+/** Domain error codes of the card's actions: `errors.backupAction.<code>`; anything else is `errors.generic`. */
+export const ACTION_ERROR_KEY: Record<string, BackupErrorKey> = {
+  'backup.invalid-token': 'backupAction.invalid-token',
+  'backup.invalid-server-url': 'backupAction.invalid-server-url',
+  'backup.on': 'backupAction.on',
+  'backup.off': 'backupAction.off',
+  'backup.withdrawal-pending': 'backupAction.withdrawal-pending',
+};
 
-export const BACKUP_PRIVACY =
-  'Your routes are stored on our server in the EU. Turning this off deletes that copy; nothing on this phone.';
-
-export const OFF_CONFIRM_TITLE = 'Turn off cloud backup?';
-export const OFF_CONFIRM_TEXT =
-  'The copy of your activities on our server will be deleted. Everything stays on this phone, and you can turn backup on again any time.';
-
-export const HEALTH_SWITCH_LABEL = 'Include Apple Health workouts';
-
-export const HEALTH_NOTE = 'Off: workouts imported from Apple Health stay on this phone (and leave the server).';
+// --- Developer tools only (backup-developer-card.tsx): founder-facing, stays English ----------
 
 export const TOKEN_LABEL = 'Device token';
 export const TOKEN_PLACEHOLDER = 'Paste your device token';
@@ -30,28 +42,7 @@ export const DEV_BACKUP_NOTE =
 
 export const ERROR_TITLE = 'Cloud backup';
 
-/** Turned off, but the server could not be told yet. */
-export const OFF_PENDING = "Backup is off. We'll let the server know next time you're online.";
-
-/** Why backup stopped, in plain words (no guilt, one next step). */
-export const ERROR_TEXT: Record<BackupErrorCode, string> = {
-  'no-token': 'Sign in with your email to back up.',
-  auth: 'Your sign-in has expired. Sign in again to carry on backing up.',
-  consent: 'The server has no backup consent from you yet. Turn backup off and on again.',
-  offline: "No connection right now. We'll carry on when you're online.",
-  server: "The server had a hiccup. We'll try again shortly.",
-  'not-ready': "The backup server isn't ready yet. Your activities wait safely on this phone.",
-  busy: "The server is busy. We'll try again in a moment.",
-  outdated: 'Update CityTurfer to keep backing up.',
-  'not-available': 'The demo account stays on this phone: it is never backed up.',
-  'needs-device-token':
-    'A testing server needs a device token. Add one in Developer tools, or go back to the built-in server.',
-};
-
-/** "Back up now" while a restore is bringing the backup back: the run waits for it. */
-export const WAITING_FOR_RESTORE = 'Restoring your backup first. Backing up carries on once it has finished.';
-
-/** Domain error codes of the card's actions, in plain words. */
+/** Domain error codes of the developer card's actions, in plain words. */
 export const ACTION_ERRORS: Record<string, string> = {
   'backup.invalid-token': "That doesn't look like a device token. Paste it again.",
   'backup.invalid-server-url': 'Use a full address starting with https:// (or http:// on your own network).',
@@ -61,8 +52,3 @@ export const ACTION_ERRORS: Record<string, string> = {
 };
 
 export const ACTION_FAILED = 'Something went wrong. Try again.';
-
-/** "2 activities can't be backed up (too long or unreadable)." */
-export function describeRefused(n: number): string {
-  return `${n} ${n === 1 ? "activity can't" : "activities can't"} be backed up (too long or unreadable).`;
-}

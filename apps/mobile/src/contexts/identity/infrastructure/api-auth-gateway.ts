@@ -1,4 +1,11 @@
-import type { AccountFailure, AccountGateway, AccountSession, Email } from '@cityturfer/core/identity/ports';
+import { type AccountFieldError, isAccountFieldError } from '@cityturfer/core/identity';
+import type {
+  AccountDetails,
+  AccountFailure,
+  AccountGateway,
+  AccountSession,
+  Email,
+} from '@cityturfer/core/identity/ports';
 
 export interface ApiAuthGatewayOptions {
   baseUrl: string;
@@ -23,18 +30,57 @@ function retryAfterS(a: Answer): number | null {
   return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
+/** The problem `code` of an answer (RFC 9457 body), or null. */
+const problemCode = (a: Answer): string | null =>
+  isObject(a.json) && typeof a.json.code === 'string' ? a.json.code : null;
+
 /** HTTP → Identity's failure kinds. The only place that knows status codes. */
 function failureOf(a: Answer | null): AccountFailure {
   if (!a) {
     return { kind: 'offline' };
   }
-  if (a.status === 401) {
+  // 403 identity.account-required: a device-token session, not an account's: sign in with the account.
+  if (a.status === 401 || (a.status === 403 && problemCode(a) === 'identity.account-required')) {
     return { kind: 'auth' };
   }
   if (a.status === 429) {
     return { kind: 'rate-limited', retryAfterS: retryAfterS(a) };
   }
   return { kind: 'unavailable' };
+}
+
+/** A refused field: the problem's own code, or the first of its `errors[]` that is one of the shared rules. */
+function fieldErrorOf(a: Answer | null): { kind: 'field-error'; code: AccountFieldError } | null {
+  if (!a || a.status < 400 || a.status >= 500) {
+    return null;
+  }
+  const own = problemCode(a);
+  const listed = isObject(a.json) && Array.isArray(a.json.errors) ? a.json.errors : [];
+  const codes = [own, ...listed.map((e) => (isObject(e) && typeof e.code === 'string' ? e.code : null))];
+  const code = codes.find((c): c is AccountFieldError => c !== null && isAccountFieldError(c));
+  return code ? { kind: 'field-error', code } : null;
+}
+
+/** 401 `auth.invalid-code`: the code was wrong, expired or used; any other 401: the session. */
+const isInvalidCode = (a: Answer | null) => a?.status === 401 && problemCode(a) === 'auth.invalid-code';
+
+const isoMs = (v: unknown): number | null => {
+  const ms = typeof v === 'string' ? Date.parse(v) : NaN;
+  return Number.isFinite(ms) ? ms : null;
+};
+
+function meOf(json: unknown): AccountDetails | null {
+  if (!isObject(json) || typeof json.id !== 'string' || typeof json.email !== 'string') {
+    return null;
+  }
+  const hasPassword = json.hasPassword === true;
+  return {
+    id: json.id,
+    email: json.email,
+    name: typeof json.name === 'string' && json.name ? json.name : null,
+    hasPassword,
+    passwordChangedAt: hasPassword ? isoMs(json.passwordChangedAt) : null,
+  };
 }
 
 function sessionOf(json: unknown): AccountSession | null {
@@ -50,9 +96,9 @@ function sessionOf(json: unknown): AccountSession | null {
 }
 
 /**
- * CityTurfer accounts over plain fetch (contract 0.4.0: email one-time codes, bearer sessions).
- * Anti-corruption layer: wire formats and status codes stay here. Never logs: bodies carry the
- * email, the code and the token.
+ * CityTurfer accounts over plain fetch (contract 0.4.0: email one-time codes, bearer sessions;
+ * 0.5.0: account settings and the optional password). Anti-corruption layer: wire formats and
+ * status codes stay here. Never logs: bodies carry the email, codes, passwords and the token.
  */
 export class ApiAuthGateway implements AccountGateway {
   private readonly base: string;
@@ -99,6 +145,85 @@ export class ApiAuthGateway implements AccountGateway {
       return { kind: 'requested' as const };
     }
     return a?.status === 422 ? { kind: 'no-email' as const } : failureOf(a);
+  }
+
+  async fetchMe(token: string) {
+    const a = await this.request('GET', '/v1/me', { token });
+    if (a?.status === 200) {
+      const me = meOf(a.json);
+      return me ? { kind: 'me' as const, me } : { kind: 'unavailable' as const };
+    }
+    return failureOf(a);
+  }
+
+  async updateName(token: string, name: string | null) {
+    // Blank clears the name (contract: `{ name: "" }`).
+    const a = await this.request('PATCH', '/v1/me', { token, body: { name: name ?? '' } });
+    if (a?.status === 200) {
+      const kept = isObject(a.json) && 'name' in a.json ? a.json.name : name;
+      return { kind: 'saved' as const, name: typeof kept === 'string' && kept ? kept : null };
+    }
+    return fieldErrorOf(a) ?? failureOf(a);
+  }
+
+  async requestStepUpCode(token: string) {
+    const a = await this.request('POST', '/v1/me/step-up/codes', { token, body: {} });
+    return a?.status === 202 || a?.status === 200 ? { kind: 'sent' as const } : failureOf(a);
+  }
+
+  async requestEmailChange(token: string, newEmail: string, stepUpCode: string) {
+    const a = await this.request('POST', '/v1/me/email/codes', { token, body: { newEmail, stepUpCode } });
+    if (a?.status === 202 || a?.status === 200) {
+      return { kind: 'sent' as const };
+    }
+    return isInvalidCode(a) ? { kind: 'invalid-code' as const } : (fieldErrorOf(a) ?? failureOf(a));
+  }
+
+  async confirmEmailChange(token: string, newEmail: string, code: string) {
+    const a = await this.request('POST', '/v1/me/email', { token, body: { newEmail, code } });
+    if (a?.status === 200) {
+      const email = isObject(a.json) && typeof a.json.email === 'string' ? a.json.email : newEmail;
+      return { kind: 'changed' as const, email };
+    }
+    if (isInvalidCode(a)) {
+      return { kind: 'invalid-code' as const };
+    }
+    if (a?.status === 409) {
+      return { kind: 'email-taken' as const };
+    }
+    return fieldErrorOf(a) ?? failureOf(a);
+  }
+
+  async setPassword(token: string, newPassword: string, stepUpCode: string) {
+    const a = await this.request('PUT', '/v1/me/password', { token, body: { newPassword, stepUpCode } });
+    if (a?.status === 204 || a?.status === 200) {
+      return { kind: 'saved' as const };
+    }
+    if (isInvalidCode(a)) {
+      return { kind: 'invalid-code' as const };
+    }
+    if (a && problemCode(a) === 'password.breached') {
+      return { kind: 'breached' as const };
+    }
+    return fieldErrorOf(a) ?? failureOf(a);
+  }
+
+  async removePassword(token: string, stepUpCode: string) {
+    const a = await this.request('DELETE', '/v1/me/password', { token, body: { stepUpCode } });
+    if (a?.status === 204 || a?.status === 200) {
+      return { kind: 'removed' as const };
+    }
+    return isInvalidCode(a) ? { kind: 'invalid-code' as const } : failureOf(a);
+  }
+
+  async signInWithPassword(email: Email, password: string) {
+    const a = await this.request('POST', '/v1/auth/sign-in', { body: { email: email.value, password } });
+    if (a?.status === 200) {
+      const session = sessionOf(a.json);
+      return session ? { kind: 'verified' as const, session } : { kind: 'unavailable' as const };
+    }
+    // 401 auth.invalid-credentials: a wrong password, no password, or no account (the same answer).
+    return a?.status === 401 ? { kind: 'invalid-credentials' as const } : failureOf(a);
   }
 
   /** Null when there was no answer (offline, DNS, timeout). */

@@ -2,6 +2,7 @@ import { TurfLegend } from '@cityturfer/ui';
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { View } from 'react-native';
 
+import { NightPanel } from '../../decorators/frame';
 import { NativePlaceholder } from '../../placeholders/native-placeholder';
 
 const meta = {
@@ -26,11 +27,14 @@ export const TurfMap: StoryObj<typeof meta> = {
     note: 'Dark OpenFreeMap tiles with glowing turf cells and tracks (contexts/territory/ui/turf-map-view.tsx).',
     height: 420,
   },
+  // The map stays dark on a light page: a night panel, as on the website.
   render: (args) => (
-    <View style={{ gap: 12 }}>
-      <NativePlaceholder {...args} />
-      <TurfLegend compact style={{ width: 160, alignSelf: 'flex-end' }} />
-    </View>
+    <NightPanel>
+      <View style={{ gap: 12 }}>
+        <NativePlaceholder {...args} />
+        <TurfLegend compact style={{ width: 160, alignSelf: 'flex-end' }} />
+      </View>
+    </NightPanel>
   ),
 };
 

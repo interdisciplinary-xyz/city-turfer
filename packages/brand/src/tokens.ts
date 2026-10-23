@@ -4,7 +4,7 @@
  * Values come from the screens as they were in v0.4.0, so adopting a token never changes a pixel.
  * Plain values only (`design-system` skill).
  */
-import { ACCENT, DARK, LIGHT, ON_ACCENT, ON_TIER, ON_TYPE_COLOR, RAMP, TIER_COLOR, TYPE_COLOR } from './colors';
+import { ACCENT, DARK, LIGHT, ON_TYPE_COLOR, type Palette, RAMP, TIER_COLOR, TYPE_COLOR } from './colors';
 
 /** Spacing scale in points (app) and CSS pixels (web). */
 export const SPACE = { xxs: 2, xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 } as const;
@@ -30,20 +30,39 @@ export const FONT_WEIGHT = {
 } as const;
 
 /**
- * Brand typefaces: Archivo (OFL), cut into two static fonts in `packages/brand/fonts/` by
+ * Brand typefaces ("Street Plate", docs/decisions/brand-typography-2026-10-22.md): Big Shoulders
+ * Display and Barlow (both OFL), cut into static fonts in `packages/brand/fonts/` by
  * `packages/brand/scripts/make-fonts.py`. The names are the PostScript names, which is how iOS,
  * Android (expo-font config plugin) and the website's `@font-face` all address them. The weight is
  * part of the font: never combine these with `fontWeight`, or Android falls back to the system
- * font. Body text and labels stay on the system font.
+ * font. In the app, body text and labels stay on the system font; the website sets them in Barlow.
  */
 export const FONT_FAMILY = {
-  /** Logo, hero and screen titles: Archivo Expanded Black. */
-  display: 'ArchivoExpanded-Black',
-  /** Big numbers (distance, time, area): Archivo ExtraBold, always with tabular figures. */
-  numeric: 'Archivo-ExtraBold',
+  /** Hero and screen titles: Big Shoulders Display Black, always uppercase (`DISPLAY_CASE`). */
+  display: 'BigShouldersDisplay-Black',
+  /** Big numbers (distance, time, area): Barlow Semi Condensed ExtraBold, always with tabular figures. */
+  numeric: 'BarlowSemiCondensed-ExtraBold',
 } as const;
 
-/** System font stack the website falls back to (and uses for body text). */
+/** Display text is set in capitals: the condensed face reads like a street-name plate. */
+export const DISPLAY_CASE = 'uppercase' as const;
+
+/** Letter spacing for display text, in points: capitals need a hair of air, never negative tracking. */
+export const DISPLAY_TRACKING = 0.4;
+
+/**
+ * Website body family: Barlow, self-hosted in four weights (`Barlow-Regular`, `-Medium`,
+ * `-SemiBold`, `-Bold` woff2). Web only; the app's body text is the system font.
+ */
+export const BODY_FONT_FAMILY = 'Barlow';
+
+/**
+ * Website tagline face: Barlow Semi Condensed Black Italic, sentence case, for the hero line "Surf
+ * your city. Own your streets." and other taglines (social image, /branding). Web only.
+ */
+export const TAGLINE_FONT_FAMILY = 'BarlowSemiCondensed-BlackItalic';
+
+/** System font stack the website falls back to (and the app uses for body text). */
 export const SYSTEM_FONT_STACK =
   "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
 
@@ -55,8 +74,14 @@ export const TIER_ORDER = ['faint', 'glowing', 'strong', 'blazing'] as const;
 export type TierName = (typeof TIER_ORDER)[number];
 
 export type ColorScheme = 'light' | 'dark';
-export type Palette = typeof LIGHT;
 export const THEMES: Record<ColorScheme, Palette> = { light: LIGHT, dark: DARK };
+
+/**
+ * The one place that says which theme the website, Swagger and Storybook use: light, with no theme
+ * switch. The app and every map panel stay dark (`DARK`) whatever this says.
+ * `docs/decisions/brand-light-theme-2026-10-22.md`.
+ */
+export const SITE_SCHEME: ColorScheme = 'light';
 
 /** A CSS custom property name and its value. */
 export type CssVariables = Record<`--${string}`, string>;
@@ -72,7 +97,9 @@ function scale(prefix: string, values: Record<string, number>, unit: string): Cs
 /**
  * Every token as CSS custom properties for one colour scheme. The website sets these on `<html>`,
  * so its CSS never hard-codes a brand hex. Brand colours keep their brand names (`--glow`,
- * `--strong`, `--walk`, `--ride`…); theme colours are semantic (`--bg`, `--card`, `--text`…).
+ * `--strong`, `--walk`, `--ride`…) and are the same in both schemes; theme colours are semantic
+ * (`--bg`, `--card`, `--text`…, `--accent-text`, `--walk-text`, `--ride-graphic`…). On a light
+ * surface draw brand colours through the `-text` / `-graphic` variants, never the raw fill.
  */
 export function cssVariables(scheme: ColorScheme): CssVariables {
   const theme = THEMES[scheme];
@@ -83,11 +110,20 @@ export function cssVariables(scheme: ColorScheme): CssVariables {
     '--muted': theme.muted,
     '--border': theme.border,
     '--danger': theme.danger,
+    '--accent-text': theme.accentText,
+    '--border-control': theme.borderControl,
+    '--strong-text': theme.strongText,
+    '--walk-text': theme.walkText,
+    '--run-text': theme.runText,
+    '--ride-text': theme.cycleText,
+    '--walk-graphic': theme.walkGraphic,
+    '--run-graphic': theme.runGraphic,
+    '--ride-graphic': theme.cycleGraphic,
     '--accent': ACCENT,
-    '--on-accent': ON_ACCENT,
+    '--on-accent': theme.onAccent,
     '--faint': TIER_COLOR.faint,
     '--glow': TIER_COLOR.glowing,
-    '--on-glow': ON_TIER.glowing,
+    '--on-glow': theme.onAccent,
     '--strong': TIER_COLOR.strong,
     '--blazing': TIER_COLOR.blazing,
     '--walk': TYPE_COLOR.walk,
@@ -102,6 +138,9 @@ export function cssVariables(scheme: ColorScheme): CssVariables {
     '--label-tracking': `${LABEL_TRACKING}px`,
     '--font-family-display': `'${FONT_FAMILY.display}', ${SYSTEM_FONT_STACK}`,
     '--font-family-numeric': `'${FONT_FAMILY.numeric}', ${SYSTEM_FONT_STACK}`,
-    '--font-family-body': SYSTEM_FONT_STACK,
+    '--font-family-body': `'${BODY_FONT_FAMILY}', ${SYSTEM_FONT_STACK}`,
+    '--font-family-tagline': `'${TAGLINE_FONT_FAMILY}', ${SYSTEM_FONT_STACK}`,
+    '--display-case': DISPLAY_CASE,
+    '--display-tracking': `${DISPLAY_TRACKING}px`,
   };
 }

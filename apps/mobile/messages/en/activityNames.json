@@ -1,0 +1,3 @@
+{
+  "defaultName": "{partOfDay, select, morning {{type, select, walk {Morning walk} run {Morning run} cycle {Morning ride} other {Morning activity}}} afternoon {{type, select, walk {Afternoon walk} run {Afternoon run} cycle {Afternoon ride} other {Afternoon activity}}} evening {{type, select, walk {Evening walk} run {Evening run} cycle {Evening ride} other {Evening activity}}} night {{type, select, walk {Night walk} run {Night run} cycle {Night ride} other {Night activity}}} other {{type, select, walk {Walk} run {Run} cycle {Ride} other {Activity}}}}"
+}

@@ -49,4 +49,12 @@ export type {
 } from './application/use-cases';
 export { RouterRateLimited, RouterUnreachable } from './application/use-cases';
 export type * from './contract';
-export { ACTIVITY_NAME_MAX_LENGTH, activityNameProblem } from './domain/activity';
+export {
+  ACTIVITY_NAME_MAX_LENGTH,
+  activityNameProblem,
+  defaultName,
+  type DefaultNameWords,
+  ENGLISH_DEFAULT_NAME_WORDS,
+  type PartOfDay,
+  partOfDay,
+} from './domain/activity';
