@@ -10,6 +10,7 @@ import { AppState, Platform } from 'react-native';
 
 import { API_BASE_URL, API_TIMEOUT_MS, API_UPLOAD_TIMEOUT_MS } from '@/constants/api';
 import { onboardingDismissal } from '@/contexts/achievements/infrastructure/onboarding-dismissal';
+import { currentDefaultNameWords } from '@/contexts/activity-log/infrastructure/catalogue-default-name-words';
 import { OsmRouteEstimator } from '@/contexts/activity-log/infrastructure/osm-route-estimator';
 import { SecureStoreGapEstimationSetting } from '@/contexts/activity-log/infrastructure/secure-store-gap-estimation-setting';
 import type { DeviceTokenStore } from '@/contexts/cloud-backup';
@@ -194,6 +195,8 @@ const adapters = {
     sha256: (text: string) => Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, text),
   },
   timeZone: deviceTimeZone,
+  // Read at creation, in the language active then (the saved setting is loaded first: headless too).
+  defaultNameWords: currentDefaultNameWords,
 };
 
 /** The device's IANA zone, kept with each new Activity (older ones get the current zone once). */

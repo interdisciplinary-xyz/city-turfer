@@ -6,6 +6,8 @@ import { toFix, toFixOn } from '../expo-location-tracker';
 jest.mock('expo-location', () => ({}));
 jest.mock('react-native', () => ({ Platform: { OS: 'android' } }));
 jest.mock('../background-activity-session', () => ({ backgroundActivitySession: {} }));
+// The notification text reads the saved Language setting from the secure store.
+jest.mock('expo-secure-store', () => ({ getItemAsync: async () => null, setItemAsync: async () => undefined }));
 
 const loc = (coords: Partial<Location.LocationObjectCoords>): Location.LocationObject => ({
   timestamp: 1_767_250_800_000,

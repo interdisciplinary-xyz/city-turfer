@@ -1,0 +1,18 @@
+{
+  "title": "Statystyki",
+  "thisWeek": "W tym tygodniu",
+  "distance": "Dystans",
+  "time": "Czas",
+  "activities": "Aktywności",
+  "weeksChartLabel": "{weeks, plural, one {Dystans tygodniowo, ostatni tydzień} few {Dystans tygodniowo, ostatnie # tygodnie} many {Dystans tygodniowo, ostatnie # tygodni} other {Dystans tygodniowo, ostatnie # tygodnia}}",
+  "turf": "Turf",
+  "area": "Obszar",
+  "cells": "Komórki",
+  "allTime": "Od początku",
+  "typeRow": "{count} · {distance} · {known, select, yes {{cells, plural, one {{cellsText} komórka} few {{cellsText} komórki} many {{cellsText} komórek} other {{cellsText} komórki}}} other {— komórek}}",
+  "total": "Razem",
+  "totalRow": "{count} · {distance} · {duration}",
+  "allActivities": "Wszystkie aktywności",
+  "seeAll": "Wszystkie ›",
+  "seeAllLabel": "Pokaż wszystkie aktywności"
+}

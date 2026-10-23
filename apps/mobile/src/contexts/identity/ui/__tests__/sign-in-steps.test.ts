@@ -1,5 +1,6 @@
-import { emailEditRestarts, onEmailSubmit, switchSignIn, wrongPasswordText } from '../sign-in-steps';
-import { SIGN_IN_COPY } from '../sign-in-steps.constants';
+import { translator } from '@/i18n/translator';
+
+import { emailEditRestarts, onEmailSubmit, switchSignIn, wrongPasswordMessage } from '../sign-in-steps';
 
 describe('sign-in: "Use a password instead"', () => {
   it('focuses the email while it is empty, the password once there is one', () => {
@@ -22,7 +23,11 @@ describe('sign-in: "Use a password instead"', () => {
   });
 
   it('a wrong chosen password also says how to get one', () => {
-    expect(wrongPasswordText(true)).toBe(SIGN_IN_COPY.wrongChosenPassword);
-    expect(wrongPasswordText(false)).toBe(SIGN_IN_COPY.wrongPassword);
+    const say = (chose: boolean, locale: 'en' | 'pl') => translator('errors', locale)(wrongPasswordMessage(chose).key);
+    expect(say(false, 'en')).toBe('Wrong email or password.');
+    expect(say(true, 'en')).toBe(
+      'Wrong email or password. No account password yet? Sign in with an email code, then set one in Me › Account.'
+    );
+    expect(say(true, 'pl')).toMatch(/Ja › Konto/);
   });
 });

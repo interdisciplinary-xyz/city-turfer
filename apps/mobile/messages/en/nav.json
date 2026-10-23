@@ -1,0 +1,21 @@
+{
+  "tabs": {
+    "dashboard": "Dashboard",
+    "turf": "Turf",
+    "record": "Record",
+    "stats": "Stats",
+    "me": "Me"
+  },
+  "screens": {
+    "activity": "Activity",
+    "history": "History",
+    "profile": "Profile",
+    "achievements": "Achievements",
+    "account": "Account",
+    "accountName": "Name",
+    "accountEmail": "Email",
+    "accountPassword": "Account password",
+    "info": "Info",
+    "city": "Your city"
+  }
+}

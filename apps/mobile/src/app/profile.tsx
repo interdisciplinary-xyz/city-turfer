@@ -7,6 +7,7 @@ import { ACCENT, DISPLAY_CASE, DISPLAY_TRACKING, FONT_FAMILY, ON_ACCENT } from '
 import { evaluateAchievements } from '@/contexts/achievements';
 import { useActivities } from '@/contexts/activity-log/ui/hooks';
 import { useTurfSummary } from '@/contexts/territory/ui/hooks';
+import { useT } from '@/i18n';
 import { useApp } from '@/ui-kit/app-context';
 import { Card, Stat } from '@/ui-kit/components';
 import { formatArea, formatDistance, shownName } from '@/ui-kit/format';
@@ -14,6 +15,7 @@ import { usePalette } from '@/ui-kit/theme';
 
 export default function ProfileScreen() {
   const p = usePalette();
+  const t = useT('profile');
   const { auth } = useApp();
   const user = auth.status === 'signed-in' ? auth.user : null;
   const activities = useActivities();
@@ -46,16 +48,21 @@ export default function ProfileScreen() {
       </View>
       <Card>
         <View style={{ flexDirection: 'row' }}>
-          <Stat label='Activities' value={String(activities?.length ?? '—')} />
-          <Stat label='Distance' value={total.value} unit={total.unit} />
-          <Stat label='Turf' value={area[0]} unit={area[1]} />
+          <Stat label={t('activities')} value={String(activities?.length ?? '—')} />
+          <Stat label={t('distance')} value={total.value} unit={total.unit} />
+          <Stat label={t('turf')} value={area[0]} unit={area[1]} />
         </View>
       </Card>
-      <Pressable testID='profile-achievements' onPress={() => router.push('/achievements')}>
+      <Pressable
+        testID='profile-achievements'
+        onPress={() => router.push('/achievements')}
+        accessibilityRole='button'
+        accessibilityLabel={t('achievementsLabel', { unlocked: String(unlocked), total: String(achievements.length) })}
+      >
         <Card style={s.link}>
-          <Text style={[s.linkText, { color: p.text }]}>Achievements</Text>
+          <Text style={[s.linkText, { color: p.text }]}>{t('achievements')}</Text>
           <Text style={{ color: ACCENT, fontWeight: '700' }}>
-            {unlocked} / {achievements.length} ›
+            {t('achievementsCount', { unlocked: String(unlocked), total: String(achievements.length) })}
           </Text>
         </Card>
       </Pressable>

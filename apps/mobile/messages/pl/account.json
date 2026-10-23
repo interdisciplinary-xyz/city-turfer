@@ -1,0 +1,130 @@
+{
+  "row": {
+    "name": "Imię",
+    "email": "E-mail",
+    "password": "Hasło do konta",
+    "signIn": "Logowanie",
+    "data": "Dane"
+  },
+  "rowLabel": "{label}: {value}",
+  "value": {
+    "notSet": "Nie ustawiono",
+    "set": "Ustawione",
+    "setOn": "Ustawione · {day}",
+    "needsInternet": "Wymaga internetu",
+    "checking": "Sprawdzanie…",
+    "createAccount": "Załóż konto, aby mieć kopię i logować się wszędzie",
+    "localProfile": "Profil lokalny na tym telefonie",
+    "codeOnly": "Kod z e-maila",
+    "codeAndPassword": "Kod z e-maila · hasło do konta",
+    "signInAgain": "Zaloguj się ponownie, aby to zmienić",
+    "couldNotLoad": "Nie udało się wczytać. Spróbuj ponownie"
+  },
+  "hint": {
+    "name": "Zmienia imię widoczne w aplikacji",
+    "email": "Zaczyna zmianę adresu e-mail",
+    "password": "Otwiera opcje hasła do konta"
+  },
+  "retry": "Spróbuj ponownie",
+  "gate": {
+    "local": "To profil lokalny na tym telefonie, więc nie ma adresu e-mail ani hasła konta do zmiany.",
+    "noPassword": "Nie masz hasła do konta, więc nie ma czego usuwać. Logujesz się kodem z e-maila."
+  },
+  "name": {
+    "label": "Twoje imię",
+    "local": "Opcjonalne. Zostaje tylko na tym telefonie.",
+    "account": "Opcjonalne. Zapisane na Twoim koncie CityTurfer."
+  },
+  "code": {
+    "label": "Kod",
+    "resend": "Wyślij nowy kod",
+    "sendCode": "Wyślij kod"
+  },
+  "email": {
+    "intro": "Dla bezpieczeństwa Twojego konta najpierw wyślemy kod na Twój obecny adres, {current}.",
+    "currentSent": "Wysłaliśmy 6-cyfrowy kod na adres {current}. Działa przez 10 minut.",
+    "newLabel": "Nowy e-mail",
+    "newHint": "Wyślemy tam kod, aby sprawdzić, czy to Twój adres.",
+    "sendNew": "Wyślij kod na nowy adres",
+    "newSent": "Wysłaliśmy 6-cyfrowy kod na adres {next}. Wpisz go, aby zakończyć.",
+    "confirm": "Zmień e-mail",
+    "restart": "Zacznij od nowa",
+    "done": "Twój adres e-mail to teraz {next}. Używaj go do logowania. Inne telefony i przeglądarki zostały wylogowane; na stary adres wysłaliśmy wiadomość."
+  },
+  "password": {
+    "stepUp": "Najpierw wyślemy kod na adres {email}, aby sprawdzić, czy to Ty.",
+    "sent": "Wysłaliśmy 6-cyfrowy kod na adres {email}. Działa przez 10 minut.",
+    "newLabel": "Nowe hasło do konta",
+    "newHint": "Co najmniej {min} znaków. Dobrze sprawdza się kilka słów, które łatwo zapamiętasz.",
+    "show": "Pokaż hasło",
+    "hide": "Ukryj hasło",
+    "actionTitle": "Hasło do konta",
+    "actionText": "Zmień je albo usuń i loguj się tylko kodami z e-maila.",
+    "change": "Zmień hasło",
+    "remove": "Usuń hasło"
+  },
+  "passwordIntro": {
+    "set": "Hasło do konta jest opcjonalne: zawsze możesz zalogować się kodem z e-maila.",
+    "change": "Wybierz nowe hasło do konta. Kody z e-maila nadal działają.",
+    "remove": "Bez hasła do konta logujesz się kodem z e-maila."
+  },
+  "passwordSave": {
+    "set": "Ustaw hasło do konta",
+    "change": "Zmień hasło do konta",
+    "remove": "Usuń hasło do konta"
+  },
+  "passwordDone": {
+    "set": "Hasło do konta jest ustawione. Inne telefony i przeglądarki zostały wylogowane.",
+    "change": "Hasło do konta zostało zmienione. Inne telefony i przeglądarki zostały wylogowane.",
+    "remove": "Hasło do konta zostało usunięte. Od teraz logujesz się kodem z e-maila."
+  },
+  "screen": {
+    "dataBackedUp": "Na tym telefonie, w kopii ({backedUp} z {total})",
+    "dataLocal": "Tylko na tym telefonie",
+    "signOut": "Wyloguj się",
+    "export": "Eksportuj moje dane",
+    "delete": "Usuń konto",
+    "failedTitle": "Coś poszło nie tak",
+    "failedText": "Spróbuj ponownie za chwilę.",
+    "recordingTitle": "Trwa nagrywanie",
+    "recordingText": "Najpierw zakończ albo odrzuć nagranie.",
+    "unsyncedTitle": "Nie wszystko jest w kopii",
+    "unsyncedText": "{count, plural, one {# aktywność ma zmiany, których nie ma jeszcze na serwerze. Tak czy inaczej zostaje na tym telefonie.} few {# aktywności mają zmiany, których nie ma jeszcze na serwerze. Tak czy inaczej zostają na tym telefonie.} many {# aktywności ma zmiany, których nie ma jeszcze na serwerze. Tak czy inaczej zostają na tym telefonie.} other {# aktywności ma zmiany, których nie ma jeszcze na serwerze. Tak czy inaczej zostają na tym telefonie.}}",
+    "backUpNow": "Kopiuj teraz",
+    "signOutAnyway": "Wyloguj mimo to"
+  },
+  "export": {
+    "requestedTitle": "Już w drodze",
+    "requestedText": "Wyślemy link do pobrania na adres {email}. Zadziała raz, przez 24 godziny.",
+    "rateLimitedTitle": "Już wysłane dzisiaj",
+    "rateLimitedText": "O eksport możesz prosić raz dziennie. Poszukaj ostatniego linku w skrzynce.",
+    "noEmailTitle": "Brak adresu e-mail",
+    "noEmailText": "To konto nie ma adresu e-mail, na który można wysłać link. Najpierw zaloguj się adresem e-mail.",
+    "offlineTitle": "Brak połączenia",
+    "offlineText": "Spróbuj ponownie, gdy będziesz online.",
+    "authTitle": "Wylogowano na serwerze",
+    "authText": "Zaloguj się ponownie, a potem poproś o eksport.",
+    "notSignedInTitle": "Zaloguj się ponownie",
+    "notSignedInText": "Ten telefon nie jest już zalogowany do Twojego konta. Wyloguj się, zaloguj adresem e-mail, a potem poproś o eksport."
+  },
+  "delete": {
+    "confirmTitle": "Usunąć konto?",
+    "confirmText": "Twoje konto i wszystko na naszym serwerze (kopia, zgody, eksporty) zostanie usunięte na zawsze. Tego nie da się cofnąć.",
+    "confirm": "Usuń konto",
+    "localTitle": "A na tym telefonie?",
+    "localText": "Zostawić tu Twoje aktywności i turf, czy usunąć je również?",
+    "localTextAdmin": "Zostawić tu Twoje aktywności i turf, czy usunąć je również? Usunięcie skasuje też historię tego telefonu sprzed założenia konta (lokalny profil admina używa tych samych danych).",
+    "keep": "Zachowaj na telefonie",
+    "deleteLocal": "Usuń z telefonu",
+    "authTitle": "Zaloguj się ponownie",
+    "authText": "Twoje logowanie wygasło. Nic nie zostało usunięte. Wyloguj się, zaloguj adresem e-mail, a potem usuń konto.",
+    "notSignedInTitle": "Zaloguj się ponownie",
+    "notSignedInText": "Ten telefon nie jest już zalogowany do Twojego konta. Nic nie zostało usunięte. Wyloguj się, zaloguj adresem e-mail, a potem usuń konto.",
+    "localPendingTitle": "Konto usunięte",
+    "localPendingText": "Twoje konto jest usunięte. Kopii Twoich aktywności na tym telefonie nie udało się teraz usunąć; CityTurfer usunie ją przy następnym uruchomieniu.",
+    "offlineTitle": "Brak połączenia",
+    "offlineText": "Nic nie zostało usunięte. Spróbuj ponownie, gdy będziesz online.",
+    "failedTitle": "Nie udało się usunąć",
+    "failedText": "Nic nie zostało usunięte. Spróbuj ponownie za chwilę."
+  }
+}

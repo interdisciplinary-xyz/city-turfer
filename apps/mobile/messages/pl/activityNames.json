@@ -1,0 +1,3 @@
+{
+  "defaultName": "{partOfDay, select, morning {{type, select, walk {Poranny spacer} run {Poranny bieg} cycle {Poranna przejażdżka} other {Poranna aktywność}}} afternoon {{type, select, walk {Popołudniowy spacer} run {Popołudniowy bieg} cycle {Popołudniowa przejażdżka} other {Popołudniowa aktywność}}} evening {{type, select, walk {Wieczorny spacer} run {Wieczorny bieg} cycle {Wieczorna przejażdżka} other {Wieczorna aktywność}}} night {{type, select, walk {Nocny spacer} run {Nocny bieg} cycle {Nocna przejażdżka} other {Nocna aktywność}}} other {{type, select, walk {Spacer} run {Bieg} cycle {Przejażdżka} other {Aktywność}}}}"
+}

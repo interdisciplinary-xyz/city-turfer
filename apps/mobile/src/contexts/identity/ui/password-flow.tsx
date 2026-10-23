@@ -3,13 +3,14 @@ import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, type TextInput, View } from 'react-native';
 
 import { ACCENT } from '@/constants/colors';
-import { accountFieldError, newPassword } from '@/contexts/identity';
+import { accountFieldError, newPassword, PASSWORD_MIN } from '@/contexts/identity';
+import { useT } from '@/i18n';
 import { useApp } from '@/ui-kit/app-context';
 import { Button } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
 
 import { AccountField } from './account-field';
-import { CODE_COPY, FIELD_ERROR_TEXT, PASSWORD_COPY, type PasswordFlowProps } from './account-settings.constants';
+import { type ErrorMessage, FIELD_ERROR, type PasswordFlowProps } from './account-settings.constants';
 import { useAccountActions, useSubmit } from './hooks';
 import type { PasswordOutcome, PasswordStep } from './password-flow.constants';
 import { afterPasswordSave, afterPasswordStepUp, savePassword } from './password-steps';
@@ -32,10 +33,14 @@ function ruleOf(draft: string) {
  */
 export function PasswordFlow({ action, onDone }: PasswordFlowProps) {
   const p = usePalette();
+  const t = useT('account');
+  const tc = useT('common');
+  const te = useT('errors');
   const { auth } = useApp();
   const email = auth.status === 'signed-in' ? auth.user.email : '';
   const actions = useAccountActions();
-  const { busy, error, run, refused, waiting } = useSubmit();
+  const { busy, error: errorMessage, run, refused, waiting } = useSubmit();
+  const error = errorMessage ? te(errorMessage.key, errorMessage.values) : null;
   useAnnounce(error);
   const [step, setStep] = useState<PasswordStep>('start');
   const [code, setCode] = useState('');
@@ -46,10 +51,11 @@ export function PasswordFlow({ action, onDone }: PasswordFlowProps) {
   const removing = action === 'remove';
   const rule = removing ? null : ruleOf(draft);
   // Too short is what the hint already says; only a too-long password is an error while typing.
-  const liveError = rule === 'password.too-long' ? FIELD_ERROR_TEXT[rule] : null;
+  const tooLong = rule === 'password.too-long' ? FIELD_ERROR[rule] : null;
+  const liveError = tooLong ? te(tooLong.key, tooLong.values) : null;
 
   /** Applies a use case's answer: the next step, an error, or a refusal. */
-  const apply = (o: PasswordOutcome): string | null => {
+  const apply = (o: PasswordOutcome): ErrorMessage | null => {
     if (o.kind === 'refused') {
       return refused(o.failure);
     }
@@ -71,17 +77,17 @@ export function PasswordFlow({ action, onDone }: PasswordFlowProps) {
 
   const save = () => run(async () => apply(afterPasswordSave(await savePassword(actions, action, draft, code))));
 
-  const text = (t: string, testID?: string) => (
+  const text = (body: string, testID?: string) => (
     <Text testID={testID} style={[s.text, { color: p.text }]}>
-      {t}
+      {body}
     </Text>
   );
 
   if (step === 'done') {
     return (
       <View style={s.root}>
-        {text(PASSWORD_COPY.done[action], 'account-password-done-text')}
-        <Button testID='account-password-done' label={PASSWORD_COPY.doneButton} color={ACCENT} onPress={onDone} />
+        {text(t(`passwordDone.${action}`), 'account-password-done-text')}
+        <Button testID='account-password-done' label={tc('done')} color={ACCENT} onPress={onDone} />
       </View>
     );
   }
@@ -94,14 +100,14 @@ export function PasswordFlow({ action, onDone }: PasswordFlowProps) {
 
   return (
     <View style={s.root}>
-      {text(PASSWORD_COPY.intro[action])}
+      {text(t(`passwordIntro.${action}`))}
       {step === 'start' && (
         <>
-          {text(PASSWORD_COPY.stepUp(email))}
+          {text(t('password.stepUp', { email }))}
           {errorText}
           <Button
             testID='account-password-send-code'
-            label={CODE_COPY.sendCode}
+            label={t('code.sendCode')}
             color={ACCENT}
             busy={busy}
             disabled={waiting}
@@ -111,11 +117,11 @@ export function PasswordFlow({ action, onDone }: PasswordFlowProps) {
       )}
       {step === 'code' && (
         <>
-          {text(PASSWORD_COPY.sent(email), 'account-password-code-sent')}
+          {text(t('password.sent', { email }), 'account-password-code-sent')}
           <AccountField
             ref={codeRef}
             testID='account-password-code'
-            label={CODE_COPY.label}
+            label={t('code.label')}
             code
             value={code}
             onChangeText={setCode}
@@ -128,7 +134,7 @@ export function PasswordFlow({ action, onDone }: PasswordFlowProps) {
               <AccountField
                 ref={passwordRef}
                 testID='account-password-new'
-                label={PASSWORD_COPY.newLabel}
+                label={t('password.newLabel')}
                 value={draft}
                 onChangeText={setDraft}
                 onSubmitEditing={() => void (rule ? undefined : save())}
@@ -141,18 +147,18 @@ export function PasswordFlow({ action, onDone }: PasswordFlowProps) {
                 returnKeyType='go'
                 editable={!busy}
                 error={liveError}
-                hint={PASSWORD_COPY.newHint}
+                hint={t('password.newHint', { min: PASSWORD_MIN })}
               />
               <Pressable
                 testID='account-password-show'
                 accessibilityRole='switch'
-                accessibilityLabel={PASSWORD_COPY.show}
+                accessibilityLabel={t('password.show')}
                 accessibilityState={{ checked: shown }}
                 onPress={() => setShown((v) => !v)}
                 style={s.linkTarget}
               >
                 <Text style={[s.toggle, { color: p.accentText }]}>
-                  {shown ? PASSWORD_COPY.hide : PASSWORD_COPY.show}
+                  {shown ? t('password.hide') : t('password.show')}
                 </Text>
               </Pressable>
             </>
@@ -160,7 +166,7 @@ export function PasswordFlow({ action, onDone }: PasswordFlowProps) {
           {errorText}
           <Button
             testID={removing ? 'account-password-remove' : 'account-password-save'}
-            label={PASSWORD_COPY.save[action]}
+            label={t(`passwordSave.${action}`)}
             color={removing ? p.border : ACCENT}
             textColor={removing ? p.danger : undefined}
             busy={busy}
@@ -170,13 +176,13 @@ export function PasswordFlow({ action, onDone }: PasswordFlowProps) {
           <Pressable
             testID='account-password-resend'
             accessibilityRole='button'
-            accessibilityLabel={CODE_COPY.resend}
+            accessibilityLabel={t('code.resend')}
             accessibilityState={{ disabled: busy || waiting }}
             onPress={() => void sendCode()}
             disabled={busy || waiting}
             style={s.linkTarget}
           >
-            <Text style={[s.link, { color: busy || waiting ? p.muted : p.accentText }]}>{CODE_COPY.resend}</Text>
+            <Text style={[s.link, { color: busy || waiting ? p.muted : p.accentText }]}>{t('code.resend')}</Text>
           </Pressable>
         </>
       )}

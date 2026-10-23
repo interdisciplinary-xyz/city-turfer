@@ -1,5 +1,12 @@
+import { translator } from '@/i18n/translator';
+
 import type { AccountSettingsState } from '../account-settings.constants';
-import { latestRequest, refreshAnswered, refreshStarted, unreachableText } from '../account-settings-state';
+import { latestRequest, refreshAnswered, refreshStarted, unreachableMessage } from '../account-settings-state';
+
+const unreachableText = (state: AccountSettingsState) => {
+  const m = unreachableMessage(state);
+  return m && translator('errors', 'en')(m.key, m.values);
+};
 
 const account = {
   kind: 'account' as const,

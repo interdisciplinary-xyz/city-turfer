@@ -1,0 +1,51 @@
+{
+  "startButton": "{type, select, walk {Zacznij spacer} run {Zacznij bieg} cycle {Zacznij jazdę} other {Zacznij}}",
+  "hint": "Każda ulica, którą pokonasz, staje się Twoim turfem.",
+  "permissionDeniedTitle": "Potrzebna lokalizacja",
+  "permissionDeniedBody": "Zezwól na dostęp do lokalizacji w Ustawieniach, aby {app} mógł nagrywać Twoją trasę.",
+  "locationOffTitle": "Lokalizacja jest wyłączona",
+  "locationOffBody": "Włącz Usługi lokalizacji, aby nagrywać.",
+  "startFailedTitle": "Nie udało się rozpocząć",
+  "startFailedBody": "Coś poszło nie tak przy rozpoczynaniu nagrywania. Spróbuj ponownie.",
+  "tooShortTitle": "Za krótkie, by zapisać",
+  "tooShortBody": "Pokonaj jeszcze kawałek albo odrzuć to nagranie.",
+  "keepRecording": "Nagrywaj dalej",
+  "discard": "Odrzuć",
+  "finishTitle": "Zakończyć nagrywanie?",
+  "finishBody": "Trasa zostanie zapisana, a jej ulice dołączą do Twojego turfu.",
+  "finish": "Zakończ",
+  "cityLabel": "Miasto: {city}",
+  "chooseCity": "Wybierz swoje miasto",
+  "cityHint": "Otwiera wybór miasta",
+  "yourCity": "Twoje miasto",
+  "showTurfLabel": "Pokaż mój turf",
+  "turfChip": "Turf",
+  "recenterLabel": "Wyśrodkuj na mojej pozycji",
+  "recenter": "Wyśrodkuj",
+  "status": {
+    "acquiring": "Czekam na GPS…",
+    "paused": "Pauza",
+    "autoPaused": "Autopauza — ruszaj, by wznowić"
+  },
+  "stat": {
+    "distance": "Dystans",
+    "time": "Czas",
+    "now": "{type, select, cycle {Prędkość} other {Tempo}}",
+    "average": "{type, select, cycle {Śr. prędkość} other {Śr. tempo}}"
+  },
+  "resume": "Wznów",
+  "pause": "Pauza",
+  "finishLabel": "Zakończ nagrywanie",
+  "finishHint": "Przytrzymaj, aby zakończyć. Z czytnikiem ekranu stuknij dwukrotnie, aby wybrać.",
+  "keepHolding": "Trzymaj dalej…",
+  "holdToFinish": "Trzymaj, by zakończyć",
+  "banner": {
+    "text": "{status, select, recording {Nagrywam {type, select, walk {spacer} run {bieg} cycle {jazdę} other {aktywność}}} other {Pauza: {type, select, walk {spacer} run {bieg} cycle {jazda} other {aktywność}}}} · <num>{distance}</num>",
+    "label": "{status, select, recording {Nagrywam {type, select, walk {spacer} run {bieg} cycle {jazdę} other {aktywność}}} other {Pauza: {type, select, walk {spacer} run {bieg} cycle {jazda} other {aktywność}}}}, {distance}. Otwórz nagrywanie.",
+    "open": "Otwórz ›"
+  },
+  "notification": {
+    "title": "{type, select, walk {Nagrywam Twój spacer} run {Nagrywam Twój bieg} cycle {Nagrywam Twoją jazdę} other {Nagrywam Twoją aktywność}}",
+    "body": "{app} zdobywa Twoje ulice. Stuknij, aby otworzyć."
+  }
+}

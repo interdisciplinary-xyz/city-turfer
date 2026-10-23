@@ -1098,7 +1098,7 @@ const DEV_NULL = /^\/dev\/(null|stdout|stderr)$/;
  * someone adds it here with a test.
  */
 const PNPM_READ_ONLY_SCRIPT =
-  /^(test|test:(unit|types|arch|tools)|typecheck|lint|arch|audit:(docs|harness|logs)|e2e:audit|check:secret-files|standard|standard:(format|lint)|ci:quality)$/;
+  /^(test|test:(unit|types|arch|tools)|typecheck|lint|arch|audit:(docs|harness|logs|i18n)|e2e:audit|check:secret-files|standard|standard:(format|lint)|ci:quality)$/;
 /** pnpm built-ins that only read (`pnpm why react`, `pnpm ls --depth 0`). */
 const PNPM_READ_ONLY_BUILTIN = new Set(['list', 'ls', 'why', 'outdated', 'view', 'info', 'licenses']);
 const WRITE_ARG = /^(--fix|--write(?!-tree).*|--update.*|--out(put)?(=.*)?|--in-place.*)$/;

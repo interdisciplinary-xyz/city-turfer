@@ -1,12 +1,6 @@
 import type { SetPasswordResult } from '@/contexts/identity';
 
-import {
-  type AccountRefusal,
-  FIELD_ERROR_TEXT,
-  INVALID_CODE,
-  PASSWORD_COPY,
-  type PasswordAction,
-} from './account-settings.constants';
+import { type AccountRefusal, FIELD_ERROR, INVALID_CODE, type PasswordAction } from './account-settings.constants';
 import type { PasswordOutcome, PasswordScreenAction } from './password-flow.constants';
 
 /**
@@ -49,9 +43,9 @@ export function afterPasswordSave(r: SetPasswordResult | RemoveResult): Password
     case 'invalid-code':
       return { kind: 'error', error: INVALID_CODE };
     case 'breached':
-      return { kind: 'error', error: PASSWORD_COPY.breached };
+      return { kind: 'error', error: { key: 'passwordBreached' } };
     case 'field-error':
-      return { kind: 'error', error: FIELD_ERROR_TEXT[r.code] };
+      return { kind: 'error', error: FIELD_ERROR[r.code] };
     default:
       return { kind: 'refused', failure: r };
   }

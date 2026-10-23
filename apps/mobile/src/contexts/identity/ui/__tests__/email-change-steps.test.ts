@@ -1,4 +1,6 @@
-import { EMAIL_COPY, INVALID_CODE } from '../account-settings.constants';
+import { translator } from '@/i18n/translator';
+
+import { INVALID_CODE } from '../account-settings.constants';
 import { afterEmailChangeRequest, afterEmailConfirm, afterStepUpCode } from '../email-change-steps';
 
 describe('email change: what each answer leads to', () => {
@@ -28,8 +30,9 @@ describe('email change: what each answer leads to', () => {
     });
     expect(afterEmailChangeRequest({ kind: 'field-error', code: 'email.unchanged' })).toEqual({
       kind: 'error',
-      error: 'That’s already your email.',
+      error: { key: 'field.emailUnchanged' },
     });
+    expect(translator('errors', 'en')('field.emailUnchanged')).toBe('That’s already your email.');
     expect(afterEmailChangeRequest({ kind: 'offline' })).toEqual({ kind: 'refused', failure: { kind: 'offline' } });
   });
 
@@ -40,11 +43,14 @@ describe('email change: what each answer leads to', () => {
     });
     expect(afterEmailConfirm({ kind: 'invalid-code' }, 'ola@new.example')).toEqual({
       kind: 'error',
-      error: EMAIL_COPY.newInvalid('ola@new.example'),
+      error: { key: 'emailCodeInvalid', values: { email: 'ola@new.example' } },
     });
+    expect(translator('errors', 'en')('emailCodeInvalid', { email: 'ola@new.example' })).toBe(
+      'That code didn’t work. Check the latest email to ola@new.example, or start again.'
+    );
     expect(afterEmailConfirm({ kind: 'email-taken' }, 'ola@new.example')).toEqual({
       kind: 'error',
-      error: EMAIL_COPY.taken,
+      error: { key: 'emailTaken' },
     });
     expect(afterEmailConfirm({ kind: 'auth' }, 'ola@new.example')).toEqual({
       kind: 'refused',

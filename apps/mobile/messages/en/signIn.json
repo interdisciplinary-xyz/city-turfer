@@ -1,0 +1,17 @@
+{
+  "tagline": "Surf your city. Own your streets.",
+  "emailPlaceholder": "Email",
+  "passwordPlaceholder": "Password",
+  "accountPasswordPlaceholder": "Account password",
+  "codePlaceholder": "Code",
+  "codeSent": "We emailed a 6-digit code to {email}. It works for 10 minutes.",
+  "usePassword": "Use a password instead",
+  "useCode": "Use an email code instead",
+  "submit": "Sign in",
+  "resend": "Send a new code",
+  "note": "Your activities stay on this phone. Cloud backup is optional.",
+  "historyTitle": "Use this phone’s history?",
+  "historyText": "This phone already has activities and turf. Make them part of your account? Nothing is copied: they stay right here, now with your account.",
+  "keepApart": "Keep apart",
+  "useThem": "Use them"
+}

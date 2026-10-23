@@ -4,8 +4,9 @@ import { ScrollView, StyleSheet, Text, useColorScheme, View } from 'react-native
 
 import { FONT_FAMILY, TYPE_COLOR } from '@/constants/colors';
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from '@/constants/map';
+import { useT } from '@/i18n';
 import { Card, Stat } from '@/ui-kit/components';
-import { formatDate, formatDistance, formatDuration, formatPaceOrSpeed } from '@/ui-kit/format';
+import { distanceText, formatDate, formatDistance, formatDuration, formatPaceOrSpeed } from '@/ui-kit/format';
 import { usePalette } from '@/ui-kit/theme';
 import { trackWithGaps } from '@/ui-kit/track-geometry';
 
@@ -21,6 +22,7 @@ export function ActivityDetailView({
   children?: ReactNode;
 }) {
   const p = usePalette();
+  const t = useT('activity');
   const scheme = useColorScheme();
   const lines = useMemo(() => trackWithGaps(a.track, a.gapRoutes), [a.track, a.gapRoutes]);
   const ends = useMemo<GeoJSON.FeatureCollection>(() => {
@@ -97,34 +99,33 @@ export function ActivityDetailView({
         <Text style={[s.date, { color: p.muted }]}>{formatDate(a.startedAt)}</Text>
         <Card>
           <View style={s.row}>
-            <Stat label='Distance' value={d.value} unit={d.unit} />
-            <Stat label='Moving time' value={formatDuration(a.movingS)} />
-            <Stat label={a.type === 'cycle' ? 'Avg speed' : 'Avg pace'} value={pace.value} unit={pace.unit} />
+            <Stat label={t('stat.distance')} value={d.value} unit={d.unit} />
+            <Stat label={t('stat.movingTime')} value={formatDuration(a.movingS)} />
+            <Stat label={t('stat.average', { type: a.type })} value={pace.value} unit={pace.unit} />
           </View>
           <View style={[s.row, { marginTop: 14 }]}>
-            <Stat label='Elapsed' value={formatDuration(a.elapsedS)} />
+            <Stat label={t('stat.elapsed')} value={formatDuration(a.elapsedS)} />
             <Stat
-              label='Elevation ≈'
+              label={t('stat.elevation')}
               value={a.elevGainM != null ? `+${a.elevGainM}` : '—'}
               unit={a.elevGainM != null ? 'm' : undefined}
             />
           </View>
           {a.estimatedDistanceM > 0 && (
             <Text testID='estimated-distance' style={[s.note, { color: p.muted }]}>
-              Includes {formatDistance(a.estimatedDistanceM).value} {formatDistance(a.estimatedDistanceM).unit}{' '}
-              estimated along streets where GPS was lost (dashed). Estimated parts don&apos;t claim turf.
+              {t('estimatedNote', { distance: distanceText(a.estimatedDistanceM) })}
             </Text>
           )}
         </Card>
         {children}
         {a.splits.length > 0 && (
           <Card>
-            <Text style={[s.h, { color: p.text }]}>Splits</Text>
+            <Text style={[s.h, { color: p.text }]}>{t('splitsTitle')}</Text>
             {a.splits.map((sp) => {
               const v = formatPaceOrSpeed(a.type, 1000, sp.seconds);
               return (
                 <View key={sp.km} style={s.split}>
-                  <Text style={{ color: p.muted, width: 50 }}>km {sp.km}</Text>
+                  <Text style={{ color: p.muted, width: 50 }}>{t('splitKm', { km: String(sp.km) })}</Text>
                   <Text style={[s.splitValue, { color: p.text }]}>
                     {v.value} {v.unit}
                   </Text>

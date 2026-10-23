@@ -2,25 +2,23 @@ import { useState } from 'react';
 import { Alert, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { ACCENT } from '@/constants/colors';
+import { translator, useT } from '@/i18n';
 import { Button, Card } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
 
-import {
-  APPLE_HEALTH_PITCH,
-  APPLE_HEALTH_PRIVACY,
-  APPLE_HEALTH_TITLE,
-  describeImport,
-  ERROR_TITLE,
-  HISTORY_TIP,
-  NO_WORKOUTS_HINT,
-} from './apple-health-card.constants';
+import { describeImport, healthErrorKey } from './apple-health-card.constants';
 import { useHealthSync } from './hooks';
 
-const showError = (e: unknown) => Alert.alert(ERROR_TITLE, String((e as Error)?.message ?? e));
+/** Explains a failure in the app language; the error's own text (and any Health data) is never shown. */
+const showError = (e: unknown) => {
+  const t = translator('health');
+  Alert.alert(t('errors.title'), t(healthErrorKey(e)));
+};
 
 /** Settings card: connect Apple Health, choose import/export, import now. Hidden where Health doesn't exist. */
 export function AppleHealthCard() {
   const p = usePalette();
+  const t = useT('health');
   const { status, progress, connect, disconnect, importNow, setDirections } = useHealthSync();
   const [busy, setBusy] = useState(false);
 
@@ -40,14 +38,14 @@ export function AppleHealthCard() {
 
   return (
     <Card style={{ gap: 10 }}>
-      <Text style={[s.h2, { color: p.text }]}>{APPLE_HEALTH_TITLE}</Text>
+      <Text style={[s.h2, { color: p.text }]}>{t('title')}</Text>
       {!status.connected ? (
         <>
-          <Text style={{ color: p.muted }}>{APPLE_HEALTH_PITCH}</Text>
-          <Text style={{ color: p.muted, fontSize: 13 }}>{HISTORY_TIP}</Text>
+          <Text style={{ color: p.muted }}>{t('pitch')}</Text>
+          <Text style={{ color: p.muted, fontSize: 13 }}>{t('historyTip')}</Text>
           <Button
             testID='health-connect'
-            label='Connect Apple Health'
+            label={t('connect')}
             color={ACCENT}
             busy={busy}
             onPress={() => run(connect)}
@@ -56,20 +54,20 @@ export function AppleHealthCard() {
       ) : (
         <>
           <View style={s.row}>
-            <Text style={[s.label, { color: p.text }]}>Import workouts</Text>
+            <Text style={[s.label, { color: p.text }]}>{t('importSwitch')}</Text>
             <Switch
               testID='health-import-switch'
-              accessibilityLabel='Import workouts from Apple Health'
+              accessibilityLabel={t('importSwitchLabel')}
               value={status.importEnabled}
               onValueChange={(on) => run(() => setDirections({ importEnabled: on }))}
               trackColor={{ true: ACCENT, false: p.border }}
             />
           </View>
           <View style={s.row}>
-            <Text style={[s.label, { color: p.text }]}>Save recordings to Health</Text>
+            <Text style={[s.label, { color: p.text }]}>{t('exportSwitch')}</Text>
             <Switch
               testID='health-export-switch'
-              accessibilityLabel='Save recordings to Apple Health'
+              accessibilityLabel={t('exportSwitchLabel')}
               value={status.exportEnabled}
               onValueChange={(on) => run(() => setDirections({ exportEnabled: on }))}
               trackColor={{ true: ACCENT, false: p.border }}
@@ -77,18 +75,18 @@ export function AppleHealthCard() {
           </View>
           <Text testID='health-last-import' style={{ color: p.muted, fontSize: 13 }}>
             {importing
-              ? `Importing… ${progress ?? 0} added so far`
+              ? t('importing', { count: progress ?? 0 })
               : last
-                ? `Last import: ${describeImport(last)}`
-                : 'Not imported yet.'}
+                ? t('lastImport', { summary: describeImport(last, t) })
+                : t('notImported')}
           </Text>
           {!importing && last && last.imported === 0 && last.duplicates === 0 && (
-            <Text style={{ color: p.muted, fontSize: 13 }}>{NO_WORKOUTS_HINT}</Text>
+            <Text style={{ color: p.muted, fontSize: 13 }}>{t('noWorkoutsHint')}</Text>
           )}
           {status.importEnabled && (
             <Button
               testID='health-import-now'
-              label='Import now'
+              label={t('importNow')}
               color={p.border}
               textColor={p.text}
               busy={importing}
@@ -96,10 +94,10 @@ export function AppleHealthCard() {
               onPress={() => run(importNow)}
             />
           )}
-          <Text style={{ color: p.muted, fontSize: 12 }}>{APPLE_HEALTH_PRIVACY}</Text>
+          <Text style={{ color: p.muted, fontSize: 12 }}>{t('privacy')}</Text>
           <Button
             testID='health-disconnect'
-            label='Disconnect'
+            label={t('disconnect')}
             color={p.card}
             textColor={p.danger}
             disabled={busy || importing}

@@ -1,22 +1,14 @@
 import { FONT_SIZE, FONT_WEIGHT, RADIUS, SPACE } from '@cityturfer/brand';
-import { activityNameProblem } from '@cityturfer/core/activity-log';
+import { ACTIVITY_NAME_MAX_LENGTH, activityNameProblem } from '@cityturfer/core/activity-log';
 import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { ACCENT } from '@/constants/colors';
+import { useT } from '@/i18n';
 import { Button, Card } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
 
-import {
-  describeLength,
-  NAME_PROBLEM_TEXT,
-  RENAME_CANCEL,
-  RENAME_FAILED,
-  RENAME_LABEL,
-  RENAME_SAVE,
-  RENAME_TITLE,
-  type RenameActivityDialogProps,
-} from './rename-activity-dialog.constants';
+import { describeLength, NAME_PROBLEM_KEY, type RenameActivityDialogProps } from './rename-activity-dialog.constants';
 
 /**
  * Rename an Activity: a small cross-platform dialog (Alert.prompt is iOS-only) with the domain's
@@ -24,6 +16,8 @@ import {
  */
 export function RenameActivityDialog({ visible, name, onClose, onSave }: RenameActivityDialogProps) {
   const p = usePalette();
+  const t = useT('activity');
+  const tc = useT('common');
   const [draft, setDraft] = useState(name);
   const [saving, setSaving] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -57,7 +51,11 @@ export function RenameActivityDialog({ visible, name, onClose, onSave }: RenameA
     }
   };
 
-  const message = problem ? NAME_PROBLEM_TEXT[problem] : failed ? RENAME_FAILED : null;
+  const message = problem
+    ? t(NAME_PROBLEM_KEY[problem], { max: ACTIVITY_NAME_MAX_LENGTH })
+    : failed
+      ? t('rename.failed')
+      : null;
 
   return (
     <Modal visible={visible} transparent animationType='fade' onRequestClose={saving ? undefined : onClose}>
@@ -66,17 +64,17 @@ export function RenameActivityDialog({ visible, name, onClose, onSave }: RenameA
           style={s.backdrop}
           onPress={saving ? undefined : onClose}
           accessibilityRole='button'
-          accessibilityLabel={RENAME_CANCEL}
+          accessibilityLabel={tc('cancel')}
           importantForAccessibility='no'
         />
         <View style={s.center} pointerEvents='box-none'>
           <Card testID='rename-dialog' style={s.card}>
             <Text accessibilityRole='header' style={[s.h2, { color: p.text }]}>
-              {RENAME_TITLE}
+              {t('rename.title')}
             </Text>
             <TextInput
               testID='rename-input'
-              accessibilityLabel={RENAME_LABEL}
+              accessibilityLabel={t('rename.label')}
               accessibilityHint={describeLength(draft)}
               value={draft}
               onChangeText={setDraft}
@@ -86,7 +84,7 @@ export function RenameActivityDialog({ visible, name, onClose, onSave }: RenameA
               returnKeyType='done'
               autoCapitalize='sentences'
               editable={!saving}
-              placeholder={RENAME_LABEL}
+              placeholder={t('rename.label')}
               placeholderTextColor={p.muted}
               style={[s.input, { color: p.text, backgroundColor: p.bg, borderColor: problem ? p.danger : p.border }]}
             />
@@ -103,7 +101,7 @@ export function RenameActivityDialog({ visible, name, onClose, onSave }: RenameA
             <View style={s.row}>
               <Button
                 testID='rename-cancel'
-                label={RENAME_CANCEL}
+                label={tc('cancel')}
                 color={p.border}
                 textColor={p.text}
                 disabled={saving}
@@ -112,7 +110,7 @@ export function RenameActivityDialog({ visible, name, onClose, onSave }: RenameA
               />
               <Button
                 testID='rename-save'
-                label={RENAME_SAVE}
+                label={tc('save')}
                 color={ACCENT}
                 busy={saving}
                 disabled={problem != null}

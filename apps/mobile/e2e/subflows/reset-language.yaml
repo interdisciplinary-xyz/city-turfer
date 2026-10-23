@@ -1,0 +1,18 @@
+# Put the Language setting back on System, from wherever the app is (tab bar, Me drawer or Info),
+# and leave the app on Me > Info.
+# The setting lives in the Keychain, so it survives reinstalls and would break every English flow.
+appId: com.turftrack.poc
+---
+- runFlow:
+    when:
+      visible: { id: 'tab-me' }
+      notVisible: { id: 'me-drawer' }
+    commands:
+      - tapOn: { id: 'tab-me' }
+- runFlow:
+    when: { visible: { id: 'me-menu-info' } }
+    commands:
+      - tapOn: { id: 'me-menu-info' }
+      - scrollUntilVisible: { element: { id: 'language-system' }, timeout: 20000 }
+- scrollUntilVisible: { element: { id: 'language-system' }, timeout: 20000 }
+- tapOn: { id: 'language-system' }

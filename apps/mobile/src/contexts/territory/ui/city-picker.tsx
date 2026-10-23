@@ -3,22 +3,28 @@ import { useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { ACCENT } from '@/constants/colors';
+import { useLocale, useT } from '@/i18n';
 import { Button } from '@/ui-kit/components';
 import { AppSymbol } from '@/ui-kit/symbol';
 import { usePalette } from '@/ui-kit/theme';
 
-import { type CityPickerProps, COUNTRY_NAME } from './city-picker.constants';
-import { useChooseHomeCity, useCitySearch, useHomeCity } from './hooks';
+import { cityName, countryName } from './city-names';
+import type { CityPickerProps } from './city-picker.constants';
+import { useChooseHomeCity, useHomeCity } from './hooks';
+import { useCitySearchInAllLanguages } from './use-city-names';
 
 /**
- * Picks the Home City from the bundled catalogue: the Turf Map opens on it. Search ignores accents
- * ("krakow" finds Kraków). The search never leaves the phone; the chosen city's id is backed up
+ * Picks the Home City from the bundled catalogue: the Turf Map opens on it. Cities show in the app
+ * language; search matches their names in every app language and ignores accents ("krakow" finds
+ * Kraków, "warszawa" Warsaw). The search never leaves the phone; the chosen city's id is backed up
  * only when Cloud backup is on.
  */
 export function CityPicker({ onDone }: CityPickerProps) {
   const p = usePalette();
+  const t = useT('cities');
+  const locale = useLocale();
   const [query, setQuery] = useState('');
-  const cities = useCitySearch(query);
+  const cities = useCitySearchInAllLanguages(query);
   const home = useHomeCity();
   const choose = useChooseHomeCity();
   const [busy, setBusy] = useState(false);
@@ -29,7 +35,7 @@ export function CityPicker({ onDone }: CityPickerProps) {
       await choose(cityId);
       onDone();
     } catch {
-      Alert.alert('Could not save your city', 'Please try again.');
+      Alert.alert(t('picker.saveFailedTitle'), t('picker.saveFailedBody'));
     } finally {
       setBusy(false);
     }
@@ -37,26 +43,24 @@ export function CityPicker({ onDone }: CityPickerProps) {
 
   return (
     <View style={[s.root, { backgroundColor: p.bg }]}>
-      <Text style={[s.lede, { color: p.muted }]}>
-        The Turf Map opens on your city. It stays on your phone, like your routes.
-      </Text>
+      <Text style={[s.lede, { color: p.muted }]}>{t('picker.lede')}</Text>
       <TextInput
         testID='city-search'
         value={query}
         onChangeText={setQuery}
-        placeholder='Search cities'
+        placeholder={t('picker.searchPlaceholder')}
         placeholderTextColor={p.muted}
         autoCorrect={false}
         autoCapitalize='words'
         clearButtonMode='while-editing'
         returnKeyType='search'
-        accessibilityLabel='Search cities'
+        accessibilityLabel={t('picker.searchLabel')}
         style={[s.search, { color: p.text, backgroundColor: p.card, borderColor: p.border }]}
       />
       {home ? (
         <Button
           testID='city-clear'
-          label={`Clear ${home.name}`}
+          label={t('picker.clear', { city: cityName(home, locale) })}
           color={p.card}
           textColor={p.text}
           disabled={busy}
@@ -72,18 +76,21 @@ export function CityPicker({ onDone }: CityPickerProps) {
         contentContainerStyle={s.list}
         ListEmptyComponent={
           <Text testID='city-empty' style={[s.empty, { color: p.muted }]}>
-            No city called “{query.trim()}” yet. CityTurfer knows the biggest Polish and European cities for now.
+            {t('picker.empty', { query: query.trim() })}
           </Text>
         }
+        extraData={locale}
         renderItem={({ item }) => {
           const selected = home?.id === item.id;
+          const name = cityName(item, locale);
+          const country = countryName(item.country, locale);
           return (
             <Pressable
               testID={`city-${item.id}`}
               disabled={busy}
               onPress={() => pick(item.id)}
               accessibilityRole='button'
-              accessibilityLabel={`${item.name}, ${COUNTRY_NAME[item.country] ?? item.country}`}
+              accessibilityLabel={t('picker.rowLabel', { city: name, country })}
               accessibilityState={{ selected, disabled: busy }}
               style={({ pressed }) => [
                 s.row,
@@ -91,8 +98,8 @@ export function CityPicker({ onDone }: CityPickerProps) {
               ]}
             >
               <View style={s.rowText}>
-                <Text style={[s.name, { color: p.text }]}>{item.name}</Text>
-                <Text style={[s.country, { color: p.muted }]}>{COUNTRY_NAME[item.country] ?? item.country}</Text>
+                <Text style={[s.name, { color: p.text }]}>{name}</Text>
+                <Text style={[s.country, { color: p.muted }]}>{country}</Text>
               </View>
               {selected ? <AppSymbol name='checkmark' fallback='✓' size={FONT_SIZE.lead} color={ACCENT} /> : null}
             </Pressable>

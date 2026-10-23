@@ -22,12 +22,13 @@ export const Default: StoryObj<typeof meta> = { args: { style: { maxWidth: 360 }
 
 export const Compact: StoryObj<typeof meta> = { args: { compact: true, style: { width: 160 } } };
 
-/** Labels are props, so a translation drops in (Polish shown). */
+/** Text is props, so a translation drops in (Polish shown, as in the app's `common` namespace), screen-reader sentence included. */
 export const Translated: StoryObj<typeof meta> = {
   args: {
     style: { maxWidth: 360 },
     title: 'Siła turfu',
-    labels: { faint: 'Słaby', glowing: 'Rozżarzony', strong: 'Mocny', blazing: 'Płonący' },
+    labels: { faint: 'Blady', glowing: 'Świecący', strong: 'Mocny', blazing: 'Płonący' },
+    accessibilityLabel: 'Siła turfu: Blady, Świecący, Mocny, Płonący, od najsłabszego do najmocniejszego',
   },
 };
 

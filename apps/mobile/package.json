@@ -23,6 +23,7 @@
     "@cityturfer/brand": "workspace:*",
     "@cityturfer/core": "workspace:*",
     "@cityturfer/ui": "workspace:*",
+    "@formatjs/intl-pluralrules": "6.3.14",
     "@kingstinct/react-native-healthkit": "16.2.0",
     "@maplibre/maplibre-react-native": "^11.5.0",
     "expo": "~57.0.29",
@@ -46,7 +47,8 @@
     "react-native": "0.86.3",
     "react-native-nitro-modules": "^0.37.1",
     "react-native-safe-area-context": "~5.7.0",
-    "react-native-screens": "~4.26.0"
+    "react-native-screens": "~4.26.0",
+    "use-intl": "4.14.9"
   },
   "devDependencies": {
     "@cityturfer/config": "workspace:*",
@@ -82,6 +84,9 @@
         }
       ]
     },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!(use-intl|intl-messageformat|icu-minify|@formatjs|@schummar)/)"
+    ],
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1",
       "^expo/virtual/env$": "<rootDir>/src/test-support/expo-virtual-env.ts"

@@ -1,19 +1,21 @@
-import { FONT_SIZE, LABEL_TRACKING, RADIUS, TIER_LABEL } from '@cityturfer/brand';
+import { FONT_SIZE, LABEL_TRACKING, RADIUS } from '@cityturfer/brand';
 import { Camera, type CameraRef, GeoJSONSource, Layer, Map, UserLocation } from '@maplibre/maplibre-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AccessibilityInfo, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ACTIVITY_TYPES, TYPE_LABEL } from '@/constants/activity';
+import { ACTIVITY_TYPES } from '@/constants/activity';
 import { DARK, FONT_FAMILY, TIER_COLOR, TYPE_COLOR } from '@/constants/colors';
 import { MAP_STYLE_DARK } from '@/constants/map';
+import { useT } from '@/i18n';
 import { type ActivityType, type BoundingBox } from '@/shared-kernel';
-import { formatArea } from '@/ui-kit/format';
+import { fixed, formatArea } from '@/ui-kit/format';
 import { ActivitySymbol, AppSymbol } from '@/ui-kit/symbol';
 
 import { useTurfSummary, useTurfViewport } from './hooks';
 import { TurfLayers } from './layers';
 import { FIT_PADDING, type TrackLine, type TurfMapViewProps } from './turf-map-view.constants';
+import { useCityName } from './use-city-names';
 
 export type { TrackLine };
 
@@ -25,6 +27,9 @@ export type { TrackLine };
  * initial view and follow mode only if the Camera exists at the map's first layout.
  */
 export function TurfMapView({ tracks, homeCity, focused, onPickCity }: TurfMapViewProps) {
+  const t = useT('turf');
+  const tc = useT('common');
+  const cityName = useCityName();
   const insets = useSafeAreaInsets();
   const camera = useRef<CameraRef>(null);
   const [view, setView] = useState<{ bbox: BoundingBox; zoom: number } | null>(null);
@@ -104,8 +109,8 @@ export function TurfMapView({ tracks, homeCity, focused, onPickCity }: TurfMapVi
     }
   }, [homeCity, focused, fitCity]);
 
-  const toggle = (t: ActivityType) =>
-    setTypes((cur) => (cur.includes(t) ? (cur.length > 1 ? cur.filter((x) => x !== t) : cur) : [...cur, t]));
+  const toggle = (type: ActivityType) =>
+    setTypes((cur) => (cur.includes(type) ? (cur.length > 1 ? cur.filter((x) => x !== type) : cur) : [...cur, type]));
 
   return (
     <View style={s.root}>
@@ -149,36 +154,43 @@ export function TurfMapView({ tracks, homeCity, focused, onPickCity }: TurfMapVi
       </Map>
 
       <View style={[s.card, { top: insets.top + 10 }]} testID='turf-summary'>
-        <Text style={s.title}>Your turf</Text>
+        <Text style={s.title}>{t('title')}</Text>
         <Text style={s.area} testID='turf-summary-area'>
           {summary ? formatArea(summary.areaKm2) : '—'}
         </Text>
         <Text style={s.sub}>
           {summary
-            ? `${summary.cellCount} cells · ${summary.strongCells} ${TIER_LABEL.strong.toLowerCase()} · +${formatArea(summary.newThisWeekKm2)} this week`
-            : 'Loading…'}
+            ? t('summary', {
+                // Counts as plain digits (no grouping), like the area: Maestro and the Turfer read them as numbers.
+                cellCount: summary.cellCount,
+                cells: fixed(summary.cellCount, 0),
+                strongCount: summary.strongCells,
+                strong: fixed(summary.strongCells, 0),
+                area: formatArea(summary.newThisWeekKm2),
+              })
+            : tc('loading')}
         </Text>
         <View style={s.chips}>
-          {ACTIVITY_TYPES.map((t) => {
-            const on = types.includes(t);
+          {ACTIVITY_TYPES.map((kind) => {
+            const on = types.includes(kind);
             return (
               <Pressable
-                key={t}
-                testID={`turf-filter-${t}`}
+                key={kind}
+                testID={`turf-filter-${kind}`}
                 accessibilityRole='checkbox'
-                accessibilityLabel={`${TYPE_LABEL[t]} turf`}
+                accessibilityLabel={t('filterLabel', { type: kind })}
                 accessibilityState={{ checked: on }}
-                onPress={() => toggle(t)}
+                onPress={() => toggle(kind)}
                 style={[
                   s.chip,
                   {
-                    borderColor: on ? TYPE_COLOR[t] : DARK.border,
-                    backgroundColor: on ? TYPE_COLOR[t] + '33' : 'transparent',
+                    borderColor: on ? TYPE_COLOR[kind] : DARK.border,
+                    backgroundColor: on ? TYPE_COLOR[kind] + '33' : 'transparent',
                   },
                 ]}
               >
-                <ActivitySymbol type={t} size={FONT_SIZE.caption} color={DARK.text} />
-                <Text style={s.chipText}>{TYPE_LABEL[t]}</Text>
+                <ActivitySymbol type={kind} size={FONT_SIZE.caption} color={DARK.text} />
+                <Text style={s.chipText}>{tc(`activityType.${kind}`)}</Text>
               </Pressable>
             );
           })}
@@ -188,25 +200,25 @@ export function TurfMapView({ tracks, homeCity, focused, onPickCity }: TurfMapVi
               onPress={fitCity}
               onLongPress={onPickCity}
               accessibilityRole='button'
-              accessibilityLabel={`Show ${homeCity.name}`}
-              accessibilityHint='Long press to choose another city'
-              accessibilityActions={onPickCity ? [{ name: 'longpress', label: 'Choose another city' }] : undefined}
+              accessibilityLabel={t('showCity', { city: cityName(homeCity) })}
+              accessibilityHint={t('cityHint')}
+              accessibilityActions={onPickCity ? [{ name: 'longpress', label: t('chooseAnotherCity') }] : undefined}
               onAccessibilityAction={(e) => e.nativeEvent.actionName === 'longpress' && onPickCity?.()}
               style={[s.chip, { borderColor: DARK.border }]}
             >
               <AppSymbol name='house' fallback='⌂' size={FONT_SIZE.caption} color={DARK.text} />
-              <Text style={s.chipText}>{homeCity.name}</Text>
+              <Text style={s.chipText}>{cityName(homeCity)}</Text>
             </Pressable>
           ) : onPickCity ? (
             <Pressable
               testID='turf-pick-city'
               onPress={onPickCity}
               accessibilityRole='button'
-              accessibilityLabel='Choose your city'
+              accessibilityLabel={t('chooseCity')}
               style={[s.chip, { borderColor: DARK.border }]}
             >
               <AppSymbol name='house' fallback='⌂' size={FONT_SIZE.caption} color={DARK.text} />
-              <Text style={s.chipText}>Your city</Text>
+              <Text style={s.chipText}>{t('yourCity')}</Text>
             </Pressable>
           ) : null}
           {allBounds && (
@@ -214,7 +226,7 @@ export function TurfMapView({ tracks, homeCity, focused, onPickCity }: TurfMapVi
               testID='turf-filter-all'
               onPress={fitAll}
               accessibilityRole='button'
-              accessibilityLabel='Show all turf'
+              accessibilityLabel={t('showAllLabel')}
               style={[s.chip, { borderColor: DARK.border }]}
             >
               <AppSymbol
@@ -223,13 +235,11 @@ export function TurfMapView({ tracks, homeCity, focused, onPickCity }: TurfMapVi
                 size={FONT_SIZE.caption}
                 color={DARK.text}
               />
-              <Text style={s.chipText}>All</Text>
+              <Text style={s.chipText}>{t('showAll')}</Text>
             </Pressable>
           )}
         </View>
-        {summary && summary.cellCount === 0 && (
-          <Text style={s.empty}>Record a walk, run or ride — every street you cover becomes yours.</Text>
-        )}
+        {summary && summary.cellCount === 0 && <Text style={s.empty}>{t('empty')}</Text>}
       </View>
     </View>
   );

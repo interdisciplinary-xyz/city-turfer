@@ -5,7 +5,8 @@ import { identity } from '@/composition-root';
 import type { User } from '@/contexts/identity';
 import { useApp } from '@/ui-kit/app-context';
 
-import { type AccountRefusal, type AccountSettingsState, failureText } from './account-settings.constants';
+import { failureMessage } from './account-messages';
+import type { AccountRefusal, AccountSettingsState, ErrorMessage } from './account-settings.constants';
 import { latestRequest, refreshAnswered, refreshStarted } from './account-settings-state';
 import { waitUntilAfter, watchCooldown } from './cooldown';
 
@@ -74,15 +75,15 @@ export function useAccountActions() {
 }
 
 /**
- * One request at a time for a flow step (a double tap sends one code), with its error message.
- * `work` resolves with the message to show, or nothing when it went well. `refused` words a
- * failure; when it is a rate limit with Retry-After, `waiting` stays true until that time has
+ * One request at a time for a flow step (a double tap sends one code), with its error message
+ * (a key in `errors`: the component words it, so it follows a language change). `work` resolves
+ * with the message to show, or nothing when it went well. `refused` picks a failure's message; when it is a rate limit with Retry-After, `waiting` stays true until that time has
  * passed, so the send buttons can stay disabled (the server's bucket is shared per IP: extra taps
  * would only push the wait further).
  */
 export function useSubmit() {
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ErrorMessage | null>(null);
   /** Epoch ms until which the server asked us to wait; 0: no wait. */
   const [waitUntil, setWaitUntil] = useState(0);
   // A ref, not the state: a second keyboard submit in the same frame must see the first one.
@@ -90,15 +91,15 @@ export function useSubmit() {
 
   useEffect(() => (waitUntil ? watchCooldown(waitUntil, () => setWaitUntil(0)) : undefined), [waitUntil]);
 
-  const refused = useCallback((f: AccountRefusal): string => {
+  const refused = useCallback((f: AccountRefusal): ErrorMessage => {
     const until = waitUntilAfter(f, Date.now());
     if (until) {
       setWaitUntil(until);
     }
-    return failureText(f);
+    return failureMessage(f);
   }, []);
 
-  const run = useCallback(async (work: () => Promise<string | null | void>) => {
+  const run = useCallback(async (work: () => Promise<ErrorMessage | null | void>) => {
     if (inFlight.current) {
       return;
     }
@@ -108,7 +109,7 @@ export function useSubmit() {
     try {
       setError((await work()) ?? null);
     } catch {
-      setError(failureText({ kind: 'unavailable' }));
+      setError(failureMessage({ kind: 'unavailable' }));
     } finally {
       inFlight.current = false;
       setBusy(false);

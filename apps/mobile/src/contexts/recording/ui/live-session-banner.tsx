@@ -1,31 +1,36 @@
 import { RADIUS } from '@cityturfer/brand';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { TYPE_LABEL } from '@/constants/activity';
 import { ACCENT, ON_ACCENT } from '@/constants/colors';
+import { useT } from '@/i18n';
 import { distanceText } from '@/ui-kit/format';
 
 import type { LiveSnapshot } from '../domain/recording-session';
 
 /** Shown outside the Record tab while a Recording Session is active (pass `useLiveSession()`). */
 export function LiveSessionBanner({ live, onPress }: { live: LiveSnapshot | null; onPress: () => void }) {
+  const t = useT('record');
   if (!live) {
     return null;
   }
-  const state = live.status === 'recording' ? 'Recording' : 'Paused';
+  const values = {
+    status: live.status === 'recording' ? 'recording' : 'paused',
+    type: live.type,
+    distance: distanceText(live.distanceM),
+  };
   return (
     <Pressable
       testID='live-session-banner'
       onPress={onPress}
       accessibilityRole='button'
-      accessibilityLabel={`${state} ${TYPE_LABEL[live.type]}, ${distanceText(live.distanceM)}. Open Record.`}
+      accessibilityLabel={t('banner.label', values)}
       style={s.banner}
     >
       <View style={s.dot} />
       <Text style={s.text}>
-        {state} {TYPE_LABEL[live.type].toLowerCase()} · <Text style={s.num}>{distanceText(live.distanceM)}</Text>
+        {t.rich('banner.text', { ...values, num: (chunks) => <Text style={s.num}>{chunks}</Text> })}
       </Text>
-      <Text style={s.text}>Open ›</Text>
+      <Text style={s.text}>{t('banner.open')}</Text>
     </Pressable>
   );
 }

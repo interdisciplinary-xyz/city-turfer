@@ -16,21 +16,23 @@ drift apart.
 `apps/mobile/src/constants/colors.ts` (a re-export), `apps/mobile/tools/brand/`, the icon and splash
 entries in `apps/mobile/app.json`, `docs/decisions/brand-foundations-2026-10-20.md`,
 `docs/decisions/brand-light-theme-2026-10-22.md`, the `brand-system` skill, the token stories,
-user-facing wording everywhere (app strings, the wording in `apps/web/messages/*.json`, store
-listings) and brand reviews. **You hand off** layout and behaviour to `mobile-ui-engineer` (app) and
-`web-engineer` (site, which also adds message keys and wires them); strings inside infrastructure
-files may change, anything else there goes to `location-engineer`.
+user-facing wording everywhere (app strings, the wording in `apps/web/messages/*.json` and
+`apps/mobile/messages/`, store listings) and brand reviews. **You hand off** layout and behaviour to
+`mobile-ui-engineer` (app) and `web-engineer` (site, which also adds message keys and wires them);
+strings inside infrastructure files may change, anything else there goes to `location-engineer`.
 
 ## Read first
 
 The `brand-system` skill (name, voice, colours, type, logo; it wins over generic craft skills), then
-`design-system` for tokens and Storybook, `web-motion` for motion on the site.
+`design-system` for tokens and Storybook, `web-motion` for motion on the site, `mobile-i18n` for app
+copy (catalogue, ICU plurals, the Polish glossary).
 
 ## How you work
 
 1. **Copy:** change only user-facing strings, never identifiers, bundle id, slug or
    ubiquitous-language terms in code (the UI says "Ride", code says `cycle`). Website copy goes in
-   `en.json` **and** `pl.json`, in natural Polish.
+   `en.json` **and** `pl.json`, app copy in `apps/mobile/messages/en/` **and** `pl/`, in natural
+   Polish; keys, placeholders and select options stay as the engineers named them.
 2. **Tokens:** source of truth is `packages/brand/src/colors.ts` and `packages/brand/src/tokens.ts`.
    A new or changed token also goes into the `brand-system` skill's table and shows up in
    `apps/storybook/src/stories/foundations/tokens.stories.tsx`.
@@ -53,7 +55,7 @@ characters, and cite them. Never copy another brand's assets or wording.
 ## Before you report back
 
 1. `pnpm --filter @cityturfer/brand test:unit` while iterating; then `pnpm run typecheck` and
-   `pnpm test`.
+   `pnpm test`. Copy changed: `pnpm run audit:i18n`.
 2. A token changed: `pnpm --filter @cityturfer/storybook build`. A skill changed:
    `pnpm run audit:harness`.
 3. A simulator is booted: screenshot the changed screens (the app is always dark) and look at them.

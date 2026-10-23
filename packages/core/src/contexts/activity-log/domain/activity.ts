@@ -74,10 +74,54 @@ function validTimeZone(tz: string | null | undefined): string | null {
   return t && t.length <= 64 ? t : null;
 }
 
-export function defaultName(type: ActivityType, startedAt: number): string {
+/** When in the day an Activity began (the device's local time), for its default name. */
+export type PartOfDay = 'morning' | 'afternoon' | 'evening' | 'night';
+
+/**
+ * The words of a default Activity name: "Morning run" for (morning, run). The app passes them in the
+ * language active when the Activity is created (core stays free of i18n); the name is then stored
+ * and never rewritten.
+ */
+export type DefaultNameWords = (partOfDay: PartOfDay, type: ActivityType) => string;
+
+const PART_EN: Record<PartOfDay, string> = {
+  morning: 'Morning',
+  afternoon: 'Afternoon',
+  evening: 'Evening',
+  night: 'Night',
+};
+const TYPE_EN: Record<ActivityType, string> = { walk: 'walk', run: 'run', cycle: 'ride' };
+
+/** Core's own words (the API and every caller that passes none): "Morning run", "Night ride". */
+export const ENGLISH_DEFAULT_NAME_WORDS: DefaultNameWords = (part, type) => `${PART_EN[part]} ${TYPE_EN[type]}`;
+
+/** Night before 05:00 and from 21:00, morning to 12:00, afternoon to 17:00, evening to 21:00 (local time). */
+export function partOfDay(startedAt: number): PartOfDay {
   const h = new Date(startedAt).getHours();
-  const part = h < 5 ? 'Night' : h < 12 ? 'Morning' : h < 17 ? 'Afternoon' : h < 21 ? 'Evening' : 'Night';
-  return `${part} ${{ walk: 'walk', run: 'run', cycle: 'ride' }[type]}`;
+  return h < 5 ? 'night' : h < 12 ? 'morning' : h < 17 ? 'afternoon' : h < 21 ? 'evening' : 'night';
+}
+
+/**
+ * The name a new Activity gets. Words that throw or give an unusable name (empty, too long) fall
+ * back to English: a translation never stops an Activity from being saved.
+ */
+export function defaultName(
+  type: ActivityType,
+  startedAt: number,
+  words: DefaultNameWords = ENGLISH_DEFAULT_NAME_WORDS
+): string {
+  const part = partOfDay(startedAt);
+  if (words !== ENGLISH_DEFAULT_NAME_WORDS) {
+    try {
+      const name = words(part, type);
+      if (typeof name === 'string' && activityNameProblem(name) == null) {
+        return name.trim();
+      }
+    } catch {
+      // fall through to English
+    }
+  }
+  return ENGLISH_DEFAULT_NAME_WORDS(part, type);
 }
 
 /** Aggregate root of the Activity Log: a finished, saved recording or an imported track. */
@@ -97,6 +141,8 @@ export class Activity {
     origin?: ActivityOrigin;
     /** The phone's IANA zone when it was saved. */
     timeZone?: string | null;
+    /** Words of the default name, in the language active now. Default: English. */
+    nameWords?: DefaultNameWords;
   }): Activity {
     const points = pointsOf(input.track);
     if (points.length < 2) {
@@ -108,7 +154,7 @@ export class Activity {
     const a = new Activity({
       id: input.id,
       type: input.type,
-      name: defaultName(input.type, input.startedAt),
+      name: defaultName(input.type, input.startedAt, input.nameWords),
       startedAt: input.startedAt,
       endedAt: input.endedAt,
       ...derive(input.type, input.track, input.startedAt, input.endedAt),
