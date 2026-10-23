@@ -7,7 +7,9 @@
   "header": {
     "home": "CityTurfer, home",
     "waitlist": "Join the waitlist",
-    "waitlistShort": "Waitlist"
+    "waitlistShort": "Waitlist",
+    "signIn": "Sign in",
+    "register": "Create account"
   },
   "hero": {
     "skip": "Skip to content",
@@ -53,7 +55,8 @@
   "portal": {
     "meta": {
       "title": "Your backup — CityTurfer",
-      "signInTitle": "Sign in — CityTurfer"
+      "signInTitle": "Sign in — CityTurfer",
+      "registerTitle": "Create account — CityTurfer"
     },
     "header": {
       "home": "CityTurfer website",
@@ -105,6 +108,16 @@
         "expired": "Your session ended. Sign in again to carry on.",
         "deleted": "Your account and its backup here are erased. Copies in our database backups are deleted after a short time. Everything is still on your phone."
       }
+    },
+    "register": {
+      "title": "Create your CityTurfer account",
+      "lede": "All it takes is your e-mail: we send a 6-digit code, no password. Use the same e-mail in the app, and once you turn on cloud backup your activities show up here. Already have an account? The code simply signs you in.",
+      "submit": "Create account",
+      "creating": "Creating your account…",
+      "newHere": "New to CityTurfer?",
+      "toRegister": "Create an account",
+      "haveAccount": "Already have an account?",
+      "toSignIn": "Sign in"
     },
     "privacy": {
       "title": "Privacy & data",

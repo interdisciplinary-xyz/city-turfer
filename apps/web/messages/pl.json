@@ -7,7 +7,9 @@
   "header": {
     "home": "CityTurfer, strona główna",
     "waitlist": "Dołącz do listy",
-    "waitlistShort": "Lista"
+    "waitlistShort": "Lista",
+    "signIn": "Zaloguj się",
+    "register": "Załóż konto"
   },
   "hero": {
     "skip": "Przejdź do treści",
@@ -53,7 +55,8 @@
   "portal": {
     "meta": {
       "title": "Twoja kopia zapasowa — CityTurfer",
-      "signInTitle": "Zaloguj się — CityTurfer"
+      "signInTitle": "Zaloguj się — CityTurfer",
+      "registerTitle": "Załóż konto — CityTurfer"
     },
     "header": {
       "home": "Strona CityTurfer",
@@ -105,6 +108,16 @@
         "expired": "Sesja wygasła. Zaloguj się ponownie, aby kontynuować.",
         "deleted": "Twoje konto i jego kopia w chmurze zostały usunięte. Kopie w kopiach bezpieczeństwa naszej bazy usuwamy po krótkim czasie. Wszystko nadal jest na Twoim telefonie."
       }
+    },
+    "register": {
+      "title": "Załóż konto w CityTurfer",
+      "lede": "Wystarczy adres e-mail: wyślemy 6-cyfrowy kod, bez hasła. Użyj tego samego adresu w aplikacji, a po włączeniu kopii w chmurze Twoje aktywności pojawią się tutaj. Masz już konto? Kod po prostu Cię zaloguje.",
+      "submit": "Załóż konto",
+      "creating": "Zakładanie konta…",
+      "newHere": "Pierwszy raz w CityTurfer?",
+      "toRegister": "Załóż konto",
+      "haveAccount": "Masz już konto?",
+      "toSignIn": "Zaloguj się"
     },
     "privacy": {
       "title": "Prywatność i dane",

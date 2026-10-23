@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, test } from 'node:test';
 
-import { checkExport, chunksOf, PORTAL_COPY_MARKER } from '../check-export.mjs';
+import { checkExport, chunksOf, PORTAL_COPY_MARKER, portalLinksOf } from '../check-export.mjs';
 
 const NOINDEX = '<meta name="robots" content="noindex, nofollow"/>';
 const SCRIPT = path.resolve(import.meta.dirname, '../check-export.mjs');
@@ -162,6 +162,25 @@ test('an export without portal pages fails', () => {
       rmSync(path.join(dir, locale), { recursive: true });
     }
     assert.deepEqual(checkExport(dir), ['no portal pages found under out/<locale>/account']);
+  });
+});
+
+test('portalLinksOf finds account links of any locale, without query or fragment', () => {
+  const html =
+    '<a href="/en/account/sign-in">x</a><a href="/en/account/register?next=%2Fen">y</a>' +
+    '<a href="/pl/account/">z</a><a href="/en/accounting">no</a><a href="/de/account">no</a>';
+  assert.deepEqual(portalLinksOf(html, ['en', 'pl']), ['/en/account/sign-in', '/en/account/register', '/pl/account']);
+});
+
+test('a landing link to an exported portal page passes', () => {
+  withExport({ landingHtml: '<a href="/en/account/sign-in">Sign in</a><a href="/en/account">x</a>' }, (dir) => {
+    assert.deepEqual(checkExport(dir), []);
+  });
+});
+
+test('a landing link to a portal page that was not exported fails', () => {
+  withExport({ landingHtml: '<a href="/en/account/register">Create account</a>' }, (dir) => {
+    assert.match(checkExport(dir).join('\n'), /en\.html links to \/en\/account\/register, which is not in the export/);
   });
 });
 

@@ -27,7 +27,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Sticky top bar. The logo and background appear once the hero lockup leaves the viewport (an IntersectionObserver in `ScrollState`, which needs the hero on the page; see Website/Page). The Scrolled story forces that state.',
+          'Sticky top bar with the waitlist link, Sign in and Create account (the web portal; Create account hides below 600 px). The logo and background appear once the hero lockup leaves the viewport (an IntersectionObserver in `ScrollState`, which needs the hero on the page; see Website/Page). The Scrolled story forces that state.',
       },
     },
   },
@@ -40,5 +40,7 @@ export const English: StoryObj<typeof meta> = {};
 export const Polish: StoryObj<typeof meta> = { args: { locale: 'pl' } };
 
 export const NoWaitlist: StoryObj<typeof meta> = { args: { waitlist: false } };
+
+export const NoAccountLinks: StoryObj<typeof meta> = { args: { account: false } };
 
 export const Scrolled: StoryObj<typeof meta> = { decorators: [forceScrolled] };

@@ -23,7 +23,19 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const EmailStep: Story = {};
+export const EmailStep: Story = { args: { switchHref: '/en/account/register' } };
+
+export const Register: Story = {
+  name: 'Create account',
+  args: { mode: 'register', switchHref: '/en/account/sign-in' },
+  parameters: {
+    docs: {
+      description: {
+        story: 'The register page: the same e-mailed-code flow (a new address gets an account), its own copy.',
+      },
+    },
+  },
+};
 
 export const CodeStep: Story = { args: { initialStep: 'code', initialEmail: 'walker@e2e.cityturfer.test' } };
 

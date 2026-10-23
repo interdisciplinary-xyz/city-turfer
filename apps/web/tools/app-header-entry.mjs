@@ -44,6 +44,10 @@ if (host) {
         waitlist: WAITLIST
           ? { href: `/${LOCALE}#waitlist`, label: en.header.waitlist, shortLabel: en.header.waitlistShort }
           : null,
+        account: {
+          signIn: { href: `/${LOCALE}/account/sign-in`, label: en.header.signIn },
+          register: { href: `/${LOCALE}/account/register`, label: en.header.register },
+        },
         languages,
         lockupSelector: host.dataset.lockup,
       })

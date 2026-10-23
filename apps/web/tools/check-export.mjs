@@ -5,7 +5,8 @@
 //   maplibre-gl or portal code, carry no portal copy and no /api/v1 call (in the HTML, a chunk or
 //   the RSC payloads the language switcher fetches: <locale>.txt, <locale>/__next.*.txt);
 // - every portal page is noindex, nofollow and loads no GSAP chunk;
-// - the sitemap lists no portal page.
+// - the sitemap lists no portal page;
+// - every portal link on a landing page (the header's Sign in / Create account) has a page.
 // Runs after every `next build` (package.json "build"); exits 1 with the findings.
 import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import path from 'node:path';
@@ -74,6 +75,12 @@ export function landingPayloads(outDir, locale) {
   ];
 }
 
+/** The portal pages a landing page links to: `href="/<locale>/account…"`, without query or fragment. */
+export function portalLinksOf(html, locales) {
+  const link = new RegExp(`href="(/(?:${locales.join('|')})/account(?:/[a-z0-9-]+)*)/?(?:[?#][^"]*)?"`, 'g');
+  return [...new Set([...html.matchAll(link)].map((match) => match[1]))];
+}
+
 /** Returns a list of findings (empty = the boundary holds). */
 export function checkExport(outDir, { locales = ['en', 'pl'], nextDir = path.join(outDir, '..', '.next') } = {}) {
   const findings = [];
@@ -109,6 +116,11 @@ export function checkExport(outDir, { locales = ['en', 'pl'], nextDir = path.joi
     }
     if (html.includes('/api/v1')) {
       findings.push(`${locale}.html mentions /api/v1`);
+    }
+    for (const href of portalLinksOf(html, locales)) {
+      if (!existsSync(path.join(outDir, `${href}.html`))) {
+        findings.push(`${locale}.html links to ${href}, which is not in the export`);
+      }
     }
     for (const payload of landingPayloads(outDir, locale)) {
       const text = read(payload);
