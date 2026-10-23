@@ -58,6 +58,11 @@ export interface AuthConfig {
    * that points at a real database cannot be used to sign in as anyone.
    */
   fixedCode?: string | null;
+  /**
+   * More addresses that get `fixedCode`: the local dev server's mock accounts (admin@ and
+   * demo@cityturfer.com, PGlite only). Without `fixedCode` (always so in production) it does nothing.
+   */
+  fixedCodeEmails?: readonly string[];
   /** Called when the mailer throws (Better Auth swallows it): no address or code is passed. */
   onMailError?: () => void;
 }
@@ -66,6 +71,10 @@ export interface AuthConfig {
 export const TEST_EMAIL_DOMAIN = 'e2e.cityturfer.test';
 
 export const isTestEmail = (email: string) => email.toLowerCase().endsWith(`@${TEST_EMAIL_DOMAIN}`);
+
+/** Whether `email` signs in with the fixed code: the test domain, or one of `extra` (local mocks). */
+export const usesFixedCode = (email: string, extra: readonly string[] = []) =>
+  isTestEmail(email) || extra.includes(email.toLowerCase());
 
 export function createAuth(config: AuthConfig) {
   return betterAuth({
@@ -130,7 +139,8 @@ export function createAuth(config: AuthConfig) {
         // typing. `reuse` needs a recoverable code, hence encrypted rather than hashed.
         resendStrategy: 'reuse',
         storeOTP: codeCipher(config.secret),
-        generateOTP: ({ email }) => (config.fixedCode && isTestEmail(email) ? config.fixedCode : undefined),
+        generateOTP: ({ email }) =>
+          config.fixedCode && usesFixedCode(email, config.fixedCodeEmails) ? config.fixedCode : undefined,
         sendVerificationOTP: async ({ email, otp }) => {
           if (isTestEmail(email)) {
             return; // Nobody reads mail at the reserved test domain.

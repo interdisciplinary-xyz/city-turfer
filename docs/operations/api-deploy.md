@@ -81,7 +81,9 @@ sessions; storing a hash of the token needs Better Auth support or our own sessi
 **Preview deployments MUST use their own Neon branch, never the production database** (a preview has
 test settings such as `AUTH_FIXED_CODE`; data, sessions and exports must not mix). The local dev
 server (`apps/api/src/server.ts`) adds the `dev-token` for user `admin` only when neither
-`API_TOKENS` nor `DATABASE_URL` is set, so it never reaches a Neon database.
+`API_TOKENS` nor `DATABASE_URL` is set, so it never reaches a Neon database. The app's mock accounts
+(admin@ and demo@cityturfer.com, code `000000`, Gdańsk demo data) exist on PGlite only, for the same
+reason.
 
 ## Migrations
 

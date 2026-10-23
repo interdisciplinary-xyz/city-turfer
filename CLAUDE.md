@@ -170,6 +170,8 @@ pnpm test                        # dependency rules (depcruise) + Jest + tool te
 pnpm run build                   # web static export (apps/web/out), admin and API builds via turbo
 pnpm run web:dev                 # landing page at https://cityturfer.local (portless + server.mjs, dev toolbar)
 pnpm --filter @cityturfer/api dev                       # API on :8787 (PGlite + token dev-token without env)
+#   …on PGlite also the app's mock accounts: admin@cityturfer.com and demo@cityturfer.com sign in to
+#   the web portal with code 000000; demo@ gets the Gdańsk demo history (apps/api/src/dev/mock-accounts.ts)
 pnpm --filter @cityturfer/api run db:generate           # SQL migration from apps/api/src/db/schema.ts (commit apps/api/drizzle/)
 DATABASE_URL=… pnpm --filter @cityturfer/api run db:migrate   # apply migrations to Neon (docs/operations/api-deploy.md)
 pnpm --filter @cityturfer/api run token:new -- <userId>       # device token + API_TOKENS entry (stopgap auth)

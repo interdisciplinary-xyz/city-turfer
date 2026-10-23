@@ -24,9 +24,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-sm) var(--space-md);
-  max-width: 48rem;
   min-height: var(--header-h);
-  margin: 0 auto;
   padding: var(--space-sm) var(--gutter);
 }
 
@@ -66,8 +64,6 @@
 .portal-main {
   flex: 1;
   width: 100%;
-  max-width: 48rem;
-  margin: 0 auto;
   padding: var(--space-xl) var(--gutter) var(--space-xxxl);
 }
 
@@ -94,9 +90,9 @@
   gap: var(--space-lg);
 }
 
+/* A compact form, on the page gutter like every other page's content. */
 .portal-sign-in {
   max-width: 28rem;
-  margin: 0 auto;
 }
 
 .portal-title {
@@ -161,6 +157,10 @@
 }
 
 .portal-muted,
+.portal-switch {
+  margin: var(--space-lg) 0 0;
+}
+
 .portal-hint,
 .portal-fineprint {
   color: var(--muted);

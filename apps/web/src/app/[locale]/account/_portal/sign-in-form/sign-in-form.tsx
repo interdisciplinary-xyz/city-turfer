@@ -35,6 +35,8 @@ function asPortalError(error: unknown): PortalError {
  * e-mail lives in this component's state only, and the session is the API's HttpOnly cookie.
  */
 export function SignInForm({
+  mode = 'sign-in',
+  switchHref,
   onRequestCode,
   onSignIn,
   reason,
@@ -43,6 +45,8 @@ export function SignInForm({
 }: SignInFormProps) {
   const t = useTranslations('portal.signIn');
   const tc = useTranslations('portal.common');
+  const tr = useTranslations('portal.register');
+  const register = mode === 'register';
   const id = useId();
   const [step, setStep] = useState<SignInStep>(initialStep);
   const [email, setEmail] = useState(initialEmail);
@@ -156,8 +160,8 @@ export function SignInForm({
           <p>{t(`notice.${reason}`)}</p>
         </Notice>
       ) : null}
-      <h1 className='portal-title'>{t('title')}</h1>
-      <p className='portal-lede'>{t('lede')}</p>
+      <h1 className='portal-title'>{register ? tr('title') : t('title')}</h1>
+      <p className='portal-lede'>{register ? tr('lede') : t('lede')}</p>
 
       {step === 'email' ? (
         <form className='portal-form' method='post' onSubmit={onSubmitEmail} aria-describedby={`${id}-cookie`}>
@@ -234,7 +238,7 @@ export function SignInForm({
             type='submit'
             disabled={!hydrated || pending || signInBlocked}
           >
-            {pending ? t('signingIn') : t('submit')}
+            {pending ? (register ? tr('creating') : t('signingIn')) : register ? tr('submit') : t('submit')}
           </button>
           <div className='portal-row'>
             <button
@@ -268,6 +272,12 @@ export function SignInForm({
       {limits.canRetry ? (
         <p className='portal-hint' role='status'>
           {t('canRetry')}
+        </p>
+      ) : null}
+      {switchHref && step === 'email' ? (
+        <p className='portal-switch'>
+          {register ? tr('haveAccount') : tr('newHere')}{' '}
+          <a href={switchHref}>{register ? tr('toSignIn') : tr('toRegister')}</a>
         </p>
       ) : null}
       <p id={`${id}-cookie`} className='portal-fineprint'>
