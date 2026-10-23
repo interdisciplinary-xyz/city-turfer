@@ -20,12 +20,26 @@ import { type Mailer, signInCodeMail } from './mailer';
  * no IP or user agent on sessions.
  */
 
-/** Sessions last 60 days and slide: a session used after a day gets 60 more. */
-export const SESSION_TTL_S = 60 * 24 * 60 * 60;
-export const SESSION_UPDATE_AGE_S = 24 * 60 * 60;
+const DAY_S = 24 * 60 * 60;
+
+/** Phone sessions last 60 days and slide: a session used after a day gets 60 more. */
+export const SESSION_TTL_S = 60 * DAY_S;
+export const SESSION_UPDATE_AGE_S = DAY_S;
 export const CODE_TTL_S = 10 * 60;
 /** The longest password body accepted, in UTF-16 units (128 code points are at most 256). */
 export const MAX_PASSWORD_UNITS = 1024;
+
+/**
+ * Browser sessions (founder decision D4, docs/decisions/api-web-sessions-2026-10-22.md): 14 days
+ * sliding, never past 30 days after sign-in; on a shared computer 8 hours, not sliding, and the
+ * cookie ends with the browser session. They slide at most once a day, like phones.
+ */
+export const BROWSER_SESSION = {
+  ttlS: 14 * DAY_S,
+  absoluteS: 30 * DAY_S,
+  sharedAbsoluteS: 8 * 60 * 60,
+  updateAgeS: DAY_S,
+} as const;
 
 export interface AuthConfig {
   db: Db;
@@ -68,7 +82,17 @@ export function createAuth(config: AuthConfig) {
       },
     }),
     user: { modelName: 'auth_users' },
-    session: { modelName: 'auth_sessions', expiresIn: SESSION_TTL_S, updateAge: SESSION_UPDATE_AGE_S },
+    session: {
+      modelName: 'auth_sessions',
+      expiresIn: SESSION_TTL_S,
+      updateAge: SESSION_UPDATE_AGE_S,
+      // IdentityService slides sessions itself (phones 60 days, browsers 14 days under a cap).
+      disableSessionRefresh: true,
+      additionalFields: {
+        client: { type: 'string', required: false, defaultValue: 'phone', input: false },
+        absoluteExpiresAt: { type: 'date', required: false, input: false },
+      },
+    },
     account: { modelName: 'auth_accounts' },
     verification: { modelName: 'auth_verifications' },
     // Optional passwords beside codes (AC1): only `auth.api.signInEmail` and the scrypt hasher are
@@ -86,6 +110,13 @@ export function createAuth(config: AuthConfig) {
     telemetry: { enabled: false },
     logger: { disabled: true },
     advanced: { ipAddress: { disableIpTracking: true } },
+    // No IP address or user agent on a session (decision A4, W6). Better Auth writes `''` for both
+    // even with IP tracking off; store NULL so "nothing recorded" is unambiguous.
+    databaseHooks: {
+      session: {
+        create: { before: (session) => Promise.resolve({ data: { ...session, ipAddress: null, userAgent: null } }) },
+      },
+    },
     plugins: [
       // Only signed tokens (`<session token>.<HMAC>`, see IdentityService.signIn): the raw token in
       // `auth_sessions` is not enough to sign in, and rotating BETTER_AUTH_SECRET revokes them all.

@@ -1,9 +1,11 @@
-import type { MiddlewareHandler } from 'hono';
+import type { Context, MiddlewareHandler } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
+import { deleteCookie, getCookie } from 'hono/cookie';
 
 import { BackupService } from './backup/use-cases';
-import type { AppEnv } from './deps';
+import type { AppEnv, Credential } from './deps';
 import { problem } from './problem';
+import { SESSION_COOKIE, SESSION_COOKIE_ATTRIBUTES } from './session-cookie';
 
 /** Vercel Functions take request bodies up to 4.5 MB; refuse bigger ones before reading them. */
 export const MAX_BODY_BYTES = 4_500_000;
@@ -121,32 +123,94 @@ export const inflateGzip: MiddlewareHandler<AppEnv> = async (c, next) => {
   return next();
 };
 
+const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+/** `CityTurfer-Client` of the website: `web/<version>` (e.g. `web/0.10.0`). */
+const WEB_CLIENT = /^web\/[0-9A-Za-z.+-]{1,32}$/;
+
+/**
+ * The CSRF guard for browser requests that change something (and for the browser sign-in): the
+ * cookie is `SameSite=Strict`, and on top `Origin` must be the website (`WEB_ORIGIN`),
+ * `Sec-Fetch-Site`, when sent, `same-origin`, and `CityTurfer-Client: web/<version>` present (a
+ * cross-site form cannot set a header). Bearer requests never need it: a page cannot attach one.
+ */
+export function isFromWebsite(c: Context<AppEnv>): boolean {
+  const { webOrigin } = c.var.deps;
+  if (!webOrigin || c.req.header('origin') !== webOrigin) {
+    return false;
+  }
+  const site = c.req.header('sec-fetch-site');
+  if (site !== undefined && site !== 'same-origin') {
+    return false;
+  }
+  return WEB_CLIENT.test(c.req.header('cityturfer-client')?.trim() ?? '');
+}
+
+/** Tells the browser to drop the session cookie (`Max-Age=0`, the same attributes). */
+export function clearSessionCookie(c: Context<AppEnv>): void {
+  deleteCookie(c, SESSION_COOKIE, SESSION_COOKIE_ATTRIBUTES);
+}
+
 /**
  * Route middleware for every protected route: runs **before** validation, so a request without a
- * valid token gets 401 and learns nothing about the schema.
+ * valid credential gets 401 and learns nothing about the schema. The credential is
+ * `Authorization: Bearer …` (phones, device tokens; wins when both are sent) or the
+ * `__Host-ct_session` cookie (browsers; then the CSRF guard for unsafe methods). Only principals
+ * of the `user` realm pass.
  */
-export const requireBearer: MiddlewareHandler<AppEnv> = async (c, next) => {
-  const header = c.req.header('authorization') ?? '';
-  const match = /^Bearer\s+(\S+)$/i.exec(header);
-  if (!match) {
-    return problem(c, 'auth.missing', 'Send Authorization: Bearer <token>.', {
+export const requireCaller: MiddlewareHandler<AppEnv> = async (c, next) => {
+  const header = c.req.header('authorization');
+  const bearer = header ? /^Bearer\s+(\S+)$/i.exec(header)?.[1] : undefined;
+  const cookie = header ? undefined : getCookie(c, SESSION_COOKIE) || undefined;
+  if (!bearer && !cookie) {
+    return problem(c, 'auth.missing', 'Send Authorization: Bearer <token>, or sign in on the website.', {
       headers: { 'WWW-Authenticate': 'Bearer' },
     });
   }
+  const credential: Credential = bearer ? 'bearer' : 'cookie';
+  if (credential === 'cookie' && UNSAFE_METHODS.has(c.req.method) && !isFromWebsite(c)) {
+    return problem(c, 'auth.csrf', "Changes with the session cookie need the website's Origin and client header.");
+  }
   let principal;
   try {
-    principal = await c.var.deps.auth.verify(match[1]);
+    principal = await c.var.deps.auth.verify((bearer ?? cookie)!, credential);
   } catch {
     // Session tokens are checked in the database: when it does not answer, say so (not 401).
     return problem(c, 'storage.unavailable', 'The database did not answer: retry later.');
   }
-  if (!principal) {
+  if (!principal || principal.realm !== 'user') {
+    if (credential === 'cookie') {
+      clearSessionCookie(c);
+    }
     return problem(c, 'auth.invalid', undefined, {
       headers: { 'WWW-Authenticate': 'Bearer error="invalid_token"' },
     });
   }
-  c.set('principal', principal);
+  c.set('principal', { ...principal, credential });
   return next();
+};
+
+/**
+ * Personal answers are never cached, by the browser (shared computers, the back button) or an edge
+ * (the website's `/api/v1/*` rewrite): `Cache-Control: private, no-store` unless the route set its
+ * own (tracks keep `private, no-cache` + ETag), and always `Vary: Cookie, Authorization`.
+ */
+export const personalCaching: MiddlewareHandler<AppEnv> = async (c, next) => {
+  await next();
+  const headers = c.res.headers;
+  if (!headers.has('cache-control')) {
+    headers.set('Cache-Control', 'private, no-store');
+  }
+  const vary = (headers.get('vary') ?? '')
+    .split(',')
+    .map((v) => v.trim())
+    .filter(Boolean);
+  for (const name of ['Cookie', 'Authorization']) {
+    if (!vary.some((v) => v.toLowerCase() === name.toLowerCase() || v === '*')) {
+      vary.push(name);
+    }
+  }
+  headers.set('Vary', vary.join(', '));
 };
 
 /** Users already upserted by this function instance (one write per user per cold start). */
@@ -158,7 +222,7 @@ export function forgetUser(store: object, userId: string): void {
 }
 
 /**
- * Route middleware for live data routes, after `requireBearer`: a verified principal (else 401),
+ * Route middleware for live data routes, after `requireCaller`: a verified principal (else 401),
  * a configured database (else 503 `storage.unavailable`), and the user row (created on first sight).
  */
 export const requireStore: MiddlewareHandler<AppEnv> = async (c, next) => {

@@ -13,9 +13,10 @@ A plausible "works" that no device has confirmed is the failure you exist to pre
 
 **You own** `apps/mobile/e2e/`, `apps/mobile/src/test-support/`, the fixtures and replay scripts in
 `apps/mobile/tools/` (`gen-route.mjs`, `route-stats.mjs`, `sim-location.sh`, the diagnose tools) and
-`docs/quality/`. Implementers write the unit tests for their own code; you add the bug repros, the
-integration tests and the E2E flows. **You hand off** app bugs you find to their owner (the
-`add-feature` skill, §2) with a failing test.
+`docs/quality/e2e.md`. Implementers write the unit tests for their own code; you add the bug repros,
+the integration tests and the E2E flows. **You hand off** app bugs you find to their owner (the
+`add-feature` skill, §2) with a failing test, and release QA (the charter and the smoke test) to
+`qa-engineer`.
 
 ## Read first
 

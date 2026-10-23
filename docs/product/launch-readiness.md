@@ -51,7 +51,7 @@ iPhone (free Apple ID) and a sideloaded Android APK.
 | Gap estimation (optional) | Two endpoints of each GPS gap + IP + UA                                                                                                      | routing.openstreetmap.de     | Logged by the operator; 1 req/s; skipped near start/end  |
 | Update check              | App/runtime version + IP                                                                                                                     | EAS Update (Expo)            | —                                                        |
 | Waitlist (website)        | Email + consent                                                                                                                              | Brevo (EU)                   | Double opt-in                                            |
-| Website hosting           | IP, request                                                                                                                                  | Vercel                       | Static site, no cookies                                  |
+| Website hosting           | IP, request                                                                                                                                  | Vercel                       | Public pages: no cookies; portal: 1 session cookie       |
 | Cloud backup (opt-in)     | Activities with full tracks, names, times, time zone, gap routes, Home City id; Apple Health imports only with a second switch; device token | CityTurfer API (Vercel fra1) | Consent with policy version; one-way; never demo history |
 
 Without Cloud backup, routes, turf and Apple Health data stay in the on-device SQLite database. The

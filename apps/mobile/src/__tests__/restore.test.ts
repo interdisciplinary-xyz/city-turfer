@@ -11,6 +11,11 @@ import type { TrackPoint } from '@/shared-kernel';
 import { DAY, phone, type PhoneContainer, T0, walk } from '@/test-support/backup-phone';
 import { loadFixes } from '@/test-support/fixtures';
 
+// Two phones on real SQLite and several backup runs: about 4 s for the whole file locally, but over
+// 5 s for one test on a 2-core CI runner while turbo builds every workspace (including the admin's
+// Payload build) beside it. A generous limit, as apps/api's vitest config has for PGlite.
+jest.setTimeout(30_000);
+
 /** 2 km of walking with a 5-minute, 300 m GPS gap in the middle (far from start and end). */
 function gappyWalk(): TrackPoint[] {
   const start = T0 + 9 * DAY;

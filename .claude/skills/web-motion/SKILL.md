@@ -13,9 +13,11 @@ motion rules follow. Both the `web-engineer` and the `mobile-reviewer` work from
 
 ## Site ground rules
 
-- **Static export** (`output: 'export'` in production): no API routes, server actions, cookies,
-  analytics or third-party scripts. Nothing dev-only (dev toolbar, test URLs) and no secrets in
-  `apps/web/out`.
+- **Static export** (`output: 'export'` in production): no API routes, server actions, analytics or
+  third-party scripts. Public pages set no cookies and make no API calls; only the signed-in portal
+  under `/[locale]/account` uses one strictly necessary session cookie, through the `/api/v1` route
+  in `apps/web/vercel.json` (`docs/decisions/web-portal-2026-10-22.md`). Nothing dev-only (dev
+  toolbar, test URLs) and no secrets in `apps/web/out`.
 - **Copy** lives in `apps/web/messages/en.json` and `pl.json` with identical keys; never hard-code
   user-facing text. Polish is a real translation, not a calque. The wording is the
   `brand-designer`'s; the `web-engineer` adds keys and wires them.

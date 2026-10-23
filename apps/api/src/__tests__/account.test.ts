@@ -608,7 +608,13 @@ describe('passwords', () => {
     expect(signed.status).toBe(200);
     expect(signed.headers.get('cache-control')).toBe('no-store');
     const session = await signed.json();
-    expect(session).toEqual({ token: expect.any(String), expiresAt: expect.any(String), user: { id, email: ANIA } });
+    expect(session).toEqual({
+      token: expect.any(String),
+      client: 'phone',
+      expiresAt: expect.any(String),
+      absoluteExpiresAt: null,
+      user: { id, email: ANIA },
+    });
     expect(await me(session.token)).toMatchObject({ id });
     // The code sign-in keeps working beside it.
     h.clock.t += 10 * MINUTE;

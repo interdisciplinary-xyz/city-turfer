@@ -104,7 +104,8 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   folder to the iOS PoC, background tracking fix
 - ✅ [`sessions/v0.10.0.md`](sessions/v0.10.0.md): Session log v0.10.0 — cut from main at the v0.9.0
   release; versions pinned to 0.10.0; carries the checks v0.9.0 shipped without (Maestro, device,
-  browser, API deploy) and its follow-ups
+  browser, API deploy) and its follow-ups; light site, Street Plate type (native), account settings
+  (API 0.5.0), portals in progress
 - 🕰️ [`sessions/v0.2.0.md`](sessions/v0.2.0.md): Session log v0.2.0 through the Me menu and
   achievements; predates the Dashboard, Me drawer and login rename (PRs 23–25) and still says
   app.json is unpinned (pinned in f04bcf3)
@@ -151,6 +152,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   contract — the phone pushes Activities (versions, ETags, If-Match, tombstones) and pulls one
   changes feed; route table, sync protocol, error catalogue and the founder's decisions D1–D13;
   supersedes the route table of api-2026-10-20.md
+- ✅ [`decisions/api-web-sessions-2026-10-22.md`](decisions/api-web-sessions-2026-10-22.md): Browser
+  sessions for the web portal (contract 0.5.0) — an HttpOnly cookie on the website's /api/v1 rewrite
+  instead of a token in the page, requireCaller (bearer or cookie, realm user), the CSRF guard,
+  14/30-day and 8-hour lifetimes, signed-in devices, and the no-store caching default
 - ✅ [`decisions/apple-health-2026-10-18.md`](decisions/apple-health-2026-10-18.md): v0.4.0
   integrates Apple Health — a Health Sync context imports walks, hikes, runs and rides with routes
   (full history) as Activities that claim turf, and saves recordings to Health with routes
@@ -178,6 +183,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`decisions/monorepo-turborepo-2026-10-18.md`](decisions/monorepo-turborepo-2026-10-18.md):
   v0.3.0 moves the repo to a pnpm + Turborepo monorepo — apps/mobile (Expo), apps/web (Next.js
   landing page), packages/brand and packages/config — in three PRs
+- ✅ [`decisions/web-portal-2026-10-22.md`](decisions/web-portal-2026-10-22.md): Web portal Slice 0
+  (trust page) — signed-in pages inside apps/web under /[locale]/account, static export kept,
+  browser sessions by cookie (14 days sliding, 30 days absolute, 8 h on a shared computer),
+  read-only apart from account actions; map and activities later
 
 ## Live plans
 
