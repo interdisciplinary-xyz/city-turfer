@@ -277,7 +277,7 @@ describe('turf backfill', () => {
     hollow.catchUpTurf = () => Promise.resolve({ claimed: 0, deferred: 0, skipped: 1, gone: false });
     expect(await backfillTurf({ store: h.store, backup: hollow })).toMatchObject({
       claimed: 0,
-      skipped: 1,
+      skipped: 2,
       remaining: 2,
       stopped: 'done',
     });
@@ -290,6 +290,33 @@ describe('turf backfill', () => {
     };
     await backfillTurf({ store: h.store, backup: liar });
     expect(attempts).toBe(2);
+  });
+
+  it('a claim that saves nothing is passed over, so it never holds back newer activities', async () => {
+    await uploads(TOKENS.admin, 3);
+    await forgetTurf();
+    // The oldest activity saves no claim (offset 0); the rest claim normally.
+    const offsets: number[] = [];
+    const stuck = service();
+    const real = stuck.catchUpTurf.bind(stuck);
+    stuck.catchUpTurf = (userId, limit, offset = 0) => {
+      offsets.push(offset);
+      return offset === 0
+        ? Promise.resolve({ claimed: 0, deferred: 0, skipped: 1, gone: false })
+        : real(userId, limit, offset);
+    };
+    for (let run = 0; run < 2; run++) {
+      offsets.length = 0;
+      expect(await backfillTurf({ store: h.store, backup: stuck })).toMatchObject({
+        claimed: run === 0 ? 2 : 0,
+        skipped: 1,
+        remaining: 1,
+        stopped: 'done',
+      });
+      expect(offsets).toEqual(run === 0 ? [0, 1, 1] : [0]);
+    }
+    const claimed = await rows<{ id: string }>(sql`SELECT activity_id AS id FROM turf_claims ORDER BY 1`);
+    expect(claimed.map((r) => r.id)).toEqual(['a1', 'a2']);
   });
 
   it('never re-creates an account erased between the backlog and the catch-up', async () => {
