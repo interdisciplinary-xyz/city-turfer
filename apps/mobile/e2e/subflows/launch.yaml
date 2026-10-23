@@ -10,10 +10,11 @@ appId: com.turftrack.poc
     when: { true: '${!DEV_URL}' }
     commands:
       - launchApp: { stopApp: false }
-- extendedWaitUntil: { visible: 'Sign in|Start .*|Continue|Hello, .*', timeout: 60000 }
+- extendedWaitUntil:
+    { visible: 'Sign in|Zaloguj się|Start .*|Zacznij .*|Continue|Dalej|Hello, .*|Cześć.*', timeout: 60000 }
 - runFlow:
-    when: { visible: 'Continue' }
-    commands: [{ tapOn: 'Continue' }]
+    when: { visible: 'Continue|Dalej' }
+    commands: [{ tapOn: 'Continue|Dalej' }]
 # Dev builds can open the Expo dev menu over the app (Android on its first launch; iOS too after
 # some launches), and it swallows taps. Android closes it with Back, iOS with its Close button.
 - runFlow:

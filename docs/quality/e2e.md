@@ -30,26 +30,28 @@ none; the audit enforces this. Gaps are listed honestly in section 3.
 | CP-10 | Home City: pick a city (accent-free search) from Me and from the Record tab, Turf Map chip, clear it                                                        | `12-home-city`                      | Chip asserted; camera position checked by screenshot only                                                                        |
 | CP-11 | Record tab turf toggle: on by default, hides and shows the turf, remembered, available while recording                                                      | `13-record-turf`                    | Toggle state asserted; the turf on the map checked by screenshot only                                                            |
 | CP-12 | Account tab: with a code-signed-in account, rename (header shows it), change email, set the account password (breached refused), sign in with it, remove it | `15-account-settings`               | Needs the API dev server (`AUTH_FIXED_CODE`); not run on a device yet; about 2 min waiting out the 1-step-up-code-a-minute limit |
+| CP-13 | Language setting: Polish on Info, Dashboard, Stats and Record, survives a restart, System brings English back (always left on System)                       | `16-language`                       | Simulator only; plural forms and long Polish words checked by screenshot                                                         |
 
 ## 2. Flow inventory
 
-| Flow                      | Tag(s)                | Purpose                                                                  |
-| ------------------------- | --------------------- | ------------------------------------------------------------------------ |
-| `01-auth`                 | auth                  | Wrong password rejected, demo account accepted, session persists         |
-| `02-record-run`           | recording             | Live distance grows, pause/resume, finish, turf gained                   |
-| `03-background-recording` | recording, background | Home button, simulated 220 m walk, distance grew after foregrounding     |
-| `04-too-short`            | recording             | Fewer than 2 points: finish refused, Discard offered                     |
-| `05-history-detail`       | history               | Recent activities, See all, detail stats and turf gained                 |
-| `06-turf-map`             | turf                  | Demo history seeds turf; summary and type filters                        |
-| `07-delete-activity`      | history               | Delete confirmation, row disappears from History                         |
-| `09-me-menu`              | me                    | Drawer items, tap outside closes, Profile and Achievements               |
-| `10-dashboard`            | dashboard             | Greeting, week distance, recent item, achievements, Stats to History     |
-| `11-apple-health`         | health                | iOS: connect Health, seed sample workouts, import 3 with routes          |
-| `12-home-city`            | turf                  | Pick, change and clear the Home City from Me and the Record tab          |
-| `13-record-turf`          | recording, turf       | Record tab turf toggle: default on, remembered, works while recording    |
-| `14-rename-activity`      | history               | Rename from the detail screen: empty name refused, new name in History   |
-| `15-account-settings`     | account               | Live API: rename, change email, set/breached/use/remove account password |
-| `08-sign-out`             | auth                  | Sign out returns to sign-in. Runs last because it ends the session       |
+| Flow                      | Tag(s)                | Purpose                                                                                           |
+| ------------------------- | --------------------- | ------------------------------------------------------------------------------------------------- |
+| `01-auth`                 | auth                  | Wrong password rejected, demo account accepted, session persists                                  |
+| `02-record-run`           | recording             | Live distance grows, pause/resume, finish, turf gained                                            |
+| `03-background-recording` | recording, background | Home button, simulated 220 m walk, distance grew after foregrounding                              |
+| `04-too-short`            | recording             | Fewer than 2 points: finish refused, Discard offered                                              |
+| `05-history-detail`       | history               | Recent activities, See all, detail stats and turf gained                                          |
+| `06-turf-map`             | turf                  | Demo history seeds turf; summary and type filters                                                 |
+| `07-delete-activity`      | history               | Delete confirmation, row disappears from History                                                  |
+| `09-me-menu`              | me                    | Drawer items, tap outside closes, Profile and Achievements                                        |
+| `10-dashboard`            | dashboard             | Greeting, week distance, recent item, achievements, Stats to History                              |
+| `11-apple-health`         | health                | iOS: connect Health, seed sample workouts, import 3 with routes                                   |
+| `12-home-city`            | turf                  | Pick, change and clear the Home City from Me and the Record tab                                   |
+| `13-record-turf`          | recording, turf       | Record tab turf toggle: default on, remembered, works while recording                             |
+| `14-rename-activity`      | history               | Rename from the detail screen: empty name refused, new name in History                            |
+| `15-account-settings`     | account               | Live API: rename, change email, set/breached/use/remove account password                          |
+| `16-language`             | me                    | Language setting: Polish on Info/Dashboard/Stats/Record, restart keeps it, System returns English |
+| `08-sign-out`             | auth                  | Sign out returns to sign-in. Runs last because it ends the session                                |
 
 Allowed tags are fixed in `apps/mobile/tools/e2e/audit.mjs`
 (`auth recording background history turf me dashboard health account`). Subflows in
