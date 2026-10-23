@@ -13,6 +13,7 @@ import {
   type ActivityRenamed,
   type ActivityTrackCorrected,
   createActivityLogApi,
+  type DefaultNameWords,
   type GapRoutingEnvironment,
   type RouteEstimator,
 } from '@/contexts/activity-log';
@@ -58,6 +59,11 @@ export interface DeviceAdapters {
   cloudBackup?: CloudBackupAdapters;
   /** The device's IANA time zone now (kept with each new Activity). Omitted: unknown. */
   timeZone?: () => string | null;
+  /**
+   * Words of a new Activity's default name in the language active at creation (recordings, Apple
+   * Health and demo imports). Omitted: core's English.
+   */
+  defaultNameWords?: () => DefaultNameWords | Promise<DefaultNameWords>;
   clock?: Clock;
 }
 
@@ -147,6 +153,7 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     clock,
     afterCommit,
     timeZone: a.timeZone,
+    defaultNameWords: a.defaultNameWords,
   });
 
   const territory = createTerritoryApi({

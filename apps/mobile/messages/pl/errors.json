@@ -1,0 +1,51 @@
+{
+  "generic": "Coś poszło nie tak. Spróbuj ponownie.",
+  "invalidCode": "Ten kod jest błędny albo wygasł. Sprawdź najnowszą wiadomość albo wyślij nowy kod.",
+  "invalidEmail": "To nie wygląda na adres e-mail.",
+  "field": {
+    "displayNameTooLong": "Maksymalnie {max} znaków.",
+    "displayNameInvalid": "To imię ma znaki, których nie umiemy pokazać.",
+    "emailInvalid": "To nie wygląda na adres e-mail.",
+    "emailUnchanged": "To już jest Twój adres e-mail.",
+    "passwordTooShort": "Użyj co najmniej {min} znaków.",
+    "passwordTooLong": "Użyj najwyżej {max} znaków."
+  },
+  "emailTaken": "Ten adres e-mail ma już konto w CityTurfer. Użyj innego.",
+  "emailCodeInvalid": "Ten kod jest błędny albo wygasł. Sprawdź najnowszą wiadomość na adres {email} albo zacznij od nowa.",
+  "passwordBreached": "To hasło jest na listach wyciekniętych haseł, więc łatwo je odgadnąć. Wybierz inne.",
+  "accountOffline": "Brak połączenia. Zmiana danych konta wymaga internetu; nic nie zostało zmienione.",
+  "signInOffline": "Brak połączenia. Logowanie wymaga internetu tylko raz; potem aplikacja działa offline.",
+  "rateLimited": "Za dużo prób. Odczekaj kilka minut i spróbuj ponownie.",
+  "rateLimitedSeconds": "Za dużo prób. Odczekaj {count, plural, one {# sekundę} few {# sekundy} many {# sekund} other {# sekundy}} i spróbuj ponownie.",
+  "rateLimitedMinutes": "Za dużo prób. Odczekaj {count, plural, one {# minutę} few {# minuty} many {# minut} other {# minuty}} i spróbuj ponownie.",
+  "rateLimitedHours": "Za dużo prób. Odczekaj {count, plural, one {# godzinę} few {# godziny} many {# godzin} other {# godziny}} i spróbuj ponownie.",
+  "signedOut": "Ten telefon nie jest już zalogowany do Twojego konta. Wyloguj się, a potem zaloguj adresem e-mail.",
+  "server": "Nasz serwer miał chwilową czkawkę. Spróbuj ponownie za chwilę.",
+  "accountsUnavailable": "Logowanie do konta nie jest dostępne w tej wersji aplikacji.",
+  "wrongPassword": "Błędny e-mail lub hasło.",
+  "wrongChosenPassword": "Błędny e-mail lub hasło. Nie masz jeszcze hasła do konta? Zaloguj się kodem z e-maila, a potem ustaw je w menu Ja › Konto.",
+  "tookLongPassword": "To trwało zbyt długo. Zaloguj się ponownie.",
+  "tookLongCode": "To trwało zbyt długo. Wyślij nowy kod i zaloguj się ponownie.",
+  "linkedToAccount": "Historia z tego telefonu należy teraz do Twojego konta CityTurfer. Zaloguj się adresem e-mail tego konta.",
+  "backup": {
+    "no-token": "Zaloguj się adresem e-mail, aby tworzyć kopię zapasową.",
+    "auth": "Twoje logowanie wygasło. Zaloguj się ponownie, aby dalej tworzyć kopię.",
+    "consent": "Serwer nie ma jeszcze Twojej zgody na kopię. Wyłącz kopię zapasową i włącz ją ponownie.",
+    "offline": "Brak połączenia. Kopia ruszy dalej, gdy będziesz online.",
+    "server": "Serwer miał chwilową czkawkę. Spróbujemy ponownie za moment.",
+    "not-ready": "Serwer kopii nie jest jeszcze gotowy. Twoje aktywności bezpiecznie czekają na tym telefonie.",
+    "busy": "Serwer jest zajęty. Spróbujemy ponownie za chwilę.",
+    "outdated": "Zaktualizuj CityTurfer, aby dalej tworzyć kopię zapasową.",
+    "not-available": "Konto demo zostaje na tym telefonie: nigdy nie trafia do kopii.",
+    "needs-device-token": "Serwer testowy wymaga tokenu urządzenia. Dodaj go w Narzędziach dewelopera albo wróć do wbudowanego serwera."
+  },
+  "backupOffPending": "Kopia zapasowa jest wyłączona. Damy znać serwerowi, gdy następnym razem będziesz online.",
+  "backupWaitingForRestore": "Najpierw przywracamy Twoją kopię. Tworzenie kopii ruszy, gdy to się skończy.",
+  "backupAction": {
+    "invalid-token": "To nie wygląda na token urządzenia. Wklej go ponownie.",
+    "invalid-server-url": "Podaj pełny adres zaczynający się od https:// (albo http:// we własnej sieci).",
+    "on": "Najpierw wyłącz kopię zapasową.",
+    "off": "Najpierw włącz kopię zapasową.",
+    "withdrawal-pending": "Serwer nie usunął jeszcze Twojej kopii. Spróbuj ponownie, gdy będziesz online."
+  }
+}

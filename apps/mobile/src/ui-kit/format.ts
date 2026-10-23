@@ -1,5 +1,7 @@
 // The language state only (no React, no secure store), so format stays pure and Jest-importable.
 import { currentDateLocale, currentLocale } from '@/i18n/language-state';
+import type { Locale } from '@/i18n/locales';
+import { translator } from '@/i18n/translator';
 import { type ActivityType, usesPace } from '@/shared-kernel';
 
 /*
@@ -124,5 +126,23 @@ export function formatDay(ms: number, locale: string = currentDateLocale()): str
   return dateFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' }, 'day').format(new Date(ms));
 }
 
-/** The name to show for the signed-in Turfer: their chosen name, or "You" (never an id or an email). */
-export const shownName = (user: { name?: string | null } | null | undefined): string => user?.name || 'You';
+/** A day and month in digits, e.g. "10/22" (en-US), "22/10" (en-GB) or "22.10" (pl): week labels on Stats. */
+export function formatDayMonth(ms: number, locale: string = currentDateLocale()): string {
+  return dateFormat(locale, { day: 'numeric', month: 'numeric' }, 'dayMonth').format(new Date(ms));
+}
+
+/** Day, month, year and time, e.g. "Oct 22, 2026, 09:15 AM" (en-US) or "22 paź 2026, 09:15" (pl). */
+export function formatDateTime(ms: number, locale: string = currentDateLocale()): string {
+  return dateFormat(
+    locale,
+    { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' },
+    'dateTime'
+  ).format(new Date(ms));
+}
+
+/**
+ * The name to show for the signed-in Turfer: their chosen name, or "You" in the app language
+ * (never an id or an email). Callers re-render on a language change through their own `useT`.
+ */
+export const shownName = (user: { name?: string | null } | null | undefined, locale?: Locale): string =>
+  user?.name || translator('me', locale)('you');

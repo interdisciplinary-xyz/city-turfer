@@ -5,6 +5,8 @@
 import type { WorkoutProxyTyped as WorkoutProxy } from '@kingstinct/react-native-healthkit';
 import { Platform } from 'react-native';
 
+import { DomainError } from '@/shared-kernel';
+
 import type { HealthStore } from '../application/ports';
 import type { HealthRoutePoint, HealthWorkout, HealthWorkoutKind, HealthWorkoutToSave } from '../domain/health-workout';
 
@@ -61,7 +63,7 @@ export class HealthKitHealthStore implements HealthStore {
 
   private kit(): HealthKit {
     if (!this.hk) {
-      throw new Error('Apple Health is not available');
+      throw new DomainError('health.unavailable');
     }
     return this.hk;
   }

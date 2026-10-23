@@ -1,19 +1,17 @@
-import { NAME, RADIUS, SPACE, TAGLINE } from '@cityturfer/brand';
-import * as Location from 'expo-location';
+import { NAME, RADIUS, SPACE } from '@cityturfer/brand';
 import * as Updates from 'expo-updates';
 import { useRef, useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { ACCENT } from '@/constants/colors';
 import { useGapEstimationSetting } from '@/contexts/activity-log/ui/hooks';
 import { BackupDeveloperCard } from '@/contexts/cloud-backup/ui/backup-developer-card';
 import { CloudBackupCard } from '@/contexts/cloud-backup/ui/cloud-backup-card';
 import { AppleHealthCard } from '@/contexts/health-sync/ui/apple-health-card';
-import { removeDemoHistory, seedDemoHistory } from '@/dev/demo-history';
-import { seedHealthWorkouts } from '@/dev/health-seed';
+import { announceDeveloperTools, DeveloperToolsCard } from '@/dev/developer-tools';
 import { LANGUAGE_SETTINGS, type LanguageSetting, type Locale, useLanguageSetting, useT } from '@/i18n';
-import { useContainer } from '@/ui-kit/app-context';
 import { Button, Card, tint } from '@/ui-kit/components';
+import { formatDateTime } from '@/ui-kit/format';
 import { AppSymbol } from '@/ui-kit/symbol';
 import { usePalette } from '@/ui-kit/theme';
 
@@ -74,172 +72,94 @@ function LanguageCard() {
   );
 }
 
+/** What the update button shows: its label, a check running, or the check found nothing new. */
+type UpdateCheck = 'idle' | 'checking' | 'upToDate';
+
 export default function InfoScreen() {
   const p = usePalette();
-  const c = useContainer();
-  const [seeding, setSeeding] = useState<string | null>(null);
+  const t = useT('info');
+  const tc = useT('common');
   const [devUnlocked, setDevUnlocked] = useState(false);
   const taps = useRef(0);
   const showDevTools = __DEV__ || devUnlocked;
-  const [checking, setChecking] = useState<string | null>(null);
+  const [check, setCheck] = useState<UpdateCheck>('idle');
   const [estimateGaps, setEstimateGaps] = useGapEstimationSetting();
-
-  const seed = async () => {
-    try {
-      setSeeding('Finding your location…');
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      const n = await seedDemoHistory(c, { lat: pos.coords.latitude, lon: pos.coords.longitude }, 90, (d, t) =>
-        setSeeding(`Importing ${d}/${t}…`)
-      );
-      Alert.alert('Demo history added', `${n} activities around your location. Open the Turf tab.`);
-    } catch (e) {
-      Alert.alert('Could not seed', String((e as Error).message ?? e));
-    } finally {
-      setSeeding(null);
-    }
-  };
-
-  const seedHealth = async () => {
-    try {
-      setSeeding('Writing to Apple Health…');
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      const n = await seedHealthWorkouts({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-      Alert.alert('Health workouts added', `${n} workouts with routes are in Apple Health. Tap Import now.`);
-    } catch (e) {
-      Alert.alert('Could not seed Health', String((e as Error).message ?? e));
-    } finally {
-      setSeeding(null);
-    }
-  };
-
-  const removeDemo = () =>
-    Alert.alert('Remove demo data?', 'Deletes all demo activities and releases the turf they claimed.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            setSeeding('Removing demo data…');
-            const n = await removeDemoHistory(c);
-            Alert.alert('Demo data removed', `${n} demo activities deleted.`);
-          } catch (e) {
-            Alert.alert('Could not remove', String((e as Error).message ?? e));
-          } finally {
-            setSeeding(null);
-          }
-        },
-      },
-    ]);
 
   const onVersionLongPress = () => {
     if (++taps.current >= DEV_TAPS && !devUnlocked) {
       setDevUnlocked(true);
-      Alert.alert('Developer tools', 'Developer tools are now visible on this screen.');
+      announceDeveloperTools();
     }
   };
 
   const checkForUpdates = async () => {
     try {
-      setChecking('Checking…');
+      setCheck('checking');
       const r = await Updates.checkForUpdateAsync();
       if (!r.isAvailable) {
-        setChecking('Up to date');
+        setCheck('upToDate');
         return;
       }
       await Updates.fetchUpdateAsync();
       await Updates.reloadAsync();
-    } catch (e) {
-      Alert.alert('Update failed', String((e as Error).message ?? e));
-      setChecking(null);
+    } catch {
+      Alert.alert(t('updateFailedTitle'), t('updateFailedBody'));
+      setCheck('idle');
     }
   };
+
+  const versionLine = t('versionLine', {
+    id: Updates.updateId?.slice(0, 8) ?? 'embedded',
+    created: Updates.createdAt ? formatDateTime(Updates.createdAt.getTime()) : 'builtIn',
+    channel: Updates.channel || 'none',
+  });
 
   return (
     <ScrollView style={{ backgroundColor: p.bg }} contentContainerStyle={{ padding: SPACE.lg, gap: 14 }}>
       <Card style={{ gap: 8 }}>
-        <Text style={[s.h2, { color: p.text }]}>App version</Text>
+        <Text style={[s.h2, { color: p.text }]}>{t('appVersion')}</Text>
         <Pressable testID='app-version-press' accessibilityRole='text' onLongPress={onVersionLongPress}>
           <Text testID='app-version' style={{ color: p.muted, fontSize: 13 }}>
-            {Updates.isEnabled
-              ? `Update ${Updates.updateId?.slice(0, 8) ?? 'embedded'} · ${Updates.createdAt ? Updates.createdAt.toLocaleString() : 'built in'}${Updates.channel ? ` · ${Updates.channel}` : ''}`
-              : 'Development build (updates come from Metro)'}
+            {Updates.isEnabled ? versionLine : t('developmentBuild')}
           </Text>
         </Pressable>
         {Updates.isEnabled && (
           <Button
             testID='check-updates'
-            label={checking ?? 'Check for updates'}
+            label={t(check === 'idle' ? 'checkForUpdates' : check)}
             color={p.border}
             textColor={p.text}
-            busy={checking === 'Checking…'}
+            busy={check === 'checking'}
             onPress={checkForUpdates}
           />
         )}
       </Card>
       <Card style={{ gap: 8 }}>
-        <Text style={[s.h2, { color: p.text }]}>Your data</Text>
-        <Text style={{ color: p.muted }}>
-          Activities and turf live on this phone; they reach our server only if you turn on Cloud backup below. When GPS
-          drops out, just the two ends of the gap are sent to the OpenStreetMap router to estimate the street route —
-          never your whole track.
-        </Text>
+        <Text style={[s.h2, { color: p.text }]}>{t('yourData')}</Text>
+        <Text style={{ color: p.muted }}>{t('yourDataBody')}</Text>
         <View style={s.row}>
-          <Text style={[s.label, { color: p.text }]}>Estimate GPS gaps along streets</Text>
+          <Text style={[s.label, { color: p.text }]}>{t('estimateGaps')}</Text>
           <Switch
             testID='estimate-gaps-switch'
-            accessibilityLabel='Estimate GPS gaps along streets'
+            accessibilityRole='switch'
+            accessibilityLabel={t('estimateGaps')}
+            accessibilityState={{ checked: estimateGaps ?? false, disabled: estimateGaps == null }}
             value={estimateGaps ?? false}
             disabled={estimateGaps == null}
             onValueChange={(on) =>
-              setEstimateGaps(on).catch((e) => Alert.alert('Could not save', String((e as Error).message ?? e)))
+              setEstimateGaps(on).catch(() => Alert.alert(tc('couldNotSave'), t('settingNotSaved')))
             }
             trackColor={{ true: ACCENT, false: p.border }}
           />
         </View>
-        <Text style={{ color: p.muted, fontSize: 13 }}>
-          Off: no requests leave the phone; gaps stay as dashed straight lines.
-        </Text>
+        <Text style={{ color: p.muted, fontSize: 13 }}>{t('estimateGapsOff')}</Text>
       </Card>
       <AppleHealthCard />
       <CloudBackupCard />
       <LanguageCard />
-      {showDevTools && (
-        <Card style={{ gap: 10 }}>
-          <Text style={[s.h2, { color: p.text }]}>Developer tools</Text>
-          <Text style={{ color: p.muted }}>
-            Generate 90 days of walks, runs and rides around your current location to preview the Turf map.
-          </Text>
-          <Button
-            testID='seed-demo'
-            label={seeding ?? 'Seed demo history'}
-            color={p.border}
-            textColor={p.text}
-            onPress={seed}
-            busy={!!seeding}
-          />
-          {Platform.OS === 'ios' && (
-            <Button
-              testID='seed-health'
-              label='Add sample workouts to Apple Health'
-              color={p.border}
-              textColor={p.text}
-              onPress={seedHealth}
-              disabled={!!seeding}
-            />
-          )}
-          <Button
-            testID='remove-demo'
-            label='Remove demo data'
-            color={p.border}
-            textColor={p.danger}
-            onPress={removeDemo}
-            disabled={!!seeding}
-          />
-        </Card>
-      )}
+      {showDevTools && <DeveloperToolsCard />}
       {showDevTools && <BackupDeveloperCard />}
-      <Text style={{ color: p.muted, textAlign: 'center', fontSize: 12 }}>{`${NAME} · ${TAGLINE}`}</Text>
+      <Text style={{ color: p.muted, textAlign: 'center', fontSize: 12 }}>{t('footer', { name: NAME })}</Text>
     </ScrollView>
   );
 }

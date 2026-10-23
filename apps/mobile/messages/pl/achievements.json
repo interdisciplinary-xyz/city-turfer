@@ -1,0 +1,63 @@
+{
+  "title": "Osiągnięcia",
+  "count": "Odblokowano {unlocked} z {total}",
+  "unlocked": "Odblokowane",
+  "notYet": "Jeszcze nie",
+  "progress": {
+    "km": "{current} / {target} km",
+    "cells": "{current} / {count, plural, one {{target} komórka} few {{target} komórki} many {{target} komórek} other {{target} komórki}}",
+    "activities": "{current} / {count, plural, one {{target} aktywność} few {{target} aktywności} many {{target} aktywności} other {{target} aktywności}}",
+    "types": "{current} / {count, plural, one {{target} rodzaj} few {{target} rodzaje} many {{target} rodzajów} other {{target} rodzaju}}"
+  },
+  "badgeLabel": "{title}. {description} {progress}",
+  "card": {
+    "label": "Osiągnięcia, odblokowano {unlocked} z {total}",
+    "labelNext": "Osiągnięcia, odblokowano {unlocked} z {total}. Następne: {next}",
+    "count": "{unlocked} / {total} ›",
+    "next": "Następne: <b>{title}</b> · {description}",
+    "allUnlocked": "Wszystko odblokowane. Jesteś legendą."
+  },
+  "achievementTitle": {
+    "firstSteps": "Pierwsze kroki",
+    "allRounder": "Trzy w jednym",
+    "fiveK": "Piątka",
+    "halfMarathon": "Półmaraton",
+    "halfCenturyRide": "50 na liczniku",
+    "hundredKm": "Klub 100 km",
+    "regular": "W rytmie",
+    "earlyBird": "Ranny ptaszek",
+    "nightOwl": "Nocny marek",
+    "neighbourhood": "Twoja okolica",
+    "turfLord": "Królestwo turfu",
+    "stronghold": "Twierdza"
+  },
+  "achievementDescription": {
+    "firstSteps": "Nagraj swoją pierwszą aktywność.",
+    "allRounder": "Przynajmniej raz idź na spacer, pobiegaj i pojeździj na rowerze.",
+    "fiveK": "Pokonaj 5 km w jednej aktywności.",
+    "halfMarathon": "Przejdź lub przebiegnij 21,1 km za jednym razem.",
+    "halfCenturyRide": "Przejedź na rowerze 50 km za jednym razem.",
+    "hundredKm": "Pokonaj łącznie 100 km.",
+    "regular": "Nagraj 3 aktywności w jednym tygodniu.",
+    "earlyBird": "Rozpocznij aktywność przed 7:00.",
+    "nightOwl": "Rozpocznij aktywność po 22:00.",
+    "neighbourhood": "Zdobądź 100 komórek turfu.",
+    "turfLord": "Zdobądź 1000 komórek turfu.",
+    "stronghold": "Wracaj raz po raz, aż 50 komórek będzie mocnych."
+  },
+  "onboarding": {
+    "title": "Na start",
+    "progressLabel": "{total, plural, one {Ukończono {done} z # kroku} few {Ukończono {done} z # kroków} many {Ukończono {done} z # kroków} other {Ukończono {done} z # kroku}}",
+    "progress": "{done} z {total}",
+    "hideLabel": "Ukryj kartę „Na start”",
+    "hide": "Ukryj",
+    "stepLabel": "{title}, {done, select, yes {zrobione} other {do zrobienia}}"
+  },
+  "onboardingStep": {
+    "firstWalk": "Nagraj swój pierwszy spacer",
+    "seeTurf": "Zobacz swój turf na mapie",
+    "tryAllThree": "Spacer, bieg i przejażdżka",
+    "comeBack": "Wróć na tę samą ulicę",
+    "unlockThree": "Odblokuj 3 osiągnięcia"
+  }
+}

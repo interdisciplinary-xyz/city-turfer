@@ -19,7 +19,7 @@
     "english": "English",
     "polish": "Polski",
     "systemOptionLabel": "Język systemu, teraz {language}",
-    "saveFailed": "Język działa już teraz, ale przy następnym uruchomieniu aplikacji może wrócić poprzedni."
+    "saveFailed": "Nowy język działa od razu, ale przy następnym otwarciu aplikacji może wrócić poprzedni."
   },
   "activityType": {
     "walk": "Spacer",
@@ -27,10 +27,10 @@
     "cycle": "Rower"
   },
   "tier": {
-    "faint": "Blady",
-    "glowing": "Świecący",
-    "strong": "Mocny",
-    "blazing": "Płonący"
+    "faint": "Blade",
+    "glowing": "Świecące",
+    "strong": "Mocne",
+    "blazing": "Płonące"
   },
   "turfLegendTitle": "Siła turfu"
 }

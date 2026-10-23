@@ -1,6 +1,7 @@
 import { FONT_SIZE, FONT_WEIGHT, LABEL_TRACKING, SPACE } from '@cityturfer/brand';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { useT } from '@/i18n';
 import { usePalette } from '@/ui-kit/theme';
 
 import type { SettingsRowProps } from './account-settings.constants';
@@ -11,6 +12,8 @@ import type { SettingsRowProps } from './account-settings.constants';
  */
 export function SettingsRow({ label, value, testID, onPress, disabled, accessibilityHint, divider }: SettingsRowProps) {
   const p = usePalette();
+  const t = useT('account');
+  const a11yLabel = t('rowLabel', { label, value });
   const body = (
     <View style={s.text}>
       <Text style={[s.key, { color: p.muted }]}>{label}</Text>
@@ -20,7 +23,7 @@ export function SettingsRow({ label, value, testID, onPress, disabled, accessibi
   const line = divider ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: p.border } : null;
   if (!onPress) {
     return (
-      <View testID={testID} accessible accessibilityLabel={`${label}: ${value}`} style={[s.row, line]}>
+      <View testID={testID} accessible accessibilityLabel={a11yLabel} style={[s.row, line]}>
         {body}
       </View>
     );
@@ -29,7 +32,7 @@ export function SettingsRow({ label, value, testID, onPress, disabled, accessibi
     <Pressable
       testID={testID}
       accessibilityRole='button'
-      accessibilityLabel={`${label}: ${value}`}
+      accessibilityLabel={a11yLabel}
       accessibilityHint={disabled ? undefined : accessibilityHint}
       accessibilityState={{ disabled: !!disabled }}
       disabled={disabled}

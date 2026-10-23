@@ -1,4 +1,4 @@
-import { INVALID_CODE, PASSWORD_COPY } from '../account-settings.constants';
+import { INVALID_CODE } from '../account-settings.constants';
 import { afterPasswordSave, afterPasswordStepUp, passwordActionFor, savePassword } from '../password-steps';
 
 describe('account password: set, change or remove', () => {
@@ -34,7 +34,7 @@ describe('account password: set, change or remove', () => {
     expect(afterPasswordSave({ kind: 'saved' })).toEqual({ kind: 'go', step: 'done' });
     expect(afterPasswordSave({ kind: 'removed' })).toEqual({ kind: 'go', step: 'done' });
     expect(afterPasswordSave({ kind: 'invalid-code' })).toEqual({ kind: 'error', error: INVALID_CODE });
-    expect(afterPasswordSave({ kind: 'breached' })).toEqual({ kind: 'error', error: PASSWORD_COPY.breached });
+    expect(afterPasswordSave({ kind: 'breached' })).toEqual({ kind: 'error', error: { key: 'passwordBreached' } });
     expect(afterPasswordSave({ kind: 'field-error', code: 'password.too-long' })).toMatchObject({ kind: 'error' });
     expect(afterPasswordSave({ kind: 'not-signed-in' })).toEqual({
       kind: 'refused',

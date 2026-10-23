@@ -1,0 +1,130 @@
+{
+  "row": {
+    "name": "Name",
+    "email": "Email",
+    "password": "Account password",
+    "signIn": "Sign-in",
+    "data": "Data"
+  },
+  "rowLabel": "{label}: {value}",
+  "value": {
+    "notSet": "Not set",
+    "set": "Set",
+    "setOn": "Set · {day}",
+    "needsInternet": "Needs internet",
+    "checking": "Checking…",
+    "createAccount": "Create an account to back up and sign in anywhere",
+    "localProfile": "Local profile on this phone",
+    "codeOnly": "Email code",
+    "codeAndPassword": "Email code · account password",
+    "signInAgain": "Sign in again to change this",
+    "couldNotLoad": "Couldn’t load. Try again"
+  },
+  "hint": {
+    "name": "Changes the name shown in the app",
+    "email": "Starts changing your email",
+    "password": "Opens your account password options"
+  },
+  "retry": "Try again",
+  "gate": {
+    "local": "This is a local profile on this phone, so there’s no account email or password to change.",
+    "noPassword": "There’s no account password to remove. You sign in with an email code."
+  },
+  "name": {
+    "label": "Your name",
+    "local": "Optional. Kept on this phone only.",
+    "account": "Optional. Saved to your CityTurfer account."
+  },
+  "code": {
+    "label": "Code",
+    "resend": "Send a new code",
+    "sendCode": "Send code"
+  },
+  "email": {
+    "intro": "To keep your account safe, we’ll first email a code to your current address, {current}.",
+    "currentSent": "We emailed a 6-digit code to {current}. It works for 10 minutes.",
+    "newLabel": "New email",
+    "newHint": "We’ll email a code there to check it’s yours.",
+    "sendNew": "Send code to new email",
+    "newSent": "We emailed a 6-digit code to {next}. Enter it to finish.",
+    "confirm": "Change email",
+    "restart": "Start again",
+    "done": "Your email is now {next}. Use it to sign in. Other phones and browsers were signed out; we sent a note to your old address."
+  },
+  "password": {
+    "stepUp": "First we’ll email a code to {email}, to check it’s you.",
+    "sent": "We emailed a 6-digit code to {email}. It works for 10 minutes.",
+    "newLabel": "New account password",
+    "newHint": "At least {min} characters. A few words you’ll remember work well.",
+    "show": "Show password",
+    "hide": "Hide password",
+    "actionTitle": "Account password",
+    "actionText": "Change it, or remove it and sign in with email codes only.",
+    "change": "Change password",
+    "remove": "Remove password"
+  },
+  "passwordIntro": {
+    "set": "An account password is optional: you can always sign in with an email code instead.",
+    "change": "Choose a new account password. Email codes keep working too.",
+    "remove": "Without an account password, you sign in with an email code."
+  },
+  "passwordSave": {
+    "set": "Set account password",
+    "change": "Change account password",
+    "remove": "Remove account password"
+  },
+  "passwordDone": {
+    "set": "Your account password is set. Other phones and browsers were signed out.",
+    "change": "Your account password has been changed. Other phones and browsers were signed out.",
+    "remove": "Your account password has been removed. Sign in with an email code from now on."
+  },
+  "screen": {
+    "dataBackedUp": "On this phone, backed up ({backedUp} of {total})",
+    "dataLocal": "Stored on this phone only",
+    "signOut": "Sign out",
+    "export": "Export my data",
+    "delete": "Delete account",
+    "failedTitle": "Something went wrong",
+    "failedText": "Try again in a moment.",
+    "recordingTitle": "Recording in progress",
+    "recordingText": "Finish or discard your recording first.",
+    "unsyncedTitle": "Not everything is backed up",
+    "unsyncedText": "{count, plural, one {# activity has changes that aren't on the server yet. They stay on this phone either way.} other {# activities have changes that aren't on the server yet. They stay on this phone either way.}}",
+    "backUpNow": "Back up now",
+    "signOutAnyway": "Sign out anyway"
+  },
+  "export": {
+    "requestedTitle": "On its way",
+    "requestedText": "We'll email a download link to {email}. It works once, for 24 hours.",
+    "rateLimitedTitle": "Already sent today",
+    "rateLimitedText": "You can ask for one export a day. Check your email for the last link.",
+    "noEmailTitle": "No email address",
+    "noEmailText": "This account has no email to send the link to. Sign in with your email first.",
+    "offlineTitle": "No connection",
+    "offlineText": "Try again when you’re online.",
+    "authTitle": "Signed out on the server",
+    "authText": "Sign in again, then ask for your export.",
+    "notSignedInTitle": "Sign in again",
+    "notSignedInText": "This phone isn’t signed in to your account any more. Sign out, sign in with your email, then ask for your export."
+  },
+  "delete": {
+    "confirmTitle": "Delete your account?",
+    "confirmText": "Your account and everything on our server (backup, consents, exports) is deleted for good. This can’t be undone.",
+    "confirm": "Delete account",
+    "localTitle": "And on this phone?",
+    "localText": "Keep your activities and turf here, or delete them too?",
+    "localTextAdmin": "Keep your activities and turf here, or delete them too? Deleting also removes this phone’s history from before the account (the local admin profile uses the same data).",
+    "keep": "Keep on this phone",
+    "deleteLocal": "Delete from this phone",
+    "authTitle": "Sign in again",
+    "authText": "Your sign-in has expired. Nothing was deleted. Sign out, sign in with your email, then delete your account.",
+    "notSignedInTitle": "Sign in again",
+    "notSignedInText": "This phone isn’t signed in to your account any more. Nothing was deleted. Sign out, sign in with your email, then delete your account.",
+    "localPendingTitle": "Account deleted",
+    "localPendingText": "Your account is deleted. This phone’s copy of your activities couldn’t be deleted just now; CityTurfer deletes it the next time it opens.",
+    "offlineTitle": "No connection",
+    "offlineText": "Nothing was deleted. Try again when you’re online.",
+    "failedTitle": "Could not delete",
+    "failedText": "Nothing was deleted. Try again in a moment."
+  }
+}

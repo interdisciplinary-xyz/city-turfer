@@ -1,0 +1,51 @@
+{
+  "startButton": "{type, select, walk {Start walk} run {Start run} cycle {Start ride} other {Start}}",
+  "hint": "Every street you cover becomes your turf.",
+  "permissionDeniedTitle": "Location needed",
+  "permissionDeniedBody": "Allow location access in Settings so {app} can record your route.",
+  "locationOffTitle": "Location is off",
+  "locationOffBody": "Turn on Location Services to record.",
+  "startFailedTitle": "Could not start",
+  "startFailedBody": "Something went wrong while starting the recording. Try again.",
+  "tooShortTitle": "Too short to save",
+  "tooShortBody": "Move a little further, or discard this recording.",
+  "keepRecording": "Keep recording",
+  "discard": "Discard",
+  "finishTitle": "Finish recording?",
+  "finishBody": "Your route will be saved and its streets added to your turf.",
+  "finish": "Finish",
+  "cityLabel": "City: {city}",
+  "chooseCity": "Choose your city",
+  "cityHint": "Opens the city picker",
+  "yourCity": "Your city",
+  "showTurfLabel": "Show my turf",
+  "turfChip": "Turf",
+  "recenterLabel": "Recenter on my location",
+  "recenter": "Recenter",
+  "status": {
+    "acquiring": "Waiting for GPS…",
+    "paused": "Paused",
+    "autoPaused": "Auto-paused — start moving to resume"
+  },
+  "stat": {
+    "distance": "Distance",
+    "time": "Time",
+    "now": "{type, select, cycle {Speed} other {Pace}}",
+    "average": "{type, select, cycle {Avg speed} other {Avg pace}}"
+  },
+  "resume": "Resume",
+  "pause": "Pause",
+  "finishLabel": "Finish recording",
+  "finishHint": "Press and hold to finish. With a screen reader, double-tap to choose.",
+  "keepHolding": "Keep holding…",
+  "holdToFinish": "Hold to finish",
+  "banner": {
+    "text": "{status, select, recording {Recording {type, select, walk {walk} run {run} cycle {ride} other {activity}}} other {Paused {type, select, walk {walk} run {run} cycle {ride} other {activity}}}} · <num>{distance}</num>",
+    "label": "{status, select, recording {Recording {type, select, walk {Walk} run {Run} cycle {Ride} other {Activity}}} other {Paused {type, select, walk {Walk} run {Run} cycle {Ride} other {Activity}}}}, {distance}. Open Record.",
+    "open": "Open ›"
+  },
+  "notification": {
+    "title": "{type, select, walk {Recording your walk} run {Recording your run} cycle {Recording your ride} other {Recording your activity}}",
+    "body": "{app} is claiming your streets. Tap to open."
+  }
+}

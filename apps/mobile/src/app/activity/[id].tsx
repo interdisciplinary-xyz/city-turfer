@@ -6,11 +6,11 @@ import { ActivityIndicator, Alert, Text, View } from 'react-native';
 import { ActivityDetailView } from '@/contexts/activity-log/ui/activity-detail-view';
 import { useActivity } from '@/contexts/activity-log/ui/hooks';
 import { RenameActivityDialog } from '@/contexts/activity-log/ui/rename-activity-dialog';
-import { RENAME_ACTION } from '@/contexts/activity-log/ui/rename-activity-dialog.constants';
 import { isImportedFromHealth } from '@/contexts/health-sync';
 import { useClaim } from '@/contexts/territory/ui/hooks';
 import { ClaimLayers } from '@/contexts/territory/ui/layers';
 import { TurfGainedCard } from '@/contexts/territory/ui/turf-gained-card';
+import { useT } from '@/i18n';
 import { Button } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
 
@@ -18,6 +18,8 @@ import { usePalette } from '@/ui-kit/theme';
 export default function ActivityScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const p = usePalette();
+  const t = useT('activity');
+  const tc = useT('common');
   const { detail, remove, rename } = useActivity(id);
   const claim = useClaim(id);
   const [renaming, setRenaming] = useState(false);
@@ -26,7 +28,7 @@ export default function ActivityScreen() {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: p.bg, gap: 10 }}>
         <ActivityIndicator />
-        <Text style={{ color: p.muted }}>{detail === null ? 'Saving your activity…' : 'Loading…'}</Text>
+        <Text style={{ color: p.muted }}>{detail === null ? t('saving') : tc('loading')}</Text>
       </View>
     );
   }
@@ -37,14 +39,14 @@ export default function ActivityScreen() {
       <ActivityDetailView a={detail} mapOverlay={<ClaimLayers claim={claim} />}>
         {isImportedFromHealth(detail.id) && (
           <Text testID='from-apple-health' style={{ color: p.muted, textAlign: 'center' }}>
-            From Apple Health
+            {t('fromAppleHealth')}
           </Text>
         )}
         <TurfGainedCard claim={claim} />
         <View style={{ flexDirection: 'row', gap: SPACE.sm }}>
           <Button
             testID='rename-activity'
-            label={RENAME_ACTION}
+            label={t('rename.action')}
             color={p.card}
             textColor={p.text}
             onPress={() => setRenaming(true)}
@@ -52,15 +54,15 @@ export default function ActivityScreen() {
           />
           <Button
             testID='delete-activity'
-            label='Delete activity'
+            label={t('deleteButton')}
             color={p.card}
             textColor={p.danger}
             style={{ flex: 1 }}
             onPress={() =>
-              Alert.alert('Delete activity?', 'Its turf will be released too.', [
-                { text: 'Cancel', style: 'cancel' },
+              Alert.alert(t('deleteTitle'), t('deleteBody'), [
+                { text: tc('cancel'), style: 'cancel' },
                 {
-                  text: 'Delete',
+                  text: tc('delete'),
                   style: 'destructive',
                   onPress: async () => {
                     await remove();

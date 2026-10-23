@@ -1,5 +1,39 @@
+import enAccount from '../../messages/en/account.json';
+import enAchievements from '../../messages/en/achievements.json';
+import enActivity from '../../messages/en/activity.json';
+import enActivityNames from '../../messages/en/activityNames.json';
+import enBackup from '../../messages/en/backup.json';
+import enCities from '../../messages/en/cities.json';
 import enCommon from '../../messages/en/common.json';
+import enDashboard from '../../messages/en/dashboard.json';
+import enErrors from '../../messages/en/errors.json';
+import enHealth from '../../messages/en/health.json';
+import enInfo from '../../messages/en/info.json';
+import enMe from '../../messages/en/me.json';
+import enNav from '../../messages/en/nav.json';
+import enProfile from '../../messages/en/profile.json';
+import enRecord from '../../messages/en/record.json';
+import enSignIn from '../../messages/en/signIn.json';
+import enStats from '../../messages/en/stats.json';
+import enTurf from '../../messages/en/turf.json';
+import plAccount from '../../messages/pl/account.json';
+import plAchievements from '../../messages/pl/achievements.json';
+import plActivity from '../../messages/pl/activity.json';
+import plActivityNames from '../../messages/pl/activityNames.json';
+import plBackup from '../../messages/pl/backup.json';
+import plCities from '../../messages/pl/cities.json';
 import plCommon from '../../messages/pl/common.json';
+import plDashboard from '../../messages/pl/dashboard.json';
+import plErrors from '../../messages/pl/errors.json';
+import plHealth from '../../messages/pl/health.json';
+import plInfo from '../../messages/pl/info.json';
+import plMe from '../../messages/pl/me.json';
+import plNav from '../../messages/pl/nav.json';
+import plProfile from '../../messages/pl/profile.json';
+import plRecord from '../../messages/pl/record.json';
+import plSignIn from '../../messages/pl/signIn.json';
+import plStats from '../../messages/pl/stats.json';
+import plTurf from '../../messages/pl/turf.json';
 import { DEFAULT_LOCALE, type Locale, LOCALES } from './locales';
 
 /*
@@ -7,14 +41,52 @@ import { DEFAULT_LOCALE, type Locale, LOCALES } from './locales';
  * static imports, so every file is listed here; a new namespace is one line per locale. English is
  * the source: its shape types the keys (`useT('common')('cancel')`).
  */
-const SOURCE = { common: enCommon };
+const SOURCE = {
+  common: enCommon,
+  signIn: enSignIn,
+  account: enAccount,
+  backup: enBackup,
+  errors: enErrors,
+  record: enRecord,
+  turf: enTurf,
+  activity: enActivity,
+  achievements: enAchievements,
+  activityNames: enActivityNames,
+  cities: enCities,
+  health: enHealth,
+  nav: enNav,
+  dashboard: enDashboard,
+  stats: enStats,
+  info: enInfo,
+  profile: enProfile,
+  me: enMe,
+};
 export type Messages = typeof SOURCE;
 export type Namespace = keyof Messages;
 
 type Catalogue = { [N in Namespace]: Record<string, unknown> };
 const RAW: Record<Locale, Catalogue> = {
   en: SOURCE,
-  pl: { common: plCommon },
+  pl: {
+    common: plCommon,
+    signIn: plSignIn,
+    account: plAccount,
+    backup: plBackup,
+    errors: plErrors,
+    record: plRecord,
+    turf: plTurf,
+    activity: plActivity,
+    achievements: plAchievements,
+    activityNames: plActivityNames,
+    cities: plCities,
+    health: plHealth,
+    nav: plNav,
+    dashboard: plDashboard,
+    stats: plStats,
+    info: plInfo,
+    profile: plProfile,
+    me: plMe,
+  },
 };
 
 type Tree = { [key: string]: string | Tree };

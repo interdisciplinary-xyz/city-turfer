@@ -85,24 +85,38 @@ labels spell units out through the catalogue. `formatArea` keeps its grouping-fr
 
 ## Polish glossary (from `apps/web/messages/pl.json`)
 
-| English                  | Polish                                                             |
-| ------------------------ | ------------------------------------------------------------------ |
-| turf                     | **turf**, inflected: Twój turf, Mapa turfu, staje się Twoim turfem |
-| Turf Map                 | Mapa turfu                                                         |
-| cells                    | komórki (1530 komórek)                                             |
-| Walk / Run / Ride (type) | Spacer / Bieg / Rower                                              |
-| walks, runs and rides    | spacery, biegi i przejażdżki                                       |
-| activity, activities     | aktywność, aktywności                                              |
-| achievement              | osiągnięcie                                                        |
-| Home City / your city    | Twoje miasto                                                       |
-| route                    | trasa                                                              |
-| cloud backup             | kopia zapasowa, kopia w chmurze                                    |
-| Apple Health workouts    | treningi z Apple Health                                            |
-| account / sign in        | konto / zaloguj się                                                |
+| English                  | Polish                                                                                                              |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| turf                     | **turf**, inflected: Twój turf, Mapa turfu, staje się Twoim turfem                                                  |
+| Turf Map                 | Mapa turfu                                                                                                          |
+| cells                    | komórki (1530 komórek)                                                                                              |
+| Walk / Run / Ride (type) | Spacer / Bieg / Rower                                                                                               |
+| walks, runs and rides    | spacery, biegi i przejażdżki                                                                                        |
+| activity, activities     | aktywność, aktywności                                                                                               |
+| achievement              | osiągnięcie                                                                                                         |
+| Home City / your city    | Twoje miasto                                                                                                        |
+| route                    | trasa                                                                                                               |
+| cloud backup             | kopia zapasowa, kopia w chmurze                                                                                     |
+| Apple Health workouts    | treningi z Apple Health                                                                                             |
+| account / sign in        | konto / zaloguj się                                                                                                 |
+| ride (the activity)      | przejażdżka (Poranna przejażdżka); **jazda** only in tight live UI (Zacznij jazdę, banner)                          |
+| record / recording       | nagraj, nagrywać / nagrywanie, nagranie (tab: Nagraj)                                                               |
+| pause / paused           | Pauza (button and status), Autopauza; resume = Wznów                                                                |
+| claim turf               | zdobywać turf (Zdobywam Twój turf…, nie dają turfu)                                                                 |
+| tiers faint…blazing      | Blade, Świecące, Mocne, Płonące (plural, agree with komórki/ulice); Siła turfu                                      |
+| Dashboard / Me (tabs)    | Pulpit / Ja                                                                                                         |
+| Splits                   | Międzyczasy                                                                                                         |
+| GPS gap                  | luka GPS (not przerwa: that reads as a pause)                                                                       |
+| track (GPS trace)        | ślad (route = trasa)                                                                                                |
+| Apple Health             | Apple Health as the integration; **aplikacja Zdrowie** only for a path on the iPhone (Zdrowie › Profil › Aplikacje) |
+| city names               | Polish exonyms (Londyn, Wiedeń, Wilno); in labels keep the name in the nominative: Pokaż miasto {city}              |
 
 Address the Turfer informally and **capitalise** the forms of Ty: Ty, Twój, Twoja, Twoje, Ciebie, Ci
 ("Ulice są Twoje"); the reflexive swój/swoją stays lowercase. Decimal comma, `km²`. Natural Polish
-wins over a literal translation; brand-designer reviews every Polish message (step 4).
+wins over a literal translation; brand-designer reviews every Polish message (step 4). We never know
+the Turfer's gender: avoid gendered nouns and past tenses addressed to them ("Cześć!", not "Cześć,
+Turferze"; "W rytmie", not "Stały bywalec"). Buttons and chips stay within ~40% of the English
+length (Pauza, not Wstrzymaj).
 
 ## Adding a language
 

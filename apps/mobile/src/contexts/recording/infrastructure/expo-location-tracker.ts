@@ -4,6 +4,9 @@ import { Platform } from 'react-native';
 
 import { ACCENT } from '@/constants/colors';
 import { LOCATION_TASK } from '@/constants/location';
+// The modules, not the @/i18n barrel: that one brings the React provider (not needed here, nor in Jest).
+import { loadLanguageSetting } from '@/i18n/language';
+import { translator } from '@/i18n/translator';
 
 import type { LocationTracker, PermissionGateway, PermissionResult } from '../application/ports';
 import type { Fix } from '../domain/fix';
@@ -44,13 +47,14 @@ export function toFixOn(l: Location.LocationObject, os: typeof Platform.OS): Fix
   };
 }
 
-const LABEL = { walk: 'walk', run: 'run', cycle: 'ride' } as const;
-
 export class ExpoLocationTracker implements LocationTracker {
   async start(profile: TrackingProfile) {
     if (await this.isRunning()) {
       await Location.stopLocationUpdatesAsync(LOCATION_TASK);
     }
+    // The notification text in the app language; a headless launch has not read the setting yet.
+    await loadLanguageSetting();
+    const t = translator('record');
     await Location.startLocationUpdatesAsync(LOCATION_TASK, {
       accuracy: Location.Accuracy.BestForNavigation,
       timeInterval: profile.timeIntervalMs,
@@ -60,8 +64,8 @@ export class ExpoLocationTracker implements LocationTracker {
       showsBackgroundLocationIndicator: true,
       deferredUpdatesInterval: 0,
       foregroundService: {
-        notificationTitle: `Recording your ${LABEL[profile.type]}`,
-        notificationBody: `${NAME} is claiming your streets. Tap to open.`,
+        notificationTitle: t('notification.title', { type: profile.type }),
+        notificationBody: t('notification.body', { app: NAME }),
         notificationColor: ACCENT,
         killServiceOnDestroy: false,
       },

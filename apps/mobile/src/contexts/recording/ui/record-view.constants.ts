@@ -46,8 +46,9 @@ export const STATUS_BANNER_ROLES: { background: keyof Palette; text: keyof Palet
   text: 'bg',
 };
 
-export const STATUS_BANNER_TEXT: Record<string, string> = {
-  acquiring: 'Waiting for GPS…',
-  paused: 'Paused',
-  autoPaused: 'Auto-paused — start moving to resume',
-};
+/** States that show the status pill (text in the `record` namespace, `status.<state>`). */
+export const BANNER_STATUSES = ['acquiring', 'paused', 'autoPaused'] as const;
+export type BannerStatus = (typeof BANNER_STATUSES)[number];
+
+export const isBannerStatus = (s: string | null): s is BannerStatus =>
+  s !== null && (BANNER_STATUSES as readonly string[]).includes(s);

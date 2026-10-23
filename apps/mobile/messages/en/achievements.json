@@ -1,0 +1,63 @@
+{
+  "title": "Achievements",
+  "count": "{unlocked} of {total} unlocked",
+  "unlocked": "Unlocked",
+  "notYet": "Not yet",
+  "progress": {
+    "km": "{current} / {target} km",
+    "cells": "{current} / {count, plural, one {{target} cell} other {{target} cells}}",
+    "activities": "{current} / {count, plural, one {{target} activity} other {{target} activities}}",
+    "types": "{current} / {count, plural, one {{target} type} other {{target} types}}"
+  },
+  "badgeLabel": "{title}. {description} {progress}",
+  "card": {
+    "label": "Achievements, {unlocked} of {total} unlocked",
+    "labelNext": "Achievements, {unlocked} of {total} unlocked. Next up: {next}",
+    "count": "{unlocked} / {total} ›",
+    "next": "Next up: <b>{title}</b> · {description}",
+    "allUnlocked": "All unlocked. Legend."
+  },
+  "achievementTitle": {
+    "firstSteps": "First steps",
+    "allRounder": "All-rounder",
+    "fiveK": "5K",
+    "halfMarathon": "Half marathon",
+    "halfCenturyRide": "Half century",
+    "hundredKm": "100 km club",
+    "regular": "Regular",
+    "earlyBird": "Early bird",
+    "nightOwl": "Night owl",
+    "neighbourhood": "Neighbourhood",
+    "turfLord": "Turf lord",
+    "stronghold": "Stronghold"
+  },
+  "achievementDescription": {
+    "firstSteps": "Record your first activity.",
+    "allRounder": "Walk, run and ride at least once each.",
+    "fiveK": "Cover 5 km in a single activity.",
+    "halfMarathon": "Walk or run 21.1 km in one go.",
+    "halfCenturyRide": "Ride 50 km in one go.",
+    "hundredKm": "Cover 100 km in total.",
+    "regular": "Record 3 activities in one week.",
+    "earlyBird": "Start an activity before 7:00.",
+    "nightOwl": "Start an activity after 22:00.",
+    "neighbourhood": "Own 100 turf cells.",
+    "turfLord": "Own 1,000 turf cells.",
+    "stronghold": "Make 50 cells strong by coming back again and again."
+  },
+  "onboarding": {
+    "title": "Getting started",
+    "progressLabel": "{done} of {total, plural, one {# step done} other {# steps done}}",
+    "progress": "{done} of {total}",
+    "hideLabel": "Hide getting started",
+    "hide": "Hide",
+    "stepLabel": "{title}, {done, select, yes {done} other {to do}}"
+  },
+  "onboardingStep": {
+    "firstWalk": "Record your first walk",
+    "seeTurf": "See your turf on the map",
+    "tryAllThree": "Walk, run and ride",
+    "comeBack": "Come back to a street",
+    "unlockThree": "Unlock 3 achievements"
+  }
+}

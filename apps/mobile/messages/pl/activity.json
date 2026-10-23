@@ -1,0 +1,30 @@
+{
+  "emptyHistory": "Nie masz jeszcze aktywności. Nagraj swój pierwszy spacer!",
+  "recentTitle": "Ostatnie aktywności",
+  "seeAllLabel": "Pokaż wszystkie aktywności",
+  "seeAll": "Wszystkie ›",
+  "rowLabel": "{estimated, select, yes {{name}, {date}, około {distance}} other {{name}, {date}, {distance}}}",
+  "saving": "Zapisuję aktywność…",
+  "fromAppleHealth": "Z Apple Health",
+  "stat": {
+    "distance": "Dystans",
+    "movingTime": "Czas w ruchu",
+    "average": "{type, select, cycle {Śr. prędkość} other {Śr. tempo}}",
+    "elapsed": "Czas całkowity",
+    "elevation": "Przewyższenie ≈"
+  },
+  "estimatedNote": "W tym {distance} oszacowano wzdłuż ulic tam, gdzie GPS zgubił sygnał (linia przerywana). Oszacowane odcinki nie dają turfu.",
+  "splitsTitle": "Międzyczasy",
+  "splitKm": "km {km}",
+  "deleteButton": "Usuń aktywność",
+  "deleteTitle": "Usunąć aktywność?",
+  "deleteBody": "Turf z tej aktywności też zniknie.",
+  "rename": {
+    "action": "Zmień nazwę",
+    "title": "Zmień nazwę aktywności",
+    "label": "Nazwa aktywności",
+    "failed": "Nie udało się zapisać nowej nazwy. Spróbuj ponownie.",
+    "empty": "Nadaj jej nazwę.",
+    "tooLong": "{max, plural, one {Maksymalnie # znak.} few {Maksymalnie # znaki.} many {Maksymalnie # znaków.} other {Maksymalnie # znaku.}}"
+  }
+}

@@ -21,12 +21,14 @@ import { BAR_HEIGHT, type TurfLegendProps } from './turf-legend.constants';
 export function TurfLegend({
   title = TURF_LEGEND_TITLE,
   labels = TIER_LABEL,
+  accessibilityLabel,
   compact,
   style,
   testID,
 }: TurfLegendProps) {
   const p = usePalette();
-  const summary = `${title}: ${TIER_ORDER.map((t) => labels[t]).join(', ')}, from weakest to strongest`;
+  const summary =
+    accessibilityLabel ?? `${title}: ${TIER_ORDER.map((t) => labels[t]).join(', ')}, from weakest to strongest`;
   return (
     <View
       testID={testID}

@@ -5,6 +5,7 @@ import { RecordView } from '@/contexts/recording/ui/record-view';
 import { LIVE_TRACK_BOTTOM_LAYER } from '@/contexts/recording/ui/record-view.constants';
 import { useHomeCity, useTurfOverlay } from '@/contexts/territory/ui/hooks';
 import { TurfLayers } from '@/contexts/territory/ui/layers';
+import { useCityName } from '@/contexts/territory/ui/use-city-names';
 
 /**
  * Recording, with Territory composed in by the screen (Recording never imports Territory): the
@@ -14,6 +15,7 @@ import { TurfLayers } from '@/contexts/territory/ui/layers';
 export default function RecordScreen() {
   const homeCity = useHomeCity();
   const turf = useTurfOverlay();
+  const cityName = useCityName();
   const [focused, setFocused] = useState(true);
   useFocusEffect(
     useCallback(() => {
@@ -29,7 +31,7 @@ export default function RecordScreen() {
   const shown = turf.shown ?? true;
   return (
     <RecordView
-      city={homeCity && { id: homeCity.id, name: homeCity.name, center: homeCity.center }}
+      city={homeCity && { id: homeCity.id, name: cityName(homeCity), center: homeCity.center }}
       onPickCity={() => router.push('/city')}
       focused={focused}
       onFinished={(id) => router.push(`/activity/${id}`)}

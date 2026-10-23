@@ -1,11 +1,12 @@
 import { FONT_WEIGHT, SPACE } from '@cityturfer/brand';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
+import { useT } from '@/i18n';
 import { Card } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
 
 import { accountRows } from './account-rows';
-import { type AccountOverviewProps, HINT, RETRY, ROW, VALUE } from './account-settings.constants';
+import type { AccountOverviewProps } from './account-settings.constants';
 import { SettingsRow } from './settings-row';
 import { useAnnounce } from './use-announce';
 
@@ -15,41 +16,42 @@ import { useAnnounce } from './use-announce';
  */
 export function AccountOverview({ user, state, dataText, onName, onEmail, onPassword, onRetry }: AccountOverviewProps) {
   const p = usePalette();
-  const rows = accountRows(user, state);
+  const t = useT('account');
+  const rows = accountRows(user, state, t);
   // "Try again" gives feedback: VoiceOver hears it's checking (TalkBack reads the live region).
-  useAnnounce(rows.retrying && VALUE.checking);
-  const retryLabel = rows.retrying ? VALUE.checking : RETRY;
+  useAnnounce(rows.retrying && t('value.checking'));
+  const retryLabel = rows.retrying ? t('value.checking') : t('retry');
 
   return (
     <Card testID='account-overview'>
       <SettingsRow
         testID='account-name-row'
-        label={ROW.name}
+        label={t('row.name')}
         value={rows.name.value}
         disabled={!rows.name.enabled}
-        accessibilityHint={HINT.name}
+        accessibilityHint={t('hint.name')}
         onPress={onName}
       />
       <SettingsRow
         testID='account-email-row'
-        label={ROW.email}
+        label={t('row.email')}
         value={rows.email.value}
         disabled={!rows.email.enabled}
-        accessibilityHint={HINT.email}
+        accessibilityHint={t('hint.email')}
         onPress={rows.local ? undefined : onEmail}
         divider
       />
       <SettingsRow
         testID='account-password-row'
-        label={ROW.password}
+        label={t('row.password')}
         value={rows.password.value}
         disabled={!rows.password.enabled}
-        accessibilityHint={HINT.password}
+        accessibilityHint={t('hint.password')}
         onPress={rows.local ? undefined : onPassword}
         divider
       />
-      <SettingsRow testID='account-sign-in-row' label={ROW.signIn} value={rows.signIn} divider />
-      <SettingsRow testID='account-data-row' label={ROW.data} value={dataText} divider />
+      <SettingsRow testID='account-sign-in-row' label={t('row.signIn')} value={rows.signIn} divider />
+      <SettingsRow testID='account-data-row' label={t('row.data')} value={dataText} divider />
       {rows.retry && (
         <Pressable
           testID='account-retry'

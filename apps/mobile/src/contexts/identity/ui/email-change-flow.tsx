@@ -4,25 +4,20 @@ import { Pressable, StyleSheet, Text, type TextInput, View } from 'react-native'
 
 import { ACCENT } from '@/constants/colors';
 import { accountFieldError, newEmail } from '@/contexts/identity';
+import { useT } from '@/i18n';
 import { useApp } from '@/ui-kit/app-context';
 import { Button } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
 
 import { AccountField } from './account-field';
-import {
-  CODE_COPY,
-  EMAIL_COPY,
-  type EmailChangeFlowProps,
-  FIELD_ERROR_TEXT,
-  INVALID_CODE,
-} from './account-settings.constants';
+import { type EmailChangeFlowProps, type ErrorMessage, FIELD_ERROR, INVALID_CODE } from './account-settings.constants';
 import type { EmailChangeStep, EmailOutcome } from './email-change-flow.constants';
 import { afterEmailChangeRequest, afterEmailConfirm, afterStepUpCode } from './email-change-steps';
 import { useAccountActions, useSubmit } from './hooks';
 import { useAnnounce } from './use-announce';
 
 /** The shared rule's message for the new address; `invalid` only once the Turfer tried to send. */
-function problemOf(draft: string, current: string, tried: boolean): string | null {
+function problemOf(draft: string, current: string, tried: boolean): ErrorMessage | null {
   try {
     newEmail(draft, current);
     return null;
@@ -31,7 +26,7 @@ function problemOf(draft: string, current: string, tried: boolean): string | nul
     if (!code || (code === 'email.invalid' && !tried)) {
       return null;
     }
-    return FIELD_ERROR_TEXT[code];
+    return FIELD_ERROR[code];
   }
 }
 
@@ -42,10 +37,14 @@ function problemOf(draft: string, current: string, tried: boolean): string | nul
  */
 export function EmailChangeFlow({ onDone }: EmailChangeFlowProps) {
   const p = usePalette();
+  const t = useT('account');
+  const tc = useT('common');
+  const te = useT('errors');
   const { auth } = useApp();
   const current = auth.status === 'signed-in' ? auth.user.email : '';
   const actions = useAccountActions();
-  const { busy, error, setError, run, refused, waiting } = useSubmit();
+  const { busy, error: errorMessage, setError, run, refused, waiting } = useSubmit();
+  const error = errorMessage ? te(errorMessage.key, errorMessage.values) : null;
   useAnnounce(error);
   const [step, setStep] = useState<EmailChangeStep>('start');
   const [stepUpCode, setStepUpCode] = useState('');
@@ -55,10 +54,11 @@ export function EmailChangeFlow({ onDone }: EmailChangeFlowProps) {
   const [code, setCode] = useState('');
   const fieldRef = useRef<TextInput>(null);
   const focusSoon = () => setTimeout(() => fieldRef.current?.focus(), 50);
-  const problem = problemOf(draft, current, tried);
+  const problemMessage = problemOf(draft, current, tried);
+  const problem = problemMessage ? te(problemMessage.key, problemMessage.values) : null;
 
   /** Applies a use case's answer: the next step (and what it clears), an error, or a refusal. */
-  const apply = (o: EmailOutcome): string | null => {
+  const apply = (o: EmailOutcome): ErrorMessage | null => {
     if (o.kind === 'refused') {
       return refused(o.failure);
     }
@@ -112,9 +112,9 @@ export function EmailChangeFlow({ onDone }: EmailChangeFlowProps) {
     setError(null);
   };
 
-  const text = (t: string, testID?: string) => (
+  const text = (body: string, testID?: string) => (
     <Text testID={testID} style={[s.text, { color: p.text }]}>
-      {t}
+      {body}
     </Text>
   );
   const link = (label: string, testID: string, onPress: () => void, disabled = busy) => (
@@ -139,8 +139,8 @@ export function EmailChangeFlow({ onDone }: EmailChangeFlowProps) {
   if (step === 'done') {
     return (
       <View style={s.root}>
-        {text(EMAIL_COPY.done(sentTo), 'account-email-done-text')}
-        <Button testID='account-email-done' label={EMAIL_COPY.doneButton} color={ACCENT} onPress={onDone} />
+        {text(t('email.done', { next: sentTo }), 'account-email-done-text')}
+        <Button testID='account-email-done' label={tc('done')} color={ACCENT} onPress={onDone} />
       </View>
     );
   }
@@ -149,11 +149,11 @@ export function EmailChangeFlow({ onDone }: EmailChangeFlowProps) {
     <View style={s.root}>
       {step === 'start' && (
         <>
-          {text(EMAIL_COPY.intro(current))}
+          {text(t('email.intro', { current }))}
           {errorText}
           <Button
             testID='account-email-send-code'
-            label={CODE_COPY.sendCode}
+            label={t('code.sendCode')}
             color={ACCENT}
             busy={busy}
             disabled={waiting}
@@ -163,11 +163,11 @@ export function EmailChangeFlow({ onDone }: EmailChangeFlowProps) {
       )}
       {step === 'current-code' && (
         <>
-          {text(EMAIL_COPY.currentSent(current), 'account-email-current-sent')}
+          {text(t('email.currentSent', { current }), 'account-email-current-sent')}
           <AccountField
             ref={fieldRef}
             testID='account-email-current-code'
-            label={CODE_COPY.label}
+            label={t('code.label')}
             code
             value={stepUpCode}
             onChangeText={setStepUpCode}
@@ -177,12 +177,12 @@ export function EmailChangeFlow({ onDone }: EmailChangeFlowProps) {
           {errorText}
           <Button
             testID='account-email-current-continue'
-            label={CODE_COPY.continue}
+            label={tc('continue')}
             color={ACCENT}
             disabled={!stepUpCode.trim()}
             onPress={toNewEmail}
           />
-          {link(CODE_COPY.resend, 'account-email-resend-current', () => void sendStepUp(), busy || waiting)}
+          {link(t('code.resend'), 'account-email-resend-current', () => void sendStepUp(), busy || waiting)}
         </>
       )}
       {step === 'new-email' && (
@@ -190,10 +190,10 @@ export function EmailChangeFlow({ onDone }: EmailChangeFlowProps) {
           <AccountField
             ref={fieldRef}
             testID='account-email-new'
-            label={EMAIL_COPY.newLabel}
+            label={t('email.newLabel')}
             value={draft}
-            onChangeText={(t) => {
-              setDraft(t);
+            onChangeText={(value) => {
+              setDraft(value);
               setError(null);
             }}
             onSubmitEditing={() => void sendToNew()}
@@ -206,12 +206,12 @@ export function EmailChangeFlow({ onDone }: EmailChangeFlowProps) {
             returnKeyType='send'
             editable={!busy}
             error={problem}
-            hint={EMAIL_COPY.newHint}
+            hint={t('email.newHint')}
           />
           {errorText}
           <Button
             testID='account-email-send-new'
-            label={EMAIL_COPY.sendNew}
+            label={t('email.sendNew')}
             color={ACCENT}
             busy={busy}
             disabled={waiting || !draft.trim() || problem != null}
@@ -221,11 +221,11 @@ export function EmailChangeFlow({ onDone }: EmailChangeFlowProps) {
       )}
       {step === 'new-code' && (
         <>
-          {text(EMAIL_COPY.newSent(sentTo), 'account-email-new-sent')}
+          {text(t('email.newSent', { next: sentTo }), 'account-email-new-sent')}
           <AccountField
             ref={fieldRef}
             testID='account-email-new-code'
-            label={CODE_COPY.label}
+            label={t('code.label')}
             code
             value={code}
             onChangeText={setCode}
@@ -236,14 +236,14 @@ export function EmailChangeFlow({ onDone }: EmailChangeFlowProps) {
           {errorText}
           <Button
             testID='account-email-confirm'
-            label={EMAIL_COPY.confirm}
+            label={t('email.confirm')}
             color={ACCENT}
             busy={busy}
             disabled={!code.trim()}
             onPress={() => void confirm()}
           />
           {/* A new code for the new inbox needs a fresh code to the current one: start again. */}
-          {link(EMAIL_COPY.restart, 'account-email-restart', restart)}
+          {link(t('email.restart'), 'account-email-restart', restart)}
         </>
       )}
     </View>

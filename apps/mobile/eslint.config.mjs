@@ -45,9 +45,9 @@ export default [
     rules: { 'local-rules/enforce-types-in-constants': 'off' },
   },
   {
-    // User-facing text comes from the message catalogue (mobile-i18n skill). Off until the copy
-    // migration: switched to 'error' in step 2 of docs/decisions/mobile-i18n-2026-10-23.md.
-    rules: { 'local-rules/no-raw-text': 'off' },
+    // User-facing text comes from the message catalogue (mobile-i18n skill,
+    // docs/decisions/mobile-i18n-2026-10-23.md).
+    rules: { 'local-rules/no-raw-text': 'error' },
   },
   {
     // Not translated: dev-only screens and seeders, tests, the developer card (founder-only).

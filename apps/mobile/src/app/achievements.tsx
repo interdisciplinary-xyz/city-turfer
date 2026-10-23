@@ -4,9 +4,11 @@ import { useMemo } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 
 import { ACCENT } from '@/constants/colors';
-import { type Achievement, type AchievementId, evaluateAchievements } from '@/contexts/achievements';
+import { type AchievementId, evaluateAchievements } from '@/contexts/achievements';
+import { achievementCopy } from '@/contexts/achievements/ui/achievement-copy';
 import { useActivities } from '@/contexts/activity-log/ui/hooks';
 import { useTurfSummary } from '@/contexts/territory/ui/hooks';
+import { useLocale, useT } from '@/i18n';
 import { Badge, Card, tint } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
 
@@ -25,12 +27,12 @@ const SYMBOL: Record<AchievementId, SFSymbol> = {
   stronghold: 'shield.lefthalf.filled',
 };
 
-const progressText = (a: Achievement) =>
-  a.unlocked ? 'Unlocked' : a.unit ? `${a.current} / ${a.target} ${a.unit}` : 'Not yet';
-
 /** Composes Activity Log and Territory facts into the Achievements evaluation. */
 export default function AchievementsScreen() {
   const p = usePalette();
+  const t = useT('achievements');
+  // Numbers in the rows follow the language: re-render the list when it changes.
+  const locale = useLocale();
   const activities = useActivities();
   const summary = useTurfSummary();
   const list = useMemo(
@@ -49,20 +51,22 @@ export default function AchievementsScreen() {
       style={{ backgroundColor: p.bg }}
       contentContainerStyle={{ padding: SPACE.lg, gap: 10 }}
       data={list}
+      extraData={locale}
       keyExtractor={(a) => a.id}
       ListHeaderComponent={
         <Text testID='achievements-count' style={[s.count, { color: p.muted }]}>
-          {unlocked} of {list.length} unlocked
+          {t('count', { unlocked, total: list.length })}
         </Text>
       }
       renderItem={({ item: a }) => {
         const color = a.unlocked ? ACCENT : p.muted;
+        const copy = achievementCopy(a, t, locale);
         return (
           <Card style={a.unlocked ? s.row : { ...s.row, opacity: 0.85 }}>
             <Badge
               testID={`achievement-${a.id}`}
               accessible
-              accessibilityLabel={`${a.title}. ${a.description} ${progressText(a)}`}
+              accessibilityLabel={t('badgeLabel', copy)}
               size={52}
               tint={a.unlocked ? tint(ACCENT) : p.bg}
             >
@@ -74,8 +78,8 @@ export default function AchievementsScreen() {
               />
             </Badge>
             <View style={{ flex: 1, gap: 4 }}>
-              <Text style={[s.title, { color: p.text }]}>{a.title}</Text>
-              <Text style={{ color: p.muted, fontSize: 13 }}>{a.description}</Text>
+              <Text style={[s.title, { color: p.text }]}>{copy.title}</Text>
+              <Text style={{ color: p.muted, fontSize: 13 }}>{copy.description}</Text>
               <View style={[s.track, { backgroundColor: p.border }]}>
                 <View
                   style={[
@@ -87,7 +91,7 @@ export default function AchievementsScreen() {
                   ]}
                 />
               </View>
-              <Text style={[s.progress, { color: a.unlocked ? p.text : p.muted }]}>{progressText(a)}</Text>
+              <Text style={[s.progress, { color: a.unlocked ? p.text : p.muted }]}>{copy.progress}</Text>
             </View>
           </Card>
         );

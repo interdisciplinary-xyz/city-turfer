@@ -6,11 +6,14 @@ import {
   fixed,
   formatArea,
   formatDate,
+  formatDateTime,
   formatDay,
+  formatDayMonth,
   formatDistance,
   formatDuration,
   formatPaceOrSpeed,
   formatSpeedNow,
+  shownName,
 } from '../format';
 
 beforeEach(() => resetLanguageStateForTests('en-US'));
@@ -111,5 +114,26 @@ describe('format.ts follows the app language', () => {
     expect(formatDay(MS)).toBe('22 Oct 2026');
     applyLanguageSetting('en', 'de-DE');
     expect(formatDay(MS)).toBe('Oct 22, 2026');
+  });
+});
+
+describe('format.ts: week labels, update stamps and the shown name', () => {
+  it('day and month in digits', () => {
+    expect(formatDayMonth(MS, 'en-US')).toBe('10/22');
+    expect(formatDayMonth(MS, 'en-GB')).toBe('22/10');
+    expect(formatDayMonth(MS, 'pl')).toBe('22.10');
+  });
+
+  it('date and time with the year', () => {
+    expect(formatDateTime(MS, 'en-US')).toMatch(/^Oct 22, 2026.*09:05/);
+    expect(formatDateTime(MS, 'pl')).toMatch(/^22 paź 2026.*09:05$/);
+  });
+
+  it('shows the chosen name, else "You" in the app language', () => {
+    expect(shownName({ name: 'Ola' })).toBe('Ola');
+    expect(shownName(null)).toBe('You');
+    expect(shownName({ name: null }, 'pl')).toBe('Ty');
+    applyLanguageSetting('pl', 'en-US');
+    expect(shownName(undefined)).toBe('Ty');
   });
 });

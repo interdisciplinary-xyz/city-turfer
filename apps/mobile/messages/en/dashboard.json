@@ -1,0 +1,6 @@
+{
+  "greeting": "{hasName, select, yes {Hello, {name}} other {Hello, Turfer}}",
+  "emptySubtitle": "Your turf starts with your first walk.",
+  "turfSubtitle": "{area} of turf · +{newArea} this week",
+  "startRecording": "Start recording"
+}
