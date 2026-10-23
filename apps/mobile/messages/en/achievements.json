@@ -3,11 +3,20 @@
   "count": "{unlocked} of {total} unlocked",
   "unlocked": "Unlocked",
   "notYet": "Not yet",
+  "groupTitle": {
+    "firsts": "Firsts",
+    "turf": "New streets",
+    "glow": "Coming back",
+    "habits": "Getting out",
+    "distance": "Distance"
+  },
+  "groupLabel": "{group}, {unlocked} of {total} unlocked",
   "progress": {
     "km": "{current} / {target} km",
     "cells": "{current} / {count, plural, one {{target} cell} other {{target} cells}}",
     "activities": "{current} / {count, plural, one {{target} activity} other {{target} activities}}",
-    "types": "{current} / {count, plural, one {{target} type} other {{target} types}}"
+    "types": "{current} / {count, plural, one {{target} type} other {{target} types}}",
+    "weeks": "{current} / {count, plural, one {{target} week} other {{target} weeks}}"
   },
   "badgeLabel": "{title}. {description} {progress}",
   "card": {
@@ -29,7 +38,15 @@
     "nightOwl": "Night owl",
     "neighbourhood": "Neighbourhood",
     "turfLord": "Turf lord",
-    "stronghold": "Stronghold"
+    "stronghold": "Stronghold",
+    "district": "District",
+    "acrossTown": "Across town",
+    "firstGlow": "First glow",
+    "homeGround": "Home ground",
+    "fourWeeks": "Four weeks out",
+    "seasonTicket": "Season ticket",
+    "tenK": "10K",
+    "fiveHundredKm": "500 km club"
   },
   "achievementDescription": {
     "firstSteps": "Record your first activity.",
@@ -43,7 +60,15 @@
     "nightOwl": "Start an activity after 22:00.",
     "neighbourhood": "Own 100 turf cells.",
     "turfLord": "Own 1,000 turf cells.",
-    "stronghold": "Make 50 cells strong by coming back again and again."
+    "stronghold": "Make 50 cells strong by coming back again and again.",
+    "district": "Own 500 turf cells.",
+    "acrossTown": "Own 5,000 turf cells.",
+    "firstGlow": "Come back to a street until one of its cells turns strong.",
+    "homeGround": "Make 250 cells strong. These streets are yours.",
+    "fourWeeks": "Get out in 4 different weeks. Any weeks: there is no streak to keep.",
+    "seasonTicket": "Get out in 12 different weeks.",
+    "tenK": "Cover 10 km in a single activity.",
+    "fiveHundredKm": "Cover 500 km in total."
   },
   "onboarding": {
     "title": "Getting started",

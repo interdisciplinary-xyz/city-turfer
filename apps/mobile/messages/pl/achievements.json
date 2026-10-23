@@ -3,11 +3,20 @@
   "count": "Odblokowano {unlocked} z {total}",
   "unlocked": "Odblokowane",
   "notYet": "Jeszcze nie",
+  "groupTitle": {
+    "firsts": "Pierwsze razy",
+    "turf": "Nowe ulice",
+    "glow": "Powroty",
+    "habits": "W ruchu",
+    "distance": "Dystans"
+  },
+  "groupLabel": "{group}, odblokowano {unlocked} z {total}",
   "progress": {
     "km": "{current} / {target} km",
     "cells": "{current} / {count, plural, one {{target} komórka} few {{target} komórki} many {{target} komórek} other {{target} komórki}}",
     "activities": "{current} / {count, plural, one {{target} aktywność} few {{target} aktywności} many {{target} aktywności} other {{target} aktywności}}",
-    "types": "{current} / {count, plural, one {{target} rodzaj} few {{target} rodzaje} many {{target} rodzajów} other {{target} rodzaju}}"
+    "types": "{current} / {count, plural, one {{target} rodzaj} few {{target} rodzaje} many {{target} rodzajów} other {{target} rodzaju}}",
+    "weeks": "{current} / {count, plural, one {{target} tydzień} few {{target} tygodnie} many {{target} tygodni} other {{target} tygodnia}}"
   },
   "badgeLabel": "{title}. {description} {progress}",
   "card": {
@@ -29,7 +38,15 @@
     "nightOwl": "Nocny marek",
     "neighbourhood": "Twoja okolica",
     "turfLord": "Królestwo turfu",
-    "stronghold": "Twierdza"
+    "stronghold": "Twierdza",
+    "district": "Dzielnica",
+    "acrossTown": "Całe miasto",
+    "firstGlow": "Pierwszy blask",
+    "homeGround": "Na swoim",
+    "fourWeeks": "Cztery tygodnie",
+    "seasonTicket": "Karnet na sezon",
+    "tenK": "Dycha",
+    "fiveHundredKm": "Klub 500 km"
   },
   "achievementDescription": {
     "firstSteps": "Nagraj swoją pierwszą aktywność.",
@@ -43,7 +60,15 @@
     "nightOwl": "Rozpocznij aktywność po 22:00.",
     "neighbourhood": "Zdobądź 100 komórek turfu.",
     "turfLord": "Zdobądź 1000 komórek turfu.",
-    "stronghold": "Wracaj raz po raz, aż 50 komórek będzie mocnych."
+    "stronghold": "Wracaj raz po raz, aż 50 komórek będzie mocnych.",
+    "district": "Zdobądź 500 komórek turfu.",
+    "acrossTown": "Zdobądź 5000 komórek turfu.",
+    "firstGlow": "Wracaj na ulicę, aż jedna z jej komórek stanie się mocna.",
+    "homeGround": "Spraw, by 250 komórek było mocnych. Te ulice są Twoje.",
+    "fourWeeks": "Wyjdź w 4 różnych tygodniach. Dowolnych: nie ma serii do pilnowania.",
+    "seasonTicket": "Wyjdź w 12 różnych tygodniach.",
+    "tenK": "Pokonaj 10 km w jednej aktywności.",
+    "fiveHundredKm": "Pokonaj łącznie 500 km."
   },
   "onboarding": {
     "title": "Na start",

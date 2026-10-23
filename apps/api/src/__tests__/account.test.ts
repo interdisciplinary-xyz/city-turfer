@@ -1,9 +1,10 @@
-import { newEmail } from '@cityturfer/core/identity';
+import { ACCOUNT_FIELD_ERRORS, newEmail } from '@cityturfer/core/identity';
 import { sql } from 'drizzle-orm';
 import { strFromU8, unzipSync } from 'fflate';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { ApiLog } from '../deps';
+import { PROBLEM_CODES } from '../errors';
 import { BREACH_CHECK_TIMEOUT_MS, HibpBreachedPasswords } from '../identity/breached-passwords';
 import { OneTimeCodes } from '../identity/codes';
 import { MemoryMailer } from '../identity/mailer';
@@ -54,6 +55,14 @@ async function stepUp(token: string, email = ANIA): Promise<string> {
 const wrong = (code: string) => (code === '000000' ? '111111' : '000000');
 
 const me = async (token: string) => (await h.call('GET', '/v1/me', { token })).json();
+
+describe('account field errors', () => {
+  it('answers every one of the core rules as a 422 problem (the clients map exactly this list)', () => {
+    for (const code of ACCOUNT_FIELD_ERRORS) {
+      expect(PROBLEM_CODES[code]?.status).toBe(422);
+    }
+  });
+});
 
 describe('GET and PATCH /v1/me: the name', () => {
   it('answers name null, no password, and the deprecated displayName falling back to the id', async () => {
@@ -260,6 +269,30 @@ describe('POST /v1/me/step-up/codes', () => {
     expect(stored).toHaveLength(1);
     expect(String(stored[0].value)).toMatch(/:1$/);
     expect((await h.call('DELETE', '/v1/me/password', { token, body: { stepUpCode: first } })).status).toBe(204);
+  });
+
+  it('mails a valid code again without extending it; one about to lapse is replaced', async () => {
+    const token = await account();
+    const expiry = async () =>
+      (await rows(sql`SELECT expires_at FROM auth_verifications WHERE identifier LIKE 'step-up-%'`)).map((r) =>
+        new Date(String(r.expires_at)).getTime()
+      );
+    const first = await stepUp(token);
+    const [firstExpiry] = await expiry();
+    // Asking again keeps the code and its first expiry: a code never lives past 10 minutes.
+    expect(await stepUp(token)).toBe(first);
+    expect(await expiry()).toEqual([firstExpiry]);
+    // Under two minutes left: a fresh code with a full 10 minutes, and the old one no longer works.
+    await h.db.execute(
+      sql`UPDATE auth_verifications SET expires_at = now() + interval '1 minute' WHERE identifier LIKE 'step-up-%'`
+    );
+    const fresh = await stepUp(token);
+    const [freshExpiry] = await expiry();
+    expect(freshExpiry - Date.now()).toBeGreaterThan(9 * 60_000);
+    if (fresh !== first) {
+      expect((await h.call('DELETE', '/v1/me/password', { token, body: { stepUpCode: first } })).status).toBe(401);
+    }
+    expect((await h.call('DELETE', '/v1/me/password', { token, body: { stepUpCode: fresh } })).status).toBe(204);
   });
 
   it('logs the mail failure by kind only and still answers 202', async () => {

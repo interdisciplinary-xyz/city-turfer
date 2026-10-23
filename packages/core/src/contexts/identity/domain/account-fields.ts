@@ -12,13 +12,22 @@ export const DISPLAY_NAME_MAX = 40;
 export const PASSWORD_MIN = 12;
 export const PASSWORD_MAX = 128;
 
-export type AccountFieldError =
-  | 'display-name.too-long'
-  | 'display-name.invalid'
-  | 'email.invalid'
-  | 'email.unchanged'
-  | 'password.too-short'
-  | 'password.too-long';
+/** Every account field error code: the one list (the API's 422s, the phone's and web's mapping). */
+export const ACCOUNT_FIELD_ERRORS = [
+  'display-name.too-long',
+  'display-name.invalid',
+  'email.invalid',
+  'email.unchanged',
+  'password.too-short',
+  'password.too-long',
+] as const;
+
+export type AccountFieldError = (typeof ACCOUNT_FIELD_ERRORS)[number];
+
+/** Whether a problem or error code is one of the account field rules. */
+export function isAccountFieldError(code: string): code is AccountFieldError {
+  return (ACCOUNT_FIELD_ERRORS as readonly string[]).includes(code);
+}
 
 // Control characters (C0, DEL, C1) and the line/paragraph separators.
 // eslint-disable-next-line no-control-regex
@@ -138,13 +147,5 @@ export function accountFieldError(e: unknown): AccountFieldError | null {
   if (!(e instanceof DomainError)) {
     return null;
   }
-  const codes: readonly string[] = [
-    'display-name.too-long',
-    'display-name.invalid',
-    'email.invalid',
-    'email.unchanged',
-    'password.too-short',
-    'password.too-long',
-  ];
-  return codes.includes(e.code) ? (e.code as AccountFieldError) : null;
+  return isAccountFieldError(e.code) ? e.code : null;
 }

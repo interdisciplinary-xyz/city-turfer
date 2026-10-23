@@ -23,6 +23,14 @@ export const ACHIEVEMENT_KEY: Record<AchievementId, AchievementKey> = {
   neighbourhood: 'neighbourhood',
   'turf-lord': 'turfLord',
   stronghold: 'stronghold',
+  district: 'district',
+  'across-town': 'acrossTown',
+  'first-glow': 'firstGlow',
+  'home-ground': 'homeGround',
+  'four-weeks': 'fourWeeks',
+  'season-ticket': 'seasonTicket',
+  'ten-k': 'tenK',
+  'five-hundred-km': 'fiveHundredKm',
 };
 
 /** Each onboarding step's title in the `achievements` namespace (`onboardingStep.<key>`). */

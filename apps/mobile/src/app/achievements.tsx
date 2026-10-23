@@ -1,10 +1,10 @@
 import { SPACE } from '@cityturfer/brand';
 import { type SFSymbol, SymbolView } from 'expo-symbols';
 import { useMemo } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { SectionList, StyleSheet, Text, View } from 'react-native';
 
 import { ACCENT } from '@/constants/colors';
-import { type AchievementId, evaluateAchievements } from '@/contexts/achievements';
+import { ACHIEVEMENT_GROUPS, type AchievementId, evaluateAchievements } from '@/contexts/achievements';
 import { achievementCopy } from '@/contexts/achievements/ui/achievement-copy';
 import { useActivities } from '@/contexts/activity-log/ui/hooks';
 import { useTurfSummary } from '@/contexts/territory/ui/hooks';
@@ -15,16 +15,24 @@ import { usePalette } from '@/ui-kit/theme';
 const SYMBOL: Record<AchievementId, SFSymbol> = {
   'first-steps': 'figure.walk',
   'all-rounder': 'star.circle',
-  'five-k': 'flag',
-  'half-marathon': 'figure.run',
-  'half-century-ride': 'bicycle',
-  'hundred-km': 'flag.checkered',
-  regular: 'calendar',
   'early-bird': 'sunrise',
   'night-owl': 'moon.stars',
   neighbourhood: 'hexagon',
+  district: 'square.grid.3x3',
   'turf-lord': 'crown',
+  'across-town': 'building.2',
+  'first-glow': 'sparkle',
   stronghold: 'shield.lefthalf.filled',
+  'home-ground': 'flame',
+  regular: 'calendar',
+  'four-weeks': 'calendar.badge.checkmark',
+  'season-ticket': 'ticket',
+  'five-k': 'flag',
+  'ten-k': 'flag.2.crossed',
+  'half-marathon': 'figure.run',
+  'half-century-ride': 'bicycle',
+  'hundred-km': 'flag.checkered',
+  'five-hundred-km': 'medal',
 };
 
 /** Composes Activity Log and Territory facts into the Achievements evaluation. */
@@ -45,14 +53,40 @@ export default function AchievementsScreen() {
     [activities, summary]
   );
   const unlocked = list.filter((a) => a.unlocked).length;
+  const sections = useMemo(
+    () =>
+      ACHIEVEMENT_GROUPS.map((group) => {
+        const data = list.filter((a) => a.group === group);
+        return { group, data, unlocked: data.filter((a) => a.unlocked).length };
+      }),
+    [list]
+  );
 
   return (
-    <FlatList
+    <SectionList
       style={{ backgroundColor: p.bg }}
       contentContainerStyle={{ padding: SPACE.lg, gap: 10 }}
-      data={list}
+      sections={sections}
       extraData={locale}
       keyExtractor={(a) => a.id}
+      stickySectionHeadersEnabled={false}
+      renderSectionHeader={({ section }) => (
+        <View
+          testID={`achievements-group-${section.group}`}
+          accessibilityRole='header'
+          accessibilityLabel={t('groupLabel', {
+            group: t(`groupTitle.${section.group}`),
+            unlocked: section.unlocked,
+            total: section.data.length,
+          })}
+          style={s.groupHeader}
+        >
+          <Text style={[s.groupTitle, { color: p.text }]}>{t(`groupTitle.${section.group}`)}</Text>
+          <Text style={[s.groupCount, { color: p.muted }]}>
+            {section.unlocked} / {section.data.length}
+          </Text>
+        </View>
+      )}
       ListHeaderComponent={
         <Text testID='achievements-count' style={[s.count, { color: p.muted }]}>
           {t('count', { unlocked, total: list.length })}
@@ -101,6 +135,9 @@ export default function AchievementsScreen() {
 }
 
 const s = StyleSheet.create({
+  groupHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 14 },
+  groupTitle: { fontSize: 15, fontWeight: '800' },
+  groupCount: { fontSize: 13, fontWeight: '600', fontVariant: ['tabular-nums'] },
   count: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 },
   row: { flexDirection: 'row', gap: 14, alignItems: 'center' },
   title: { fontSize: 16, fontWeight: '800' },

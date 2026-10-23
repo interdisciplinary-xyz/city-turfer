@@ -5,12 +5,17 @@ import { type Auth, CODE_TTL_S, codeCipher } from './better-auth';
 /** Wrong tries a code survives: the third wrong one burns it (as sign-in codes, A1). */
 export const CODE_ATTEMPTS = 3;
 
+/** A valid code is mailed again only while at least this much of its life is left. */
+export const CODE_REUSE_MIN_LEFT_MS = 2 * 60_000;
+
 /**
  * The account-settings codes (docs/decisions/account-settings-2026-10-22.md, AC4): the **step-up**
  * code mailed to the current address before a sensitive change, and the code mailed to a **new**
  * address. They follow the sign-in codes' rules (A1): 6 digits, 10 minutes, 3 tries, single use,
  * stored encrypted (codeCipher) in `auth_verifications` as `<sealed>:<attempts>`, and a request
- * while one is valid mails the same code again. Built here rather than with Better Auth's emailOTP
+ * while one is valid mails the same code again, with its first expiry: a code lives at most 10
+ * minutes however often it is asked for (one with under 2 minutes left is replaced instead, so the
+ * mail never carries a code about to lapse). Built here rather than with Better Auth's emailOTP
  * change-email flow, which mails nothing for a taken address, writes only `auth_users`, revokes no
  * session and wants a fresh cookie session; the rows go through Better Auth's internal adapter
  * (`consume` writes with compare-and-swap statements, so the use is single and race-free).
@@ -38,19 +43,22 @@ export class OneTimeCodes {
     return `${emailChangePrefix(userId)}${hmac}`;
   }
 
-  /** The valid, unburnt code of `identifier` again (10 more minutes), else a new one (`fixed` or random). */
+  /**
+   * The valid, unburnt code of `identifier` again (its expiry unchanged) while at least
+   * CODE_REUSE_MIN_LEFT_MS of it is left, else a new one (`fixed` or random) for 10 minutes.
+   */
   async issue(identifier: string, fixed: string | null = null): Promise<string> {
     const { internalAdapter } = await this.auth.$context;
-    const expiresAt = new Date(Date.now() + CODE_TTL_S * 1000);
+    const now = Date.now();
     const existing = await internalAdapter.findVerificationValue(identifier);
-    if (existing && existing.expiresAt > new Date()) {
+    if (existing && existing.expiresAt.getTime() - now >= CODE_REUSE_MIN_LEFT_MS) {
       const [sealed, attempts] = splitAtLastColon(existing.value);
       const plain = Number(attempts || '0') < CODE_ATTEMPTS ? await this.cipher.decrypt(sealed) : '';
       if (plain) {
-        await internalAdapter.updateVerificationByIdentifier(identifier, { expiresAt });
         return plain;
       }
     }
+    const expiresAt = new Date(now + CODE_TTL_S * 1000);
     const code = fixed ?? String(randomInt(0, 1_000_000)).padStart(6, '0');
     await internalAdapter.deleteVerificationByIdentifier(identifier);
     await internalAdapter.createVerificationValue({

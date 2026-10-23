@@ -1,14 +1,29 @@
 /**
  * The web portal in the sync chain: signs in and calls the API exactly as the portal's client does
- * (apps/web/src/api on the web-portal branch), and reads only what its pages show. No browser: the
- * pages render these answers, and the portal's own tests cover the rendering.
+ * (apps/web/src/api), and reads only what its pages show. No browser: the pages render these
+ * answers, and the portal's own tests cover the rendering.
  *
- * Browser sessions are contract 0.5.0 (web portal Slice 0). Against an API without them the sign-in
- * returns no session cookie, and every check reports pending.
+ * Slice 0 (built) shows the account, the backup consents and the signed-in devices. Slice 1 (the
+ * map and activity pages, next) reads the activities, the totals and every turf cell; those reads
+ * are here already, with the browser's cookie, so the data the pages will draw is checked against
+ * the phone before the pages exist.
+ *
+ * Browser sessions are contract 0.5.0. Against an API without them the sign-in returns no session
+ * cookie, and every check reports pending.
  */
 import { deviceIp, LIVE_CODE } from './chain-server';
-import type { Pending } from './pending';
+import { isPending, type Pending } from './pending';
 import { retryAfterWait } from './retry';
+import {
+  type ActivityTotals,
+  type CellCounts,
+  readActivities,
+  readTotals,
+  readTurfCells,
+  readTurfSummary,
+  type ServerActivityView,
+  type TurfSummary,
+} from './server-reads';
 
 /** The API refuses browser writes from any other origin (WEB_ORIGIN; the dev server's default). */
 const WEB_ORIGIN = process.env.CITYTURFER_WEB_ORIGIN ?? 'https://cityturfer.local';
@@ -44,6 +59,14 @@ export interface WebPortal {
   deleteAccount(): Promise<number>;
   /** "Export my data": the status code (202 started, 429 once a day). */
   requestExport(): Promise<number>;
+  /** Slice 1 reads, with the browser's cookie: the activities list and the totals. */
+  activities(): Promise<ServerActivityView[]>;
+  totals(): Promise<ActivityTotals | Pending>;
+  /** Slice 1 reads: the turf summary and every cell the map draws. */
+  turfSummary(): Promise<TurfSummary | Pending>;
+  turfCells(): Promise<CellCounts[] | Pending>;
+  /** `Cache-Control` of the turf cells answer (a shared computer must keep no copy on disk). */
+  turfCellsCacheControl(): Promise<string | null | Pending>;
 }
 
 export async function webSignIn(base: string, address: string): Promise<WebPortal | Pending> {
@@ -96,6 +119,7 @@ export async function webSignIn(base: string, address: string): Promise<WebPorta
     }
     return res;
   };
+  const get = (path: string) => call('GET', path);
   const json = async <T>(path: string): Promise<T> => {
     const res = await call('GET', path);
     if (!res.ok) {
@@ -132,5 +156,16 @@ export async function webSignIn(base: string, address: string): Promise<WebPorta
     signOutEverywhere: async (scope) => (await call('DELETE', `/v1/auth/sessions?scope=${scope}`)).status,
     deleteAccount: async () => (await call('DELETE', '/v1/me')).status,
     requestExport: async () => (await call('POST', '/v1/me/exports')).status,
+    activities: () => readActivities(get),
+    totals: () => readTotals(get),
+    turfSummary: () => readTurfSummary(get),
+    async turfCells() {
+      const read = await readTurfCells(get);
+      return isPending(read) ? read : read.cells;
+    },
+    async turfCellsCacheControl() {
+      const read = await readTurfCells(get);
+      return isPending(read) ? read : read.cacheControl;
+    },
   };
 }

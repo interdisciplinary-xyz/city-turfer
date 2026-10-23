@@ -1,10 +1,9 @@
-import { createHash, timingSafeEqual } from 'node:crypto';
-
 import type { OpenAPIHono } from '@hono/zod-openapi';
 
 import { BackupService } from '../backup/use-cases';
 import type { ApiDeps, AppEnv } from '../deps';
 import { problem } from '../problem';
+import { secretMatches } from '../secret';
 import { type BackfillReport, backfillTurf } from '../territory/backfill';
 
 /** Vercel Cron calls this daily (apps/api/vercel.json `crons`); not part of the public contract. */
@@ -17,12 +16,10 @@ export const RETENTION_CRON_PATH = '/internal/cron/retention';
 export const TURF_CATCH_UP_ACTIVITIES = 25;
 export const TURF_CATCH_UP_MS = 60_000;
 
-const digest = (s: string) => createHash('sha256').update(s).digest();
-
-/** Constant time: both sides are hashed to 32 bytes first, so neither length nor content leaks. */
+/** Whether `Authorization` is `Bearer <secret>` (constant time, `secretMatches`). */
 export function bearerMatches(header: string | undefined, secret: string): boolean {
   const match = /^\s*Bearer\s+(\S+)\s*$/i.exec(header ?? '');
-  return timingSafeEqual(digest(match?.[1] ?? ''), digest(secret)) && !!match;
+  return secretMatches(match?.[1], secret);
 }
 
 /**
