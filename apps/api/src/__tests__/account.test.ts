@@ -271,6 +271,30 @@ describe('POST /v1/me/step-up/codes', () => {
     expect((await h.call('DELETE', '/v1/me/password', { token, body: { stepUpCode: first } })).status).toBe(204);
   });
 
+  it('mails a valid code again without extending it; one about to lapse is replaced', async () => {
+    const token = await account();
+    const expiry = async () =>
+      (await rows(sql`SELECT expires_at FROM auth_verifications WHERE identifier LIKE 'step-up-%'`)).map((r) =>
+        new Date(String(r.expires_at)).getTime()
+      );
+    const first = await stepUp(token);
+    const [firstExpiry] = await expiry();
+    // Asking again keeps the code and its first expiry: a code never lives past 10 minutes.
+    expect(await stepUp(token)).toBe(first);
+    expect(await expiry()).toEqual([firstExpiry]);
+    // Under two minutes left: a fresh code with a full 10 minutes, and the old one no longer works.
+    await h.db.execute(
+      sql`UPDATE auth_verifications SET expires_at = now() + interval '1 minute' WHERE identifier LIKE 'step-up-%'`
+    );
+    const fresh = await stepUp(token);
+    const [freshExpiry] = await expiry();
+    expect(freshExpiry - Date.now()).toBeGreaterThan(9 * 60_000);
+    if (fresh !== first) {
+      expect((await h.call('DELETE', '/v1/me/password', { token, body: { stepUpCode: first } })).status).toBe(401);
+    }
+    expect((await h.call('DELETE', '/v1/me/password', { token, body: { stepUpCode: fresh } })).status).toBe(204);
+  });
+
   it('logs the mail failure by kind only and still answers 202', async () => {
     const events: Record<string, unknown>[] = [];
     const log: ApiLog = { request: () => undefined, event: (e) => events.push(e) };
