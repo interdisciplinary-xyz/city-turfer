@@ -1,4 +1,4 @@
-import { createHash, timingSafeEqual } from 'node:crypto';
+import { secretMatches } from './secret';
 
 /**
  * The header the website's `/api/v1/*` route adds on Vercel (`apps/web/vercel.json`, a `routes`
@@ -10,14 +10,9 @@ export const WEB_EDGE_HEADER = 'cityturfer-edge';
 /** The shortest WEB_EDGE_SECRET accepted (`openssl rand -hex 32` gives 64). */
 export const MIN_WEB_EDGE_SECRET_LENGTH = 32;
 
-const digest = (s: string) => createHash('sha256').update(s).digest();
-
-/** Constant time: both sides are hashed to 32 bytes first, so neither length nor content leaks. */
+/** Whether the edge header carries WEB_EDGE_SECRET (constant time, `secretMatches`). */
 export function edgeSecretMatches(value: string | undefined, secret: string | null): boolean {
-  if (!secret) {
-    return false;
-  }
-  return timingSafeEqual(digest(value ?? ''), digest(secret)) && value !== undefined;
+  return secretMatches(value, secret);
 }
 
 /**

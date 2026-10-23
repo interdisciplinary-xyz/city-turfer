@@ -1,4 +1,4 @@
-import type { AccountFieldError } from '@cityturfer/core/identity';
+import { type AccountFieldError, isAccountFieldError } from '@cityturfer/core/identity';
 import type {
   AccountDetails,
   AccountFailure,
@@ -49,15 +49,6 @@ function failureOf(a: Answer | null): AccountFailure {
   return { kind: 'unavailable' };
 }
 
-const FIELD_CODES: readonly string[] = [
-  'display-name.too-long',
-  'display-name.invalid',
-  'email.invalid',
-  'email.unchanged',
-  'password.too-short',
-  'password.too-long',
-] satisfies readonly AccountFieldError[];
-
 /** A refused field: the problem's own code, or the first of its `errors[]` that is one of the shared rules. */
 function fieldErrorOf(a: Answer | null): { kind: 'field-error'; code: AccountFieldError } | null {
   if (!a || a.status < 400 || a.status >= 500) {
@@ -66,8 +57,8 @@ function fieldErrorOf(a: Answer | null): { kind: 'field-error'; code: AccountFie
   const own = problemCode(a);
   const listed = isObject(a.json) && Array.isArray(a.json.errors) ? a.json.errors : [];
   const codes = [own, ...listed.map((e) => (isObject(e) && typeof e.code === 'string' ? e.code : null))];
-  const code = codes.find((c): c is string => c !== null && FIELD_CODES.includes(c));
-  return code ? { kind: 'field-error', code: code as AccountFieldError } : null;
+  const code = codes.find((c): c is AccountFieldError => c !== null && isAccountFieldError(c));
+  return code ? { kind: 'field-error', code } : null;
 }
 
 /** 401 `auth.invalid-code`: the code was wrong, expired or used; any other 401: the session. */

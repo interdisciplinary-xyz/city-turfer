@@ -71,10 +71,12 @@ export type {
   VerifySignInResult,
 } from './application/use-cases';
 export {
+  ACCOUNT_FIELD_ERRORS,
   type AccountFieldError,
   accountFieldError,
   DISPLAY_NAME_MAX,
   displayName,
+  isAccountFieldError,
   newEmail,
   newPassword,
   PASSWORD_MAX,
