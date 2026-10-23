@@ -47,3 +47,5 @@ export type TerritoryApi = ReturnType<typeof createTerritoryApi>;
 export { catalogueCityView, type HomeCityDeps } from './application/home-city';
 export type { ActivityTrackSource, TerritoryDeps } from './application/use-cases';
 export type * from './contract';
+/** The turf strength rule (pure): clients holding `TurfCellCounts` derive visits, strength and tier here. */
+export { isStrong, strengthOf, tierOf, TURF_SATURATION_K, visitsOf } from './domain/strength';

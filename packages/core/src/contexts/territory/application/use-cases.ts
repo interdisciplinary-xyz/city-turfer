@@ -11,7 +11,7 @@ import {
 import type { ClaimView, TurfCellCounts, TurfCellPage, TurfCellView, TurfSummaryView } from '../contract';
 import type { CellGrid, CellId } from '../domain/cell-grid';
 import { Claim } from '../domain/claim';
-import { isStrong, strengthOf, tierOf } from '../domain/strength';
+import { isStrong, strengthOf, tierOf, visitsOf } from '../domain/strength';
 import type { CellRow, TerritoryRepository } from '../domain/territory-repository';
 
 /** Port: Activity Log's open-host track query. */
@@ -82,7 +82,7 @@ export class ReclaimTurfOfActivity {
   }
 }
 
-const visitsFor = (r: CellRow, types: readonly ActivityType[]) => types.reduce((s, t) => s + r[t], 0);
+const visitsFor = (r: CellRow, types: readonly ActivityType[]) => visitsOf([r.cell, r.walk, r.run, r.cycle], types);
 const ring = (grid: CellGrid, c: CellId): [number, number][] => {
   const b = grid.boundary(c).map((p) => [p.lon, p.lat] as [number, number]);
   return [...b, b[0]];
