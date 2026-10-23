@@ -1,18 +1,27 @@
 /**
  * Sync chain, phone → server (docs/plans/sync-chain-testing-2026-10-22.md, scenarios S1–S13).
  * Every change starts on a phone; the server is checked from outside, the way the web portal and
- * the admin will read it. Runs against the FakeApiServer always, and against a real API when
- * CITYTURFER_LIVE_API names one (`pnpm test:chain` starts one on throwaway data).
+ * the admin will read it: the activities with their numbers, the totals, and the turf cell for
+ * cell. Runs against the FakeApiServer always, and against a real API when CITYTURFER_LIVE_API
+ * names one (`pnpm test:chain` starts one on throwaway data).
  */
+import { adminObserver } from '@/test-support/chain/admin';
 import {
   CHAIN_SERVERS,
   type ChainPhone,
   type ChainServer,
-  isPending,
   LIVE_API,
   liveServer,
 } from '@/test-support/chain/chain-server';
-import { addActivity, notYet, phoneSnapshot, turnBackupOn } from '@/test-support/chain/scenario';
+import {
+  addActivity,
+  expectTotalsMatch,
+  expectTurfMatches,
+  notYet,
+  phoneSnapshot,
+  turnBackupOn,
+  withoutOneWalk,
+} from '@/test-support/chain/scenario';
 import { loadFixes } from '@/test-support/fixtures';
 
 jest.setTimeout(180_000);
@@ -43,13 +52,34 @@ async function expectServerMatchesPhone(p: ChainPhone, ids: string[]) {
   });
 }
 
-async function expectTurfMatches(name: string, check: string, p: ChainPhone) {
-  const server = await p.server.turfCellCount();
-  if (isPending(server)) {
-    notYet(name, check, server);
-    return;
+/** Turf and totals exist on the real API only: the fake stores uploads and computes nothing. */
+const computes = (name: string) => name === 'live API';
+
+/** The server's turf is the phone's, cell for cell (real API only). */
+async function expectServerTurf(
+  name: string,
+  check: string,
+  p: ChainPhone,
+  expected?: Parameters<typeof expectTurfMatches>[4]
+) {
+  if (computes(name)) {
+    await expectTurfMatches(name, check, p.server, p.c, expected);
   }
-  expect(server).toBe((await phoneSnapshot(p.c)).cells);
+}
+
+/** The server's turf and totals are the phone's (real API only). */
+async function expectSameTurfAndTotals(name: string, check: string, p: ChainPhone) {
+  if (computes(name)) {
+    await expectTurfMatches(name, `${check} turf`, p.server, p.c);
+    await expectTotalsMatch(name, `${check} totals`, () => p.server.totals(), p.c);
+  }
+}
+
+/** The admin portal: nothing to observe until the API has its admin routes (live runs only). */
+async function expectAdminSees(name: string, check: string) {
+  if (computes(name)) {
+    notYet(name, `${check} admin`, await adminObserver(LIVE_API!));
+  }
 }
 
 describe.each(CHAIN_SERVERS)('sync chain, phone → %s', (name, make) => {
@@ -71,7 +101,8 @@ describe.each(CHAIN_SERVERS)('sync chain, phone → %s', (name, make) => {
     expect(await p.c.cloudBackup.status.execute()).toMatchObject({ backedUp: 3, total: 3, lastError: null });
     await expectServerMatchesPhone(p, ['rec-walk', 'rec-run', 'rec-ride']);
     expect(await p.server.consents()).toMatchObject({ 'cloud-sync': true });
-    await expectTurfMatches(name, 'S1 turf cells', p);
+    await expectSameTurfAndTotals(name, 'S1', p);
+    await expectAdminSees(name, 'S1');
 
     // No upload was refused and retried behind an "ok" (a 412/428/422 would show here).
     expect(p.refusedWrites()).toEqual([]);
@@ -111,6 +142,8 @@ describe.each(CHAIN_SERVERS)('sync chain, phone → %s', (name, make) => {
     await expectServerMatchesPhone(p, ['rec-walk', id]);
     expect(await p.c.cloudBackup.status.execute()).toMatchObject({ backedUp: 2, total: 2, unsynced: 0 });
     expect(p.refusedWrites()).toEqual([]);
+    // The recording's turf is the server's too.
+    await expectSameTurfAndTotals(name, 'S2', p);
   });
 
   it('S3 + S4 + S5: rename, delete and Home City reach the server', async () => {
@@ -131,7 +164,8 @@ describe.each(CHAIN_SERVERS)('sync chain, phone → %s', (name, make) => {
     await expectServerMatchesPhone(p, ['rec-walk']);
     expect((await p.server.activities()).find((a) => a.id === 'rec-walk')!.name).toBe('Lunch loop');
     expect(await p.server.homeCityId()).toBe('pl-warsaw');
-    await expectTurfMatches(name, 'S4 turf after delete', p);
+    // The deleted run's cells left both turfs; the walk's stayed.
+    await expectSameTurfAndTotals(name, 'S4 after delete', p);
   });
 
   it('S6 + S7: Apple Health workouts reach the server only while shared; turning sharing off keeps them on the phone', async () => {
@@ -147,12 +181,17 @@ describe.each(CHAIN_SERVERS)('sync chain, phone → %s', (name, make) => {
     const hk = (await p.server.activities()).find((a) => a.id === 'hk-w1');
     expect(hk?.source).toBe('apple-health');
     expect(await p.server.consents()).toMatchObject({ 'apple-health-in-cloud-sync': true });
+    // Shared: the server's turf counts the workout, like the phone's.
+    await expectSameTurfAndTotals(name, 'S7 Health shared', p);
 
     const phoneBefore = await phoneSnapshot(p.c);
     expect(await p.c.cloudBackup.includeHealth.execute(false)).toEqual({ kind: 'ok' });
     expect(await p.server.isGone('hk-w1')).toBe(true);
     await expectServerMatchesPhone(p, ['rec-walk']);
     expect(await phoneSnapshot(p.c)).toEqual(phoneBefore);
+    // Not shared: the server drops the workout's visits (it walked the same route as rec-walk, so
+    // each cell has one walk fewer); the phone keeps its turf.
+    await expectServerTurf(name, 'S7 Health withdrawn turf', p, withoutOneWalk);
   });
 
   it('S8: turning backup off erases the server copy and nothing on the phone', async () => {
@@ -171,6 +210,9 @@ describe.each(CHAIN_SERVERS)('sync chain, phone → %s', (name, make) => {
     expect(await p.server.homeCityId()).toBeNull();
     expect(await p.server.consents()).toMatchObject({ 'cloud-sync': false });
     expect(await phoneSnapshot(p.c)).toEqual(phoneBefore);
+    // The server's turf goes with the copy; the phone's stays.
+    await expectServerTurf(name, 'S8 turf erased', p, () => []);
+    expect(phoneBefore.cells).toBeGreaterThan(0);
   });
 
   it('S11: a new phone on the same account restores the same history', async () => {
@@ -208,6 +250,8 @@ describe.each(CHAIN_SERVERS)('sync chain, phone → %s', (name, make) => {
     await expectServerMatchesPhone(a, ['rec-walk', 'rec-ride']);
     expect(a.refusedWrites()).toEqual([]);
     expect(b.refusedWrites()).toEqual([]);
+    // The restored phone's turf is the server's, cell for cell.
+    await expectServerTurf(name, 'S11 restored turf', b);
   });
 });
 
@@ -280,6 +324,8 @@ describeLive('sync chain, live API only', () => {
       await expectServerMatchesPhone(p, ['rec-walk', 'rec-run', 'rec-ride']);
       expect(p.refusedWrites()).toEqual([]);
       expect(await p.c.cloudBackup.status.execute()).toMatchObject({ backedUp: 3, total: 3, unsynced: 0 });
+      // A replayed upload claims nothing twice.
+      await expectSameTurfAndTotals('live API', `S12 ${mode}`, p);
     }
   );
 });

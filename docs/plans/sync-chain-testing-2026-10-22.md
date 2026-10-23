@@ -1,12 +1,13 @@
 ---
 status: proposed
-verified: 2026-10-22
+verified: 2026-10-23
 owner: founder
 scope:
   [
     apps/mobile/src/__tests__/chain,
     apps/mobile/src/test-support/chain,
     tools/chain/run.mjs,
+    apps/api/src/routes/territory.ts,
     apps/mobile/src/contexts/cloud-backup,
     apps/mobile/e2e,
     apps/api/src/server.ts,
@@ -54,22 +55,23 @@ adjustments:
 `live-api.integration.test.ts`, which could not pass against a real server (its second sign-in for
 the same address always hit the one-code-a-minute `429`).
 
-## What each app can see today (2026-10-22)
+## What each app can see today (2026-10-23)
 
-| App                 | State                                                   | What a phone change can show there                                                                        | What it can do to the phone                                                    |
-| ------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| API                 | `scope/v0.10.0`, contract 0.5.0 (with account settings) | Everything: activities with recomputed numbers, tombstones, consents, Home City                           | —                                                                              |
-| Web portal, Slice 0 | **Merged** (#141), contract 0.5.0                       | Privacy & data: account e-mail, backup and Apple Health consent state with dates, signed-in devices       | Sign out one device, others or all (phones included); delete account; export   |
-| Account settings    | **Merged** into `scope/v0.10.0` (#142), contract 0.5.0  | Name and e-mail on `/v1/me` for every session                                                             | E-mail or password change signs out every **other** session, browsers included |
-| Web portal, Slice 1 | planned                                                 | Activities list, detail, turf map (needs server turf, lane C)                                             | —                                                                              |
-| Admin               | **Merged** (#139): staff sign-in only                   | Nothing yet. Its own Payload database holds staff only; user data waits for `/internal/admin/v1` (lane D) | Later: erasure, block                                                          |
+| App                 | State                                                    | What a phone change can show there                                                                                     | What it can do to the phone                                                    |
+| ------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| API                 | `scope/v0.10.0`, contract 0.6.0 (account settings, turf) | Everything: activities with recomputed numbers, totals, tombstones, consents, Home City, **turf cell for cell** (#149) | —                                                                              |
+| Web portal, Slice 0 | **Merged** (#141)                                        | Privacy & data: account e-mail and name, backup and Apple Health consent state, signed-in devices                      | Sign out one device, others or all (phones included); delete account; export   |
+| Account settings    | **Merged** (#142)                                        | Name and e-mail on `/v1/me` for every session, the web portal's included                                               | E-mail or password change signs out every **other** session, browsers included |
+| Web portal, Slice 1 | next; its data is on the API (#149)                      | Activities list and detail, totals, turf map: checked now with the browser's cookie (W5), pages not built              | —                                                                              |
+| Admin               | **Merged** (#139): staff sign-in only                    | Nothing yet. Its own Payload database holds staff only; user data waits for `/internal/admin/v1` (lane D)              | Later: erasure, block                                                          |
 
-The web portal shows **no activities, counts, "last backed up", Home City or turf** in Slice 0
-("what we store" is static copy). So a recording, rename, delete or Home City change has nothing to
-show on the web yet; those columns wait for Slice 1.
+Slice 0 pages show **no activities, totals, Home City or turf**. Slice 1's pages will, and the data
+they will draw is already on the API: W5 reads it the way the portal will (cookie session) and
+compares it with the phone, so the pages start from a checked source.
 
-Both portals and account settings are in `scope/v0.10.0` since 2026-10-23. The web portal's session
-cookie is `__Host-ct_session` (it was `__Secure-ct_session` on the branch).
+The admin portal has no route to user data yet. Every live scenario that would show there asks the
+API for `/internal/admin/v1` and reports pending while it answers 404; the day those routes exist,
+the probe fails and asks for the admin observer (N4) instead of staying pending by accident.
 
 ## Scenarios
 
@@ -78,21 +80,23 @@ the reason and is listed apart from the passes; it is never counted as passed.
 
 ### Phone → server (`phone-to-server.test.ts`, fake and live API)
 
-| #   | On the phone                                        | API (`/v1`)                                                             | Web portal (Slice 0)                                  | Admin                    |
-| --- | --------------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------ |
-| S1  | Turn on backup with 3 activities, run backup        | 3 activities, same distance (1 m) and moving time (1 s); no refusals    | Backup "on since" (W1)                                | pending: lane D          |
-| S2  | Record a run, finish                                | Nothing written while recording; on finish the outbox uploads it        | — (Slice 1)                                           | pending                  |
-| S3  | Rename                                              | New name                                                                | — (Slice 1)                                           | —                        |
-| S4  | Delete                                              | `410` tombstone; turf summary: pending (server turf, lane C)            | — (Slice 1)                                           | pending                  |
-| S5  | Choose Home City                                    | Stored                                                                  | — (Slice 1)                                           | — (never: location data) |
-| S6  | Apple Health workout, sharing off                   | No `hk-*` activity                                                      | Apple Health "off" (W1)                               | —                        |
-| S7  | Sharing on, then off                                | `hk-*` arrives as Apple Health, then is erased; phone unchanged         | Apple Health "on", then "off" (W1)                    | pending                  |
-| S8  | Turn backup off                                     | Copy and Home City erased, consent withdrawn; phone unchanged           | Backup "withdrawn" (W1)                               | pending                  |
-| S9  | Request an export                                   | Export job                                                              | The web's own export is refused for the day (W2)      | pending                  |
-| S10 | Delete the account                                  | Every session 401; backup notes `auth`, waits for a sign-in; phone kept | Not checked here (W4 covers delete from the web side) | pending                  |
-| S11 | New phone, same account: restore                    | Unchanged; no refusals on either phone                                  | Not checked yet (devices list would show both phones) | —                        |
-| S12 | Network drops mid-backup (before send, answer lost) | Never half an activity; the retry completes it                          | —                                                     | —                        |
-| S13 | Record in the background                            | No request at all                                                       | —                                                     | —                        |
+| #   | On the phone                                        | API (`/v1`)                                                                                      | Web portal (Slice 0)                                  | Admin                    |
+| --- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------- | ------------------------ |
+| S1  | Turn on backup with 3 activities, run backup        | 3 activities, same distance (1 m) and moving time (1 s); totals; turf cell for cell; no refusals | Backup "on since" (W1); the data Slice 1 draws (W5)   | pending: no admin routes |
+| S2  | Record a run, finish                                | Nothing written while recording; on finish the outbox uploads it; turf and totals match          | W5                                                    | pending                  |
+| S3  | Rename                                              | New name                                                                                         | W5                                                    | —                        |
+| S4  | Delete                                              | `410` tombstone; the run's cells leave the turf; totals                                          | W5                                                    | pending                  |
+| S5  | Choose Home City                                    | Stored                                                                                           | — (not shown)                                         | — (never: location data) |
+| S6  | Apple Health workout, sharing off                   | No `hk-*` activity                                                                               | Apple Health "off" (W1)                               | —                        |
+| S7  | Sharing on, then off                                | `hk-*` arrives as Apple Health and in the turf, then both go; phone unchanged                    | Apple Health "on", then "off" (W1); W5                | pending                  |
+| S8  | Turn backup off                                     | Copy, Home City and turf erased, consent withdrawn; phone unchanged                              | Backup "withdrawn" (W1)                               | pending                  |
+| S9  | Request an export                                   | Export job                                                                                       | The web's own export is refused for the day (W2)      | pending                  |
+| S10 | Delete the account                                  | Every session 401; backup notes `auth`, waits for a sign-in; phone kept                          | Not checked here (W4 covers delete from the web side) | pending                  |
+| S11 | New phone, same account: restore                    | Unchanged; the restored phone's turf is the server's; no refusals on either phone                | Not checked yet (devices list would show both phones) | —                        |
+| S12 | Network drops mid-backup (before send, answer lost) | Never half an activity; the retry completes it; nothing claimed twice                            | —                                                     | —                        |
+| S13 | Record in the background                            | No request at all                                                                                | —                                                     | —                        |
+
+Turf and totals are checked on the real API only: the fake stores uploads and computes nothing.
 
 S13 is not in the chain suite: a foreground phone in Jest cannot prove it. It stays with
 `apps/mobile/src/__tests__/headless-offline.test.ts` and the device check (layer L4).
@@ -109,6 +113,7 @@ The web observer signs in and calls the API exactly as the portal client (apps/w
 | W2  | Phone requests an export; web asks for one; web signs out                                                                     | Web export refused (`429`, one a day per account); web cookie cleared; the phone stays signed in and its next activity still uploads                                                               |
 | W3  | Web "Sign out everywhere" (`scope=all`)                                                                                       | Browser and phone both signed out; phone keeps everything                                                                                                                                          |
 | W4  | Web deletes the account                                                                                                       | Cookie cleared, `/v1/me` 401; phone signed out, keeps everything                                                                                                                                   |
+| W5  | Phone backs up a walk, a run, a ride and a shared Apple Health walk, renames, deletes the run, stops sharing Health           | With the browser's cookie, the data Slice 1 draws: the activities (ids, names, sources, numbers), the totals and every turf cell equal the phone's at each step; turf cells answer `no-store`      |
 
 ### Account settings from the phone (`account-settings.test.ts`, live API with account settings)
 
@@ -119,14 +124,13 @@ The phone side sends the requests its Account tab's gateway sends on #142, with 
 | A1  | Set a name, then clear it                      | A second phone on the account reads the name, then none                                                                                                   |
 | A2  | Change e-mail (step-up code, new-address code) | Same account: backup keeps going to the same copy, no refusals; the other phone is signed out; a new phone signing in with the new address finds the copy |
 | A3  | Set a password                                 | The other phone is signed out, this one isn't; a new phone signing in with the password finds the backup                                                  |
-
-When #141 and #142 are both in, add: **A4**, an e-mail or password change on the phone signs the web
-portal out. The API does it today, because browsers use the same sessions table.
+| A4  | (in A2 and A3) the web portal signed in too    | The e-mail change and the new password sign the web portal out (cookie cleared); A1: the portal's account panel shows the name                            |
 
 ### Checked in every scenario
 
-- **Same numbers:** count exact, distance within 1 m, moving time within 1 s; turf cells exact once
-  server turf exists.
+- **Same numbers:** count exact, distance within 1 m, moving time within 1 s; totals likewise; turf
+  exact: the same H3 cells with the same visits per type, and the same summary (cells, strong cells,
+  cells per type).
 - **The phone never loses data from a server-side action** (decision B4): S7, S8, S10, W1, W3, W4.
 - **No silent refusals:** no write outside sign-in answered ≥ 400 (a 412 retry behind an "ok").
 - **Idempotent:** a second backup run writes nothing.
@@ -173,17 +177,24 @@ for that day.
 
 ## Still to build
 
-| #   | What                                                                                                     | Owner (skill)                         | Needs             |
-| --- | -------------------------------------------------------------------------------------------------------- | ------------------------------------- | ----------------- |
-| N1  | A4 (account change signs the web out): now possible                                                      | mobile-test-engineer (mobile-testing) | —                 |
-| N2  | Switch account actions to `ApiAuthGateway`'s methods (on scope now) instead of raw requests              | mobile-test-engineer                  | —                 |
-| N3  | Web Slice 1 columns: list, detail, map show S1–S7, same numbers                                          | portal-engineer (web-portal)          | lane C, Slice 1   |
-| N4  | Admin observer: counts, audit row per staff read, no coordinates (G9); erasure and block reach the phone | admin-engineer (admin-portal)         | lane D routes, P2 |
-| N5  | Browser rendering checks (Playwright) once the portal has a Playwright setup                             | portal-engineer                       | apps/web E2E      |
-| N6  | Maestro backup flow (L3) with the API observer                                                           | mobile-test-engineer                  | P3                |
-| P2  | A test-only staff assertion for PGlite (refused in production, like `AUTH_FIXED_CODE`)                   | api-engineer (api-design)             | lane D            |
-| P3  | `testID`s on the backup card                                                                             | mobile-ui-engineer                    | —                 |
-| P4  | CI job for `test:chain`; the verify-change skill names it for cloud-backup, identity, API, portal diffs  | harness-engineer (ai-harness)         | —                 |
+| #   | What                                                                                                                                                           | Owner (skill)                 | Needs             |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | ----------------- |
+| N1  | ~~A4 (account change signs the web out)~~: done, in A2 and A3                                                                                                  | —                             | —                 |
+| N2  | ~~Account actions through `ApiAuthGateway`~~: done (`account-actions.ts`)                                                                                      | —                             | —                 |
+| N3  | Web Slice 1: the data is checked (W5); add the pages' rendering of it once they exist (N5)                                                                     | portal-engineer (web-portal)  | Slice 1 pages     |
+| N4  | Admin observer: counts, audit row per staff read, no coordinates (G9); erasure and block reach the phone. The probe in `admin.ts` fails when the routes appear | admin-engineer (admin-portal) | lane D routes, P2 |
+| N5  | Browser rendering checks (Playwright) once the portal has a Playwright setup                                                                                   | portal-engineer               | apps/web E2E      |
+| N6  | Maestro backup flow (L3) with the API observer                                                                                                                 | mobile-test-engineer          | P3                |
+| P2  | A test-only staff assertion for PGlite (refused in production, like `AUTH_FIXED_CODE`)                                                                         | api-engineer (api-design)     | lane D            |
+| P3  | `testID`s on the backup card                                                                                                                                   | mobile-ui-engineer            | —                 |
+| P4  | CI job for `test:chain`; the verify-change skill names it for cloud-backup, identity, API, portal diffs                                                        | harness-engineer (ai-harness) | —                 |
+
+## Next: two-way flow (v0.11.0)
+
+The founder decided on 2026-10-23 (`docs/decisions/data-flow-2026-10-23.md`): records are created on
+the phone, deleted on the web, adjusted by staff (all but tracks), and the phone pulls those
+changes. The chain then gains: a web delete reaches the phone (activity and turf gone); admin edits
+and erasure reach the phone and the web; conflicts resolve by the decided rules.
 
 ## Decisions
 
