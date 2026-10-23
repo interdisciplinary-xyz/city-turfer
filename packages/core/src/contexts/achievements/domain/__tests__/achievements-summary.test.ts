@@ -4,9 +4,9 @@ import { summarizeAchievements } from '../achievements-summary';
 const at = (d: number, h = 12) => new Date(2026, 9, d, h).getTime();
 
 describe('summarizeAchievements', () => {
-  it('starts at 0 of 12 with First steps closest (ties keep display order)', () => {
+  it('starts at 0 of 20 with First steps closest (ties keep display order)', () => {
     const s = summarizeAchievements(evaluateAchievements({ activities: [], turfCells: 0, strongCells: 0 }));
-    expect(s).toMatchObject({ unlocked: 0, total: 12 });
+    expect(s).toMatchObject({ unlocked: 0, total: 20 });
     expect(s.closest?.id).toBe('first-steps');
   });
 
@@ -27,6 +27,6 @@ describe('summarizeAchievements', () => {
       ...a,
       unlocked: true,
     }));
-    expect(summarizeAchievements(list)).toEqual({ unlocked: 12, total: 12, closest: null });
+    expect(summarizeAchievements(list)).toEqual({ unlocked: 20, total: 20, closest: null });
   });
 });

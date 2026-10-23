@@ -139,6 +139,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   settings (contract 0.5.0) — change name, e-mail and an optional password; codes stay the default
   sign-in and the recovery path; a fresh code to the current address before any sensitive change;
   other sessions signed out and a security mail after an e-mail or password change
+- 🚧 [`decisions/achievements-list-2026-10-23.md`](decisions/achievements-list-2026-10-23.md):
+  Achievements list v2 (product owner proposal) — 12 → 20 achievements in five groups; turf and
+  coming back weighted as much as distance; weeks counted apart, never in a row; all old ids kept
 - ✅ [`decisions/api-2026-10-20.md`](decisions/api-2026-10-20.md): v0.8.0 HTTP API — apps/api (Hono
   on Vercel, Frankfurt) exposing the app's existing use cases as /v1 routes, contract-first with zod
   → OpenAPI 3.1, documented with Swagger UI at cityturfer.local/swagger; the core logic now lives in
