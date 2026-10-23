@@ -107,7 +107,8 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`sessions/v0.10.0.md`](sessions/v0.10.0.md): Session log v0.10.0 — cut from main at the v0.9.0
   release; versions pinned to 0.10.0; carries the checks v0.9.0 shipped without (Maestro, device,
   browser, API deploy) and its follow-ups; light site, Street Plate type (native), account settings
-  (API 0.5.0), portals in progress
+  (API 0.5.0), web portal Slice 0, admin scaffold, sync-chain tests, server turf (API 0.6.0), local
+  mock accounts
 - 🕰️ [`sessions/v0.2.0.md`](sessions/v0.2.0.md): Session log v0.2.0 through the Me menu and
   achievements; predates the Dashboard, Me drawer and login rename (PRs 23–25) and still says
   app.json is unpinned (pinned in f04bcf3)
