@@ -56,7 +56,11 @@ export function parseApiTokens(raw: string | undefined): { entries: TokenEntry[]
 /** Verifies bearer tokens against the configured hashes, comparing every entry in constant time. */
 export function deviceTokenAuth(entries: readonly TokenEntry[]): AuthVerifier {
   return {
-    verify(token) {
+    verify(token, credential = 'bearer') {
+      if (credential !== 'bearer') {
+        // Device tokens live on phones only: never accepted from a cookie.
+        return Promise.resolve(null);
+      }
       const digest = createHash('sha256').update(token, 'utf8').digest();
       let found: TokenEntry | null = null;
       for (const entry of entries) {
@@ -67,6 +71,7 @@ export function deviceTokenAuth(entries: readonly TokenEntry[]): AuthVerifier {
       }
       const principal: Principal | null = found
         ? {
+            realm: 'user',
             userId: found.userId,
             verified: true,
             kind: 'device',

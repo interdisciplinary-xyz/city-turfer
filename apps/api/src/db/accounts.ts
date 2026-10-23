@@ -5,7 +5,8 @@ import { and, eq, like, ne, or } from 'drizzle-orm';
 import type { AccountRepository } from '../identity/account';
 import { emailChangePrefix } from '../identity/codes';
 import type { SignInStamp, SignInStamps } from '../identity/use-cases';
-import { authAccounts, authSessions, authUsers, authVerifications, users } from './schema';
+import { authAccounts, authUsers, authVerifications, users } from './schema';
+import { revokeSessionsOf } from './sessions';
 import type { Db } from './store';
 
 /** Better Auth's provider id of a password (`auth_accounts`, account id = user id). */
@@ -85,10 +86,10 @@ export class DrizzleAccountRepository implements AccountRepository, SignInStamps
     userId: string;
     from: string;
     to: string;
-    keepSessionToken: string;
+    keepSessionId: string;
     at: number;
   }): Promise<'changed' | 'taken'> {
-    const { userId, from, to, keepSessionToken, at } = input;
+    const { userId, from, to, keepSessionId, at } = input;
     try {
       return await this.db.transaction(async (tx) => {
         const [taken] = await tx
@@ -114,9 +115,7 @@ export class DrizzleAccountRepository implements AccountRepository, SignInStamps
               like(authVerifications.identifier, `${literal(emailChangePrefix(userId))}%`)
             )
           );
-        await tx
-          .delete(authSessions)
-          .where(and(eq(authSessions.userId, userId), ne(authSessions.token, keepSessionToken)));
+        await revokeSessionsOf(tx, userId, keepSessionId);
         return 'changed' as const;
       });
     } catch (error) {
@@ -131,10 +130,10 @@ export class DrizzleAccountRepository implements AccountRepository, SignInStamps
   async setPassword(input: {
     userId: string;
     hash: string;
-    keepSessionToken: string;
+    keepSessionId: string;
     at: number;
   }): Promise<'set' | 'changed'> {
-    const { userId, hash, keepSessionToken, at } = input;
+    const { userId, hash, keepSessionId, at } = input;
     return this.db.transaction(async (tx) => {
       const [existing] = await tx
         .select({ id: authAccounts.id, password: authAccounts.password })
@@ -157,23 +156,19 @@ export class DrizzleAccountRepository implements AccountRepository, SignInStamps
           updatedAt: new Date(at),
         });
       }
-      await tx
-        .delete(authSessions)
-        .where(and(eq(authSessions.userId, userId), ne(authSessions.token, keepSessionToken)));
+      await revokeSessionsOf(tx, userId, keepSessionId);
       return existing?.password ? ('changed' as const) : ('set' as const);
     });
   }
 
-  async removePassword(input: { userId: string; keepSessionToken: string }): Promise<boolean> {
-    const { userId, keepSessionToken } = input;
+  async removePassword(input: { userId: string; keepSessionId: string }): Promise<boolean> {
+    const { userId, keepSessionId } = input;
     return this.db.transaction(async (tx) => {
       const removed = await tx
         .delete(authAccounts)
         .where(isCredential(userId))
         .returning({ password: authAccounts.password });
-      await tx
-        .delete(authSessions)
-        .where(and(eq(authSessions.userId, userId), ne(authSessions.token, keepSessionToken)));
+      await revokeSessionsOf(tx, userId, keepSessionId);
       return removed.some((r) => r.password);
     });
   }

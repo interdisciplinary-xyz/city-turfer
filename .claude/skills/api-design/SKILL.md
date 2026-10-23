@@ -76,9 +76,14 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
 - **Errors:** `application/problem+json` (RFC 9457): `type`, `title`, `status`, `detail`, our `code`
   from the catalogue in `apps/api/src/errors.ts` (domain codes like `home-city.unknown` included),
   and for 400 an `errors[]` of JSON pointers (at most 20) — never input values.
-- **Headers:** `X-Request-Id` on every answer; `CityTurfer-Client` (426 `client.too-old`);
-  `Retry-After` + `RateLimit` on 429; `Location` on 201/202.
-- **Auth:** `bearerAuth` (HTTP bearer). Every route needs it except `GET /v1/health`,
+- **Headers:** `X-Request-Id` on every answer; `Cache-Control: private, no-store` and
+  `Vary: Cookie, Authorization` by default on `/v1` (`personalCaching`; tracks keep
+  `private, no-cache`); `CityTurfer-Client` (426 `client.too-old`); `Retry-After` + `RateLimit` on
+  429; `Location` on 201/202.
+- **Auth:** `bearerAuth` (HTTP bearer) or `cookieAuth` (the website's `__Host-ct_session`,
+  `requireCaller` in `apps/api/src/middleware.ts`; cookie writes need `Origin` = `WEB_ORIGIN` and
+  `CityTurfer-Client: web/<version>`, else 403 `auth.csrf`; principals carry `realm: 'user'`; design
+  `docs/decisions/api-web-sessions-2026-10-22.md`). Every route needs one except `GET /v1/health`,
   `POST /v1/auth/codes`, `POST /v1/auth/sign-in`, `GET /v1/exports/{key}` (the key is the
   credential), `/openapi.json` and `/swagger`. **Sign-in** = e-mailed 6-digit code via Better Auth
   (`apps/api/src/identity/`: `better-auth.ts`, `use-cases.ts` IdentityService, `mailer.ts` Mailer
@@ -89,9 +94,11 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   and counting only failed sign-ins). Tables `auth_*`; the Better Auth user id is `users.id`. The
   verifier is composite: **device tokens** (`API_TOKENS`, sha256 → user id, constant time; one more
   release) first, then sessions (only the signed token `<token>.<HMAC>` is accepted:
-  `bearer({ requireSignature: true })`; revoke by deleting `auth_sessions` rows); unknown → 401
-  `auth.invalid`. The user row is created on first sight. The placeholder verifier (spec generation,
-  planned-route tests) marks callers unverified, which live routes refuse. Decision:
+  `bearer({ requireSignature: true })`; phone sessions only as bearer, browser sessions only from
+  the cookie; IdentityService slides them: phones 60 days, browsers 14 under a 30-day or 8-hour cap;
+  users list and revoke them via `/v1/auth/sessions`); unknown → 401 `auth.invalid`. The user row is
+  created on first sight. The placeholder verifier (spec generation, planned-route tests) marks
+  callers unverified, which live routes refuse. Decision:
   `docs/decisions/api-accounts-2026-10-22.md`.
 - **Account settings (0.5.0):** `PATCH /v1/me` (name), step-up codes, e-mail change, optional
   password (`AccountService` in `apps/api/src/identity/account.ts`, repository
@@ -101,10 +108,12 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   (`accountCaller`; device tokens → 403 `identity.account-required`); the step-up check is in each
   use case, never a middleware; step-up codes and wrong account codes are rate-limited per user id,
   never in the address's sign-in buckets (a stranger can fill those). E-mail and password changes,
-  and removing the password, revoke every other session in the same transaction, and a sign-in that
-  raced one is re-checked and dropped. Password sign-in is the second body of
-  `POST /v1/auth/sign-in` (`auth.api.signInEmail`; every failure `401 auth.invalid-credentials`).
-  Decision: `docs/decisions/account-settings-2026-10-22.md`.
+  and removing the password, revoke every other session (phones and browsers) in the same
+  transaction, keeping the caller's by session id (`revokeSessionsOf` in `db/sessions.ts`, shared
+  with the `SessionStore`), and a sign-in that raced one is re-checked and dropped. Cookie callers
+  pass the CSRF guard like any write. Password sign-in is the second body of `POST /v1/auth/sign-in`
+  (`auth.api.signInEmail`; every failure `401 auth.invalid-credentials`), with `client: "browser"`
+  and `sharedComputer` as for codes. Decision: `docs/decisions/account-settings-2026-10-22.md`.
 - **Consent:** activity and Home City writes need `cloud-sync` granted (Apple Health activities also
   `apple-health-in-cloud-sync`), else 403 `consent.required`; `DELETE` never needs it. Withdrawing
   erases the server copy it covered (`eraseBackup`, no new tombstones): `cloud-sync` → everything
@@ -151,13 +160,14 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   `DATABASE_URL` it uses PGlite in `apps/api/.data/` (gitignored, migrated on start); without
   `API_TOKENS` and `DATABASE_URL` the token `dev-token` is user `admin` (never against Neon).
 - **Env (Vercel):** `DATABASE_URL` (Neon pooled), optional `DATABASE_URL_UNPOOLED` (migrations),
-  `BETTER_AUTH_SECRET`, `BREVO_API_KEY`, `MAIL_FROM`, `API_PUBLIC_URL`, `CRON_SECRET`, `API_TOKENS`;
-  `AUTH_FIXED_CODE` on previews only, and only for `@e2e.cityturfer.test` addresses (production
-  refuses to boot with it, or without the others: `checkProductionEnv` in `apps/api/src/wiring.ts`).
-  Production also needs `DATABASE_URL` and `CRON_SECRET` (daily Vercel Cron
-  `GET /internal/cron/retention`, outside `/v1` and the spec, purges expired exports, codes,
-  sessions and rate-limit rows). Unexpected errors log one sanitised `request.error` line
-  (`describeError`, never the message). Runbook: `docs/operations/api-deploy.md`.
+  `BETTER_AUTH_SECRET`, `BREVO_API_KEY`, `MAIL_FROM`, `API_PUBLIC_URL`, `CRON_SECRET`, `API_TOKENS`,
+  `WEB_ORIGIN` (the website, for browser sessions; unset on Vercel → off); `AUTH_FIXED_CODE` on
+  previews only, and only for `@e2e.cityturfer.test` addresses (production refuses to boot with it,
+  or without the others: `checkProductionEnv` in `apps/api/src/wiring.ts`). Production also needs
+  `DATABASE_URL` and `CRON_SECRET` (daily Vercel Cron `GET /internal/cron/retention`, outside `/v1`
+  and the spec, purges expired exports, codes, sessions and rate-limit rows). Unexpected errors log
+  one sanitised `request.error` line (`describeError`, never the message). Runbook:
+  `docs/operations/api-deploy.md`.
 - **Support (no admin panel):** `user:find -- <id|email>` (no coordinates) and
   `user:delete -- <id> [--yes]` (same erase as `DELETE /v1/me`; dry run without `--yes`).
 - **Codes locally:** the dev server prints them (ConsoleMailer); tests read them from MemoryMailer

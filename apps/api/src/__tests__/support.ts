@@ -9,6 +9,7 @@ import { DrizzleExportStore, PostgresFileStorage } from '../db/exports';
 import { createPgliteDb } from '../db/pglite';
 import { PostgresRateLimiter } from '../db/rate-limits';
 import { DrizzleRetentionStore } from '../db/retention';
+import { DrizzleSessionStore } from '../db/sessions';
 import { DrizzleBackupStore } from '../db/store';
 import { type ApiLog, defaultDeps, silentLog } from '../deps';
 import { createAuth } from '../identity/better-auth';
@@ -70,6 +71,7 @@ export async function backupApp(
     mailer?: MemoryMailer;
     log?: ApiLog;
     cronSecret?: string | null;
+    webEdgeSecret?: string | null;
     /** Passwords the fake breach check refuses (default: `password1234`, …). */
     breached?: readonly string[];
   } = {}
@@ -94,7 +96,8 @@ export async function backupApp(
     new PostgresRateLimiter(db),
     TEST_AUTH_SECRET,
     clock,
-    new DrizzleAccountRepository(db)
+    new DrizzleAccountRepository(db),
+    new DrizzleSessionStore(db)
   );
   const log = options.log ?? silentLog;
   const breached = new FakeBreachedPasswords(options.breached);
@@ -129,6 +132,7 @@ export async function backupApp(
       ),
       retention: new RetentionService(new DrizzleRetentionStore(db), clock, log),
       cronSecret: options.cronSecret === undefined ? TEST_CRON_SECRET : options.cronSecret,
+      webEdgeSecret: options.webEdgeSecret ?? null,
     })
   );
   const call = (

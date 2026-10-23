@@ -3,7 +3,7 @@ import type { Context } from 'hono';
 import { stream } from 'hono/streaming';
 
 import type { AppEnv } from '../deps';
-import { forgetUser } from '../middleware';
+import { clearSessionCookie, forgetUser } from '../middleware';
 import type { ExportService } from '../privacy/use-cases';
 import { problem } from '../problem';
 import { AUTH_ERRORS, INVALID, LOCATION_HEADER, notFound, problemResponse, UNAVAILABLE } from '../schemas/common';
@@ -43,7 +43,7 @@ export function registerPrivacy(app: OpenAPIHono<AppEnv>): void {
       operationId: 'deleteMe',
       summary: 'Delete my account and data',
       description:
-        'Erases the account and every row it owns, in one transaction — activities, tracks, gap routes, tombstones, the Home City, consents, exports, the sign-in account with every session and pending code (use case EraseAccount; GDPR art. 17, App Store account deletion). Afterwards the session token answers `401`. The phone keeps its own copy. A device token (`API_TOKENS`) still authenticates until it is removed from the configuration: its next request starts an empty account. Database backups keep the rows for the provider’s restore window.',
+        'Erases the account and every row it owns, in one transaction — activities, tracks, gap routes, tombstones, the Home City, consents, exports, the sign-in account with every session and pending code (use case EraseAccount; GDPR art. 17, App Store account deletion). Afterwards every session answers `401` (with the cookie, this answer clears it). The phone keeps its own copy. A device token (`API_TOKENS`) still authenticates until it is removed from the configuration: its next request starts an empty account. Database backups keep the rows for the provider’s restore window.',
       responses: {
         204: { description: 'Erased (or nothing to erase).' },
         ...AUTH_ERRORS,
@@ -52,6 +52,9 @@ export function registerPrivacy(app: OpenAPIHono<AppEnv>): void {
     async (c) => {
       await c.var.backup.eraseAccount(c.var.userId);
       forgetUser(c.var.deps.store as object, c.var.userId);
+      if (c.var.principal.credential === 'cookie') {
+        clearSessionCookie(c);
+      }
       return c.body(null, 204);
     }
   );

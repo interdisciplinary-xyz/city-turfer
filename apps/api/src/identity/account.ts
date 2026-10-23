@@ -34,17 +34,20 @@ export interface AccountCaller {
   userId: string;
   /** The current sign-in address (`auth_users.email`). */
   email: string;
-  /** The stored token of the caller's session: kept when other sessions are revoked (AC5). */
-  sessionToken: string;
+  /**
+   * The opaque id of the caller's session (bearer phone or browser cookie): kept when the other
+   * sessions are revoked (AC5), the same id `GET /v1/auth/sessions` marks `current`.
+   */
+  sessionId: string;
 }
 
 /** The caller as an account, else 403 `identity.account-required` (device tokens have no account). */
 export function accountCaller(principal: Principal): AccountCaller {
   const email = principal.profile?.email;
-  if (principal.kind !== 'session' || !principal.userId || !principal.sessionToken || !email) {
+  if (principal.kind !== 'session' || !principal.userId || !principal.sessionId || !email) {
     throw new AppError('identity.account-required');
   }
-  return { userId: principal.userId, email, sessionToken: principal.sessionToken };
+  return { userId: principal.userId, email, sessionId: principal.sessionId };
 }
 
 /** Port: the account rows (`users`, `auth_users`, `auth_accounts`, `auth_sessions`). */
@@ -63,21 +66,16 @@ export interface AccountRepository {
     userId: string;
     from: string;
     to: string;
-    keepSessionToken: string;
+    keepSessionId: string;
     at: number;
   }): Promise<'changed' | 'taken'>;
   /** Sets or replaces the password hash and revokes every other session, in one transaction. */
-  setPassword(input: {
-    userId: string;
-    hash: string;
-    keepSessionToken: string;
-    at: number;
-  }): Promise<'set' | 'changed'>;
+  setPassword(input: { userId: string; hash: string; keepSessionId: string; at: number }): Promise<'set' | 'changed'>;
   /**
    * Removes the password credential and revokes every other session, in one transaction (also
    * when there was no password); false when there was none.
    */
-  removePassword(input: { userId: string; keepSessionToken: string }): Promise<boolean>;
+  removePassword(input: { userId: string; keepSessionId: string }): Promise<boolean>;
 }
 
 export interface AccountServiceDeps {
@@ -165,7 +163,7 @@ export class AccountService {
       userId: caller.userId,
       from: caller.email,
       to,
-      keepSessionToken: caller.sessionToken,
+      keepSessionId: caller.sessionId,
       at,
     });
     if (result === 'taken') {
@@ -193,7 +191,7 @@ export class AccountService {
     const result = await this.deps.repo.setPassword({
       userId: caller.userId,
       hash,
-      keepSessionToken: caller.sessionToken,
+      keepSessionId: caller.sessionId,
       at,
     });
     await this.send(passwordSetMail(caller.email, at, result === 'changed'), 'notice');
@@ -206,7 +204,7 @@ export class AccountService {
    */
   async removePassword(caller: AccountCaller, stepUpCode: string, ip: string): Promise<void> {
     await this.spendStepUp(caller, stepUpCode, ip);
-    if (await this.deps.repo.removePassword({ userId: caller.userId, keepSessionToken: caller.sessionToken })) {
+    if (await this.deps.repo.removePassword({ userId: caller.userId, keepSessionId: caller.sessionId })) {
       await this.send(passwordRemovedMail(caller.email, this.deps.clock.now()), 'notice');
     }
   }

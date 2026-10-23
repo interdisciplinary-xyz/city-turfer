@@ -3,7 +3,7 @@
   "info": {
     "title": "CityTurfer API",
     "version": "0.5.0",
-    "description": "The CityTurfer HTTP API: the app's use cases over HTTP, to back up and sync a local-first phone and, later, other clients.\n\n## Getting started\n\n- **Base URL:** pick a server above. Locally, `pnpm --filter @cityturfer/api dev` runs the API on port 8787 and `pnpm run web:dev` serves this page at https://cityturfer.local/swagger with the API under `/api`.\n- **Status:** sign-in, backup and restore are live: health, auth, `/v1/me`, consents, activity upload/read/rename/delete, track, gap routes, the changes feed, the Home City, the data export (e-mailed link), account settings (name, e-mail, optional password) and account deletion. Server turf is planned. The rest is designed but **planned**: its summary starts with `[planned]`, it carries `x-cityturfer-status: planned` and answers `501` once auth and validation pass. Live data routes answer `503 storage.unavailable` when the server has no database.\n- **Auth:** `POST /v1/auth/codes` with an e-mail, then `POST /v1/auth/sign-in` with the 6-digit code from the e-mail: the answer's `token` goes in `Authorization: Bearer <token>` (button **Authorize**) for about 60 days (sliding); `DELETE /v1/auth/session` signs out. An account with a password may sign in with `{ email, password }` instead of the code. Device tokens (`API_TOKENS`) keep working for one more release. A missing token answers `401` *before* the input is validated. Locally the dev server prints the code (and with `AUTH_FIXED_CODE=000000`, addresses `@e2e.cityturfer.test` sign in with `000000`); `dev-token` works for user `admin` on PGlite.\n- **Account settings:** `PATCH /v1/me` changes the name. A new e-mail or setting, changing or removing the password first needs a step-up code: `POST /v1/me/step-up/codes` mails one to the current address, the change spends it. Afterwards every other session is signed out. Device tokens get `403 identity.account-required`.\n- **Consent:** activity and Home City writes need `PUT /v1/me/consents/cloud-sync` with `granted: true` first (else `403 consent.required`); Apple Health activities also `apple-health-in-cloud-sync`.\n- **Headers you send:** `Content-Type: application/json`; `Content-Encoding: gzip` for long tracks; `If-Match` to change an existing activity; `CityTurfer-Client: ios/0.8.0+123` (old clients may get `426 client.too-old`).\n- **Headers you get:** `X-Request-Id` on every answer (quote it when reporting a problem), `ETag` on activities, `Location` on 201/202, `Retry-After` and `RateLimit` on 429.\n- **Limits:** request and response bodies ≤ 4.5 MB (Vercel); ≤ 40,000 points per track; gzip bodies inflate to ≤ 16 MB.\n\n## Sync flow (phone ↔ server)\n\nThe phone is local-first and authoritative for what it recorded; the server stores activities with their tracks and recomputes everything derived (summaries, turf). Writes are keyed by ids the phone mints, so every request can be retried.\n\n**First upload of an existing history**\n1. `PUT /v1/me/consents/cloud-sync` (and `apple-health-in-cloud-sync` to include Apple Health imports).\n2. `GET /v1/sync/changes` without a cursor, every page: what the server already has (the manifest).\n3. For each local activity, oldest first (never `demo-…`): absent → `PUT /v1/activities/{id}`; same `trackHash` → done; different → `PUT` with `If-Match`; tombstoned → delete it locally.\n4. `PUT /v1/activities/{id}/gap-routes` once the phone checked the gaps (an empty list when there are none); `PUT /v1/turf/home-city`.\n5. Keep the last `nextCursor`.\n\n**Restore to a new phone**\n1. Sign in; `GET /v1/sync/changes` without a cursor while `hasMore` (entries carry ids, names, versions and `trackHash`, no geometry; a page ends at `limit` or about 1 MB).\n2. Per activity: `GET /v1/activities/{id}` (summary, gap routes, `gapsCheckedAt`) and `GET /v1/activities/{id}/track`. Store them as restored: never upload them back.\n3. Apply tombstones and the Home City; keep the last `nextCursor`.\n\n**Every day after**\n- **Push** from the outbox: recorded → `PUT`; track corrected → `PUT` + `If-Match`; renamed → `PATCH`; deleted → `DELETE`; gaps estimated → `PUT …/gap-routes`; Home City → `PUT /v1/turf/home-city`.\n- **Pull** on launch and foreground: `GET /v1/sync/changes?cursor=…` while `hasMore`; fetch `GET /v1/activities/{id}/track` (with `If-None-Match`) only when `trackHash` is new; apply tombstones by deleting locally. Pull **before** importing from Apple Health, so a workout recorded on another phone is not imported twice.\n\n**Conflicts:** same content → `200` (replay). Stale `If-Match` → `412`: pull, re-apply, retry. Different content without `If-Match` → `428`. Deleted id → `410 activity.deleted`: delete wins. Renames and the Home City: last write wins. Invalid cursor → `410 sync.cursor-expired`: start again without one.\n\n## Errors\n\nEvery error is `application/problem+json` (RFC 9457) with a stable `code`. `detail` is for people and never repeats input values; a `400` lists JSON pointers in `errors[]`.\n\n| code | status | meaning |\n| --- | --- | --- |\n| `invalid-request` | 400 | Invalid request |\n| `auth.missing` | 401 | Missing bearer token |\n| `auth.invalid` | 401 | Invalid or expired token |\n| `auth.invalid-code` | 401 | Wrong or expired code: ask for a new one |\n| `auth.invalid-credentials` | 401 | Wrong e-mail or password |\n| `consent.required` | 403 | Give the cloud-sync consent first |\n| `identity.account-required` | 403 | Sign in with your account (not a device token) to do this |\n| `not-found` | 404 | Not found |\n| `activity.deleted` | 410 | Activity was deleted |\n| `sync.cursor-expired` | 410 | Sync cursor expired: sync again without a cursor |\n| `export.gone` | 410 | This download link was used or has expired |\n| `email.taken` | 409 | This address belongs to another account |\n| `precondition-failed` | 412 | The resource changed since your version |\n| `payload-too-large` | 413 | Request body too large |\n| `unsupported-media-type` | 415 | Unsupported content type or encoding |\n| `activity.track-too-short` | 422 | A track needs at least two points |\n| `activity.ends-before-start` | 422 | The activity ends before it starts |\n| `activity.invalid-name` | 422 | Names are 1 to 80 characters |\n| `activity.track-hash-mismatch` | 422 | trackHash does not match the track |\n| `activity.renamed-in-future` | 422 | renamedAt is more than 5 minutes ahead of the server |\n| `activity.source-mismatch` | 422 | source does not match the id (hk-… is apple-health) |\n| `home-city.unknown` | 422 | Not a catalogue city |\n| `export.no-email` | 422 | The account has no e-mail to send the export link to |\n| `display-name.too-long` | 422 | Names are at most 40 characters |\n| `display-name.invalid` | 422 | Names cannot hold control characters |\n| `email.invalid` | 422 | Not a valid e-mail address |\n| `email.unchanged` | 422 | This is already the account address |\n| `password.too-short` | 422 | Passwords are at least 12 characters |\n| `password.too-long` | 422 | Passwords are at most 128 characters |\n| `password.breached` | 422 | This password appears in known data breaches: choose another |\n| `client.too-old` | 426 | Update the app to sync |\n| `precondition-required` | 428 | Send If-Match to change an existing resource |\n| `rate-limited` | 429 | Too many requests |\n| `auth.rate-limited` | 429 | Too many codes or sign-ins: wait and try again |\n| `internal` | 500 | Something went wrong |\n| `not-implemented` | 501 | Not implemented yet |\n| `storage.unavailable` | 503 | Storage is not available: retry later |\n\n## Units and formats\n\nJSON in camelCase. SI units with a suffix (`distanceM`, `movingS`, `areaKm2`). Timestamps ISO 8601 UTC; an activity may carry its IANA `timeZone` for display — the server derives nothing from local time. Coordinates `[lon, lat]` (GeoJSON order); bounding boxes `[west, south, east, north]`. Track points `[lon, lat, t, segment, altitudeM]`. `trackHash` = SHA-256 hex of `JSON.stringify(track.points)` (no whitespace, ECMAScript number formatting, upload order); the server computes it, so sending it is optional. Turf cells are H3 indexes (resolution 11).\n\n## Privacy\n\nGPS tracks, turf cells and the Home City are personal data. Cloud sync needs the `cloud-sync` consent; everything can be exported (`POST /v1/me/exports`) and erased (`DELETE /v1/me`). Nothing of it is logged: logs hold the route pattern, status, duration, request id and user id. Examples on this page use public landmarks (Warsaw Old Town).",
+    "description": "The CityTurfer HTTP API: the app's use cases over HTTP, to back up and sync a local-first phone and, later, other clients.\n\n## Getting started\n\n- **Base URL:** pick a server above. Locally, `pnpm --filter @cityturfer/api dev` runs the API on port 8787 and `pnpm run web:dev` serves this page at https://cityturfer.local/swagger with the API under `/api`.\n- **Status:** sign-in, backup and restore are live: health, auth, `/v1/me`, consents, activity upload/read/rename/delete, track, gap routes, the changes feed, the Home City, the data export (e-mailed link), account settings (name, e-mail, optional password) and account deletion. Server turf is planned. The rest is designed but **planned**: its summary starts with `[planned]`, it carries `x-cityturfer-status: planned` and answers `501` once auth and validation pass. Live data routes answer `503 storage.unavailable` when the server has no database.\n- **Auth:** `POST /v1/auth/codes` with an e-mail, then `POST /v1/auth/sign-in` with the 6-digit code from the e-mail: the answer's `token` goes in `Authorization: Bearer <token>` (button **Authorize**) for about 60 days (sliding); `DELETE /v1/auth/session` signs out. An account with a password may sign in with `{ email, password }` instead of the code. **The website** signs in (code or password) with `client: \"browser\"` and gets an `HttpOnly` cookie (`__Host-ct_session`, `Path=/`) instead of a token: 14 days sliding, at most 30 (8 hours with `sharedComputer`); its writes need `Origin` = the website and `CityTurfer-Client: web/<version>` (else `403 auth.csrf`). `GET /v1/auth/sessions` lists the signed-in phones and browsers. Device tokens (`API_TOKENS`) keep working for one more release. A missing token answers `401` *before* the input is validated. Locally the dev server prints the code (and with `AUTH_FIXED_CODE=000000`, addresses `@e2e.cityturfer.test` sign in with `000000`); `dev-token` works for user `admin` on PGlite.\n- **Account settings:** `PATCH /v1/me` changes the name. A new e-mail or setting, changing or removing the password first needs a step-up code: `POST /v1/me/step-up/codes` mails one to the current address, the change spends it. Afterwards every other session (phones and browsers) is signed out; the one making the change stays. Device tokens get `403 identity.account-required`.\n- **Consent:** activity and Home City writes need `PUT /v1/me/consents/cloud-sync` with `granted: true` first (else `403 consent.required`); Apple Health activities also `apple-health-in-cloud-sync`.\n- **Headers you send:** `Content-Type: application/json`; `Content-Encoding: gzip` for long tracks; `If-Match` to change an existing activity; `CityTurfer-Client: ios/0.8.0+123` (old clients may get `426 client.too-old`; the website sends `web/<version>`).\n- **Headers you get:** `X-Request-Id` on every answer, `Cache-Control: private, no-store` (unless a route says otherwise) and `Vary: Cookie, Authorization` on every `/v1` answer (quote it when reporting a problem), `ETag` on activities, `Location` on 201/202, `Retry-After` and `RateLimit` on 429.\n- **Limits:** request and response bodies ≤ 4.5 MB (Vercel); ≤ 40,000 points per track; gzip bodies inflate to ≤ 16 MB.\n\n## Sync flow (phone ↔ server)\n\nThe phone is local-first and authoritative for what it recorded; the server stores activities with their tracks and recomputes everything derived (summaries, turf). Writes are keyed by ids the phone mints, so every request can be retried.\n\n**First upload of an existing history**\n1. `PUT /v1/me/consents/cloud-sync` (and `apple-health-in-cloud-sync` to include Apple Health imports).\n2. `GET /v1/sync/changes` without a cursor, every page: what the server already has (the manifest).\n3. For each local activity, oldest first (never `demo-…`): absent → `PUT /v1/activities/{id}`; same `trackHash` → done; different → `PUT` with `If-Match`; tombstoned → delete it locally.\n4. `PUT /v1/activities/{id}/gap-routes` once the phone checked the gaps (an empty list when there are none); `PUT /v1/turf/home-city`.\n5. Keep the last `nextCursor`.\n\n**Restore to a new phone**\n1. Sign in; `GET /v1/sync/changes` without a cursor while `hasMore` (entries carry ids, names, versions and `trackHash`, no geometry; a page ends at `limit` or about 1 MB).\n2. Per activity: `GET /v1/activities/{id}` (summary, gap routes, `gapsCheckedAt`) and `GET /v1/activities/{id}/track`. Store them as restored: never upload them back.\n3. Apply tombstones and the Home City; keep the last `nextCursor`.\n\n**Every day after**\n- **Push** from the outbox: recorded → `PUT`; track corrected → `PUT` + `If-Match`; renamed → `PATCH`; deleted → `DELETE`; gaps estimated → `PUT …/gap-routes`; Home City → `PUT /v1/turf/home-city`.\n- **Pull** on launch and foreground: `GET /v1/sync/changes?cursor=…` while `hasMore`; fetch `GET /v1/activities/{id}/track` (with `If-None-Match`) only when `trackHash` is new; apply tombstones by deleting locally. Pull **before** importing from Apple Health, so a workout recorded on another phone is not imported twice.\n\n**Conflicts:** same content → `200` (replay). Stale `If-Match` → `412`: pull, re-apply, retry. Different content without `If-Match` → `428`. Deleted id → `410 activity.deleted`: delete wins. Renames and the Home City: last write wins. Invalid cursor → `410 sync.cursor-expired`: start again without one.\n\n## Errors\n\nEvery error is `application/problem+json` (RFC 9457) with a stable `code`. `detail` is for people and never repeats input values; a `400` lists JSON pointers in `errors[]`.\n\n| code | status | meaning |\n| --- | --- | --- |\n| `invalid-request` | 400 | Invalid request |\n| `auth.missing` | 401 | Missing bearer token or session cookie |\n| `auth.invalid` | 401 | Invalid or expired token |\n| `auth.invalid-code` | 401 | Wrong or expired code: ask for a new one |\n| `auth.invalid-credentials` | 401 | Wrong e-mail or password |\n| `auth.csrf` | 403 | Cross-site request refused: send it from the CityTurfer website |\n| `consent.required` | 403 | Give the cloud-sync consent first |\n| `identity.account-required` | 403 | Sign in with your account (not a device token) to do this |\n| `not-found` | 404 | Not found |\n| `activity.deleted` | 410 | Activity was deleted |\n| `sync.cursor-expired` | 410 | Sync cursor expired: sync again without a cursor |\n| `export.gone` | 410 | This download link was used or has expired |\n| `email.taken` | 409 | This address belongs to another account |\n| `precondition-failed` | 412 | The resource changed since your version |\n| `payload-too-large` | 413 | Request body too large |\n| `unsupported-media-type` | 415 | Unsupported content type or encoding |\n| `activity.track-too-short` | 422 | A track needs at least two points |\n| `activity.ends-before-start` | 422 | The activity ends before it starts |\n| `activity.invalid-name` | 422 | Names are 1 to 80 characters |\n| `activity.track-hash-mismatch` | 422 | trackHash does not match the track |\n| `activity.renamed-in-future` | 422 | renamedAt is more than 5 minutes ahead of the server |\n| `activity.source-mismatch` | 422 | source does not match the id (hk-… is apple-health) |\n| `home-city.unknown` | 422 | Not a catalogue city |\n| `export.no-email` | 422 | The account has no e-mail to send the export link to |\n| `display-name.too-long` | 422 | Names are at most 40 characters |\n| `display-name.invalid` | 422 | Names cannot hold control characters |\n| `email.invalid` | 422 | Not a valid e-mail address |\n| `email.unchanged` | 422 | This is already the account address |\n| `password.too-short` | 422 | Passwords are at least 12 characters |\n| `password.too-long` | 422 | Passwords are at most 128 characters |\n| `password.breached` | 422 | This password appears in known data breaches: choose another |\n| `client.too-old` | 426 | Update the app to sync |\n| `precondition-required` | 428 | Send If-Match to change an existing resource |\n| `rate-limited` | 429 | Too many requests |\n| `auth.rate-limited` | 429 | Too many codes or sign-ins: wait and try again |\n| `internal` | 500 | Something went wrong |\n| `not-implemented` | 501 | Not implemented yet |\n| `storage.unavailable` | 503 | Storage is not available: retry later |\n\n## Units and formats\n\nJSON in camelCase. SI units with a suffix (`distanceM`, `movingS`, `areaKm2`). Timestamps ISO 8601 UTC; an activity may carry its IANA `timeZone` for display — the server derives nothing from local time. Coordinates `[lon, lat]` (GeoJSON order); bounding boxes `[west, south, east, north]`. Track points `[lon, lat, t, segment, altitudeM]`. `trackHash` = SHA-256 hex of `JSON.stringify(track.points)` (no whitespace, ECMAScript number formatting, upload order); the server computes it, so sending it is optional. Turf cells are H3 indexes (resolution 11).\n\n## Privacy\n\nGPS tracks, turf cells and the Home City are personal data. Cloud sync needs the `cloud-sync` consent; everything can be exported (`POST /v1/me/exports`) and erased (`DELETE /v1/me`). Nothing of it is logged: logs hold the route pattern, status, duration, request id and user id. Examples on this page use public landmarks (Warsaw Old Town).",
     "license": {
       "name": "Proprietary",
       "identifier": "LicenseRef-Proprietary"
@@ -54,7 +54,13 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "description": "A session token from `POST /v1/auth/sign-in` (e-mailed code, about 60 days, sliding), or — for one more release — a device token minted with `pnpm --filter @cityturfer/api run token:new -- <userId>` (the server knows only its SHA-256, env `API_TOKENS`)."
+        "description": "A session token from `POST /v1/auth/sign-in` (e-mailed code, about 60 days, sliding), or — for one more release — a device token minted with `pnpm --filter @cityturfer/api run token:new -- <userId>` (the server knows only its SHA-256, env `API_TOKENS`). Sent with `Authorization`, it wins over the cookie."
+      },
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "__Host-ct_session",
+        "description": "The website's session (`POST /v1/auth/sign-in` with `client: \"browser\"`): `HttpOnly; Secure; SameSite=Strict; Path=/`, host-only, set on the website's host through its `/api/v1/*` rewrite. 14 days sliding, at most 30 days; on a shared computer a browser-session cookie and 8 hours. Requests that change something also need `Origin` = the website, `Sec-Fetch-Site: same-origin` when sent, and `CityTurfer-Client: web/<version>` (else `403 auth.csrf`)."
       }
     },
     "headers": {
@@ -183,6 +189,7 @@
           "auth.invalid",
           "auth.invalid-code",
           "auth.invalid-credentials",
+          "auth.csrf",
           "consent.required",
           "identity.account-required",
           "not-found",
@@ -257,24 +264,46 @@
         "properties": {
           "token": {
             "type": "string",
-            "description": "Bearer token: send `Authorization: Bearer <token>`. Store it in the keychain; never log it.",
+            "description": "Phones only — absent for `client: \"browser\"` (the cookie carries it and page scripts never see it). Bearer token: send `Authorization: Bearer <token>`. Store it in the keychain; never log it.",
             "example": "q8VbXf3T2LwN0aZr5sJyK1mHcP7dUe4G"
+          },
+          "client": {
+            "$ref": "#/components/schemas/SessionClient"
           },
           "expiresAt": {
             "type": "string",
             "format": "date-time",
             "example": "2026-10-19T07:12:00Z",
-            "description": "About 60 days ahead; using the session after a day moves it 60 days on (sliding)."
+            "description": "Phones: about 60 days ahead, moved 60 days on when used after a day (sliding). Browsers: 14 days ahead, sliding the same way, never past `absoluteExpiresAt`."
+          },
+          "absoluteExpiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z",
+            "description": "Browsers: the session ends then however often it is used (30 days, or 8 hours on a shared computer). Null for phones."
           },
           "user": {
             "$ref": "#/components/schemas/SessionUser"
           }
         },
         "required": [
-          "token",
+          "client",
           "expiresAt",
+          "absoluteExpiresAt",
           "user"
         ]
+      },
+      "SessionClient": {
+        "type": "string",
+        "enum": [
+          "phone",
+          "browser"
+        ],
+        "description": "`phone`: the app, with a bearer token. `browser`: the website, with the session cookie.",
+        "example": "browser"
       },
       "SessionUser": {
         "type": "object",
@@ -305,7 +334,7 @@
             "$ref": "#/components/schemas/PasswordSignInBody"
           }
         ],
-        "description": "Either the e-mailed code or the account password."
+        "description": "Either the e-mailed code or the account password, for a phone or a browser session."
       },
       "CodeSignInBody": {
         "type": "object",
@@ -323,6 +352,21 @@
             "maxLength": 16,
             "description": "The 6-digit code from the e-mail (works once, 10 minutes).",
             "example": "493027"
+          },
+          "client": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SessionClient"
+              },
+              {
+                "description": "Default `phone`: the token comes in the body. `browser`: the session goes in the `__Host-ct_session` cookie and the body has no token; the request must come from the website (`Origin`, `CityTurfer-Client: web/<version>`, else `403 auth.csrf`)."
+              }
+            ]
+          },
+          "sharedComputer": {
+            "type": "boolean",
+            "description": "Browsers only (\"This is a shared computer\"): the cookie lasts until the browser closes and the session at most 8 hours. `true` with a phone is `400`.",
+            "example": false
           }
         },
         "required": [
@@ -346,12 +390,88 @@
             "maxLength": 1024,
             "description": "The account password (sign-in only: accounts are created by a code).",
             "example": "tram stops past the old town"
+          },
+          "client": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SessionClient"
+              },
+              {
+                "description": "Default `phone`: the token comes in the body. `browser`: the session goes in the `__Host-ct_session` cookie and the body has no token; the request must come from the website (`Origin`, `CityTurfer-Client: web/<version>`, else `403 auth.csrf`)."
+              }
+            ]
+          },
+          "sharedComputer": {
+            "type": "boolean",
+            "description": "Browsers only (\"This is a shared computer\"): the cookie lasts until the browser closes and the session at most 8 hours. `true` with a phone is `400`.",
+            "example": false
           }
         },
         "required": [
           "email",
           "password"
         ]
+      },
+      "SessionList": {
+        "type": "object",
+        "properties": {
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignedInDevice"
+            }
+          }
+        },
+        "required": [
+          "sessions"
+        ],
+        "description": "Live sessions, most recently used first. Device tokens are not listed."
+      },
+      "SignedInDevice": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "example": "Xq3T9mPzL2vN8aKc5sJyR1hGdU4fWe7B"
+          },
+          "client": {
+            "$ref": "#/components/schemas/SessionClient"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z",
+            "description": "When it signed in."
+          },
+          "lastActiveAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z",
+            "description": "Last use, to the day: a session records its use at most once a day (also once its expiry can no longer move). A shared-computer session (8 hours) shows when it signed in."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-19T07:12:00Z",
+            "description": "When it signs out by itself unless used again."
+          },
+          "current": {
+            "type": "boolean",
+            "description": "The session of this request."
+          }
+        },
+        "required": [
+          "id",
+          "client",
+          "createdAt",
+          "lastActiveAt",
+          "expiresAt",
+          "current"
+        ],
+        "description": "One signed-in phone or browser. No IP address, user agent or location is stored."
       },
       "User": {
         "type": "object",
@@ -1731,7 +1851,7 @@
         "operationId": "signIn",
         "security": [],
         "summary": "Sign in with the code or the password",
-        "description": "Exchanges the e-mailed code, or the account password, for a bearer session of about 60 days, sliding (use cases SignIn and SignInWithPassword; Better Auth). A code creates the account on the first sign-in; a password never does. A wrong or expired code is `401 auth.invalid-code`; three wrong tries burn the code (ask for a new one). A wrong password, an account without a password and an unknown address are all `401 auth.invalid-credentials`. Limits (codes and passwords together): 10 sign-ins per address and 20 failed sign-ins per IP (an IPv6 /64 counts as one IP) per 10 minutes, and 10 failed sign-ins per address per day (then even the right code or password answers `429` until the day is over).",
+        "description": "Exchanges the e-mailed code, or the account password, for a session (use cases SignIn and SignInWithPassword; Better Auth). A code creates the account on the first sign-in; a password never does. **Phones** (default, `client: \"phone\"`): a bearer `token` in the body, about 60 days, sliding. **Browsers** (`client: \"browser\"`, with a code or a password): no token in the body; the answer sets `__Host-ct_session=…; Max-Age=2592000; Path=/; HttpOnly; Secure; SameSite=Strict` (host-only; without `Max-Age` when `sharedComputer`), 14 days sliding, at most 30 days (8 hours on a shared computer); the request must come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`, else `403 auth.csrf`). A wrong or expired code is `401 auth.invalid-code`; three wrong tries burn the code (ask for a new one). A wrong password, an account without a password and an unknown address are all `401 auth.invalid-credentials`. Limits (codes and passwords together): 10 sign-ins per address and 20 failed sign-ins per IP (an IPv6 /64 counts as one IP) per 10 minutes, and 10 failed sign-ins per address per day (then even the right code or password answers `429` until the day is over).",
         "requestBody": {
           "required": true,
           "content": {
@@ -1744,7 +1864,16 @@
         },
         "responses": {
           "200": {
-            "description": "Signed in.",
+            "description": "Signed in. Browsers: the session cookie is in `Set-Cookie`, the body has no token.",
+            "headers": {
+              "Set-Cookie": {
+                "description": "Browsers only: the session cookie (`HttpOnly`, so page scripts never read it).",
+                "schema": {
+                  "type": "string",
+                  "example": "__Host-ct_session=…; Max-Age=2592000; Path=/; HttpOnly; Secure; SameSite=Strict"
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -1795,6 +1924,27 @@
                       "title": "Wrong e-mail or password",
                       "status": 401,
                       "code": "auth.invalid-credentials"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`client: \"browser\"` from outside the website. Codes: `auth.csrf`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.csrf": {
+                    "summary": "auth.csrf",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.csrf",
+                      "title": "Cross-site request refused: send it from the CityTurfer website",
+                      "status": 403,
+                      "code": "auth.csrf"
                     }
                   }
                 },
@@ -1861,10 +2011,13 @@
         ],
         "operationId": "signOut",
         "summary": "Sign out",
-        "description": "Revokes the session of this bearer token (use case SignOut); the token answers `401` afterwards. Idempotent. A device token cannot be revoked here (remove it from `API_TOKENS`): `204` all the same.",
+        "description": "Revokes the session of this bearer token or cookie (use case SignOut); it answers `401` afterwards. With the cookie the answer also clears it (`Max-Age=0`). Idempotent. A device token cannot be revoked here (remove it from `API_TOKENS`): `204` all the same. Signing out on the website never signs a phone out (that is `DELETE /v1/auth/sessions?scope=all`).",
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "responses": {
@@ -1872,7 +2025,7 @@
             "description": "Signed out."
           },
           "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -1880,7 +2033,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -1892,6 +2045,486 @@
                       "title": "Invalid or expired token",
                       "status": 401,
                       "code": "auth.invalid"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.csrf": {
+                    "summary": "auth.csrf",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.csrf",
+                      "title": "Cross-site request refused: send it from the CityTurfer website",
+                      "status": 403,
+                      "code": "auth.csrf"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: wait `Retry-After` seconds. Codes: `rate-limited`.",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimitPolicy"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "rate-limited": {
+                    "summary": "rate-limited",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/rate-limited",
+                      "title": "Too many requests",
+                      "status": 429,
+                      "code": "rate-limited"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "No database configured or reachable: retry later. Codes: `storage.unavailable`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "storage.unavailable": {
+                    "summary": "storage.unavailable",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/storage.unavailable",
+                      "title": "Storage is not available: retry later",
+                      "status": 503,
+                      "code": "storage.unavailable"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/sessions": {
+      "get": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "listSessions",
+        "summary": "Signed-in devices",
+        "description": "The phones and browsers signed in to this account (use case ListSessions), most recently used first; `current` marks the one making this request. Ids are opaque and are not credentials. No IP address, user agent or location is stored, so none is shown. Device tokens (`API_TOKENS`) are not sessions and are not listed.",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The live sessions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.missing": {
+                    "summary": "auth.missing",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.missing",
+                      "title": "Missing bearer token or session cookie",
+                      "status": 401,
+                      "code": "auth.missing"
+                    }
+                  },
+                  "auth.invalid": {
+                    "summary": "auth.invalid",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.invalid",
+                      "title": "Invalid or expired token",
+                      "status": 401,
+                      "code": "auth.invalid"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: wait `Retry-After` seconds. Codes: `rate-limited`.",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimitPolicy"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "rate-limited": {
+                    "summary": "rate-limited",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/rate-limited",
+                      "title": "Too many requests",
+                      "status": 429,
+                      "code": "rate-limited"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "No database configured or reachable: retry later. Codes: `storage.unavailable`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "storage.unavailable": {
+                    "summary": "storage.unavailable",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/storage.unavailable",
+                      "title": "Storage is not available: retry later",
+                      "status": 503,
+                      "code": "storage.unavailable"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "revokeSessions",
+        "summary": "Sign out other devices, or everywhere",
+        "description": "`scope=others` signs out every session of this account but the current one; `scope=all` every session, this one and every phone included (use case RevokeSessions). Phones then answer `401` on their next request and must sign in again; their recorded data stays on them. With the cookie, `all` also clears it. Device tokens are not sessions and keep working. Idempotent.",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "others",
+                "all"
+              ],
+              "description": "`others`: every session but this one. `all`: every session, this one and every phone included.",
+              "example": "others"
+            },
+            "required": true,
+            "description": "`others`: every session but this one. `all`: every session, this one and every phone included.",
+            "name": "scope",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Signed out."
+          },
+          "400": {
+            "description": "Invalid input. Codes: `invalid-request`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "invalid-request": {
+                    "summary": "invalid-request",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/invalid-request",
+                      "title": "Invalid request",
+                      "status": 400,
+                      "code": "invalid-request"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.missing": {
+                    "summary": "auth.missing",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.missing",
+                      "title": "Missing bearer token or session cookie",
+                      "status": 401,
+                      "code": "auth.missing"
+                    }
+                  },
+                  "auth.invalid": {
+                    "summary": "auth.invalid",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.invalid",
+                      "title": "Invalid or expired token",
+                      "status": 401,
+                      "code": "auth.invalid"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.csrf": {
+                    "summary": "auth.csrf",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.csrf",
+                      "title": "Cross-site request refused: send it from the CityTurfer website",
+                      "status": 403,
+                      "code": "auth.csrf"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests: wait `Retry-After` seconds. Codes: `rate-limited`.",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimitPolicy"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "rate-limited": {
+                    "summary": "rate-limited",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/rate-limited",
+                      "title": "Too many requests",
+                      "status": 429,
+                      "code": "rate-limited"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "No database configured or reachable: retry later. Codes: `storage.unavailable`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "storage.unavailable": {
+                    "summary": "storage.unavailable",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/storage.unavailable",
+                      "title": "Storage is not available: retry later",
+                      "status": 503,
+                      "code": "storage.unavailable"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/sessions/{sessionId}": {
+      "delete": {
+        "tags": [
+          "Identity"
+        ],
+        "operationId": "revokeSession",
+        "summary": "Sign out one device",
+        "description": "Signs out one of this account's sessions (use case RevokeSession); that phone or browser answers `401` on its next request. Revoking the current browser session also clears its cookie. An id that is not one of your sessions — someone else's, or already signed out — is `404`.",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "example": "Xq3T9mPzL2vN8aKc5sJyR1hGdU4fWe7B"
+            },
+            "required": true,
+            "name": "sessionId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Signed out."
+          },
+          "400": {
+            "description": "Invalid input. Codes: `invalid-request`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "invalid-request": {
+                    "summary": "invalid-request",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/invalid-request",
+                      "title": "Invalid request",
+                      "status": 400,
+                      "code": "invalid-request"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.missing": {
+                    "summary": "auth.missing",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.missing",
+                      "title": "Missing bearer token or session cookie",
+                      "status": 401,
+                      "code": "auth.missing"
+                    }
+                  },
+                  "auth.invalid": {
+                    "summary": "auth.invalid",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.invalid",
+                      "title": "Invalid or expired token",
+                      "status": 401,
+                      "code": "auth.invalid"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.csrf": {
+                    "summary": "auth.csrf",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.csrf",
+                      "title": "Cross-site request refused: send it from the CityTurfer website",
+                      "status": 403,
+                      "code": "auth.csrf"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No session with this id for this user. Codes: `not-found`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "not-found": {
+                    "summary": "not-found",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/not-found",
+                      "title": "Not found",
+                      "status": 404,
+                      "code": "not-found"
                     }
                   }
                 },
@@ -1968,6 +2601,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "responses": {
@@ -1982,7 +2618,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -1990,7 +2626,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -2076,6 +2712,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "requestBody": {
@@ -2121,7 +2760,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -2129,7 +2768,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -2151,7 +2790,7 @@
             }
           },
           "403": {
-            "description": "Signed in with a device token: account settings need an account session (sign in with a code). Codes: `identity.account-required`.",
+            "description": "Signed in with a device token: account settings need an account session (sign in with a code). Codes: `identity.account-required`. With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -2162,6 +2801,15 @@
                       "title": "Sign in with your account (not a device token) to do this",
                       "status": 403,
                       "code": "identity.account-required"
+                    }
+                  },
+                  "auth.csrf": {
+                    "summary": "auth.csrf",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.csrf",
+                      "title": "Cross-site request refused: send it from the CityTurfer website",
+                      "status": 403,
+                      "code": "auth.csrf"
                     }
                   }
                 },
@@ -2262,10 +2910,13 @@
         ],
         "operationId": "deleteMe",
         "summary": "Delete my account and data",
-        "description": "Erases the account and every row it owns, in one transaction — activities, tracks, gap routes, tombstones, the Home City, consents, exports, the sign-in account with every session and pending code (use case EraseAccount; GDPR art. 17, App Store account deletion). Afterwards the session token answers `401`. The phone keeps its own copy. A device token (`API_TOKENS`) still authenticates until it is removed from the configuration: its next request starts an empty account. Database backups keep the rows for the provider’s restore window.",
+        "description": "Erases the account and every row it owns, in one transaction — activities, tracks, gap routes, tombstones, the Home City, consents, exports, the sign-in account with every session and pending code (use case EraseAccount; GDPR art. 17, App Store account deletion). Afterwards every session answers `401` (with the cookie, this answer clears it). The phone keeps its own copy. A device token (`API_TOKENS`) still authenticates until it is removed from the configuration: its next request starts an empty account. Database backups keep the rows for the provider’s restore window.",
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "responses": {
@@ -2273,7 +2924,7 @@
             "description": "Erased (or nothing to erase)."
           },
           "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -2281,7 +2932,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -2293,6 +2944,27 @@
                       "title": "Invalid or expired token",
                       "status": 401,
                       "code": "auth.invalid"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.csrf": {
+                    "summary": "auth.csrf",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.csrf",
+                      "title": "Cross-site request refused: send it from the CityTurfer website",
+                      "status": 403,
+                      "code": "auth.csrf"
                     }
                   }
                 },
@@ -2369,6 +3041,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "requestBody": {
@@ -2414,7 +3089,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -2422,7 +3097,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -2444,7 +3119,7 @@
             }
           },
           "403": {
-            "description": "Signed in with a device token: account settings need an account session (sign in with a code). Codes: `identity.account-required`.",
+            "description": "Signed in with a device token: account settings need an account session (sign in with a code). Codes: `identity.account-required`. With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -2455,6 +3130,15 @@
                       "title": "Sign in with your account (not a device token) to do this",
                       "status": 403,
                       "code": "identity.account-required"
+                    }
+                  },
+                  "auth.csrf": {
+                    "summary": "auth.csrf",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.csrf",
+                      "title": "Cross-site request refused: send it from the CityTurfer website",
+                      "status": 403,
+                      "code": "auth.csrf"
                     }
                   }
                 },
@@ -2525,6 +3209,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "requestBody": {
@@ -2578,7 +3265,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -2609,7 +3296,7 @@
             }
           },
           "403": {
-            "description": "Signed in with a device token: account settings need an account session (sign in with a code). Codes: `identity.account-required`.",
+            "description": "Signed in with a device token: account settings need an account session (sign in with a code). Codes: `identity.account-required`. With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -2620,6 +3307,15 @@
                       "title": "Sign in with your account (not a device token) to do this",
                       "status": 403,
                       "code": "identity.account-required"
+                    }
+                  },
+                  "auth.csrf": {
+                    "summary": "auth.csrf",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.csrf",
+                      "title": "Cross-site request refused: send it from the CityTurfer website",
+                      "status": 403,
+                      "code": "auth.csrf"
                     }
                   }
                 },
@@ -2720,6 +3416,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "requestBody": {
@@ -2773,7 +3472,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -2804,7 +3503,7 @@
             }
           },
           "403": {
-            "description": "Signed in with a device token: account settings need an account session (sign in with a code). Codes: `identity.account-required`.",
+            "description": "Signed in with a device token: account settings need an account session (sign in with a code). Codes: `identity.account-required`. With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -2815,6 +3514,15 @@
                       "title": "Sign in with your account (not a device token) to do this",
                       "status": 403,
                       "code": "identity.account-required"
+                    }
+                  },
+                  "auth.csrf": {
+                    "summary": "auth.csrf",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.csrf",
+                      "title": "Cross-site request refused: send it from the CityTurfer website",
+                      "status": 403,
+                      "code": "auth.csrf"
                     }
                   }
                 },
@@ -2936,6 +3644,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "requestBody": {
@@ -2982,7 +3693,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -3013,7 +3724,7 @@
             }
           },
           "403": {
-            "description": "Signed in with a device token: account settings need an account session (sign in with a code). Codes: `identity.account-required`.",
+            "description": "Signed in with a device token: account settings need an account session (sign in with a code). Codes: `identity.account-required`. With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -3024,6 +3735,15 @@
                       "title": "Sign in with your account (not a device token) to do this",
                       "status": 403,
                       "code": "identity.account-required"
+                    }
+                  },
+                  "auth.csrf": {
+                    "summary": "auth.csrf",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.csrf",
+                      "title": "Cross-site request refused: send it from the CityTurfer website",
+                      "status": 403,
+                      "code": "auth.csrf"
                     }
                   }
                 },
@@ -3131,6 +3851,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "requestBody": {
@@ -3177,7 +3900,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -3208,7 +3931,7 @@
             }
           },
           "403": {
-            "description": "Signed in with a device token: account settings need an account session (sign in with a code). Codes: `identity.account-required`.",
+            "description": "Signed in with a device token: account settings need an account session (sign in with a code). Codes: `identity.account-required`. With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -3219,6 +3942,15 @@
                       "title": "Sign in with your account (not a device token) to do this",
                       "status": 403,
                       "code": "identity.account-required"
+                    }
+                  },
+                  "auth.csrf": {
+                    "summary": "auth.csrf",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.csrf",
+                      "title": "Cross-site request refused: send it from the CityTurfer website",
+                      "status": 403,
+                      "code": "auth.csrf"
                     }
                   }
                 },
@@ -3289,6 +4021,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "responses": {
@@ -3308,7 +4043,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -3316,7 +4051,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -3328,6 +4063,27 @@
                       "title": "Invalid or expired token",
                       "status": 401,
                       "code": "auth.invalid"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.csrf": {
+                    "summary": "auth.csrf",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.csrf",
+                      "title": "Cross-site request refused: send it from the CityTurfer website",
+                      "status": 403,
+                      "code": "auth.csrf"
                     }
                   }
                 },
@@ -3425,6 +4181,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "parameters": [
@@ -3474,7 +4233,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -3482,7 +4241,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -3713,6 +4472,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "responses": {
@@ -3727,7 +4489,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -3735,7 +4497,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -3823,6 +4585,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "parameters": [
@@ -3879,7 +4644,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -3887,7 +4652,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -3899,6 +4664,27 @@
                       "title": "Invalid or expired token",
                       "status": 401,
                       "code": "auth.invalid"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.csrf": {
+                    "summary": "auth.csrf",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.csrf",
+                      "title": "Cross-site request refused: send it from the CityTurfer website",
+                      "status": 403,
+                      "code": "auth.csrf"
                     }
                   }
                 },
@@ -3975,6 +4761,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "parameters": [
@@ -4037,7 +4826,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -4045,7 +4834,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -4154,6 +4943,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "parameters": [
@@ -4224,7 +5016,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -4232,7 +5024,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -4320,6 +5112,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "parameters": [
@@ -4414,7 +5209,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -4422,7 +5217,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -4444,7 +5239,7 @@
             }
           },
           "403": {
-            "description": "Give the consent first: `PUT /v1/me/consents/cloud-sync`. Codes: `consent.required`.",
+            "description": "Give the consent first: `PUT /v1/me/consents/cloud-sync`. Codes: `consent.required`. With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -4455,6 +5250,15 @@
                       "title": "Give the cloud-sync consent first",
                       "status": 403,
                       "code": "consent.required"
+                    }
+                  },
+                  "auth.csrf": {
+                    "summary": "auth.csrf",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.csrf",
+                      "title": "Cross-site request refused: send it from the CityTurfer website",
+                      "status": 403,
+                      "code": "auth.csrf"
                     }
                   }
                 },
@@ -4691,6 +5495,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "parameters": [
@@ -4745,7 +5552,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -4753,7 +5560,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -4881,6 +5688,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "parameters": [
@@ -4957,7 +5767,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -4965,7 +5775,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -4987,7 +5797,7 @@
             }
           },
           "403": {
-            "description": "Give the consent first: `PUT /v1/me/consents/cloud-sync`. Codes: `consent.required`.",
+            "description": "Give the consent first: `PUT /v1/me/consents/cloud-sync`. Codes: `consent.required`. With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -4998,6 +5808,15 @@
                       "title": "Give the cloud-sync consent first",
                       "status": 403,
                       "code": "consent.required"
+                    }
+                  },
+                  "auth.csrf": {
+                    "summary": "auth.csrf",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.csrf",
+                      "title": "Cross-site request refused: send it from the CityTurfer website",
+                      "status": 403,
+                      "code": "auth.csrf"
                     }
                   }
                 },
@@ -5165,6 +5984,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "parameters": [
@@ -5207,7 +6029,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -5215,7 +6037,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -5227,6 +6049,27 @@
                       "title": "Invalid or expired token",
                       "status": 401,
                       "code": "auth.invalid"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`.",
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.csrf": {
+                    "summary": "auth.csrf",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.csrf",
+                      "title": "Cross-site request refused: send it from the CityTurfer website",
+                      "status": 403,
+                      "code": "auth.csrf"
                     }
                   }
                 },
@@ -5303,6 +6146,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "parameters": [
@@ -5371,7 +6217,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -5379,7 +6225,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -5509,6 +6355,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "parameters": [
@@ -5573,7 +6422,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -5581,7 +6430,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -5603,7 +6452,7 @@
             }
           },
           "403": {
-            "description": "Give the consent first: `PUT /v1/me/consents/cloud-sync`. Codes: `consent.required`.",
+            "description": "Give the consent first: `PUT /v1/me/consents/cloud-sync`. Codes: `consent.required`. With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -5614,6 +6463,15 @@
                       "title": "Give the cloud-sync consent first",
                       "status": 403,
                       "code": "consent.required"
+                    }
+                  },
+                  "auth.csrf": {
+                    "summary": "auth.csrf",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.csrf",
+                      "title": "Cross-site request refused: send it from the CityTurfer website",
+                      "status": 403,
+                      "code": "auth.csrf"
                     }
                   }
                 },
@@ -5732,6 +6590,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "x-cityturfer-status": "planned",
@@ -5747,7 +6608,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -5755,7 +6616,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -5843,6 +6704,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "x-cityturfer-status": "planned",
@@ -5919,7 +6783,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -5927,7 +6791,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -6015,6 +6879,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "x-cityturfer-status": "planned",
@@ -6065,7 +6932,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -6073,7 +6940,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -6182,6 +7049,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "responses": {
@@ -6196,7 +7066,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -6204,7 +7074,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -6290,6 +7160,9 @@
         "security": [
           {
             "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
           }
         ],
         "requestBody": {
@@ -6335,7 +7208,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid bearer token; checked before the input. Codes: `auth.missing`, `auth.invalid`.",
+            "description": "Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -6343,7 +7216,7 @@
                     "summary": "auth.missing",
                     "value": {
                       "type": "https://cityturfer.app/problems/auth.missing",
-                      "title": "Missing bearer token",
+                      "title": "Missing bearer token or session cookie",
                       "status": 401,
                       "code": "auth.missing"
                     }
@@ -6365,7 +7238,7 @@
             }
           },
           "403": {
-            "description": "Give the consent first: `PUT /v1/me/consents/cloud-sync`. Codes: `consent.required`.",
+            "description": "Give the consent first: `PUT /v1/me/consents/cloud-sync`. Codes: `consent.required`. With the session cookie: the request did not come from the website (`Origin`, `Sec-Fetch-Site`, `CityTurfer-Client: web/<version>`). Codes: `auth.csrf`.",
             "content": {
               "application/problem+json": {
                 "examples": {
@@ -6376,6 +7249,15 @@
                       "title": "Give the cloud-sync consent first",
                       "status": 403,
                       "code": "consent.required"
+                    }
+                  },
+                  "auth.csrf": {
+                    "summary": "auth.csrf",
+                    "value": {
+                      "type": "https://cityturfer.app/problems/auth.csrf",
+                      "title": "Cross-site request refused: send it from the CityTurfer website",
+                      "status": 403,
+                      "code": "auth.csrf"
                     }
                   }
                 },
