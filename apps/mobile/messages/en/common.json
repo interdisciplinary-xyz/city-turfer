@@ -20,5 +20,17 @@
     "polish": "Polski",
     "systemOptionLabel": "System language, now {language}",
     "saveFailed": "The language applies now but may switch back the next time you open the app."
-  }
+  },
+  "activityType": {
+    "walk": "Walk",
+    "run": "Run",
+    "cycle": "Ride"
+  },
+  "tier": {
+    "faint": "Faint",
+    "glowing": "Glowing",
+    "strong": "Strong",
+    "blazing": "Blazing"
+  },
+  "turfLegendTitle": "Turf strength"
 }

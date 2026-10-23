@@ -20,5 +20,17 @@
     "polish": "Polski",
     "systemOptionLabel": "Język systemu, teraz {language}",
     "saveFailed": "Język działa już teraz, ale przy następnym uruchomieniu aplikacji może wrócić poprzedni."
-  }
+  },
+  "activityType": {
+    "walk": "Spacer",
+    "run": "Bieg",
+    "cycle": "Rower"
+  },
+  "tier": {
+    "faint": "Blady",
+    "glowing": "Świecący",
+    "strong": "Mocny",
+    "blazing": "Płonący"
+  },
+  "turfLegendTitle": "Siła turfu"
 }
