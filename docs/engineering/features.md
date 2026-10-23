@@ -36,7 +36,7 @@ Me drawer, and the screens pushed from them. Format adapted from empatalk's `FEA
 > | SQLite schema         | `apps/mobile/src/platform/migrations.ts`                                 |
 
 Today: <!-- probe:achievements -->12<!-- /probe --> achievements,
-<!-- probe:e2e-flows -->15<!-- /probe --> Maestro flows, <!-- probe:migrations -->12<!-- /probe -->
+<!-- probe:e2e-flows -->15<!-- /probe --> Maestro flows, <!-- probe:migrations -->13<!-- /probe -->
 
 migrations.
 

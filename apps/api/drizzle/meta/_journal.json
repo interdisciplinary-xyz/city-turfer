@@ -36,6 +36,20 @@
       "when": 1792680002101,
       "tag": "0004_browser_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792740214080,
+      "tag": "0005_turf",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792749358189,
+      "tag": "0006_turf_claim_track_hash",
+      "breakpoints": true
     }
   ]
 }

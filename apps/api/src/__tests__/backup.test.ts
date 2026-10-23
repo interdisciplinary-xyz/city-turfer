@@ -184,7 +184,8 @@ describe('consents', () => {
             )
           ),
       }),
-      h.clock
+      h.clock,
+      h.grid
     );
     const lockedBeforeConsent = () => {
       const lock = calls.indexOf('lock');
@@ -440,7 +441,7 @@ describe('reads', () => {
     const t = await h.call('GET', '/v1/activities/run-1/track');
     const etag = `"${trackHashOf(track())}"`;
     expect(t.headers.get('etag')).toBe(etag);
-    expect(t.headers.get('cache-control')).toBe('private, no-cache');
+    expect(t.headers.get('cache-control')).toBe('private, no-store');
     expect((await t.json()).points).toEqual(track());
     const cached = await h.call('GET', '/v1/activities/run-1/track', { headers: { 'If-None-Match': etag } });
     expect(cached.status).toBe(304);

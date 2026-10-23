@@ -1,16 +1,23 @@
 /**
- * Loads h3-js safely on Hermes. h3-js evaluates `new TextDecoder("utf-16le")`
- * at module load whenever TextDecoder exists; Hermes' TextDecoder only
- * supports UTF-8 and throws RangeError. h3-js falls back to its own decoder
- * when TextDecoder is undefined, so hide it during the require.
+ * Loads h3-js safely on Hermes (see ./hide-text-decoder.ts): TextDecoder is hidden by the first
+ * import and restored here, in this module's body, which runs only after both imports have been
+ * evaluated. The functions are read off the namespace before restoring, so h3-js is loaded by
+ * then even under a lazy-import CommonJS transform. Plain ESM: works under Node/tsx, esbuild,
+ * Vitest, Jest and Metro without a CommonJS `require`.
  */
-type H3 = typeof import('h3-js');
+import './hide-text-decoder';
 
-const g = globalThis as { TextDecoder?: unknown };
-const saved = g.TextDecoder;
-g.TextDecoder = undefined;
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const h3: H3 = require('h3-js');
-g.TextDecoder = saved;
+import * as h3 from 'h3-js';
 
-export const { cellArea, cellToBoundary, cellToLatLng, cellToParent, getHexagonEdgeLengthAvg, latLngToCell } = h3;
+import { SAVED_TEXT_DECODER } from './text-decoder.constants';
+
+const { cellArea, cellToBoundary, cellToLatLng, cellToParent, getHexagonEdgeLengthAvg, latLngToCell } = h3;
+
+const g = globalThis as Record<PropertyKey, unknown>;
+const saved = g[SAVED_TEXT_DECODER] as { value: unknown } | undefined;
+if (saved) {
+  g.TextDecoder = saved.value;
+  delete g[SAVED_TEXT_DECODER];
+}
+
+export { cellArea, cellToBoundary, cellToLatLng, cellToParent, getHexagonEdgeLengthAvg, latLngToCell };

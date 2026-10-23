@@ -1,9 +1,12 @@
+import type { CellGrid } from '@cityturfer/core/territory/ports';
+
 import type { BackupStore } from './backup/ports';
 import type { BackupService } from './backup/use-cases';
 import type { AccountService } from './identity/account';
 import type { IdentityService } from './identity/use-cases';
 import type { RetentionService } from './privacy/retention';
 import type { ExportService } from './privacy/use-cases';
+import type { TurfService } from './territory/turf-service';
 
 /**
  * What the API needs from the outside, injected into `createApp(deps)`: tests pass PGlite and their
@@ -72,6 +75,8 @@ export interface ApiDeps {
   log: ApiLog;
   /** Null when no database is configured: live data routes answer 503 `storage.unavailable`. */
   store: BackupStore | null;
+  /** Territory's CellGrid (H3, src/wiring.ts): the backup claims turf with it. Null without a store. */
+  grid: CellGrid | null;
   /** Sign-in with e-mailed codes (Better Auth); null without a database or BETTER_AUTH_SECRET (503). */
   identity: IdentityService | null;
   /** Account settings (name, e-mail, password); null when sign-in is off (503). */
@@ -119,6 +124,7 @@ export function defaultDeps(overrides: Partial<ApiDeps> = {}): ApiDeps {
     clock: { now: () => Date.now() },
     log: jsonLineLog,
     store: null,
+    grid: null,
     identity: null,
     accounts: null,
     exports: null,
@@ -139,5 +145,7 @@ export interface AppEnv {
     /** Live data routes only (after `requireStore`): the verified user and the use cases. */
     userId: string;
     backup: BackupService;
+    /** Live data routes only: the turf reads. */
+    turf: TurfService;
   };
 }

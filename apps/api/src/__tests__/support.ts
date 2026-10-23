@@ -1,9 +1,11 @@
 import { createHash } from 'node:crypto';
 
+import { H3CellGrid } from '@cityturfer/core/h3';
 import { sql } from 'drizzle-orm';
 
 import { createApp } from '../app';
 import { deviceTokenAuth, parseApiTokens } from '../auth/device-tokens';
+import type { BackupStore } from '../backup/ports';
 import { DrizzleAccountRepository } from '../db/accounts';
 import { DrizzleExportStore, PostgresFileStorage } from '../db/exports';
 import { createPgliteDb } from '../db/pglite';
@@ -76,6 +78,8 @@ export async function backupApp(
     webEdgeSecret?: string | null;
     /** Passwords the fake breach check refuses (default: `password1234`, …). */
     breached?: readonly string[];
+    /** Wraps the store the app uses (a failure injected behind the real routes); `h.store` stays real. */
+    wrapStore?: (store: BackupStore) => BackupStore;
   } = {}
 ) {
   shared ??= createPgliteDb();
@@ -83,7 +87,8 @@ export async function backupApp(
   await emptyTables(db);
   // The shared database outlives each test; `closeSharedDb()` closes it once per file.
   const close = async () => undefined;
-  const store = new DrizzleBackupStore(db);
+  const grid = new H3CellGrid();
+  const store = new DrizzleBackupStore(db, grid);
   const clock = { t: Date.parse('2026-10-20T08:00:00Z'), now: () => clock.t };
   const mailer = options.mailer ?? new MemoryMailer();
   const auth = createAuth({
@@ -121,7 +126,8 @@ export async function backupApp(
       auth: compositeVerifier(deviceTokenAuth(parseApiTokens(API_TOKENS).entries), identity.verifier),
       clock,
       log,
-      store,
+      store: options.wrapStore ? options.wrapStore(store) : store,
+      grid,
       identity,
       accounts,
       exports: new ExportService(
@@ -167,7 +173,7 @@ export async function backupApp(
     });
     return ((await res.json()) as { token: string }).token;
   };
-  return { app, store, db, clock, call, close, mailer, auth, identity, accounts, breached, signIn };
+  return { app, store, grid, db, clock, call, close, mailer, auth, identity, accounts, breached, signIn };
 }
 
 /** A made-up run around Warsaw Old Town (public landmark): `n` points, 3 s and ~7 m apart. */

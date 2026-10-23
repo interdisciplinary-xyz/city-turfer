@@ -1,4 +1,5 @@
-import { and, asc, desc, eq, gt, inArray, like, lt, notInArray, or, sql } from 'drizzle-orm';
+import type { CellGrid } from '@cityturfer/core/territory/ports';
+import { and, asc, desc, eq, gt, gte, inArray, like, lt, notInArray, or, type SQL, sql } from 'drizzle-orm';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 
 import type {
@@ -14,8 +15,17 @@ import type {
   TombstoneRecord,
   UserRecord,
 } from '../backup/model';
-import type { BackupStore, UserReader, UserWriter } from '../backup/ports';
+import type {
+  ActivitySums,
+  BackupStore,
+  TurfBacklogEntry,
+  TurfUserEntry,
+  UserReader,
+  UserWriter,
+} from '../backup/ports';
 import { emailChangePrefix } from '../identity/codes';
+import { DrizzleTerritoryRepository, hasTrack } from '../territory/drizzle-territory-repository';
+import type { TurfRepository } from '../territory/ports';
 import {
   activities,
   activityTracks,
@@ -81,10 +91,15 @@ const activityRow = (userId: string, a: ActivityRecord) => ({
 
 /** Every query of one user, on a database or inside a transaction. */
 class UserScope implements UserWriter {
+  readonly turf: TurfRepository;
+
   constructor(
     private readonly db: Db,
-    private readonly userId: string
-  ) {}
+    private readonly userId: string,
+    grid: CellGrid
+  ) {
+    this.turf = new DrizzleTerritoryRepository(db, userId, grid);
+  }
 
   async user(): Promise<UserRecord | null> {
     const [row] = await this.db.select().from(users).where(eq(users.id, this.userId));
@@ -177,6 +192,8 @@ class UserScope implements UserWriter {
     limit: number;
     type?: ActivityTypeName;
     before?: { startedAt: number; id: string };
+    startedAfter?: number;
+    startedBefore?: number;
   }): Promise<ActivityRecord[]> {
     const before = q.before
       ? or(
@@ -187,10 +204,45 @@ class UserScope implements UserWriter {
     const rows = await this.db
       .select()
       .from(activities)
-      .where(and(eq(activities.userId, this.userId), q.type ? eq(activities.type, q.type) : undefined, before))
+      .where(
+        and(
+          eq(activities.userId, this.userId),
+          q.type ? eq(activities.type, q.type) : undefined,
+          q.startedAfter === undefined ? undefined : gte(activities.startedAt, new Date(q.startedAfter)),
+          q.startedBefore === undefined ? undefined : lt(activities.startedAt, new Date(q.startedBefore)),
+          before
+        )
+      )
       .orderBy(desc(activities.startedAt), desc(activities.id))
       .limit(q.limit);
     return rows.map(toActivity);
+  }
+
+  async activityTotals(): Promise<Partial<Record<ActivityTypeName, ActivitySums>>> {
+    // Sums only: the totals rule (recorded + estimated) is applied by the use case.
+    const rows = await this.db
+      .select({
+        type: activities.type,
+        count: sql<number>`count(*)::int`,
+        distanceM: sql<number>`coalesce(sum((${activities.summary}->>'distanceM')::float8), 0)::float8`,
+        estimatedDistanceM: sql<number>`coalesce(sum(${activities.estimatedDistanceM}), 0)::float8`,
+        movingS: sql<number>`coalesce(sum((${activities.summary}->>'movingS')::float8), 0)::float8`,
+        estimatedMovingS: sql<number>`coalesce(sum(${activities.estimatedMovingS}), 0)::float8`,
+      })
+      .from(activities)
+      .where(eq(activities.userId, this.userId))
+      .groupBy(activities.type);
+    const out: Partial<Record<ActivityTypeName, ActivitySums>> = {};
+    for (const r of rows) {
+      out[r.type as ActivityTypeName] = {
+        count: Number(r.count),
+        distanceM: Number(r.distanceM),
+        estimatedDistanceM: Number(r.estimatedDistanceM),
+        movingS: Number(r.movingS),
+        estimatedMovingS: Number(r.estimatedMovingS),
+      };
+    }
+    return out;
   }
 
   async changesSince(afterSeq: number, limit: number): Promise<ChangeRecord[]> {
@@ -243,6 +295,12 @@ class UserScope implements UserWriter {
     // be gone: re-create it (empty account) instead of failing on the foreign keys.
     await this.db.insert(users).values({ id: this.userId }).onConflictDoNothing();
     await this.db.select({ id: users.id }).from(users).where(eq(users.id, this.userId)).for('update');
+  }
+
+  async lockExisting(): Promise<boolean> {
+    // No insert: a background job must never re-create an erased account.
+    const [row] = await this.db.select({ id: users.id }).from(users).where(eq(users.id, this.userId)).for('update');
+    return !!row;
   }
 
   async nextSeq(): Promise<number> {
@@ -323,6 +381,13 @@ class UserScope implements UserWriter {
       .where(scope === 'all' ? mine : and(mine, or(like(activities.id, 'hk-%'), eq(activities.source, 'apple-health'))))
       .returning({ id: activities.id });
     if (scope === 'all') {
+      // The claims went with their activities; the Turf Cells go too.
+      await this.turf.eraseAll();
+    } else if (gone.length > 0) {
+      // Their claims went with them (cascade): recompute the cells, first claimers included.
+      await this.turf.rebuildAll();
+    }
+    if (scope === 'all') {
       // Tombstones stay (ids and times only, no location data): delete wins (D5) across a
       // withdrawal, so a phone still holding a deleted activity gets 410 instead of re-uploading
       // it. They go with the account (eraseAccount).
@@ -352,12 +417,63 @@ class UserScope implements UserWriter {
   }
 }
 
+/**
+ * Users with activities that have no turf claim, with how many could be claimed (a track) and how
+ * many cannot (no track): `BackupStore.turfBacklog`, support counts.
+ */
+export async function turfBacklog(
+  db: Db,
+  q: { limit: number; afterUserId?: string; userId?: string }
+): Promise<TurfBacklogEntry[]> {
+  // Ids in JS string order (COLLATE "C") so a resumed run continues where it stopped on Neon too.
+  const tracked = hasTrack(sql`a.user_id`, sql`a.id`);
+  const result = await db.execute(sql`
+    SELECT a.user_id AS "userId",
+      count(*) FILTER (WHERE ${tracked})::int AS unclaimed,
+      count(*) FILTER (WHERE NOT ${tracked})::int AS untracked
+    FROM activities a
+    WHERE NOT EXISTS (SELECT 1 FROM turf_claims k WHERE k.user_id = a.user_id AND k.activity_id = a.id)
+      ${q.userId === undefined ? sql`` : sql`AND a.user_id = ${q.userId}`}
+      ${q.afterUserId === undefined ? sql`` : sql`AND a.user_id COLLATE "C" > ${q.afterUserId}`}
+    GROUP BY a.user_id
+    ORDER BY a.user_id COLLATE "C"
+    LIMIT ${q.limit}`);
+  return (result as unknown as { rows: TurfBacklogEntry[] }).rows.map((r) => ({
+    userId: r.userId,
+    unclaimed: Number(r.unclaimed),
+    untracked: Number(r.untracked),
+  }));
+}
+
+/** Users with claims or Turf Cells, by id in JS order (`BackupStore.turfUsers`, `turf:rebuild`). */
+export async function turfUsers(
+  db: Db,
+  q: { limit: number; afterUserId?: string; userId?: string }
+): Promise<TurfUserEntry[]> {
+  const only = (col: SQL) => sql`
+    ${q.userId === undefined ? sql`` : sql`AND ${col} = ${q.userId}`}
+    ${q.afterUserId === undefined ? sql`` : sql`AND ${col} COLLATE "C" > ${q.afterUserId}`}`;
+  const result = await db.execute(sql`
+    SELECT u.user_id AS "userId" FROM (
+      SELECT DISTINCT k.user_id FROM turf_claims k WHERE true ${only(sql`k.user_id`)}
+      UNION
+      SELECT DISTINCT c.user_id FROM turf_cells c WHERE true ${only(sql`c.user_id`)}
+    ) u
+    ORDER BY u.user_id COLLATE "C"
+    LIMIT ${q.limit}`);
+  return (result as unknown as { rows: TurfUserEntry[] }).rows.map((r) => ({ userId: r.userId }));
+}
+
 /** The BackupStore adapter over Drizzle. Queries always carry the user id (multi-tenant). */
 export class DrizzleBackupStore implements BackupStore {
-  constructor(private readonly db: Db) {}
+  /** `grid`: Territory's CellGrid (H3 from src/wiring.ts), for the turf repository's areas and centroids. */
+  constructor(
+    private readonly db: Db,
+    private readonly grid: CellGrid
+  ) {}
 
   read(userId: string): UserReader {
-    return new UserScope(this.db, userId);
+    return new UserScope(this.db, userId, this.grid);
   }
 
   /**
@@ -367,7 +483,7 @@ export class DrizzleBackupStore implements BackupStore {
    * level (REPEATABLE READ) would keep the reads from before the lock wait.
    */
   write<T>(userId: string, fn: (tx: UserWriter) => Promise<T>): Promise<T> {
-    return this.db.transaction((tx) => fn(new UserScope(tx as unknown as Db, userId)), {
+    return this.db.transaction((tx) => fn(new UserScope(tx as unknown as Db, userId, this.grid)), {
       isolationLevel: 'read committed',
     });
   }
@@ -385,8 +501,8 @@ export class DrizzleBackupStore implements BackupStore {
       await tx
         .delete(authVerifications)
         .where(like(authVerifications.identifier, `${likeEscaped(emailChangePrefix(userId))}%`));
-      // Everything else hangs off users (ON DELETE CASCADE): consents, activities → tracks and gap
-      // routes, tombstones, the Home City, exports. Sessions and the password (auth_accounts) went
+      // Everything else hangs off users (ON DELETE CASCADE): consents, activities → tracks, gap
+      // routes and turf claims, Turf Cells, tombstones, the Home City, exports. Sessions and the password (auth_accounts) went
       // with auth_users.
       await tx.delete(users).where(eq(users.id, userId));
     });
@@ -403,6 +519,14 @@ export class DrizzleBackupStore implements BackupStore {
           displayName: sql`coalesce(${users.displayName}, excluded.display_name)`,
         },
       });
+  }
+
+  turfBacklog(q: { limit: number; afterUserId?: string; userId?: string }): Promise<TurfBacklogEntry[]> {
+    return turfBacklog(this.db, q);
+  }
+
+  turfUsers(q: { limit: number; afterUserId?: string; userId?: string }): Promise<TurfUserEntry[]> {
+    return turfUsers(this.db, q);
   }
 
   async ping(): Promise<boolean> {

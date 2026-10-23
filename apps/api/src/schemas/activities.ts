@@ -107,7 +107,35 @@ export const ActivityListQuery = z.object({
   limit: Limit,
   cursor: Cursor,
   type: ActivityType.optional().openapi({ param: { name: 'type', in: 'query' } }),
+  startedAfter: IsoDateTime.optional().openapi({
+    param: { name: 'startedAfter', in: 'query' },
+    description: 'Only activities with `startedAt` at or after this time (inclusive).',
+    example: '2026-10-12T00:00:00Z',
+  }),
+  startedBefore: IsoDateTime.optional().openapi({
+    param: { name: 'startedBefore', in: 'query' },
+    description: 'Only activities with `startedAt` before this time (exclusive).',
+    example: '2026-10-19T00:00:00Z',
+  }),
 });
+
+export const Totals = z
+  .object({
+    count: z.number().int().min(0).openapi({ example: 42 }),
+    distanceM: z.number().min(0).openapi({ description: 'Recorded + estimated over GPS gaps.', example: 210_400 }),
+    movingS: z.number().min(0).openapi({ description: 'Recorded + estimated moving time.', example: 71_250 }),
+  })
+  .openapi('Totals');
+
+export const ActivityTotals = z
+  .object({
+    allTime: Totals,
+    byType: z.object({ walk: Totals, run: Totals, cycle: Totals }),
+  })
+  .openapi('ActivityTotals', {
+    description:
+      "Every activity on the server, as the phone's Stats tab counts them: distance and moving time include the street estimates across GPS gaps.",
+  });
 
 export const Split = z
   .object({

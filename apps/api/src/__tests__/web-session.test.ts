@@ -494,7 +494,7 @@ describe('caching default', () => {
     expect((await h.call('PUT', `/v1/activities/${id}`, { body: upload() })).status).toBe(201);
     const track = await h.call('GET', `/v1/activities/${id}/track`);
     expect(track.status).toBe(200);
-    expect(track.headers.get('cache-control')).toBe('private, no-cache');
+    expect(track.headers.get('cache-control')).toBe('private, no-store');
     expect(track.headers.get('etag')).toBeTruthy();
     expect(track.headers.get('vary')).toContain('Cookie, Authorization');
   });

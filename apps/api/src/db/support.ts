@@ -1,7 +1,7 @@
 import { count, eq, max, sql } from 'drizzle-orm';
 
-import { activities, authSessions, authUsers, consents, dataExports, tombstones, users } from './schema';
-import type { Db } from './store';
+import { activities, authSessions, authUsers, consents, dataExports, tombstones, turfClaims, users } from './schema';
+import { type Db, turfBacklog } from './store';
 
 /**
  * Support without an admin panel (`user:find`, `user:delete` in apps/api/scripts/): what an operator
@@ -23,6 +23,11 @@ export interface AccountSummary {
   lastUploadAt: string | null;
   sessions: number;
   exports: number;
+  /**
+   * Turf claims; activities without one that have a track (not backfilled yet, or a start in the
+   * future); and activities without one that cannot be claimed (no track: a repair case).
+   */
+  turf: { claims: number; unclaimedActivities: number; untrackedActivities: number };
   consents: { purpose: string; granted: boolean; policyVersion: string; decidedAt: string }[];
 }
 
@@ -60,6 +65,8 @@ export async function findAccount(db: Db, query: string): Promise<AccountSummary
   const [tombs] = await db.select({ n: count() }).from(tombstones).where(eq(tombstones.userId, id));
   const [sessions] = await db.select({ n: count() }).from(authSessions).where(eq(authSessions.userId, id));
   const [exps] = await db.select({ n: count() }).from(dataExports).where(eq(dataExports.userId, id));
+  const [claims] = await db.select({ n: count() }).from(turfClaims).where(eq(turfClaims.userId, id));
+  const [backlog] = await turfBacklog(db, { limit: 1, userId: id });
   const decisions = await db.select().from(consents).where(eq(consents.userId, id)).orderBy(consents.purpose);
   return {
     id,
@@ -72,6 +79,11 @@ export async function findAccount(db: Db, query: string): Promise<AccountSummary
     lastUploadAt: iso(acts?.lastUpdated),
     sessions: Number(sessions?.n ?? 0),
     exports: Number(exps?.n ?? 0),
+    turf: {
+      claims: Number(claims?.n ?? 0),
+      unclaimedActivities: backlog?.unclaimed ?? 0,
+      untrackedActivities: backlog?.untracked ?? 0,
+    },
     consents: decisions.map((c) => ({
       purpose: c.purpose,
       granted: c.granted,

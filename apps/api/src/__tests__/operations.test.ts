@@ -120,13 +120,25 @@ describe(`GET ${RETENTION_CRON_PATH}`, () => {
 
     // Before the zip expires: only the expired auth rows go.
     let res = await cron(TEST_CRON_SECRET);
-    expect(await res.json()).toEqual({ exportFiles: 0, signInCodes: 1, sessions: 1, rateLimits: 1 });
+    expect(await res.json()).toEqual({
+      exportFiles: 0,
+      signInCodes: 1,
+      sessions: 1,
+      rateLimits: 1,
+      turf: { claimed: 0, deferred: 0, skipped: 0, failed: 0, remaining: 0 },
+    });
 
     // A day later the zip (it holds GPS tracks) goes too, and its link answers 410.
     h.clock.t = now + 25 * HOUR;
     res = await cron(TEST_CRON_SECRET);
     // The minute-old counter is stale by then as well; the month-long code and session are not.
-    expect(await res.json()).toEqual({ exportFiles: 1, signInCodes: 0, sessions: 0, rateLimits: 1 });
+    expect(await res.json()).toEqual({
+      exportFiles: 1,
+      signInCodes: 0,
+      sessions: 0,
+      rateLimits: 1,
+      turf: { claimed: 0, deferred: 0, skipped: 0, failed: 0, remaining: 0 },
+    });
     expect(await h.db.select().from(storedFiles)).toHaveLength(0);
     expect((await h.call('GET', link!, { token: null })).status).toBe(410);
 
@@ -137,6 +149,7 @@ describe(`GET ${RETENTION_CRON_PATH}`, () => {
       signInCodes: 0,
       sessions: 0,
       rateLimits: 0,
+      turf: { claimed: 0, deferred: 0, skipped: 0, failed: 0, remaining: 0 },
     });
     expect((await h.db.select().from(authSessions)).map((r) => r.id)).toEqual(['s-live']);
     expect((await h.db.select().from(authVerifications)).map((r) => r.id)).toEqual(['v-live']);

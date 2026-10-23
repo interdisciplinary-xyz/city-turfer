@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-22
+verified: 2026-10-23
 owner: founder
 scope:
   [
@@ -11,10 +11,14 @@ scope:
     apps/api/src/routes/internal.ts,
     apps/api/src/client-ip.ts,
     apps/api/src/db/support.ts,
+    apps/api/src/territory/backfill.ts,
+    apps/api/src/territory/rebuild.ts,
   ]
 summary:
   Deploy the CityTurfer API — Vercel project city-turfer-api (apps/api, fra1), production branch,
-  env vars (Neon, Better Auth, Brevo, cron), migrations before the merge, the daily retention cron,
+  env vars (Neon, Better Auth, Brevo, cron), migrations before the merge, the server turf rollout
+  (migrate 0005 and 0006 before the merge, deploy, turf:backfill, then the web map; turf:rebuild
+  straight after redeploying from a rollback), the daily retention cron with its turf catch-up,
   adopting the admin data, device tokens, support requests (find, delete), checking health
 ---
 
@@ -83,13 +87,15 @@ reason.
 
 ## Migrations
 
-| Migration                  | Contract | What                                              |
-| -------------------------- | -------- | ------------------------------------------------- |
-| `0000_init`                | 0.3.0    | users, consents, activities, tracks, gap routes … |
-| `0001_activity_renamed_at` | 0.4.0    | `activities.renamed_at` (rename, last write wins) |
-| `0002_auth`                | 0.4.0    | Better Auth `auth_*` tables, `rate_limits`        |
-| `0003_exports`             | 0.4.0    | `data_exports`, `stored_files` (export zips)      |
-| `0004_browser_sessions`    | 0.5.0    | `auth_sessions.client`, `absolute_expires_at`     |
+| Migration                    | Contract | What                                              |
+| ---------------------------- | -------- | ------------------------------------------------- |
+| `0000_init`                  | 0.3.0    | users, consents, activities, tracks, gap routes … |
+| `0001_activity_renamed_at`   | 0.4.0    | `activities.renamed_at` (rename, last write wins) |
+| `0002_auth`                  | 0.4.0    | Better Auth `auth_*` tables, `rate_limits`        |
+| `0003_exports`               | 0.4.0    | `data_exports`, `stored_files` (export zips)      |
+| `0004_browser_sessions`      | 0.5.0    | `auth_sessions.client`, `absolute_expires_at`     |
+| `0005_turf`                  | 0.6.0    | `turf_claims`, `turf_cells`, `users.turf_version` |
+| `0006_turf_claim_track_hash` | 0.6.0    | `turf_claims.track_hash` (rollback repair)        |
 
 Migrations are SQL files in `apps/api/drizzle/`, generated from `apps/api/src/db/schema.ts` with
 `pnpm --filter @cityturfer/api run db:generate` and committed. Apply them to the production database
@@ -221,13 +227,96 @@ It refuses when the e-mail already belongs to another account (delete that one f
 `DELETE /v1/me`). Without `DATABASE_URL` it works on the local PGlite (stop the dev server first).
 The device token keeps working for the same user until it is removed from `API_TOKENS`.
 
+## Server turf: migrate, deploy, backfill (v0.10.0, contract 0.6.0)
+
+From 0.6.0 the server claims turf in every upload's transaction and serves it (`/v1/turf/summary`,
+`/v1/turf/cells`, `/v1/turf/claims/{id}`; design `docs/decisions/api-server-turf-2026-10-23.md`).
+Activities uploaded before have no claim until the backfill. **The founder runs the production
+backfill.**
+
+> **Migrate `0005_turf` and `0006_turf_claim_track_hash` before merging `release/vX.Y.Z` → `main`.**
+> That merge deploys 0.6.0, which reads `users.turf_version` on every request that loads the
+> account: without the migration `/v1/me`, every upload and every turf route answer **500**. Check
+> `GET /v1/health` on the current deployment after migrating, then merge.
+
+Order:
+
+1. **Migrate** production to `0006_turf_claim_track_hash` (section above) **before the merge**:
+   additive, the running 0.5.0 code ignores the new tables and column.
+2. **Deploy** (merge `release/vX.Y.Z` → `main`); check `GET /v1/health` answers `version: 0.6.0`,
+   `database: ok`. New uploads claim from now on.
+3. **Backfill** from a trusted machine, against the direct (unpooled) connection. First see what
+   cannot be claimed — activities without a track (uploads always carry one; any row here is a
+   repair case for support, never shared outside):
+
+   ```sql
+   -- Activities without a claim that have no track row, or a track without points, per user.
+   SELECT a.user_id, count(*) AS untracked
+   FROM activities a
+   LEFT JOIN activity_tracks t ON t.user_id = a.user_id AND t.activity_id = a.id
+   WHERE NOT EXISTS (SELECT 1 FROM turf_claims k WHERE k.user_id = a.user_id AND k.activity_id = a.id)
+     AND (t.activity_id IS NULL OR jsonb_array_length(t.points) = 0)
+   GROUP BY a.user_id;
+   ```
+
+   ```bash
+   DATABASE_URL_UNPOOLED='<neon production url>' pnpm --filter @cityturfer/api run turf:backfill -- --dry-run
+   DATABASE_URL_UNPOOLED='<neon production url>' pnpm --filter @cityturfer/api run turf:backfill
+   # one account only: … run turf:backfill -- --user <userId>
+   # bounds of one run (defaults 20000 activities, 30 minutes): … -- --max 5000 --minutes 10
+   ```
+
+   One activity per locked transaction, oldest first per user: idempotent and resumable (stop it any
+   time, run it again; a second run claims 0) and safe while phones upload. A run stops at its
+   budget or deadline (`Stopped (budget; run again to continue)`). It prints counts only
+   (`user 3/12: 40 claimed, …`), never ids of cells or coordinates. `deferred` = a start in the
+   future (a phone clock ahead): the daily cron claims it once due. `skipped` = activities without a
+   track (the query above): never attempted, by this run, later runs or the cron, so they cannot
+   keep either busy; they are reported on every run until support repairs or erases them (a later
+   upload with a track claims at once). `failed` > 0 exits 1: a failed claim is passed over for the
+   rest of the run (the user's newer activities still claim) and tried first by the next. Re-run; if
+   it stays, look at the error class it printed and find the account with `user:find` (its unclaimed
+   count stays above 0 after a full run). `user:find` shows "turf: N claims, M activities unclaimed,
+   K without a track" per account. The backfill never re-creates an account erased while it runs.
+
+4. **Then the web map** (the website's turf pages) may ship: before the backfill, users who uploaded
+   earlier see partial turf.
+
+**Rollback** (redeploy 0.5.0 code): the turf tables stay but 0.5.0 does not maintain them. Its
+deletes and withdrawals cascade claims away with their activities **but leave their Turf Cells**,
+and its replaces change the track, type or start in place **under the old claim**, so turf derived
+from erased, withdrawn or trimmed-away data would stay and be served again (personal data that must
+be gone, decision B5). Size the repair with `turf:rebuild -- --dry-run` before redeploying 0.6.0;
+keep the web turf pages off; then, **immediately after the redeploy**, run `turf:rebuild` and then
+`turf:backfill`, and only then turn the web turf pages back on (until the rebuild, `/v1/turf/*`
+serves the stale turf):
+
+```bash
+DATABASE_URL_UNPOOLED='<neon production url>' pnpm --filter @cityturfer/api run turf:rebuild -- --dry-run
+DATABASE_URL_UNPOOLED='<neon production url>' pnpm --filter @cityturfer/api run turf:rebuild
+# one account only: … run turf:rebuild -- --user <userId>
+DATABASE_URL_UNPOOLED='<neon production url>' pnpm --filter @cityturfer/api run turf:backfill
+```
+
+`turf:rebuild` recomputes each user's Turf Cells from the claims that remain, one locked transaction
+per user, only where they differ (a user with cells and no claims loses them all), then re-claims
+every claim whose activity's track hash, type or start no longer matches (`N claims re-claimed`); a
+second run finds nothing (`0 rebuilt`) and changes no turf version. Counts only; it skips accounts
+erased meanwhile without re-creating them; `failed` > 0 exits 1. Then the backfill claims what 0.5.0
+uploaded (the cron would too, 25 a day).
+
 ## Retention cron
 
 `apps/api/vercel.json` schedules `GET /internal/cron/retention` daily at 03:00 UTC (Hobby runs daily
 crons once within that hour; crons run on production deployments only). It deletes export zips past
 their 24 h expiry (they hold GPS tracks; before this they were deleted only when the next export was
 requested), expired sign-in codes and sessions, and stale rate-limit counters, and logs the counts
-(`retention.purged`). The route is internal: outside `/v1` and the OpenAPI spec, 401 without
+(`retention.purged`). It then **catches up turf**: at most 25 activities without a claim, about 60 s
+at most (deferred future starts once due, anything the backfill missed), and answers and logs counts
+only (`turf: { claimed, deferred, skipped, failed, remaining }`, `turf.caught-up`; activities
+without a track are `skipped`, never attempted, so they cannot use up the 25); a turf failure never
+fails the run (`turf: null`, `turf.catch-up-failed` with the error class). The bulk backfill is the
+script above, not the cron. The route is internal: outside `/v1` and the OpenAPI spec, 401 without
 `Authorization: Bearer $CRON_SECRET` (constant-time compare), 404 when `CRON_SECRET` is not set. Run
 it by hand (Vercel → Settings → Cron Jobs → Run, or
 `curl -H "Authorization: Bearer $CRON_SECRET" https://city-turfer-api.vercel.app/internal/cron/retention`);
@@ -261,10 +350,12 @@ pnpm --filter @cityturfer/api run user:delete -- <userId> --yes   # erases
 ```
 
 `user:find` prints id, `email`, `signInEmail`, `createdAt`, activity and tombstone counts,
-`lastActivityAt` (latest activity end), `lastUploadAt`, sessions, exports and consents.
-`user:delete` takes the **id** (not an e-mail) and runs the same EraseAccount use case as
-`DELETE /v1/me`: every row of the account in one transaction (auth rows and pending codes, consents,
-activities, tracks, gap routes, tombstones, Home City, exports and their zips).
+`lastActivityAt` (latest activity end), `lastUploadAt`, sessions, exports, consents and `turf`
+(claims, activities without a claim that have a track, and those without a track), then the line
+`turf: N claims, M activities unclaimed, K without a track`. `user:delete` takes the **id** (not an
+e-mail) and runs the same EraseAccount use case as `DELETE /v1/me`: every row of the account in one
+transaction (auth rows and pending codes, consents, activities, tracks, gap routes, tombstones, Home
+City, exports and their zips).
 
 **Data deletion request by e-mail** (GDPR art. 17; answer within one month):
 

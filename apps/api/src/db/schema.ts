@@ -35,6 +35,8 @@ export const users = pgTable('users', {
   displayName: text('display_name'),
   changeSeq: seq('change_seq').notNull().default(0),
   createdAt: ts('created_at').notNull().defaultNow(),
+  /** +1 whenever the user's turf projection changes (claim, release, rebuild, erase): the turf ETag. */
+  turfVersion: seq('turf_version').notNull().default(0),
 });
 
 /** The latest decision per purpose (`cloud-sync`, `apple-health-in-cloud-sync`). */
@@ -144,6 +146,58 @@ export const homeCities = pgTable('home_cities', {
   recordedAt: ts('recorded_at').notNull(),
   changeSeq: seq('change_seq').notNull(),
 });
+
+// ---------------------------------------------------------------------------------------------
+// Turf (Territory), derived on the server from the uploaded tracks with @cityturfer/core
+// (docs/decisions/api-server-turf-2026-10-23.md). Never uploaded; rebuildable from the claims. Turf
+// Cells (H3 res 11 ids) are location data: never logged, never in problem bodies.
+// ---------------------------------------------------------------------------------------------
+
+/** The Claim of one Activity: its unique Turf Cells. Goes with the activity (ON DELETE CASCADE). */
+export const turfClaims = pgTable(
+  'turf_claims',
+  {
+    userId: text('user_id').notNull(),
+    activityId: text('activity_id').notNull(),
+    type: text('type').notNull(),
+    /** The activity's start (the Claim's time), not when the server claimed it. */
+    claimedAt: ts('claimed_at').notNull(),
+    cells: text('cells').array().notNull(),
+    /**
+     * The activity's `track_hash` when it was claimed. A claim whose hash, type or start no longer
+     * matches its activity is stale (an API without server turf replaced the activity in place):
+     * `turf:rebuild` re-claims it. '' = claimed before migration 0006 (re-claimed too).
+     */
+    trackHash: text('track_hash').notNull().default(''),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.activityId] }),
+    foreignKey({ columns: [t.userId, t.activityId], foreignColumns: [activities.userId, activities.id] }).onDelete(
+      'cascade'
+    ),
+  ]
+);
+
+/**
+ * The turf projection: visits per type of every Turf Cell, and its canonical first claimer (D4: the
+ * claim with the earliest `(claimed_at, activity_id COLLATE "C")`, whatever the upload order). No
+ * coordinates (the grid derives them) and no decay (strength is computed on read).
+ */
+export const turfCells = pgTable(
+  'turf_cells',
+  {
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    cell: text('cell').notNull(),
+    walk: integer('walk').notNull().default(0),
+    run: integer('run').notNull().default(0),
+    cycle: integer('cycle').notNull().default(0),
+    firstAt: ts('first_at').notNull(),
+    firstActivityId: text('first_activity_id').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.cell] })]
+);
 
 // ---------------------------------------------------------------------------------------------
 // Better Auth (email one-time codes + bearer sessions). Its own tables, prefixed `auth_`, mapped
@@ -285,6 +339,8 @@ export const schema = {
   gapRoutes,
   tombstones,
   homeCities,
+  turfClaims,
+  turfCells,
   authUsers,
   authSessions,
   authAccounts,

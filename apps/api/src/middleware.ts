@@ -6,6 +6,7 @@ import { BackupService } from './backup/use-cases';
 import type { AppEnv, Credential } from './deps';
 import { problem } from './problem';
 import { SESSION_COOKIE, SESSION_COOKIE_ATTRIBUTES } from './session-cookie';
+import { TurfService } from './territory/turf-service';
 
 /** Vercel Functions take request bodies up to 4.5 MB; refuse bigger ones before reading them. */
 export const MAX_BODY_BYTES = 4_500_000;
@@ -193,7 +194,8 @@ export const requireCaller: MiddlewareHandler<AppEnv> = async (c, next) => {
 /**
  * Personal answers are never cached, by the browser (shared computers, the back button) or an edge
  * (the website's `/api/v1/*` rewrite): `Cache-Control: private, no-store` unless the route set its
- * own (tracks keep `private, no-cache` + ETag), and always `Vary: Cookie, Authorization`.
+ * own (none relaxes it: tracks, activity detail and turf cells set `no-store` too, with an ETag for
+ * clients that keep the body themselves), and always `Vary: Cookie, Authorization`.
  */
 export const personalCaching: MiddlewareHandler<AppEnv> = async (c, next) => {
   await next();
@@ -232,8 +234,8 @@ export const requireStore: MiddlewareHandler<AppEnv> = async (c, next) => {
       headers: { 'WWW-Authenticate': 'Bearer error="invalid_token"' },
     });
   }
-  const { store } = deps;
-  if (!store) {
+  const { store, grid } = deps;
+  if (!store || !grid) {
     return problem(c, 'storage.unavailable', 'No database is configured.');
   }
   const userId = principal.userId;
@@ -252,6 +254,7 @@ export const requireStore: MiddlewareHandler<AppEnv> = async (c, next) => {
     seen.add(userId);
   }
   c.set('userId', userId);
-  c.set('backup', new BackupService(store, deps.clock));
+  c.set('backup', new BackupService(store, deps.clock, grid));
+  c.set('turf', new TurfService(store, deps.clock, grid));
   return next();
 };
