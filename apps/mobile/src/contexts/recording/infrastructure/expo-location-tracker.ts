@@ -53,7 +53,7 @@ export class ExpoLocationTracker implements LocationTracker {
       await Location.stopLocationUpdatesAsync(LOCATION_TASK);
     }
     // The notification text in the app language; a headless launch has not read the setting yet.
-    await loadLanguageSetting();
+    await loadLanguageSetting().catch(() => undefined);
     const t = translator('record');
     await Location.startLocationUpdatesAsync(LOCATION_TASK, {
       accuracy: Location.Accuracy.BestForNavigation,

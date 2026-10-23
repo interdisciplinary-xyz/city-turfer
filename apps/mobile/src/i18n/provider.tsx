@@ -3,7 +3,7 @@ import { AppState } from 'react-native';
 import { IntlProvider, useTranslations } from 'use-intl';
 
 import { MESSAGES, type Namespace } from './catalogue';
-import { loadLanguageSetting, setLanguageSetting } from './language';
+import { LANGUAGE_READ_TIMEOUT_MS, loadLanguageSetting, setLanguageSetting } from './language';
 import { applyLanguageSetting, getLanguageState, type LanguageState, subscribeLanguage } from './language-state';
 import { deviceTimeZone, type LanguageSetting, type Locale } from './locales';
 import { messageFallback, onI18nError, type T } from './translator';
@@ -19,8 +19,22 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const { locale, setting, ready } = useLanguageState();
   const timeZone = useMemo(() => deviceTimeZone(), []);
 
+  // Read the saved setting; a slow or locked keychain must not hold the launch spinner: after a
+  // moment show the phone's language, and the saved one still applies when the read arrives.
   useEffect(() => {
     void loadLanguageSetting();
+    const timer = setTimeout(() => {
+      if (!getLanguageState().ready) {
+        applyLanguageSetting('system');
+      }
+    }, LANGUAGE_READ_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // A read that failed (keychain locked) is retried when the app comes to the front; a no-op once read.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => s === 'active' && void loadLanguageSetting());
+    return () => sub.remove();
   }, []);
 
   // Android can change the phone's language while the app is in the background: follow it.

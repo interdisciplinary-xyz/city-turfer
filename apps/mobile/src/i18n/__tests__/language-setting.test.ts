@@ -1,14 +1,17 @@
 const mockStore = new Map<string, string>();
-const mockState = { failing: false };
+const mockState = { failing: false, options: [] as unknown[] };
 
 jest.mock('expo-secure-store', () => ({
-  getItemAsync: async (k: string) => {
+  AFTER_FIRST_UNLOCK: 'after-first-unlock',
+  getItemAsync: async (k: string, options?: unknown) => {
+    mockState.options.push(options);
     if (mockState.failing) {
       throw new Error('keychain locked');
     }
     return mockStore.get(k) ?? null;
   },
-  setItemAsync: async (k: string, v: string) => {
+  setItemAsync: async (k: string, v: string, options?: unknown) => {
+    mockState.options.push(options);
     if (mockState.failing) {
       throw new Error('keychain locked');
     }
@@ -18,11 +21,17 @@ jest.mock('expo-secure-store', () => ({
 
 import { createLanguageSettings } from '../language';
 import { LANGUAGE_SETTING_KEY, SecureStoreLanguageSetting } from '../language-setting';
-import { getLanguageState, resetLanguageStateForTests, subscribeLanguage } from '../language-state';
+import {
+  applyLanguageSetting,
+  getLanguageState,
+  resetLanguageStateForTests,
+  subscribeLanguage,
+} from '../language-state';
 
 beforeEach(() => {
   mockStore.clear();
   mockState.failing = false;
+  mockState.options = [];
   resetLanguageStateForTests('en-US');
 });
 
@@ -40,11 +49,20 @@ describe('SecureStoreLanguageSetting', () => {
     expect(await setting.get()).toBe('pl');
   });
 
-  it('reads an unknown value or a locked keychain as System', async () => {
+  it('reads an unknown value as System and a locked keychain as unreadable', async () => {
     mockStore.set(LANGUAGE_SETTING_KEY, 'de');
     expect(await setting.get()).toBe('system');
     mockState.failing = true;
-    expect(await setting.get()).toBe('system');
+    expect(await setting.get()).toBeNull();
+  });
+
+  it('stays readable while the phone is locked (a headless launch builds the notification)', async () => {
+    await setting.set('pl');
+    await setting.get();
+    expect(mockState.options).toEqual([
+      { keychainAccessible: 'after-first-unlock' },
+      { keychainAccessible: 'after-first-unlock' },
+    ]);
   });
 
   it('says when saving failed', async () => {
@@ -106,5 +124,28 @@ describe('createLanguageSettings', () => {
     mockState.failing = true;
     await expect(settings.set('pl')).rejects.toThrow('keychain locked');
     expect(getLanguageState().locale).toBe('pl');
+  });
+
+  it('follows the phone when the keychain is locked, and reads the saved choice next time', async () => {
+    mockStore.set(LANGUAGE_SETTING_KEY, 'pl');
+    const settings = createLanguageSettings();
+    mockState.failing = true;
+    await settings.load();
+    expect(getLanguageState()).toMatchObject({ setting: 'system', locale: 'en', ready: true });
+    mockState.failing = false;
+    await settings.load();
+    expect(getLanguageState()).toMatchObject({ setting: 'pl', locale: 'pl', ready: true });
+    mockStore.set(LANGUAGE_SETTING_KEY, 'en');
+    await settings.load(); // read once it succeeded
+    expect(getLanguageState().setting).toBe('pl');
+  });
+
+  it('applies a saved choice that arrives after the launch gave up waiting', async () => {
+    mockStore.set(LANGUAGE_SETTING_KEY, 'pl');
+    const settings = createLanguageSettings();
+    const loading = settings.load();
+    applyLanguageSetting('system'); // the provider's launch timeout
+    await loading;
+    expect(getLanguageState()).toMatchObject({ setting: 'pl', locale: 'pl' });
   });
 });
