@@ -258,12 +258,16 @@ describeLive('sync chain, live API only', () => {
       expect(dropped).toMatchObject({ kind: 'done', report: { error: 'offline' } });
       const partial = await p.server.activities();
       expect(dropped).toMatchObject({ report: { uploaded: 1 } });
+      // The phone counts only the upload it heard back about.
+      expect(await p.c.cloudBackup.status.execute()).toMatchObject({ backedUp: 1, total: 3 });
       if (mode === 'before-send') {
         // The run stops at the first dropped write: one activity on the server.
         expect(partial).toHaveLength(1);
       } else {
-        // Every write reached the server; the phone heard back about one.
-        expect(partial.length).toBeGreaterThan(1);
+        // Dropped writes still reach the server, so it may hold more than the phone knows. Only
+        // "at least one" holds whatever the order of the run's writes (gap routing is off on the
+        // chain phone, so they are all activity uploads today).
+        expect(partial.length).toBeGreaterThanOrEqual(1);
       }
       // Whatever arrived is whole: same numbers as on the phone.
       await expectServerMatchesPhone(

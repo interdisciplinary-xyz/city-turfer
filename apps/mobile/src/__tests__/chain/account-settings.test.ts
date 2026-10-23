@@ -1,7 +1,7 @@
 /**
  * Sync chain, account settings from the phone (docs/plans/sync-chain-testing-2026-10-22.md, A1–A3):
- * name, e-mail and password changed in the phone's Account tab, checked from the account's other
- * sessions and from backup. Live API only; against an API without account settings every scenario
+ * name, e-mail and password changed through the phone's own ApiAuthGateway (what the Account tab's
+ * use cases call), checked from the account's other sessions and from backup. Live API only; against an API without account settings every scenario
  * reports pending.
  */
 import { chainAddress, type ChainServer, LIVE_API, LIVE_CODE, liveServer } from '@/test-support/chain/chain-server';
@@ -28,11 +28,11 @@ describeLive('sync chain, account settings from the phone', () => {
       notYet('live API', 'A1 name', missing);
       return;
     }
-    expect(await a.account!.rename('Ola')).toBe(200);
+    expect(await a.account!.rename('Ola')).toEqual({ kind: 'saved', name: 'Ola' });
     const b = await server.phone('a1', 'phone-b');
-    expect(await b.account!.me()).toMatchObject({ name: 'Ola' });
-    expect(await a.account!.rename('  ')).toBe(200); // blank clears it
-    expect(await b.account!.me()).toMatchObject({ name: null });
+    expect(await b.account!.me()).toMatchObject({ kind: 'me', me: { name: 'Ola' } });
+    expect(await a.account!.rename('  ')).toEqual({ kind: 'saved', name: null }); // blank clears it
+    expect(await b.account!.me()).toMatchObject({ kind: 'me', me: { name: null } });
   });
 
   it('A2: an e-mail change keeps the backup and the phone that made it; every other session is signed out', async () => {
@@ -49,11 +49,11 @@ describeLive('sync chain, account settings from the phone', () => {
     expect(await b.server.signedIn()).toBe(true);
 
     const newAddress = chainAddress('a2-new');
-    expect(await a.account!.requestStepUpCode()).toBe(202);
-    expect(await a.account!.requestEmailChange(newAddress, LIVE_CODE)).toBe(202);
-    expect(await a.account!.confirmEmailChange(newAddress, LIVE_CODE)).toBe(200);
+    expect(await a.account!.requestStepUpCode()).toEqual({ kind: 'sent' });
+    expect(await a.account!.requestEmailChange(newAddress, LIVE_CODE)).toEqual({ kind: 'sent' });
+    expect(await a.account!.confirmEmailChange(newAddress, LIVE_CODE)).toEqual({ kind: 'changed', email: newAddress });
 
-    expect(await a.account!.me()).toMatchObject({ email: newAddress });
+    expect(await a.account!.me()).toMatchObject({ kind: 'me', me: { email: newAddress } });
     expect(await b.server.signedIn()).toBe(false);
     // Same account id: the phone that made the change keeps backing up into the same copy.
     await addActivity(a.c, 'rec-run', 'run', RUN);
@@ -78,9 +78,9 @@ describeLive('sync chain, account settings from the phone', () => {
     expect(await a.c.cloudBackup.status.execute()).toMatchObject({ backedUp: 1, total: 1, lastError: null });
     const b = await server.phone('a3', 'phone-b');
 
-    expect(await a.account!.requestStepUpCode()).toBe(202);
-    expect(await a.account!.setPassword(PASSWORD, LIVE_CODE)).toBe(204);
-    expect(await a.account!.me()).toMatchObject({ hasPassword: true });
+    expect(await a.account!.requestStepUpCode()).toEqual({ kind: 'sent' });
+    expect(await a.account!.setPassword(PASSWORD, LIVE_CODE)).toEqual({ kind: 'saved' });
+    expect(await a.account!.me()).toMatchObject({ kind: 'me', me: { hasPassword: true } });
     expect(await a.server.signedIn()).toBe(true);
     expect(await b.server.signedIn()).toBe(false);
 

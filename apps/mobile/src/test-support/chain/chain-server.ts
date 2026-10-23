@@ -4,6 +4,8 @@
  * (CITYTURFER_LIVE_API). Each scenario runs against both, so the fake cannot drift from the API
  * unnoticed. The server is only ever observed from outside: over HTTP for the real one.
  */
+import { randomInt } from 'node:crypto';
+
 import type { ConsentPurpose } from '@/contexts/cloud-backup/application/ports';
 import { createFetchApiClient } from '@/contexts/cloud-backup/infrastructure/fetch-api-client';
 import { FakeApiServer, nodeSha256 } from '@/contexts/cloud-backup/test-support/fake-api-server';
@@ -12,8 +14,9 @@ import { migrate } from '@/platform/migrations';
 import { phone as fakePhone } from '@/test-support/backup-phone';
 import { type AccountActions, accountActions } from '@/test-support/chain/account-actions';
 import { isPending, type Pending } from '@/test-support/chain/pending';
+import { retryAfterWait } from '@/test-support/chain/retry';
 
-export { isPending, type Pending };
+export { isPending, type Pending, retryAfterWait };
 import { openNodeDatabase } from '@/test-support/node-database';
 import { type DeviceAdapters, wire } from '@/wiring';
 
@@ -161,26 +164,14 @@ interface Exchange {
   status: number;
 }
 
-export async function retryAfterWait<T extends { kind: string }>(call: () => Promise<T>): Promise<T> {
-  const first = await call();
-  if (first.kind !== 'rate-limited') {
-    return first;
-  }
-  const { retryAfterS } = first as T & { retryAfterS?: number | null };
-  // One code per address per minute (AUTH_LIMITS), as for a real user with a second phone.
-  await new Promise((r) => setTimeout(r, ((retryAfterS ?? 60) + 1) * 1000));
-  return call();
-}
-
-let devices = 0;
 /**
  * Each simulated phone or browser gets its own IP, as Vercel reports one per real device
  * (`x-real-ip`). Without it every client of a run shares the API's per-IP sign-in buckets, which no
- * real set of users does; the per-address limits still apply in full.
+ * real set of users does; the per-address limits still apply in full. Random, not counted: Jest
+ * resets module state per test file, so a counter would repeat across files in one worker.
  */
 export function deviceIp(): string {
-  devices++;
-  return `10.${process.pid % 250}.${Math.floor(devices / 250)}.${devices % 250}`;
+  return `10.${randomInt(256)}.${randomInt(256)}.${randomInt(1, 255)}`;
 }
 
 /** The test address of an account label in this run (fixed sign-in codes work only for these). */
@@ -200,18 +191,13 @@ async function codeSignIn(gateway: ApiAuthGateway, address: string) {
   return verified.session;
 }
 
-/** A phone password sign-in (`POST /v1/auth/sign-in` with `{ email, password }`, contract 0.5.0). */
-async function passwordSignIn(base: string, address: string, password: string, ip: string) {
-  const res = await fetch(`${base}/v1/auth/sign-in`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'CityTurfer-Client': CLIENT, 'x-real-ip': ip },
-    body: JSON.stringify({ email: address, password }),
-  });
-  const body = (await res.json().catch(() => null)) as { token?: string; user?: { id: string } } | null;
-  if (res.status !== 200 || !body?.token || !body.user) {
-    throw new Error(`password sign-in failed: ${res.status}`);
+/** A phone password sign-in through the app's own gateway ("Use a password instead"). */
+async function passwordSignIn(gateway: ApiAuthGateway, address: string, password: string) {
+  const verified = await gateway.signInWithPassword({ value: address }, password);
+  if (verified.kind !== 'verified') {
+    throw new Error(`password sign-in failed: ${verified.kind}`);
   }
-  return { token: body.token, account: { id: body.user.id, email: address } };
+  return verified.session;
 }
 
 export function liveServer(base: string): ChainServer {
@@ -240,7 +226,7 @@ export function liveServer(base: string): ChainServer {
       const address = chainAddress(account);
       const gateway = new ApiAuthGateway({ baseUrl: base, client: CLIENT, timeoutMs: 20_000, fetchImpl });
       const session = options.password
-        ? await passwordSignIn(base, address, options.password, ip)
+        ? await passwordSignIn(gateway, address, options.password)
         : await codeSignIn(gateway, address);
 
       const db = openNodeDatabase();
@@ -359,7 +345,7 @@ export function liveServer(base: string): ChainServer {
         },
         address,
         token: session.token,
-        account: accountActions(base, session.token, ip),
+        account: accountActions(gateway, session.token, get),
         dropNetworkAfter(writes, mode = 'before-send') {
           net.writesLeft = writes;
           net.mode = mode;

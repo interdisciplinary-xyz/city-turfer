@@ -6,8 +6,9 @@
  * Browser sessions are contract 0.5.0 (web portal Slice 0). Against an API without them the sign-in
  * returns no session cookie, and every check reports pending.
  */
-import { deviceIp, LIVE_CODE, retryAfterWait } from './chain-server';
+import { deviceIp, LIVE_CODE } from './chain-server';
 import type { Pending } from './pending';
+import { retryAfterWait } from './retry';
 
 /** The API refuses browser writes from any other origin (WEB_ORIGIN; the dev server's default). */
 const WEB_ORIGIN = process.env.CITYTURFER_WEB_ORIGIN ?? 'https://cityturfer.local';
@@ -67,8 +68,17 @@ export async function webSignIn(base: string, address: string): Promise<WebPorta
     body: JSON.stringify({ email: address, code: LIVE_CODE, client: 'browser' }),
   });
   const value = COOKIE.exec(signIn.headers.get('set-cookie') ?? '')?.[1];
-  if (signIn.status !== 200 || !value) {
-    return { pending: `browser sign-in by cookie is not on this API (answer ${signIn.status}; web portal #141)` };
+  if (!value) {
+    // Pending only when the API has no browser sessions: it ignores `client` and signs in a phone
+    // (200 with a token in the body), or has no such route. Anything else is a real failure.
+    const body = (await signIn.json().catch(() => null)) as { token?: unknown } | null;
+    const phoneSession = signIn.status === 200 && typeof body?.token === 'string';
+    if (phoneSession || signIn.status === 404 || signIn.status === 501) {
+      return { pending: `browser sign-in by cookie is not on this API (answer ${signIn.status})` };
+    }
+    throw new Error(
+      `browser sign-in failed: ${signIn.status} (check CITYTURFER_WEB_ORIGIN against the API's WEB_ORIGIN and the fixed code)`
+    );
   }
 
   let cookie: string | null = value;

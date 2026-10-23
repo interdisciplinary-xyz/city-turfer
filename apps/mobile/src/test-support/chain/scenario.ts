@@ -64,11 +64,14 @@ export async function phoneSnapshot(c: Container) {
 
 /**
  * Notes a check that could not run. Written to CHAIN_REPORT (one JSON line each) when the chain
- * runner sets it; the runner lists them apart from the passes.
+ * runner sets it, and the runner lists them apart from the passes; printed to stderr otherwise.
  */
 export function notYet(server: string, check: string, p: Pending): void {
   const file = process.env.CHAIN_REPORT;
   if (file) {
     appendFileSync(file, `${JSON.stringify({ server, check, pending: p.pending })}\n`);
+  } else {
+    // Outside the runner nothing lists pending checks, and the test itself shows green: say so.
+    process.stderr.write(`PENDING, NOT RUN [${server}] ${check}: ${p.pending}\n`);
   }
 }
