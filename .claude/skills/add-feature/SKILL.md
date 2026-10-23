@@ -42,6 +42,7 @@ Activity Log, Achievements and Identity (domain + application) lives in
 | `contexts/cloud-backup/{domain,application,infrastructure}`                                                                  | `api-engineer`         | api-design, ddd-architecture     |
 | `apps/api/` (routes, schemas, server side of cloud backup and sync), its decision records                                    | `api-engineer`         | api-design                       |
 | `apps/mobile/src/app/`, `contexts/*/ui/` (not health-sync), `ui-kit/`, maps, `apps/mobile/plugins/with-local-maplibre.js`    | `mobile-ui-engineer`   | turf-territory (Turf Map)        |
+| `apps/mobile/src/i18n/`, `apps/mobile/messages/` (keys in every locale; the wording is `brand-designer`'s)                   | `mobile-ui-engineer`   | mobile-i18n                      |
 | `packages/ui/`, `apps/storybook/` config, app and ui stories                                                                 | `mobile-ui-engineer`   | design-system                    |
 | `packages/brand/`, `constants/colors.ts`, icons and splash in `app.json`, `apps/mobile/tools/brand/`, copy                   | `brand-designer`       | brand-system, design-system      |
 | `apps/web/`, `packages/dev-toolbar/`, website stories                                                                        | `web-engineer`         | web-motion                       |

@@ -45,6 +45,21 @@ export default [
     rules: { 'local-rules/enforce-types-in-constants': 'off' },
   },
   {
+    // User-facing text comes from the message catalogue (mobile-i18n skill). Off until the copy
+    // migration: switched to 'error' in step 2 of docs/decisions/mobile-i18n-2026-10-23.md.
+    rules: { 'local-rules/no-raw-text': 'off' },
+  },
+  {
+    // Not translated: dev-only screens and seeders, tests, the developer card (founder-only).
+    files: [
+      'src/dev/**',
+      '**/__tests__/**',
+      'src/test-support/**',
+      'src/contexts/cloud-backup/ui/backup-developer-card.tsx',
+    ],
+    rules: { 'local-rules/no-raw-text': 'off' },
+  },
+  {
     // Tests, config files, config plugins and dev tools (CLI scripts print to stdout)
     files: ['**/__tests__/**', 'src/test-support/**', '*.config.*', '*.cjs', 'plugins/**', 'tools/**'],
     rules: { '@typescript-eslint/no-require-imports': 'off', 'no-console': 'off' },
