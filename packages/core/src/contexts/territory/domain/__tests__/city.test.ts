@@ -39,6 +39,39 @@ describe('searchCities', () => {
   it('returns nothing when no name matches', () => {
     expect(searchCities(CITY_CATALOG, 'atlantis')).toEqual([]);
   });
+
+  describe('with aliases', () => {
+    const POLISH: Record<string, string[]> = {
+      'pl-warsaw': ['Warszawa'],
+      'at-vienna': ['Wiedeń'],
+      'it-rome': ['Rzym'],
+    };
+    const aliases = (id: string) => POLISH[id] ?? [];
+
+    it('matches an alias like the catalogue name, accent-insensitive, and keeps the catalogue name', () => {
+      expect(names(searchCities(CITY_CATALOG, 'warszawa', aliases))).toEqual(['Warsaw']);
+      expect(names(searchCities(CITY_CATALOG, 'wieden', aliases))).toEqual(['Vienna']);
+      expect(names(searchCities(CITY_CATALOG, 'rzym', aliases))).toEqual(['Rome']);
+    });
+
+    it('still matches the catalogue name', () => {
+      expect(names(searchCities(CITY_CATALOG, 'vienna', aliases))).toEqual(['Vienna']);
+      expect(names(searchCities(CITY_CATALOG, 'warsaw', aliases))).toEqual(['Warsaw']);
+    });
+
+    it('ranks a city by its best-matching name', () => {
+      // "wi": Wiedeń starts with it (rank 0); "Katowice" and others only contain it (rank 2).
+      expect(names(searchCities(CITY_CATALOG, 'wi', aliases))).toEqual(['Vienna', 'Katowice', 'Sosnowiec', 'Gliwice']);
+      expect(names(searchCities(CITY_CATALOG, 'w', aliases)).slice(0, 3)).toEqual(['Warsaw', 'Wrocław', 'Vienna']);
+    });
+
+    it('ignores an alias source that throws', () => {
+      const broken = () => {
+        throw new Error('no catalogue');
+      };
+      expect(names(searchCities(CITY_CATALOG, 'krakow', broken))).toEqual(['Kraków']);
+    });
+  });
 });
 
 describe('cityBounds', () => {
