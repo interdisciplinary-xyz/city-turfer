@@ -1,0 +1,24 @@
+{
+  "ok": "OK",
+  "cancel": "Cancel",
+  "save": "Save",
+  "delete": "Delete",
+  "remove": "Remove",
+  "back": "Back",
+  "done": "Done",
+  "close": "Close",
+  "continue": "Continue",
+  "retry": "Retry",
+  "loading": "Loading…",
+  "couldNotSave": "Could not save",
+  "activities": "{count, plural, one {# activity} other {# activities}}",
+  "minutes": "{count, plural, one {# minute} other {# minutes}}",
+  "language": {
+    "title": "Language",
+    "system": "System",
+    "english": "English",
+    "polish": "Polski",
+    "systemOptionLabel": "System language, now {language}",
+    "saveFailed": "The language applies now but may switch back the next time you open the app."
+  }
+}

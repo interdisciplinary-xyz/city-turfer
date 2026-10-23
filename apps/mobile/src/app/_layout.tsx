@@ -4,13 +4,16 @@ import { ActivityIndicator, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ACCENT, DARK, DISPLAY_CASE, DISPLAY_TRACKING, FONT_FAMILY } from '@/constants/colors';
+import { I18nProvider, useLanguageSetting } from '@/i18n';
 import { AppProvider, useApp } from '@/ui-kit/app-context';
 import { usePalette } from '@/ui-kit/theme';
 
 function Gate() {
   const { auth } = useApp();
+  const [language] = useLanguageSetting();
   const p = usePalette();
-  if (auth.status === 'loading') {
+  // The saved language is read alongside the session, so the first screen never flashes in the wrong one.
+  if (auth.status === 'loading' || !language.ready) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: DARK.bg }}>
         <ActivityIndicator color={ACCENT} />
@@ -78,10 +81,12 @@ function Gate() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <AppProvider>
-        <StatusBar style='auto' />
-        <Gate />
-      </AppProvider>
+      <I18nProvider>
+        <AppProvider>
+          <StatusBar style='auto' />
+          <Gate />
+        </AppProvider>
+      </I18nProvider>
     </SafeAreaProvider>
   );
 }

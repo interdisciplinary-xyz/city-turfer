@@ -9,8 +9,8 @@ description: >-
 # Mobile app languages
 
 Decisions L1–L12: `docs/decisions/mobile-i18n-2026-10-23.md`. **In progress:** the foundation
-(`apps/mobile/src/i18n/`, step 1) and the catalogue (`apps/mobile/messages/`) are being built; until
-then this skill describes the intended API.
+(`apps/mobile/src/i18n/`, step 1) and the `common` namespace exist; the screens move to the
+catalogue in step 2, so most copy is still inline English.
 
 ## Where strings live
 
@@ -35,7 +35,11 @@ Alert.alert(t('discardTitle'), t('discardBody'), [{ text: t('cancel'), style: 'c
 ```
 
 `useT` re-renders on a language change; `translator()` reads the language at call time, so call it
-when the text is built, never at module top level.
+when the text is built, never at module top level. Both come from `@/i18n` (also `useLocale()`,
+`useLanguageSetting()`, `loadLanguageSetting()`: await it before building text in a headless launch,
+where no provider has read the saved setting). The `I18nProvider` wraps the root layout; the root
+layout keeps its launch spinner until the saved setting is read (`ready`). Keys are typed from the
+English JSON: a new namespace is one import per locale in `apps/mobile/src/i18n/catalogue.ts`.
 
 ## Writing messages
 
@@ -58,10 +62,15 @@ when the text is built, never at module top level.
 
 ## Numbers, dates, units
 
-Through `apps/mobile/src/ui-kit/format.ts` on the **app** language (`Intl.NumberFormat` /
-`DateTimeFormat`), never `toFixed` or the phone's locale: `2,50 km`, `5:12 /km` in Polish. Units
-stay metric symbols in every language (`km`, `km/h`, `km²`); accessibility labels spell units out
-through the catalogue. `formatArea` keeps its grouping-free output.
+Through `apps/mobile/src/ui-kit/format.ts` on the **app** language, never `toFixed` or the phone's
+locale in a component: `2,50 km`, `5:12 /km` in Polish. Each function takes the locale last and
+defaults to the current one (tests pass `'en'` / `'pl'`). Decimals are `fixed()`: the digits of
+`toFixed` (English unchanged, never grouped: Hermes' `Intl.NumberFormat` has no `useGrouping`) with
+the locale's decimal mark from Intl. Dates use `Intl.DateTimeFormat` with the app language in the
+phone's regional variant when they agree (`en-GB` keeps "22 Oct"). A component that formats but does
+not call `useT` reads `useLocale()` so it re-renders on a change (memoised rows: pass it as
+`extraData`). Units stay metric symbols in every language (`km`, `km/h`, `km²`); accessibility
+labels spell units out through the catalogue. `formatArea` keeps its grouping-free output.
 
 ## Not translated
 
@@ -97,9 +106,11 @@ wins over a literal translation; brand-designer reviews every Polish message (st
 
 ## Adding a language
 
-A folder `apps/mobile/messages/<locale>/` with every namespace file, one entry in `LOCALES` in
-`apps/mobile/src/i18n/`, its plural data for the polyfill (L3), and the website's pair kept in step.
-audit:i18n takes the plural categories from CLDR, so it checks the new locale without changes.
+A folder `apps/mobile/messages/<locale>/` with every namespace file, one entry in `LOCALES`
+(`apps/mobile/src/i18n/locales.ts`) and its imports in `catalogue.ts`, its plural data for the
+polyfill (L3: a `locale-data/<locale>.js` require in `apps/mobile/src/i18n/plural-rules.ts`; Hermes
+has no `Intl.PluralRules`), and the website's pair kept in step. audit:i18n takes the plural
+categories from CLDR, so it checks the new locale without changes.
 
 ## Verify
 

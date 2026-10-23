@@ -55,8 +55,6 @@ const PLANNED_PATHS = new Set([
   'docs/spikes.md', // poc-plan.md M2: MapLibre spike decision record
   'docs/poc-report.md', // poc-plan.md M6: the PoC report
   'docs/roadmap.md', // add-feature skill: created after the PoC milestones
-  'apps/mobile/src/i18n/', // mobile-i18n decision, step 1: the app's i18n foundation
-  'apps/mobile/messages/', // mobile-i18n decision, step 1: the app's message catalogue
 ]);
 
 /** Index sections in reading order: folder → [heading, what lives here]. */

@@ -1,0 +1,24 @@
+{
+  "ok": "OK",
+  "cancel": "Anuluj",
+  "save": "Zapisz",
+  "delete": "Usuń",
+  "remove": "Usuń",
+  "back": "Wstecz",
+  "done": "Gotowe",
+  "close": "Zamknij",
+  "continue": "Dalej",
+  "retry": "Spróbuj ponownie",
+  "loading": "Ładowanie…",
+  "couldNotSave": "Nie udało się zapisać",
+  "activities": "{count, plural, one {# aktywność} few {# aktywności} many {# aktywności} other {# aktywności}}",
+  "minutes": "{count, plural, one {# minuta} few {# minuty} many {# minut} other {# minuty}}",
+  "language": {
+    "title": "Język",
+    "system": "Systemowy",
+    "english": "English",
+    "polish": "Polski",
+    "systemOptionLabel": "Język systemu, teraz {language}",
+    "saveFailed": "Język działa już teraz, ale przy następnym uruchomieniu aplikacji może wrócić poprzedni."
+  }
+}

@@ -1,4 +1,4 @@
-import { NAME, SPACE, TAGLINE } from '@cityturfer/brand';
+import { NAME, RADIUS, SPACE, TAGLINE } from '@cityturfer/brand';
 import * as Location from 'expo-location';
 import * as Updates from 'expo-updates';
 import { useRef, useState } from 'react';
@@ -11,12 +11,68 @@ import { CloudBackupCard } from '@/contexts/cloud-backup/ui/cloud-backup-card';
 import { AppleHealthCard } from '@/contexts/health-sync/ui/apple-health-card';
 import { removeDemoHistory, seedDemoHistory } from '@/dev/demo-history';
 import { seedHealthWorkouts } from '@/dev/health-seed';
+import { LANGUAGE_SETTINGS, type LanguageSetting, type Locale, useLanguageSetting, useT } from '@/i18n';
 import { useContainer } from '@/ui-kit/app-context';
-import { Button, Card } from '@/ui-kit/components';
+import { Button, Card, tint } from '@/ui-kit/components';
+import { AppSymbol } from '@/ui-kit/symbol';
 import { usePalette } from '@/ui-kit/theme';
 
 /** Long-presses on the version text needed to reveal developer tools in release builds. */
 const DEV_TAPS = 5;
+
+/**
+ * System · English · Polski. The language names are always in their own language; System shows
+ * what it resolves to on this phone. A choice applies at once.
+ */
+function LanguageCard() {
+  const p = usePalette();
+  const t = useT('common');
+  const [language, setLanguage] = useLanguageSetting();
+  const name = (l: Locale) => (l === 'pl' ? t('language.polish') : t('language.english'));
+  const label = (o: LanguageSetting) => (o === 'system' ? t('language.system') : name(o));
+  const choose = (o: LanguageSetting) =>
+    setLanguage(o).catch(() => Alert.alert(t('couldNotSave'), t('language.saveFailed')));
+  return (
+    <Card style={{ gap: 10 }}>
+      <Text style={[s.h2, { color: p.text }]} accessibilityRole='header'>
+        {t('language.title')}
+      </Text>
+      <View testID='language-row' style={s.options} accessibilityRole='radiogroup'>
+        {LANGUAGE_SETTINGS.map((o) => {
+          const selected = language.setting === o;
+          return (
+            <Pressable
+              key={o}
+              testID={`language-${o}`}
+              accessibilityRole='radio'
+              accessibilityLabel={
+                o === 'system' ? t('language.systemOptionLabel', { language: name(language.system) }) : label(o)
+              }
+              accessibilityState={{ selected, checked: selected }}
+              onPress={() => void choose(o)}
+              style={[
+                s.option,
+                { borderColor: selected ? ACCENT : p.border, backgroundColor: selected ? tint(ACCENT) : 'transparent' },
+              ]}
+            >
+              <View style={s.optionTitle}>
+                {selected && <AppSymbol name='checkmark' fallback='✓' size={14} color={p.text} />}
+                <Text style={[s.optionText, { color: p.text, fontWeight: selected ? '800' : '600' }]} numberOfLines={1}>
+                  {label(o)}
+                </Text>
+              </View>
+              {o === 'system' && (
+                <Text style={{ color: p.muted, fontSize: 13 }} numberOfLines={1}>
+                  {name(language.system)}
+                </Text>
+              )}
+            </Pressable>
+          );
+        })}
+      </View>
+    </Card>
+  );
+}
 
 export default function InfoScreen() {
   const p = usePalette();
@@ -147,6 +203,7 @@ export default function InfoScreen() {
       </Card>
       <AppleHealthCard />
       <CloudBackupCard />
+      <LanguageCard />
       {showDevTools && (
         <Card style={{ gap: 10 }}>
           <Text style={[s.h2, { color: p.text }]}>Developer tools</Text>
@@ -191,4 +248,18 @@ const s = StyleSheet.create({
   h2: { fontSize: 17, fontWeight: '800' },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   label: { flex: 1, fontSize: 15, fontWeight: '600' },
+  options: { flexDirection: 'row', gap: 10 },
+  option: {
+    flex: 1,
+    minHeight: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+    borderRadius: RADIUS.chip,
+    borderWidth: 2,
+    gap: 2,
+  },
+  optionTitle: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  optionText: { fontSize: 15 },
 });
