@@ -35,8 +35,8 @@ Me drawer, and the screens pushed from them. Format adapted from empatalk's `FEA
 > | Maestro flows         | `apps/mobile/e2e/config.yaml` → `flowsOrder`                             |
 > | SQLite schema         | `apps/mobile/src/platform/migrations.ts`                                 |
 
-Today: <!-- probe:achievements -->12<!-- /probe --> achievements,
-<!-- probe:e2e-flows -->14<!-- /probe --> Maestro flows, <!-- probe:migrations -->12<!-- /probe -->
+Today: <!-- probe:achievements -->20<!-- /probe --> achievements,
+<!-- probe:e2e-flows -->15<!-- /probe --> Maestro flows, <!-- probe:migrations -->13<!-- /probe -->
 
 migrations.
 
@@ -107,8 +107,9 @@ The Me tab doesn't open a screen: it slides in a drawer from the right with **Pr
 - **Profile** (`apps/mobile/src/app/profile.tsx`): avatar, name, email, totals (activities,
   distance, turf), unlocked achievements → Achievements.
 - **Achievements** (`apps/mobile/src/app/achievements.tsx`): every achievement with progress and an
-  "n of m unlocked" count; unlocked ones in the strong-tier colour. Evaluated on the fly from
-  activity and turf facts (nothing stored).
+  "n of m unlocked" count, in five groups (Firsts, New streets, Coming back, Getting out, Distance),
+  each heading with its own count; unlocked ones in the accent colour. Evaluated on the fly from
+  activity and turf facts (nothing stored). List: `docs/decisions/achievements-list-2026-10-23.md`.
 - **Sign in** (`apps/mobile/src/app/sign-in.tsx`): email first; the local profiles
   (`admin@cityturfer.com`, `demo@cityturfer.com`) then ask for their password, any other email gets
   a 6-digit code (`textContentType oneTimeCode`). The first real sign-in on a phone whose `admin`

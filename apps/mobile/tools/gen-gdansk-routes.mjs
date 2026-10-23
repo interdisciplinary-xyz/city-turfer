@@ -5,14 +5,14 @@
 // paths and the seaside bike lane. The result is committed, so the app never
 // calls the router for demo data.
 //
-//   node tools/gen-gdansk-routes.mjs            # writes src/dev/gdansk-routes.json
+//   node tools/gen-gdansk-routes.mjs            # writes packages/core/src/demo/gdansk-routes.json
 //
 // Waypoints are public places (squares, parks, the beach), not anyone's home.
 
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-const OUT = fileURLToPath(new URL('../src/dev/gdansk-routes.json', import.meta.url));
+const OUT = fileURLToPath(new URL('../../../packages/core/src/demo/gdansk-routes.json', import.meta.url));
 const BASE = 'https://routing.openstreetmap.de';
 const PROJECT_URL = 'https://github.com/interdisciplinary-xyz/city-turfer';
 const PROFILE = { walk: 'routed-foot', run: 'routed-foot', cycle: 'routed-bike' };

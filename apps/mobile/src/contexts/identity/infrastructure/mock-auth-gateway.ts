@@ -13,10 +13,15 @@ import {
  * with Gdańsk demo data for screenshots (src/dev/gdansk-demo.ts).
  * The credentials live in this file only. Real accounts (email one-time codes)
  * go through ApiAuthGateway; these two local profiles keep working in every build.
+ * `name` is the default; a name the Turfer chooses in Me › Account is kept on the phone
+ * (ProfileNameStore) and wins. Local profiles have no email to change and no account password.
  */
 const ACCOUNTS: readonly { password: string; user: User }[] = [
-  { password: 'admin1234', user: { id: userId('admin'), email: 'admin@cityturfer.com', displayName: 'Admin' } },
-  { password: 'demo1234', user: { id: userId('demo'), email: 'demo@cityturfer.com', displayName: 'Ola' } },
+  {
+    password: 'admin1234',
+    user: { id: userId('admin'), email: 'admin@cityturfer.com', displayName: 'Admin', name: 'Admin' },
+  },
+  { password: 'demo1234', user: { id: userId('demo'), email: 'demo@cityturfer.com', displayName: 'Ola', name: 'Ola' } },
 ];
 
 export class MockAuthGateway implements AuthGateway {

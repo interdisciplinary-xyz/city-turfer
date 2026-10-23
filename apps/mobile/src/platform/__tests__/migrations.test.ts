@@ -165,3 +165,21 @@ describe('migration v12 (declined restore offers)', () => {
     await expect(db.run("INSERT INTO cb_restore_declined (activity_id) VALUES ('rec-1')")).rejects.toThrow();
   });
 });
+
+describe('migration v13 (claim cells by cell)', () => {
+  it('lets a release find the other claims of its cells through an index, not a table scan', async () => {
+    const db = openNodeDatabase();
+    await migrate(db, 12);
+    await migrate(db, 13);
+    // The join a release runs to recompute first_at / last_at (sqlite-territory-repository.ts).
+    const plan = await db.all<{ detail: string }>(
+      `EXPLAIN QUERY PLAN
+       SELECT cc.cell FROM ter_claim_cells r
+       JOIN ter_claim_cells cc ON cc.cell = r.cell AND cc.activity_id != r.activity_id
+       WHERE r.activity_id = 'a1'`
+    );
+    const details = plan.map((p) => p.detail).join('\n');
+    expect(details).toMatch(/idx_ter_claim_cells_cell/);
+    expect(details).not.toMatch(/^SCAN cc\b/m);
+  });
+});

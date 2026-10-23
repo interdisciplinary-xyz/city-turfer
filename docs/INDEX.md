@@ -67,7 +67,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   publish it to the website download link, test it on an emulator
 - ✅ [`operations/api-deploy.md`](operations/api-deploy.md): Deploy the CityTurfer API — Vercel
   project city-turfer-api (apps/api, fra1), production branch, env vars (Neon, Better Auth, Brevo,
-  cron), migrations before the merge, the daily retention cron, adopting the admin data, device
+  cron), migrations before the merge, the server turf rollout (migrate 0005 and 0006 before the
+  merge, deploy, turf:backfill, then the web map; turf:rebuild straight after redeploying from a
+  rollback), the daily retention cron with its turf catch-up, adopting the admin data, device
   tokens, support requests (find, delete), checking health
 - ✅ [`operations/apple-health.md`](operations/apple-health.md): Install the Apple Health build on
   the iPhone and check import and export with real data
@@ -102,6 +104,11 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 
 - 🕰️ [`sessions/v0.1.0.md`](sessions/v0.1.0.md): Session log v0.1.0 (2026-10-15 → 16) — from empty
   folder to the iOS PoC, background tracking fix
+- ✅ [`sessions/v0.10.0.md`](sessions/v0.10.0.md): Session log v0.10.0 — cut from main at the v0.9.0
+  release; versions pinned to 0.10.0; carries the checks v0.9.0 shipped without (Maestro, device,
+  browser, API deploy) and its follow-ups; light site, Street Plate type (native), account settings
+  (API 0.5.0), web portal Slice 0, admin scaffold, sync-chain tests, server turf (API 0.6.0), local
+  mock accounts
 - 🕰️ [`sessions/v0.2.0.md`](sessions/v0.2.0.md): Session log v0.2.0 through the Me menu and
   achievements; predates the Dashboard, Me drawer and login rename (PRs 23–25) and still says
   app.json is unpinned (pinned in f04bcf3)
@@ -128,6 +135,13 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 
 `docs/decisions/` — Full write-ups of single decisions.
 
+- ✅ [`decisions/account-settings-2026-10-22.md`](decisions/account-settings-2026-10-22.md): Account
+  settings (contract 0.5.0) — change name, e-mail and an optional password; codes stay the default
+  sign-in and the recovery path; a fresh code to the current address before any sensitive change;
+  other sessions signed out and a security mail after an e-mail or password change
+- 🚧 [`decisions/achievements-list-2026-10-23.md`](decisions/achievements-list-2026-10-23.md):
+  Achievements list v2 (product owner proposal) — 12 → 20 achievements in five groups; turf and
+  coming back weighted as much as distance; weeks counted apart, never in a row; all old ids kept
 - ✅ [`decisions/api-2026-10-20.md`](decisions/api-2026-10-20.md): v0.8.0 HTTP API — apps/api (Hono
   on Vercel, Frankfurt) exposing the app's existing use cases as /v1 routes, contract-first with zod
   → OpenAPI 3.1, documented with Swagger UI at cityturfer.local/swagger; the core logic now lives in
@@ -140,17 +154,41 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   Stopgap for the first live backup — secret device tokens (API_TOKENS holds only SHA-256 hashes)
   instead of Better Auth, one-way backup phone → server on Neon Postgres via Drizzle, canonical
   trackHash computed by the server (contract 0.3.0)
+- ✅ [`decisions/api-server-turf-2026-10-23.md`](decisions/api-server-turf-2026-10-23.md): The
+  server derives turf from uploaded tracks with core's own use cases, in the upload's locked
+  transaction — tables turf_claims (cells as text[]) and turf_cells (per-type counts, canonical
+  first claimer D4, COLLATE "C"), users.turf_version, no decay stored, future starts deferred,
+  export excluded for v0.10.0; phase 2 serves it (contract 0.6.0) — every cell paged with a
+  version-bound cursor and ETag/304 (no-store), summary, claims, activity totals — plus a resumable
+  backfill script that skips trackless activities, a bounded catch-up in the daily cron, and
+  turf:rebuild for the repair after a rollback (stale cells and claims replaced in place)
 - ✅ [`decisions/api-sync-2026-10-20.md`](decisions/api-sync-2026-10-20.md): Sync-first v1 API
   contract — the phone pushes Activities (versions, ETags, If-Match, tombstones) and pulls one
   changes feed; route table, sync protocol, error catalogue and the founder's decisions D1–D13;
   supersedes the route table of api-2026-10-20.md
+- ✅ [`decisions/api-web-sessions-2026-10-22.md`](decisions/api-web-sessions-2026-10-22.md): Browser
+  sessions for the web portal (contract 0.5.0) — an HttpOnly cookie on the website's /api/v1 rewrite
+  instead of a token in the page, requireCaller (bearer or cookie, realm user), the CSRF guard,
+  14/30-day and 8-hour lifetimes, signed-in devices, and the no-store caching default
 - ✅ [`decisions/apple-health-2026-10-18.md`](decisions/apple-health-2026-10-18.md): v0.4.0
   integrates Apple Health — a Health Sync context imports walks, hikes, runs and rides with routes
   (full history) as Activities that claim turf, and saves recordings to Health with routes
 - ✅ [`decisions/brand-foundations-2026-10-20.md`](decisions/brand-foundations-2026-10-20.md): Brand
   foundations (positioning for three audiences, personality, pillars), Archivo as the brand typeface
-  everywhere, visual language beyond colour, WCAG contrast rules with the open palette fixes, and
-  the asset set (outlined wordmarks, social image, store screenshots)
+  (superseded by brand-typography-2026-10-22), visual language beyond colour, WCAG contrast rules
+  with the open palette fixes, and the asset set (outlined wordmarks, social image, store
+  screenshots)
+- ✅ [`decisions/brand-light-theme-2026-10-22.md`](decisions/brand-light-theme-2026-10-22.md): The
+  website, Swagger and Storybook switch to a light theme (SITE_SCHEME) while the app and every map
+  stay dark; the AA light palette, its new tokens and ratios, night labels on pink buttons
+- ✅ [`decisions/brand-typography-2026-10-22.md`](decisions/brand-typography-2026-10-22.md): Brand
+  type changes from Archivo to the "Street Plate" pairing: Big Shoulders Display Black in capitals
+  for headings, Barlow Semi Condensed ExtraBold for numbers, Barlow for website body text; the
+  wordmark is redrawn in Big Shoulders Display (CITY Medium + TURFER Black)
+- 🚧 [`decisions/data-flow-2026-10-23.md`](decisions/data-flow-2026-10-23.md): Founder decisions
+  2026-10-23 on how data flows between the phone, the API, the web portal and the admin portal —
+  records are created on the phone, managed (deleted) on the web, adjusted (all but tracks) by
+  staff, and the phone pulls those changes; built in v0.11.0
 - ✅ [`decisions/design-system-2026-10-19.md`](decisions/design-system-2026-10-19.md): v0.5.0 design
   system — tokens in @cityturfer/brand (TS + CSS variables), React Native components in
   @cityturfer/ui, one Storybook (react-native-web) for the app and the website, shipped OTA
@@ -163,14 +201,27 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`decisions/monorepo-turborepo-2026-10-18.md`](decisions/monorepo-turborepo-2026-10-18.md):
   v0.3.0 moves the repo to a pnpm + Turborepo monorepo — apps/mobile (Expo), apps/web (Next.js
   landing page), packages/brand and packages/config — in three PRs
+- ✅ [`decisions/web-portal-2026-10-22.md`](decisions/web-portal-2026-10-22.md): Web portal Slice 0
+  (trust page) — signed-in pages inside apps/web under /[locale]/account, static export kept,
+  browser sessions by cookie (14 days sliding, 30 days absolute, 8 h on a shared computer),
+  read-only apart from account actions; map and activities later
 
 ## Live plans
 
 `docs/plans/` — Plans for work not shipped yet.
 
+- ✅ [`plans/account-settings-2026-10-22.md`](plans/account-settings-2026-10-22.md): A complete
+  Account tab on the phone and on the web portal — change name, e-mail and password — over one set
+  of API routes and one set of rules in core; passwords as an optional second sign-in method beside
+  e-mailed codes (reverses A1, needs a decision), step-up codes, security mails, tests at every
+  layer
 - 🚧 [`plans/backend-plan-2026-10-22.md`](plans/backend-plan-2026-10-22.md): Plan for the first
   back-end release (opt-in backup, real accounts, restore to a new phone, delete account, export) —
   founder decisions of 2026-10-22, what feat/backend-sync built, and what is left before testers can
   use it
+- 🚧 [`plans/sync-chain-testing-2026-10-22.md`](plans/sync-chain-testing-2026-10-22.md): How to test
+  that the four apps stay one system — every scenario starts on the phone (the source of truth) or
+  reaches it, and is checked in the API, the web portal and the admin portal as each is built today;
+  scenarios report pending until the routes they need exist
 
 <!-- docs-index:end -->

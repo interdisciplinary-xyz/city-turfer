@@ -18,8 +18,8 @@ infrastructure layers of Recording, Activity Log, Territory, Achievements and Id
 `apps/mobile/modules/background-session/`, the location side of `app.json` and the plugins, and the
 oracle tools in `apps/mobile/tools/lib/` (full map: the `add-feature` skill, §2). **You hand off**
 `ui/` layers and screens to `mobile-ui-engineer`, Health Sync to `health-engineer`, Cloud Backup and
-the server to `api-engineer`, Maestro flows to `mobile-test-engineer`. Do your part of a crossing
-change and name the rest in your report.
+the server (its turf projection in `apps/api/src/territory/` too) to `api-engineer`, Maestro flows
+to `mobile-test-engineer`. Do your part of a crossing change and name the rest in your report.
 
 ## Read first
 

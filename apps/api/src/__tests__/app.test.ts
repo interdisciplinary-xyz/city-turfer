@@ -2,10 +2,12 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { gzipSync } from 'node:zlib';
 
+import { z } from '@hono/zod-openapi';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createApp } from '../app';
 import { defaultDeps, type RequestLogEntry, silentLog } from '../deps';
+import { defineRoute } from '../routes/define';
 import { API_VERSION, OPENAPI_CONFIG } from '../spec';
 import { backupApp, closeSharedDb, TOKENS } from './support';
 
@@ -13,13 +15,22 @@ import { backupApp, closeSharedDb, TOKENS } from './support';
 const app = createApp(defaultDeps({ log: silentLog }));
 const AUTH = { Authorization: 'Bearer test-token' };
 const PUBLIC = new Set(['getHealth', 'requestSignInCode', 'signIn', 'downloadDataExport']);
-/** The one-way backup (docs/decisions/api-sync-2026-10-20.md): live since 0.3.0. */
+/** The one-way backup (docs/decisions/api-sync-2026-10-20.md): live since 0.3.0; account settings since 0.5.0. */
 const LIVE = new Set([
   'getHealth',
   'requestSignInCode',
   'signIn',
   'signOut',
+  'listSessions',
+  'revokeSession',
+  'revokeSessions',
   'getMe',
+  'updateMe',
+  'requestStepUpCode',
+  'requestEmailChangeCode',
+  'changeEmail',
+  'setPassword',
+  'removePassword',
   'deleteMe',
   'requestDataExport',
   'getDataExport',
@@ -36,7 +47,34 @@ const LIVE = new Set([
   'saveGapRoutes',
   'getHomeCity',
   'chooseHomeCity',
+  'getActivityTotals',
+  'getTurfSummary',
+  'getTurfCells',
+  'getClaim',
 ]);
+
+/**
+ * Every route of 0.6.0 is live; the planned mechanism (501 after auth and validation) is checked
+ * on a test-only route, outside the spec under test.
+ */
+const plannedApp = createApp(defaultDeps({ log: silentLog }));
+defineRoute(plannedApp, {
+  status: 'planned',
+  method: 'get',
+  path: '/v1/test/planned',
+  tags: ['Platform'],
+  operationId: 'testPlanned',
+  summary: 'Planned test route',
+  request: {
+    query: z.object({
+      near: z
+        .string()
+        .regex(/^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/)
+        .openapi({ param: { name: 'near', in: 'query' } }),
+    }),
+  },
+  responses: { 200: { description: 'Never.' } },
+});
 
 /** Live routes on PGlite with real device tokens. */
 let live: Awaited<ReturnType<typeof backupApp>>;
@@ -77,14 +115,14 @@ describe('routes', () => {
   });
 
   it('answers planned routes with a 501 problem', async () => {
-    const res = await app.request('/v1/turf/summary', { headers: AUTH });
+    const res = await plannedApp.request('/v1/test/planned?near=1,2', { headers: AUTH });
     expect(res.status).toBe(501);
     expect(res.headers.get('content-type')).toContain('application/problem+json');
     expect(await res.json()).toMatchObject({ status: 501, code: 'not-implemented' });
   });
 
   it('validates input before a planned handler, without echoing it back', async () => {
-    const res = await app.request('/v1/turf/cells?bbox=21.0122,52.2297&zoom=13', { headers: AUTH });
+    const res = await plannedApp.request('/v1/test/planned?near=21.0122,52.2297,1', { headers: AUTH });
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body).toMatchObject({ status: 400, code: 'invalid-request' });
@@ -150,6 +188,8 @@ describe('routes', () => {
     const html = await ui.text();
     expect(html).toContain('swagger');
     expect(html).toContain('showExtensions');
+    // Light code blocks, matching the site's light theme.
+    expect(html).toContain('syntaxHighlight: {"activated":true,"theme":"idea"}');
   });
 });
 
@@ -213,7 +253,7 @@ describe('platform middleware', () => {
     const res = await logged.request('/v1/turf/claims/3f9c2a64', { headers: AUTH });
     expect(res.headers.get('x-request-id')).toBeTruthy();
     expect(entries).toEqual([
-      expect.objectContaining({ method: 'GET', route: '/v1/turf/claims/:activityId', status: 501 }),
+      expect.objectContaining({ method: 'GET', route: '/v1/turf/claims/:activityId', status: 401 }),
     ]);
     expect(JSON.stringify(entries)).not.toContain('3f9c2a64');
   });
@@ -225,7 +265,7 @@ describe('OpenAPI document', () => {
 
   it('is OpenAPI 3.1 with every route of the decision record', () => {
     expect(doc.openapi).toBe('3.1.0');
-    expect(ops).toHaveLength(24);
+    expect(ops).toHaveLength(34);
   });
 
   it('gives every operation a unique id and a bounded-context tag', () => {
@@ -236,10 +276,10 @@ describe('OpenAPI document', () => {
     }
   });
 
-  it('requires bearer auth everywhere except the public routes', () => {
+  it('requires bearer or cookie auth everywhere except the public routes', () => {
     for (const o of ops) {
       const id = o.op.operationId!;
-      expect([id, o.op.security]).toEqual([id, PUBLIC.has(id) ? [] : [{ bearerAuth: [] }]]);
+      expect([id, o.op.security]).toEqual([id, PUBLIC.has(id) ? [] : [{ bearerAuth: [] }, { cookieAuth: [] }]]);
     }
   });
 

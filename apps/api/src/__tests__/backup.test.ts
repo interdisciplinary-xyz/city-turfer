@@ -44,18 +44,30 @@ describe('auth', () => {
     expect(await admin.json()).toEqual({
       id: 'admin',
       email: 'admin@cityturfer.com',
+      name: 'Admin',
       displayName: 'Admin',
+      hasPassword: false,
+      passwordChangedAt: null,
       createdAt,
     });
+    // No name: `name` is null, the deprecated `displayName` still falls back to the id (old phones).
     const other = await h.call('GET', '/v1/me', { token: TOKENS.other });
-    expect(await other.json()).toEqual({ id: 'other', email: null, displayName: 'other', createdAt });
+    expect(await other.json()).toEqual({
+      id: 'other',
+      email: null,
+      name: null,
+      displayName: 'other',
+      hasPassword: false,
+      passwordChangedAt: null,
+      createdAt,
+    });
   });
 
   it('answers live data routes 503 storage.unavailable without a database', async () => {
     const noDb = createApp(
       defaultDeps({
         log: silentLog,
-        auth: { verify: () => Promise.resolve({ userId: 'admin', verified: true }) },
+        auth: { verify: () => Promise.resolve({ realm: 'user', userId: 'admin', verified: true }) },
       })
     );
     const res = await noDb.request('/v1/me', { headers: { Authorization: 'Bearer x' } });
@@ -172,7 +184,8 @@ describe('consents', () => {
             )
           ),
       }),
-      h.clock
+      h.clock,
+      h.grid
     );
     const lockedBeforeConsent = () => {
       const lock = calls.indexOf('lock');
@@ -428,7 +441,7 @@ describe('reads', () => {
     const t = await h.call('GET', '/v1/activities/run-1/track');
     const etag = `"${trackHashOf(track())}"`;
     expect(t.headers.get('etag')).toBe(etag);
-    expect(t.headers.get('cache-control')).toBe('private, no-cache');
+    expect(t.headers.get('cache-control')).toBe('private, no-store');
     expect((await t.json()).points).toEqual(track());
     const cached = await h.call('GET', '/v1/activities/run-1/track', { headers: { 'If-None-Match': etag } });
     expect(cached.status).toBe(304);

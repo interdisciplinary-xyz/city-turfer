@@ -1,6 +1,6 @@
 {
   "name": "city-turfer",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "private": true,
   "scripts": {
     "start": "pnpm --filter @cityturfer/mobile start",
@@ -9,7 +9,7 @@
     "start:dev": "(test -f apps/storybook/storybook-static/index.html || pnpm --filter @cityturfer/storybook build) && pnpm run web:dev",
     "prepare": "husky",
     "commitlint": "commitlint --edit",
-    "cache:clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules .turbo apps/*/.turbo packages/*/.turbo apps/web/.next apps/web/out apps/mobile/.expo && echo 'Caches cleared. Run pnpm install to reinstall.'",
+    "cache:clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules .turbo apps/*/.turbo packages/*/.turbo apps/web/.next apps/admin/.next apps/web/out apps/mobile/.expo && echo 'Caches cleared. Run pnpm install to reinstall.'",
     "release": "commit-and-tag-version",
     "standard": "pnpm run standard:format && pnpm run standard:lint",
     "standard:fix": "pnpm run standard:lint:fix && pnpm run standard:format:fix",
@@ -23,13 +23,14 @@
     "test": "turbo run arch test:unit && pnpm run test:tools",
     "test:unit": "turbo run test:unit && pnpm run test:tools",
     "test:tools": "node --test tools/__tests__/*.test.mjs",
+    "test:chain": "node tools/chain/run.mjs",
     "test:e2e": "pnpm --filter @cityturfer/mobile test:e2e",
     "e2e:audit": "pnpm --filter @cityturfer/mobile e2e:audit",
     "audit:logs": "node tools/audit-logs.mjs",
     "check:secret-files": "node tools/check-secret-files.mjs",
     "audit:docs": "node tools/docs-audit.mjs",
     "audit:harness": "node tools/harness-audit.mjs",
-    "ci:quality": "pnpm run standard:format && pnpm run standard:lint && turbo run typecheck arch test:unit build && pnpm run test:tools && pnpm run audit:logs && pnpm run audit:harness && pnpm run e2e:audit",
+    "ci:quality": "pnpm run standard:format && pnpm run standard:lint && turbo run typecheck arch test:unit build && pnpm --filter @cityturfer/admin run generate:check && pnpm run test:tools && pnpm run audit:logs && pnpm run audit:harness && pnpm run e2e:audit",
     "build": "turbo run build",
     "web:dev": "pnpm --filter @cityturfer/web dev"
   },

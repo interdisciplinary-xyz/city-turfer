@@ -1,12 +1,18 @@
-"""Cut CityTurfer's static Archivo fonts from the variable font (brand-system skill, Typography).
+"""Cut CityTurfer's static brand fonts (brand-system skill, Typography).
 
-The app and the website use the same two files. React Native has no variable-font support, and on
-iOS a font is addressed by its PostScript name, so each instance gets a PostScript name equal to
-its file name (`ArchivoExpanded-Black.ttf` -> `ArchivoExpanded-Black`).
+Big Shoulders Display Black (headings) and Barlow Semi Condensed ExtraBold (numbers) are bundled in
+the app and used by the website; the Barlow body weights and the tagline italic are web only. React Native has no
+variable-font support, and on iOS a font is addressed by its PostScript name, so each font gets a
+PostScript name equal to its file name (`BigShouldersDisplay-Black.ttf` -> `BigShouldersDisplay-Black`).
+Every font is subset to Latin + Polish.
 
-Usage (fonttools + brotli in a virtualenv):
-  curl -sL -o Archivo-VF.ttf "https://github.com/google/fonts/raw/main/ofl/archivo/Archivo%5Bwdth,wght%5D.ttf"
-  python make-fonts.py Archivo-VF.ttf packages/brand/fonts
+Usage (fonttools + brotli in a virtualenv), sources from Google Fonts:
+  B=https://github.com/google/fonts/raw/main/ofl
+  curl -sL -o src/BigShouldersDisplay-VF.ttf "$B/bigshouldersdisplay/BigShouldersDisplay%5Bwght%5D.ttf"
+  curl -sL -o src/BarlowSemiCondensed-ExtraBold.ttf "$B/barlowsemicondensed/BarlowSemiCondensed-ExtraBold.ttf"
+  for w in Regular Medium SemiBold Bold; do curl -sL -o src/Barlow-$w.ttf "$B/barlow/Barlow-$w.ttf"; done
+  curl -sL -o src/BarlowSemiCondensed-BlackItalic.ttf "$B/barlowsemicondensed/BarlowSemiCondensed-BlackItalic.ttf"
+  python make-fonts.py src packages/brand/fonts
 """
 import os
 import sys
@@ -15,11 +21,20 @@ from fontTools.subset import Options, Subsetter
 from fontTools.ttLib import TTFont
 from fontTools.varLib.instancer import instantiateVariableFont
 
-# (file / PostScript name, family, style, axes)
+# (file / PostScript name, family, style, source file, variable axes or None for a static source)
 INSTANCES = [
-    ('ArchivoExpanded-Black', 'Archivo Expanded', 'Black', {'wdth': 125, 'wght': 900}),
-    ('Archivo-ExtraBold', 'Archivo', 'ExtraBold', {'wdth': 100, 'wght': 800}),
+    ('BigShouldersDisplay-Black', 'Big Shoulders Display', 'Black', 'BigShouldersDisplay-VF.ttf', {'wght': 900}),
+    ('BarlowSemiCondensed-ExtraBold', 'Barlow Semi Condensed', 'ExtraBold', 'BarlowSemiCondensed-ExtraBold.ttf', None),
+    # Website body text (the app keeps the system font for body).
+    ('Barlow-Regular', 'Barlow', 'Regular', 'Barlow-Regular.ttf', None),
+    ('Barlow-Medium', 'Barlow', 'Medium', 'Barlow-Medium.ttf', None),
+    ('Barlow-SemiBold', 'Barlow', 'SemiBold', 'Barlow-SemiBold.ttf', None),
+    ('Barlow-Bold', 'Barlow', 'Bold', 'Barlow-Bold.ttf', None),
+    # Website tagline ("Surf your city. Own your streets."), web only.
+    ('BarlowSemiCondensed-BlackItalic', 'Barlow Semi Condensed', 'Black Italic', 'BarlowSemiCondensed-BlackItalic.ttf', None),
 ]
+# Web-only fonts get no TTF (the app never bundles them).
+WEB_ONLY = {'Barlow-Regular', 'Barlow-Medium', 'Barlow-SemiBold', 'Barlow-Bold', 'BarlowSemiCondensed-BlackItalic'}
 # Basic Latin, Latin-1, Latin Extended-A (Polish), punctuation, arrows, superscripts (km²), minus.
 UNICODES = (
     list(range(0x20, 0x7F))
@@ -41,9 +56,11 @@ def rename(font, ps_name, family, style):
     font['OS/2'].usWeightClass = 400  # the style lives in the family name, so RN never synthesises bold
 
 
-def main(src, out_dir):
-    for ps_name, family, style, axes in INSTANCES:
-        font = instantiateVariableFont(TTFont(src), axes, updateFontNames=False)
+def main(src_dir, out_dir):
+    for ps_name, family, style, source, axes in INSTANCES:
+        font = TTFont(os.path.join(src_dir, source))
+        if axes:
+            font = instantiateVariableFont(font, axes, updateFontNames=False)
         options = Options()
         options.layout_features = ['*']
         options.name_IDs = ['*']
@@ -54,7 +71,9 @@ def main(src, out_dir):
         if 'DSIG' in font:
             del font['DSIG']
         rename(font, ps_name, family, style)
-        font.save(os.path.join(out_dir, f'{ps_name}.ttf'))
+        if ps_name not in WEB_ONLY:  # TTF for the app
+            font.flavor = None
+            font.save(os.path.join(out_dir, f'{ps_name}.ttf'))
         font.flavor = 'woff2'
         font.save(os.path.join(out_dir, f'{ps_name}.woff2'))
         print(ps_name, 'ok')

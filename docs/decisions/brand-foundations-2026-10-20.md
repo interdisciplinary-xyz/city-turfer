@@ -5,8 +5,9 @@ owner: founder
 scope: [packages/brand, apps/mobile/tools/brand, apps/web/src/app, .claude/skills/brand-system]
 summary:
   Brand foundations (positioning for three audiences, personality, pillars), Archivo as the brand
-  typeface everywhere, visual language beyond colour, WCAG contrast rules with the open palette
-  fixes, and the asset set (outlined wordmarks, social image, store screenshots)
+  typeface (superseded by brand-typography-2026-10-22), visual language beyond colour, WCAG contrast
+  rules with the open palette fixes, and the asset set (outlined wordmarks, social image, store
+  screenshots)
 ---
 
 # Brand foundations (v0.8.0)
@@ -49,6 +50,10 @@ visibly), **Yours alone** (local-first, no tracking).
 
 ## Typography: Archivo
 
+> **Superseded (2026-10-22):** the brand type is now Big Shoulders Display + Barlow ("Street
+> Plate"), `docs/decisions/brand-typography-2026-10-22.md`. The wordmark is redrawn in Big Shoulders
+> Display too.
+
 Decision: **Archivo** (Omnibus-Type, SIL Open Font License) for display and numbers; system fonts
 (SF Pro, Roboto) for body text and labels.
 
@@ -74,8 +79,9 @@ loads them with `next/font/local` (self-hosted, display face preloaded). The wor
 ## Visual language
 
 - **Map is the hero.** Product imagery is the real Turf Map: dark basemap, turf glowing on it. The
-  basemap stays desaturated so the turf is the only colour on screen. Tier colours mean turf only;
-  activity colours mean tracks only.
+  basemap stays desaturated so the turf is the only colour on screen. On the light website, maps and
+  map imagery still sit on night panels (`docs/decisions/brand-light-theme-2026-10-22.md`). Tier
+  colours mean turf only; activity colours mean tracks only.
 - **Motif.** The hexagon cell and the street-wave from the mark are the building blocks for
   illustration, empty states and patterns. No mascot, no characters.
 - **Photography** (marketing only, optional): city streets at dusk or night, human scale, people
@@ -95,7 +101,14 @@ WCAG 2.2 AA: 4.5:1 for body text, 3:1 for large text, icons and UI boundaries.
 every pairing the apps draw and lists today's failures explicitly, so none can be added silently and
 a fixed one must be removed from the list.
 
-Open failures and the suggested fixes (not applied: each changes how the app looks):
+**Update 2026-10-22:** the website, Swagger and Storybook moved to a light theme while the app and
+every map stay dark. The light-theme rows below are closed by new light tokens (`LIGHT.accentText`,
+`LIGHT.<type>Text` / `<type>Graphic`, a deeper `LIGHT.danger`, a night `LIGHT.onAccent` on the
+unchanged glow fill); values, ratios and the reasoning are in
+`docs/decisions/brand-light-theme-2026-10-22.md`. The app-side rows (white on glow, white on the
+dark danger fill) stay open: the app's dark tokens did not change.
+
+Failures as of 2026-10-20 and the suggested fixes (kept as the record; see the update above):
 
 | Pair                                     | Today     | Suggested fix                                                |
 | ---------------------------------------- | --------- | ------------------------------------------------------------ |
@@ -110,7 +123,9 @@ Open failures and the suggested fixes (not applied: each changes how the app loo
 All rendered by `apps/mobile/tools/brand/render-assets.mjs` with headless Chrome:
 
 - `packages/brand/svg/wordmark.svg` (dark backgrounds) and `wordmark-light.svg` (light: "City" in
-  night, "Turfer" in faint → glow, the part of the Ramp that holds on white).
+  night, "Turfer" in faint → glow, the part of the Ramp that holds on white). Since the light
+  website, `wordmark-light.svg` is the site's wordmark and `wordmark.svg` is for night panels
+  (`docs/decisions/brand-light-theme-2026-10-22.md`).
 - `apps/web/public/og-image.png`: 1200×630 social image from
   `packages/brand/templates/og-image.html`.
 - `apps/mobile/assets/brand/out/store/`: App Store 6.9" (1290×2796) and Google Play (1080×2340)

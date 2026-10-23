@@ -26,7 +26,10 @@ const result = await build({
   target: 'node22',
   // `hono` stays a plain import: the Vercel Hono builder detects its entry by `from "hono"`.
   external: ['hono', 'hono/*'],
-  // CommonJS dependencies inside an ESM bundle may call require().
+  // CommonJS inside an ESM bundle may call require(). Checked 2026-10-23: the only calls left are
+  // h3-js's emscripten loader (`require("fs")`, `require("path")` in its file reader, not reached
+  // while the memory image is an embedded data URI); without the banner they would throw "Dynamic
+  // require … is not supported" if ever reached. Kept as that safety net.
   banner: {
     js: "import { createRequire as __createRequire } from 'node:module'; const require = __createRequire(import.meta.url);",
   },

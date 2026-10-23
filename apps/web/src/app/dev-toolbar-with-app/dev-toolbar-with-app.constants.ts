@@ -1,4 +1,7 @@
-import type { DevToolbarLink } from '@interdisciplinary/dev-toolbar/react';
+import { NAME } from '@cityturfer/brand';
+import type { DevToolbarLink, DevToolbarProps } from '@interdisciplinary/dev-toolbar/react';
+
+import { routing } from '@/i18n/routing';
 
 /** Namespace for the toolbar's localStorage / sessionStorage keys. */
 export const DEV_TOOLBAR_STORAGE_PREFIX = 'cityturfer';
@@ -19,3 +22,18 @@ export const DEV_TOOLBAR_LINKS: readonly DevToolbarLink[] = [
   { label: 'Pull requests', href: 'https://github.com/interdisciplinary-xyz/city-turfer/pulls' },
   { label: 'Vercel', href: 'https://vercel.com/micha-dopieralskis-projects' },
 ];
+
+/**
+ * Everything but the locale, shared by every page that shows the toolbar: the site (/en, /branding)
+ * through `DevToolbarWithApp`, and Storybook and Swagger through `tools/swagger-toolbar-entry.mjs`,
+ * so the bar looks the same everywhere. Only the DEV row: there is no API logger for now.
+ */
+export const DEV_TOOLBAR_PROPS = {
+  user: null,
+  brandLabel: NAME,
+  locales: routing.locales,
+  defaultLocale: routing.defaultLocale,
+  links: DEV_TOOLBAR_LINKS,
+  storagePrefix: DEV_TOOLBAR_STORAGE_PREFIX,
+  requestLogger: false,
+} as const satisfies Omit<DevToolbarProps, 'locale'>;

@@ -6,21 +6,9 @@ import { Frame } from '../src/decorators/frame';
 import type { Locale } from '../src/decorators/frame.constants';
 import { cityTurferTheme } from './theme';
 
-/** Toolbar: colour scheme (app components; the website is always dark) and language (website). */
+/** Toolbar: language (website copy). No theme switch: every story renders in SITE_SCHEME (light). */
 const preview: Preview = {
   globalTypes: {
-    scheme: {
-      description: 'Colour scheme',
-      toolbar: {
-        title: 'Theme',
-        icon: 'mirror',
-        items: [
-          { value: 'dark', title: 'Dark' },
-          { value: 'light', title: 'Light' },
-        ],
-        dynamicTitle: true,
-      },
-    },
     locale: {
       description: 'Language (website copy)',
       toolbar: {
@@ -36,7 +24,7 @@ const preview: Preview = {
   },
   // A Docs page per component: its description, every story and the prop table.
   tags: ['autodocs'],
-  initialGlobals: { scheme: 'dark', locale: 'en' },
+  initialGlobals: { locale: 'en' },
   parameters: {
     layout: 'fullscreen',
     controls: { expanded: true },
@@ -46,7 +34,6 @@ const preview: Preview = {
   decorators: [
     (Story, context) => (
       <Frame
-        scheme={context.globals.scheme === 'light' ? 'light' : 'dark'}
         locale={(context.globals.locale as Locale) ?? 'en'}
         web={context.title.startsWith('Website/')}
         pageLoaded={context.parameters.pageLoaded !== false}

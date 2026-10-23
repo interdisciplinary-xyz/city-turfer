@@ -50,7 +50,8 @@ Scope: `scope/v0.2.0` → `release/v0.2.0` (#18). Area prefixes are the commit s
       field tests
 - [ ] APP-SHELL: share card — share an activity's route and turf as an image
 - [ ] APP-SHELL: feedback prompts — ask testers for feedback in the app
-- [ ] ACHIEVEMENTS: unlock celebration, unlock dates, more tiers
+- [ ] ACHIEVEMENTS: unlock celebration, unlock dates (more tiers and groups: v0.10.0,
+      `docs/decisions/achievements-list-2026-10-23.md`)
 - [ ] TERRITORY: performance test with a year of history (Q4 budget)
 - [ ] DOCS: PoC report (M6) with evidence per question
 - [ ] DOCS: move `docs/poc-plan.md` into a folder; add `pnpm run audit:docs -- --strict` to

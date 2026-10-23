@@ -13,9 +13,11 @@ motion rules follow. Both the `web-engineer` and the `mobile-reviewer` work from
 
 ## Site ground rules
 
-- **Static export** (`output: 'export'` in production): no API routes, server actions, cookies,
-  analytics or third-party scripts. Nothing dev-only (dev toolbar, test URLs) and no secrets in
-  `apps/web/out`.
+- **Static export** (`output: 'export'` in production): no API routes, server actions, analytics or
+  third-party scripts. Public pages set no cookies and make no API calls; only the signed-in portal
+  under `/[locale]/account` uses one strictly necessary session cookie, through the `/api/v1` route
+  in `apps/web/vercel.json` (`docs/decisions/web-portal-2026-10-22.md`). Nothing dev-only (dev
+  toolbar, test URLs) and no secrets in `apps/web/out`.
 - **Copy** lives in `apps/web/messages/en.json` and `pl.json` with identical keys; never hard-code
   user-facing text. Polish is a real translation, not a calque. The wording is the
   `brand-designer`'s; the `web-engineer` adds keys and wires them.
@@ -25,14 +27,17 @@ motion rules follow. Both the `web-engineer` and the `mobile-reviewer` work from
   form renders only when all its `NEXT_PUBLIC_*` variables are set. No extra fields, pixels or
   embeds.
 - **Shared tokens:** colours and the brand name come from `@cityturfer/brand` (CSS variables from
-  `cssVariables()` in `[locale]/layout.tsx`). A change in `packages/brand` also changes the mobile
-  app.
+  `cssVariables(SITE_SCHEME)` in `[locale]/layout.tsx`). The site is light, with no theme switch;
+  maps and map images sit on a night panel (`DARK.bg` / `DARK.card`), with `wordmark.svg` there and
+  `wordmark-light.svg` elsewhere. Text and lines use the `-text` / `-graphic` variables, never the
+  raw `--glow`, `--walk`, `--run` or `--ride` (`brand-system` skill). A change in `packages/brand`
+  also changes the mobile app.
 - **Stories:** every component in `apps/web/src/app/[locale]/` has a story in
   `apps/storybook/src/stories/website/`, except pure motion wrappers (`hero-motion`) and dev-only
   pieces (`dev-toolbar-with-app`). Website pieces stay synchronous (`useTranslations`, not
   `await getTranslations`): Storybook cannot render async server components.
 - **Accessibility:** real labels, visible focus, `prefers-reduced-motion` respected, no horizontal
-  scroll from 320 px, text contrast on the dark background.
+  scroll from 320 px, text contrast on the light background (and on night map panels).
 - **Hosting:** Vercel project `city-turfer-web`, root `apps/web`. `apps/web/vercel.json` holds the
   `/` → `/en` or `/pl` redirect and a `turbo-ignore` build skip: a new workspace dependency must
   appear in turbo's graph or deploys skip it. `NEXT_PUBLIC_*` values are build-time: set on Vercel

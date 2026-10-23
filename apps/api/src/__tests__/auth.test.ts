@@ -1,7 +1,9 @@
 import { sql } from 'drizzle-orm';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { DrizzleAccountRepository } from '../db/accounts';
 import { PostgresRateLimiter } from '../db/rate-limits';
+import { DrizzleSessionStore } from '../db/sessions';
 import { adopt } from '../identity/adopt';
 import { createAuth } from '../identity/better-auth';
 import { BrevoMailer, parseMailFrom } from '../identity/mailer';
@@ -41,9 +43,12 @@ describe('sign-in with an e-mailed code', () => {
     const session = await signed.json();
     expect(session).toEqual({
       token: expect.any(String),
+      client: 'phone',
       expiresAt: expect.any(String),
+      absoluteExpiresAt: null,
       user: { id: expect.any(String), email: EMAIL },
     });
+    expect(signed.headers.get('set-cookie')).toBeNull();
     const days = (Date.parse(session.expiresAt) - Date.now()) / 86_400_000;
     expect(days).toBeGreaterThan(59);
     expect(days).toBeLessThan(61);
@@ -121,7 +126,9 @@ describe('sign-in with an e-mailed code', () => {
       createAuth({ db: h.db, secret: 'z'.repeat(48), baseURL: 'http://localhost:8787', mailer: h.mailer }),
       new PostgresRateLimiter(h.db),
       'z'.repeat(48),
-      h.clock
+      h.clock,
+      new DrizzleAccountRepository(h.db),
+      new DrizzleSessionStore(h.db)
     );
     await expect(rotated.signIn(EMAIL, old, '203.0.113.7')).rejects.toMatchObject({ code: 'auth.invalid-code' });
     await rotated.requestCode(EMAIL, '203.0.113.7');
@@ -250,7 +257,14 @@ describe('sign-in with an e-mailed code', () => {
       mailer: { send: () => Promise.reject(new Error('down')) },
       onMailError: () => events.push({ msg: 'auth.code-not-sent' }),
     });
-    const service = new IdentityService(auth, new PostgresRateLimiter(h.db), TEST_AUTH_SECRET, h.clock);
+    const service = new IdentityService(
+      auth,
+      new PostgresRateLimiter(h.db),
+      TEST_AUTH_SECRET,
+      h.clock,
+      new DrizzleAccountRepository(h.db),
+      new DrizzleSessionStore(h.db)
+    );
     await expect(service.requestCode(EMAIL, '203.0.113.50')).resolves.toBeUndefined();
     expect(events).toEqual([{ msg: 'auth.code-not-sent' }]);
   });
@@ -277,7 +291,9 @@ describe('sessions', () => {
       createAuth({ db: h.db, secret: 'y'.repeat(48), baseURL: 'http://localhost:8787', mailer: h.mailer }),
       new PostgresRateLimiter(h.db),
       'y'.repeat(48),
-      h.clock
+      h.clock,
+      new DrizzleAccountRepository(h.db),
+      new DrizzleSessionStore(h.db)
     );
     expect(await rotated.verifier.verify(token)).toBeNull();
     expect(await h.identity.verifier.verify(token)).toMatchObject({ kind: 'session', sessionToken: stored });

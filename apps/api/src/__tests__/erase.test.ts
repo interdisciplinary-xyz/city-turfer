@@ -23,6 +23,8 @@ async function rowsOf(userId: string): Promise<Record<string, number>> {
     'gap_routes',
     'tombstones',
     'home_cities',
+    'turf_claims',
+    'turf_cells',
     'auth_sessions',
   ];
   const out: Record<string, number> = {};

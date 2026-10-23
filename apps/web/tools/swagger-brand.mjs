@@ -2,7 +2,8 @@
 //
 // @cityturfer/brand is TypeScript source (extensionless imports), which plain Node can't load, so
 // esbuild bundles it in memory on first use and the result is imported from a data: URL. The page's
-// colours therefore come from the same `cssVariables('dark')` as the website, never from literals.
+// colours therefore come from the same `cssVariables(SITE_SCHEME)` as the website (light since v0.10.0,
+// docs/decisions/brand-light-theme-2026-10-22.md), never from literals.
 // The toolbar bundle works the same way (see ./swagger-toolbar.mjs).
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -32,9 +33,9 @@ export function rootVariablesCss(variables) {
   return `:root {\n${lines.join('\n')}\n}\n`;
 }
 
-/** The whole stylesheet: brand variables first, then the skin that only uses them. */
+/** The whole stylesheet: the site scheme's brand variables first, then the skin that only uses them. */
 export async function swaggerThemeCss(root) {
-  const { cssVariables } = await loadBrand(root);
+  const { cssVariables, SITE_SCHEME } = await loadBrand(root);
   const skin = await readFile(path.join(import.meta.dirname, 'swagger-theme.css'), 'utf8');
-  return `${rootVariablesCss(cssVariables('dark'))}\n${skin}`;
+  return `${rootVariablesCss(cssVariables(SITE_SCHEME))}\n${skin}`;
 }

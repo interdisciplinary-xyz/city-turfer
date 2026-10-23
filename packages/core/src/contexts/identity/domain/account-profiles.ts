@@ -142,6 +142,17 @@ export class AccountProfiles {
     };
   }
 
+  /**
+   * The account's e-mail changed on the server: its entry follows, so a later sign-in or a deleted
+   * account's kept profile still matches by e-mail.
+   */
+  emailChanged(accountId: string, email: string): void {
+    this.state = {
+      ...this.state,
+      entries: this.state.entries.map((e) => (e.accountId === accountId && !e.deleted ? { ...e, email } : e)),
+    };
+  }
+
   signedOut(): void {
     this.state = { ...this.state, current: null };
   }

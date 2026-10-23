@@ -1,5 +1,7 @@
 import { type BrandActivityType, FONT_SIZE, LABEL_TRACKING, type TierName, TURF_LEGEND_TITLE } from '@cityturfer/brand';
 
+import type { Locale } from '@/i18n/routing';
+
 /**
  * Words on the /branding page. The values (colours, type, spacing, copy lines) come from
  * @cityturfer/brand; the rationale mirrors docs/decisions/brand-foundations-2026-10-20.md and the
@@ -8,6 +10,10 @@ import { type BrandActivityType, FONT_SIZE, LABEL_TRACKING, type TierName, TURF_
 export const BRANDING_TITLE = 'Brand definition';
 export const BRANDING_DESCRIPTION =
   'CityTurfer brand definition: positioning, personality, logo, colour, type, visual language and accessibility.';
+/** /branding is English only, like the brand docs; the site header uses this language. */
+export const BRANDING_LOCALE: Locale = 'en';
+/** The hero wordmark: the site header's logo shows once it has scrolled away. */
+export const BRAND_LOCKUP_SELECTOR = '.brand-hero-wordmark';
 export const DECISION_DOC_URL =
   'https://github.com/interdisciplinary-xyz/city-turfer/blob/main/docs/decisions/brand-foundations-2026-10-20.md';
 
@@ -246,9 +252,9 @@ export const NAME_RULES: readonly string[] = [
 
 export const TIER_MEANING: Record<TierName, string> = {
   faint: 'Tier 1, gradient start',
-  glowing: 'Tier 2 and the primary accent: buttons, selection, links',
+  glowing: 'Tier 2 and the primary accent fill: buttons, selection. Pink text on light is accent-text',
   strong: 'Tier 3, highlights',
-  blazing: 'Tier 4, “City” in the logotype, headlines on dark',
+  blazing: 'Tier 4, “City” in the logotype, headlines on night panels',
 };
 
 export const ACTIVITY_LABEL: Record<BrandActivityType, string> = { walk: 'Walk', run: 'Run', cycle: 'Ride' };
@@ -257,31 +263,32 @@ export type FontSpec = { role: string; family: string; cssVar: string; sample: s
 export const FONTS: readonly FontSpec[] = [
   {
     role: 'Display',
-    family: 'Archivo Expanded Black · width 125, weight 900',
+    family: 'Big Shoulders Display Black · condensed, set in capitals',
     cssVar: '--display',
     sample: 'Own your streets',
-    use: 'Wordmark, hero, screen titles',
+    use: 'Hero, screen titles and headings; always in capitals',
   },
   {
     role: 'Numeric',
-    family: 'Archivo ExtraBold · weight 800, tabular figures',
+    family: 'Barlow Semi Condensed ExtraBold · tabular figures',
     cssVar: '--numeric',
     sample: '12.48 km · 1:04:37',
     use: 'Big numbers: distance, time, area',
   },
   {
     role: 'Body',
-    family: 'System · SF Pro, Roboto',
-    cssVar: '--font-family-body',
+    family: 'Barlow on the web · system font in the app (SF Pro, Roboto)',
+    cssVar: '--body',
     sample: 'Every street you cover becomes yours.',
     use: 'Body text, labels, buttons',
   },
 ];
 export const TYPE_RULES: readonly string[] = [
-  'The weight is part of each Archivo font: never add font-weight or bold, or Android falls back to the system font.',
+  'The weight is part of the display and numeric fonts: never add font-weight or bold to them, or Android falls back to the system font.',
+  'Display text is always set in capitals (DISPLAY_CASE) with 0.4 px tracking; the face is condensed, so size headings about a third larger than a wide face would need.',
   'Numbers always use tabular figures, so live stats don’t jitter.',
   `Labels are uppercase system text, ${FONT_SIZE.label}–${FONT_SIZE.caption} px, weight 600–700, with ${LABEL_TRACKING} px tracking.`,
-  'Archivo Expanded is wide: use it sparingly, track it −2% to −4%, and check long Polish lines at 320–375 px.',
+  'Check long Polish headings in capitals at 320–375 px (for example “Zapisz się na listę oczekujących”).',
 ];
 
 /** One sample per type size, set in the face that uses it (display, numbers or the system font). */
@@ -322,25 +329,18 @@ export const VISUAL_LANGUAGE: readonly Pillar[] = [
 export type ContrastFix = { pair: string; today: string; fix: string };
 export const CONTRAST_FIXES: readonly ContrastFix[] = [
   {
-    pair: 'White label on the glow accent (buttons)',
+    pair: 'White label on the glow accent (app buttons)',
     today: '3.5:1',
-    fix: 'Night label on glow (5.5:1), or white on #C8137F (5.4:1)',
-  },
-  { pair: 'Glow as text or links on light theme', today: '3.3:1', fix: 'Light-theme accent text #C8137F (5.1:1)' },
-  { pair: 'Danger on light theme', today: '3.7:1', fix: '#CF2F35 (4.8:1)' },
-  {
-    pair: 'Walk / run / ride lines on light',
-    today: '1.8–2.4:1',
-    fix: 'Light-map variants #14935C, #C85A12, #1477B8 (≥ 3.6:1)',
+    fix: 'The website already uses the night label (5.5:1); the app moves with its next native release',
   },
   {
     pair: 'White label on danger (Hold to finish)',
     today: '2.9–3.9:1',
-    fix: 'A deeper danger fill token, decided with the accent fix',
+    fix: 'A deeper danger fill token, decided with the app accent fix',
   },
 ];
 export const CONTRAST_FIXES_NOTE =
-  'From v0.9.0 the app and the website are dark only, so the light-theme rows matter for Storybook and any future light surface; the glow button and Hold to finish rows affect every screen.';
+  'The website, Swagger and Storybook are light (docs/decisions/brand-light-theme-2026-10-22.md); the light rows above are fixed. The app stays dark and keeps these two known failures so it does not shift over the air.';
 
 export type BrandAsset = { name: string; where: string; note: string };
 export const ASSETS: readonly BrandAsset[] = [
@@ -358,8 +358,12 @@ export const ASSETS: readonly BrandAsset[] = [
   {
     name: 'Store screenshots',
     where: 'apps/mobile/assets/brand/out/store/',
-    note: 'App Store 1290×2796, Play 1080×2340. Rendered locally, not in git; the framed screens predate Archivo and the dark app, so recapture before submitting',
+    note: 'App Store 1290×2796, Play 1080×2340. Rendered locally, not in git; the framed screens predate the current typefaces and the dark app, so recapture before submitting',
   },
-  { name: 'Fonts (OFL)', where: 'packages/brand/fonts/', note: 'Archivo static cuts, TTF + WOFF2' },
+  {
+    name: 'Fonts (OFL)',
+    where: 'packages/brand/fonts/',
+    note: 'Big Shoulders Display Black, Barlow Semi Condensed ExtraBold (TTF + WOFF2), Barlow 400–700 (WOFF2, web only)',
+  },
 ];
 export const RENDER_COMMAND = 'node apps/mobile/tools/brand/render-assets.mjs';

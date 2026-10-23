@@ -6,7 +6,7 @@ import localFont from 'next/font/local';
  * Each exposes a CSS variable that globals.css puts in front of the brand `--font-family-*` stack.
  */
 export const displayFont = localFont({
-  src: '../../../../packages/brand/fonts/ArchivoExpanded-Black.woff2',
+  src: '../../../../packages/brand/fonts/BigShouldersDisplay-Black.woff2',
   variable: '--face-display',
   display: 'swap',
   preload: true,
@@ -14,9 +14,32 @@ export const displayFont = localFont({
 });
 
 export const numericFont = localFont({
-  src: '../../../../packages/brand/fonts/Archivo-ExtraBold.woff2',
+  src: '../../../../packages/brand/fonts/BarlowSemiCondensed-ExtraBold.woff2',
   variable: '--face-numeric',
   display: 'swap',
   preload: false,
+  fallback: ['-apple-system', 'BlinkMacSystemFont', 'Roboto', 'Arial', 'sans-serif'],
+});
+
+/** Body text on the web (the app uses the system font). Four static weights, no synthesis. */
+export const bodyFont = localFont({
+  src: [
+    { path: '../../../../packages/brand/fonts/Barlow-Regular.woff2', weight: '400', style: 'normal' },
+    { path: '../../../../packages/brand/fonts/Barlow-Medium.woff2', weight: '500', style: 'normal' },
+    { path: '../../../../packages/brand/fonts/Barlow-SemiBold.woff2', weight: '600', style: 'normal' },
+    { path: '../../../../packages/brand/fonts/Barlow-Bold.woff2', weight: '700', style: 'normal' },
+  ],
+  variable: '--face-body',
+  display: 'swap',
+  preload: true,
+  fallback: ['-apple-system', 'BlinkMacSystemFont', 'Roboto', 'Arial', 'sans-serif'],
+});
+
+/** The hero tagline: Barlow Semi Condensed Black Italic, sentence case (TAGLINE_FONT_FAMILY). */
+export const taglineFont = localFont({
+  src: '../../../../packages/brand/fonts/BarlowSemiCondensed-BlackItalic.woff2',
+  variable: '--face-tagline',
+  display: 'swap',
+  preload: true,
   fallback: ['-apple-system', 'BlinkMacSystemFont', 'Roboto', 'Arial', 'sans-serif'],
 });

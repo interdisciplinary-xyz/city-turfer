@@ -1,6 +1,8 @@
 // Public API of the Achievements context: pure evaluation over Activity Log and Territory facts.
 export {
   type Achievement,
+  ACHIEVEMENT_GROUPS,
+  type AchievementGroup,
   type AchievementId,
   type AchievementInput,
   evaluateAchievements,

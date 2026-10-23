@@ -49,7 +49,7 @@ CityTurfer is single-player and local-first: the phone is the source of truth.
 | [React Native 0.86][react-native]                 | [zod 4][zod] → OpenAPI 3.1        | [next-intl][next-intl] (en, pl)    | [Maestro][maestro] (E2E)                  |
 | [TypeScript][typescript] (strict)                 | [Drizzle][drizzle] + [Neon][neon] | [GSAP][gsap]                       | [dependency-cruiser][dependency-cruiser]  |
 | [expo-router][expo-router]                        | Swagger UI                        | [Storybook 10][storybook] (RN web) | [ESLint][eslint] · [Prettier][prettier]   |
-| [expo-location][expo-location] + task manager     |                                   | Archivo typeface                   | [Turborepo][turborepo] · [pnpm][pnpm]     |
+| [expo-location][expo-location] + task manager     |                                   | Big Shoulders Display + Barlow     | [Turborepo][turborepo] · [pnpm][pnpm]     |
 | [MapLibre][maplibre] + [OpenFreeMap][openfreemap] |                                   |                                    | [Husky][husky] · [Commitlint][commitlint] |
 | [H3][h3] (`h3-js` in `@cityturfer/core`)          |                                   |                                    | [EAS Update][eas-update]                  |
 | [expo-sqlite][expo-sqlite]                        |                                   |                                    |                                           |
@@ -104,7 +104,7 @@ The repo is a pnpm + Turborepo monorepo
 | `apps/web/`               | Landing page (`@cityturfer/web`): Next.js static export on Vercel, English + Polish, waitlist                     |
 | `apps/storybook/`         | One Storybook (`@cityturfer/storybook`) for `@cityturfer/ui` and website pieces                                   |
 | `packages/core/`          | `@cityturfer/core`: shared kernel and the domain + use cases shared by the app and the API                        |
-| `packages/brand/`         | `@cityturfer/brand`: design tokens (turf strength ramp, themes, type), copy, logo SVGs, Archivo fonts             |
+| `packages/brand/`         | `@cityturfer/brand`: design tokens (turf strength ramp, themes, type), copy, logo SVGs, brand fonts               |
 | `packages/ui/`            | `@cityturfer/ui`: pure React Native components (Button, Card, Stat, Badge, ActivityRow, TurfLegend)               |
 | `packages/config/`        | `@cityturfer/config`: Prettier and tsconfig bases                                                                 |
 | `packages/eslint-config/` | `@interdisciplinary/eslint-config`: ESLint presets and local rules, shared with empatalk                          |
