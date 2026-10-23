@@ -59,19 +59,17 @@ the same address always hit the one-code-a-minute `429`).
 | App                 | State                                                   | What a phone change can show there                                                                        | What it can do to the phone                                                    |
 | ------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | API                 | `scope/v0.10.0`, contract 0.5.0 (with account settings) | Everything: activities with recomputed numbers, tombstones, consents, Home City                           | —                                                                              |
-| Web portal, Slice 0 | PR #141 (`feat/web-portal`), contract 0.5.0             | Privacy & data: account e-mail, backup and Apple Health consent state with dates, signed-in devices       | Sign out one device, others or all (phones included); delete account; export   |
+| Web portal, Slice 0 | **Merged** (#141), contract 0.5.0                       | Privacy & data: account e-mail, backup and Apple Health consent state with dates, signed-in devices       | Sign out one device, others or all (phones included); delete account; export   |
 | Account settings    | **Merged** into `scope/v0.10.0` (#142), contract 0.5.0  | Name and e-mail on `/v1/me` for every session                                                             | E-mail or password change signs out every **other** session, browsers included |
 | Web portal, Slice 1 | planned                                                 | Activities list, detail, turf map (needs server turf, lane C)                                             | —                                                                              |
-| Admin               | PR #139 (`feat/admin-portal`): staff sign-in            | Nothing yet. Its own Payload database holds staff only; user data waits for `/internal/admin/v1` (lane D) | Later: erasure, block                                                          |
+| Admin               | **Merged** (#139): staff sign-in only                   | Nothing yet. Its own Payload database holds staff only; user data waits for `/internal/admin/v1` (lane D) | Later: erasure, block                                                          |
 
 The web portal shows **no activities, counts, "last backed up", Home City or turf** in Slice 0
 ("what we store" is static copy). So a recording, rename, delete or Home City change has nothing to
 show on the web yet; those columns wait for Slice 1.
 
-**#141 must now be merged with #142's API.** Both claimed contract 0.5.0 and changed the same eight
-API files (identity routes, schemas, use cases, wiring, errors, `openapi.json`). #142 is in scope,
-so #141 needs a real resolution by api-engineer before it merges. W1–W4 were verified against #141
-on its own (below).
+Both portals and account settings are in `scope/v0.10.0` since 2026-10-23. The web portal's session
+cookie is `__Host-ct_session` (it was `__Secure-ct_session` on the branch).
 
 ## Scenarios
 
@@ -102,7 +100,7 @@ S13 is not in the chain suite: a foreground phone in Jest cannot prove it. It st
 ### Phone ↔ web portal (`phone-and-web.test.ts`, live API with browser sessions)
 
 The web observer signs in and calls the API exactly as the portal client (apps/web/src/api) does on
-#141: an e-mailed code, `client: "browser"`, the `__Secure-ct_session` cookie, and `Origin`,
+#141: an e-mailed code, `client: "browser"`, the `__Host-ct_session` cookie, and `Origin`,
 `Sec-Fetch-Site` and `CityTurfer-Client: web/…` on writes. It reads only what the pages show.
 
 | #   | Steps                                                                                                                         | Checked                                                                                                                                                                                            |
@@ -151,12 +149,12 @@ per-address limits still apply in full, and the suite waits them out like a user
 an address waits about a minute. Jest runs the three files in parallel, so a full run takes about 5
 minutes.
 
-### Verified on 2026-10-22
+### Verified
 
-| API under test                                      | Result                                                        |
-| --------------------------------------------------- | ------------------------------------------------------------- |
-| `scope/v0.10.0` with #142 merged + this branch      | 22 passed, five full runs; A1–A3 pass; W1–W4 and turf pending |
-| + `feat/web-portal` (#141), local merge before #142 | 22 passed; W1–W4 pass                                         |
+| API under test                                        | Result                                        |
+| ----------------------------------------------------- | --------------------------------------------- |
+| `scope/v0.10.0` with #141, #142 and #139 (2026-10-23) | 22 passed; W1–W4 and A1–A3 pass; turf pending |
+| `scope/v0.10.0` with #142 only (2026-10-22)           | 22 passed, five full runs; W1–W4 pending      |
 
 One earlier full run failed W4 and A3 once and the details were lost; it did not come back in six
 runs, also from a cold cache. Since then every scenario turns backup on with a helper that waits for
@@ -177,7 +175,7 @@ for that day.
 
 | #   | What                                                                                                     | Owner (skill)                         | Needs             |
 | --- | -------------------------------------------------------------------------------------------------------- | ------------------------------------- | ----------------- |
-| N1  | A4 (account change signs the web out) once #141 is in                                                    | mobile-test-engineer (mobile-testing) | #141 merged       |
+| N1  | A4 (account change signs the web out): now possible                                                      | mobile-test-engineer (mobile-testing) | —                 |
 | N2  | Switch account actions to `ApiAuthGateway`'s methods (on scope now) instead of raw requests              | mobile-test-engineer                  | —                 |
 | N3  | Web Slice 1 columns: list, detail, map show S1–S7, same numbers                                          | portal-engineer (web-portal)          | lane C, Slice 1   |
 | N4  | Admin observer: counts, audit row per staff read, no coordinates (G9); erasure and block reach the phone | admin-engineer (admin-portal)         | lane D routes, P2 |

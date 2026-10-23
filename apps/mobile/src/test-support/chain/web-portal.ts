@@ -12,7 +12,9 @@ import type { Pending } from './pending';
 /** The API refuses browser writes from any other origin (WEB_ORIGIN; the dev server's default). */
 const WEB_ORIGIN = process.env.CITYTURFER_WEB_ORIGIN ?? 'https://cityturfer.local';
 const WEB_HEADERS = { Origin: WEB_ORIGIN, 'Sec-Fetch-Site': 'same-origin', 'CityTurfer-Client': 'web/chain-test' };
-const COOKIE = /__Secure-ct_session=([^;]*)/;
+/** The browser session cookie (apps/api/src/session-cookie.ts). */
+const COOKIE_NAME = '__Host-ct_session';
+const COOKIE = new RegExp(`${COOKIE_NAME}=([^;]*)`);
 
 export interface Device {
   id: string;
@@ -76,10 +78,10 @@ export async function webSignIn(base: string, address: string): Promise<WebPorta
       headers: {
         ...ip,
         ...(method === 'GET' ? {} : WEB_HEADERS),
-        ...(cookie ? { Cookie: `__Secure-ct_session=${cookie}` } : {}),
+        ...(cookie ? { Cookie: `${COOKIE_NAME}=${cookie}` } : {}),
       },
     });
-    if (/__Secure-ct_session=;/.test(res.headers.get('set-cookie') ?? '')) {
+    if ((res.headers.get('set-cookie') ?? '').includes(`${COOKIE_NAME}=;`)) {
       cookie = null;
     }
     return res;
