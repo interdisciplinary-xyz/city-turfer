@@ -15,8 +15,18 @@ import { phone as fakePhone } from '@/test-support/backup-phone';
 import { type AccountActions, accountActions } from '@/test-support/chain/account-actions';
 import { isPending, type Pending } from '@/test-support/chain/pending';
 import { retryAfterWait } from '@/test-support/chain/retry';
+import {
+  type ActivityTotals,
+  type CellCounts,
+  readActivities,
+  readTotals,
+  readTurfCells,
+  readTurfSummary,
+  type ServerActivityView,
+  type TurfSummary,
+} from '@/test-support/chain/server-reads';
 
-export { isPending, type Pending, retryAfterWait };
+export { isPending, type Pending, retryAfterWait, type ServerActivityView };
 import { openNodeDatabase } from '@/test-support/node-database';
 import { type DeviceAdapters, wire } from '@/wiring';
 
@@ -27,17 +37,6 @@ const CLIENT = 'ios/chain-test';
 /** One run id, so addresses never collide with an earlier run on the same database. */
 const RUN = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
 
-/** What the server holds for one account, as a portal would read it. */
-export interface ServerActivityView {
-  id: string;
-  name: string;
-  type: string;
-  source: string;
-  /** Null on the fake, which stores uploads but computes no numbers. */
-  distanceM: number | null;
-  movingS: number | null;
-}
-
 export interface ServerView {
   activities(): Promise<ServerActivityView[]>;
   /** True when the server no longer serves the activity (404 or 410). */
@@ -46,7 +45,12 @@ export interface ServerView {
   tombstoned(id: string): Promise<boolean>;
   consents(): Promise<Partial<Record<ConsentPurpose, boolean>>>;
   homeCityId(): Promise<string | null>;
-  turfCellCount(): Promise<number | Pending>;
+  /** The turf summary (cells, strong cells, cells per type). */
+  turfSummary(): Promise<TurfSummary | Pending>;
+  /** Every turf cell with its visits per type, as the web map downloads them. */
+  turfCells(): Promise<CellCounts[] | Pending>;
+  /** What the Stats tab and the web show as totals. */
+  totals(): Promise<ActivityTotals | Pending>;
   /** Whether this phone's credentials still work (GET /v1/me). */
   signedIn(): Promise<boolean>;
 }
@@ -137,8 +141,14 @@ export function fakeServer(): ChainServer {
         async homeCityId() {
           return s.homeCity?.cityId ?? null;
         },
-        async turfCellCount() {
+        async turfSummary() {
           return { pending: 'the fake API has no server turf' };
+        },
+        async turfCells() {
+          return { pending: 'the fake API has no server turf' };
+        },
+        async totals() {
+          return { pending: 'the fake API computes no numbers' };
         },
         async signedIn() {
           return true;
@@ -271,27 +281,7 @@ export function liveServer(base: string): ChainServer {
         return status;
       };
       const view: ServerView = {
-        async activities() {
-          const out: ServerActivityView[] = [];
-          let cursor: string | null = null;
-          do {
-            const page: { items: ServerActivityView[]; nextCursor: string | null } = await json(
-              `/v1/activities${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`
-            );
-            out.push(
-              ...page.items.map(({ id, name, type, source, distanceM, movingS }) => ({
-                id,
-                name,
-                type,
-                source,
-                distanceM,
-                movingS,
-              }))
-            );
-            cursor = page.nextCursor;
-          } while (cursor);
-          return out;
-        },
+        activities: () => readActivities(get),
         async isGone(id) {
           const status = await activityStatus(id);
           return status !== 200;
@@ -307,16 +297,12 @@ export function liveServer(base: string): ChainServer {
           const { city } = await json<{ city: { id: string } | null }>('/v1/turf/home-city');
           return city?.id ?? null;
         },
-        async turfCellCount() {
-          const res = await get('/v1/turf/summary');
-          if (res.status === 501) {
-            return { pending: 'GET /v1/turf/summary answers 501 (server turf: lane C)' };
-          }
-          if (!res.ok) {
-            throw new Error(`GET /v1/turf/summary → ${res.status}`);
-          }
-          return ((await res.json()) as { cellCount: number }).cellCount;
+        turfSummary: () => readTurfSummary(get),
+        async turfCells() {
+          const read = await readTurfCells(get);
+          return isPending(read) ? read : read.cells;
         },
+        totals: () => readTotals(get),
         async signedIn() {
           const { status } = await get('/v1/me');
           if (status !== 200 && status !== 401) {

@@ -1,17 +1,29 @@
 /**
- * Sync chain, phone ↔ web portal (docs/plans/sync-chain-testing-2026-10-22.md, W1–W4). The web
+ * Sync chain, phone ↔ web portal (docs/plans/sync-chain-testing-2026-10-22.md, W1–W5). The web
  * portal's Slice 0 shows the account, the backup consents and the signed-in devices, and can sign
- * phones out, export and delete the account; it shows no activities or turf yet (Slice 1). Live API
- * only; against an API without browser sessions every scenario reports pending.
+ * phones out, export and delete the account (W1–W4). Its Slice 1 pages (activities, the turf map)
+ * aren't built yet; W5 checks, with the browser's cookie, the data they will draw. Live API only;
+ * against an API without browser sessions every scenario reports pending.
  */
+import { adminObserver } from '@/test-support/chain/admin';
 import { type ChainPhone, type ChainServer, isPending, LIVE_API, liveServer } from '@/test-support/chain/chain-server';
-import { addActivity, notYet, phoneSnapshot, turnBackupOn } from '@/test-support/chain/scenario';
+import {
+  addActivity,
+  expectTotalsMatch,
+  expectTurfMatches,
+  notYet,
+  phoneSnapshot,
+  settleBackup,
+  turnBackupOn,
+  withoutOneWalk,
+} from '@/test-support/chain/scenario';
 import { type WebPortal, webSignIn } from '@/test-support/chain/web-portal';
 
 jest.setTimeout(300_000);
 
 const WALK = 'walk-2k.gpx';
 const RUN = 'run-5k-outliers-pause.gpx';
+const RIDE = 'cycle-20k.gpx';
 const describeLive = LIVE_API ? describe : describe.skip;
 
 /** A phone with backup on and one walk backed up, plus the website signed in to the same account. */
@@ -59,6 +71,7 @@ describeLive('sync chain, phone ↔ web portal', () => {
     const { p, web } = both;
     expect(await web.account()).toMatchObject({ email: p.address });
     expect(await web.backupPanel()).toEqual({ backup: 'on', health: false });
+    notYet('live API', 'W1 admin', await adminObserver(LIVE_API!));
     const devices = await web.devices();
     expect(devices.filter((d) => d.client === 'phone' && !d.current)).toHaveLength(1);
     expect(devices.filter((d) => d.client === 'browser' && d.current)).toHaveLength(1);
@@ -125,5 +138,60 @@ describeLive('sync chain, phone ↔ web portal', () => {
     expect(web.cookieCleared()).toBe(true);
     expect(await web.account()).toBeNull();
     await expectSignedOutPhoneKeepsData(p, before);
+  });
+
+  it("W5: what the web portal will draw (activities, totals, every turf cell) is the phone's, through backup, rename, delete and Apple Health", async () => {
+    const both = await phoneAndWeb(server, 'w5', 'W5 web Slice 1 data');
+    if (!both) {
+      return;
+    }
+    const { p, web } = both;
+    /** Every read the activity pages and the map make, against the phone. */
+    const expectWebShowsPhone = async (check: string, expected?: Parameters<typeof expectTurfMatches>[4]) => {
+      const phone = (await phoneSnapshot(p.c)).activities;
+      const shown = (await web.activities()).sort((a, b) => a.id.localeCompare(b.id));
+      const onServer = phone.filter((a) => shown.some((s) => s.id === a.id));
+      expect(shown.map((a) => [a.id, a.name, a.type])).toEqual(onServer.map((a) => [a.id, a.name, a.type]));
+      shown.forEach((s, i) => {
+        expect(Math.abs(s.distanceM! - onServer[i].distanceM)).toBeLessThan(1);
+        expect(Math.abs(s.movingS! - onServer[i].movingS)).toBeLessThanOrEqual(1);
+      });
+      await expectTurfMatches('live API', `${check} turf`, web, p.c, expected);
+      return shown;
+    };
+
+    // Recordings and imports, Apple Health shared, one renamed: all of it on the web.
+    await addActivity(p.c, 'rec-run', 'run', RUN);
+    await addActivity(p.c, 'rec-ride', 'cycle', RIDE);
+    await addActivity(p.c, 'hk-w1', 'walk', WALK);
+    expect(await p.c.cloudBackup.includeHealth.execute(true)).toEqual({ kind: 'ok' });
+    await p.c.activityLog.rename.execute('rec-ride', 'Coast ride');
+    await p.c.dispatcher.dispatchPending();
+    await settleBackup(p.c);
+    expect(await p.c.cloudBackup.status.execute()).toMatchObject({ unsynced: 0, lastError: null });
+    const shown = await expectWebShowsPhone('W5 backed up');
+    expect(shown.map((a) => a.id)).toEqual(['hk-w1', 'rec-ride', 'rec-run', 'rec-walk']);
+    expect(shown.find((a) => a.id === 'hk-w1')?.source).toBe('apple-health');
+    expect(shown.find((a) => a.id === 'rec-ride')?.name).toBe('Coast ride');
+    await expectTotalsMatch('live API', 'W5 totals', () => web.totals(), p.c);
+    // A shared computer keeps no copy of the turf on disk.
+    const cache = await web.turfCellsCacheControl();
+    if (!isPending(cache)) {
+      expect(cache).toContain('no-store');
+    }
+
+    // A delete on the phone leaves the web list, the totals and the map.
+    await p.c.activityLog.remove.execute('rec-run');
+    await p.c.dispatcher.dispatchPending();
+    await settleBackup(p.c);
+    expect((await expectWebShowsPhone('W5 after delete')).map((a) => a.id)).not.toContain('rec-run');
+    await expectTotalsMatch('live API', 'W5 totals after delete', () => web.totals(), p.c);
+
+    // Apple Health no longer shared: the workout leaves the web (it walked rec-walk's route, so
+    // each of those cells has one walk fewer); the phone keeps it.
+    expect(await p.c.cloudBackup.includeHealth.execute(false)).toEqual({ kind: 'ok' });
+    const after = await expectWebShowsPhone('W5 Health withdrawn', withoutOneWalk);
+    expect(after.map((a) => a.id)).toEqual(['rec-ride', 'rec-walk']);
+    expect((await phoneSnapshot(p.c)).activities.map((a) => a.id)).toContain('hk-w1');
   });
 });
