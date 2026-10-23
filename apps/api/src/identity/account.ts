@@ -3,7 +3,7 @@ import { displayName, newEmail, newPassword } from '@cityturfer/core/identity';
 import { AppError } from '../backup/app-error';
 import type { Clock } from '../backup/use-cases';
 import type { Principal } from '../deps';
-import { isTestEmail } from './better-auth';
+import { isTestEmail, usesFixedCode } from './better-auth';
 import type { BreachedPasswords } from './breached-passwords';
 import type { OneTimeCodes } from './codes';
 import { ipBucket } from './ip-bucket';
@@ -89,6 +89,8 @@ export interface AccountServiceDeps {
   clock: Clock;
   /** AUTH_FIXED_CODE: the code for TEST_EMAIL_DOMAIN addresses only (never in production). */
   fixedCode?: string | null;
+  /** More addresses that get `fixedCode` (the local server's mock accounts). */
+  fixedCodeEmails?: readonly string[];
   /** A mail could not be sent; `kind` names the mail, nothing else is passed. */
   onMailError?: (kind: 'code' | 'notice') => void;
 }
@@ -227,7 +229,7 @@ export class AccountService {
   }
 
   private fixedFor(email: string): string | null {
-    return this.deps.fixedCode && isTestEmail(email) ? this.deps.fixedCode : null;
+    return this.deps.fixedCode && usesFixedCode(email, this.deps.fixedCodeEmails) ? this.deps.fixedCode : null;
   }
 
   /** Mails after the change is committed; a failure is reported by kind and never fails the request. */

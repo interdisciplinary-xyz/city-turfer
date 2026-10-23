@@ -57,6 +57,8 @@ export interface WiringOverrides {
   mailer?: Mailer;
   /** The local server's fake breach check (no network); production calls HIBP. */
   breached?: BreachedPasswords;
+  /** The local server's mock accounts, which also get AUTH_FIXED_CODE (none in production). */
+  fixedCodeEmails?: readonly string[];
 }
 
 /**
@@ -72,6 +74,7 @@ export function accountService(input: {
   breached: BreachedPasswords;
   clock: { now(): number };
   fixedCode?: string | null;
+  fixedCodeEmails?: readonly string[];
   log?: ApiLog;
 }): AccountService {
   return new AccountService({
@@ -83,6 +86,7 @@ export function accountService(input: {
     hashPassword: async (password) => (await input.auth.$context).password.hash(password),
     clock: input.clock,
     fixedCode: input.fixedCode ?? null,
+    fixedCodeEmails: input.fixedCodeEmails,
     onMailError: (kind) =>
       input.log?.event?.({ msg: kind === 'code' ? 'auth.code-not-sent' : 'account.notice-not-sent' }),
   });
@@ -201,6 +205,7 @@ export function productionDeps(env: NodeJS.ProcessEnv, overrides: WiringOverride
           baseURL: publicUrlOf(env),
           mailer,
           fixedCode,
+          fixedCodeEmails: overrides.fixedCodeEmails,
           onMailError: () => base.log.event?.({ msg: 'auth.code-not-sent' }),
         })
       : null;
@@ -225,6 +230,7 @@ export function productionDeps(env: NodeJS.ProcessEnv, overrides: WiringOverride
           mailer,
           clock: base.clock,
           fixedCode,
+          fixedCodeEmails: overrides.fixedCodeEmails,
           log: base.log,
           breached:
             overrides.breached ??
