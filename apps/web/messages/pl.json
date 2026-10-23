@@ -56,12 +56,19 @@
     "meta": {
       "title": "Twoja kopia zapasowa — CityTurfer",
       "signInTitle": "Zaloguj się — CityTurfer",
-      "registerTitle": "Załóż konto — CityTurfer"
+      "registerTitle": "Załóż konto — CityTurfer",
+      "activitiesTitle": "Aktywności — CityTurfer",
+      "activityTitle": "Aktywność — CityTurfer"
     },
     "header": {
       "home": "Strona CityTurfer",
       "signOut": "Wyloguj się",
       "signingOut": "Wylogowywanie…"
+    },
+    "nav": {
+      "label": "Twoja kopia",
+      "activities": "Aktywności",
+      "privacy": "Prywatność i dane"
     },
     "common": {
       "skip": "Przejdź do treści",
@@ -191,6 +198,70 @@
         "confirmMismatch": "To jeszcze nie {word}. Wielkość liter nie ma znaczenia.",
         "confirm": "Usuń moje konto na zawsze",
         "deleting": "Usuwanie…"
+      }
+    },
+    "activities": {
+      "title": "Aktywności",
+      "lede": "Spacery, biegi i przejażdżki z Twojej kopii zapasowej, od najnowszych.",
+      "loading": "Otwieramy Twoje aktywności…",
+      "type": {
+        "walk": "Spacer",
+        "run": "Bieg",
+        "cycle": "Rower"
+      },
+      "fromHealth": "Z Apple Health",
+      "approx": "około",
+      "healthOff": "Treningi z Apple Health zostają na Twoim telefonie, więc nie ma ich na tej liście.",
+      "stat": {
+        "distance": "Dystans",
+        "movingTime": "Czas w ruchu",
+        "average": "{type, select, cycle {Śr. prędkość} other {Śr. tempo}}",
+        "elapsed": "Czas całkowity",
+        "elevation": "Przewyższenie"
+      },
+      "totals": {
+        "title": "Od początku",
+        "all": "Wszystkie",
+        "meta": "{count, plural, one {# aktywność} few {# aktywności} many {# aktywności} other {# aktywności}} · {duration} w ruchu"
+      },
+      "filter": {
+        "label": "Pokaż",
+        "all": "Wszystkie",
+        "walk": "Spacery",
+        "run": "Biegi",
+        "cycle": "Przejażdżki"
+      },
+      "list": {
+        "shown": "{count, plural, one {Pokazano # aktywność} few {Pokazano # aktywności} many {Pokazano # aktywności} other {Pokazano # aktywności}}",
+        "showMore": "Pokaż więcej",
+        "loadingMore": "Wczytujemy…"
+      },
+      "empty": {
+        "never": "Twoje aktywności są zapisane na telefonie. Nic jeszcze nie trafiło do kopii, więc nie ma tu czego pokazać.",
+        "withdrawn": "Kopia zapasowa jest wyłączona, więc usunęliśmy stąd Twoją kopię. Wszystkie aktywności nadal są na Twoim telefonie.",
+        "nothingYet": "Kopia zapasowa jest włączona, ale nic jeszcze nie dotarło. Otwórz aplikację, gdy masz internet, a Twoje aktywności pojawią się tutaj.",
+        "filter": "{type, select, walk {W kopii nie ma jeszcze spacerów.} run {W kopii nie ma jeszcze biegów.} other {W kopii nie ma jeszcze przejażdżek.}}",
+        "unknown": "W Twojej kopii nie ma tu jeszcze nic do pokazania.",
+        "howTo": "Aby włączyć kopię, otwórz aplikację: Informacje › Kopia w chmurze."
+      },
+      "detail": {
+        "back": "Wszystkie aktywności",
+        "redirecting": "Przechodzimy do Twoich aktywności…",
+        "loading": "Otwieramy tę aktywność…",
+        "notFoundTitle": "Nie znaleziono aktywności",
+        "notFound": "Nie ma jej w Twojej kopii. Może została usunięta na telefonie albo trafiła do kopii z innego konta.",
+        "statsTitle": "Statystyki",
+        "estimatedNote": "W tym {distance} oszacowano wzdłuż ulic tam, gdzie GPS zgubił sygnał (linia przerywana). Oszacowane odcinki nie dają turfu.",
+        "routeTitle": "Trasa",
+        "routeLabel": "{gaps, select, yes {Kształt trasy, bez mapy. Linie przerywane łączą nagrane odcinki tam, gdzie była pauza albo luka GPS.} other {Kształt trasy, bez mapy.}}",
+        "routeRecorded": "Nagrane",
+        "routeBetween": "Między nagranymi odcinkami: pauza albo luka GPS oszacowana wzdłuż ulic",
+        "routeNoMap": "Sam kształt, bez mapy: nie wczytujemy kafelków mapy z innych stron.",
+        "routeSimplified": "Nie udało się wczytać całej trasy, więc to uproszczony kształt.",
+        "splitsTitle": "Międzyczasy",
+        "splitKm": "Kilometr",
+        "splitValue": "{type, select, cycle {Prędkość} other {Tempo}}",
+        "splitRow": "km {km}"
       }
     },
     "errors": {

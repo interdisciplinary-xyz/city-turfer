@@ -1,12 +1,23 @@
 'use client';
 
 // Data hooks of the portal (TanStack Query, in memory only). Pages use these, never the client.
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { type InfiniteData, useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
 import { useContext } from 'react';
 
 import { deleteAccountMutation, revokeSessionsMutation, SESSIONS_KEY, signOutMutation } from './account-mutations';
+import { isActivityId } from './activity-id';
 import type { PortalError } from './errors';
 import { PortalApiContext, type PortalApiContextValue } from './provider.constants';
+import type { ActivityType } from './schema';
+
+/** Activities per page of the list (H6: cursor pages of 50, "Show more"). */
+export const ACTIVITY_PAGE_SIZE = 50;
+
+/**
+ * The list is fresh for this long (ms) and isn't re-read on window focus: re-reading every loaded
+ * page of 50 on each focus is heavy, and the session is still re-checked by `/v1/me` on focus.
+ */
+export const ACTIVITY_LIST_STALE_MS = 5 * 60_000;
 
 /**
  * How often (ms) to re-read an export while its status is `pending`. An interval, with no cap: it
@@ -28,6 +39,10 @@ export const QUERY_KEYS = {
   consents: ['consents'],
   sessions: SESSIONS_KEY,
   export: (id: string) => ['export', id],
+  activities: (type: ActivityType | null) => ['activities', type ?? 'all'],
+  activity: (id: string) => ['activity', id],
+  track: (id: string) => ['track', id],
+  activityTotals: ['activity-totals'],
 } as const;
 
 export function usePortal(): PortalApiContextValue {
@@ -69,6 +84,55 @@ export function useExportStatus(exportId: string | null) {
     queryFn: () => api.exportStatus(exportId ?? ''),
     enabled: exportId !== null,
     refetchInterval: (query) => exportPollInterval(query.state),
+  });
+}
+
+/**
+ * The backed-up activities, newest first, one cursor page of `ACTIVITY_PAGE_SIZE` at a time
+ * (`fetchNextPage` = "Show more"). The type filter is page state (H6), so each filter is its own list.
+ */
+export function useActivities(type: ActivityType | null) {
+  const { api } = usePortal();
+  type Page = Awaited<ReturnType<typeof api.activities>>;
+  return useInfiniteQuery<Page, PortalError, InfiniteData<Page, string | null>, readonly string[], string | null>({
+    queryKey: QUERY_KEYS.activities(type),
+    queryFn: ({ pageParam }) => api.activities({ limit: ACTIVITY_PAGE_SIZE, cursor: pageParam, type }),
+    initialPageParam: null,
+    getNextPageParam: (last) => last.nextCursor,
+    staleTime: ACTIVITY_LIST_STALE_MS,
+    refetchOnWindowFocus: false,
+  });
+}
+
+/** All-time totals, all and per type (`GET /v1/activity-totals`). */
+export function useActivityTotals() {
+  const { api } = usePortal();
+  return useQuery<Awaited<ReturnType<typeof api.activityTotals>>, PortalError>({
+    queryKey: QUERY_KEYS.activityTotals,
+    queryFn: api.activityTotals,
+  });
+}
+
+/** One activity with its splits and gap routes; off until there is a valid id. */
+export function useActivity(id: string | null) {
+  const { api } = usePortal();
+  return useQuery<Awaited<ReturnType<typeof api.activity>>, PortalError>({
+    queryKey: QUERY_KEYS.activity(id ?? ''),
+    queryFn: () => api.activity(id ?? ''),
+    enabled: isActivityId(id),
+  });
+}
+
+/** Every point of one activity (up to 40,000), for its route shape; in memory only, like the rest. */
+export function useTrack(id: string | null, { enabled = true }: { enabled?: boolean } = {}) {
+  const { api } = usePortal();
+  return useQuery<Awaited<ReturnType<typeof api.track>>, PortalError>({
+    queryKey: QUERY_KEYS.track(id ?? ''),
+    queryFn: () => api.track(id ?? ''),
+    enabled: enabled && isActivityId(id),
+    // A track changes only with a new upload (a new `trackHash`): keep it while it's in memory.
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
   });
 }
 

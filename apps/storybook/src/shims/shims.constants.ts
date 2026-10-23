@@ -9,4 +9,6 @@ export type NextImageShimProps = Omit<ImgHTMLAttributes<HTMLImageElement>, 'src'
 export type LinkShimProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
   href: string;
   locale?: string;
+  /** next/link's prefetch switch: nothing to prefetch in a story, so the shim drops it. */
+  prefetch?: boolean;
 };

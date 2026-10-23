@@ -40,6 +40,22 @@ module.exports = {
       to: { path: '(^|/)packages/core/src/h3/|(^|/)node_modules/h3-js/' },
     },
     {
+      name: 'marketing-not-core',
+      severity: 'error',
+      comment:
+        'Public pages never load @cityturfer/core: its formatters are for the portal (docs/plans/web-portal-history-2026-10-23.md, H4).',
+      from: { path: site, pathNot: notPortal },
+      to: { path: '(^|/)packages/core/', pathNot: '(^|/)packages/core/src/h3/' },
+    },
+    {
+      name: 'portal-core-shared-kernel-only',
+      severity: 'error',
+      comment:
+        'apps/web uses @cityturfer/core through its shared kernel only (and /h3 for the portal map), never the contexts.',
+      from: { path: notPortal },
+      to: { path: '(^|/)packages/core/src/', pathNot: '(^|/)packages/core/src/(shared-kernel|h3)/' },
+    },
+    {
       name: 'api-client-is-a-leaf',
       severity: 'error',
       comment: 'src/api is the data layer: it never imports pages or components.',

@@ -7,5 +7,7 @@ export type PortalFrameProps = {
   /** This page without the locale, for the language links. */
   path: string;
   headerActions?: ReactNode;
+  /** The section links of signed-in pages (`PortalNav`); none on sign-in. */
+  nav?: ReactNode;
   children: ReactNode;
 };
