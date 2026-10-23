@@ -267,12 +267,12 @@ describe('turf on upload', () => {
     expect(res.status).toBe(201);
     expect(await claimOf('f1')).toBeUndefined();
     const service = new BackupService(h.store, h.clock, h.grid);
-    expect(await service.catchUpTurf('admin', 25)).toEqual({ claimed: 0, deferred: 1 });
+    expect(await service.catchUpTurf('admin', 25)).toEqual({ claimed: 0, deferred: 1, skipped: 0, gone: false });
 
     h.clock.t = start + 60_000;
-    expect(await service.catchUpTurf('admin', 25)).toEqual({ claimed: 1, deferred: 0 });
+    expect(await service.catchUpTurf('admin', 25)).toEqual({ claimed: 1, deferred: 0, skipped: 0, gone: false });
     expect((await claimOf('f1'))!.cells).toEqual(coreCells(points));
-    expect(await service.catchUpTurf('admin', 25)).toEqual({ claimed: 0, deferred: 0 });
+    expect(await service.catchUpTurf('admin', 25)).toEqual({ claimed: 0, deferred: 0, skipped: 0, gone: false });
     await expectConsistent();
   });
 

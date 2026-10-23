@@ -12,14 +12,16 @@ scope:
     apps/api/src/routes/territory.ts,
     apps/api/src/schemas/territory.ts,
     apps/api/scripts/turf-backfill.ts,
+    apps/api/scripts/turf-rebuild.ts,
   ]
 summary:
   The server derives turf from uploaded tracks with core's own use cases, in the upload's locked
   transaction — tables turf_claims (cells as text[]) and turf_cells (per-type counts, canonical
   first claimer D4, COLLATE "C"), users.turf_version, no decay stored, future starts deferred,
   export excluded for v0.10.0; phase 2 serves it (contract 0.6.0) — every cell paged with a
-  version-bound cursor and ETag/304, summary, claims, activity totals — plus a resumable backfill
-  script and a bounded catch-up in the daily cron
+  version-bound cursor and ETag/304 (no-store), summary, claims, activity totals — plus a resumable
+  backfill script that skips trackless activities, a bounded catch-up in the daily cron, and
+  turf:rebuild for the repair after a rollback
 ---
 
 # Server turf projection and reads
@@ -128,10 +130,11 @@ server's clock. Nothing is computed in the API but paging and tags.
   re-created: versions restart at 0), answers **`410 turf.changed`** — a new code rather than
   `sync.cursor-expired`, whose remedy ("sync again without a cursor") belongs to the changes feed.
   Malformed → 400.
-- **ETag** `"t<turfVersion>-<createdAt base 36>"`, `Cache-Control: private, no-cache`. The version
-  and `createdAt` are read **first**: `If-None-Match` naming them answers `304` without loading a
-  row. Reads take no lock: the tag is read again after the page, and a page whose version moved is
-  re-read (first page) or refused with `410` (later pages), so a page never mixes two versions.
+- **ETag** `"t<turfVersion>-<createdAt base 36>"`, `Cache-Control: private, no-store` (see "Caching"
+  below). The version and `createdAt` are read **first**: `If-None-Match` naming them answers `304`
+  without loading a row. Reads take no lock: the tag is read again after the page, and a page whose
+  version moved is re-read (first page) or refused with `410` (later pages), so a page never mixes
+  two versions.
 - **`GET /v1/turf/summary`** — `private, no-store` (new this week/month depend on now).
 - **`GET /v1/turf/claims/{activityId}`** — 404 `not-found` / 410 `activity.deleted` as every
   activity route; 404 also when the activity has no claim (a deferred start, not backfilled); cells
@@ -141,6 +144,18 @@ server's clock. Nothing is computed in the API but paging and tags.
   `distance_m + estimated_m`, checked in `sqlite-activity-repository.ts`). The store sums recorded
   and estimated apart; the use case adds them. **`GET /v1/activities`** gained `startedAfter`
   (inclusive) and `startedBefore` (exclusive), cursor unchanged.
+
+**Caching (review, 2026-10-23; founder default, reversible).** `/v1/turf/cells` answers
+`private, no-store`, not `no-cache`: `no-cache` lets a browser keep the body on disk and only
+revalidate, so on a shared computer the next person's profile (or anyone reading the disk cache)
+holds the previous user's whole turf — location data — after sign-out. The ETag stays: a client that
+keeps the cells itself (the web map, in memory) still sends `If-None-Match` and gets `304`. The same
+risk applies to **tracks** (`GET /v1/activities/{id}/track`: raw coordinates, worse than cells) and
+the **activity detail** (bbox and preview line), which had kept `private, no-cache` since the
+web-sessions change (W8): they are `private, no-store` with their ETags now too. No client relied on
+the browser cache: the website fetches with `cache: 'no-store'`, the phone keeps its own copy.
+Rejected: `no-cache` + `Clear-Site-Data` on sign-out (does not cover a closed tab or a crash, and
+the cookie clear already relies on it); `max-age=0, must-revalidate` (still stored).
 
 Rejected: a cell-id keyset cursor (location data in URLs); `sync.cursor-expired` for turf; one
 response with every cell (50k+ users would pass 4.5 MB); a viewport (bbox) route (coordinates in
@@ -158,11 +173,44 @@ time), safe next to uploads (the user lock serialises them; an activity an uploa
 just drops out). A user stops at the first deferred start (later starts are later still) or at a
 failure (error class reported, the run goes on with the next user). Output: counts only.
 
+**Activities without a track (review, 2026-10-23).** The core's claim returns without saving when
+the track has no point, so an activity row without an `activity_tracks` row (or with an empty one)
+was counted as claimed and stayed unclaimed: the script looped on it for ever and the cron spent its
+attempts on it every day. Now: `unclaimed()` and the backlog only count activities **with** a track;
+those without are reported as `skipped` (once per run, never attempted) by the script, the cron and
+`user:find`; `claimMissing` counts a claim only when the claim row exists afterwards (anything else
+is `skipped`); a user gets at most as many attempts as they had pending; the script has a default
+budget (20,000 activities) and deadline (30 min). Across runs they stay out by the query itself
+(derived, no marker column): an upload that brings a track claims at once. Rejected: a
+`turf_skipped` marker table (a migration for a state the query already knows, and one more table for
+export and erasure); deleting trackless activities (the phone owns the data: support decides).
+
+**Background jobs never re-create an account.** `lock()` inserts a missing `users` row (a
+device-token user erased on another instance, so the request can still write). The catch-up, the
+backfill and `turf:rebuild` use `lockExisting()` instead (`SELECT … FOR UPDATE` only) and skip a
+user whose row is gone: an erasure between their listing and their transaction never brings back an
+empty account.
+
 The cron runs it with at most 25 attempts and ~60 s (`TURF_CATCH_UP_ACTIVITIES`, `TURF_CATCH_UP_MS`
 in `apps/api/src/routes/internal.ts`) after the purge; a failure never fails the purge. Known limit:
 users whose only unclaimed activities are deferred still take an attempt each per run, so in
-theory > 25 of them could starve later users for a day. Rollout order and the founder's production
-run: `docs/operations/api-deploy.md` ("Server turf").
+theory > 25 of them could starve later users for a day (activities without a track no longer can).
+Rollout order and the founder's production run: `docs/operations/api-deploy.md` ("Server turf").
+
+## Rebuild after a rollback
+
+0.5.0 does not maintain the projection: while it runs, deletes, replaces and withdrawals cascade
+claims away with their activities but leave their Turf Cells, so cells derived from erased or
+withdrawn data would survive a redeploy of 0.6.0 (B5). `rebuildTurf`
+(`apps/api/src/territory/rebuild.ts`,
+`pnpm --filter @cityturfer/api run turf:rebuild -- [--user <id>] [--dry-run]`) walks every user with
+claims or cells, and per user, under `lockExisting()`, compares `turf_cells` with a recomputation
+from `turf_claims` (`drift`: rows that differ either way) and calls `rebuildAll` only when they
+differ — a user with cells and no claims loses them all; a consistent user is left alone (no turf
+version bump, no needless 304 → 200 for the web). Counts only. The runbook makes it mandatory after
+any rollback, before `turf:backfill`. Rejected: rebuilding every user unconditionally (bumps every
+ETag); a trigger on `activities` delete (0.5.0 code would not know about it either way, and triggers
+are invisible to the core's rules).
 
 ## Export
 

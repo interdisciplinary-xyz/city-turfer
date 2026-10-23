@@ -125,7 +125,7 @@ describe(`GET ${RETENTION_CRON_PATH}`, () => {
       signInCodes: 1,
       sessions: 1,
       rateLimits: 1,
-      turf: { claimed: 0, deferred: 0, failed: 0, remaining: 0 },
+      turf: { claimed: 0, deferred: 0, skipped: 0, failed: 0, remaining: 0 },
     });
 
     // A day later the zip (it holds GPS tracks) goes too, and its link answers 410.
@@ -137,7 +137,7 @@ describe(`GET ${RETENTION_CRON_PATH}`, () => {
       signInCodes: 0,
       sessions: 0,
       rateLimits: 1,
-      turf: { claimed: 0, deferred: 0, failed: 0, remaining: 0 },
+      turf: { claimed: 0, deferred: 0, skipped: 0, failed: 0, remaining: 0 },
     });
     expect(await h.db.select().from(storedFiles)).toHaveLength(0);
     expect((await h.call('GET', link!, { token: null })).status).toBe(410);
@@ -149,7 +149,7 @@ describe(`GET ${RETENTION_CRON_PATH}`, () => {
       signInCodes: 0,
       sessions: 0,
       rateLimits: 0,
-      turf: { claimed: 0, deferred: 0, failed: 0, remaining: 0 },
+      turf: { claimed: 0, deferred: 0, skipped: 0, failed: 0, remaining: 0 },
     });
     expect((await h.db.select().from(authSessions)).map((r) => r.id)).toEqual(['s-live']);
     expect((await h.db.select().from(authVerifications)).map((r) => r.id)).toEqual(['v-live']);

@@ -47,7 +47,7 @@ export function registerInternal(app: OpenAPIHono<AppEnv>): void {
   });
 }
 
-type CatchUp = Pick<BackfillReport, 'claimed' | 'deferred' | 'failed' | 'remaining'>;
+type CatchUp = Pick<BackfillReport, 'claimed' | 'deferred' | 'skipped' | 'failed' | 'remaining'>;
 
 /**
  * Claims the turf of a few activities without a claim (deferred future starts once due, anything
@@ -68,9 +68,9 @@ async function catchUpTurf(deps: ApiDeps): Promise<CatchUp | null> {
       },
       { maxActivities: TURF_CATCH_UP_ACTIVITIES, deadlineAt: Date.now() + TURF_CATCH_UP_MS }
     );
-    const { claimed, deferred, failed, remaining } = report;
-    log.event?.({ msg: 'turf.caught-up', claimed, deferred, failed, remaining, stopped: report.stopped });
-    return { claimed, deferred, failed, remaining };
+    const { claimed, deferred, skipped, failed, remaining } = report;
+    log.event?.({ msg: 'turf.caught-up', claimed, deferred, skipped, failed, remaining, stopped: report.stopped });
+    return { claimed, deferred, skipped, failed, remaining };
   } catch (e) {
     log.event?.({ msg: 'turf.catch-up-failed', error: e instanceof Error ? e.name : 'unknown' });
     return null;

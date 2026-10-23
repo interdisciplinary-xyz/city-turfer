@@ -1,5 +1,5 @@
 import type { CellGrid } from '@cityturfer/core/territory/ports';
-import { and, asc, desc, eq, gt, gte, inArray, like, lt, notInArray, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, gte, inArray, like, lt, notInArray, or, type SQL, sql } from 'drizzle-orm';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 
 import type {
@@ -15,9 +15,16 @@ import type {
   TombstoneRecord,
   UserRecord,
 } from '../backup/model';
-import type { ActivitySums, BackupStore, TurfBacklogEntry, UserReader, UserWriter } from '../backup/ports';
+import type {
+  ActivitySums,
+  BackupStore,
+  TurfBacklogEntry,
+  TurfUserEntry,
+  UserReader,
+  UserWriter,
+} from '../backup/ports';
 import { emailChangePrefix } from '../identity/codes';
-import { DrizzleTerritoryRepository } from '../territory/drizzle-territory-repository';
+import { DrizzleTerritoryRepository, hasTrack } from '../territory/drizzle-territory-repository';
 import type { TurfRepository } from '../territory/ports';
 import {
   activities,
@@ -290,6 +297,12 @@ class UserScope implements UserWriter {
     await this.db.select({ id: users.id }).from(users).where(eq(users.id, this.userId)).for('update');
   }
 
+  async lockExisting(): Promise<boolean> {
+    // No insert: a background job must never re-create an erased account.
+    const [row] = await this.db.select({ id: users.id }).from(users).where(eq(users.id, this.userId)).for('update');
+    return !!row;
+  }
+
   async nextSeq(): Promise<number> {
     const [row] = await this.db
       .update(users)
@@ -404,14 +417,20 @@ class UserScope implements UserWriter {
   }
 }
 
-/** Users with activities that have no turf claim, with how many (`BackupStore.turfBacklog`; support counts). */
+/**
+ * Users with activities that have no turf claim, with how many could be claimed (a track) and how
+ * many cannot (no track): `BackupStore.turfBacklog`, support counts.
+ */
 export async function turfBacklog(
   db: Db,
   q: { limit: number; afterUserId?: string; userId?: string }
 ): Promise<TurfBacklogEntry[]> {
   // Ids in JS string order (COLLATE "C") so a resumed run continues where it stopped on Neon too.
+  const tracked = hasTrack(sql`a.user_id`, sql`a.id`);
   const result = await db.execute(sql`
-    SELECT a.user_id AS "userId", count(*)::int AS unclaimed
+    SELECT a.user_id AS "userId",
+      count(*) FILTER (WHERE ${tracked})::int AS unclaimed,
+      count(*) FILTER (WHERE NOT ${tracked})::int AS untracked
     FROM activities a
     WHERE NOT EXISTS (SELECT 1 FROM turf_claims k WHERE k.user_id = a.user_id AND k.activity_id = a.id)
       ${q.userId === undefined ? sql`` : sql`AND a.user_id = ${q.userId}`}
@@ -422,7 +441,27 @@ export async function turfBacklog(
   return (result as unknown as { rows: TurfBacklogEntry[] }).rows.map((r) => ({
     userId: r.userId,
     unclaimed: Number(r.unclaimed),
+    untracked: Number(r.untracked),
   }));
+}
+
+/** Users with claims or Turf Cells, by id in JS order (`BackupStore.turfUsers`, `turf:rebuild`). */
+export async function turfUsers(
+  db: Db,
+  q: { limit: number; afterUserId?: string; userId?: string }
+): Promise<TurfUserEntry[]> {
+  const only = (col: SQL) => sql`
+    ${q.userId === undefined ? sql`` : sql`AND ${col} = ${q.userId}`}
+    ${q.afterUserId === undefined ? sql`` : sql`AND ${col} COLLATE "C" > ${q.afterUserId}`}`;
+  const result = await db.execute(sql`
+    SELECT u.user_id AS "userId" FROM (
+      SELECT DISTINCT k.user_id FROM turf_claims k WHERE true ${only(sql`k.user_id`)}
+      UNION
+      SELECT DISTINCT c.user_id FROM turf_cells c WHERE true ${only(sql`c.user_id`)}
+    ) u
+    ORDER BY u.user_id COLLATE "C"
+    LIMIT ${q.limit}`);
+  return (result as unknown as { rows: TurfUserEntry[] }).rows.map((r) => ({ userId: r.userId }));
 }
 
 /** The BackupStore adapter over Drizzle. Queries always carry the user id (multi-tenant). */
@@ -484,6 +523,10 @@ export class DrizzleBackupStore implements BackupStore {
 
   turfBacklog(q: { limit: number; afterUserId?: string; userId?: string }): Promise<TurfBacklogEntry[]> {
     return turfBacklog(this.db, q);
+  }
+
+  turfUsers(q: { limit: number; afterUserId?: string; userId?: string }): Promise<TurfUserEntry[]> {
+    return turfUsers(this.db, q);
   }
 
   async ping(): Promise<boolean> {

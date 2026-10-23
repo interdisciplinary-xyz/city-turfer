@@ -21,6 +21,15 @@ export interface TurfRepository extends TerritoryRepository {
   rebuildAll(): Promise<void>;
   /** Deletes every claim and Turf Cell of the user (cloud-sync withdrawal). */
   eraseAll(): Promise<void>;
-  /** Activities without a claim, oldest first by `(startedAt, id)`. */
+  /**
+   * Activities without a claim that have a track (a row with points), oldest first by
+   * `(startedAt, id)`. Activities without one cannot be claimed and are never returned (else they
+   * would head the queue for ever).
+   */
   unclaimed(limit: number): Promise<UnclaimedActivity[]>;
+  /**
+   * How many of the user's Turf Cells differ from a recomputation from the claims (stale rows,
+   * missing rows, wrong counts or first claimer): what `rebuildAll` would fix. Reads only.
+   */
+  drift(): Promise<number>;
 }

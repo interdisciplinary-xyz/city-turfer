@@ -8,20 +8,28 @@ export interface BackfillProgress {
   users: number;
   claimed: number;
   deferred: number;
+  skipped: number;
   failed: number;
 }
 
 export interface BackfillReport {
-  /** Users with unclaimed activities when the run started. */
+  /** Users with unclaimed activities that have a track when the run started. */
   users: number;
-  /** Activities without a claim when the run started. */
+  /** Activities without a claim that have a track when the run started. */
   pending: number;
   claimed: number;
   /** Starts still in the future (`claim.in-future`): claimed by a later run once due. */
   deferred: number;
+  /**
+   * Activities without a claim that cannot be claimed (no track row, or no points): reported once
+   * per run, never attempted, and never counted in `pending` or `remaining`, so they cannot keep a
+   * run (or the cron) busy. They stay out of every later run too until a track arrives (an upload
+   * that brings one claims at once). The runbook's diagnostic SQL lists them for support.
+   */
+  skipped: number;
   /** Activities whose claim failed (any other error): the user is skipped until the next run. */
   failed: number;
-  /** Activities still without a claim at the end. */
+  /** Activities with a track still without a claim at the end. */
   remaining: number;
   /** `done`: no user left; `budget` or `deadline`: stopped early (run again to continue). */
   stopped: 'done' | 'budget' | 'deadline' | 'dry-run';
@@ -69,18 +77,22 @@ async function backlogOf(store: BackupStore, userId: string | undefined, pageSiz
  * **one activity per locked transaction** (`BackupService.catchUpTurf(userId, 1)`: one track in
  * memory, never a long lock), so it is idempotent, resumable after any stop, and safe next to
  * uploads — an activity claimed meanwhile is simply no longer unclaimed. A user stops at their
- * first deferred start (every later one is later still) or failure.
+ * first deferred start (every later one is later still), skipped activity, failure, or erasure,
+ * and after as many attempts as they had pending (so a run always ends, whatever a claim returns).
+ * Activities without a track are counted as `skipped` and never attempted.
  */
 export async function backfillTurf(deps: BackfillDeps, options: BackfillOptions = {}): Promise<BackfillReport> {
   const now = deps.now ?? Date.now;
   const pageSize = options.pageSize ?? 500;
-  const backlog = await backlogOf(deps.store, options.userId, pageSize);
+  const all = await backlogOf(deps.store, options.userId, pageSize);
+  const backlog = all.filter((e) => e.unclaimed > 0);
   const pending = backlog.reduce((n, e) => n + e.unclaimed, 0);
   const report: BackfillReport = {
     users: backlog.length,
     pending,
     claimed: 0,
     deferred: 0,
+    skipped: all.reduce((n, e) => n + e.untracked, 0),
     failed: 0,
     remaining: pending,
     stopped: 'done',
@@ -99,14 +111,14 @@ export async function backfillTurf(deps: BackfillDeps, options: BackfillOptions 
     return null;
   };
   outer: for (const [i, entry] of backlog.entries()) {
-    for (;;) {
+    for (let tries = 0; tries < entry.unclaimed; tries++) {
       const stop = stopBefore();
       if (stop) {
         report.stopped = stop;
         break outer;
       }
       attempts++;
-      let result: { claimed: number; deferred: number };
+      let result: Awaited<ReturnType<BackupService['catchUpTurf']>>;
       try {
         result = await deps.backup.catchUpTurf(entry.userId, 1);
       } catch (e) {
@@ -116,8 +128,9 @@ export async function backfillTurf(deps: BackfillDeps, options: BackfillOptions 
       }
       report.claimed += result.claimed;
       report.deferred += result.deferred;
+      report.skipped += result.skipped;
       if (result.claimed === 0) {
-        // Deferred (all later starts are later still), or nothing left (claimed meanwhile).
+        // Deferred (all later starts are later still), skipped, erased meanwhile, or nothing left.
         break;
       }
     }
@@ -126,6 +139,7 @@ export async function backfillTurf(deps: BackfillDeps, options: BackfillOptions 
       users: backlog.length,
       claimed: report.claimed,
       deferred: report.deferred,
+      skipped: report.skipped,
       failed: report.failed,
     });
   }

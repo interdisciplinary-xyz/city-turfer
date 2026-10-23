@@ -97,12 +97,13 @@ describe('turf backfill', () => {
       pending: 8,
       claimed: 8,
       deferred: 0,
+      skipped: 0,
       failed: 0,
       remaining: 0,
       stopped: 'done',
     });
     expect(await snapshot()).toEqual(live);
-    expect(progress.at(-1)).toEqual({ user: 2, users: 2, claimed: 8, deferred: 0, failed: 0 });
+    expect(progress.at(-1)).toEqual({ user: 2, users: 2, claimed: 8, deferred: 0, skipped: 0, failed: 0 });
 
     const v = await h.store.read('admin').turf.version();
     expect(await run()).toMatchObject({ users: 0, pending: 0, claimed: 0, remaining: 0, stopped: 'done' });
@@ -115,8 +116,16 @@ describe('turf backfill', () => {
     await forgetTurf();
     expect(await run({ userId: 'other' })).toMatchObject({ users: 1, claimed: 2, remaining: 0 });
     expect(await run({ dryRun: true })).toMatchObject({ users: 1, pending: 2 });
-    expect((await findAccount(h.db, 'admin'))!.turf).toEqual({ claims: 0, unclaimedActivities: 2 });
-    expect((await findAccount(h.db, 'other'))!.turf).toEqual({ claims: 2, unclaimedActivities: 0 });
+    expect((await findAccount(h.db, 'admin'))!.turf).toEqual({
+      claims: 0,
+      unclaimedActivities: 2,
+      untrackedActivities: 0,
+    });
+    expect((await findAccount(h.db, 'other'))!.turf).toEqual({
+      claims: 2,
+      unclaimedActivities: 0,
+      untrackedActivities: 0,
+    });
   });
 
   it('is resumable: stopped by its budget, the next run continues where it stopped', async () => {
@@ -182,6 +191,102 @@ describe('turf backfill', () => {
     expect(errors).toEqual(['TypeError']);
   });
 
+  it('an activity without a track is skipped once, never retried, and does not hold up other users', async () => {
+    await uploads(TOKENS.admin, 3);
+    await uploads(TOKENS.other, 2);
+    await forgetTurf();
+    // A repair case: the activity row is there, its track row is not (or holds no point).
+    await h.db.execute(sql`DELETE FROM activity_tracks WHERE user_id = 'admin' AND activity_id = 'a0'`);
+    await h.db.execute(
+      sql`UPDATE activity_tracks SET points = '[]'::jsonb WHERE user_id = 'admin' AND activity_id = 'a1'`
+    );
+    const calls: string[] = [];
+    const counting = service();
+    const real = counting.catchUpTurf.bind(counting);
+    counting.catchUpTurf = (userId, limit) => {
+      calls.push(userId);
+      return real(userId, limit);
+    };
+    const report = await backfillTurf({ store: h.store, backup: counting });
+    expect(report).toMatchObject({
+      users: 2,
+      pending: 3,
+      claimed: 3,
+      skipped: 2,
+      failed: 0,
+      remaining: 0,
+      stopped: 'done',
+    });
+    // One attempt per claimable activity: the trackless ones were never attempted.
+    expect(calls).toHaveLength(3);
+    const claimed = await rows<{ id: string }>(sql`
+      SELECT user_id || '/' || activity_id AS id FROM turf_claims ORDER BY 1`);
+    expect(claimed.map((r) => r.id)).toEqual(['admin/a2', 'other/a0', 'other/a1']);
+    expect((await findAccount(h.db, 'admin'))!.turf).toEqual({
+      claims: 1,
+      unclaimedActivities: 0,
+      untrackedActivities: 2,
+    });
+    // A second run reports them again but attempts nothing.
+    calls.length = 0;
+    expect(await backfillTurf({ store: h.store, backup: counting })).toMatchObject({
+      users: 0,
+      claimed: 0,
+      skipped: 2,
+      remaining: 0,
+    });
+    expect(calls).toEqual([]);
+  });
+
+  it('counts a claim only when it exists afterwards; a run always ends', async () => {
+    await uploads(TOKENS.admin, 2);
+    await forgetTurf();
+    // A claim that returns without saving (what the core does for a track without a point).
+    const hollow = service();
+    hollow.catchUpTurf = () => Promise.resolve({ claimed: 0, deferred: 0, skipped: 1, gone: false });
+    expect(await backfillTurf({ store: h.store, backup: hollow })).toMatchObject({
+      claimed: 0,
+      skipped: 1,
+      remaining: 2,
+      stopped: 'done',
+    });
+    // Even a claim that always says "claimed" (the old bug) stops after the user's pending count.
+    let attempts = 0;
+    const liar = service();
+    liar.catchUpTurf = () => {
+      attempts++;
+      return Promise.resolve({ claimed: 1, deferred: 0, skipped: 0, gone: false });
+    };
+    await backfillTurf({ store: h.store, backup: liar });
+    expect(attempts).toBe(2);
+  });
+
+  it('never re-creates an account erased between the backlog and the catch-up', async () => {
+    await uploads(TOKENS.admin, 2);
+    await uploads(TOKENS.other, 1);
+    await forgetTurf();
+    const erasing = Object.assign(Object.create(h.store) as BackupStore, {
+      turfBacklog: async (q: Parameters<BackupStore['turfBacklog']>[0]) => {
+        const page = await h.store.turfBacklog(q);
+        await h.store.eraseAccount('admin');
+        return page;
+      },
+    });
+    const report = await backfillTurf({ store: erasing, backup: new BackupService(erasing, h.clock, h.grid) });
+    expect(report).toMatchObject({ users: 2, claimed: 1, failed: 0 });
+    const users = await rows<{ id: string }>(sql`SELECT id FROM users WHERE id = 'admin'`);
+    expect(users).toEqual([]);
+    expect(await rows(sql`SELECT 1 FROM turf_cells WHERE user_id = 'admin'`)).toEqual([]);
+  });
+
+  it('catchUpTurf skips an erased user without writing anything', async () => {
+    await uploads(TOKENS.admin, 1);
+    await forgetTurf();
+    await h.store.eraseAccount('admin');
+    expect(await service().catchUpTurf('admin', 5)).toEqual({ claimed: 0, deferred: 0, skipped: 0, gone: true });
+    expect(await rows(sql`SELECT id FROM users WHERE id = 'admin'`)).toEqual([]);
+  });
+
   it('progress and report hold counts only: no user, activity or cell id, no coordinate', async () => {
     await uploads(TOKENS.admin, 3);
     await forgetTurf();
@@ -204,13 +309,31 @@ describe('the retention cron catches up turf', () => {
     expect((await res.json()).turf).toEqual({
       claimed: TURF_CATCH_UP_ACTIVITIES,
       deferred: 0,
+      skipped: 0,
       failed: 0,
       remaining: 3,
     });
     res = await cron();
-    expect((await res.json()).turf).toEqual({ claimed: 3, deferred: 0, failed: 0, remaining: 0 });
+    expect((await res.json()).turf).toEqual({ claimed: 3, deferred: 0, skipped: 0, failed: 0, remaining: 0 });
     const events = logged.map((l) => JSON.parse(l) as { msg: string }).filter((l) => l.msg === 'turf.caught-up');
     expect(events).toHaveLength(2);
+    expect(logged.join('\n')).not.toMatch(H3_ID);
+  }, 120_000);
+
+  it('activities without a track never use up the cap: other users are still claimed', async () => {
+    // More trackless activities than the cap, all on the user whose id sorts first.
+    await uploads(TOKENS.admin, TURF_CATCH_UP_ACTIVITIES + 2);
+    await uploads(TOKENS.other, 2);
+    await forgetTurf();
+    await h.db.execute(sql`DELETE FROM activity_tracks WHERE user_id = 'admin'`);
+    const res = await cron();
+    expect((await res.json()).turf).toEqual({
+      claimed: 2,
+      deferred: 0,
+      skipped: TURF_CATCH_UP_ACTIVITIES + 2,
+      failed: 0,
+      remaining: 0,
+    });
     expect(logged.join('\n')).not.toMatch(H3_ID);
   }, 120_000);
 
@@ -218,9 +341,21 @@ describe('the retention cron catches up turf', () => {
     await uploads(TOKENS.admin, 0);
     const start = h.clock.t + 3_600_000;
     await h.call('PUT', '/v1/activities/later', { body: body(line(0, start)) });
-    expect((await (await cron()).json()).turf).toEqual({ claimed: 0, deferred: 1, failed: 0, remaining: 1 });
+    expect((await (await cron()).json()).turf).toEqual({
+      claimed: 0,
+      deferred: 1,
+      skipped: 0,
+      failed: 0,
+      remaining: 1,
+    });
     h.clock.t = start + 86_400_000;
-    expect((await (await cron()).json()).turf).toEqual({ claimed: 1, deferred: 0, failed: 0, remaining: 0 });
+    expect((await (await cron()).json()).turf).toEqual({
+      claimed: 1,
+      deferred: 0,
+      skipped: 0,
+      failed: 0,
+      remaining: 0,
+    });
   });
 
   it('a turf failure never fails the retention run: logged by class, answered as null', async () => {

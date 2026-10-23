@@ -23,7 +23,19 @@ export interface ActivitySums {
 /** A user whose activities are not all claimed yet, with how many are not. */
 export interface TurfBacklogEntry {
   userId: string;
+  /** Activities without a claim that have a track to claim from (what the backfill works on). */
   unclaimed: number;
+  /**
+   * Activities without a claim and without a track (no `activity_tracks` row, or no points): they
+   * cannot be claimed, so the backfill reports them as skipped and never retries them. Uploads
+   * always carry ≥ 2 points, so any count here is a repair case (runbook: the diagnostic SQL).
+   */
+  untracked: number;
+}
+
+/** A user with a turf projection (claims or Turf Cells): what `turf:rebuild` walks. */
+export interface TurfUserEntry {
+  userId: string;
 }
 
 /** Reads scoped to one user: every query filters on the user id (object-level authorisation). */
@@ -69,6 +81,12 @@ export interface UserWriter extends UserReader {
    * Re-creates a missing row (a device-token user erased on another function instance).
    */
   lock(): Promise<void>;
+  /**
+   * Background jobs (catch-up, backfill, rebuild): locks the user's row until commit like `lock`,
+   * but never re-creates it. False when the row is gone (the account was erased meanwhile): the job
+   * must skip the user and write nothing.
+   */
+  lockExisting(): Promise<boolean>;
   /** Next change seq of this user (after `lock`). */
   nextSeq(): Promise<number>;
   putConsent(consent: ConsentRecord): Promise<void>;
@@ -112,4 +130,9 @@ export interface BackupStore {
    * most `limit`, after `afterUserId`; only `userId` when given. Counts only, across users.
    */
   turfBacklog(q: { limit: number; afterUserId?: string; userId?: string }): Promise<TurfBacklogEntry[]>;
+  /**
+   * Users with claims or Turf Cells (`turf:rebuild`), by user id (JS order), at most `limit`, after
+   * `afterUserId`; only `userId` when given.
+   */
+  turfUsers(q: { limit: number; afterUserId?: string; userId?: string }): Promise<TurfUserEntry[]>;
 }

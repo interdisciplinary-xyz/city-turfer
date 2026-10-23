@@ -194,7 +194,8 @@ export const requireCaller: MiddlewareHandler<AppEnv> = async (c, next) => {
 /**
  * Personal answers are never cached, by the browser (shared computers, the back button) or an edge
  * (the website's `/api/v1/*` rewrite): `Cache-Control: private, no-store` unless the route set its
- * own (tracks keep `private, no-cache` + ETag), and always `Vary: Cookie, Authorization`.
+ * own (none relaxes it: tracks, activity detail and turf cells set `no-store` too, with an ETag for
+ * clients that keep the body themselves), and always `Vary: Cookie, Authorization`.
  */
 export const personalCaching: MiddlewareHandler<AppEnv> = async (c, next) => {
   await next();

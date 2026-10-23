@@ -23,8 +23,11 @@ export interface AccountSummary {
   lastUploadAt: string | null;
   sessions: number;
   exports: number;
-  /** Turf claims, and activities without one (not backfilled yet, or a start in the future). */
-  turf: { claims: number; unclaimedActivities: number };
+  /**
+   * Turf claims; activities without one that have a track (not backfilled yet, or a start in the
+   * future); and activities without one that cannot be claimed (no track: a repair case).
+   */
+  turf: { claims: number; unclaimedActivities: number; untrackedActivities: number };
   consents: { purpose: string; granted: boolean; policyVersion: string; decidedAt: string }[];
 }
 
@@ -76,7 +79,11 @@ export async function findAccount(db: Db, query: string): Promise<AccountSummary
     lastUploadAt: iso(acts?.lastUpdated),
     sessions: Number(sessions?.n ?? 0),
     exports: Number(exps?.n ?? 0),
-    turf: { claims: Number(claims?.n ?? 0), unclaimedActivities: backlog?.unclaimed ?? 0 },
+    turf: {
+      claims: Number(claims?.n ?? 0),
+      unclaimedActivities: backlog?.unclaimed ?? 0,
+      untrackedActivities: backlog?.untracked ?? 0,
+    },
     consents: decisions.map((c) => ({
       purpose: c.purpose,
       granted: c.granted,

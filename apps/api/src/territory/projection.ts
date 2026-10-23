@@ -23,6 +23,13 @@ export interface TurfProjectionDeps {
   storedTrack(activityId: string): Promise<CompactPoint[] | null>;
 }
 
+/** What one catch-up did: claims made, starts still in the future, activities that cannot be claimed. */
+export interface CatchUpCounts {
+  claimed: number;
+  deferred: number;
+  skipped: number;
+}
+
 /** The only domain error the projection swallows: a start more than 60 s after the server's now. */
 const IN_FUTURE = 'claim.in-future';
 
@@ -81,19 +88,27 @@ export class TurfProjection {
 
   /**
    * Claims up to `limit` activities that have no claim yet, oldest first (backfill, deferred
-   * future starts). Returns how many were claimed and how many are still deferred.
+   * future starts). `claimed` counts only claims that exist afterwards: the core's claim returns
+   * without saving when the track has no point, and such an activity is `skipped` (the repository's
+   * `unclaimed` already leaves out activities without a track; this guards the rest).
    */
-  async claimMissing(limit: number): Promise<{ claimed: number; deferred: number }> {
-    let claimed = 0;
-    let deferred = 0;
+  async claimMissing(limit: number): Promise<CatchUpCounts> {
+    const counts: CatchUpCounts = { claimed: 0, deferred: 0, skipped: 0 };
     for (const a of await this.d.repo.unclaimed(limit)) {
-      if (await this.claim(a)) {
-        claimed++;
+      if (!(await this.claim(a))) {
+        counts.deferred++;
+      } else if (await this.d.repo.claimExists(a.id)) {
+        counts.claimed++;
       } else {
-        deferred++;
+        counts.skipped++;
       }
     }
-    return { claimed, deferred };
+    return counts;
+  }
+
+  /** How many Turf Cells a rebuild would change (reads only). */
+  drift(): Promise<number> {
+    return this.d.repo.drift();
   }
 
   private async deferInFuture(

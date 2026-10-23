@@ -128,13 +128,13 @@ describe('GET /v1/turf/cells', () => {
     const etag = first.headers.get('etag')!;
     const version = await h.store.read('admin').turf.version();
     expect(etag).toMatch(new RegExp(`^"t${version}-[0-9a-z]+"$`));
-    expect(first.headers.get('cache-control')).toBe('private, no-cache');
+    expect(first.headers.get('cache-control')).toBe('private, no-store');
 
     const again = await h.call('GET', '/v1/turf/cells', { headers: { 'If-None-Match': etag } });
     expect(again.status).toBe(304);
     expect(await again.text()).toBe('');
     expect(again.headers.get('etag')).toBe(etag);
-    expect(again.headers.get('cache-control')).toBe('private, no-cache');
+    expect(again.headers.get('cache-control')).toBe('private, no-store');
     expect((await h.call('GET', '/v1/turf/cells', { headers: { 'If-None-Match': `W/${etag}` } })).status).toBe(304);
 
     await putOk('w2', body(line({ lat: 52.2305, start: T0 + 86_400_000 })));

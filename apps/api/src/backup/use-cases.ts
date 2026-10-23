@@ -2,7 +2,7 @@ import { catalogueCityView } from '@cityturfer/core/territory';
 import type { CellGrid } from '@cityturfer/core/territory/ports';
 
 import { decodeCursor, encodeCursor } from '../cursor';
-import { TurfProjection } from '../territory/projection';
+import { type CatchUpCounts, TurfProjection } from '../territory/projection';
 import { AppError } from './app-error';
 import { contentHashOf, trackHashOf } from './hashing';
 import type {
@@ -435,10 +435,32 @@ export class BackupService {
    * future starts; the backfill of activities uploaded before the server claimed turf), oldest
    * first, under the user lock. Idempotent.
    */
-  catchUpTurf(userId: string, limit: number): Promise<{ claimed: number; deferred: number }> {
+  catchUpTurf(userId: string, limit: number): Promise<CatchUpCounts & { gone: boolean }> {
     return this.store.write(userId, async (tx) => {
-      await tx.lock();
-      return this.turf(tx).claimMissing(limit);
+      // A background job: never re-create an account erased since the backlog was read.
+      if (!(await tx.lockExisting())) {
+        return { claimed: 0, deferred: 0, skipped: 0, gone: true };
+      }
+      return { ...(await this.turf(tx).claimMissing(limit)), gone: false };
+    });
+  }
+
+  /**
+   * RebuildTurf (repair, `turf:rebuild`): recomputes every Turf Cell of the user from the claims
+   * that remain, under the user lock, when any cell differs (`drift`); a user without claims loses
+   * every cell. `dryRun` only counts. Skips an erased user (never re-creates the row).
+   */
+  rebuildTurf(userId: string, options: { dryRun?: boolean } = {}): Promise<{ drift: number; gone: boolean }> {
+    return this.store.write(userId, async (tx) => {
+      if (!(await tx.lockExisting())) {
+        return { drift: 0, gone: true };
+      }
+      const turf = this.turf(tx);
+      const drift = await turf.drift();
+      if (drift > 0 && !options.dryRun) {
+        await turf.rebuildAll();
+      }
+      return { drift, gone: false };
     });
   }
 

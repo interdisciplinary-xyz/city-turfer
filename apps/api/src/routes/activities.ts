@@ -193,7 +193,7 @@ export function registerActivities(app: OpenAPIHono<AppEnv>): void {
       const { activityId } = valid<Id>(c, 'param');
       const { activity, gapRoutes } = await c.var.backup.activity(c.var.userId, activityId);
       c.header('ETag', etagOf(activity.version));
-      c.header('Cache-Control', 'private, no-cache');
+      c.header('Cache-Control', 'private, no-store');
       return c.json(activityDetailDto(activity, gapRoutes), 200);
     }
   );
@@ -275,7 +275,7 @@ export function registerActivities(app: OpenAPIHono<AppEnv>): void {
       operationId: 'getActivityTrack',
       summary: 'Activity track',
       description:
-        'Every track point, compact, as uploaded (use case ActivityTrackQuery). The `ETag` is the `trackHash` in quotes: send it as `If-None-Match` to get `304` when the track has not changed. Personal data: `Cache-Control: private, no-cache`.',
+        'Every track point, compact, as uploaded (use case ActivityTrackQuery). The `ETag` is the `trackHash` in quotes: send it as `If-None-Match` to get `304` when the track has not changed. Personal data: `Cache-Control: private, no-store` (never stored by a browser or proxy: shared computers); a client that keeps the body itself can still send `If-None-Match`.',
       request: {
         params: ActivityIdParam,
         headers: z.object({
@@ -300,7 +300,7 @@ export function registerActivities(app: OpenAPIHono<AppEnv>): void {
       const { activity, points } = await c.var.backup.track(c.var.userId, activityId);
       const etag = `"${activity.trackHash}"`;
       c.header('ETag', etag);
-      c.header('Cache-Control', 'private, no-cache');
+      c.header('Cache-Control', 'private, no-store');
       if (matchesTag(c.req.header('if-none-match'), etag)) {
         return c.body(null, 304);
       }

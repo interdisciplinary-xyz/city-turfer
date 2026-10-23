@@ -3,6 +3,9 @@
 // resumable — stop it any time and run it again. Safe while the API takes uploads.
 //   DATABASE_URL_UNPOOLED=… pnpm --filter @cityturfer/api run turf:backfill -- --dry-run
 //   DATABASE_URL_UNPOOLED=… pnpm --filter @cityturfer/api run turf:backfill -- [--user <userId>]
+//     [--max <activities, default 20000>] [--minutes <wall time, default 30>]
+// Stops at the budget or the deadline (run again to continue). Activities without a track cannot
+// be claimed: reported as skipped, never attempted.
 // Prints counts only: no user, activity or cell ids, no coordinates.
 // Runbook: docs/operations/api-deploy.md ("Server turf: migrate, deploy, backfill").
 import { H3CellGrid } from '@cityturfer/core/h3';
@@ -12,16 +15,42 @@ import { DrizzleBackupStore } from '../src/db/store';
 import { backfillTurf } from '../src/territory/backfill';
 import { openDb } from './open-db';
 
-const USAGE = 'Usage: pnpm --filter @cityturfer/api run turf:backfill -- [--user <userId>] [--dry-run]';
+const USAGE =
+  'Usage: pnpm --filter @cityturfer/api run turf:backfill -- [--user <userId>] [--dry-run] [--max <n>] [--minutes <n>]';
 
-const args = process.argv.slice(2).filter((a) => a !== '--');
-const dryRun = args.includes('--dry-run');
-const userAt = args.indexOf('--user');
-const userId = userAt === -1 ? undefined : args[userAt + 1];
-const known = args.filter((a, i) => a === '--dry-run' || a === '--user' || (userAt !== -1 && i === userAt + 1));
-if (known.length !== args.length || (userAt !== -1 && (!userId || !/^[A-Za-z0-9_-]{1,64}$/.test(userId)))) {
+/** Default bounds of one run: a stuck or huge run ends; the next run continues where it stopped. */
+const DEFAULT_MAX_ACTIVITIES = 20_000;
+const DEFAULT_MINUTES = 30;
+
+const fail = (): never => {
   console.error(USAGE);
   process.exit(1);
+};
+const args = process.argv.slice(2).filter((a) => a !== '--');
+let dryRun = false;
+let userId: string | undefined;
+let maxActivities = DEFAULT_MAX_ACTIVITIES;
+let minutes = DEFAULT_MINUTES;
+const positive = (v: string | undefined) => {
+  const n = Number(v);
+  return Number.isSafeInteger(n) && n > 0 ? n : fail();
+};
+for (let i = 0; i < args.length; i++) {
+  const a = args[i];
+  if (a === '--dry-run') {
+    dryRun = true;
+  } else if (a === '--user') {
+    userId = args[++i];
+    if (!userId || !/^[A-Za-z0-9_-]{1,64}$/.test(userId)) {
+      fail();
+    }
+  } else if (a === '--max') {
+    maxActivities = positive(args[++i]);
+  } else if (a === '--minutes') {
+    minutes = positive(args[++i]);
+  } else {
+    fail();
+  }
 }
 
 const { db, close, where } = await openDb();
@@ -35,18 +64,20 @@ try {
       backup: new BackupService(store, { now: () => Date.now() }, grid),
       onProgress: (p) =>
         console.log(
-          `user ${p.user}/${p.users}: ${p.claimed} claimed, ${p.deferred} deferred, ${p.failed} failed so far`
+          `user ${p.user}/${p.users}: ${p.claimed} claimed, ${p.deferred} deferred, ${p.skipped} skipped, ${p.failed} failed so far`
         ),
       onFailure: (error) => console.error(`a claim failed (${error}); that user is skipped until the next run`),
     },
-    { userId, dryRun }
+    { userId, dryRun, maxActivities, deadlineAt: started + minutes * 60_000 }
   );
   const secs = ((Date.now() - started) / 1000).toFixed(1);
   if (dryRun) {
-    console.log(`Dry run (${where}): ${report.pending} activities of ${report.users} users have no claim.`);
+    console.log(
+      `Dry run (${where}): ${report.pending} activities of ${report.users} users have no claim; ${report.skipped} more have no track (cannot be claimed).`
+    );
   } else {
     console.log(
-      `Done (${where}, ${secs} s): ${report.claimed} claimed, ${report.deferred} deferred (start in the future), ${report.failed} failed; ${report.remaining} still unclaimed.`
+      `${report.stopped === 'done' ? 'Done' : `Stopped (${report.stopped}; run again to continue)`} (${where}, ${secs} s): ${report.claimed} claimed, ${report.deferred} deferred (start in the future), ${report.skipped} skipped (no track), ${report.failed} failed; ${report.remaining} still unclaimed.`
     );
   }
   process.exitCode = report.failed > 0 ? 1 : 0;

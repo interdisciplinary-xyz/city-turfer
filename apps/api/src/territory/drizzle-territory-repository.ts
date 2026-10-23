@@ -1,6 +1,6 @@
 import type { ActivityType, BoundingBox } from '@cityturfer/core/shared-kernel';
 import type { CellGrid, CellId, CellRow, Claim } from '@cityturfer/core/territory/ports';
-import { and, asc, eq, notExists, sql } from 'drizzle-orm';
+import { and, asc, eq, notExists, sql, type SQLWrapper } from 'drizzle-orm';
 
 import type { ActivityTypeName } from '../backup/model';
 import { activities, turfCells, turfClaims, users } from '../db/schema';
@@ -24,22 +24,34 @@ const rowsOf = <T>(result: unknown): T[] => (result as { rows: T[] }).rows;
 
 /**
  * The visit counts and canonical first claimer of the given cells (all when `only` is null),
- * recomputed from the user's claims. D4: the first claimer is the claim with the earliest
- * `(claimed_at, activity_id)`, ids in **JS string order** — `COLLATE "C"` is load-bearing: Neon's
- * default collation is linguistic, so without it the tie-break would differ from the phone's.
+ * recomputed from the user's claims, as rows of `turf_cells`. D4: the first claimer is the claim
+ * with the earliest `(claimed_at, activity_id)`, ids in **JS string order** — `COLLATE "C"` is
+ * load-bearing: Neon's default collation is linguistic, so without it the tie-break would differ
+ * from the phone's.
  */
-const recomputed = (userId: string, only: string | null) => sql`
-  INSERT INTO turf_cells (user_id, cell, walk, run, cycle, first_at, first_activity_id)
-  SELECT ${userId}, c.cell,
-    count(*) FILTER (WHERE k.type = 'walk')::int,
-    count(*) FILTER (WHERE k.type = 'run')::int,
-    count(*) FILTER (WHERE k.type = 'cycle')::int,
-    min(k.claimed_at),
-    (array_agg(k.activity_id ORDER BY k.claimed_at, k.activity_id COLLATE "C"))[1]
+const recomputedRows = (userId: string, only: string | null) => sql`
+  SELECT ${userId}::text AS user_id, c.cell,
+    count(*) FILTER (WHERE k.type = 'walk')::int AS walk,
+    count(*) FILTER (WHERE k.type = 'run')::int AS run,
+    count(*) FILTER (WHERE k.type = 'cycle')::int AS cycle,
+    min(k.claimed_at) AS first_at,
+    (array_agg(k.activity_id ORDER BY k.claimed_at, k.activity_id COLLATE "C"))[1] AS first_activity_id
   FROM turf_claims k CROSS JOIN LATERAL unnest(k.cells) AS c(cell)
   WHERE k.user_id = ${userId}
     ${only === null ? sql`` : sql`AND c.cell IN (SELECT unnest(${only}::text[]))`}
   GROUP BY c.cell`;
+
+const recomputed = (userId: string, only: string | null) => sql`
+  INSERT INTO turf_cells (user_id, cell, walk, run, cycle, first_at, first_activity_id)
+  ${recomputedRows(userId, only)}`;
+
+/**
+ * The activity (its `user_id` and `id` columns) has a track to claim from: a track row with at least
+ * one point. Uploads always carry ≥ 2; without one the core's claim returns without saving anything.
+ */
+export const hasTrack = (userId: SQLWrapper, activityId: SQLWrapper) => sql`EXISTS (
+  SELECT 1 FROM activity_tracks t
+  WHERE t.user_id = ${userId} AND t.activity_id = ${activityId} AND jsonb_array_length(t.points) > 0)`;
 
 /**
  * Territory's `TerritoryRepository` on Postgres, for one user inside that user's locked transaction
@@ -228,12 +240,25 @@ export class DrizzleTerritoryRepository implements TurfRepository {
               .select({ one: sql`1` })
               .from(turfClaims)
               .where(and(eq(turfClaims.userId, activities.userId), eq(turfClaims.activityId, activities.id)))
-          )
+          ),
+          hasTrack(activities.userId, activities.id)
         )
       )
       .orderBy(asc(activities.startedAt), sql`${activities.id} COLLATE "C"`)
       .limit(limit);
     return rows.map((r) => ({ id: r.id, type: r.type as ActivityTypeName, startedAt: r.startedAt.getTime() }));
+  }
+
+  async drift(): Promise<number> {
+    const stored = sql`
+      SELECT user_id, cell, walk, run, cycle, first_at, first_activity_id
+      FROM turf_cells WHERE user_id = ${this.userId}`;
+    const fresh = recomputedRows(this.userId, null);
+    const result = await this.db.execute(sql`
+      SELECT count(*)::int AS n FROM (
+        ((${stored}) EXCEPT (${fresh})) UNION ALL ((${fresh}) EXCEPT (${stored}))
+      ) d`);
+    return Number(rowsOf<{ n: number }>(result)[0]?.n ?? 0);
   }
 
   private async bump(): Promise<void> {
