@@ -68,6 +68,8 @@ export const TEST_CRON_SECRET = 'test-cron-secret-0123456789';
 export async function backupApp(
   options: {
     fixedCode?: string;
+    /** More addresses that get `fixedCode` (the local server's mock accounts). */
+    fixedCodeEmails?: readonly string[];
     mailer?: MemoryMailer;
     log?: ApiLog;
     cronSecret?: string | null;
@@ -90,6 +92,7 @@ export async function backupApp(
     baseURL: 'http://localhost:8787',
     mailer,
     fixedCode: options.fixedCode ?? null,
+    fixedCodeEmails: options.fixedCodeEmails,
   });
   const identity = new IdentityService(
     auth,
@@ -110,6 +113,7 @@ export async function backupApp(
     breached,
     clock,
     fixedCode: options.fixedCode ?? null,
+    fixedCodeEmails: options.fixedCodeEmails,
     log,
   });
   const app = createApp(

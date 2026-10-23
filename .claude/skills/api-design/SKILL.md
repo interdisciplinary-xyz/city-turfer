@@ -158,7 +158,11 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
 
 - **Local:** `pnpm --filter @cityturfer/api dev` (port 8787; `PORT=8788 …` for another). Without
   `DATABASE_URL` it uses PGlite in `apps/api/.data/` (gitignored, migrated on start); without
-  `API_TOKENS` and `DATABASE_URL` the token `dev-token` is user `admin` (never against Neon).
+  `API_TOKENS` and `DATABASE_URL` the token `dev-token` is user `admin` (never against Neon). On
+  PGlite the app's mock accounts exist too (`src/dev/mock-accounts.ts`): admin@cityturfer.com (user
+  `admin`) and demo@cityturfer.com (user `demo`, filled with the Gdańsk demo history from
+  `@cityturfer/core/demo` through the backup routes on first start) sign in with `000000`
+  (`AUTH_FIXED_CODE` defaults to it locally; production refuses it, so the list does nothing there).
 - **Env (Vercel):** `DATABASE_URL` (Neon pooled), optional `DATABASE_URL_UNPOOLED` (migrations),
   `BETTER_AUTH_SECRET`, `BREVO_API_KEY`, `MAIL_FROM`, `API_PUBLIC_URL`, `CRON_SECRET`, `API_TOKENS`,
   `WEB_ORIGIN` (the website, for browser sessions; unset on Vercel → off); `AUTH_FIXED_CODE` on

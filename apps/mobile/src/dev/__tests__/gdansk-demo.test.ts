@@ -1,10 +1,11 @@
+import { GDANSK_ROUTES } from '@cityturfer/core/demo';
+
 import type { User } from '@/contexts/identity';
 import { migrate } from '@/platform/migrations';
 import { openNodeDatabase } from '@/test-support/node-database';
 import { wire } from '@/wiring';
 
 import { prepareDemoAccount, seedGdanskDemo, trackAlongPath } from '../gdansk-demo';
-import data from '../gdansk-routes.json';
 
 function fakes() {
   let n = 0;
@@ -39,7 +40,7 @@ const GDANSK: [number, number, number, number] = [18.5, 54.3, 18.8, 54.45]; // [
 
 describe('Gdańsk demo account', () => {
   it('every route is a loop inside Gdańsk', () => {
-    for (const r of data.routes) {
+    for (const r of GDANSK_ROUTES) {
       for (const [lat, lon] of r.path) {
         expect(lon).toBeGreaterThan(GDANSK[0]);
         expect(lat).toBeGreaterThan(GDANSK[1]);
@@ -52,7 +53,7 @@ describe('Gdańsk demo account', () => {
   });
 
   it('a track follows its route at walking pace', () => {
-    const route = data.routes[0];
+    const route = GDANSK_ROUTES[0];
     const pts = trackAlongPath(route.path as [number, number][], 'walk', 0, 1);
     const minutes = (pts[pts.length - 1].t - pts[0].t) / 60_000;
     expect(minutes).toBeGreaterThan(route.distanceM / 1.6 / 60);
