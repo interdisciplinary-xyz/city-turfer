@@ -82,7 +82,8 @@
 }
 
 .app-header-home:focus-visible,
-.app-header-link:focus-visible {
+.app-header-link:focus-visible,
+.app-header-cta:focus-visible {
   outline: 2px solid var(--accent-text);
   outline-offset: 2px;
   border-radius: 8px;
@@ -118,6 +119,37 @@
 .app-header .app-header-link:hover,
 .app-header .app-header-link:focus-visible {
   color: var(--text);
+}
+
+/* "Create account": a quiet pill, so it reads as an action without outshouting the waitlist. Hidden
+   on phones, where the bar has no room; the sign-in page links to it. */
+.app-header .app-header-cta {
+  display: none;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--text);
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.55;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.app-header .app-header-cta:hover,
+.app-header .app-header-cta:focus-visible {
+  border-color: var(--text);
+}
+
+.app-header .app-header-link {
+  white-space: nowrap;
+}
+
+@media (min-width: 600px) {
+  .app-header .app-header-cta {
+    display: inline-block;
+  }
 }
 
 /* Phones get the short label ("Waitlist"); from 600px the full one. */

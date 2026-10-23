@@ -1,5 +1,5 @@
 import type { PortalError } from '@/api/errors';
-import type { SignInReason } from '@/api/next-path';
+import type { AuthMode, SignInReason } from '@/api/next-path';
 
 export type SignInStep = 'email' | 'code';
 
@@ -10,6 +10,10 @@ export type SignInFormProps = {
   onRequestCode: (email: string) => Promise<unknown>;
   /** `POST /v1/auth/sign-in`; resolves once signed in (the page then leaves), rejects with a PortalError. */
   onSignIn: (attempt: SignInAttempt) => Promise<unknown>;
+  /** `register`: "Create account" title, lede and button; same steps. Default `sign-in`. */
+  mode?: AuthMode;
+  /** The other page ("Create an account" from sign-in, "Sign in" from register); none: no link. */
+  switchHref?: string;
   /** Why the visitor landed here (`?reason=`), shown as a calm notice. */
   reason?: SignInReason | null;
   /** Start values, for stories. */

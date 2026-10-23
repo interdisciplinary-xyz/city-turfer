@@ -161,6 +161,10 @@
 }
 
 .portal-muted,
+.portal-switch {
+  margin: var(--space-lg) 0 0;
+}
+
 .portal-hint,
 .portal-fineprint {
   color: var(--muted);
