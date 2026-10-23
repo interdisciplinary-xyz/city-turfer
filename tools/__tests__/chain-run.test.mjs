@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { findCoordinates, summarisePending } from '../chain/run.mjs';
+import { findCoordinates, summarisePending, tail } from '../chain/run.mjs';
 
 test('findCoordinates flags degree-like numbers and leaves request lines alone', () => {
   const log = [
@@ -17,4 +17,9 @@ test('summarisePending lists each pending check with its server and reason', () 
   const jsonl = '{"server":"live API","check":"S1 turf cells","pending":"501"}\n';
   assert.deepEqual(summarisePending(jsonl), ['  - [live API] S1 turf cells: 501']);
   assert.deepEqual(summarisePending(''), []);
+});
+
+test('tail keeps the last lines of the API output', () => {
+  assert.equal(tail('a\nb\nc\nd', 2), 'c\nd');
+  assert.equal(tail('only', 40), 'only');
 });

@@ -59,17 +59,57 @@ async function waitForHealth(base, api) {
   throw new Error('the API did not answer /v1/health within 60 s');
 }
 
+/** The last lines of the API's output, for a start-up failure (no coordinates exist yet then). */
+export function tail(text, lines = 40) {
+  return text.split('\n').slice(-lines).join('\n');
+}
+
 async function main() {
   const work = mkdtempSync(path.join(tmpdir(), 'cityturfer-chain-'));
   const report = path.join(work, 'pending.jsonl');
+  let api = null;
+  let jest = null;
+  let stopped = false;
+  /** Stops the Jest and API process groups (pnpm → jest workers, pnpm → tsx → node) and removes the work folder. */
+  const cleanUp = () => {
+    if (stopped) {
+      return;
+    }
+    stopped = true;
+    // Both run under pnpm (and Jest has worker processes): stop each whole process group.
+    for (const child of [jest, api]) {
+      if (child?.pid && child.exitCode == null) {
+        try {
+          process.kill(-child.pid, 'SIGTERM');
+        } catch {
+          child.kill('SIGTERM');
+        }
+      }
+    }
+    rmSync(work, { recursive: true, force: true });
+  };
+  // Ctrl+C or a CI cancel: never leave an API with the fixed sign-in code running.
+  for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
+    process.once(signal, () => {
+      process.stderr.write(`chain: ${signal}, stopping Jest and the API\n`);
+      cleanUp();
+      process.exit(130);
+    });
+  }
+
   const port = await freePort();
   const base = `http://127.0.0.1:${port}`;
   let apiLog = '';
-
-  const env = { ...process.env, HOST: '127.0.0.1', PORT: String(port), PGLITE_DIR: 'memory', AUTH_FIXED_CODE: CODE };
+  const env = {
+    ...process.env,
+    API_HOST: '127.0.0.1',
+    PORT: String(port),
+    PGLITE_DIR: 'memory',
+    AUTH_FIXED_CODE: CODE,
+  };
   delete env.DATABASE_URL; // a chain run never touches a real database
   delete env.API_TOKENS;
-  const api = spawn('pnpm', ['--filter', '@cityturfer/api', 'exec', 'tsx', 'src/server.ts'], {
+  api = spawn('pnpm', ['--filter', '@cityturfer/api', 'exec', 'tsx', 'src/server.ts'], {
     cwd: ROOT,
     env,
     detached: true,
@@ -78,11 +118,17 @@ async function main() {
   api.stderr.on('data', (d) => (apiLog += d));
 
   let code = 1;
+  let pending = [];
   try {
-    await waitForHealth(base, api);
+    try {
+      await waitForHealth(base, api);
+    } catch (e) {
+      process.stderr.write(`chain: ${e.message}. The API's last output:\n${tail(apiLog)}\n`);
+      throw e;
+    }
     process.stdout.write(`chain: API on ${base} (PGlite in memory)\n`);
     code = await new Promise((resolve) => {
-      const jest = spawn(
+      jest = spawn(
         'pnpm',
         [
           '-C',
@@ -95,18 +141,19 @@ async function main() {
         {
           cwd: ROOT,
           stdio: 'inherit',
+          detached: true,
           env: { ...process.env, CITYTURFER_LIVE_API: base, CITYTURFER_LIVE_CODE: CODE, CHAIN_REPORT: report },
         }
       );
       jest.on('exit', (c) => resolve(c ?? 1));
     });
-  } finally {
-    // The API runs under pnpm and tsx: stop the whole process group, not just the wrapper.
     try {
-      process.kill(-api.pid, 'SIGTERM');
+      pending = summarisePending(readFileSync(report, 'utf8'));
     } catch {
-      api.kill('SIGTERM');
+      // no pending checks
     }
+  } finally {
+    cleanUp();
   }
 
   const leaks = findCoordinates(apiLog);
@@ -115,17 +162,14 @@ async function main() {
     code = code || 1;
   } else {
     process.stdout.write('chain: API log checked, no coordinates\n');
-  }
-  let pending = [];
-  try {
-    pending = summarisePending(readFileSync(report, 'utf8'));
-  } catch {
-    // no pending checks
+    if (code !== 0) {
+      // Checked above to hold no coordinates, so the API's own view of a failed run can be shown.
+      process.stderr.write(`chain: tests failed. The API's last output:\n${tail(apiLog)}\n`);
+    }
   }
   if (pending.length > 0) {
     process.stdout.write(`chain: ${pending.length} check(s) pending, not passed:\n${pending.join('\n')}\n`);
   }
-  rmSync(work, { recursive: true, force: true });
   process.exit(code);
 }
 
