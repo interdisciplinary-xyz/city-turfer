@@ -2,7 +2,8 @@
 // The website's dev server proxies https://cityturfer.local/api/* here.
 //
 // - With DATABASE_URL: the Neon database it names. Without: PGlite persisted in apps/api/.data/
-//   (gitignored), migrated on start.
+//   (gitignored), migrated on start; PGLITE_DIR=<folder> persists it there instead, and
+//   PGLITE_DIR=memory keeps it in memory (test runs that must not touch your dev data).
 // - With API_TOKENS: those device tokens. Without API_TOKENS and DATABASE_URL: one dev token,
 //   `dev-token`, for user `admin` on PGlite only (src/index.ts, the Vercel entry, has no fallback).
 // - Sign-in codes are printed here (ConsoleMailer), never e-mailed. On PGlite a dev
@@ -26,6 +27,14 @@ const DEV_TOKEN = 'dev-token';
 /** Local PGlite only: a published, worthless secret. */
 const DEV_AUTH_SECRET = 'cityturfer-local-dev-secret-not-for-deployments';
 
+/** Where the local PGlite database lives: apps/api/.data by default, undefined for memory. */
+function pgliteDir(value: string | undefined): string | undefined {
+  if (value === 'memory') {
+    return undefined;
+  }
+  return value ? path.resolve(value) : path.join(import.meta.dirname, '..', '.data', 'pglite');
+}
+
 const env = { ...process.env };
 const local = !env.DATABASE_URL;
 // The dev token only ever reaches the local PGlite database, never one DATABASE_URL names (Neon).
@@ -38,19 +47,26 @@ if (local && !env.BETTER_AUTH_SECRET) {
 }
 let db;
 if (local) {
-  const dataDir = path.join(import.meta.dirname, '..', '.data', 'pglite');
-  mkdirSync(dataDir, { recursive: true });
+  const dataDir = pgliteDir(env.PGLITE_DIR);
+  if (dataDir) {
+    mkdirSync(dataDir, { recursive: true });
+  }
   ({ db } = await createPgliteDb(dataDir));
 }
 // No network for the breach check here: the fake refuses DEV_BREACHED_PASSWORDS only.
 const deps = productionDeps(env, { db, mailer: consoleMailer, breached: new FakeBreachedPasswords() });
 
 const port = Number(process.env.PORT ?? LOCAL_API_PORT);
-serve({ fetch: createApp(deps).fetch, port }, (info) => {
+// API_HOST=127.0.0.1 keeps a test run (fixed sign-in code) off the local network. Not HOST: some
+// shells and CI images export that as the machine's name.
+const hostname = process.env.API_HOST;
+serve({ fetch: createApp(deps).fetch, port, hostname }, (info) => {
   const notes = [
-    local ? 'database: PGlite in apps/api/.data' : 'database: DATABASE_URL',
+    local ? `database: PGlite (${env.PGLITE_DIR ?? 'apps/api/.data'})` : 'database: DATABASE_URL',
     devToken ? `token: Bearer ${DEV_TOKEN} (user admin)` : env.API_TOKENS ? 'tokens: API_TOKENS' : 'no device tokens',
     deps.identity ? 'sign-in codes: printed here' : 'sign-in: off (set BETTER_AUTH_SECRET)',
   ];
-  process.stdout.write(`CityTurfer API on http://localhost:${info.port} (docs: /swagger; ${notes.join('; ')})\n`);
+  process.stdout.write(
+    `CityTurfer API on http://${hostname ?? 'localhost'}:${info.port} (docs: /swagger; ${notes.join('; ')})\n`
+  );
 });
