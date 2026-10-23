@@ -35,9 +35,7 @@
 
 .brand-wrap {
   width: 100%;
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 0 var(--space-lg);
+  padding: 0 var(--gutter);
 }
 
 /* ---------- Hero ---------- */

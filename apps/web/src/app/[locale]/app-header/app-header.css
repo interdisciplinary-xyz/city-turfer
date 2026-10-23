@@ -4,6 +4,16 @@
 
 :root {
   --header-h: 56px;
+  /* The page gutter of every page (landing, portal, /branding, the dev pages) and of this bar: content
+     runs the full page width with this side padding. Defined here because every page with the
+     header loads this file. */
+  --gutter: var(--space-lg);
+}
+
+@media (min-width: 600px) {
+  :root {
+    --gutter: 48px;
+  }
 }
 
 @media (min-width: 960px) {
@@ -46,7 +56,7 @@
   }
 }
 
-/* Full page width: 48px side padding from tablet width up, the usual gutter on phones. */
+/* Full page width with the page gutter (48px from tablet width up, 16px on phones). */
 .app-header-inner {
   display: flex;
   align-items: center;
@@ -55,13 +65,7 @@
   width: 100%;
   height: var(--header-h);
   margin: 0;
-  padding: 0 var(--space-lg);
-}
-
-@media (min-width: 600px) {
-  .app-header-inner {
-    padding: 0 48px;
-  }
+  padding: 0 var(--gutter);
 }
 
 /* The logo only shows once the page's own logo (the lockup) has left the screen. */
