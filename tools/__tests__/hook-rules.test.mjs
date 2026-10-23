@@ -698,6 +698,7 @@ test('read-only agents: inspection and test commands pass', () => {
     'pnpm exec turbo run typecheck test:unit --filter=@cityturfer/core',
     'pnpm exec prettier --check .claude',
     'pnpm run audit:harness',
+    'pnpm run audit:i18n',
     'pnpm test',
     'pnpm run typecheck',
     'pnpm --filter @cityturfer/api run test:unit',

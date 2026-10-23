@@ -72,6 +72,12 @@ not call `useT` reads `useLocale()` so it re-renders on a change (memoised rows:
 `extraData`). Units stay metric symbols in every language (`km`, `km/h`, `km²`); accessibility
 labels spell units out through the catalogue. `formatArea` keeps its grouping-free output.
 
+Counts in messages (`#` and plain `{n}` with a number) are formatted by ICU and **grouped**: "1,234
+workouts added", "1 234 treningów". That is correct in both languages and fine for counts nobody
+matches. Where a Maestro flow or a test matches the text (turf summary, turf gained), pass the
+number to the plural selector and a pre-formatted `fixed(n, 0)` string for the text:
+`{cellCount, plural, one {{cells} cell} other {{cells} cells}}`.
+
 ## Not translated
 
 - Code and domain terms (`cycle`, `Claim`, `Turf Cell`): only the catalogue translates (L9).
@@ -130,13 +136,22 @@ categories from CLDR, so it checks the new locale without changes.
 
 ```bash
 pnpm run audit:i18n                                   # keys, ICU, placeholders, plurals (in ci:quality)
-pnpm -C apps/mobile exec eslint <files>               # local-rules/no-raw-text, once switched on
+pnpm -C apps/mobile exec eslint <files>               # local-rules/no-raw-text (on for apps/mobile)
 pnpm -C apps/mobile exec jest src/i18n src/ui-kit     # locale resolution, translator, format.ts in en and pl
 pnpm -C apps/mobile exec expo-updates fingerprint:generate --platform ios   # unchanged: ships over the air
 ```
 
-Until step 2 switches the rule on, check a migrated file with
-`pnpm -C apps/mobile exec eslint --rule '{"local-rules/no-raw-text":"error"}' <files>`. Then run the
-Maestro language flow (`mobile-testing` skill) and look at the changed screens on the simulator in
-**both** languages: long Polish words on small screens, plurals at 1, 2, 5, 22 and 1,5. Never call a
-language done from the audit alone: Hermes plural rules show only on a simulator.
+Then run the Maestro language flow (`16-language`) (`mobile-testing` skill) and look at the changed
+screens on the simulator in **both** languages: long Polish words on small screens, plurals at 1, 2,
+5, 22 and 1,5. Never call a language done from the audit alone: Hermes plural rules show only on a
+simulator.
+
+Maestro pitfalls with a second language:
+
+- Every flow starts through `e2e/subflows/launch.yaml`; it matches the sign-in and onboarding texts
+  in **both** languages, so a run left in Polish still starts. Add the Polish text there when a
+  launch screen's copy changes.
+- The iOS back button is labelled by the OS in the app's language: tap `Back|Wstecz`
+  (`subflows/back.yaml`).
+- A flow that switches language ends with `onFlowComplete: reset-language.yaml`, so a failed assert
+  never leaves the simulator in Polish for the next flow.
