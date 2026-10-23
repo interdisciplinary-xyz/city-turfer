@@ -1,9 +1,10 @@
-import { newEmail } from '@cityturfer/core/identity';
+import { ACCOUNT_FIELD_ERRORS, newEmail } from '@cityturfer/core/identity';
 import { sql } from 'drizzle-orm';
 import { strFromU8, unzipSync } from 'fflate';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { ApiLog } from '../deps';
+import { PROBLEM_CODES } from '../errors';
 import { BREACH_CHECK_TIMEOUT_MS, HibpBreachedPasswords } from '../identity/breached-passwords';
 import { OneTimeCodes } from '../identity/codes';
 import { MemoryMailer } from '../identity/mailer';
@@ -54,6 +55,14 @@ async function stepUp(token: string, email = ANIA): Promise<string> {
 const wrong = (code: string) => (code === '000000' ? '111111' : '000000');
 
 const me = async (token: string) => (await h.call('GET', '/v1/me', { token })).json();
+
+describe('account field errors', () => {
+  it('answers every one of the core rules as a 422 problem (the clients map exactly this list)', () => {
+    for (const code of ACCOUNT_FIELD_ERRORS) {
+      expect(PROBLEM_CODES[code]?.status).toBe(422);
+    }
+  });
+});
 
 describe('GET and PATCH /v1/me: the name', () => {
   it('answers name null, no password, and the deprecated displayName falling back to the id', async () => {
