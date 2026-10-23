@@ -12,8 +12,6 @@
   /* Readable on light: faint to accent-text, like the light wordmark. No blazing, no near-white stops. */
   --ramp: linear-gradient(45deg, var(--faint), var(--accent-text));
   --radius: var(--radius-panel);
-  --gutter: var(--space-lg);
-  --max: 1080px;
   color-scheme: light;
   /* next/font sets --face-*; the brand variables from cssVariables() are the fallback stack. The
      weight is baked into each font, so never bold them (font-synthesis: none). */
@@ -121,10 +119,9 @@ img {
   display: block;
 }
 
+/* Full page width with the page gutter (--gutter, app-header.css), like the header. */
 .wrap {
   width: 100%;
-  max-width: var(--max);
-  margin: 0 auto;
   padding: 0 var(--gutter);
 }
 
@@ -134,7 +131,7 @@ img {
 }
 .skip:focus {
   left: var(--gutter);
-  top: var(--gutter);
+  top: var(--space-lg);
   background: var(--card);
   padding: 8px 12px;
   border-radius: 8px;
