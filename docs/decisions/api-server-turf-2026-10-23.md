@@ -9,21 +9,25 @@ scope:
     apps/api/src/db/schema.ts,
     apps/api/src/db/store.ts,
     apps/api/drizzle/0005_turf.sql,
+    apps/api/src/routes/territory.ts,
+    apps/api/src/schemas/territory.ts,
+    apps/api/scripts/turf-backfill.ts,
   ]
 summary:
   The server derives turf from uploaded tracks with core's own use cases, in the upload's locked
   transaction — tables turf_claims (cells as text[]) and turf_cells (per-type counts, canonical
   first claimer D4, COLLATE "C"), users.turf_version, no decay stored, future starts deferred,
-  export excluded for v0.10.0; phase 1 (projection), routes are phase 2
+  export excluded for v0.10.0; phase 2 serves it (contract 0.6.0) — every cell paged with a
+  version-bound cursor and ETag/304, summary, claims, activity totals — plus a resumable backfill
+  script and a bounded catch-up in the daily cron
 ---
 
-# Server turf projection (phase 1)
+# Server turf projection and reads
 
-The founder asked for server turf in v0.10.0 (so the web portal can show it). This record covers
-**phase 1**: the projection the server keeps. The turf routes (`/v1/turf/summary`, `/v1/turf/cells`,
-`/v1/turf/claims/{activityId}`), the backfill script, the catch-up in the retention cron, activity
-totals and contract 0.6.0 are phase 2. Plan: rn-architect, 2026-10-23. Closes D10 of
-`docs/decisions/api-sync-2026-10-20.md`.
+The founder asked for server turf in v0.10.0 (so the web portal can show it). **Phase 1** is the
+projection the server keeps (below); **phase 2** serves it (contract 0.6.0, "Reads"), backfills the
+activities uploaded before ("Backfill") and adds activity totals. Plan: rn-architect, 2026-10-23.
+Closes D10 of `docs/decisions/api-sync-2026-10-20.md`.
 
 ## What the server does
 
@@ -75,7 +79,7 @@ the phone and the API. They do **not** agree on a claim's "new" cells (`isNew`, 
 `newAreaKm2`): the phone fixes them at arrival and never revises them (a late `hk-…` walk that is
 older than everything: phone 0 new, D4 5; a same-instant tie: the phone credits the first arrival).
 A mobile test pins this as a known gap. **The web must take "new turf" from the server
-(`/v1/turf/claims/…`, phase 2), never assume it equals the phone's card.**
+(`/v1/turf/claims/…`), never assume it equals the phone's card.**
 
 ## Future starts (`claim.in-future`)
 
@@ -97,14 +101,68 @@ logged but the error class; the phone retries) — swallowing more would hide dr
 - **A stored projection, not lazy on read.** Reads (web turf map, summary) must be cheap and
   cacheable by version; a lazy backfill on the first read would run a user's whole history inside a
   GET (seconds on Vercel, cold starts) and race concurrent writes without the user lock. Backfill of
-  activities uploaded before this release is an explicit, resumable script (phase 2, run by the
-  founder) plus the bounded catch-up in the daily cron.
+  activities uploaded before this release is an explicit, resumable script (run by the founder) plus
+  the bounded catch-up in the daily cron.
 - **No events on the server.** `afterCommit` is a no-op and the Claim's `TurfClaimed` events are
   dropped: the server has no outbox and nothing subscribes.
 
 Rejected: a new `TurfStore` port (core's `TerritoryRepository` already fits); `first_at` kept from a
 deleted claim (the phone's old drift); storing strength or decay; lazy backfill on read; catching
 every turf error.
+
+## Reads (phase 2, contract 0.6.0)
+
+Routes in `apps/api/src/routes/territory.ts`, behind `requireCaller` (bearer or the website's
+cookie; reads need no CSRF headers), over `TurfService` (`apps/api/src/territory/turf-service.ts`):
+core's `ListTurfCells`, `GetTurfSummary` and `GetClaimForActivity` from `createTurfApi`, at the
+server's clock. Nothing is computed in the API but paging and tags.
+
+- **`GET /v1/turf/cells?cursor=&limit=`** — the web downloads **every** cell once and draws it
+  locally (the web portal plan: no viewport queries). Rows `[h3Id, walk, run, cycle]` by id (JS
+  order), pages of 20,000, at most 50,000 (~1.5 MB; a test keeps 50k under Vercel's 4.5 MB), answer
+  `{ turfVersion, total, cells, nextCursor }`. Visits, strength and tier derive from the counts with
+  core on the reader's side.
+- **Cursor** = base64url `{ v, c, o }`: turf version, the account's `createdAt` in base 36 and the
+  offset. **Never a cell id** (cursors land in URLs, proxy logs, browser history; cell ids are
+  location data). A cursor from another version, or another incarnation of the account (erased and
+  re-created: versions restart at 0), answers **`410 turf.changed`** — a new code rather than
+  `sync.cursor-expired`, whose remedy ("sync again without a cursor") belongs to the changes feed.
+  Malformed → 400.
+- **ETag** `"t<turfVersion>-<createdAt base 36>"`, `Cache-Control: private, no-cache`. The version
+  and `createdAt` are read **first**: `If-None-Match` naming them answers `304` without loading a
+  row. Reads take no lock: the tag is read again after the page, and a page whose version moved is
+  re-read (first page) or refused with `410` (later pages), so a page never mixes two versions.
+- **`GET /v1/turf/summary`** — `private, no-store` (new this week/month depend on now).
+- **`GET /v1/turf/claims/{activityId}`** — 404 `not-found` / 410 `activity.deleted` as every
+  activity route; 404 also when the activity has no claim (a deferred start, not backfilled); cells
+  `{ id, isNew }` sorted by id, "new" canonical (D4); `private, no-store`.
+- **`GET /v1/activity-totals`** — `{ allTime, byType }` of `{ count, distanceM, movingS }`, gap
+  estimates included, as the phone's `activityStats` (its `ActivityListItem.distanceM` is
+  `distance_m + estimated_m`, checked in `sqlite-activity-repository.ts`). The store sums recorded
+  and estimated apart; the use case adds them. **`GET /v1/activities`** gained `startedAfter`
+  (inclusive) and `startedBefore` (exclusive), cursor unchanged.
+
+Rejected: a cell-id keyset cursor (location data in URLs); `sync.cursor-expired` for turf; one
+response with every cell (50k+ users would pass 4.5 MB); a viewport (bbox) route (coordinates in
+URLs, and the web map wants everything anyway); an ETag on the summary (cheap, and time-dependent).
+
+## Backfill (phase 2)
+
+`backfillTurf` (`apps/api/src/territory/backfill.ts`), used by
+`pnpm --filter @cityturfer/api run turf:backfill -- [--user <id>] [--dry-run]` and by the daily
+retention cron. It lists users with unclaimed activities (anti-join, user ids in `COLLATE "C"`
+order), then per user calls `BackupService.catchUpTurf(userId, 1)` until nothing is left: one
+activity per locked transaction (one track in memory, no long lock), oldest first by
+`(started_at, id)`. Idempotent (a claimed activity is no longer unclaimed), resumable (stop any
+time), safe next to uploads (the user lock serialises them; an activity an upload claimed meanwhile
+just drops out). A user stops at the first deferred start (later starts are later still) or at a
+failure (error class reported, the run goes on with the next user). Output: counts only.
+
+The cron runs it with at most 25 attempts and ~60 s (`TURF_CATCH_UP_ACTIVITIES`, `TURF_CATCH_UP_MS`
+in `apps/api/src/routes/internal.ts`) after the purge; a failure never fails the purge. Known limit:
+users whose only unclaimed activities are deferred still take an attempt each per run, so in
+theory > 25 of them could starve later users for a day. Rollout order and the founder's production
+run: `docs/operations/api-deploy.md` ("Server turf").
 
 ## Export
 

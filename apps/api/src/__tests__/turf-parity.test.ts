@@ -3,8 +3,8 @@
  * (packages/core/src/contexts/territory/__fixtures__/turf-parity.json) replayed through the HTTP
  * upload, replace and delete routes give the golden projection — summary, every cell with its
  * counts and first time, and each claim's canonical "new" cells (D4). The phone and core assert the
- * same golden. Read through the use cases (`createTurfApi` over the repository): the turf routes
- * are phase 2. Runs twice: on PGlite's C collation and with linguistic id columns (as on Neon).
+ * same golden. Read through the use cases (`createTurfApi` over the repository) and through the
+ * routes (`/v1/turf/summary`, the paged `/v1/turf/cells`, `/v1/turf/claims/…`). Runs twice: on PGlite's C collation and with linguistic id columns (as on Neon).
  */
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -133,6 +133,39 @@ async function expectGolden() {
     });
     expect(Math.abs(v!.newAreaKm2 - claim.newAreaKm2)).toBeLessThan(1e-9);
   }
+  // The routes answer the same: the summary at the golden's now, the whole cell download (small
+  // pages, so the cursor is exercised), and each claim's numbers.
+  h.clock.t = expected.now;
+  const summary = (await (await h.call('GET', '/v1/turf/summary')).json()) as typeof s;
+  expect({ cellCount: summary.cellCount, strongCells: summary.strongCells, byType: summary.byType }).toEqual({
+    cellCount: g.cellCount,
+    strongCells: g.strongCells,
+    byType: g.byType,
+  });
+  for (const k of ['areaKm2', 'newThisWeekKm2', 'newThisMonthKm2'] as const) {
+    expect(Math.abs(summary[k] - g[k]), `route ${k}`).toBeLessThan(1e-9);
+  }
+  const downloaded: unknown[] = [];
+  let cursor: string | null = null;
+  do {
+    const res = await h.call('GET', `/v1/turf/cells?limit=4${cursor ? `&cursor=${cursor}` : ''}`);
+    expect(res.status).toBe(200);
+    const page = (await res.json()) as { cells: unknown[]; nextCursor: string | null; total: number };
+    expect(page.total).toBe(expected.cells.length);
+    downloaded.push(...page.cells);
+    cursor = page.nextCursor;
+  } while (cursor);
+  expect(downloaded).toEqual(expected.cells.map(([id, w, r, c]) => [id, w, r, c]));
+  for (const claim of expected.claims) {
+    const res = await h.call('GET', `/v1/turf/claims/${claim.activityId}`);
+    const v = (await res.json()) as { cellCount: number; newCellCount: number; newAreaKm2: number };
+    expect({ cellCount: v.cellCount, newCellCount: v.newCellCount }, `route ${claim.activityId}`).toEqual({
+      cellCount: claim.cellCount,
+      newCellCount: claim.newCellCount,
+    });
+    expect(Math.abs(v.newAreaKm2 - claim.newAreaKm2)).toBeLessThan(1e-9);
+  }
+
   // Only the surviving claims exist (the deleted activity's is gone).
   const result = await h.db.execute(sql`SELECT activity_id FROM turf_claims WHERE user_id = 'admin'`);
   const ids = (result as unknown as { rows: { activity_id: string }[] }).rows;

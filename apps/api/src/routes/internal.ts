@@ -2,11 +2,20 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 
 import type { OpenAPIHono } from '@hono/zod-openapi';
 
-import type { AppEnv } from '../deps';
+import { BackupService } from '../backup/use-cases';
+import type { ApiDeps, AppEnv } from '../deps';
 import { problem } from '../problem';
+import { type BackfillReport, backfillTurf } from '../territory/backfill';
 
 /** Vercel Cron calls this daily (apps/api/vercel.json `crons`); not part of the public contract. */
 export const RETENTION_CRON_PATH = '/internal/cron/retention';
+
+/**
+ * The daily turf catch-up's bounds: claim attempts and wall time per run. Deferred future starts
+ * and stragglers are few; the bulk backfill is `pnpm --filter @cityturfer/api run turf:backfill`.
+ */
+export const TURF_CATCH_UP_ACTIVITIES = 25;
+export const TURF_CATCH_UP_MS = 60_000;
 
 const digest = (s: string) => createHash('sha256').update(s).digest();
 
@@ -33,6 +42,37 @@ export function registerInternal(app: OpenAPIHono<AppEnv>): void {
     if (!retention) {
       return problem(c, 'storage.unavailable', 'No database is configured.');
     }
-    return c.json(await retention.purge(), 200);
+    const purged = await retention.purge();
+    return c.json({ ...purged, turf: await catchUpTurf(c.var.deps) }, 200);
   });
+}
+
+type CatchUp = Pick<BackfillReport, 'claimed' | 'deferred' | 'failed' | 'remaining'>;
+
+/**
+ * Claims the turf of a few activities without a claim (deferred future starts once due, anything
+ * the backfill missed), bounded by TURF_CATCH_UP_ACTIVITIES and TURF_CATCH_UP_MS. Never fails the
+ * retention run: an error logs its class and answers null. Counts only, in the answer and the log.
+ */
+async function catchUpTurf(deps: ApiDeps): Promise<CatchUp | null> {
+  const { store, grid, clock, log } = deps;
+  if (!store || !grid) {
+    return null;
+  }
+  try {
+    const report = await backfillTurf(
+      {
+        store,
+        backup: new BackupService(store, clock, grid),
+        onFailure: (error) => log.event?.({ msg: 'turf.catch-up-failed', error }),
+      },
+      { maxActivities: TURF_CATCH_UP_ACTIVITIES, deadlineAt: Date.now() + TURF_CATCH_UP_MS }
+    );
+    const { claimed, deferred, failed, remaining } = report;
+    log.event?.({ msg: 'turf.caught-up', claimed, deferred, failed, remaining, stopped: report.stopped });
+    return { claimed, deferred, failed, remaining };
+  } catch (e) {
+    log.event?.({ msg: 'turf.catch-up-failed', error: e instanceof Error ? e.name : 'unknown' });
+    return null;
+  }
 }

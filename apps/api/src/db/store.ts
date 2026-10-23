@@ -1,5 +1,5 @@
 import type { CellGrid } from '@cityturfer/core/territory/ports';
-import { and, asc, desc, eq, gt, inArray, like, lt, notInArray, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, gte, inArray, like, lt, notInArray, or, sql } from 'drizzle-orm';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 
 import type {
@@ -15,7 +15,7 @@ import type {
   TombstoneRecord,
   UserRecord,
 } from '../backup/model';
-import type { BackupStore, UserReader, UserWriter } from '../backup/ports';
+import type { ActivitySums, BackupStore, TurfBacklogEntry, UserReader, UserWriter } from '../backup/ports';
 import { emailChangePrefix } from '../identity/codes';
 import { DrizzleTerritoryRepository } from '../territory/drizzle-territory-repository';
 import type { TurfRepository } from '../territory/ports';
@@ -185,6 +185,8 @@ class UserScope implements UserWriter {
     limit: number;
     type?: ActivityTypeName;
     before?: { startedAt: number; id: string };
+    startedAfter?: number;
+    startedBefore?: number;
   }): Promise<ActivityRecord[]> {
     const before = q.before
       ? or(
@@ -195,10 +197,45 @@ class UserScope implements UserWriter {
     const rows = await this.db
       .select()
       .from(activities)
-      .where(and(eq(activities.userId, this.userId), q.type ? eq(activities.type, q.type) : undefined, before))
+      .where(
+        and(
+          eq(activities.userId, this.userId),
+          q.type ? eq(activities.type, q.type) : undefined,
+          q.startedAfter === undefined ? undefined : gte(activities.startedAt, new Date(q.startedAfter)),
+          q.startedBefore === undefined ? undefined : lt(activities.startedAt, new Date(q.startedBefore)),
+          before
+        )
+      )
       .orderBy(desc(activities.startedAt), desc(activities.id))
       .limit(q.limit);
     return rows.map(toActivity);
+  }
+
+  async activityTotals(): Promise<Partial<Record<ActivityTypeName, ActivitySums>>> {
+    // Sums only: the totals rule (recorded + estimated) is applied by the use case.
+    const rows = await this.db
+      .select({
+        type: activities.type,
+        count: sql<number>`count(*)::int`,
+        distanceM: sql<number>`coalesce(sum((${activities.summary}->>'distanceM')::float8), 0)::float8`,
+        estimatedDistanceM: sql<number>`coalesce(sum(${activities.estimatedDistanceM}), 0)::float8`,
+        movingS: sql<number>`coalesce(sum((${activities.summary}->>'movingS')::float8), 0)::float8`,
+        estimatedMovingS: sql<number>`coalesce(sum(${activities.estimatedMovingS}), 0)::float8`,
+      })
+      .from(activities)
+      .where(eq(activities.userId, this.userId))
+      .groupBy(activities.type);
+    const out: Partial<Record<ActivityTypeName, ActivitySums>> = {};
+    for (const r of rows) {
+      out[r.type as ActivityTypeName] = {
+        count: Number(r.count),
+        distanceM: Number(r.distanceM),
+        estimatedDistanceM: Number(r.estimatedDistanceM),
+        movingS: Number(r.movingS),
+        estimatedMovingS: Number(r.estimatedMovingS),
+      };
+    }
+    return out;
   }
 
   async changesSince(afterSeq: number, limit: number): Promise<ChangeRecord[]> {
@@ -367,6 +404,27 @@ class UserScope implements UserWriter {
   }
 }
 
+/** Users with activities that have no turf claim, with how many (`BackupStore.turfBacklog`; support counts). */
+export async function turfBacklog(
+  db: Db,
+  q: { limit: number; afterUserId?: string; userId?: string }
+): Promise<TurfBacklogEntry[]> {
+  // Ids in JS string order (COLLATE "C") so a resumed run continues where it stopped on Neon too.
+  const result = await db.execute(sql`
+    SELECT a.user_id AS "userId", count(*)::int AS unclaimed
+    FROM activities a
+    WHERE NOT EXISTS (SELECT 1 FROM turf_claims k WHERE k.user_id = a.user_id AND k.activity_id = a.id)
+      ${q.userId === undefined ? sql`` : sql`AND a.user_id = ${q.userId}`}
+      ${q.afterUserId === undefined ? sql`` : sql`AND a.user_id COLLATE "C" > ${q.afterUserId}`}
+    GROUP BY a.user_id
+    ORDER BY a.user_id COLLATE "C"
+    LIMIT ${q.limit}`);
+  return (result as unknown as { rows: TurfBacklogEntry[] }).rows.map((r) => ({
+    userId: r.userId,
+    unclaimed: Number(r.unclaimed),
+  }));
+}
+
 /** The BackupStore adapter over Drizzle. Queries always carry the user id (multi-tenant). */
 export class DrizzleBackupStore implements BackupStore {
   /** `grid`: Territory's CellGrid (H3 from src/wiring.ts), for the turf repository's areas and centroids. */
@@ -422,6 +480,10 @@ export class DrizzleBackupStore implements BackupStore {
           displayName: sql`coalesce(${users.displayName}, excluded.display_name)`,
         },
       });
+  }
+
+  turfBacklog(q: { limit: number; afterUserId?: string; userId?: string }): Promise<TurfBacklogEntry[]> {
+    return turfBacklog(this.db, q);
   }
 
   async ping(): Promise<boolean> {

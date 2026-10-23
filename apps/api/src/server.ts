@@ -9,8 +9,6 @@
 //   BETTER_AUTH_SECRET is used when none is set; AUTH_FIXED_CODE=000000 is the code for
 //   addresses @e2e.cityturfer.test only (sign-in, step-up and new-address codes).
 // - The breached-password check is a fake (no network): `password1234` counts as breached.
-import './node-require';
-
 import { createHash } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';

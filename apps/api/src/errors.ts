@@ -15,6 +15,7 @@ export const PROBLEM_CODES = {
   'not-found': { status: 404, title: 'Not found' },
   'activity.deleted': { status: 410, title: 'Activity was deleted' },
   'sync.cursor-expired': { status: 410, title: 'Sync cursor expired: sync again without a cursor' },
+  'turf.changed': { status: 410, title: 'Your turf changed while you paged it: download it again from the first page' },
   'export.gone': { status: 410, title: 'This download link was used or has expired' },
   'email.taken': { status: 409, title: 'This address belongs to another account' },
   'precondition-failed': { status: 412, title: 'The resource changed since your version' },

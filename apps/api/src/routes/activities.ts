@@ -9,6 +9,7 @@ import {
   ActivityListQuery,
   ActivityRename,
   ActivitySummary,
+  ActivityTotals,
   ActivityUpload,
   GapRoutesUpload,
   Track,
@@ -50,7 +51,7 @@ export function registerActivities(app: OpenAPIHono<AppEnv>): void {
       operationId: 'listActivities',
       summary: 'List activities',
       description:
-        'Newest first (`startedAt`, then id), paged with an opaque `cursor` (use case ListActivities). Deleted activities are not listed: sync clients read tombstones from `GET /v1/sync/changes`.',
+        'Newest first (`startedAt`, then id), paged with an opaque `cursor` (use case ListActivities); `startedAfter` (inclusive) and `startedBefore` (exclusive) narrow it to a time range — send them with every page. Deleted activities are not listed: sync clients read tombstones from `GET /v1/sync/changes`.',
       request: { query: ActivityListQuery },
       responses: {
         200: { description: 'A page of activities.', content: json(ActivityList) },
@@ -60,9 +61,34 @@ export function registerActivities(app: OpenAPIHono<AppEnv>): void {
     },
     async (c) => {
       const q = valid<z.infer<typeof ActivityListQuery>>(c, 'query');
-      const page = await c.var.backup.list(c.var.userId, q);
+      const page = await c.var.backup.list(c.var.userId, {
+        limit: q.limit,
+        cursor: q.cursor,
+        type: q.type,
+        startedAfter: q.startedAfter === undefined ? undefined : ms(q.startedAfter),
+        startedBefore: q.startedBefore === undefined ? undefined : ms(q.startedBefore),
+      });
       return c.json({ items: page.items.map(activitySummaryDto), nextCursor: page.nextCursor }, 200);
     }
+  );
+
+  defineRoute(
+    app,
+    {
+      status: 'live',
+      method: 'get',
+      path: '/v1/activity-totals',
+      tags: TAG,
+      operationId: 'getActivityTotals',
+      summary: 'Activity totals',
+      description:
+        "How many activities, how far and how long, all time and per type (use case ActivityTotals): what the phone's Stats tab shows, gap estimates included. Deleted activities do not count.",
+      responses: {
+        200: { description: 'The totals.', content: json(ActivityTotals) },
+        ...AUTH_ERRORS,
+      },
+    },
+    async (c) => c.json(await c.var.backup.totals(c.var.userId), 200)
   );
 
   defineRoute(

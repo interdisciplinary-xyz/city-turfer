@@ -5,8 +5,6 @@
 //   DATABASE_URL=… pnpm --filter @cityturfer/api run user:delete -- <userId> --yes    # erase
 // Takes the id only (find it with user:find), so a typo in an e-mail cannot pick another account.
 // Runbook: docs/operations/api-deploy.md ("Support requests").
-import '../src/node-require';
-
 import { H3CellGrid } from '@cityturfer/core/h3';
 
 import { BackupService } from '../src/backup/use-cases';

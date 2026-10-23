@@ -14,6 +14,7 @@
     "auth:adopt": "tsx scripts/auth-adopt.ts",
     "user:find": "tsx scripts/user-find.ts",
     "user:delete": "tsx scripts/user-delete.ts",
+    "turf:backfill": "tsx scripts/turf-backfill.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src scripts && redocly lint openapi.json --config redocly.yaml",
     "test:unit": "vitest run"

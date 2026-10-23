@@ -6,6 +6,7 @@ import type { AccountService } from './identity/account';
 import type { IdentityService } from './identity/use-cases';
 import type { RetentionService } from './privacy/retention';
 import type { ExportService } from './privacy/use-cases';
+import type { TurfService } from './territory/turf-service';
 
 /**
  * What the API needs from the outside, injected into `createApp(deps)`: tests pass PGlite and their
@@ -144,5 +145,7 @@ export interface AppEnv {
     /** Live data routes only (after `requireStore`): the verified user and the use cases. */
     userId: string;
     backup: BackupService;
+    /** Live data routes only: the turf reads. */
+    turf: TurfService;
   };
 }

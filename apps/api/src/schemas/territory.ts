@@ -7,47 +7,51 @@ import { ActivityType, BoundingBox, IsoDateTime, LonLat } from './common';
  * all of it from uploaded tracks with the shared core; phones never upload turf.
  */
 
-export const StrengthTier = z.enum(['faint', 'glowing', 'strong', 'blazing']).openapi('StrengthTier');
+/** Made up (not a real user's cell): an H3 res-11 index. */
+const CELL_EXAMPLE = '8b1f53cae5a3fff';
 
-export const TurfCell = z
-  .object({
-    id: z
-      .string()
-      .openapi({ description: 'H3 cell index (res 11, or coarser when aggregated).', example: '8b1f53cae5a3fff' }),
-    strength: z.number().min(0).max(1).openapi({ example: 0.63 }),
-    tier: StrengthTier,
-    visits: z.number().int().min(1).openapi({ example: 3 }),
-    centroid: LonLat,
-  })
-  .openapi('TurfCell', {
-    description: 'No polygon: clients draw the boundary from the H3 id (h3-js `cellToBoundary`).',
+export const TurfCellCounts = z
+  .tuple([z.string(), z.number().int().min(0), z.number().int().min(0), z.number().int().min(0)])
+  .openapi('TurfCellCounts', {
+    description:
+      'One Turf Cell: `[h3Id, walk, run, cycle]` — the H3 index (resolution 11) and how many activities of each type covered it. Visits = walk + run + cycle; strength (`1 − exp(−visits/3)`) and tier derive from visits with the Territory rules of the shared core, as on the phone. No polygon or centroid: draw the cell from its id (h3-js `cellToBoundary`).',
+    example: [CELL_EXAMPLE, 2, 1, 0],
   });
 
-export const TurfCells = z.object({ cells: z.array(TurfCell) }).openapi('TurfCells');
+export const TurfCells = z
+  .object({
+    turfVersion: z.number().int().min(0).openapi({
+      description: 'The version of the turf this page belongs to (+1 on every change).',
+      example: 42,
+    }),
+    total: z.number().int().min(0).openapi({ description: 'Cells in the whole download.', example: 1530 }),
+    cells: z.array(TurfCellCounts).openapi({ description: 'Sorted by cell id.' }),
+    nextCursor: z
+      .string()
+      .nullable()
+      .openapi({ description: 'Pass as `cursor` for the next page; null on the last page.', example: null }),
+  })
+  .openapi('TurfCells');
 
 export const TurfCellsQuery = z.object({
-  bbox: z
+  cursor: z
     .string()
-    .regex(/^-?\d+(\.\d+)?(,-?\d+(\.\d+)?){3}$/)
-    .openapi({
-      param: { name: 'bbox', in: 'query' },
-      description: 'west,south,east,north',
-      example: '20.85,52.12,21.17,52.34',
-    }),
-  zoom: z.coerce
-    .number()
-    .min(0)
-    .max(22)
-    .openapi({ param: { name: 'zoom', in: 'query' }, example: 13 }),
-  types: z
-    .string()
-    .regex(/^(walk|run|cycle)(,(walk|run|cycle))*$/)
+    .min(1)
+    .max(256)
     .optional()
     .openapi({
-      param: { name: 'types', in: 'query' },
-      description: 'Comma-separated; all when omitted.',
-      example: 'walk,run',
+      param: { name: 'cursor', in: 'query' },
+      description:
+        'Opaque: `nextCursor` of the previous page; omit for the first. Bound to a turf version: after a change it answers `410 turf.changed`.',
+      example: 'eyJ2Ijo0MiwiYyI6Im1nemhmZzAwIiwibyI6MjAwMDB9',
     }),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(50_000)
+    .default(20_000)
+    .openapi({ param: { name: 'limit', in: 'query' }, description: 'Cells per page.', example: 20_000 }),
 });
 
 export const TurfSummary = z
@@ -67,7 +71,9 @@ export const Claim = z
     cellCount: z.number().int().openapi({ example: 412 }),
     newCellCount: z.number().int().openapi({ example: 37 }),
     newAreaKm2: z.number().openapi({ example: 0.07 }),
-    cells: z.array(z.object({ id: z.string().openapi({ example: '8b1f53cae5a3fff' }), isNew: z.boolean() })),
+    cells: z
+      .array(z.object({ id: z.string().openapi({ example: CELL_EXAMPLE }), isNew: z.boolean() }))
+      .openapi({ description: 'Sorted by cell id.' }),
   })
   .openapi('Claim', {
     description:

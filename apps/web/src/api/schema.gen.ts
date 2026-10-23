@@ -373,9 +373,29 @@ export interface paths {
     };
     /**
      * List activities
-     * @description Newest first (`startedAt`, then id), paged with an opaque `cursor` (use case ListActivities). Deleted activities are not listed: sync clients read tombstones from `GET /v1/sync/changes`.
+     * @description Newest first (`startedAt`, then id), paged with an opaque `cursor` (use case ListActivities); `startedAfter` (inclusive) and `startedBefore` (exclusive) narrow it to a time range — send them with every page. Deleted activities are not listed: sync clients read tombstones from `GET /v1/sync/changes`.
      */
     get: operations['listActivities'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/activity-totals': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Activity totals
+     * @description How many activities, how far and how long, all time and per type (use case ActivityTotals): what the phone's Stats tab shows, gap estimates included. Deleted activities do not count.
+     */
+    get: operations['getActivityTotals'];
     put?: never;
     post?: never;
     delete?: never;
@@ -473,8 +493,8 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * [planned] Turf summary
-     * @description Area, cells, strong cells, new in the last 7 and 30 days (rolling, time-zone free), cells per type (use case GetTurfSummary).
+     * Turf summary
+     * @description Area, cells, strong cells, new in the last 7 and 30 days (rolling, at the server's now, time-zone free), cells per type (use case GetTurfSummary). Recomputed by the server from uploaded tracks; activities not claimed yet (a start in the future, not backfilled) do not count. `Cache-Control: private, no-store`.
      */
     get: operations['getTurfSummary'];
     put?: never;
@@ -493,8 +513,11 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * [planned] Turf cells in a viewport
-     * @description Cells in the bounding box (padded 10%), aggregated to coarser cells past 5,000 features (use case GetTurfInViewport). Cells come without polygons: draw them from the H3 id.
+     * Download every Turf Cell
+     * @description Every Turf Cell of the user with its visits per type, sorted by cell id, a page at a time (use case ListTurfCells): the web map downloads the whole turf once and draws it locally. No bounding box and no coordinates in the URL — only an opaque cursor.
+     *
+     *     - **Pages:** follow `nextCursor` until null. The cursor is bound to `turfVersion`: if the turf changes meanwhile (an upload, a delete), the next page answers `410 turf.changed` — start again without a cursor.
+     *     - **Caching:** `ETag` names the turf version; send it as `If-None-Match` to get `304` (no body) when nothing changed. `Cache-Control: private, no-cache`.
      */
     get: operations['getTurfCells'];
     put?: never;
@@ -513,8 +536,8 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * [planned] Turf claimed by an activity
-     * @description Cells the activity covered and which were new (use case GetClaimForActivity). The Claim is a Territory aggregate keyed by the activity id.
+     * Turf claimed by an activity
+     * @description Cells the activity covered and which were new (use case GetClaimForActivity). The Claim is a Territory aggregate keyed by the activity id. "New" is canonical (decision D4: the earliest `(startedAt, activityId)` that covers a cell) and can differ from the phone's card, which counts in arrival order. `404 not-found` also when the activity has no claim yet (a start in the future, not backfilled); `410 activity.deleted` after a delete. `Cache-Control: private, no-store`.
      */
     get: operations['getClaim'];
     put?: never;
@@ -558,7 +581,7 @@ export interface components {
       status: 'ok';
       /**
        * @description Version of the API contract.
-       * @example 0.5.0
+       * @example 0.6.0
        */
       version: string;
       /**
@@ -604,6 +627,7 @@ export interface components {
       | 'not-found'
       | 'activity.deleted'
       | 'sync.cursor-expired'
+      | 'turf.changed'
       | 'export.gone'
       | 'email.taken'
       | 'precondition-failed'
@@ -1100,6 +1124,29 @@ export interface components {
      *     ]
      */
     LonLat: [number, number];
+    /** @description Every activity on the server, as the phone's Stats tab counts them: distance and moving time include the street estimates across GPS gaps. */
+    ActivityTotals: {
+      allTime: components['schemas']['Totals'];
+      byType: {
+        walk: components['schemas']['Totals'];
+        run: components['schemas']['Totals'];
+        cycle: components['schemas']['Totals'];
+      };
+    };
+    Totals: {
+      /** @example 42 */
+      count: number;
+      /**
+       * @description Recorded + estimated over GPS gaps.
+       * @example 210400
+       */
+      distanceM: number;
+      /**
+       * @description Recorded + estimated moving time.
+       * @example 71250
+       */
+      movingS: number;
+    };
     ActivityUpload: {
       type: components['schemas']['ActivityType'];
       /**
@@ -1288,24 +1335,34 @@ export interface components {
       };
     };
     TurfCells: {
-      cells: components['schemas']['TurfCell'][];
-    };
-    /** @description No polygon: clients draw the boundary from the H3 id (h3-js `cellToBoundary`). */
-    TurfCell: {
       /**
-       * @description H3 cell index (res 11, or coarser when aggregated).
-       * @example 8b1f53cae5a3fff
+       * @description The version of the turf this page belongs to (+1 on every change).
+       * @example 42
        */
-      id: string;
-      /** @example 0.63 */
-      strength: number;
-      tier: components['schemas']['StrengthTier'];
-      /** @example 3 */
-      visits: number;
-      centroid: components['schemas']['LonLat'];
+      turfVersion: number;
+      /**
+       * @description Cells in the whole download.
+       * @example 1530
+       */
+      total: number;
+      /** @description Sorted by cell id. */
+      cells: components['schemas']['TurfCellCounts'][];
+      /**
+       * @description Pass as `cursor` for the next page; null on the last page.
+       * @example null
+       */
+      nextCursor: string | null;
     };
-    /** @enum {string} */
-    StrengthTier: 'faint' | 'glowing' | 'strong' | 'blazing';
+    /**
+     * @description One Turf Cell: `[h3Id, walk, run, cycle]` — the H3 index (resolution 11) and how many activities of each type covered it. Visits = walk + run + cycle; strength (`1 − exp(−visits/3)`) and tier derive from visits with the Territory rules of the shared core, as on the phone. No polygon or centroid: draw the cell from its id (h3-js `cellToBoundary`).
+     * @example [
+     *       "8b1f53cae5a3fff",
+     *       2,
+     *       1,
+     *       0
+     *     ]
+     */
+    TurfCellCounts: [string, number, number, number];
     /** @description The cells one activity covered. A cell is *new* for the claim with the earliest `(startedAt, activityId)` that covers it (decision D4), so the answer does not depend on upload order; it can change when an older activity arrives later. */
     Claim: {
       /** @example 3f9c2a64-5d1e-4b8e-9a51-0c7d2e6f1b20 */
@@ -1316,6 +1373,7 @@ export interface components {
       newCellCount: number;
       /** @example 0.07 */
       newAreaKm2: number;
+      /** @description Sorted by cell id. */
       cells: {
         /** @example 8b1f53cae5a3fff */
         id: string;
@@ -2745,6 +2803,10 @@ export interface operations {
         /** @description Opaque: pass `nextCursor` of the previous page. Omit for the first page. */
         cursor?: string;
         type?: components['schemas']['ActivityType'];
+        /** @description Only activities with `startedAt` at or after this time (inclusive). */
+        startedAfter?: string;
+        /** @description Only activities with `startedAt` before this time (exclusive). */
+        startedBefore?: string;
       };
       header?: never;
       path?: never;
@@ -2768,6 +2830,56 @@ export interface operations {
         };
         content: {
           'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description Too many requests: wait `Retry-After` seconds. Codes: `rate-limited`. */
+      429: {
+        headers: {
+          'Retry-After': components['headers']['RetryAfter'];
+          RateLimit: components['headers']['RateLimit'];
+          'RateLimit-Policy': components['headers']['RateLimitPolicy'];
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description No database configured or reachable: retry later. Codes: `storage.unavailable`. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+    };
+  };
+  getActivityTotals: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The totals. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ActivityTotals'];
         };
       };
       /** @description Missing or invalid bearer token or session cookie; checked before the input. With the cookie, the answer also clears it. Codes: `auth.missing`, `auth.invalid`. */
@@ -3429,8 +3541,8 @@ export interface operations {
           'application/problem+json': components['schemas']['Problem'];
         };
       };
-      /** @description Planned route, not implemented yet. Codes: `not-implemented`. */
-      501: {
+      /** @description No database configured or reachable: retry later. Codes: `storage.unavailable`. */
+      503: {
         headers: {
           [name: string]: unknown;
         };
@@ -3442,27 +3554,38 @@ export interface operations {
   };
   getTurfCells: {
     parameters: {
-      query: {
-        /** @description west,south,east,north */
-        bbox: string;
-        zoom?: number | null;
-        /** @description Comma-separated; all when omitted. */
-        types?: string;
+      query?: {
+        /** @description Opaque: `nextCursor` of the previous page; omit for the first. Bound to a turf version: after a change it answers `410 turf.changed`. */
+        cursor?: string;
+        /** @description Cells per page. */
+        limit?: number;
       };
-      header?: never;
+      header?: {
+        /** @description An `ETag` of this route. */
+        'If-None-Match'?: string;
+      };
       path?: never;
       cookie?: never;
     };
     requestBody?: never;
     responses: {
-      /** @description The cells. */
+      /** @description A page of cells. */
       200: {
         headers: {
+          ETag: components['headers']['ETag'];
           [name: string]: unknown;
         };
         content: {
           'application/json': components['schemas']['TurfCells'];
         };
+      };
+      /** @description Not modified since the `If-None-Match` version. */
+      304: {
+        headers: {
+          ETag: components['headers']['ETag'];
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       /** @description Invalid input. Codes: `invalid-request`. */
       400: {
@@ -3482,6 +3605,15 @@ export interface operations {
           'application/problem+json': components['schemas']['Problem'];
         };
       };
+      /** @description The turf changed since this cursor: start again without one. Codes: `turf.changed`. */
+      410: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
       /** @description Too many requests: wait `Retry-After` seconds. Codes: `rate-limited`. */
       429: {
         headers: {
@@ -3494,8 +3626,8 @@ export interface operations {
           'application/problem+json': components['schemas']['Problem'];
         };
       };
-      /** @description Planned route, not implemented yet. Codes: `not-implemented`. */
-      501: {
+      /** @description No database configured or reachable: retry later. Codes: `storage.unavailable`. */
+      503: {
         headers: {
           [name: string]: unknown;
         };
@@ -3543,8 +3675,17 @@ export interface operations {
           'application/problem+json': components['schemas']['Problem'];
         };
       };
-      /** @description No claim with this id for this user. Codes: `not-found`. */
+      /** @description No activity with this id for this user, or no claim for it yet. Codes: `not-found`. */
       404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['Problem'];
+        };
+      };
+      /** @description The activity was deleted (delete wins; no undelete). Codes: `activity.deleted`. */
+      410: {
         headers: {
           [name: string]: unknown;
         };
@@ -3564,8 +3705,8 @@ export interface operations {
           'application/problem+json': components['schemas']['Problem'];
         };
       };
-      /** @description Planned route, not implemented yet. Codes: `not-implemented`. */
-      501: {
+      /** @description No database configured or reachable: retry later. Codes: `storage.unavailable`. */
+      503: {
         headers: {
           [name: string]: unknown;
         };

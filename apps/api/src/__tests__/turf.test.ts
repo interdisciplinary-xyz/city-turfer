@@ -475,9 +475,11 @@ describe('privacy', () => {
     expect(text).not.toMatch(/21\.01|52\.2/);
   });
 
-  it('the turf routes (planned until phase 2) answer no Turf Cell id', async () => {
+  it('the turf summary answers no Turf Cell id', async () => {
+    await grant();
+    await putOk('a1', body(line({})));
     const res = await h.call('GET', '/v1/turf/summary');
-    expect([200, 501]).toContain(res.status);
+    expect(res.status).toBe(200);
     expect(await res.text()).not.toMatch(H3_ID);
   });
 });

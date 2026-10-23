@@ -6,6 +6,7 @@ import { BackupService } from './backup/use-cases';
 import type { AppEnv, Credential } from './deps';
 import { problem } from './problem';
 import { SESSION_COOKIE, SESSION_COOKIE_ATTRIBUTES } from './session-cookie';
+import { TurfService } from './territory/turf-service';
 
 /** Vercel Functions take request bodies up to 4.5 MB; refuse bigger ones before reading them. */
 export const MAX_BODY_BYTES = 4_500_000;
@@ -253,5 +254,6 @@ export const requireStore: MiddlewareHandler<AppEnv> = async (c, next) => {
   }
   c.set('userId', userId);
   c.set('backup', new BackupService(store, deps.clock, grid));
+  c.set('turf', new TurfService(store, deps.clock, grid));
   return next();
 };

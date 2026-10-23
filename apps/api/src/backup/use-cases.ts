@@ -1,6 +1,7 @@
 import { catalogueCityView } from '@cityturfer/core/territory';
 import type { CellGrid } from '@cityturfer/core/territory/ports';
 
+import { decodeCursor, encodeCursor } from '../cursor';
 import { TurfProjection } from '../territory/projection';
 import { AppError } from './app-error';
 import { contentHashOf, trackHashOf } from './hashing';
@@ -56,7 +57,7 @@ async function requireConsent(reader: UserReader, purpose: ConsentPurposeName): 
 }
 
 /** The activity, or 404 when the user never had it and 410 when it was deleted. */
-async function existingActivity(reader: UserReader, id: string): Promise<ActivityRecord> {
+export async function existingActivity(reader: UserReader, id: string): Promise<ActivityRecord> {
   const activity = await reader.activity(id);
   if (activity) {
     return activity;
@@ -74,6 +75,13 @@ export interface UploadInput {
   resumedSegments: number[] | null;
   trackHash?: string;
   points: CompactPoint[];
+}
+
+/** Count, distance (m) and moving time (s) of a set of activities, gap estimates included. */
+export interface Totals {
+  count: number;
+  distanceM: number;
+  movingS: number;
 }
 
 export class BackupService {
@@ -331,21 +339,55 @@ export class BackupService {
     return { activity, points };
   }
 
+  /**
+   * ListActivities, newest first. `startedAfter` (inclusive) and `startedBefore` (exclusive) bound
+   * `startedAt`; the cursor is the same as without them (send the same filters with every page).
+   */
   async list(
     userId: string,
-    q: { limit: number; type?: ActivityTypeName; cursor?: string }
+    q: { limit: number; type?: ActivityTypeName; cursor?: string; startedAfter?: number; startedBefore?: number }
   ): Promise<{ items: ActivityRecord[]; nextCursor: string | null }> {
     const before = q.cursor ? (decodeCursor(q.cursor, isListPosition) ?? undefined) : undefined;
     if (q.cursor && !before) {
       throw new AppError('invalid-request');
     }
-    const rows = await this.store.read(userId).listActivities({ limit: q.limit + 1, type: q.type, before });
+    const rows = await this.store.read(userId).listActivities({
+      limit: q.limit + 1,
+      type: q.type,
+      before,
+      startedAfter: q.startedAfter,
+      startedBefore: q.startedBefore,
+    });
     const items = rows.slice(0, q.limit);
     const last = items.at(-1);
     return {
       items,
       nextCursor: rows.length > q.limit && last ? encodeCursor({ startedAt: last.startedAt, id: last.id }) : null,
     };
+  }
+
+  /**
+   * ActivityTotals: count, distance and moving time of every activity, all time and per type. As
+   * the phone's Stats tab (`activityStats`): distance and moving time include the street estimates
+   * across GPS gaps.
+   */
+  async totals(userId: string): Promise<{ allTime: Totals; byType: Record<ActivityTypeName, Totals> }> {
+    const sums = await this.store.read(userId).activityTotals();
+    const byType = {} as Record<ActivityTypeName, Totals>;
+    const allTime: Totals = { count: 0, distanceM: 0, movingS: 0 };
+    for (const type of ['walk', 'run', 'cycle'] as const) {
+      const s = sums[type];
+      const t: Totals = {
+        count: s?.count ?? 0,
+        distanceM: (s?.distanceM ?? 0) + (s?.estimatedDistanceM ?? 0),
+        movingS: (s?.movingS ?? 0) + (s?.estimatedMovingS ?? 0),
+      };
+      byType[type] = t;
+      allTime.count += t.count;
+      allTime.distanceM += t.distanceM;
+      allTime.movingS += t.movingS;
+    }
+    return { allTime, byType };
   }
 
   // ------------------------------------------------------------------ Sync
@@ -469,16 +511,3 @@ const isListPosition = (v: unknown): v is { startedAt: number; id: string } =>
 
 const isFeedPosition = (v: unknown): v is { seq: number } =>
   !!v && typeof v === 'object' && Number.isSafeInteger((v as { seq?: unknown }).seq) && (v as { seq: number }).seq >= 0;
-
-function encodeCursor(value: object): string {
-  return Buffer.from(JSON.stringify(value), 'utf8').toString('base64url');
-}
-
-function decodeCursor<T>(cursor: string, guard: (v: unknown) => v is T): T | null {
-  try {
-    const value: unknown = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'));
-    return guard(value) ? value : null;
-  } catch {
-    return null;
-  }
-}

@@ -11,6 +11,21 @@ import type {
   UserRecord,
 } from './model';
 
+/** Sums over a set of activities: recorded (the core's summary) and estimated over GPS gaps, apart. */
+export interface ActivitySums {
+  count: number;
+  distanceM: number;
+  estimatedDistanceM: number;
+  movingS: number;
+  estimatedMovingS: number;
+}
+
+/** A user whose activities are not all claimed yet, with how many are not. */
+export interface TurfBacklogEntry {
+  userId: string;
+  unclaimed: number;
+}
+
 /** Reads scoped to one user: every query filters on the user id (object-level authorisation). */
 export interface UserReader {
   /**
@@ -34,7 +49,13 @@ export interface UserReader {
     limit: number;
     type?: ActivityTypeName;
     before?: { startedAt: number; id: string };
+    /** `startedAt >= startedAfter` (epoch ms). */
+    startedAfter?: number;
+    /** `startedAt < startedBefore` (epoch ms). */
+    startedBefore?: number;
   }): Promise<ActivityRecord[]>;
+  /** Per type: how many activities, and the sums of their recorded and estimated distance and moving time. */
+  activityTotals(): Promise<Partial<Record<ActivityTypeName, ActivitySums>>>;
   /** Activities, tombstones and the Home City whose change seq is above `afterSeq`, in seq order. */
   changesSince(afterSeq: number, limit: number): Promise<ChangeRecord[]>;
   /** The user's change counter (highest seq handed out). */
@@ -86,4 +107,9 @@ export interface BackupStore {
   ensureUser(user: UserRecord): Promise<void>;
   /** True when the database answers. */
   ping(): Promise<boolean>;
+  /**
+   * Users with activities that have no turf claim (backfill, catch-up), by user id (JS order), at
+   * most `limit`, after `afterUserId`; only `userId` when given. Counts only, across users.
+   */
+  turfBacklog(q: { limit: number; afterUserId?: string; userId?: string }): Promise<TurfBacklogEntry[]>;
 }

@@ -1,5 +1,6 @@
 // Support: looks an account up by id or e-mail and prints what support may see — id, e-mails,
-// createdAt, counts, last activity time, consents. No coordinates, tracks or activity names.
+// createdAt, counts (turf claims and unclaimed activities too), last activity time, consents. No
+// coordinates, tracks, cell ids or activity names.
 //   DATABASE_URL=… pnpm --filter @cityturfer/api run user:find -- <userId|email>
 // Runbook: docs/operations/api-deploy.md ("Support requests").
 import { findAccount } from '../src/db/support';
@@ -16,6 +17,7 @@ try {
   const account = await findAccount(db, query);
   if (account) {
     console.log(JSON.stringify(account, null, 2));
+    console.log(`turf: ${account.turf.claims} claims, ${account.turf.unclaimedActivities} activities unclaimed`);
   } else {
     console.error(`No account with that id or e-mail (${where}).`);
     process.exitCode = 1;

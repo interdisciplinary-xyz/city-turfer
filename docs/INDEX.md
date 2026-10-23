@@ -67,8 +67,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   publish it to the website download link, test it on an emulator
 - ✅ [`operations/api-deploy.md`](operations/api-deploy.md): Deploy the CityTurfer API — Vercel
   project city-turfer-api (apps/api, fra1), production branch, env vars (Neon, Better Auth, Brevo,
-  cron), migrations before the merge, the daily retention cron, adopting the admin data, device
-  tokens, support requests (find, delete), checking health
+  cron), migrations before the merge, the server turf rollout (migrate 0005, deploy, turf:backfill,
+  then the web map), the daily retention cron with its turf catch-up, adopting the admin data,
+  device tokens, support requests (find, delete), checking health
 - ✅ [`operations/apple-health.md`](operations/apple-health.md): Install the Apple Health build on
   the iPhone and check import and export with real data
 - ❔ [`operations/observability.md`](operations/observability.md): _no frontmatter_
@@ -152,7 +153,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   server derives turf from uploaded tracks with core's own use cases, in the upload's locked
   transaction — tables turf_claims (cells as text[]) and turf_cells (per-type counts, canonical
   first claimer D4, COLLATE "C"), users.turf_version, no decay stored, future starts deferred,
-  export excluded for v0.10.0; phase 1 (projection), routes are phase 2
+  export excluded for v0.10.0; phase 2 serves it (contract 0.6.0) — every cell paged with a
+  version-bound cursor and ETag/304, summary, claims, activity totals — plus a resumable backfill
+  script and a bounded catch-up in the daily cron
 - ✅ [`decisions/api-sync-2026-10-20.md`](decisions/api-sync-2026-10-20.md): Sync-first v1 API
   contract — the phone pushes Activities (versions, ETags, If-Match, tombstones) and pulls one
   changes feed; route table, sync protocol, error catalogue and the founder's decisions D1–D13;
