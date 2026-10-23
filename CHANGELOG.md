@@ -2,6 +2,120 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.9.0...v0.10.0) (2026-10-23)
+
+
+### Features
+
+* **achievements:** twenty achievements in five groups ([7facea1](https://github.com/interdisciplinary-xyz/city-turfer/commit/7facea1adc0e5635d7a3f0937e9e284dd0294a4c))
+* **admin:** brand the Payload admin UI ([670a1e8](https://github.com/interdisciplinary-xyz/city-turfer/commit/670a1e884aef767865cc8cbcdc2d02716e007e15))
+* **admin:** scaffold the staff admin portal on Payload CMS 3 ([ad6c58d](https://github.com/interdisciplinary-xyz/city-turfer/commit/ad6c58d6db530770abab03b99837cbe295bcc466))
+* **admin:** street plate typefaces in the admin theme ([d6a1371](https://github.com/interdisciplinary-xyz/city-turfer/commit/d6a1371139125c089ab9bc526a116aa262e038de)), closes [#140](https://github.com/interdisciplinary-xyz/city-turfer/issues/140)
+* **api:** light code blocks in Swagger UI (idea theme) ([dd1d8c1](https://github.com/interdisciplinary-xyz/city-turfer/commit/dd1d8c146701edca0f20dc3df9ce38fee9ea909d))
+* **api:** mock accounts on the local dev server ([a9e831e](https://github.com/interdisciplinary-xyz/city-turfer/commit/a9e831e60e5d3dd4b419fe42075eb2e6a0ad14a9))
+* **api:** server turf projection filled in the upload transaction ([a561b95](https://github.com/interdisciplinary-xyz/city-turfer/commit/a561b95256937f15294dad15cab0328be585e914))
+* **api:** turf routes, activity totals and the turf backfill (contract 0.6.0) ([2ae72b6](https://github.com/interdisciplinary-xyz/city-turfer/commit/2ae72b6b237fc7cf4a68b878532e1082df21fcc6))
+* **app:** activity types and turf tiers in the common catalogue ([cbdfffa](https://github.com/interdisciplinary-xyz/city-turfer/commit/cbdfffa1386c059eafd3f1788a9387ca9d6faab6))
+* **app:** bundle and use the street plate typefaces ([10e85c0](https://github.com/interdisciplinary-xyz/city-turfer/commit/10e85c0ec8546638ac14a3258c1b23a9bec02eec))
+* **app:** every screen in English and Polish ([a7f7667](https://github.com/interdisciplinary-xyz/city-turfer/commit/a7f766783a19eb2193429649ef20ee55f13bf770))
+* **app:** i18n foundation, Language setting and Polish number formats ([926bb6c](https://github.com/interdisciplinary-xyz/city-turfer/commit/926bb6c54b756192000354f56be35edce9457133))
+* **brand:** bold wordmark and an italic tagline face ([bfad381](https://github.com/interdisciplinary-xyz/city-turfer/commit/bfad381ba0783f0f8969de54a6cce425bc8e4a28))
+* **brand:** light palette for the website with AA contrast tokens ([f62cddf](https://github.com/interdisciplinary-xyz/city-turfer/commit/f62cddf95eeb0eec59db9e4c4a120b9718675be9)), closes [#5A6375](https://github.com/interdisciplinary-xyz/city-turfer/issues/5A6375) [#C92A33](https://github.com/interdisciplinary-xyz/city-turfer/issues/C92A33)
+* **brand:** redraw the wordmark in big shoulders display ([a7eb1a8](https://github.com/interdisciplinary-xyz/city-turfer/commit/a7eb1a8bcd582190d14079a8193d098f9b32dfb6))
+* **brand:** street plate typefaces (big shoulders display + barlow) ([8ae447c](https://github.com/interdisciplinary-xyz/city-turfer/commit/8ae447ce00f3d5f71a6fb44e5977189c49983280))
+* **claude:** add qa-engineer agent for release qa and acceptance testing ([ee1aca9](https://github.com/interdisciplinary-xyz/city-turfer/commit/ee1aca93cbf4affe7cbd17f2186da7ef2fcf0f31))
+* **core:** default activity names and city search take words from the caller ([50cfe32](https://github.com/interdisciplinary-xyz/city-turfer/commit/50cfe326e946e46ffbab07adc913028ca47baac0))
+* **identity:** account settings API (contract 0.5.0) ([f852f9c](https://github.com/interdisciplinary-xyz/city-turfer/commit/f852f9cd1e751735c1f994fa8ca90ab75e15458c))
+* **identity:** account settings plan, decision record and shared field rules ([d66da47](https://github.com/interdisciplinary-xyz/city-turfer/commit/d66da47d2b352cecdd64d8a07795338309f3c651))
+* **identity:** account tab on the phone ([8099b5e](https://github.com/interdisciplinary-xyz/city-turfer/commit/8099b5e753cba82a3dbdf91df5ad1a0dd283571c))
+* **identity:** browser sessions by cookie and signed-in devices (contract 0.5.0) ([7fdeaca](https://github.com/interdisciplinary-xyz/city-turfer/commit/7fdeacacdc51723aa4223970372e77dd784e5c68))
+* **storybook:** render Storybook in the light site scheme ([c0b066b](https://github.com/interdisciplinary-xyz/city-turfer/commit/c0b066bfefcf984604e51e4858fd6a9effb01765))
+* **territory:** export strength, tier and visitsOf for web clients ([ed0d4df](https://github.com/interdisciplinary-xyz/city-turfer/commit/ed0d4df34a9215d97232d45cecb3245f2fff5107))
+* **territory:** turf API for the server and a phone-server parity golden ([4ddbe55](https://github.com/interdisciplinary-xyz/city-turfer/commit/4ddbe5586b54de08c050a0f017181e9f542b37dd))
+* **ui:** take the pink-button label and badge tint from the palette ([0874b29](https://github.com/interdisciplinary-xyz/city-turfer/commit/0874b29bca5bec9e9f99eed53ffed15d44b8622e))
+* **web:** light Swagger skin from cssVariables(SITE_SCHEME) ([22baf4c](https://github.com/interdisciplinary-xyz/city-turfer/commit/22baf4c331cde68a65879a804e6e8e337b9b44bb))
+* **web:** one dev toolbar on the site, Storybook and Swagger ([434ee11](https://github.com/interdisciplinary-xyz/city-turfer/commit/434ee11c4a4bfd2830a93084249bf22e333351bd))
+* **web:** one page width everywhere, like the header ([f0a5f2a](https://github.com/interdisciplinary-xyz/city-turfer/commit/f0a5f2add118d34f27a782d1500e868e8c130e12))
+* **web:** one site header on /en, /branding, Storybook and Swagger ([5b980e3](https://github.com/interdisciplinary-xyz/city-turfer/commit/5b980e3e91903ec8670f946ce2677e4dd45b985d))
+* **web:** set the site and swagger in the street plate typefaces ([562f6be](https://github.com/interdisciplinary-xyz/city-turfer/commit/562f6bee9300932952498f687033de26c77b3193))
+* **web:** sign in and create account from the site header ([13149b3](https://github.com/interdisciplinary-xyz/city-turfer/commit/13149b3220f25a64ac2030fceffee69fb38c2ad2))
+* **web:** signed-in portal Slice 0 under /account ([1ce1132](https://github.com/interdisciplinary-xyz/city-turfer/commit/1ce1132e32312cd538e4f7bb6f9d327d0c046020))
+* **web:** switch the landing page and /branding to the light site theme ([3cb6081](https://github.com/interdisciplinary-xyz/city-turfer/commit/3cb6081def45a44d004cd38c4f06f2833d8e27d9))
+
+
+### Bug Fixes
+
+* **admin:** address the team review of the scaffold ([e8eaabe](https://github.com/interdisciplinary-xyz/city-turfer/commit/e8eaabe1d61962de74b4d95436e0077be9bbf896))
+* **api:** a re-sent account code keeps its first expiry ([673562f](https://github.com/interdisciplinary-xyz/city-turfer/commit/673562fd558aee28c177841699792e41445f4184))
+* **api:** no browser sessions on Vercel without the edge secret ([0241c0a](https://github.com/interdisciplinary-xyz/city-turfer/commit/0241c0a547ce4af05b926ee8e78b7bb66b8f02d8))
+* **api:** turf backfill ends, turf:rebuild repairs, erased users stay gone ([502fa19](https://github.com/interdisciplinary-xyz/city-turfer/commit/502fa196c2783f4f14d89416ef02028c3dd907db))
+* **api:** turf backfill passes over a claim that saves nothing ([b49ea15](https://github.com/interdisciplinary-xyz/city-turfer/commit/b49ea157eff7eba76790e2c4f44cb3b7ef1f69e7))
+* **api:** turf review fixes on [#149](https://github.com/interdisciplinary-xyz/city-turfer/issues/149) (rollback replaces, paging, 304, busy) ([5f21f13](https://github.com/interdisciplinary-xyz/city-turfer/commit/5f21f13712c2da50206af83e772881ad61b17934))
+* **app:** the language setting reads on a locked phone and never holds the launch ([7b4aaf4](https://github.com/interdisciplinary-xyz/city-turfer/commit/7b4aaf4c47277cebdd6cb13bda092e1e9149b45b))
+* **identity:** __Host- session cookie and exact session tests ([7a0de42](https://github.com/interdisciplinary-xyz/city-turfer/commit/7a0de4239ecb1ab7a6281f776151b5919f0d6ed6))
+* **identity:** account API review fixes ([c24216e](https://github.com/interdisciplinary-xyz/city-turfer/commit/c24216e5679686f1a6ec56b56323a24c6ea5814b))
+* **identity:** account API security review fixes ([7d30f77](https://github.com/interdisciplinary-xyz/city-turfer/commit/7d30f7727f45e3f0209525c09a5272199f7d9bc6))
+* **identity:** account tab and account mail copy ([ef72bf5](https://github.com/interdisciplinary-xyz/city-turfer/commit/ef72bf5573b955db63cacd72ae855ff4185384c4))
+* **identity:** account tab review fixes ([fe7723e](https://github.com/interdisciplinary-xyz/city-turfer/commit/fe7723ea8e7e52e99d16061d8f194df7b932af81))
+* **identity:** account tab review fixes (state, deep links, a11y) ([fb5b430](https://github.com/interdisciplinary-xyz/city-turfer/commit/fb5b4308612211ee7a9c2fab77b9d11ffaffccfe))
+* **identity:** trust the visitor IP only behind the website's edge secret ([d693369](https://github.com/interdisciplinary-xyz/city-turfer/commit/d69336980a7f2a6944128612b6343287b5bd5ad7))
+* **recording:** the stop button centres its text when it wraps ([a63eba9](https://github.com/interdisciplinary-xyz/city-turfer/commit/a63eba997f7ab869e045a3c4f7a9cc23f8cea589))
+* **territory:** load h3-js as ESM without a bare require ([657a237](https://github.com/interdisciplinary-xyz/city-turfer/commit/657a2375ea3cceca6dd4f43ae3f364e0bf24a55c))
+* **web:** list script URLs and out/_next files when the export check fails ([cfd16dc](https://github.com/interdisciplinary-xyz/city-turfer/commit/cfd16dc4921412ddd7777e6c6d47fb8b20e7765a))
+* **web:** portal header loads the switcher styles; headers match /account only ([bed63be](https://github.com/interdisciplinary-xyz/city-turfer/commit/bed63bee17c2ea36bed2f647526466157cbd8045))
+* **web:** portal review fixes for the gate, sign-in limits, delete and export ([9fc5ae0](https://github.com/interdisciplinary-xyz/city-turfer/commit/9fc5ae0b606dc0b1501cd43c84421277619b7396))
+* **web:** read export chunks from .next when the Vercel build moved them ([95ede6a](https://github.com/interdisciplinary-xyz/city-turfer/commit/95ede6afb6188a98690e3a20b781f8dce4162189))
+* **web:** say what the export check read when its positive control fails ([fbd034e](https://github.com/interdisciplinary-xyz/city-turfer/commit/fbd034e375bcebde0d1d0bee7fe1bc9794e6f7ad))
+* **web:** the app path in the Polish backup privacy note matches the Polish app ([b1d02f5](https://github.com/interdisciplinary-xyz/city-turfer/commit/b1d02f5eaea38676e5e58a54e96578ae5c886c3b))
+* **web:** the export check reads Vercel's immutable chunk paths ([7e1a49f](https://github.com/interdisciplinary-xyz/city-turfer/commit/7e1a49f09ef9a817d7d7e325c91e5f79ede231a3))
+
+
+### Refactoring
+
+* **api:** grid always present; one list of state-changing methods ([86c0b4c](https://github.com/interdisciplinary-xyz/city-turfer/commit/86c0b4c16dbd91437d615a86fabed9eeb1e0b672))
+* **app:** the Gdańsk demo history lives in @cityturfer/core/demo ([eb2fbc7](https://github.com/interdisciplinary-xyz/city-turfer/commit/eb2fbc71897edc0e653058b128aab8b0c4c13618))
+* **identity:** one list of account field error codes, in core ([c8817e0](https://github.com/interdisciplinary-xyz/city-turfer/commit/c8817e0c03b7948bb2ad13198b916ff7fc886b2f))
+
+
+### Documentation
+
+* **brand:** record the light-theme decision ([d23112f](https://github.com/interdisciplinary-xyz/city-turfer/commit/d23112f4f5db56093adfb7132d9da64a867d233c))
+* **brand:** record the street plate type decision ([d9635b1](https://github.com/interdisciplinary-xyz/city-turfer/commit/d9635b165dba1715d2f1e640b1bd233df76c9b5e))
+* **decisions:** data flow between phone, web and admin ([8bf7a7d](https://github.com/interdisciplinary-xyz/city-turfer/commit/8bf7a7d14f2e9fa039881724481ff03f49e823df))
+* **decisions:** mobile app in English and Polish (plan and decisions) ([06683df](https://github.com/interdisciplinary-xyz/city-turfer/commit/06683df7ce9c15b3a0a79f096a25af1f60e84efd))
+* **decisions:** mobile languages executed, open copy choices for the founder ([f2bc324](https://github.com/interdisciplinary-xyz/city-turfer/commit/f2bc324b814c316404b03ebdfee418e32d2bbd47))
+* **docs:** point the dark-website lines to the light-theme decision ([0a89fa2](https://github.com/interdisciplinary-xyz/city-turfer/commit/0a89fa21603dc7596e241c439a6613d161495230))
+* probe counts for the account settings docs and flow ([51e918b](https://github.com/interdisciplinary-xyz/city-turfer/commit/51e918b15d5e3755d04a73f97ad562d772357c19))
+* **release:** name PR [#153](https://github.com/interdisciplinary-xyz/city-turfer/issues/153) in the v0.10.0 session log ([7a7d05e](https://github.com/interdisciplinary-xyz/city-turfer/commit/7a7d05e6bec38ab99cf1567a160c20b1f36daaae))
+* **release:** start the v0.10.0 session log and close v0.9.0 ([92fa1c3](https://github.com/interdisciplinary-xyz/city-turfer/commit/92fa1c380de082684ec3a2ad1829fa48264010fb)), closes [#124](https://github.com/interdisciplinary-xyz/city-turfer/issues/124) [#130](https://github.com/interdisciplinary-xyz/city-turfer/issues/130)
+* **release:** v0.10.0 session log through server turf ([1ff3824](https://github.com/interdisciplinary-xyz/city-turfer/commit/1ff3824c7521642ba25c43fccc3fa9d247302a34)), closes [#144](https://github.com/interdisciplinary-xyz/city-turfer/issues/144) [#148](https://github.com/interdisciplinary-xyz/city-turfer/issues/148) [-#152](https://github.com/interdisciplinary-xyz/-/issues/152) [#140](https://github.com/interdisciplinary-xyz/city-turfer/issues/140)
+* **release:** v0.10.0 session log up to [#145](https://github.com/interdisciplinary-xyz/city-turfer/issues/145) ([208f3ca](https://github.com/interdisciplinary-xyz/city-turfer/commit/208f3ca7b36c343d72e6218068a222ec4a756a01))
+* **release:** web portal Slice 0 in the v0.10.0 session log ([e61084d](https://github.com/interdisciplinary-xyz/city-turfer/commit/e61084d9a0320b8e56923f23585eac0519b33a1f)), closes [#139](https://github.com/interdisciplinary-xyz/city-turfer/issues/139) [#141](https://github.com/interdisciplinary-xyz/city-turfer/issues/141) [#146](https://github.com/interdisciplinary-xyz/city-turfer/issues/146) [#147](https://github.com/interdisciplinary-xyz/city-turfer/issues/147)
+* sync chain plan after account settings merged ([b0dea19](https://github.com/interdisciplinary-xyz/city-turfer/commit/b0dea19e01ff8f6674f32e6d78243b77fcf9b2de)), closes [#142](https://github.com/interdisciplinary-xyz/city-turfer/issues/142)
+* sync chain plan matches the portals as built ([1827f00](https://github.com/interdisciplinary-xyz/city-turfer/commit/1827f00b526fc89118e4cdb57f73fada9fd7222e)), closes [#141](https://github.com/interdisciplinary-xyz/city-turfer/issues/141) [#142](https://github.com/interdisciplinary-xyz/city-turfer/issues/142)
+* sync chain testing plan ([b378768](https://github.com/interdisciplinary-xyz/city-turfer/commit/b378768b71d1ab5b8206347ea4bf600fccb4f36e))
+* **tooling:** note the light website theme in CLAUDE.md ([4450429](https://github.com/interdisciplinary-xyz/city-turfer/commit/4450429ff071b776c3d23dad89fc25c24847a6fd))
+* **tooling:** public pages are cookie-free, the portal uses one cookie ([7cb1ff8](https://github.com/interdisciplinary-xyz/city-turfer/commit/7cb1ff85eab71333d9377458e63885a05fe73d0e))
+* **tooling:** skills and agents describe the server turf projection ([27d5e71](https://github.com/interdisciplinary-xyz/city-turfer/commit/27d5e71a17ff5c2b32938fed8e5c2db85fe99253))
+
+
+### Tests
+
+* **admin:** give the Payload suite the API's CI timeouts ([5040a7c](https://github.com/interdisciplinary-xyz/city-turfer/commit/5040a7cd37597975083e752b957aebc35ed00ea6))
+* **app:** give the restore suite room on a busy CI runner ([7180f60](https://github.com/interdisciplinary-xyz/city-turfer/commit/7180f6059c53fe926557f34da47b0452cea56446)), closes [#139](https://github.com/interdisciplinary-xyz/city-turfer/issues/139)
+* **e2e:** account settings flow ([5751dbd](https://github.com/interdisciplinary-xyz/city-turfer/commit/5751dbdbd02cda3c2d731e86c9d1d163bfaa078b))
+* **e2e:** chain failures can no longer pass as pending ([ef9c3c3](https://github.com/interdisciplinary-xyz/city-turfer/commit/ef9c3c382f875e1b91111aed5dbb93655ddf8482))
+* **e2e:** chain scenarios wait for background backup runs ([251f202](https://github.com/interdisciplinary-xyz/city-turfer/commit/251f202d0718dfd4dfa75a3231585726b8ca3992))
+* **e2e:** chain web observer uses the __Host- session cookie ([87f898c](https://github.com/interdisciplinary-xyz/city-turfer/commit/87f898ccbd9d20f3d18be7e65a64e9a242ed4aa5)), closes [#141](https://github.com/interdisciplinary-xyz/city-turfer/issues/141)
+* **e2e:** language flow switches to Polish, persists and back to System ([5246ba4](https://github.com/interdisciplinary-xyz/city-turfer/commit/5246ba47e1e60f62e0f0263c8ef2bb122ca20db4))
+* **e2e:** sync chain checks turf, totals and the web portal's data ([0608495](https://github.com/interdisciplinary-xyz/city-turfer/commit/0608495916ce0cf0c6a396c63ea784233c486116)), closes [#149](https://github.com/interdisciplinary-xyz/city-turfer/issues/149)
+* **e2e:** sync chain phase 0, phone to server ([b552113](https://github.com/interdisciplinary-xyz/city-turfer/commit/b5521135bbcb31ada3df13f6d84e8ec9ec835b4c))
+* **e2e:** sync chain scenarios for the web portal and account settings ([42ce95d](https://github.com/interdisciplinary-xyz/city-turfer/commit/42ce95daacf766bc69383ba558aa4d05ac919cd9)), closes [#141](https://github.com/interdisciplinary-xyz/city-turfer/issues/141) [#142](https://github.com/interdisciplinary-xyz/city-turfer/issues/142)
+* **e2e:** wait for loaded rows and drop obsolete code waits ([91d38c8](https://github.com/interdisciplinary-xyz/city-turfer/commit/91d38c8b1fa9f387c2398a173e64e23a69a2cc19))
+* **territory:** keep a ride in the parity golden ([c0098d7](https://github.com/interdisciplinary-xyz/city-turfer/commit/c0098d7ee9dd8244d19cd386b767822d5d8a1271))
+* **web:** make the export check and dependency rules unable to pass silently ([2db44a8](https://github.com/interdisciplinary-xyz/city-turfer/commit/2db44a890c22a560a73b1024ea71a62a0bfa3e6d))
+* **web:** portal E2E with Playwright, a testable leave, brand tokens in CSS ([047c555](https://github.com/interdisciplinary-xyz/city-turfer/commit/047c55514ec5f74ae6b254be2bae302da57ce923))
+
 ## [0.9.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.8.0...v0.9.0) (2026-10-22)
 
 
