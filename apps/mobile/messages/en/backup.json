@@ -32,7 +32,7 @@
     "restoredSkipped": "Restored {restored}. {skipped} couldn't be read and stayed on the server.",
     "nothingToRestore": "This phone already has everything in your backup.",
     "restored": "Restored {count, plural, one {# activity} other {# activities}}.",
-    "signInFirst": "Sign in with your email to restore your backup.",
+    "signInFirst": "To restore, first confirm your email with a code.",
     "start": "Restore",
     "notNow": "Not now"
   },
@@ -42,5 +42,21 @@
     "offline": "No connection right now. Tap Restore when you're online; it carries on where it stopped.",
     "server": "The server had a hiccup. Tap Restore to try again.",
     "auth": "Your sign-in has expired. Sign in again to restore."
+  },
+  "link": {
+    "offer": "Backing up this profile needs a code, which we’ll email to {email}.",
+    "mailboxNote": "Whoever reads that mailbox can open this backup.",
+    "request": "Email me a code",
+    "intro": "We’ll email a 6-digit code to {email}.",
+    "sending": "Sending your code…",
+    "sent": "We emailed a 6-digit code to {email}. It works for 10 minutes.",
+    "codeLabel": "Code",
+    "submit": "Turn on backup",
+    "resend": "Send a new code",
+    "resendIn": "{count, plural, one {Send a new code in # second} other {Send a new code in # seconds}}",
+    "turningOn": "Turning on backup…",
+    "linked": "Code accepted. This profile is now linked to the account for {email}.",
+    "confirm": "Confirm code",
+    "stayedOff": "Backup stays off. The server deletes its copy as soon as this phone reaches it."
   }
 }

@@ -1,25 +1,49 @@
+import { useFocusEffect, useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 
 import { useApp, useContainer } from '@/ui-kit/app-context';
 
 import type { RestoreOffer, RestoreProgress, RestoreResult } from '../application/restore';
 import type { BackupCommandResult, BackupStatus } from '../contract';
+import { RUNNING_REFRESH_MS } from './hooks.constants';
 
 /** Cloud backup status, switches, token and "Back up now", for the Info screen card. `status` is null while loading. */
 export function useCloudBackup() {
   const c = useContainer();
   const { dataVersion } = useApp();
   const [status, setStatus] = useState<BackupStatus | null>(null);
+  /** Counts finished refreshes, failed ones too: the running poll re-arms on it, so it never stalls. */
+  const [answered, setAnswered] = useState(0);
+  const focused = useIsFocused();
 
   const refresh = useCallback(
     () =>
       c.cloudBackup.status
         .execute()
         .then(setStatus)
-        .catch(() => undefined),
+        .catch(() => undefined)
+        .finally(() => setAnswered((n) => n + 1)),
     [c]
   );
-  useEffect(() => void refresh(), [refresh, dataVersion]);
+  // Again on coming back into view (e.g. from turning backup on in another screen) and on data changes.
+  useFocusEffect(
+    useCallback(() => {
+      void refresh();
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- a data change asks again (while in view)
+    }, [refresh, dataVersion])
+  );
+  /**
+   * A pass started elsewhere (another screen, the app's own runs): follow it until it ends, only
+   * while this screen is in view (coming back refreshes anyway). Each answer, or failure, arms the next.
+   */
+  const running = status?.running ?? false;
+  useEffect(() => {
+    if (!running || !focused) {
+      return;
+    }
+    const timer = setTimeout(() => void refresh(), RUNNING_REFRESH_MS);
+    return () => clearTimeout(timer);
+  }, [running, focused, answered, refresh]);
 
   /** Runs a backup pass and refreshes the status while and after it runs; resolves with its result. */
   const backUpNow = useCallback(
@@ -84,7 +108,10 @@ export function useCloudBackup() {
     [c, refresh]
   );
 
-  return { status, refresh, setEnabled, setHealthIncluded, saveToken, removeToken, saveServerUrl, backUpNow };
+  /** The status read now (not the last one shown), for a decision about to be taken. */
+  const current = useCallback(() => c.cloudBackup.status.execute(), [c]);
+
+  return { status, refresh, current, setEnabled, setHealthIncluded, saveToken, removeToken, saveServerUrl, backUpNow };
 }
 
 /**

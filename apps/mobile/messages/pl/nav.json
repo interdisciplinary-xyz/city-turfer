@@ -16,6 +16,7 @@
     "accountEmail": "E-mail",
     "accountPassword": "Hasło do konta",
     "info": "Informacje",
-    "city": "Twoje miasto"
+    "city": "Twoje miasto",
+    "linkBackup": "Kopia w chmurze"
   }
 }

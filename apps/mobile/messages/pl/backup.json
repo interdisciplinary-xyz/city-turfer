@@ -32,7 +32,7 @@
     "restoredSkipped": "Przywrócono: {restored}. {skipped, plural, one {# aktywności nie dało się odczytać, więc została na serwerze.} few {# aktywności nie dało się odczytać, więc zostały na serwerze.} many {# aktywności nie dało się odczytać, więc zostały na serwerze.} other {# aktywności nie dało się odczytać, więc zostały na serwerze.}}",
     "nothingToRestore": "Ten telefon ma już wszystko z Twojej kopii.",
     "restored": "Przywrócono {count, plural, one {# aktywność} few {# aktywności} many {# aktywności} other {# aktywności}}.",
-    "signInFirst": "Zaloguj się adresem e-mail, aby przywrócić kopię.",
+    "signInFirst": "Aby przywrócić kopię, najpierw potwierdź swój adres e-mail kodem.",
     "start": "Przywróć",
     "notNow": "Nie teraz"
   },
@@ -42,5 +42,21 @@
     "offline": "Brak połączenia. Stuknij Przywróć, gdy będziesz online; przywracanie ruszy od miejsca, w którym stanęło.",
     "server": "Serwer miał chwilową czkawkę. Stuknij Przywróć, aby spróbować ponownie.",
     "auth": "Twoje logowanie wygasło. Zaloguj się ponownie, aby przywrócić kopię."
+  },
+  "link": {
+    "offer": "Kopia tego profilu wymaga kodu, który wyślemy na adres {email}.",
+    "mailboxNote": "Każdy, kto czyta tę skrzynkę, ma dostęp do tej kopii.",
+    "request": "Wyślij mi kod",
+    "intro": "Wyślemy 6-cyfrowy kod na adres {email}.",
+    "sending": "Wysyłamy kod…",
+    "sent": "Wysłaliśmy 6-cyfrowy kod na adres {email}. Działa przez 10 minut.",
+    "codeLabel": "Kod",
+    "submit": "Włącz kopię",
+    "resend": "Wyślij nowy kod",
+    "resendIn": "{count, plural, one {Wyślij nowy kod za # sekundę} few {Wyślij nowy kod za # sekundy} many {Wyślij nowy kod za # sekund} other {Wyślij nowy kod za # sekundy}}",
+    "turningOn": "Włączamy kopię…",
+    "linked": "Kod przyjęty. Ten profil jest teraz połączony z kontem {email}.",
+    "confirm": "Potwierdź kod",
+    "stayedOff": "Kopia pozostaje wyłączona. Serwer usunie swoją kopię, gdy tylko ten telefon się z nim połączy."
   }
 }

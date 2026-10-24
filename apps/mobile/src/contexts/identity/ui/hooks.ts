@@ -2,7 +2,7 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { identity } from '@/composition-root';
-import type { User } from '@/contexts/identity';
+import type { BackupLinkTarget, User } from '@/contexts/identity';
 import { useApp } from '@/ui-kit/app-context';
 
 import { failureMessage } from './account-messages';
@@ -115,5 +115,74 @@ export function useSubmit() {
       setBusy(false);
     }
   }, []);
-  return { busy, error, setError, run, refused, waiting: waitUntil !== 0 };
+  return { busy, error, setError, run, refused, waiting: waitUntil !== 0, waitUntil };
+}
+
+/** Whole seconds left until `until` (epoch ms), ticking once a second; 0 once it has passed or with no wait. */
+export function useSecondsLeft(until: number): number {
+  const left = () => Math.max(0, Math.ceil((until - Date.now()) / 1000));
+  const [seconds, setSeconds] = useState(left);
+  useEffect(() => {
+    setSeconds(left());
+    if (!until) {
+      return;
+    }
+    const timer = setInterval(() => {
+      const s = left();
+      setSeconds(s);
+      if (s === 0) {
+        clearInterval(timer);
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `left` only reads `until`
+  }, [until]);
+  return seconds;
+}
+
+/**
+ * Info › Cloud backup on a local profile (mock admin, demo): the address its backup code goes to,
+ * read again each time the screen comes into view. `undefined` while loading; null: not a local
+ * profile that may be linked (a real account, or one whose data belongs to another address).
+ */
+export function useBackupLinkTarget(): BackupLinkTarget | null | undefined {
+  const { auth } = useApp();
+  const profileId = auth.status === 'signed-in' ? auth.user.id : null;
+  const [target, setTarget] = useState<BackupLinkTarget | null | undefined>(undefined);
+  useFocusEffect(
+    useCallback(() => {
+      let live = true;
+      if (!profileId) {
+        setTarget(null);
+        return;
+      }
+      identity.backupLinkTarget
+        .execute(profileId)
+        .catch(() => null)
+        .then((t) => live && setTarget(t));
+      return () => {
+        live = false;
+      };
+    }, [profileId])
+  );
+  return target;
+}
+
+/**
+ * The backup link's use cases for the signed-in local profile: "Email me a code" and the code. A
+ * linked profile's user (now with its account) is shown everywhere at once.
+ */
+export function useBackupLink() {
+  const { auth, updateUser } = useApp();
+  const profileId = auth.status === 'signed-in' ? auth.user.id : '';
+  return {
+    requestCode: () => identity.requestBackupLinkCode.execute(profileId),
+    link: async (code: string) => {
+      const r = await identity.linkSignedInProfile.execute(profileId, code);
+      if (r.kind === 'linked') {
+        updateUser(r.user);
+      }
+      return r;
+    },
+  };
 }

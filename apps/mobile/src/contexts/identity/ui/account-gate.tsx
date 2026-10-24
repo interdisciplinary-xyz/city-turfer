@@ -10,7 +10,7 @@ import { usePalette } from '@/ui-kit/theme';
 
 import type { AccountGateProps, AccountReady } from './account-settings.constants';
 import { unreachableMessage } from './account-settings-state';
-import { useAccountSettings } from './hooks';
+import { useAccountSettings, useBackupLinkTarget } from './hooks';
 import { useAnnounce } from './use-announce';
 
 /**
@@ -25,7 +25,11 @@ export function AccountGate({ children }: AccountGateProps) {
   const tc = useT('common');
   const te = useT('errors');
   const { state, refresh } = useAccountSettings();
+  // A local profile linked to its own address: its email and password are not changed here.
+  const linkTarget = useBackupLinkTarget();
+  const fixedAddress = linkTarget != null;
   const checking =
+    linkTarget === undefined ||
     state.status === 'loading' ||
     (state.status === 'ready' && state.refreshing === true) ||
     ((state.status === 'offline' || state.status === 'failed') && state.retrying === true);
@@ -33,12 +37,13 @@ export function AccountGate({ children }: AccountGateProps) {
   const blocked = unreachable ? te(unreachable.key, unreachable.values) : null;
   const note = checking
     ? null
-    : state.status === 'ready' && state.settings.kind === 'local'
+    : fixedAddress || (state.status === 'ready' && state.settings.kind === 'local')
       ? t('gate.local')
       : blocked;
   useAnnounce(note);
   const [opened, setOpened] = useState<AccountReady | null>(null);
-  const fresh = !checking && state.status === 'ready' && state.settings.kind === 'account' ? state.settings : null;
+  const fresh =
+    !checking && !fixedAddress && state.status === 'ready' && state.settings.kind === 'account' ? state.settings : null;
   if (fresh && !opened) {
     setOpened(fresh); // derived state, set while rendering: the first fresh answer opens the flow
   }
@@ -68,7 +73,7 @@ export function AccountGate({ children }: AccountGateProps) {
       <Text testID='account-gate-note' accessibilityLiveRegion='polite' style={[s.text, { color: p.text }]}>
         {note}
       </Text>
-      {blocked && (
+      {blocked && !fixedAddress && (
         <Button testID='account-gate-retry' label={t('retry')} color={ACCENT} onPress={() => void refresh()} />
       )}
       {back}
