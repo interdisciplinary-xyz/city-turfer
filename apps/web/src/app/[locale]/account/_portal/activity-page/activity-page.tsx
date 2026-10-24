@@ -28,7 +28,8 @@ export function ActivityPage({ locale }: ActivityPageProps) {
   const rawId = useSearchParams().get('id');
   const id = isActivityId(rawId) ? rawId : null;
   const detail = useActivity(id);
-  const track = useTrack(id, detail.isSuccess ? detail.data.trackHash : null);
+  // The hash of the detail in memory (kept through a failed background refresh).
+  const track = useTrack(id, detail.data?.trackHash ?? null);
   const zone = useMemo(() => browserZone(), []);
   const view = activityView({ rawId, validId: id !== null, hasData: detail.data !== undefined, error: detail.error });
 
