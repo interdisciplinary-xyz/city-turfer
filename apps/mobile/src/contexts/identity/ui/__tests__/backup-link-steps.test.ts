@@ -79,7 +79,7 @@ describe('backup link: the code', () => {
       ],
       [
         { kind: 'linked-elsewhere' },
-        `The account for ${EMAIL} already keeps its history in another profile on this phone. To back that profile up, sign out, then sign in with an email code to ${EMAIL}.`,
+        `The account for ${EMAIL} already keeps its history in another profile on this phone. To back that profile up, sign out, then sign in with a code sent to ${EMAIL}.`,
       ],
       [
         { kind: 'not-local-profile' },
