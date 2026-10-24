@@ -16,6 +16,7 @@
     "accountEmail": "Email",
     "accountPassword": "Account password",
     "info": "Info",
-    "city": "Your city"
+    "city": "Your city",
+    "linkBackup": "Cloud backup"
   }
 }

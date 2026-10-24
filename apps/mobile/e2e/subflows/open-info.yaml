@@ -1,0 +1,9 @@
+# Open Me > Info from wherever a flow is (tab bar visible, or one screen deeper).
+appId: com.turftrack.poc
+---
+- runFlow:
+    when: { notVisible: { id: 'tab-me' } }
+    commands:
+      - runFlow: back.yaml
+- tapOn: { id: 'tab-me' }
+- tapOn: { id: 'me-menu-info' }

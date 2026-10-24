@@ -22,10 +22,12 @@ glows brighter each time you come back.
 **Not for:** competing for territory with other people, training plans or heart-rate analysis.
 CityTurfer is single-player and local-first: the phone is the source of truth.
 
-> [!NOTE] Status: **v0.8.0 released** (proof of concept: iOS dev builds, Android APK), **v0.9.0 in
-> progress**. Single demo account (`admin@cityturfer.com` / `admin1234`). Data stays on the phone
-> unless you turn on **Cloud backup** (opt-in, one way, needs a device token). Not on the App Store
-> or Google Play yet.
+> [!NOTE] Status: **v0.10.0 released** (proof of concept: iOS dev builds, Android APK), **v0.11.0 in
+> progress**. Local profiles `admin@cityturfer.com` / `admin1234` and `demo@cityturfer.com` /
+> `demo1234` (Gdańsk demo data); any other e-mail signs in with an e-mailed code against the API.
+> Data stays on the phone unless you turn on **Cloud backup** (opt-in, one way, signed-in account).
+> The website has a signed-in account page (Slice 0: what the server holds, export, delete). Not on
+> the App Store or Google Play yet.
 
 ---
 
@@ -50,10 +52,11 @@ CityTurfer is single-player and local-first: the phone is the source of truth.
 | [TypeScript][typescript] (strict)                 | [Drizzle][drizzle] + [Neon][neon] | [GSAP][gsap]                       | [dependency-cruiser][dependency-cruiser]  |
 | [expo-router][expo-router]                        | Swagger UI                        | [Storybook 10][storybook] (RN web) | [ESLint][eslint] · [Prettier][prettier]   |
 | [expo-location][expo-location] + task manager     |                                   | Big Shoulders Display + Barlow     | [Turborepo][turborepo] · [pnpm][pnpm]     |
-| [MapLibre][maplibre] + [OpenFreeMap][openfreemap] |                                   |                                    | [Husky][husky] · [Commitlint][commitlint] |
+| [MapLibre][maplibre] + [OpenFreeMap][openfreemap] |                                   | [Payload 3.91][payload] (admin)    | [Husky][husky] · [Commitlint][commitlint] |
 | [H3][h3] (`h3-js` in `@cityturfer/core`)          |                                   |                                    | [EAS Update][eas-update]                  |
 | [expo-sqlite][expo-sqlite]                        |                                   |                                    |                                           |
 | [HealthKit][healthkit] (iOS)                      |                                   |                                    |                                           |
+| [use-intl][use-intl] (en, pl)                     |                                   |                                    |                                           |
 
 [expo]: https://docs.expo.dev/
 [react-native]: https://reactnative.dev/
@@ -73,6 +76,8 @@ CityTurfer is single-player and local-first: the phone is the source of truth.
 [next]: https://nextjs.org/
 [next-intl]: https://next-intl.dev/
 [gsap]: https://gsap.com/
+[payload]: https://payloadcms.com/
+[use-intl]: https://next-intl.dev/docs/environments/core-library
 [storybook]: https://storybook.js.org/
 [jest]: https://jestjs.io/
 [vitest]: https://vitest.dev/
@@ -97,20 +102,21 @@ channel `production`; native changes need a new build.
 The repo is a pnpm + Turborepo monorepo
 ([decision](./docs/decisions/monorepo-turborepo-2026-10-18.md)):
 
-| Path                      | What                                                                                                              |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `apps/mobile/`            | The Expo app (`@cityturfer/mobile`): app code, native module, config plugins, Maestro flows, mobile dev tools     |
-| `apps/api/`               | HTTP API (`@cityturfer/api`): Hono on Vercel (`fra1`), `/v1` routes, generated `openapi.json`, Postgres backup    |
-| `apps/web/`               | Landing page (`@cityturfer/web`): Next.js static export on Vercel, English + Polish, waitlist                     |
-| `apps/storybook/`         | One Storybook (`@cityturfer/storybook`) for `@cityturfer/ui` and website pieces                                   |
-| `packages/core/`          | `@cityturfer/core`: shared kernel and the domain + use cases shared by the app and the API                        |
-| `packages/brand/`         | `@cityturfer/brand`: design tokens (turf strength ramp, themes, type), copy, logo SVGs, brand fonts               |
-| `packages/ui/`            | `@cityturfer/ui`: pure React Native components (Button, Card, Stat, Badge, ActivityRow, TurfLegend)               |
-| `packages/config/`        | `@cityturfer/config`: Prettier and tsconfig bases                                                                 |
-| `packages/eslint-config/` | `@interdisciplinary/eslint-config`: ESLint presets and local rules, shared with empatalk                          |
-| `packages/dev-toolbar/`   | `@interdisciplinary/dev-toolbar`: dev-only toolbar for the website (request log, route map), shared with empatalk |
-| `tools/`                  | Repo-wide tools: docs, log and harness audits, secret-file guard, Claude Code hook rules, release helpers         |
-| `docs/`                   | Documentation, indexed in [`docs/INDEX.md`](./docs/INDEX.md)                                                      |
+| Path                      | What                                                                                                               |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `apps/mobile/`            | The Expo app (`@cityturfer/mobile`): app code, native module, config plugins, Maestro flows, mobile dev tools      |
+| `apps/api/`               | HTTP API (`@cityturfer/api`): Hono on Vercel (`fra1`), `/v1` routes, generated `openapi.json`, backup, server turf |
+| `apps/web/`               | Website (`@cityturfer/web`): Next.js static export on Vercel, English + Polish, waitlist, signed-in account page   |
+| `apps/admin/`             | Staff admin (`@cityturfer/admin`): Payload CMS scaffold, own database, staff accounts only, not deployed           |
+| `apps/storybook/`         | One Storybook (`@cityturfer/storybook`) for `@cityturfer/ui` and website pieces                                    |
+| `packages/core/`          | `@cityturfer/core`: shared kernel, the domain + use cases shared by the app and the API, demo-history generator    |
+| `packages/brand/`         | `@cityturfer/brand`: design tokens (turf strength ramp, themes, type), copy, logo SVGs, brand fonts                |
+| `packages/ui/`            | `@cityturfer/ui`: pure React Native components (Button, Card, Stat, Badge, ActivityRow, TurfLegend)                |
+| `packages/config/`        | `@cityturfer/config`: Prettier and tsconfig bases                                                                  |
+| `packages/eslint-config/` | `@interdisciplinary/eslint-config`: ESLint presets and local rules, shared with empatalk                           |
+| `packages/dev-toolbar/`   | `@interdisciplinary/dev-toolbar`: dev-only toolbar for the website (request log, route map), shared with empatalk  |
+| `tools/`                  | Repo-wide tools: docs, log, i18n and harness audits, sync-chain runner, secret-file guard, hook rules, release     |
+| `docs/`                   | Documentation, indexed in [`docs/INDEX.md`](./docs/INDEX.md)                                                       |
 
 Domain-Driven Design is a hard requirement. Each bounded context has `domain/`, `application/`,
 `infrastructure/` and (in the app) `ui/` layers and a public `index.ts`. Contexts talk only through
@@ -156,46 +162,53 @@ case; it never relies on React state and never touches the network.
 expo-router, file-based under `apps/mobile/src/app/`. Screens are thin: they compose context `ui/`
 components and hooks.
 
-| Route                      | Screen                                                                                    |
-| -------------------------- | ----------------------------------------------------------------------------------------- |
-| `(tabs)/index`             | Dashboard (start tab): greeting, onboarding checklist, this week, recent, achievements    |
-| `(tabs)/turf`              | Turf Map: tracks, glowing turf, walk/run/ride filter, Home City chip                      |
-| `(tabs)/record`            | Record (raised centre tab): type picker, live map and stats, turf toggle, city chip       |
-| `(tabs)/stats`             | This week, 8-week chart, turf totals, all-time per type                                   |
-| `(tabs)/me`                | Opens the Me drawer: Profile, Account, City, Info                                         |
-| `history`                  | Activity history (from Dashboard and Stats)                                               |
-| `activity/[id]`            | Activity detail: map, stats, splits, turf gained, delete                                  |
-| `profile` · `achievements` | Profile with totals; achievements with progress                                           |
-| `city`                     | Home City picker (catalogue of Polish and European cities, works offline)                 |
-| `account` · `info`         | Sign out; app version, updates, data note, Apple Health and Cloud backup cards, demo data |
-| `sign-in`                  | Mock sign-in                                                                              |
+| Route                      | Screen                                                                                 |
+| -------------------------- | -------------------------------------------------------------------------------------- |
+| `(tabs)/index`             | Dashboard (start tab): greeting, onboarding checklist, this week, recent, achievements |
+| `(tabs)/turf`              | Turf Map: tracks, glowing turf, walk/run/ride filter, Home City chip                   |
+| `(tabs)/record`            | Record (raised centre tab): type picker, live map and stats, turf toggle, city chip    |
+| `(tabs)/stats`             | This week, 8-week chart, turf totals, all-time per type                                |
+| `(tabs)/me`                | Opens the Me drawer: Profile, Account, City, Info                                      |
+| `history`                  | Activity history (from Dashboard and Stats)                                            |
+| `activity/[id]`            | Activity detail: map, stats, splits, turf gained, rename, delete                       |
+| `profile` · `achievements` | Profile with totals; achievements with progress                                        |
+| `city`                     | Home City picker (catalogue of Polish and European cities, works offline)              |
+| `account`                  | Name, e-mail, optional password, data export, sign out, delete account                 |
+| `info`                     | Version, updates, language, data note, Apple Health and Cloud backup cards, demo data  |
+| `sign-in`                  | E-mailed code or account password; the local `admin` and `demo` profiles               |
 
 ### Scripts
 
 Everyday commands from the root `package.json` (they run the workspaces' scripts through Turborepo
 or `pnpm --filter`); `pnpm run` is authoritative.
 
-| Name                        | Description                                                                       |
-| --------------------------- | --------------------------------------------------------------------------------- |
-| `start`                     | Metro for an installed development build                                          |
-| `ios` / `android`           | Build and install a development build                                             |
-| `test:types` / `typecheck`  | `tsc --noEmit` in every workspace                                                 |
-| `test:arch`                 | DDD dependency rules (dependency-cruiser) in the app and in core                  |
-| `test:unit`                 | Jest (app, core, ui, brand), Vitest (API, shared packages), node tool tests       |
-| `test`                      | `test:arch` + unit and tool tests                                                 |
-| `test:e2e`                  | Maestro suite on the booted iOS Simulator (`apps/mobile/e2e/run.sh`)              |
-| `build`                     | Website static export, static Storybook and the API bundle                        |
-| `web:dev`                   | Website at `https://cityturfer.local` with the dev toolbar, Swagger at `/swagger` |
-| `standard` / `standard:fix` | Prettier + ESLint, check or apply                                                 |
-| `ci:quality`                | Full local gate: `standard`, types, arch, unit, builds, log/harness/e2e audits    |
-| `audit:docs`                | Docs audit: dead paths, broken links, frontmatter, probes                         |
-| `audit:harness`             | Claude Code setup matches the code (skills, agents, hooks, `CLAUDE.md`)           |
-| `release`                   | `commit-and-tag-version` (run by CI on `main`, never by hand)                     |
+| Name                        | Description                                                                         |
+| --------------------------- | ----------------------------------------------------------------------------------- |
+| `start`                     | Metro for an installed development build                                            |
+| `ios` / `android`           | Build and install a development build                                               |
+| `test:types` / `typecheck`  | `tsc --noEmit` in every workspace                                                   |
+| `test:arch`                 | Dependency rules (dependency-cruiser) in the app, core, web and admin               |
+| `test:unit`                 | Jest (app, core, ui, brand), Vitest (API, web, admin, shared packages), tool tests  |
+| `test`                      | `test:arch` + unit and tool tests                                                   |
+| `test:chain`                | Sync chain: phone → API (PGlite) → web portal scenarios (`tools/chain/run.mjs`)     |
+| `test:e2e`                  | Maestro suite on the booted iOS Simulator (`apps/mobile/e2e/run.sh`)                |
+| `build`                     | Website static export, static Storybook, the admin and the API bundle               |
+| `web:dev`                   | Website at `https://cityturfer.local` with the dev toolbar, Swagger at `/swagger`   |
+| `start:dev`                 | `web:dev`, building Storybook first if it isn't built                               |
+| `cache:clean`               | Delete `node_modules`, `.turbo`, `.next`, `out` and `.expo` (then `pnpm install`)   |
+| `standard` / `standard:fix` | Prettier + ESLint, check or apply                                                   |
+| `ci:quality`                | Full local gate: `standard`, types, arch, unit, builds, log/harness/i18n/e2e audits |
+| `audit:docs`                | Docs audit: dead paths, broken links, frontmatter, probes                           |
+| `audit:i18n`                | App and website copy: same keys in every locale, valid ICU messages                 |
+| `audit:harness`             | Claude Code setup matches the code (skills, agents, hooks, `CLAUDE.md`)             |
+| `release`                   | `commit-and-tag-version` (run by CI on `main`, never by hand)                       |
 
 API commands (`pnpm --filter @cityturfer/api run <name>`): `dev` (http://localhost:8787, Swagger at
-`/swagger`), `openapi` (regenerate `openapi.json`; a test fails when it's stale), `db:migrate` (by
-hand, never in a Vercel build), `token:new -- <user>` (a device token). Deploy:
-[API deploy runbook](./docs/operations/api-deploy.md).
+`/swagger`), `openapi` (regenerate `openapi.json`; a test fails when it's stale), `db:generate` (SQL
+migration from the schema), `db:migrate` (by hand, never in a Vercel build), `token:new -- <user>`
+(a device token), `turf:backfill` and `turf:rebuild` (server turf). Deploy:
+[API deploy runbook](./docs/operations/api-deploy.md). Admin commands (`migrate`, `generate`,
+`staff:create`) are in `CLAUDE.md`.
 
 > [!IMPORTANT] Tests passing doesn't prove background tracking works. It needs a development build
 > on a device, or a simulator with replayed movement (`apps/mobile/tools/sim-location.sh`). See the
@@ -222,7 +235,8 @@ The diagnostics tools never print coordinates: location data is personal data.
 
 No `.env` is needed for local app development. The local `admin` and `demo` profiles work in every
 build (decision B6 in `docs/plans/backend-plan-2026-10-22.md`); any other e-mail signs in with a
-code against the API.
+code against the API. On the API's local PGlite database the same two e-mails sign in to the web
+portal with code `000000`, and `demo@` gets the Gdańsk demo history.
 
 Sign-in and cloud backup talk to `API_BASE_URL` in `apps/mobile/src/constants/api.ts`:
 `EXPO_PUBLIC_API_URL` when set, else the production API `https://city-turfer-api.vercel.app` (a
@@ -246,7 +260,8 @@ pnpm ios                                   # build and install a development bui
 pnpm start                                 # later: Metro for the installed build
 ```
 
-Sign in with `admin@cityturfer.com` / `admin1234`. To see turf straight away, use **Me → Info → Seed
+Sign in with `admin@cityturfer.com` / `admin1234`, or with `demo@cityturfer.com` / `demo1234`, which
+fills itself with Gdańsk demo data on first sign-in. To see turf around you, use **Me → Info → Seed
 demo history** (90 days of activities around your location). In a release build the demo tools are
 hidden: long-press the version text on Info five times to show them.
 
@@ -267,16 +282,20 @@ Local quirks: watchman is disabled in the Jest and Metro config (broken Homebrew
 
 ```sh
 pnpm run ci:quality   # Prettier, ESLint, tsc, dependency rules, unit tests, builds, audits
+pnpm test:chain       # phone → API → web portal sync chain on an in-memory PGlite (not in CI yet)
+pnpm run audit:i18n   # English and Polish app copy in step (also part of ci:quality)
 pnpm run test:e2e     # Maestro flows in apps/mobile/e2e/ on the booted iOS Simulator
 ```
 
 Unit tests run on real SQL (`better-sqlite3`) and cover domain invariants, metrics against the
 oracle (±3 %), the full context chain (including a crash between steps), idempotency, turf release
 on delete, the turf strength vectors shared with `turf-preview.mjs`, Cloud backup against a fake
-server, the API on PGlite (user isolation included) and WCAG contrast of the brand colours. Maestro
-covers sign-in, recording (with pause/resume and in the background), history, the Turf Map, the Me
-menu, the Dashboard, Apple Health, the Home City, the turf toggle on the Record map and sign-out.
-Details: [E2E](./docs/quality/e2e.md).
+server, the API on PGlite (user isolation and server turf included) and WCAG contrast of the brand
+colours. The sync chain checks that the phone, the API and the web portal agree (turf cell for cell,
+totals). Maestro covers sign-in, recording (with pause/resume and in the background), history,
+rename, the Turf Map, the Me menu, the Dashboard, Apple Health, the Home City, the turf toggle on
+the Record map, account settings, the language setting and sign-out. Details:
+[E2E](./docs/quality/e2e.md).
 
 ---
 
@@ -294,8 +313,9 @@ pnpm -C apps/mobile dlx eas-cli@latest update --channel production --environment
 ```
 
 OTA updates reach only builds with the same runtime fingerprint. Changing native code, plugins or
-`app.json` (including its `version`) needs a new build: v0.8.0 is such a release (the Archivo font
-plugin). Details: [OTA release](./docs/operations/ota-release.md),
+`app.json` (including its `version`) needs a new build: v0.10.0 is such a release (the Street Plate
+typefaces, and the release commit bumps `app.json`'s `version`). Details:
+[OTA release](./docs/operations/ota-release.md),
 [Android release](./docs/operations/android-release.md).
 
 ---
@@ -312,6 +332,7 @@ plugin). Details: [OTA release](./docs/operations/ota-release.md),
 | [Docs conventions](./docs/process/docs-conventions.md)    | Frontmatter, folders, filenames, the audit           |
 | [Release manager](./docs/process/release-manager.md)      | Branch policy, versioning, CI                        |
 | [Session logs](./docs/sessions/)                          | What was built and verified, per version             |
+| [Plans](./docs/plans/)                                    | Live plans (backend, account settings, sync chain)   |
 | [CLAUDE.md](./CLAUDE.md)                                  | Hard rules and commands for Claude Code              |
 | [Brand system](./.claude/skills/brand-system/SKILL.md)    | Name, voice, colours, type, icons, store copy        |
 | [Skills](./.claude/skills/) · [agents](./.claude/agents/) | How Claude Code works in this repo                   |

@@ -1,6 +1,6 @@
 {
   "title": "Kopia w chmurze",
-  "pitch": "Trzymaj kopię swoich spacerów, biegów i przejażdżek na serwerze CityTurfer, żeby nowy telefon nigdy nie oznaczał budowania turfu od zera.",
+  "pitch": "Trzymaj kopię swoich spacerów, biegów i przejażdżek na serwerze CityTurfer, żeby nowy telefon nigdy nie oznaczał budowania terytorium od zera.",
   "switchLabel": "Kopiuj do chmury CityTurfer",
   "privacy": "Twoje trasy są przechowywane na naszym serwerze w UE. Wyłączenie usuwa tę kopię, ale nic na tym telefonie.",
   "offConfirmTitle": "Wyłączyć kopię w chmurze?",
@@ -20,7 +20,7 @@
   },
   "restore": {
     "title": "Witaj z powrotem",
-    "offer": "{count, plural, one {W Twojej kopii jest # aktywność, której nie ma na tym telefonie. Przenieś ją, a Twój turf wróci razem z nią. Nic tutaj nie zostanie zastąpione.} few {W Twojej kopii są # aktywności, których nie ma na tym telefonie. Przenieś je, a Twój turf wróci razem z nimi. Nic tutaj nie zostanie zastąpione.} many {W Twojej kopii jest # aktywności, których nie ma na tym telefonie. Przenieś je, a Twój turf wróci razem z nimi. Nic tutaj nie zostanie zastąpione.} other {W Twojej kopii jest # aktywności, których nie ma na tym telefonie. Przenieś je, a Twój turf wróci razem z nimi. Nic tutaj nie zostanie zastąpione.}}",
+    "offer": "{count, plural, one {W Twojej kopii jest # aktywność, której nie ma na tym telefonie. Przenieś ją, a Twoje terytorium wróci razem z nią. Nic tutaj nie zostanie zastąpione.} few {W Twojej kopii są # aktywności, których nie ma na tym telefonie. Przenieś je, a Twoje terytorium wróci razem z nimi. Nic tutaj nie zostanie zastąpione.} many {W Twojej kopii jest # aktywności, których nie ma na tym telefonie. Przenieś je, a Twoje terytorium wróci razem z nimi. Nic tutaj nie zostanie zastąpione.} other {W Twojej kopii jest # aktywności, których nie ma na tym telefonie. Przenieś je, a Twoje terytorium wróci razem z nimi. Nic tutaj nie zostanie zastąpione.}}",
     "resume": "Przywracanie kopii zatrzymało się na {done} z {total} aktywności. Dokończ od tego miejsca.",
     "action": "Przywróć z kopii",
     "actionNote": "Przenosi wszystko z Twojej kopii, czego nie ma na tym telefonie. Nic tutaj nie zostanie zastąpione ani zdublowane.",
@@ -33,6 +33,7 @@
     "nothingToRestore": "Ten telefon ma już wszystko z Twojej kopii.",
     "restored": "Przywrócono {count, plural, one {# aktywność} few {# aktywności} many {# aktywności} other {# aktywności}}.",
     "signInFirst": "Zaloguj się adresem e-mail, aby przywrócić kopię.",
+    "linkFirst": "Aby przywrócić kopię, najpierw potwierdź adres e-mail kodem: Informacje › Kopia w chmurze.",
     "start": "Przywróć",
     "notNow": "Nie teraz"
   },
@@ -42,5 +43,24 @@
     "offline": "Brak połączenia. Stuknij Przywróć, gdy będziesz online; przywracanie ruszy od miejsca, w którym stanęło.",
     "server": "Serwer miał chwilową czkawkę. Stuknij Przywróć, aby spróbować ponownie.",
     "auth": "Twoje logowanie wygasło. Zaloguj się ponownie, aby przywrócić kopię."
+  },
+  "link": {
+    "offer": "Aby włączyć kopię tego profilu, potwierdź adres {email} kodem, który tam wyślemy.",
+    "mailboxNote": "Każdy, kto ma dostęp do tej skrzynki, może zalogować się i zobaczyć tę kopię.",
+    "request": "Wyślij mi kod",
+    "intro": "Wyślemy 6-cyfrowy kod na adres {email}.",
+    "sending": "Wysyłamy kod…",
+    "sent": "Wysłaliśmy 6-cyfrowy kod na adres {email}. Działa przez 10 minut.",
+    "sentRecently": "Niedawno wysłaliśmy kod na adres {email}. Wpisz najnowszy; każdy kod działa przez 10 minut.",
+    "codeLabel": "Kod",
+    "submit": "Włącz kopię",
+    "resend": "Wyślij nowy kod",
+    "resendIn": "{count, plural, one {Wyślij nowy kod za # sekundę} few {Wyślij nowy kod za # sekundy} many {Wyślij nowy kod za # sekund} other {Wyślij nowy kod za # sekundy}}",
+    "turningOn": "Włączamy kopię…",
+    "linked": "Kod przyjęty. Ten profil jest teraz połączony z kontem {email}.",
+    "confirm": "Potwierdź kod",
+    "stayedOff": "Kopia pozostaje wyłączona, a ta na serwerze została usunięta. Wszystko zostaje na tym telefonie.",
+    "stayedOffPending": "Kopia pozostaje wyłączona. Kopia na serwerze zniknie, gdy telefon znów będzie online. Wszystko zostaje na tym telefonie.",
+    "newAccount": "Ten adres ma teraz nowe konto CityTurfer, a kopia dla niego jest wyłączona. Stuknij Włącz kopię, aby zacząć."
   }
 }

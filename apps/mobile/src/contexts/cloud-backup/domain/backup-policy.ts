@@ -1,3 +1,5 @@
+import { isGdanskPlanActivityId } from '@cityturfer/core/demo';
+
 import { DomainError, type TrackPoint } from '@/shared-kernel';
 
 /**
@@ -31,12 +33,53 @@ export function canonicalTrackPoints(track: readonly TrackPoint[]): [number, num
 /** The text whose SHA-256 is the server's `trackHash`. */
 export const trackHashInput = (track: readonly TrackPoint[]): string => JSON.stringify(canonicalTrackPoints(track));
 
+/** What decides whether an Activity may leave the phone, beyond its id. */
+export interface UploadScope {
+  /** The Turfer turned on "Include Apple Health workouts" (its own consent, decision D2). */
+  healthIncluded: boolean;
+  /**
+   * The signed-in profile is the demo profile: a shared account whose content is its generated
+   * Gdańsk history, and only that (LP3).
+   */
+  demoProfile: boolean;
+}
+
 /**
- * Demo history is never uploaded; Apple Health imports only with their own consent (decision D2).
+ * The demo profile backs up only its planned Gdańsk history (`demo-gdansk-n<i>`, LP3): its
+ * recordings and Apple Health imports are real tracks (a walk recorded for screenshots) and stay on
+ * the phone, never on the shared demo@ account or its web portal. Any other `demo-…` Activity
+ * never leaves the phone either (seeded on another profile, or the Developer tools seeder's
+ * `demo-<ms>` tracks around the phone's real position). Every other profile: recordings always,
+ * Apple Health imports only with their own consent (decision D2), no demo history.
  */
-export function mayUpload(activityId: string, healthIncluded: boolean): boolean {
-  const kind = sourceOf(activityId);
-  return kind === 'recording' || (kind === 'apple-health' && healthIncluded);
+export function mayUpload(activityId: string, scope: UploadScope): boolean {
+  const source = sourceOf(activityId);
+  if (scope.demoProfile) {
+    return source === 'demo' && isGdanskPlanActivityId(activityId);
+  }
+  switch (source) {
+    case 'recording':
+      return true;
+    case 'apple-health':
+      return scope.healthIncluded;
+    case 'demo':
+      return false;
+  }
+}
+
+/** Where an uploaded Activity came from, as the server's `source` names it. */
+export type UploadSourceName = 'recording' | 'apple-health' | 'import';
+
+/** The `source` an upload carries: demo history is an import (as the local API seeds it). */
+export function uploadSourceOf(activityId: string): UploadSourceName {
+  switch (sourceOf(activityId)) {
+    case 'apple-health':
+      return 'apple-health';
+    case 'demo':
+      return 'import';
+    case 'recording':
+      return 'recording';
+  }
 }
 
 /** Wait before the n-th retry of one Activity: 30 s, doubling, at most 6 h. */

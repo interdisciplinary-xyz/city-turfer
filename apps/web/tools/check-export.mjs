@@ -4,6 +4,8 @@
 // - the landing pages (/en, /pl) load no chunk with the API client, TanStack Query, openapi-fetch,
 //   maplibre-gl or portal code, carry no portal copy and no /api/v1 call (in the HTML, a chunk or
 //   the RSC payloads the language switcher fetches: <locale>.txt, <locale>/__next.*.txt);
+//   @cityturfer/core on public pages is caught at the source by dependency-cruiser
+//   (`marketing-not-core`), as no minified string of its formatters is a reliable marker;
 // - every portal page is noindex, nofollow and loads no GSAP chunk;
 // - the sitemap lists no portal page;
 // - every portal link on a landing page (the header's Sign in / Create account) has a page.

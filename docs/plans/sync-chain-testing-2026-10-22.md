@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: canonical
 verified: 2026-10-23
 owner: founder
 scope:
@@ -57,13 +57,13 @@ the same address always hit the one-code-a-minute `429`).
 
 ## What each app can see today (2026-10-23)
 
-| App                 | State                                                    | What a phone change can show there                                                                                     | What it can do to the phone                                                    |
-| ------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| API                 | `scope/v0.10.0`, contract 0.6.0 (account settings, turf) | Everything: activities with recomputed numbers, totals, tombstones, consents, Home City, **turf cell for cell** (#149) | —                                                                              |
-| Web portal, Slice 0 | **Merged** (#141)                                        | Privacy & data: account e-mail and name, backup and Apple Health consent state, signed-in devices                      | Sign out one device, others or all (phones included); delete account; export   |
-| Account settings    | **Merged** (#142)                                        | Name and e-mail on `/v1/me` for every session, the web portal's included                                               | E-mail or password change signs out every **other** session, browsers included |
-| Web portal, Slice 1 | next; its data is on the API (#149)                      | Activities list and detail, totals, turf map: checked now with the browser's cookie (W5), pages not built              | —                                                                              |
-| Admin               | **Merged** (#139): staff sign-in only                    | Nothing yet. Its own Payload database holds staff only; user data waits for `/internal/admin/v1` (lane D)              | Later: erasure, block                                                          |
+| App                 | State                                            | What a phone change can show there                                                                                     | What it can do to the phone                                                    |
+| ------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| API                 | v0.10.0, contract 0.6.0 (account settings, turf) | Everything: activities with recomputed numbers, totals, tombstones, consents, Home City, **turf cell for cell** (#149) | —                                                                              |
+| Web portal, Slice 0 | **Merged** (#141)                                | Privacy & data: account e-mail and name, backup and Apple Health consent state, signed-in devices                      | Sign out one device, others or all (phones included); delete account; export   |
+| Account settings    | **Merged** (#142)                                | Name and e-mail on `/v1/me` for every session, the web portal's included                                               | E-mail or password change signs out every **other** session, browsers included |
+| Web portal, Slice 1 | next; its data is on the API (#149)              | Activities list and detail, totals, turf map: checked now with the browser's cookie (W5), pages not built              | —                                                                              |
+| Admin               | **Merged** (#139): staff sign-in only            | Nothing yet. Its own Payload database holds staff only; user data waits for `/internal/admin/v1` (lane D)              | Later: erasure, block                                                          |
 
 Slice 0 pages show **no activities, totals, Home City or turf**. Slice 1's pages will, and the data
 they will draw is already on the API: W5 reads it the way the portal will (cookie session) and
@@ -155,10 +155,11 @@ minutes.
 
 ### Verified
 
-| API under test                                        | Result                                        |
-| ----------------------------------------------------- | --------------------------------------------- |
-| `scope/v0.10.0` with #141, #142 and #139 (2026-10-23) | 22 passed; W1–W4 and A1–A3 pass; turf pending |
-| `scope/v0.10.0` with #142 only (2026-10-22)           | 22 passed, five full runs; W1–W4 pending      |
+| API under test                                        | Result                                             |
+| ----------------------------------------------------- | -------------------------------------------------- |
+| Release at `5bee35e`, with #149 and #156 (2026-10-23) | 23 passed, turf and W5 too; 2 admin checks pending |
+| `scope/v0.10.0` with #141, #142 and #139 (2026-10-23) | 22 passed; W1–W4 and A1–A3 pass; turf pending      |
+| `scope/v0.10.0` with #142 only (2026-10-22)           | 22 passed, five full runs; W1–W4 pending           |
 
 One earlier full run failed W4 and A3 once and the details were lost; it did not come back in six
 runs, also from a cold cache. Since then every scenario turns backup on with a helper that waits for
@@ -172,22 +173,22 @@ for that day.
 ### In CI
 
 - `pnpm test` runs the fake half, as today.
-- A CI job for `pnpm test:chain` on PRs into `scope/*` and nightly (P4).
+- A CI job for `pnpm test:chain` on PRs into `scope/*` and nightly (P4, not built yet).
 - The scope → release PR needs a green chain run, Maestro, and the device checks.
 
 ## Still to build
 
-| #   | What                                                                                                                                                           | Owner (skill)                 | Needs             |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | ----------------- |
-| N1  | ~~A4 (account change signs the web out)~~: done, in A2 and A3                                                                                                  | —                             | —                 |
-| N2  | ~~Account actions through `ApiAuthGateway`~~: done (`account-actions.ts`)                                                                                      | —                             | —                 |
-| N3  | Web Slice 1: the data is checked (W5); add the pages' rendering of it once they exist (N5)                                                                     | portal-engineer (web-portal)  | Slice 1 pages     |
-| N4  | Admin observer: counts, audit row per staff read, no coordinates (G9); erasure and block reach the phone. The probe in `admin.ts` fails when the routes appear | admin-engineer (admin-portal) | lane D routes, P2 |
-| N5  | Browser rendering checks (Playwright) once the portal has a Playwright setup                                                                                   | portal-engineer               | apps/web E2E      |
-| N6  | Maestro backup flow (L3) with the API observer                                                                                                                 | mobile-test-engineer          | P3                |
-| P2  | A test-only staff assertion for PGlite (refused in production, like `AUTH_FIXED_CODE`)                                                                         | api-engineer (api-design)     | lane D            |
-| P3  | `testID`s on the backup card                                                                                                                                   | mobile-ui-engineer            | —                 |
-| P4  | CI job for `test:chain`; the verify-change skill names it for cloud-backup, identity, API, portal diffs                                                        | harness-engineer (ai-harness) | —                 |
+| #   | What                                                                                                                                                           | Owner (skill)                                             | Needs             |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ----------------- |
+| N1  | ~~A4 (account change signs the web out)~~: done, in A2 and A3                                                                                                  | —                                                         | —                 |
+| N2  | ~~Account actions through `ApiAuthGateway`~~: done (`account-actions.ts`)                                                                                      | —                                                         | —                 |
+| N3  | Web Slice 1: the data is checked (W5); add the pages' rendering of it once they exist (N5)                                                                     | portal-engineer (web-portal)                              | Slice 1 pages     |
+| N4  | Admin observer: counts, audit row per staff read, no coordinates (G9); erasure and block reach the phone. The probe in `admin.ts` fails when the routes appear | admin-engineer (admin-portal; planned, not on this scope) | lane D routes, P2 |
+| N5  | Browser rendering checks (Playwright): `apps/web/e2e/portal.spec.ts` exists since #141; chain checks through it are not built                                  | portal-engineer                                           | apps/web E2E      |
+| N6  | Maestro backup flow (L3) with the API observer                                                                                                                 | mobile-test-engineer                                      | P3                |
+| P2  | A test-only staff assertion for PGlite (refused in production, like `AUTH_FIXED_CODE`)                                                                         | api-engineer (api-design)                                 | lane D            |
+| P3  | `testID`s on the backup card                                                                                                                                   | mobile-ui-engineer                                        | —                 |
+| P4  | CI job for `test:chain`; the verify-change skill names it for cloud-backup, identity, API, portal diffs                                                        | harness-engineer (ai-harness)                             | —                 |
 
 ## Next: two-way flow (v0.11.0)
 
@@ -198,10 +199,10 @@ and erasure reach the phone and the web; conflicts resolve by the decided rules.
 
 ## Decisions
 
-| #   | Decision                          | Recommendation                                                                                  |
-| --- | --------------------------------- | ----------------------------------------------------------------------------------------------- |
-| T1  | Drive only from the phone?        | Yes for the suite's home and most triggers; also cover the web's actions on the phone (W1–W4)   |
-| T2  | Web observer: HTTP or browser?    | HTTP mirror of the portal's client now (no Playwright setup exists); add browser checks with N5 |
-| T3  | Chain run on every PR or nightly? | PRs into `scope/*` and nightly; not on feature branches                                         |
-| T4  | Fake API kept?                    | Yes, for fast unit tests, held honest by running the same scenarios against both                |
-| T5  | Per-device IPs in the chain       | Yes (`x-real-ip` per simulated client); per-address limits stay real                            |
+| #   | Decision                          | Recommendation                                                                                      |
+| --- | --------------------------------- | --------------------------------------------------------------------------------------------------- |
+| T1  | Drive only from the phone?        | Yes for the suite's home and most triggers; also cover the web's actions on the phone (W1–W4)       |
+| T2  | Web observer: HTTP or browser?    | HTTP mirror of the portal's client now (Playwright was not set up then); add browser checks with N5 |
+| T3  | Chain run on every PR or nightly? | PRs into `scope/*` and nightly; not on feature branches                                             |
+| T4  | Fake API kept?                    | Yes, for fast unit tests, held honest by running the same scenarios against both                    |
+| T5  | Per-device IPs in the chain       | Yes (`x-real-ip` per simulated client); per-address limits stay real                                |

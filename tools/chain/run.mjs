@@ -14,7 +14,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-/** The fixed sign-in code; the API accepts it only for @e2e.cityturfer.test addresses. */
+/**
+ * The fixed sign-in code. The API accepts it for @e2e.cityturfer.test addresses and, on the local
+ * PGlite server only, for the mock accounts admin@ and demo@cityturfer.com (the local profile
+ * backup scenarios rely on that; never in production).
+ */
 const CODE = '000000';
 
 /** Numbers shaped like a coordinate (a degree with 4+ decimals): none may reach the API's log. */

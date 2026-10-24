@@ -3,7 +3,6 @@ import { hasLocale } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 
-import { PORTAL_ROOT } from '@/api/next-path';
 import { routing } from '@/i18n/routing';
 
 import { SessionGate } from '../_portal/session-gate';
@@ -21,9 +20,5 @@ export default async function SignedInLayout({
     notFound();
   }
   setRequestLocale(locale);
-  return (
-    <SessionGate locale={locale} path={PORTAL_ROOT}>
-      {children}
-    </SessionGate>
-  );
+  return <SessionGate locale={locale}>{children}</SessionGate>;
 }

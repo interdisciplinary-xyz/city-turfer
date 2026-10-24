@@ -13,9 +13,9 @@ import type {
   SessionStore,
 } from '../../ports';
 
-export const ADMIN: User = { id: userId('admin'), email: 'admin@cityturfer.com', displayName: 'Admin' };
+export const ADMIN: User = { id: userId('admin'), email: 'admin@cityturfer.com', displayName: 'Admin', name: 'Admin' };
 
-export const DEMO: User = { id: userId('demo'), email: 'demo@cityturfer.com', displayName: 'Ola' };
+export const DEMO: User = { id: userId('demo'), email: 'demo@cityturfer.com', displayName: 'Ola', name: 'Ola' };
 
 export const localAuth: AuthGateway = {
   signIn: async (e, p) =>
@@ -25,7 +25,11 @@ export const localAuth: AuthGateway = {
         ? { kind: 'signed-in', user: DEMO }
         : { kind: 'invalid-credentials' },
   userById: async (id) => (id === 'admin' ? ADMIN : id === 'demo' ? DEMO : null),
-  hasLocalAccount: (e) => e.value === ADMIN.email || e.value === 'demo@cityturfer.com',
+  localProfileOf: (e) => [ADMIN, DEMO].find((u) => u.email === e.value)?.id ?? null,
+  localEmailOf: (id) => {
+    const u = [ADMIN, DEMO].find((x) => x.id === id);
+    return u ? { value: u.email } : null;
+  },
 };
 
 /** The step-up code the fake mails to the current address, and the one it mails to a new address. */
@@ -239,6 +243,7 @@ export function setup(
   let profiles: ReturnType<AccountProfiles['toState']> | null = opts.profiles ?? null;
   let recording = false;
   let keychainBroken = false;
+  let profileWritesBroken = false;
   const names = new Map<string, string | null>();
   const sessions: SessionStore = {
     read: async () => session,
@@ -257,7 +262,12 @@ export function setup(
   };
   const profileStore: AccountProfileStore = {
     read: async () => profiles,
-    write: async (s) => void (profiles = s),
+    write: async (s) => {
+      if (profileWritesBroken) {
+        throw new Error('profile map write failed');
+      }
+      profiles = s;
+    },
   };
   const nameStore: ProfileNameStore = {
     read: async (id) => (names.has(id) ? names.get(id) : undefined),
@@ -299,5 +309,7 @@ export function setup(
     forgetCredentials: () => void (credentials = null),
     /** Simulates a keychain that refuses writes (reads still work). */
     breakKeychain: (broken = true) => void (keychainBroken = broken),
+    /** Simulates a profile map that refuses writes (reads still work). */
+    breakProfileWrites: (broken = true) => void (profileWritesBroken = broken),
   };
 }

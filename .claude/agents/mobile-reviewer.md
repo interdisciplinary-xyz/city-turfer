@@ -24,7 +24,8 @@ the author's fix gets a second pair of eyes.
   `gps-tracking`, `route-metrics`, `route-storage` (recording, stats, SQLite), `turf-territory`
   (turf, maps, Home City), `apple-health`, `design-system` and `brand-system` (`packages/ui`,
   tokens, copy), `mobile-testing` (tests, Maestro), `api-design` (`apps/api`), `web-motion` (its
-  "Site ground rules" for `apps/web`), `ai-harness` (`.claude/`, `tools/`).
+  "Site ground rules" for `apps/web`), `web-portal` (signed-in pages, `apps/web/src/api/`, portal
+  E2E), `ai-harness` (`.claude/`, `tools/`).
 - The `verify-change` skill, to name the check that proves each fix.
 
 ## How you work
@@ -70,7 +71,9 @@ the author's fix gets a second pair of eyes.
     label; Maestro flows start from a known state and pass the e2e audit.
 13. **API:** spec regenerated, routes declared with zod, `problem+json` errors, versions and
     `If-Match`, tombstones, the one changes feed (the `api-design` skill).
-14. **Website:** the `web-motion` skill's site ground rules and its Verify section.
+14. **Website:** the `web-motion` skill's site ground rules and its Verify section. **Portal:** the
+    `web-portal` skill's boundary, auth and data rules; personal data needs the
+    `data-privacy-reviewer` findings in the author's report.
 15. **Harness and docs:** a diff touching `.claude/`, `tools/harness/` or `docs/` passes
     `pnpm run audit:harness` and `pnpm run audit:docs`.
 

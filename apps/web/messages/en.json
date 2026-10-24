@@ -56,12 +56,19 @@
     "meta": {
       "title": "Your backup — CityTurfer",
       "signInTitle": "Sign in — CityTurfer",
-      "registerTitle": "Create account — CityTurfer"
+      "registerTitle": "Create account — CityTurfer",
+      "activitiesTitle": "Activities — CityTurfer",
+      "activityTitle": "Activity — CityTurfer"
     },
     "header": {
       "home": "CityTurfer website",
       "signOut": "Sign out",
       "signingOut": "Signing out…"
+    },
+    "nav": {
+      "label": "Your backup",
+      "activities": "Activities",
+      "privacy": "Privacy & data"
     },
     "common": {
       "skip": "Skip to content",
@@ -191,6 +198,70 @@
         "confirmMismatch": "That isn't {word} yet. Upper or lower case both work.",
         "confirm": "Delete my account for good",
         "deleting": "Deleting…"
+      }
+    },
+    "activities": {
+      "title": "Activities",
+      "lede": "The walks, runs and rides you backed up from your phone, newest first.",
+      "loading": "Opening your activities…",
+      "type": {
+        "walk": "Walk",
+        "run": "Run",
+        "cycle": "Ride"
+      },
+      "fromHealth": "From Apple Health",
+      "approx": "about",
+      "healthOff": "Apple Health workouts stay on your phone, so they aren't listed here.",
+      "stat": {
+        "distance": "Distance",
+        "movingTime": "Moving time",
+        "average": "{type, select, cycle {Avg speed} other {Avg pace}}",
+        "elapsed": "Elapsed time",
+        "elevation": "Elevation gain"
+      },
+      "totals": {
+        "title": "All time",
+        "all": "All",
+        "meta": "{count, plural, one {# activity} other {# activities}} · {duration} moving"
+      },
+      "filter": {
+        "label": "Show",
+        "all": "All",
+        "walk": "Walks",
+        "run": "Runs",
+        "cycle": "Rides"
+      },
+      "list": {
+        "shown": "{count, plural, one {Showing # activity} other {Showing # activities}}",
+        "showMore": "Show more",
+        "loadingMore": "Loading…"
+      },
+      "empty": {
+        "never": "Your activities live on your phone. Nothing is backed up yet, so there's nothing to show here.",
+        "withdrawn": "You turned backup off, so we erased the copy here. All your activities are still on your phone.",
+        "nothingYet": "Backup is on, but nothing has arrived yet. Open the app while you have a connection, and your activities will show up here.",
+        "filter": "{type, select, walk {No walks in your backup yet.} run {No runs in your backup yet.} other {No rides in your backup yet.}}",
+        "unknown": "There is nothing in your backup to show here yet.",
+        "howTo": "To turn on backup, open the app: Info › Cloud backup."
+      },
+      "detail": {
+        "back": "All activities",
+        "redirecting": "Taking you to your activities…",
+        "loading": "Opening this activity…",
+        "notFoundTitle": "Activity not found",
+        "notFound": "It isn't in your backup. It may have been deleted on your phone, or backed up from another account.",
+        "statsTitle": "Stats",
+        "estimatedNote": "Includes {distance} estimated along streets where GPS was lost (dashed). Estimated parts don't claim turf.",
+        "routeTitle": "Route",
+        "routeLabel": "{gaps, select, yes {The shape of the route, without a map. Dashed lines join the recorded parts across a pause or a GPS gap.} other {The shape of the route, without a map.}}",
+        "routeRecorded": "Recorded",
+        "routeBetween": "Between recorded parts: a pause, or a GPS gap estimated along streets",
+        "routeNoMap": "Just the shape, without a map: no map tiles are loaded from other sites.",
+        "routeSimplified": "Couldn't load the full route, so this is a simplified shape.",
+        "splitsTitle": "Splits",
+        "splitKm": "Kilometre",
+        "splitValue": "{type, select, cycle {Speed} other {Pace}}",
+        "splitRow": "km {km}"
       }
     },
     "errors": {

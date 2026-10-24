@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-20
+verified: 2026-10-23
 owner: founder
 scope: [docs/product]
 summary:
@@ -70,8 +70,9 @@ Garmin and Samsung Health.
 | One-off / lifetime    | Fog of World ~$30, MoveMap $24.99, Fogbreaker $89.99 | Full history, the whole map               |
 
 **History depth** is the most common paywall. Single-player, private apps sell **one-off /
-lifetime** well — and CityTurfer has no server cost, so a one-off price is viable. Untested
-inference; see the `product-strategy` skill before using it.
+lifetime** well. CityTurfer's server cost is limited to Turfers who turn on the opt-in cloud backup
+(Vercel and Neon since v0.8.0–v0.10.0), so a one-off price may still be viable. Untested inference;
+see the `product-strategy` skill before using it.
 
 ## 4. Where CityTurfer is different (and weak)
 
@@ -80,8 +81,10 @@ Different:
 1. **Permanent turf that glows brighter with repeat visits.** Territory games let rivals take it;
    Turf resets monthly; completionists count a street once. Only Stride rewards repeats. A daily dog
    walk counts here.
-2. **Private, no account, no upload.** Credible because there is no backend. Only Fog of World and
-   MoveMap share this.
+2. **Private by default.** Routes stay on the phone unless the Turfer turns on the opt-in backup; no
+   analytics. Only Fog of World and MoveMap go further today: CityTurfer has a backend (v0.8.0+) and
+   still asks every new user to sign in with an e-mailed code, which creates an account (a way in
+   without one is decided, not built).
 3. **Native recorder + Apple Health back-import**: years of turf on day one; no Strava dependency.
 4. **Walk, run and ride equally**, with ~50 m street cells (short urban walks visibly fill in).
 

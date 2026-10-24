@@ -59,7 +59,7 @@ async function backedUpPhoneA() {
   });
   await c.activityLog.importActivity.execute({ id: 'rec-ride', type: 'cycle', points: points('cycle-20k.gpx') });
   await c.add('rec-gap', gappyWalk()); // a GPS gap mid-walk: routed along streets
-  await c.add('demo-1', walk(11)); // generated demo history: never backed up
+  await c.add('demo-1', walk(11)); // generated demo history: uploaded only from the demo profile (LP3), not this one
   await c.dispatcher.dispatchPending();
   await c.activityLog.splitTrackGaps.execute();
   await c.dispatcher.dispatchPending();
@@ -445,7 +445,7 @@ describe('Restore from the cloud backup', () => {
   });
 });
 
-/** Turf cells only the demo activity claimed on phone A (demo history is never backed up). */
+/** Turf cells only the demo activity claimed on phone A (a `demo-…` activity off the demo profile is never backed up, LP3). */
 async function turfOfDemo(c: PhoneContainer): Promise<number> {
   const before = (await c.territory.summary.execute()).cellCount;
   await c.activityLog.remove.execute('demo-1');

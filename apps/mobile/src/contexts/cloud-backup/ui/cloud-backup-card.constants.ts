@@ -52,3 +52,33 @@ export const ACTION_ERRORS: Record<string, string> = {
 };
 
 export const ACTION_FAILED = 'Something went wrong. Try again.';
+
+// --- Local profiles (mock admin, demo): backup after a code to the profile's own address (LP1) ---
+
+/**
+ * What the screen tells the card about linking this profile for backup (it asks Identity):
+ * `loading`, null (nothing to link: a real account, or not linkable), or the address the code goes
+ * to with what "Email me a code" does.
+ */
+export type BackupLinkOffer = { email: string; onRequestCode: () => void };
+
+export type CloudBackupCardProps = { link: BackupLinkOffer | null | 'loading' };
+
+/**
+ * The Home screen's restore card. `localProfile`: a linkable local profile (mock admin, demo, from
+ * the screen: Identity knows), which gets credentials from a code in Info rather than a sign-in.
+ */
+export type RestoreCardProps = { localProfile?: boolean };
+
+/** Which of the card's parts show, from the status and the link offer. */
+export type CloudBackupCardMode = {
+  /** "Backup needs a code sent to {email}" with "Email me a code". */
+  offerLink: boolean;
+  /** "Sign in with your email to back up." (a real account without credentials). */
+  signInFirst: boolean;
+  /**
+   * The consent switch. Hidden while backup is off with nothing pending and the offer stands or is
+   * still loading (it could not turn on); shown while backup is on or its withdrawal is pending.
+   */
+  showSwitch: boolean;
+};

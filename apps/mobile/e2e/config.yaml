@@ -19,5 +19,6 @@ executionOrder:
     - 12-home-city
     - 13-record-turf
     - 16-language
+    - 17-local-profile-backup # needs the API dev server (admin@ code); run.sh excludes tag `account` when it is down
     - 15-account-settings # needs the API dev server; run.sh excludes tag `account` when it is down
     - 08-sign-out # last: signs out

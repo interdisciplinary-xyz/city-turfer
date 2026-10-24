@@ -253,6 +253,16 @@ export class BackupSettings {
     this.state = { ...this.state, homeCitySentAt: chosenAt };
   }
 
+  /**
+   * New credentials for this profile (a code linked its account again): an error that said there
+   * were none, or that the server refused them, no longer holds. The next run says what does.
+   */
+  credentialsArrived(): void {
+    if (this.state.lastError === 'auth' || this.state.lastError === 'no-token') {
+      this.state = { ...this.state, lastError: null };
+    }
+  }
+
   runFinished(now: number, error: BackupErrorCode | null): void {
     this.state = { ...this.state, lastRunAt: now, lastError: error };
   }

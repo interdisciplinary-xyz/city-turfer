@@ -16,7 +16,12 @@ import {
  * `name` is the default; a name the Turfer chooses in Me › Account is kept on the phone
  * (ProfileNameStore) and wins. Local profiles have no email to change and no account password.
  */
-const ACCOUNTS: readonly { password: string; user: User }[] = [
+export interface MockAccount {
+  readonly password: string;
+  readonly user: User;
+}
+
+const ACCOUNTS: readonly MockAccount[] = [
   {
     password: 'admin1234',
     user: { id: userId('admin'), email: 'admin@cityturfer.com', displayName: 'Admin', name: 'Admin' },
@@ -25,15 +30,23 @@ const ACCOUNTS: readonly { password: string; user: User }[] = [
 ];
 
 export class MockAuthGateway implements AuthGateway {
+  /** `accounts`: the local profiles (tests); default the mock admin and the demo profile. */
+  constructor(private readonly accounts: readonly MockAccount[] = ACCOUNTS) {}
+
   async signIn(email: Email, password: string): Promise<SignInOutcome> {
-    const account = ACCOUNTS.find((a) => a.user.email === email.value && a.password === password);
+    const account = this.accounts.find((a) => a.user.email === email.value && a.password === password);
     return account ? { kind: 'signed-in', user: account.user } : { kind: 'invalid-credentials' };
   }
   async userById(id: UserId): Promise<User | null> {
-    return ACCOUNTS.find((a) => a.user.id === id)?.user ?? null;
+    return this.accounts.find((a) => a.user.id === id)?.user ?? null;
   }
   /** These emails sign in with their password in every build; any other email gets a code. */
-  hasLocalAccount(email: Email): boolean {
-    return ACCOUNTS.some((a) => a.user.email === email.value);
+  localProfileOf(email: Email): UserId | null {
+    return this.accounts.find((a) => a.user.email === email.value)?.user.id ?? null;
+  }
+  /** The profile's own address: where its backup link code goes (Info › Cloud backup). */
+  localEmailOf(profileId: string): Email | null {
+    const user = this.accounts.find((a) => a.user.id === profileId)?.user;
+    return user ? { value: user.email } : null;
   }
 }

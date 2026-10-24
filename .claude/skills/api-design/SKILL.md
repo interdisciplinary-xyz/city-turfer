@@ -91,7 +91,10 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   the app's `BoundingBox` and MapLibre. Track points are `[lon, lat, t, segment, altitudeM|null]`
   (no accuracy or speed, D1).
 - **Ids:** opaque strings minted by the phone (session UUID, `hk-…` for Apple Health imports). The
-  server never re-mints an id. `demo-*` activities are never uploaded.
+  server never re-mints an id. `demo-*` activities are never uploaded, except the Gdańsk plan ids
+  (`demo-gdansk-n<i>`, as `import`), from the demo profile only and only to demo@'s own account; its
+  recordings and Apple Health imports never upload (LP3 in
+  `docs/decisions/local-profile-backup-2026-10-24.md`).
 - **Pagination:** `limit` + opaque `cursor`; responses `{ items, nextCursor }` (feed:
   `{ changes, nextCursor, hasMore }`).
 - **Errors:** `application/problem+json` (RFC 9457): `type`, `title`, `status`, `detail`, our `code`

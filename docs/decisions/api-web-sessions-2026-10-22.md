@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-22
+verified: 2026-10-23
 owner: founder
 scope:
   [
@@ -46,10 +46,17 @@ and get the same answers plus two fields. Accounts and phone sessions:
 | W10 | `WEB_ORIGIN` env | a bare `https://` origin; off Vercel it defaults to `https://cityturfer.local`; on Vercel unset → browser sessions off (phones unaffected); malformed → boot fails                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | required in production (a forgotten variable would take the phone API down with it)                                                                                                                                                                                                                                                                                   |
 | W11 | Session list     | `auth_sessions` through Drizzle (`SessionStore`): live rows only (`expires_at`, `absolute_expires_at` after the use cases' clock), sorted by last use; one `DELETE … RETURNING` per revoke; `scope=others` one `DELETE … WHERE id <> current`. `lastActiveAt` is written at most once a day, also once the expiry is at its cap                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Better Auth's `listSessions` (at most 100 rows, unsorted, expired rows included: `scope=others` could leave sessions signed in, an expired id answered 204)                                                                                                                                                                                                           |
 
+**Since (#154, review of #131):** W10 is tighter: on Vercel, `WEB_ORIGIN` without a valid
+`WEB_EDGE_SECRET` also keeps browser sessions off (a preview would otherwise put every visitor in
+the website edge's one per-IP sign-in bucket); production still fails the boot (`webOriginOf` and
+`checkProductionEnv` in `apps/api/src/wiring.ts`). The CSRF guard and the spec's `403 auth.csrf`
+read one list of state-changing methods (`apps/api/src/unsafe-methods.ts`).
+
 ## Contract (0.5.0)
 
 - `POST /v1/auth/sign-in` `{ email, code, client?: "phone" | "browser", sharedComputer?: boolean }`
-  (`sharedComputer: true` with a phone is 400) →
+  (or `password` instead of `code`, `account-settings-2026-10-22.md`; `sharedComputer: true` with a
+  phone is 400) →
   `200 { token?, client, expiresAt, absoluteExpiresAt | null, user: { id, email } }`; browsers: no
   `token`, the cookie in `Set-Cookie`; outside the website `403 auth.csrf`. A session has expired
   when `expiresAt` or `absoluteExpiresAt` is **at or before** now (the use cases' clock), so 14 days
@@ -62,6 +69,8 @@ and get the same answers plus two fields. Accounts and phone sessions:
   → 204. Device tokens are not sessions: never listed, never revoked here.
 
 ## Open (prove on a Vercel preview before production)
+
+Pending (founder): none of these has been checked on Vercel yet, as far as the repo shows.
 
 1. The cookie survives the website's rewrite: `Set-Cookie` arrives on the website's host as
    `__Host-ct_session` with `Path=/`, and the browser sends it back on `/api/v1/*` (Chrome and

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { frontmatterError, parseFrontmatter } from '../docs-audit.mjs';
+import { frontmatterError, parseFrontmatter, PROBES } from '../docs-audit.mjs';
 
 const doc = (yaml) => `---\n${yaml}\n---\n\n# Body\n`;
 
@@ -34,4 +34,12 @@ test('no frontmatter is null; invalid YAML is reported and still read leniently'
   assert.equal(parseFrontmatter(broken).name, 'x');
   // false positive guard: valid YAML has no error
   assert.equal(frontmatterError(doc('description: >-\n  a: b')), null);
+});
+
+test('every probe derives a whole number from the current tree', () => {
+  for (const [name, probe] of Object.entries(PROBES)) {
+    const value = probe();
+    assert.ok(Number.isInteger(value) && value >= 0, `probe ${name} gave ${value}`);
+  }
+  assert.ok(PROBES['cities-pl']() > 0 && PROBES['cities-europe']() > 0, 'both city counts are found');
 });

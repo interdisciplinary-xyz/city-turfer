@@ -45,7 +45,8 @@ it, where the other sources are, and how to keep them honest.
 4. Say where it's verified: unit tests, Simulator, emulator, or a real device. Background tracking
    and Apple Health only count as working when checked on a device (`mobile-testing` skill).
 5. Use the user's words from the brief's vocabulary table: _ride_ (code says `cycle`), _turf_,
-   _cell_, _Your city_ (Home City). Never "territory", "score", "points" or "conquer" in copy.
+   _cell_, _Your city_ (Home City). Never "territory" (English; Polish says _terytorium_, see the
+   `mobile-i18n` glossary), "score", "points" or "conquer" in copy.
 
 ## Related skills and the owner
 

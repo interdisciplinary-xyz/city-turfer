@@ -3,6 +3,7 @@ import type { HomeCityChoice } from '@/contexts/territory';
 import type { Clock } from '@/shared-kernel';
 
 import type { ActivityBackup } from '../domain/activity-backup';
+import type { UploadSourceName } from '../domain/backup-policy';
 import type { BackupSettings, ConsentPurpose } from '../domain/backup-settings';
 import type { Restore, RestoreItem } from '../domain/restore';
 
@@ -56,7 +57,7 @@ export interface ChangesPage {
 export type ServerActivityCopy = ActivityArchive & { version: number; source: UploadSource };
 
 /** Where an uploaded Activity came from (the server's `source`). */
-export type UploadSource = 'recording' | 'apple-health';
+export type UploadSource = UploadSourceName;
 
 /**
  * Port: the CityTurfer API (apps/api, contract 0.4.0), already authenticated. The adapter is the
@@ -202,8 +203,23 @@ export interface BackupRunReport {
 export type { ConsentPurpose };
 
 export interface CloudBackupDeps {
-  /** False for profiles that never talk to the API (the demo profile): no request of any kind. */
+  /**
+   * False when no server is configured (tests): no request of any kind. Otherwise a profile reaches
+   * the server only once it has credentials (BackupCredentials).
+   */
   available: boolean;
+  /**
+   * The signed-in profile is the demo profile (demo@cityturfer.com): its planned Gdańsk history
+   * (`demo-gdansk-n<i>`) is uploaded, as `import` (LP3). False everywhere else: demo history seeded
+   * there stays on the phone; other `demo-…` ids stay on the phone on every profile.
+   */
+  demoProfile: boolean;
+  /**
+   * A local profile (mock admin, demo): its only account is the one of its own fixed address,
+   * linked by a code (LP1). Lets a withdrawal for that address's former account (deleted, then
+   * made anew by a code) stop blocking backup (see backup-access deliverToPrevious). Omitted: false.
+   */
+  localProfile?: boolean;
   repo: BackupRepository;
   api: ApiClientFactory;
   /** The Developer tools device token (until the Turfer signs in with a code). */

@@ -1,7 +1,7 @@
 import { NAME, RADIUS, SPACE } from '@cityturfer/brand';
 import { Camera, type CameraRef, GeoJSONSource, Layer, Map, UserLocation } from '@maplibre/maplibre-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AccessibilityInfo, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Alert, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ACTIVITY_TYPES } from '@/constants/activity';
@@ -16,7 +16,9 @@ import { usePalette } from '@/ui-kit/theme';
 import { trackWithGaps } from '@/ui-kit/track-geometry';
 
 import {
+  CHIP_INSET,
   CITY_ZOOM,
+  cityChipMaxWidth,
   HOLD_MS,
   isBannerStatus,
   LIVE_TRACK_BOTTOM_LAYER,
@@ -50,6 +52,9 @@ export function RecordView({
   const [busy, setBusy] = useState(false);
   const [following, setFollowing] = useState(true);
   const [holding, setHolding] = useState(false);
+  // The city chip leaves room for the chip column on the right (narrow screens, large text).
+  const { width: windowWidth } = useWindowDimensions();
+  const [chipColumnWidth, setChipColumnWidth] = useState(0);
   const camera = useRef<CameraRef>(null);
 
   useEffect(() => {
@@ -199,10 +204,13 @@ export function RecordView({
           accessibilityLabel={city ? t('cityLabel', { city: city.name }) : t('chooseCity')}
           accessibilityHint={t('cityHint')}
           onPress={onPickCity}
-          style={[s.city, { top: insets.top + 12, backgroundColor: p.card }]}
+          style={[
+            s.city,
+            { top: insets.top + 12, maxWidth: cityChipMaxWidth(windowWidth, chipColumnWidth), backgroundColor: p.card },
+          ]}
         >
           <AppSymbol name='house' fallback='⌂' size={15} color={p.text} />
-          <Text style={[s.cityName, { color: p.text }]} numberOfLines={1}>
+          <Text style={[s.cityName, { color: p.text }]} numberOfLines={1} ellipsizeMode='tail'>
             {city ? city.name : t('yourCity')}
           </Text>
           <AppSymbol name='chevron.down' fallback='▾' size={12} color={p.text} />
@@ -210,7 +218,11 @@ export function RecordView({
       )}
 
       {/* One column at the top right, so the chips never overlap whatever the text size. */}
-      <View style={[s.chipColumn, { top: insets.top + 12 }]} pointerEvents='box-none'>
+      <View
+        style={[s.chipColumn, { top: insets.top + 12 }]}
+        pointerEvents='box-none'
+        onLayout={(e) => setChipColumnWidth(Math.ceil(e.nativeEvent.layout.width))}
+      >
         {turf && (
           <Pressable
             testID='record-turf'
@@ -379,8 +391,7 @@ const s = StyleSheet.create({
   hint: { textAlign: 'center', fontSize: 13 },
   city: {
     position: 'absolute',
-    left: 12,
-    maxWidth: '55%',
+    left: CHIP_INSET,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -392,7 +403,7 @@ const s = StyleSheet.create({
     shadowRadius: 6,
     elevation: 4,
   },
-  chipColumn: { position: 'absolute', right: 12, alignItems: 'flex-end', gap: 12 },
+  chipColumn: { position: 'absolute', right: CHIP_INSET, alignItems: 'flex-end', gap: 12 },
   cityName: { fontWeight: '700', flexShrink: 1 },
   chip: {
     flexDirection: 'row',

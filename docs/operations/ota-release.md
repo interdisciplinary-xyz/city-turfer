@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-17
+verified: 2026-10-23
 owner: founder
 scope: [apps/mobile/app.json, apps/mobile/src/app/info.tsx, docs/process/release-manager.md]
 summary:
@@ -36,6 +36,17 @@ received, #4 bad update).
   runbook #7): anything that changes the fingerprint. Say so in the PR's "Risk & rollback". That
   includes any edit under `apps/mobile/plugins/` (config plugins are hashed even when the change is
   formatting, e.g. a lint autofix), `app.json`, native modules and native dependencies.
+- **The release commit moves the fingerprint.** On `main`, `release.yml` bumps
+  `apps/mobile/app.json` `version`, so a build made from `scope/…` or `release/…` before that commit
+  gets no OTA published from `main` afterwards, even when the release was JS only (follow-up in
+  `docs/sessions/v0.10.0.md`). Build the phone from the release tag, or publish from the commit it
+  was built from.
+
+v0.10.0 is a native release: the bundled typefaces (#140) and then the release commit's `app.json`
+bump to 0.10.0 both moved the fingerprint. Before the bump (scope up to `549c873`): iOS
+`1b3ffa48d51f84290c29865c26ae06359693d456`, Android `4dcf4be7518455cd70c3618da76c8b10998b0cb9`.
+After it, measured on `scope/v0.11.0` at `20431a7` (tag `v0.10.0` plus package.json version pins):
+iOS `06aca0e17e430961e1ccb2fd755db451c830efda`, Android `ab6e3dbbd0c2ab97a3bc6e8395b0b376a0bb4684`.
 
 To check, compare the fingerprint of the checkout you'll publish from with the runtime of the latest
 update the phone already runs:
@@ -49,7 +60,8 @@ pnpm -C apps/mobile dlx eas-cli@latest channel:view production       # "Runtime 
 
 1. On the branch being shipped, the gate is green: `pnpm run ci:quality` (and the simulator replay
    for recording changes).
-2. Publish (iOS only today; Android has no build yet):
+2. Publish (iOS here; add `--platform android`, or `all`, for the sideloaded APK,
+   `docs/operations/android-release.md`):
 
    ```bash
    pnpm -C apps/mobile dlx eas-cli@latest update --channel production --environment production --platform ios \

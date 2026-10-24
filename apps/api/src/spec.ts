@@ -5,7 +5,7 @@ import { API_GUIDE } from './guide';
  * Version of the API contract, not of the app: bump it when the contract changes. (The app's release
  * commit bumps package.json versions; the spec must not change with it.)
  */
-export const API_VERSION = '0.6.0';
+export const API_VERSION = '0.6.1';
 
 export const SPEC_PATH = '/openapi.json';
 

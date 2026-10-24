@@ -12,6 +12,7 @@ import { activityStats } from '@/contexts/activity-log/ui/activity-stats';
 import { useActivities } from '@/contexts/activity-log/ui/hooks';
 import { RecentActivities } from '@/contexts/activity-log/ui/recent-activities';
 import { RestoreCard } from '@/contexts/cloud-backup/ui/restore-card';
+import { useBackupLinkTarget } from '@/contexts/identity/ui/hooks';
 import { LiveSessionBanner } from '@/contexts/recording/ui/live-session-banner';
 import { useLiveSession } from '@/contexts/recording/ui/use-live-session';
 import { useTurfSummary } from '@/contexts/territory/ui/hooks';
@@ -41,6 +42,8 @@ export default function DashboardScreen() {
   const activities = useActivities();
   const summary = useTurfSummary();
   const live = useLiveSession();
+  // A linkable local profile restores after a code in Info, not a sign-in (the card's wording).
+  const localProfile = useBackupLinkTarget() != null;
   // Recompute "this week" when the day changes, not only when data does (the tab stays mounted).
   const today = new Date().toDateString();
   const week = useMemo(() => activityStats(activities ?? [], Date.now()).thisWeek, [activities, today]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -89,7 +92,7 @@ export default function DashboardScreen() {
               : ' '}
         </Text>
       </View>
-      <RestoreCard />
+      <RestoreCard localProfile={localProfile} />
       {onboarding.progress && (
         <OnboardingCard
           progress={onboarding.progress}

@@ -1,6 +1,6 @@
 ---
 status: proposed
-verified: 2026-10-20
+verified: 2026-10-23
 owner: founder
 scope: [docs/product, NOTEBOOK.md]
 summary:
@@ -39,7 +39,9 @@ account or an upload; never let anyone take your turf away; reward return as muc
    trimmed) — the cheapest growth engine that keeps the privacy promise.
 
 DHM check: delight ✔ (glow), hard to copy — partly (trust + local-first is hard for Strava-style
-backends; the mechanic alone is not), margin — one-off/lifetime pricing with no server cost.
+backends; the mechanic alone is not), margin — one-off/lifetime pricing with no server cost. (Fact
+check 2026-10-23: opt-in cloud backup and server turf now run on Vercel and Neon, so there is a
+server cost for Turfers who turn backup on.)
 
 ## 4. Positioning options (test, don't pick by taste)
 
@@ -72,11 +74,11 @@ telemetry exists.
 
 ## 7. Now / Next / Later
 
-| When  | Outcome                                                                  | Candidate bets                                                                                       |
-| ----- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| Now   | Testers trust recording and understand turf (v0.8–0.9)                   | Record turf overlay (in progress); first 5 interviews; Android on a real phone; remove login wall    |
-| Next  | Testers come back weekly without nudging                                 | Strength-change moments, weekly new-streets recap, city coverage (after defining 100 %), share image |
-| Later | Strangers from the waitlist activate and invite others; launch readiness | TestFlight/Play beta, privacy policy, PL app copy, pricing test, Health Connect                      |
+| When  | Outcome                                                                  | Candidate bets                                                                                            |
+| ----- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| Now   | Testers trust recording and understand turf (v0.8–0.9)                   | Record turf overlay (built in v0.8.0); first 5 interviews; Android on a real phone; remove login wall     |
+| Next  | Testers come back weekly without nudging                                 | Strength-change moments, weekly new-streets recap, city coverage (after defining 100 %), share image      |
+| Later | Strangers from the waitlist activate and invite others; launch readiness | TestFlight/Play beta, privacy policy, PL app copy (screens done in v0.10.0), pricing test, Health Connect |
 
 ## 8. Decisions this needs from the founder
 
@@ -85,7 +87,10 @@ telemetry exists.
    above ("never require an account or an upload") and the trust-based positioning only survive if
    sync is **opt-in, off by default, with local-only as a full mode**. Recommendation: decide this
    explicitly (decision record) before the sync client is built, and test with users whether
-   backup/multi-device is wanted at all (assumption A10).
+   backup/multi-device is wanted at all (assumption A10). Status 2026-10-23: decided 2026-10-22 as
+   B1 (opt-in, off by default, local-only stays a full mode;
+   `docs/plans/backend-plan-2026-10-22.md`). The sync client shipped in v0.8.0–v0.9.0; a way in
+   without an account is not built yet, and A10 is still untested.
 
 1. Accept / edit the guiding policy (§2).
 2. Which beachhead to test first (§5).
