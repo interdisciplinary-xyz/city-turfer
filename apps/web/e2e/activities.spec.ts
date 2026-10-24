@@ -7,7 +7,15 @@ import type { Page } from '@playwright/test';
 
 import type { ActivitySummary, ActivityType } from '../src/api/schema';
 import { activityId, seedApi, upload } from './support/activities';
-import { expect, expectNoHorizontalScroll, expectNoSeriousAxe, signIn, test, testEmail } from './support/fixtures';
+import {
+  expect,
+  expectNoHorizontalScroll,
+  expectNoSeriousAxe,
+  signIn,
+  signInHere,
+  test,
+  testEmail,
+} from './support/fixtures';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** 22 October 2026, 07:12 in Warsaw: the newest seeded activity; older ones a day apart. */
@@ -268,6 +276,30 @@ test('backup withdrawn: the copy here is erased, everything is still on the phon
   await expect(page.getByText('Erased walk')).toHaveCount(0);
 });
 
+test('backup withdrawn while the list is in memory: the cached list and totals go', async ({
+  page,
+  context,
+  baseURL,
+}) => {
+  await signIn(page, testEmail('history-withdraw-later'));
+  const api = seedApi(context.request, baseURL ?? '');
+  await api.grant('cloud-sync');
+  await api.upload(activityId(), upload({ type: 'run', name: 'Cached run', startMs: NEWEST_MS }));
+  const nav = page.locator('.portal-nav');
+  await nav.getByRole('link', { name: 'Activities' }).click();
+  await expect(rows(page)).toHaveCount(1);
+  await expect(page.locator('.portal-total')).not.toHaveCount(0);
+
+  // Withdrawn on the phone; back to the list in the same page (the list is still in memory).
+  await nav.getByRole('link', { name: 'Privacy & data' }).click();
+  await api.grant('cloud-sync', false);
+  await nav.getByRole('link', { name: 'Activities' }).click();
+  await expect(page.getByText('You turned backup off, so we erased the copy here.', { exact: false })).toBeVisible();
+  await expect(rows(page)).toHaveCount(0);
+  await expect(page.locator('.portal-total')).toHaveCount(0);
+  await expect(page.getByText('Cached run')).toHaveCount(0);
+});
+
 test('API unreachable: the Unreachable block, and retry brings the list', async ({ page, context, baseURL }) => {
   await signIn(page, testEmail('history-down'));
   const api = seedApi(context.request, baseURL ?? '');
@@ -298,4 +330,86 @@ test('H5: months and times follow the activity zone, not the browser zone', asyn
 
   await rows(page).first().getByRole('link').click();
   await expect(page.locator('.portal-detail-meta time')).toHaveText(/^Sunday, 1 November 2026 at 00:30 (GMT\+1|CET)$/);
+});
+
+test('signed out on an activity link: sign-in comes back to that activity', async ({ page, context, baseURL }) => {
+  // One code per address a minute: sign in once, from the activity link itself, then back it up.
+  const id = activityId();
+  await page.goto(`/en/account/activity?id=${id}`);
+  await expect(page).toHaveURL(/\/en\/account\/sign-in\?next=/);
+  expect(new URL(page.url()).searchParams.get('next')).toBe(`/en/account/activity?id=${id}`);
+  await signInHere(page, testEmail('history-next'));
+  await expect(page).toHaveURL(new RegExp(`/en/account/activity\\?id=${id}$`));
+  await expect(page.getByRole('heading', { level: 1, name: 'Activity not found' })).toBeVisible();
+
+  const api = seedApi(context.request, baseURL ?? '');
+  await api.grant('cloud-sync');
+  await api.upload(id, upload({ type: 'walk', name: 'Walk after sign-in', startMs: NEWEST_MS }));
+  await page.reload();
+  await expect(page.getByRole('heading', { level: 1, name: 'Walk after sign-in' })).toBeVisible();
+  await expectNoStorage(page);
+});
+
+test('keyboard: nav, the filter, every row and "Show more" are reachable with Tab', async ({
+  page,
+  context,
+  baseURL,
+}) => {
+  test.setTimeout(120_000);
+  await signIn(page, testEmail('history-keys'));
+  const api = seedApi(context.request, baseURL ?? '');
+  await api.grant('cloud-sync');
+  // One more than a page, so "Show more" is there.
+  for (let i = 0; i < 51; i++) {
+    const type = TYPES[i % 3];
+    await api.upload(activityId(), upload({ type, name: `${RIDE[type]} ${i + 1}`, startMs: NEWEST_MS - i * DAY_MS }));
+  }
+  await page.goto('/en/account/activities');
+  await expect(rows(page)).toHaveCount(50);
+
+  // Tab from the top of the page until "Show more" has focus, noting what got focus on the way.
+  type Focused = { kind: string; name: string; visible: boolean };
+  const seen: Focused[] = [];
+  for (let i = 0; i < 120; i++) {
+    await page.keyboard.press('Tab');
+    const focused = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      if (!el || el === document.body) {
+        return null;
+      }
+      const kind = el.closest('.portal-nav')
+        ? 'nav'
+        : el.matches('input[type=radio]')
+          ? 'radio'
+          : el.closest('.portal-activities')
+            ? 'row'
+            : el.tagName.toLowerCase();
+      return {
+        kind,
+        name: (el.textContent || (el as HTMLInputElement).value || '').trim(),
+        visible: el.matches(':focus-visible'),
+      };
+    });
+    if (focused) {
+      seen.push(focused);
+      if (focused.name === 'Show more') {
+        break;
+      }
+    }
+  }
+  expect(seen.some((f) => f.kind === 'nav' && f.name === 'Activities')).toBe(true);
+  // Native radios: one Tab stop for the group, on the checked one.
+  expect(seen.filter((f) => f.kind === 'radio').map((f) => f.name)).toEqual(['all']);
+  expect(seen.filter((f) => f.kind === 'row')).toHaveLength(50);
+  expect(seen.at(-1)?.name).toBe('Show more');
+  expect(seen.every((f) => f.visible)).toBe(true);
+
+  await page.keyboard.press('Enter');
+  await expect(rows(page)).toHaveCount(51);
+
+  // The arrow keys move the filter (the radio group's own keys).
+  await page.getByRole('radio', { name: 'All' }).focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByRole('radio', { name: 'Walks' })).toBeChecked();
+  await expect(rows(page)).toHaveCount(17);
 });
