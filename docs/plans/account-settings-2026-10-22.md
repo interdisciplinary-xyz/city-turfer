@@ -23,8 +23,8 @@ phone (Me › Account) and on the web portal (`/[locale]/account`), with the sam
 words and the same server data on both.
 
 Builds on `docs/decisions/api-accounts-2026-10-22.md` (codes, sessions, deletion) and the web and
-admin portal plans (web-portal and portals-execution, dated 2026-10-22, on the main checkout; not
-yet on this scope). Decisions: `docs/decisions/account-settings-2026-10-22.md`.
+admin portal plans (web-portal and portals-execution, dated 2026-10-22: planned, not on this scope).
+Decisions: `docs/decisions/account-settings-2026-10-22.md`.
 
 ## Status (checked in code, 2026-10-23)
 

@@ -85,7 +85,8 @@ a reason to feel behind — by design.
 | Getting started                    | Dashboard checklist (record, see turf, try all three types, come back, unlock achievements); hideable                                                                                      | `packages/core/src/contexts/achievements/domain/onboarding.ts`   |
 
 Voice: confident, playful, outdoorsy; never guilt, fake urgency, leaderboards, "score", "points",
-"conquer" or "territory" in copy (`brand-system` skill).
+"conquer" or "territory" in copy (English; Polish says _terytorium_, see the `mobile-i18n` glossary;
+`brand-system` skill).
 
 ## 5. What a user can do today (v0.10.0)
 

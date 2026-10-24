@@ -79,6 +79,8 @@ const SECTIONS = [
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
 const countMatches = (text, re) => (text.match(re) ?? []).length;
 
+const CITY_CATALOG = 'packages/core/src/contexts/territory/domain/city-catalog.ts';
+
 export const PROBES = {
   /** Bounded contexts: one directory per context in apps/mobile/src/contexts/. */
   contexts: () =>
@@ -95,6 +97,11 @@ export const PROBES = {
   },
   /** SQLite migrations: `version: n` entries in apps/mobile/src/platform/migrations.ts. */
   migrations: () => countMatches(read('apps/mobile/src/platform/migrations.ts'), /^\s+version: \d+,/gm),
+  /** Home City catalogue: `city('pl-…'` entries in core's city-catalog.ts. */
+  'cities-pl': () => countMatches(read(CITY_CATALOG), /^\s+city\('pl-/gm),
+  /** Home City catalogue: every other `city('…'` entry (the European cities outside Poland). */
+  'cities-europe': () =>
+    countMatches(read(CITY_CATALOG), /^\s+city\('/gm) - countMatches(read(CITY_CATALOG), /^\s+city\('pl-/gm),
   /** Tracked docs under docs/. */
   docs: () => listFiles('docs').filter((f) => f.endsWith('.md')).length,
   /** HTTP operations in the generated API spec (apps/api/openapi.json). */

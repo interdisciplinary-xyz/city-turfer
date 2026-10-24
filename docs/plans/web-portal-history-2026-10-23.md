@@ -98,7 +98,8 @@ needed for reads:
    are unchanged (no cookie, no API call, no portal chunk).
 6. No coordinates or cell ids in URLs, `console` or storage; nothing written to `localStorage`.
 7. axe: no serious or critical findings; 320 px without horizontal scroll; keyboard reachable.
-8. EN and PL copy reviewed; no banned words (territory, score, points, sync, dashboard…).
+8. EN and PL copy reviewed; no banned words (territory in English, where Polish says _terytorium_
+   (see the `mobile-i18n` glossary); score, points, sync, dashboard…).
 
 ## Executed (2026-10-24)
 

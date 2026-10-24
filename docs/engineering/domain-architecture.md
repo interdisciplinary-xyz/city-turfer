@@ -53,7 +53,9 @@ There are <!-- probe:contexts -->7<!-- /probe --> bounded contexts, one director
   `homeCityChoice`; its outbox handlers on `ActivityRecorded`, `ActivityDeleted`, `ActivityRenamed`,
   `ActivityTrackCorrected`, `ActivityDistanceEstimated` and `HomeCityChosen` only queue work, which
   `RunBackup` sends in the foreground. Restore imports a backup onto a new phone through Activity
-  Log (origin `restore`). Never `demo-*`; `hk-*` only with its own consent.
+  Log (origin `restore`). `demo-*` never, except the demo profile's generated Gdańsk history
+  (`demo-gdansk-n<i>`, to demo@'s own account; LP3 in
+  `docs/decisions/local-profile-backup-2026-10-24.md`); `hk-*` only with its own consent.
 - **achievements** (supporting): pure `evaluateAchievements` / `summarizeAchievements` and the
   getting-started steps over facts the UI passes in. Domain in core; the app holds `ui/` and
   `infrastructure/` (only the onboarding card's dismissal flag).

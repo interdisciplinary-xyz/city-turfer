@@ -1,10 +1,9 @@
 ---
 name: brand-system
 description: >-
-  "is this on-brand?", user-facing copy, choosing a colour or font, restyling a screen, app icon,
-  splash, store listing or screenshots, social image. CityTurfer name, voice, colour tokens (turf
-  Ramp), typefaces (Big Shoulders Display, Barlow), logo, WCAG contrast and rendering assets with
-  render-assets.mjs.
+  Use for "is this on-brand?", user-facing copy, a colour or font, restyling a screen, app icon,
+  splash, store listing, screenshots or social image. CityTurfer name, voice, colour tokens (turf
+  ramp), typefaces (Big Shoulders Display, Barlow), logo, WCAG contrast, render-assets.mjs.
 ---
 
 # CityTurfer brand system
