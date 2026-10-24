@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useApp, useContainer } from '@/ui-kit/app-context';
 
+import type { AfterCredentialsResult } from '../application/after-credentials';
 import type { RestoreOffer, RestoreProgress, RestoreResult } from '../application/restore';
 import type { BackupCommandResult, BackupStatus } from '../contract';
 import { RUNNING_REFRESH_MS } from './hooks.constants';
@@ -111,7 +112,29 @@ export function useCloudBackup() {
   /** The status read now (not the last one shown), for a decision about to be taken. */
   const current = useCallback(() => c.cloudBackup.status.execute(), [c]);
 
-  return { status, refresh, current, setEnabled, setHealthIncluded, saveToken, removeToken, saveServerUrl, backUpNow };
+  /** The profile was just linked by a code: Cloud Backup decides; a run starts when backup is on. */
+  const afterCredentials = useCallback(async (): Promise<AfterCredentialsResult> => {
+    const r = await c.cloudBackup.afterCredentials.execute();
+    if (r.kind === 'turned-on' || r.kind === 'carried-on') {
+      void backUpNow();
+    } else {
+      await refresh();
+    }
+    return r;
+  }, [c, backUpNow, refresh]);
+
+  return {
+    status,
+    refresh,
+    current,
+    setEnabled,
+    setHealthIncluded,
+    saveToken,
+    removeToken,
+    saveServerUrl,
+    backUpNow,
+    afterCredentials,
+  };
 }
 
 /**

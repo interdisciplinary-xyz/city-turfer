@@ -1,10 +1,5 @@
 import type { BackupStatus } from '../contract';
-import type {
-  AfterLinkPlan,
-  BackupErrorKey,
-  CloudBackupCardMode,
-  CloudBackupCardProps,
-} from './cloud-backup-card.constants';
+import type { BackupErrorKey, CloudBackupCardMode, CloudBackupCardProps } from './cloud-backup-card.constants';
 
 type ModeStatus = Pick<BackupStatus, 'hasToken' | 'enabled' | 'withdrawalPending'>;
 
@@ -52,12 +47,4 @@ export function shownLastError(
     return null;
   }
   return status.lastError;
-}
-
-/** After the link: turn backup on only when it was off with nothing pending (see `AfterLinkPlan`). */
-export function afterLinkPlan(status: Pick<BackupStatus, 'enabled' | 'withdrawalPending'>): AfterLinkPlan {
-  if (status.withdrawalPending && !status.enabled) {
-    return 'deliver-withdrawal';
-  }
-  return status.enabled ? 'resume' : 'enable';
 }

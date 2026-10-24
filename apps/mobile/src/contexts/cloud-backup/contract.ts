@@ -3,7 +3,7 @@ import type { BackupErrorCode } from './domain/backup-settings';
 
 /** What the Info screen's Cloud backup card shows. */
 export interface BackupStatus {
-  /** False for profiles that never back up (the demo profile). */
+  /** False when this build has no server configured: nothing is ever sent. */
   available: boolean;
   enabled: boolean;
   /** Backup was turned off and the server has not been told yet (its copy is still there). */

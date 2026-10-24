@@ -76,12 +76,3 @@ export type CloudBackupCardMode = {
    */
   showSwitch: boolean;
 };
-
-/**
- * What to do once a local profile is linked (its account's credentials just arrived):
- * - `enable`: backup was off with nothing pending, so the Turfer came to turn it on;
- * - `resume`: backup is on already (opened by password, LP2): just run a pass;
- * - `deliver-withdrawal`: backup was turned off while it had no credentials; run a pass so the
- *   server hears it (and deletes its copy), and leave the switch to the Turfer: never turn it back on.
- */
-export type AfterLinkPlan = 'enable' | 'resume' | 'deliver-withdrawal';

@@ -1,7 +1,7 @@
 import { translator } from '@/i18n/translator';
 
 import type { BackupLinkOffer } from '../cloud-backup-card.constants';
-import { afterLinkPlan, cloudBackupCardMode, offPendingNotice, shownLastError } from '../cloud-backup-card-state';
+import { cloudBackupCardMode, offPendingNotice, shownLastError } from '../cloud-backup-card-state';
 
 const offer = (email: string): BackupLinkOffer => ({ email, onRequestCode: () => undefined });
 const NORMAL = { offerLink: false, signInFirst: false, showSwitch: true };
@@ -89,20 +89,6 @@ describe('Cloud backup card: backup off while the server still has the copy', ()
     for (const s of [st(false, false), st(true, true), st(false, true)]) {
       expect(offPendingNotice(s, cloudBackupCardMode(s, offer('admin@cityturfer.com')))).toBeNull();
     }
-  });
-});
-
-describe('after the link', () => {
-  it('turns backup on only when it was off with nothing pending (the Turfer came to turn it on)', () => {
-    expect(afterLinkPlan({ enabled: false, withdrawalPending: false })).toBe('enable');
-  });
-
-  it('never turns it back on when the Turfer had turned it off: delivers the withdrawal instead', () => {
-    expect(afterLinkPlan({ enabled: false, withdrawalPending: true })).toBe('deliver-withdrawal');
-  });
-
-  it('already on (opened by password, LP2): just runs a pass', () => {
-    expect(afterLinkPlan({ enabled: true, withdrawalPending: false })).toBe('resume');
   });
 });
 
