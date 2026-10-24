@@ -42,10 +42,10 @@ env:
 - assertVisible: { id: 'backup-link-request' }
 - takeScreenshot: 17-offer
 - tapOn: { id: 'backup-link-request' }
-# The code field, or an error on the request step (ids are regexes).
-- extendedWaitUntil: { visible: { id: 'backup-link-code|backup-link-error' }, timeout: 20000 }
+# The code field; an error instead leaves the request step with its send button (not while sending).
+- extendedWaitUntil: { visible: { id: 'backup-link-code' }, timeout: 20000, optional: true }
 - runFlow:
-    when: { visible: { id: 'backup-link-error' }, notVisible: { id: 'backup-link-code' } }
+    when: { visible: { id: 'backup-link-send' } }
     commands:
       - takeScreenshot: 17-send-error
       - extendedWaitUntil: { visible: { id: 'backup-link-send', enabled: true }, timeout: 70000 }
