@@ -103,3 +103,36 @@ describe('createPortalClient', () => {
 it('unwrap passes data through', async () => {
   await expect(unwrap(Promise.resolve({ data: 1, response: new Response('1') }))).resolves.toBe(1);
 });
+
+describe('portalApi: the activity history reads', () => {
+  const where = (request: Request) => {
+    const url = new URL(request.url);
+    return { method: request.method, path: url.pathname, query: Object.fromEntries(url.searchParams) };
+  };
+
+  it('asks for the list page by page, with the cursor and type only when set', async () => {
+    const { api, requests } = setup(() => json(200, { items: [], nextCursor: null }));
+    await api.activities({ limit: 50, cursor: null, type: null });
+    await api.activities({ limit: 50, cursor: 'c_2', type: 'cycle' });
+    expect(requests.map(where)).toEqual([
+      { method: 'GET', path: '/api/v1/activities', query: { limit: '50' } },
+      { method: 'GET', path: '/api/v1/activities', query: { limit: '50', cursor: 'c_2', type: 'cycle' } },
+    ]);
+  });
+
+  it('reads one activity, its track and the totals by their own paths, no query', async () => {
+    const { api, requests } = setup(() => json(200, {}));
+    await api.activity('3f9c2a64-5d1e-4b8e-9a51-0c7d2e6f1b20');
+    await api.track('hk-ABC_123');
+    await api.activityTotals();
+    expect(requests.map(where)).toEqual([
+      { method: 'GET', path: '/api/v1/activities/3f9c2a64-5d1e-4b8e-9a51-0c7d2e6f1b20', query: {} },
+      { method: 'GET', path: '/api/v1/activities/hk-ABC_123/track', query: {} },
+      { method: 'GET', path: '/api/v1/activity-totals', query: {} },
+    ]);
+    for (const request of requests) {
+      expect(request.headers.get(CLIENT_HEADER)).toBe('web/9.9.9');
+      expect(request.cache).toBe('no-store');
+    }
+  });
+});
