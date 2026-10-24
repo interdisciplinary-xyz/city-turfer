@@ -81,9 +81,16 @@ export function CloudBackupCard({ link }: CloudBackupCardProps) {
 
   const mode = cloudBackupCardMode(status, link);
   const restoreMessage = describeRestoreResult(restore.result, t, { health: Platform.OS === 'ios' });
-  const lastError = shownLastError(status, mode);
-  const errorKey = notice ?? offPendingNotice(status, mode) ?? (lastError ? ERROR_KEY[lastError] : null);
+  // A linkable profile whose server session died (auth) gets the code offer: "Sign in again" would
+  // only reopen the local profile with its password (LP2), never reach the server.
+  const lastError = mode.offerLink && status.lastError === 'auth' ? null : shownLastError(status, mode);
+  const offNotice = offPendingNotice(status, mode);
+  const errorKey = notice ?? offNotice ?? (lastError ? ERROR_KEY[lastError] : null);
   const error = errorKey ? te(errorKey) : null;
+  /** Backup off with the server's copy still to delete: a status, not a failure. */
+  const errorIsStatus = !notice && offNotice !== null;
+  /** Restore needs a working server session: not while the code offer stands. */
+  const canRestore = status.hasToken && !mode.offerLink;
 
   return (
     <Card style={{ gap: SPACE.md }}>
@@ -100,6 +107,12 @@ export function CloudBackupCard({ link }: CloudBackupCardProps) {
             {t('link.offer', { email: link.email })}
           </Text>
           <Text style={{ color: p.muted, fontSize: FONT_SIZE.caption }}>{t('link.mailboxNote')}</Text>
+          {/* The code turns backup on (consent): where the data goes, when the switch isn't there to say it. */}
+          {!mode.showSwitch && (
+            <Text testID='backup-link-privacy' style={{ color: p.muted, fontSize: FONT_SIZE.caption }}>
+              {t('privacy')}
+            </Text>
+          )}
           <Button
             testID='backup-link-request'
             label={t('link.request')}
@@ -162,7 +175,7 @@ export function CloudBackupCard({ link }: CloudBackupCardProps) {
         </Text>
       )}
       {error && (
-        <Text testID='backup-error' style={{ color: p.danger, fontSize: FONT_SIZE.caption }}>
+        <Text testID='backup-error' style={{ color: errorIsStatus ? p.muted : p.danger, fontSize: FONT_SIZE.caption }}>
           {error}
         </Text>
       )}
@@ -185,7 +198,7 @@ export function CloudBackupCard({ link }: CloudBackupCardProps) {
         />
       )}
 
-      {status.hasToken && (
+      {canRestore && (
         <>
           <Text style={{ color: p.muted, fontSize: FONT_SIZE.caption }}>{t('restore.actionNote')}</Text>
           {restore.running && (

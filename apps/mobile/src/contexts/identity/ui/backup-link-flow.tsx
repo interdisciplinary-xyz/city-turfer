@@ -150,6 +150,12 @@ export function BackupLinkFlow({ onLinked, onDone, turnsOn }: BackupLinkFlowProp
             editable={!busy}
           />
           {errorText}
+          {/* "Turn on backup" records consent: say where the data goes right next to it. */}
+          {turnsOn && (
+            <Text testID='backup-link-privacy' style={[s.note, { color: p.muted }]}>
+              {t('privacy')}
+            </Text>
+          )}
           <Button
             testID='backup-link-submit'
             label={turnsOn ? t('link.submit') : t('link.confirm')}
@@ -192,6 +198,7 @@ const s = StyleSheet.create({
   root: { gap: SPACE.lg },
   text: { fontSize: FONT_SIZE.body },
   error: { fontSize: FONT_SIZE.caption },
+  note: { fontSize: FONT_SIZE.caption },
   link: { fontWeight: FONT_WEIGHT.bold, textAlign: 'center' },
   linkTarget: { minHeight: 44, justifyContent: 'center' },
 });
