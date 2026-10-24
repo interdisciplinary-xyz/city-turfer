@@ -27,9 +27,10 @@ summary:
 Design: `docs/decisions/api-sync-2026-10-20.md` and
 `docs/decisions/api-device-tokens-2026-10-20.md`.
 
-**Status (2026-10-23):** v0.10.0 ships API contract 0.6.0. Whether production has had its steps
-(Neon `db:migrate` 0004–0006, `WEB_EDGE_SECRET` on both Vercel projects, `WEB_ORIGIN`, the turf
-backfill) is not recorded anywhere in the repo: **pending (founder)** until checked.
+**Status (2026-10-24):** v0.11.0 ships API contract 0.6.1 (text only: the demo profile's Gdańsk
+upload; `API_VERSION` in `apps/api/src/spec.ts`); v0.10.0 shipped 0.6.0. Whether production has had
+its steps (Neon `db:migrate` 0004–0006, `WEB_EDGE_SECRET` on both Vercel projects, `WEB_ORIGIN`, the
+turf backfill) is not recorded anywhere in the repo: **pending (founder)** until checked.
 `GET /v1/health` on production answers the deployed version.
 
 ## Vercel project

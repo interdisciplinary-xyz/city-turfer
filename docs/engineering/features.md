@@ -137,15 +137,18 @@ The Me tab doesn't open a screen: it slides in a drawer from the right with **Pr
   `health-sync/ui/apple-health-card.tsx`), the **Cloud backup** card
   (`cloud-backup/ui/cloud-backup-card.tsx`: "Back up to CityTurfer cloud" consent switch (off asks
   first: it erases the server copy), "Include Apple Health workouts" on iOS, "Backed up N of M
-  activities · last run …", errors in plain words, Back up now; the demo profile never backs up),
-  the **Language** card (System, English, Polski). **Developer tools** show in dev builds, or after
-  five long presses on the version: the device token and a server URL override for testing
-  (`cloud-backup/ui/backup-developer-card.tsx`), **Seed demo history** (90 days around the current
-  location, `apps/mobile/src/dev/demo-history.ts`) and, on iOS, **Add sample workouts to Apple
-  Health** (`apps/mobile/src/dev/health-seed.ts`) and Remove demo data
-  (`apps/mobile/src/dev/developer-tools.tsx`).
+  activities · last run …", errors in plain words, Back up now; on the admin@ and demo@ local
+  profiles "Email me a code" to the profile's own address links a server account for it (LP1 in
+  `docs/decisions/local-profile-backup-2026-10-24.md`), and the demo profile uploads only its
+  generated Gdańsk history (LP3)), the **Language** card (System, English, Polski). **Developer
+  tools** show in dev builds, or after five long presses on the version: the device token and a
+  server URL override for testing (`cloud-backup/ui/backup-developer-card.tsx`), **Seed demo
+  history** (90 days around the current location, `apps/mobile/src/dev/demo-history.ts`) and, on
+  iOS, **Add sample workouts to Apple Health** (`apps/mobile/src/dev/health-seed.ts`) and Remove
+  demo data (`apps/mobile/src/dev/developer-tools.tsx`).
 - **Your city** (`apps/mobile/src/app/city.tsx` → `territory/ui/city-picker.tsx`): choose the Home
-  City from a bundled catalogue (23 Polish, 15 European cities); search ignores accents ("krakow"
+  City from a bundled catalogue (<!-- probe:cities-pl -->23<!-- /probe --> Polish,
+  <!-- probe:cities-europe -->15<!-- /probe --> European cities); search ignores accents ("krakow"
   finds Kraków); the current city is ticked; "Clear <city>". Stored per user (`ter_home_city`); its
   id and time go to the server only with Cloud backup on.
 
@@ -175,15 +178,17 @@ The Me tab doesn't open a screen: it slides in a drawer from the right with **Pr
   `apps/api/openapi.json`). Turning it on records the consent, compares the history with the
   server's manifest and uploads what is missing, oldest first, two at a time; afterwards new
   recordings, renames, deletes, corrected tracks, gap routes and the Home City follow via the
-  outbox, and changes made while backup was off are reconciled on the next run. Never `demo-*`;
-  `hk-*` only with the Apple Health switch. Network work runs in the foreground only (launch, app
-  active, after each outbox run); the outbox handlers just queue (`cb_activities`).
+  outbox, and changes made while backup was off are reconciled on the next run. `demo-*` never,
+  except `demo-gdansk-n<i>` from the demo profile to demo@'s own account (LP3; its recordings and
+  Apple Health imports stay on the phone); `hk-*` only with the Apple Health switch. Network work
+  runs in the foreground only (launch, app active, after each outbox run); the outbox handlers just
+  queue (`cb_activities`).
 - **Restore**: a new phone signed in to an account with a backup imports it (origin `restore`),
   resumable and paused while recording (`cloud-backup/application/restore.ts`).
 
 ## 4. Beyond the phone
 
-- **Server turf** (API contract 0.6.0, `apps/api/src/territory/`): the API builds its own turf
+- **Server turf** (since API contract 0.6.0, `apps/api/src/territory/`): the API builds its own turf
   projection from backed-up activities, with the same rules from `@cityturfer/core`
   (`/v1/turf/cells`, `/v1/turf/summary`, `/v1/activity-totals`). A parity golden keeps phone and
   server turf equal. Only for activities in the backup; nothing on the phone reads it yet.
@@ -192,10 +197,14 @@ The Me tab doesn't open a screen: it slides in a drawer from the right with **Pr
   what the server holds, the backup state, export, delete account and signed-in devices. One
   `__Host-` session cookie through `/api/v1`; public pages stay cookie-free. Design:
   `docs/decisions/web-portal-2026-10-22.md`.
-- **Not built yet:** web portal Slice 1 (turf map and activities on the web), the phone pulling
-  changes from the server, a web delete removing the activity everywhere, the staff admin portal's
-  data views (`apps/admin` is a scaffold with staff sign-in only; no `/internal/admin` routes).
-  Planned in `docs/decisions/data-flow-2026-10-23.md` (proposed).
+- **Web portal activity history** (v0.11.0, `apps/web/src/app/[locale]/account/(signed-in)/`): all
+  backed-up activities with all-time totals, a type filter and a list by month; one activity's
+  stats, splits and route as an inline SVG (gap estimates dashed), no basemap or tile requests.
+  Read-only. Plan: `docs/plans/web-portal-history-2026-10-23.md`.
+- **Not built yet:** the Turf Map on the web (cells, tiles), the phone pulling changes from the
+  server, a web delete removing the activity everywhere, the staff admin portal's data views
+  (`apps/admin` is a scaffold with staff sign-in only; no `/internal/admin` routes). Planned in
+  `docs/decisions/data-flow-2026-10-23.md` (proposed).
 
 ## 5. Known gaps — claims that aren't true yet
 

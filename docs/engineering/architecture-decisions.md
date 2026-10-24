@@ -97,7 +97,12 @@ the password stays `admin1234` and the user ID stays `admin`
 existing activities and the stored session carry over.
 
 **Update (2026-10-22):** a second local profile, `demo@cityturfer.com` / `demo1234`, fills its own
-database with Gdańsk demo data for screenshots and never backs up.
+database with Gdańsk demo data for screenshots.
+
+**Update (2026-10-24):** both local profiles can back up after an e-mailed code proves their mailbox
+(LP1); the demo profile uploads only its generated Gdańsk history, to demo@'s own account, and what
+is recorded or imported on it stays on the phone (LP3,
+`docs/decisions/local-profile-backup-2026-10-24.md`).
 
 ---
 

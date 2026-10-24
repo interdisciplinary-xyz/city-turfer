@@ -178,17 +178,17 @@ for that day.
 
 ## Still to build
 
-| #   | What                                                                                                                                                           | Owner (skill)                 | Needs             |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | ----------------- |
-| N1  | ~~A4 (account change signs the web out)~~: done, in A2 and A3                                                                                                  | —                             | —                 |
-| N2  | ~~Account actions through `ApiAuthGateway`~~: done (`account-actions.ts`)                                                                                      | —                             | —                 |
-| N3  | Web Slice 1: the data is checked (W5); add the pages' rendering of it once they exist (N5)                                                                     | portal-engineer (web-portal)  | Slice 1 pages     |
-| N4  | Admin observer: counts, audit row per staff read, no coordinates (G9); erasure and block reach the phone. The probe in `admin.ts` fails when the routes appear | admin-engineer (admin-portal) | lane D routes, P2 |
-| N5  | Browser rendering checks (Playwright): `apps/web/e2e/portal.spec.ts` exists since #141; chain checks through it are not built                                  | portal-engineer               | apps/web E2E      |
-| N6  | Maestro backup flow (L3) with the API observer                                                                                                                 | mobile-test-engineer          | P3                |
-| P2  | A test-only staff assertion for PGlite (refused in production, like `AUTH_FIXED_CODE`)                                                                         | api-engineer (api-design)     | lane D            |
-| P3  | `testID`s on the backup card                                                                                                                                   | mobile-ui-engineer            | —                 |
-| P4  | CI job for `test:chain`; the verify-change skill names it for cloud-backup, identity, API, portal diffs                                                        | harness-engineer (ai-harness) | —                 |
+| #   | What                                                                                                                                                           | Owner (skill)                                             | Needs             |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ----------------- |
+| N1  | ~~A4 (account change signs the web out)~~: done, in A2 and A3                                                                                                  | —                                                         | —                 |
+| N2  | ~~Account actions through `ApiAuthGateway`~~: done (`account-actions.ts`)                                                                                      | —                                                         | —                 |
+| N3  | Web Slice 1: the data is checked (W5); add the pages' rendering of it once they exist (N5)                                                                     | portal-engineer (web-portal)                              | Slice 1 pages     |
+| N4  | Admin observer: counts, audit row per staff read, no coordinates (G9); erasure and block reach the phone. The probe in `admin.ts` fails when the routes appear | admin-engineer (admin-portal; planned, not on this scope) | lane D routes, P2 |
+| N5  | Browser rendering checks (Playwright): `apps/web/e2e/portal.spec.ts` exists since #141; chain checks through it are not built                                  | portal-engineer                                           | apps/web E2E      |
+| N6  | Maestro backup flow (L3) with the API observer                                                                                                                 | mobile-test-engineer                                      | P3                |
+| P2  | A test-only staff assertion for PGlite (refused in production, like `AUTH_FIXED_CODE`)                                                                         | api-engineer (api-design)                                 | lane D            |
+| P3  | `testID`s on the backup card                                                                                                                                   | mobile-ui-engineer                                        | —                 |
+| P4  | CI job for `test:chain`; the verify-change skill names it for cloud-backup, identity, API, portal diffs                                                        | harness-engineer (ai-harness)                             | —                 |
 
 ## Next: two-way flow (v0.11.0)
 
