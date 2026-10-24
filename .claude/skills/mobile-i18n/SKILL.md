@@ -148,9 +148,9 @@ simulator.
 
 Maestro pitfalls with a second language:
 
-- Every flow starts through `e2e/subflows/launch.yaml`; it matches the sign-in and onboarding texts
-  in **both** languages, so a run left in Polish still starts. Add the Polish text there when a
-  launch screen's copy changes.
+- Every flow starts through `apps/mobile/e2e/subflows/launch.yaml`; it matches the sign-in and
+  onboarding texts in **both** languages, so a run left in Polish still starts. Add the Polish text
+  there when a launch screen's copy changes.
 - The iOS back button is labelled by the OS in the app's language: tap `Back|Wstecz`
   (`subflows/back.yaml`).
 - A flow that switches language ends with `onFlowComplete: reset-language.yaml`, so a failed assert

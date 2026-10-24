@@ -37,7 +37,7 @@ portal add. Format adapted from empatalk's `FEATURES.md`.
 > | SQLite schema         | `apps/mobile/src/platform/migrations.ts`                                 |
 
 Today: <!-- probe:achievements -->20<!-- /probe --> achievements,
-<!-- probe:e2e-flows -->16<!-- /probe --> Maestro flows,
+<!-- probe:e2e-flows -->17<!-- /probe --> Maestro flows,
 <!-- probe:migrations -->13<!-- /probe --> migrations.
 
 ## 1. Tabs
