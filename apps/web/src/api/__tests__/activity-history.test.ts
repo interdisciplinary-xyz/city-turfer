@@ -28,11 +28,13 @@ import { totalsTiles } from '../../app/[locale]/account/_portal/activity-totals/
 import { dateLocale, formatDate } from '../../app/[locale]/account/_portal/format';
 import { portalLocation } from '../../app/[locale]/account/_portal/portal-nav/portal-nav.constants';
 import {
+  type Position,
   previewLines,
   routeShape,
   simplifyLines,
   type TrackColumns,
   trackLines,
+  unwrapLines,
 } from '../../app/[locale]/account/_portal/route-shape';
 import { isActivityId } from '../activity-id';
 import { PortalError } from '../errors';
@@ -215,6 +217,46 @@ describe('routeShape', () => {
     const spot = routeShape(previewLines([[18.6535, 54.3485]]), box)!;
     expect(spot.track).toBe('');
     expect(spot.start).toEqual({ x: 50, y: 50 });
+  });
+});
+
+describe('a route across the antimeridian (180°)', () => {
+  // About 430 m eastward across 180° at Taveuni's latitude (16.8° S): made-up points at sea.
+  const crossing = {
+    segments: [
+      [
+        [179.999, -16.8],
+        [-179.999, -16.8],
+      ] as Position[],
+    ],
+    gaps: [
+      [
+        [-179.999, -16.8],
+        [-179.997, -16.8],
+      ] as Position[],
+    ],
+  };
+  const box = { width: 100, height: 100, padding: 10 };
+
+  it('unwraps longitudes to within 180° of the first point', () => {
+    const lines = unwrapLines(crossing);
+    expect(lines.segments[0][1][0]).toBeCloseTo(180.001, 6);
+    expect(lines.gaps[0][1][0]).toBeCloseTo(180.003, 6);
+    expect(unwrapLines({ segments: [], gaps: [] })).toEqual({ segments: [], gaps: [] });
+  });
+
+  it('draws it as the short line it is, west to east, not across the world', () => {
+    const shape = routeShape(crossing, box)!;
+    // 0.002° of track, then 0.002° of gap, in a row: each fills half the width.
+    expect(shape.track).toBe('M10 50L50 50');
+    expect(shape.gaps).toBe('M50 50L90 50');
+  });
+
+  it('keeps its extent small when simplifying (both ends stay)', () => {
+    const many = Array.from({ length: 101 }, (_, i) => [((179.95 + i * 0.001 + 180) % 360) - 180, -16.8] as Position);
+    const lines = simplifyLines({ segments: [many], gaps: [] });
+    expect(lines.segments[0].length).toBe(2);
+    expect(lines.segments[0][1][0]).toBeCloseTo(180.05, 6);
   });
 });
 

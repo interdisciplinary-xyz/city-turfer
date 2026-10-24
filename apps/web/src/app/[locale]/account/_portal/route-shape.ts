@@ -2,7 +2,8 @@
 // lon/lat projected with cos(latitude) scaling (so a street grid isn't stretched sideways), fitted
 // into a viewBox with its aspect kept, north up. One subpath per recorded segment; the connectors
 // between segments (a GPS gap's street estimate when the phone made one, else a straight line, as
-// the app draws them) form a separate path, drawn dashed. Pure: no React, no DOM, no network.
+// the app draws them) form a separate path, drawn dashed. Longitudes are unwrapped across the
+// antimeridian first (`unwrapLines`). Pure: no React, no DOM, no network.
 import { simplify } from '@cityturfer/core/shared-kernel';
 
 /** [longitude, latitude] (GeoJSON order, as the API sends them). */
@@ -71,6 +72,31 @@ export function trackLines(points: readonly TrackColumns[], gapRoutes: readonly 
   return { segments: ordered.map(([, line]) => line), gaps };
 }
 
+/**
+ * Longitudes made continuous across the antimeridian: each is moved by ±360° to within 180° of the
+ * route's first point, so a route crossing 180° (Fiji, Chukotka) is one small shape, not a line
+ * across the whole world. Lines without a first point come back as they are.
+ */
+export function unwrapLines(lines: RouteLines): RouteLines {
+  const first = lines.segments.find((line) => line.length > 0)?.[0] ?? lines.gaps.find((line) => line.length > 0)?.[0];
+  if (!first) {
+    return lines;
+  }
+  const ref = first[0];
+  const unwrap = (line: Position[]): Position[] =>
+    line.map(([lon, lat]) => {
+      let x = lon;
+      while (x - ref > 180) {
+        x -= 360;
+      }
+      while (ref - x > 180) {
+        x += 360;
+      }
+      return [x, lat] as const;
+    });
+  return { segments: lines.segments.map(unwrap), gaps: lines.gaps.map(unwrap) };
+}
+
 function extentM(lines: RouteLines): number {
   let minLon = Infinity;
   let maxLon = -Infinity;
@@ -95,7 +121,8 @@ function extentM(lines: RouteLines): number {
  * Fewer points for drawing (core's Douglas–Peucker, render only): a tolerance of about
  * 1/`detail` of the route's extent, which is below a pixel at the size it's drawn.
  */
-export function simplifyLines(lines: RouteLines, detail = 1500): RouteLines {
+export function simplifyLines(input: RouteLines, detail = 1500): RouteLines {
+  const lines = unwrapLines(input);
   const epsilonM = extentM(lines) / detail;
   if (epsilonM <= 0) {
     return lines;
@@ -111,7 +138,8 @@ export function simplifyLines(lines: RouteLines, detail = 1500): RouteLines {
 const round = (n: number): number => Math.round(n * 10) / 10;
 
 /** The lines fitted into `box` (aspect kept, centred, north up); null when there is nothing to draw. */
-export function routeShape(lines: RouteLines, { width, height, padding }: Box): RouteShape | null {
+export function routeShape(input: RouteLines, { width, height, padding }: Box): RouteShape | null {
+  const lines = unwrapLines(input);
   const all = [...lines.segments, ...lines.gaps].flat();
   if (all.length === 0) {
     return null;
