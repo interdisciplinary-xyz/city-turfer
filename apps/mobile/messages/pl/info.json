@@ -8,7 +8,7 @@
   "updateFailedTitle": "Aktualizacja nie powiodła się",
   "updateFailedBody": "Nie udało się pobrać aktualizacji. Sprawdź połączenie i spróbuj ponownie.",
   "yourData": "Twoje dane",
-  "yourDataBody": "Aktywności i turf są zapisane na tym telefonie. Na nasz serwer trafiają tylko wtedy, gdy włączysz niżej kopię w chmurze. Gdy GPS zgubi sygnał, wysyłamy do usługi tras OpenStreetMap tylko dwa końce luki, żeby odtworzyć drogę ulicami — nigdy całego śladu.",
+  "yourDataBody": "Aktywności i terytorium są zapisane na tym telefonie. Na nasz serwer trafiają tylko wtedy, gdy włączysz niżej kopię w chmurze. Gdy GPS zgubi sygnał, wysyłamy do usługi tras OpenStreetMap tylko dwa końce luki, żeby odtworzyć drogę ulicami — nigdy całego śladu.",
   "estimateGaps": "Uzupełniaj luki GPS wzdłuż ulic",
   "estimateGapsOff": "Wyłączone: żadne zapytania nie wychodzą z telefonu, a luki zostają prostymi liniami przerywanymi.",
   "settingNotSaved": "Ustawienie się nie zmieniło. Spróbuj ponownie.",

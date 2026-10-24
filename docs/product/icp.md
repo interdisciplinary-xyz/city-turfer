@@ -1,6 +1,6 @@
 ---
 status: proposed
-verified: 2026-10-22
+verified: 2026-10-23
 owner: founder
 scope:
   [

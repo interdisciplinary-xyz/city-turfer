@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-18
+verified: 2026-10-23
 owner: founder
 scope: [apps/mobile/src/contexts/health-sync, apps/mobile/e2e/11-apple-health.yaml]
 summary: Install the Apple Health build on the iPhone and check import and export with real data
@@ -13,9 +13,9 @@ The Simulator proves the code path; only the iPhone has your Apple Watch workout
 
 ## Install
 
-1. This build is a **native change** (new runtime fingerprint): reinstall the Release build from
-   Xcode over the existing app, as in runbook #7 of `docs/operations/ota-release.md`. Don't delete
-   the app first: that would delete your activities.
+1. Apple Health came in a **native change** (new runtime fingerprint), so the phone needs a Release
+   build that includes it: reinstall from Xcode over the existing app, as in #7 of
+   `docs/operations/runbook.md`. Don't delete the app first: that would delete your activities.
 2. If Xcode reports that the provisioning profile doesn't support HealthKit: Signing & Capabilities
    → let it re-sign once (free Apple ID works).
 
@@ -36,13 +36,22 @@ The Simulator proves the code path; only the iPhone has your Apple Watch workout
 2. Health app → Browse → Activity → Workouts: the walk is there, from CityTurfer, with a route map.
 3. Open CityTurfer again: the next import must not bring that walk back (count stays the same).
 
+## Cloud backup and restore
+
+- Imported workouts reach the API only when Info › Cloud backup has **Include Apple Health
+  workouts** on (iOS only). Without it they stay on the phone.
+- A phone restored from the backup gets those workouts back (origin `restore`) and links them in
+  `hs_links`, so the next Health import doesn't bring them in twice; one deleted after the restore
+  stays deleted. A restore takes over only the cloud-sync consent: **Include Apple Health workouts**
+  stays off on the restored phone until you turn it on there.
+
 ## If something is off
 
-- **0 workouts:** Health app → Sharing → Apps → CityTurfer: Workouts and Workout Routes allowed,
+- **0 workouts:** Health app → Profile → Apps → CityTurfer: Workouts and Workout Routes allowed,
   data access "All Recorded Data".
 - **Workouts without a route:** treadmill and indoor workouts have none, as do workouts from apps
   that don't share routes. They are skipped on purpose.
-- **Stop syncing:** the card's Disconnect, or the two switches. Revoking access happens in the
-  Health app.
+- **Stop syncing:** the card's Disconnect, or the two switches (Import workouts, Save recordings to
+  Health). Revoking access happens in the Health app.
 
 Tell Claude what you saw (counts, any errors) rather than copying app data off the phone.

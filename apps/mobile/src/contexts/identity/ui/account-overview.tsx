@@ -7,6 +7,7 @@ import { usePalette } from '@/ui-kit/theme';
 
 import { accountRows } from './account-rows';
 import type { AccountOverviewProps } from './account-settings.constants';
+import { useBackupLinkTarget } from './hooks';
 import { SettingsRow } from './settings-row';
 import { useAnnounce } from './use-announce';
 
@@ -17,7 +18,9 @@ import { useAnnounce } from './use-announce';
 export function AccountOverview({ user, state, dataText, onName, onEmail, onPassword, onRetry }: AccountOverviewProps) {
   const p = usePalette();
   const t = useT('account');
-  const rows = accountRows(user, state, t);
+  // A local profile linked to its own address: that address is the profile (see accountRows).
+  const fixedAddress = useBackupLinkTarget() != null;
+  const rows = accountRows(user, state, t, undefined, fixedAddress);
   // "Try again" gives feedback: VoiceOver hears it's checking (TalkBack reads the live region).
   useAnnounce(rows.retrying && t('value.checking'));
   const retryLabel = rows.retrying ? t('value.checking') : t('retry');
@@ -36,20 +39,22 @@ export function AccountOverview({ user, state, dataText, onName, onEmail, onPass
         testID='account-email-row'
         label={t('row.email')}
         value={rows.email.value}
-        disabled={!rows.email.enabled}
-        accessibilityHint={t('hint.email')}
-        onPress={rows.local ? undefined : onEmail}
+        disabled={!rows.email.enabled && !rows.emailFixed}
+        accessibilityHint={rows.emailFixed ? undefined : t('hint.email')}
+        onPress={rows.local || rows.emailFixed ? undefined : onEmail}
         divider
       />
-      <SettingsRow
-        testID='account-password-row'
-        label={t('row.password')}
-        value={rows.password.value}
-        disabled={!rows.password.enabled}
-        accessibilityHint={t('hint.password')}
-        onPress={rows.local ? undefined : onPassword}
-        divider
-      />
+      {rows.password && (
+        <SettingsRow
+          testID='account-password-row'
+          label={t('row.password')}
+          value={rows.password.value}
+          disabled={!rows.password.enabled}
+          accessibilityHint={t('hint.password')}
+          onPress={rows.local ? undefined : onPassword}
+          divider
+        />
+      )}
       <SettingsRow testID='account-sign-in-row' label={t('row.signIn')} value={rows.signIn} divider />
       <SettingsRow testID='account-data-row' label={t('row.data')} value={dataText} divider />
       {rows.retry && (

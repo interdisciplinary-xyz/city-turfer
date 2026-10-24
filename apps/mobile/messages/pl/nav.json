@@ -1,7 +1,7 @@
 {
   "tabs": {
     "dashboard": "Pulpit",
-    "turf": "Turf",
+    "turf": "Terytorium",
     "record": "Nagraj",
     "stats": "Statystyki",
     "me": "Ja"
@@ -16,6 +16,7 @@
     "accountEmail": "E-mail",
     "accountPassword": "Hasło do konta",
     "info": "Informacje",
-    "city": "Twoje miasto"
+    "city": "Twoje miasto",
+    "linkBackup": "Kopia w chmurze"
   }
 }

@@ -8,6 +8,7 @@ import {
   SetPassword,
   UpdateName,
 } from './application/account-settings';
+import { GetBackupLinkTarget, LinkSignedInProfile, RequestBackupLinkCode } from './application/backup-link';
 import {
   AccountBearer,
   ChooseHistory,
@@ -48,6 +49,12 @@ export function createIdentityApi(deps: IdentityDeps, isRecording: () => Promise
     confirmEmailChange: new ConfirmEmailChange(deps),
     setPassword: new SetPassword(deps),
     removePassword: new RemovePassword(deps),
+    /** Info › Cloud backup on a local profile (mock admin, demo): is it linkable, and to which address? */
+    backupLinkTarget: new GetBackupLinkTarget(deps),
+    /** "Email me a code" to the local profile's own address. */
+    requestBackupLinkCode: new RequestBackupLinkCode(deps),
+    /** The code: links that address's account to the signed-in local profile (same database). */
+    linkSignedInProfile: new LinkSignedInProfile(deps),
   };
 }
 export type IdentityApi = ReturnType<typeof createIdentityApi>;
@@ -59,6 +66,11 @@ export type {
   SetPasswordResult,
   UpdateNameResult,
 } from './application/account-settings';
+export type {
+  BackupLinkTarget,
+  LinkSignedInProfileResult,
+  RequestBackupLinkCodeResult,
+} from './application/backup-link';
 export type { AccountFailure, FieldRefused } from './application/ports';
 export type {
   AccountDeps,
@@ -82,4 +94,5 @@ export {
   PASSWORD_MAX,
   PASSWORD_MIN,
 } from './domain/account-fields';
-export { isLocalOnlyProfile, type User } from './domain/user';
+/** The demo profile's id (`@cityturfer/core/demo` DEMO_USER_ID, without loading the demo data). */
+export { DEMO_PROFILE_ID, isNeverAdopted, NEVER_ADOPTED, type User } from './domain/user';

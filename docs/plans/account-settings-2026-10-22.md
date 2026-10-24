@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-22
+verified: 2026-10-23
 owner: founder
 scope:
   [
@@ -10,11 +10,10 @@ scope:
     apps/mobile/src/app/account.tsx,
     apps/web,
   ]
-summary:
-  A complete Account tab on the phone and on the web portal — change name, e-mail and password —
-  over one set of API routes and one set of rules in core; passwords as an optional second sign-in
-  method beside e-mailed codes (reverses A1, needs a decision), step-up codes, security mails, tests
-  at every layer
+summary: A complete Account tab on the phone and on the web portal — change name, e-mail and
+  password — over one set of API routes and one set of rules in core; passwords as an optional
+  second sign-in method beside e-mailed codes (AC1 decided yes), step-up codes, security mails. API
+  and phone shipped in #142 (v0.10.0); the web Profile section is still to build
 ---
 
 # Account tab: name, e-mail, password
@@ -24,10 +23,27 @@ phone (Me › Account) and on the web portal (`/[locale]/account`), with the sam
 words and the same server data on both.
 
 Builds on `docs/decisions/api-accounts-2026-10-22.md` (codes, sessions, deletion) and the web and
-admin portal plans (web-portal and portals-execution, dated 2026-10-22, on the main checkout; not
-yet on this scope). Decisions: `docs/decisions/account-settings-2026-10-22.md`.
+admin portal plans (web-portal and portals-execution, dated 2026-10-22: planned, not on this scope).
+Decisions: `docs/decisions/account-settings-2026-10-22.md`.
 
-## Where we start (checked in code, 2026-10-22)
+## Status (checked in code, 2026-10-23)
+
+Shipped in #142 (v0.10.0): the decision record (AC1 = optional password), the core rules, API
+contract 0.5.0 (every route in the table below), the phone's Name, Email and Password screens
+(`account-name.tsx`, `account-email.tsx`, `account-password.tsx`), "Use a password instead" on the
+phone's sign-in, and Maestro flow `15-account-settings`. That is items 1–5, 7, the phone half of 8
+and the Maestro part of 9.
+
+Not built yet:
+
+- **Web (items 6 and the web half of 8):** the portal's `/[locale]/account` (#141, Slice 0) has no
+  Profile section and no password sign-in; it signs in by code only. See the hand-off below.
+- **Item 9:** Playwright for the account flows and the cross-layer parity fixture.
+- **Item 10:** the privacy policy line on the breach check is pending (founder); there is no privacy
+  policy in the repo yet.
+- `15-account-settings` fails at `hideKeyboard` on the iOS 26.1 simulator (seen in #158).
+
+## Where we started (checked in code, 2026-10-22)
 
 | Thing                | Today                                                                                                                                                                                 |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -166,7 +182,7 @@ holds; no activity or turf data becomes writable.
 **Slice 1 = items 2–6** (no password, no reversal of A1). **Slice 2 = items 7–8.** Item 9 runs with
 each slice.
 
-## Fitting the running sessions
+## Fitting the running sessions (as planned, 2026-10-22)
 
 - The API routes belong to lane D (`feat/api-portal-routes`) or a new `feat/account-settings` branch
   off `scope/v0.10.0`; declare them in the 0.5.0 contract first so lane A can code against the

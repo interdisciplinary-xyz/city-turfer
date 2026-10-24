@@ -28,6 +28,7 @@
   "retry": "Spróbuj ponownie",
   "gate": {
     "local": "To profil lokalny na tym telefonie, więc nie ma adresu e-mail ani hasła konta do zmiany.",
+    "fixedAddress": "Adres e-mail tego profilu jest stały: na niego trafiają kody, a ten telefon otwiera profil własnym hasłem.",
     "noPassword": "Nie masz hasła do konta, więc nie ma czego usuwać. Logujesz się kodem z e-maila."
   },
   "name": {
@@ -112,8 +113,8 @@
     "confirmText": "Twoje konto i wszystko na naszym serwerze (kopia, zgody, eksporty) zostanie usunięte na zawsze. Tego nie da się cofnąć.",
     "confirm": "Usuń konto",
     "localTitle": "A na tym telefonie?",
-    "localText": "Zostawić tu Twoje aktywności i turf, czy usunąć je również?",
-    "localTextAdmin": "Zostawić tu Twoje aktywności i turf, czy usunąć je również? Usunięcie skasuje też historię tego telefonu sprzed założenia konta (lokalny profil admina używa tych samych danych).",
+    "localText": "Zostawić tu Twoje aktywności i terytorium, czy usunąć je również?",
+    "localTextAdmin": "Zostawić tu Twoje aktywności i terytorium, czy usunąć je również? Usunięcie skasuje też historię tego telefonu sprzed założenia konta (lokalny profil admina używa tych samych danych).",
     "keep": "Zachowaj na telefonie",
     "deleteLocal": "Usuń z telefonu",
     "authTitle": "Zaloguj się ponownie",

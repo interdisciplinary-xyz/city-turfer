@@ -1,6 +1,12 @@
-# E2E: critical paths and flow inventory
+---
+status: canonical
+verified: 2026-10-23
+owner: founder
+scope: [apps/mobile/e2e, apps/mobile/tools/e2e]
+summary: Maestro critical paths, flow inventory, known gaps and how to add a flow
+---
 
-**Last reviewed:** 2026-10-18
+# E2E: critical paths and flow inventory
 
 The Maestro suite in `apps/mobile/e2e/` is the regression lock for what a runner does with the app.
 Run it with `pnpm run test:e2e` (`apps/mobile/e2e/run.sh`, iOS Simulator, location pre-granted,
@@ -8,7 +14,7 @@ flows run in the order of `apps/mobile/e2e/config.yaml`). `pnpm run e2e:audit` (
 `ci:quality`) statically checks that this document, `config.yaml`, the flows and the `testID`s in
 `apps/mobile/src/` agree. It does not run the app.
 
-Adapted from empatalk's `docs/quality/E2E.md`.
+Adapted from empatalk's E2E doc (quality/E2E.md in that repo).
 
 ## 1. Critical paths
 
@@ -16,27 +22,28 @@ A critical path is a journey that, if broken, loses a user's data or breaks the 
 (record, own the streets). Every row must name an existing flow, or say `unit-only` when there is
 none; the audit enforces this. Gaps are listed honestly in section 3.
 
-| ID    | Critical path                                                                                                                                               | Flows                               | Coverage                                                                                                                         |
-| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| CP-1  | Sign in (wrong password rejected, session survives restart), sign out                                                                                       | `01-auth`, `08-sign-out`            | Covered                                                                                                                          |
-| CP-2  | Record a run, pause/resume, hold to finish, activity with turf gained                                                                                       | `02-record-run`, `04-too-short`     | Covered                                                                                                                          |
-| CP-3  | Recording continues while the app is backgrounded (simulated walk)                                                                                          | `03-background-recording`           | Covered on simulator only                                                                                                        |
-| CP-4  | Kill the app mid-recording and recover the session on relaunch                                                                                              | none, unit-only                     | Unit-only (`end-to-end.test.ts`)                                                                                                 |
-| CP-5  | Turf appears after an activity and on the Turf map                                                                                                          | `02-record-run`, `06-turf-map`      | Covered                                                                                                                          |
-| CP-6  | Deleting an activity releases its turf                                                                                                                      | `07-delete-activity`                | Row only: turf not asserted                                                                                                      |
-| CP-7  | Dashboard: week stats, recent activities, achievements, Stats links                                                                                         | `10-dashboard`, `05-history-detail` | Covered                                                                                                                          |
-| CP-8  | Me drawer: Profile, Account, City, Info, tap-outside closes, Achievements                                                                                   | `09-me-menu`                        | Covered                                                                                                                          |
-| CP-9  | Apple Health: connect, import workouts with routes (iOS)                                                                                                    | `11-apple-health`                   | Simulator only; Watch on device                                                                                                  |
-| CP-10 | Home City: pick a city (accent-free search) from Me and from the Record tab, Turf Map chip, clear it                                                        | `12-home-city`                      | Chip asserted; camera position checked by screenshot only                                                                        |
-| CP-11 | Record tab turf toggle: on by default, hides and shows the turf, remembered, available while recording                                                      | `13-record-turf`                    | Toggle state asserted; the turf on the map checked by screenshot only                                                            |
-| CP-12 | Account tab: with a code-signed-in account, rename (header shows it), change email, set the account password (breached refused), sign in with it, remove it | `15-account-settings`               | Needs the API dev server (`AUTH_FIXED_CODE`); not run on a device yet; about 2 min waiting out the 1-step-up-code-a-minute limit |
-| CP-13 | Language setting: Polish on Info, Dashboard, Stats and Record, survives a restart, System brings English back (always left on System)                       | `16-language`                       | Simulator only; plural forms and long Polish words checked by screenshot                                                         |
+| ID    | Critical path                                                                                                                                                                                                  | Flows                               | Coverage                                                                                                                                                                         |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CP-1  | Sign in (wrong password rejected, session survives restart), sign out                                                                                                                                          | `01-auth`, `08-sign-out`            | Covered                                                                                                                                                                          |
+| CP-2  | Record a run, pause/resume, hold to finish, activity with turf gained                                                                                                                                          | `02-record-run`, `04-too-short`     | Covered                                                                                                                                                                          |
+| CP-3  | Recording continues while the app is backgrounded (simulated walk)                                                                                                                                             | `03-background-recording`           | Covered on simulator only                                                                                                                                                        |
+| CP-4  | Kill the app mid-recording and recover the session on relaunch                                                                                                                                                 | none, unit-only                     | Unit-only (`end-to-end.test.ts`)                                                                                                                                                 |
+| CP-5  | Turf appears after an activity and on the Turf map                                                                                                                                                             | `02-record-run`, `06-turf-map`      | Covered                                                                                                                                                                          |
+| CP-6  | Deleting an activity releases its turf                                                                                                                                                                         | `07-delete-activity`                | Row only: turf not asserted                                                                                                                                                      |
+| CP-7  | Dashboard: week stats, recent activities, achievements, Stats links                                                                                                                                            | `10-dashboard`, `05-history-detail` | Covered                                                                                                                                                                          |
+| CP-8  | Me drawer: Profile, Account, City, Info, tap-outside closes, Achievements                                                                                                                                      | `09-me-menu`                        | Covered                                                                                                                                                                          |
+| CP-9  | Apple Health: connect, import workouts with routes (iOS)                                                                                                                                                       | `11-apple-health`                   | Simulator only; Watch on device                                                                                                                                                  |
+| CP-10 | Home City: pick a city (accent-free search) from Me and from the Record tab, Turf Map chip, clear it                                                                                                           | `12-home-city`                      | Chip asserted; camera position checked by screenshot only                                                                                                                        |
+| CP-11 | Record tab turf toggle: on by default, hides and shows the turf, remembered, available while recording                                                                                                         | `13-record-turf`                    | Toggle state asserted; the turf on the map checked by screenshot only                                                                                                            |
+| CP-12 | Account tab: with a code-signed-in account, rename (header shows it), change email, set the account password (breached refused), sign in with it, remove it                                                    | `15-account-settings`               | Needs the API dev server (`AUTH_FIXED_CODE`); not run on a device yet; about 2 min waiting out the 1-step-up-code-a-minute limit                                                 |
+| CP-13 | Language setting: Polish on Info, Dashboard, Stats and Record, survives a restart, System brings English back (always left on System)                                                                          | `16-language`                       | Simulator only; plural forms and long Polish words checked by screenshot                                                                                                         |
+| CP-14 | Local profile backup: admin@ gets "Email me a code" on Info, a wrong code is refused, the right one links and turns backup on; the app password then opens it with no server credentials and the offer is back | `17-local-profile-backup`           | Needs the API dev server (admin@ takes the fixed code on PGlite); server side proven by `pnpm test:chain` (`local-profile-backup.test.ts`); Simulator run: 2026-10-24 (iOS 26.1) |
 
 ## 2. Flow inventory
 
 | Flow                      | Tag(s)                | Purpose                                                                                           |
 | ------------------------- | --------------------- | ------------------------------------------------------------------------------------------------- |
-| `01-auth`                 | auth                  | Wrong password rejected, demo account accepted, session persists                                  |
+| `01-auth`                 | auth                  | Wrong password rejected, admin account accepted, session persists                                 |
 | `02-record-run`           | recording             | Live distance grows, pause/resume, finish, turf gained                                            |
 | `03-background-recording` | recording, background | Home button, simulated 220 m walk, distance grew after foregrounding                              |
 | `04-too-short`            | recording             | Fewer than 2 points: finish refused, Discard offered                                              |
@@ -51,6 +58,7 @@ none; the audit enforces this. Gaps are listed honestly in section 3.
 | `14-rename-activity`      | history               | Rename from the detail screen: empty name refused, new name in History                            |
 | `15-account-settings`     | account               | Live API: rename, change email, set/breached/use/remove account password                          |
 | `16-language`             | me                    | Language setting: Polish on Info/Dashboard/Stats/Record, restart keeps it, System returns English |
+| `17-local-profile-backup` | account               | Live API: admin@ links its backup with an e-mailed code, password sign-in leaves no credentials   |
 | `08-sign-out`             | auth                  | Sign out returns to sign-in. Runs last because it ends the session                                |
 
 Allowed tags are fixed in `apps/mobile/tools/e2e/audit.mjs`
@@ -58,9 +66,12 @@ Allowed tags are fixed in `apps/mobile/tools/e2e/audit.mjs`
 `apps/mobile/e2e/subflows/` are not flows; `travel-*.yaml` are generated by
 `apps/mobile/tools/e2e/gpx-to-travel.mjs` from GPX fixtures.
 
-### Running `15-account-settings`
+### Running `15-account-settings` and `17-local-profile-backup`
 
-It talks to a real API, so it needs both ends set up (the app bundle is the part people forget):
+It talks to a real API, so it needs both ends set up (the app bundle is the part people forget).
+`17-local-profile-backup` needs the same setup but uses the app's own admin@cityturfer.com, which
+the PGlite dev server knows and accepts the fixed code for (no `@e2e.cityturfer.test` address); with
+a server on another port set `E2E_API_URL` for `run.sh` and the same URL in `EXPO_PUBLIC_API_URL`:
 
 ```bash
 AUTH_FIXED_CODE=000000 pnpm --filter @cityturfer/api dev                   # API on :8787 (PGlite)
@@ -90,12 +101,15 @@ step-up code and spends about 2 minutes asleep on purpose.
   `apps/mobile/src/__tests__/apple-health.test.ts` and was verified once on the Simulator (the
   `hs_links` export row, and the next import skipping our own workout). Apple Watch workouts can
   only be tested on a device.
+- **CP-12 fails on iOS 26.1.** `15-account-settings` stops at `hideKeyboard` on the numeric keypad
+  of the iOS 26.1 simulator (seen in #158, unrelated to language). Not fixed yet.
 - Android has no Maestro run today.
 
 ## 4. Adding a flow
 
-1. Add `apps/mobile/e2e/NN-name.yaml` with `tags: [...]` from the allowed set. Prefer `id:`
-   selectors; add the `testID` in `apps/mobile/src/` first.
+1. Add a flow file to `apps/mobile/e2e/` (named NN-name.yaml, the next free number) with
+   `tags: [...]` from the allowed set. Prefer `id:` selectors; add the `testID` in
+   `apps/mobile/src/` first.
 2. Add it to `flowsOrder` in `apps/mobile/e2e/config.yaml` (keep `08-sign-out` last).
 3. Map it to a critical path in section 1 (or add a CP row), then run `pnpm run e2e:audit`.
 4. No commented-out steps: delete them or fix the flow.

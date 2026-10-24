@@ -2,66 +2,42 @@
 import { currentDateLocale, currentLocale } from '@/i18n/language-state';
 import type { Locale } from '@/i18n/locales';
 import { translator } from '@/i18n/translator';
-import { type ActivityType, usesPace } from '@/shared-kernel';
+import {
+  type ActivityType,
+  decimalMark,
+  distanceText as coreDistanceText,
+  fixed as coreFixed,
+  formatArea as coreFormatArea,
+  formatDistance as coreFormatDistance,
+  formatDuration,
+  formatPaceOrSpeed as coreFormatPaceOrSpeed,
+  type FormattedQuantity,
+  usesPace,
+} from '@/shared-kernel';
 
 /*
  * Numbers and dates in the app language (docs/decisions/mobile-i18n-2026-10-23.md, L6). Every
  * function takes the locale last and defaults to the app's current one, so call sites stay as they
- * are and tests pass a locale. Units stay metric symbols in every language.
+ * are and tests pass a locale. Units stay metric symbols in every language. The number formatters
+ * live in the shared kernel (@cityturfer/core, pure, locale required) so the web portal shows the
+ * same digits (docs/plans/web-portal-history-2026-10-23.md, H4); here they get the app's locale.
  */
 
-const marks = new Map<string, string>();
-
-/** The locale's decimal mark, from Intl: `.` in English, `,` in Polish. */
-export function decimalMark(locale: string): string {
-  let mark = marks.get(locale);
-  if (mark === undefined) {
-    try {
-      mark = new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
-        .format(1.5)
-        .replace(/\d/g, '');
-    } catch {
-      mark = '.';
-    }
-    if (mark.length !== 1) {
-      mark = '.';
-    }
-    marks.set(locale, mark);
-  }
-  return mark;
-}
+export { decimalMark, formatDuration };
 
 /**
- * `n` with `digits` decimals, never grouped, in the locale's decimal mark: the digits of `toFixed`
- * (English output unchanged), only the mark localised. Hermes' Intl.NumberFormat has no
- * `useGrouping` option, so grouping-free output cannot come from Intl itself.
+ * `n` with `digits` decimals, never grouped, in the locale's decimal mark (Hermes' Intl has no
+ * `useGrouping`, so the digits come from `toFixed`).
  */
 export function fixed(n: number, digits: number, locale: string = currentLocale()): string {
-  const s = n.toFixed(digits);
-  const mark = decimalMark(locale);
-  return mark === '.' ? s : s.replace('.', mark);
+  return coreFixed(n, digits, locale);
 }
 
-export function formatDistance(m: number, locale: string = currentLocale()): { value: string; unit: string } {
-  if (m < 1000) {
-    return { value: String(Math.round(m)), unit: 'm' };
-  }
-  return { value: fixed(m / 1000, m < 100_000 ? 2 : 1, locale), unit: 'km' };
+export function formatDistance(m: number, locale: string = currentLocale()): FormattedQuantity {
+  return coreFormatDistance(m, locale);
 }
-export const distanceText = (m: number, locale: string = currentLocale()) => {
-  const d = formatDistance(m, locale);
-  return `${d.value} ${d.unit}`;
-};
 
-export function formatDuration(s: number): string {
-  const sec = Math.max(0, Math.round(s));
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const r = sec % 60;
-  return h > 0
-    ? `${h}:${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`
-    : `${m}:${String(r).padStart(2, '0')}`;
-}
+export const distanceText = (m: number, locale: string = currentLocale()): string => coreDistanceText(m, locale);
 
 /** Pace (min/km) for walk/run, speed (km/h) for cycle. */
 export function formatPaceOrSpeed(
@@ -69,37 +45,24 @@ export function formatPaceOrSpeed(
   distanceM: number,
   seconds: number,
   locale: string = currentLocale()
-): { value: string; unit: string } {
-  if (usesPace(type)) {
-    if (distanceM < 50 || seconds <= 0) {
-      return { value: '—', unit: '/km' };
-    }
-    const pace = seconds / (distanceM / 1000);
-    if (pace > 60 * 60) {
-      return { value: '—', unit: '/km' };
-    }
-    return { value: formatDuration(pace), unit: '/km' };
-  }
-  if (seconds <= 0) {
-    return { value: '—', unit: 'km/h' };
-  }
-  return { value: fixed((distanceM / seconds) * 3.6, 1, locale), unit: 'km/h' };
+): FormattedQuantity {
+  return coreFormatPaceOrSpeed(type, distanceM, seconds, locale);
 }
 
+/** The live pace or speed from the current speed in m/s; `—` when standing (≤ 0.2 m/s) or unknown. */
 export function formatSpeedNow(
   type: ActivityType,
   mps: number | null,
   locale: string = currentLocale()
-): { value: string; unit: string } {
+): FormattedQuantity {
   if (mps == null || mps <= 0.2) {
     return { value: '—', unit: usesPace(type) ? '/km' : 'km/h' };
   }
-  return formatPaceOrSpeed(type, mps * 1000, 1000, locale);
+  return coreFormatPaceOrSpeed(type, mps * 1000, 1000, locale);
 }
 
 /** Never grouped: thousands separators read as decimals in some locales (e.g. pl "37.495 m²"). */
-export const formatArea = (km2: number, locale: string = currentLocale()) =>
-  km2 >= 0.01 ? `${fixed(km2, 2, locale)} km²` : `${Math.round(km2 * 1e6)} m²`;
+export const formatArea = (km2: number, locale: string = currentLocale()): string => coreFormatArea(km2, locale);
 
 const dateFormats = new Map<string, Intl.DateTimeFormat>();
 const dateFormat = (locale: string, options: Intl.DateTimeFormatOptions, id: string) => {

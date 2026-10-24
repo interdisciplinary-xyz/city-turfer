@@ -25,9 +25,11 @@ const FILES = {
   'src/app/[locale]/map.tsx': "import '@cityturfer/core/h3';\n", // core-h3-only-in-portal
   'src/app/[locale]/typo.ts': "import './no-such-file';\n", // not-to-unresolvable
   'src/app/[locale]/branding.ts': "import '@cityturfer/brand';\n", // resolves: no finding
+  'src/app/[locale]/stats.ts': "import '@cityturfer/core/shared-kernel';\n", // marketing-not-core
+  'src/app/[locale]/account/turf.ts': "import '@cityturfer/core/territory';\n", // portal-core-shared-kernel-only
   // The portal may use its libraries and h3 (no finding), but not GSAP (portal-no-gsap).
   'src/app/[locale]/account/page.tsx':
-    "import '@tanstack/react-query';\nimport '@cityturfer/core/h3';\nimport 'gsap';\nexport default 1;\n",
+    "import '@tanstack/react-query';\nimport '@cityturfer/core/h3';\nimport '@cityturfer/core/shared-kernel';\nimport 'gsap';\nexport default 1;\n",
   'src/api/client.ts': "import '../app/[locale]/page';\n", // api-client-is-a-leaf
   // The entry files outside src, cruised like `arch` does, and a dev tool server.mjs loads.
   'server.mjs': "import './tools/dev-route.mjs';\nimport './src/app/[locale]/account/page';\n", // marketing-not-portal
@@ -96,6 +98,14 @@ test('a landing module importing @cityturfer/core/h3 fails core-h3-only-in-porta
   expectViolation('core-h3-only-in-portal', 'src/app/[locale]/map.tsx');
 });
 
+test('a landing module importing @cityturfer/core fails marketing-not-core', () => {
+  expectViolation('marketing-not-core', 'src/app/[locale]/stats.ts');
+});
+
+test('the portal importing a core context (not the shared kernel) fails portal-core-shared-kernel-only', () => {
+  expectViolation('portal-core-shared-kernel-only', 'src/app/[locale]/account/turf.ts');
+});
+
 test('an unresolvable import fails not-to-unresolvable', () => {
   expectViolation('not-to-unresolvable', 'src/app/[locale]/typo.ts');
 });
@@ -128,5 +138,5 @@ test('allowed imports raise nothing: workspace packages resolve, the portal may 
       (from(v) === 'src/app/[locale]/account/page.tsx' && !v.startsWith('portal-no-gsap '))
   );
   assert.deepEqual(allowed, []);
-  assert.equal(violations.length, 10, violations.join('\n'));
+  assert.equal(violations.length, 12, violations.join('\n'));
 });

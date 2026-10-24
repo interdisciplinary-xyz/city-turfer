@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-20
+verified: 2026-10-23
 owner: founder
 scope:
   [
@@ -11,16 +11,17 @@ scope:
     apps/mobile/e2e,
   ]
 summary:
-  Inventory of every shipped feature by tab and screen, where it lives, and the claims that aren't
-  true yet
+  Inventory of every shipped app feature by tab and screen, where it lives, what the server and web
+  portal add, and the claims that aren't true yet
 ---
 
 # Features
 
-Every feature in the app on `scope/v0.2.0`, grouped by where a person meets it: the five tabs, the
-Me drawer, and the screens pushed from them. Format adapted from empatalk's `FEATURES.md`.
+Every feature in the app on `scope/v0.11.0` (the v0.10.0 release), grouped by where a person meets
+it: the five tabs, the Me drawer, and the screens pushed from them; then what the server and the web
+portal add. Format adapted from empatalk's `FEATURES.md`.
 
-> **Derived from code on 2026-10-17.** Where this doc and the code disagree, the code wins. Don't
+> **Derived from code on 2026-10-23.** Where this doc and the code disagree, the code wins. Don't
 > hand-edit counts; re-derive them:
 >
 > | Thing                 | Derive with                                                              |
@@ -36,9 +37,8 @@ Me drawer, and the screens pushed from them. Format adapted from empatalk's `FEA
 > | SQLite schema         | `apps/mobile/src/platform/migrations.ts`                                 |
 
 Today: <!-- probe:achievements -->20<!-- /probe --> achievements,
-<!-- probe:e2e-flows -->15<!-- /probe --> Maestro flows, <!-- probe:migrations -->13<!-- /probe -->
-
-migrations.
+<!-- probe:e2e-flows -->17<!-- /probe --> Maestro flows,
+<!-- probe:migrations -->13<!-- /probe --> migrations.
 
 ## 1. Tabs
 
@@ -47,7 +47,11 @@ opens on Dashboard after sign-in.
 
 ### Dashboard (`apps/mobile/src/app/(tabs)/index.tsx`)
 
-- Greeting with the user's name; turf area and "+ this week" under it.
+- Greeting with the name chosen in Me › Account ("Turfer" without one); turf area and "+ this week"
+  under it.
+- Restore card (below) and the getting-started card: five steps (first walk, see your turf, walk run
+  and ride, come back to a street, unlock 3 achievements), hideable
+  (`packages/core/src/contexts/achievements/domain/onboarding.ts`).
 - Live-session banner when a recording is running (taps through to Record).
 - "Start recording" button when there are no activities yet.
 - This week: distance, moving time, activity count.
@@ -101,7 +105,8 @@ The Me tab doesn't open a screen: it slides in a drawer from the right with **Pr
 - **Activity detail** (`apps/mobile/src/app/activity/[id].tsx` →
   `activity-log/ui/activity-detail-view.tsx`): route map with gap estimates dashed, distance (marked
   "≈" when it includes estimated gaps), moving and elapsed time, average pace or speed, elevation
-  "≈", km splits, turf gained (`territory/ui/turf-gained-card.tsx`), delete with confirmation
+  "≈", km splits, turf gained (`territory/ui/turf-gained-card.tsx`), rename (`rename-activity`; an
+  empty name is refused; `activity-log/ui/rename-activity-dialog.tsx`), delete with confirmation
   (releases its turf). Shows "Saving your activity…" until the outbox has delivered
   `SessionFinished`. Imported workouts say "From Apple Health".
 - **Profile** (`apps/mobile/src/app/profile.tsx`): avatar, name, email, totals (activities,
@@ -112,30 +117,40 @@ The Me tab doesn't open a screen: it slides in a drawer from the right with **Pr
   activity and turf facts (nothing stored). List: `docs/decisions/achievements-list-2026-10-23.md`.
 - **Sign in** (`apps/mobile/src/app/sign-in.tsx`): email first; the local profiles
   (`admin@cityturfer.com`, `demo@cityturfer.com`) then ask for their password, any other email gets
-  a 6-digit code (`textContentType oneTimeCode`). The first real sign-in on a phone whose `admin`
-  profile has activities asks whether to use that history with the account (no copy).
-- **Account** (`apps/mobile/src/app/account.tsx`): email, sign-in method, backup state; Sign out
-  (blocked while recording; with unsynced backup changes: Back up now / Sign out anyway / Cancel);
-  for accounts also Export my data (the server emails a link) and Delete account (warning, then keep
-  or delete this phone's data).
+  a 6-digit code (`textContentType oneTimeCode`), or "Use a password instead" for an account that
+  has set an account password. A wrong password shows `sign-in-error`. The first real sign-in on a
+  phone whose `admin` profile has activities asks whether to use that history with the account (no
+  copy).
+- **Account** (`apps/mobile/src/app/account.tsx`, rows in `identity/ui/account-overview.tsx`): name,
+  email, account password, sign-in method, data (backed up or on this phone only). Name, email and
+  password open their own screens (`account-name.tsx`, `account-email.tsx`, `account-password.tsx`):
+  an email change and setting, changing or removing the password ask for an e-mailed code first and
+  sign out the account's other sessions. Local profiles change only their name. Sign out (blocked
+  while recording; with unsynced backup changes: Back up now / Sign out anyway / Cancel); for
+  accounts also Export my data (the server emails a link) and Delete account (warning, then keep or
+  delete this phone's data).
 - **Restore** (`cloud-backup/ui/restore-card.tsx`, Home): offered when a signed-in account's profile
   has no activities and the backup has some; progress "Restoring n of m…", resumable.
 - **Info** (`apps/mobile/src/app/info.tsx`): app version and OTA update id/channel, "Check for
-  updates", a data note, the **Apple Health** card (iOS: connect, import and save switches, last
-  import, Import now, Disconnect; `health-sync/ui/apple-health-card.tsx`), the **Cloud backup** card
+  updates", a data note with the "Estimate GPS gaps along streets" switch, the **Apple Health** card
+  (iOS: connect, import and save switches, last import, Import now, Disconnect;
+  `health-sync/ui/apple-health-card.tsx`), the **Cloud backup** card
   (`cloud-backup/ui/cloud-backup-card.tsx`: "Back up to CityTurfer cloud" consent switch (off asks
   first: it erases the server copy), "Include Apple Health workouts" on iOS, "Backed up N of M
-  activities · last run …", errors in plain words, Back up now; the demo profile never backs up), in
-  Developer tools the device token and a server URL override for testing
-  (`cloud-backup/ui/backup-developer-card.tsx`), **Seed demo history** (90 days around the current
-  location, `apps/mobile/src/dev/demo-history.ts`) and, on iOS, **Add sample workouts to Apple
-  Health** (`apps/mobile/src/dev/health-seed.ts`).
+  activities · last run …", errors in plain words, Back up now; on the admin@ and demo@ local
+  profiles "Email me a code" to the profile's own address links a server account for it (LP1 in
+  `docs/decisions/local-profile-backup-2026-10-24.md`), and the demo profile uploads only its
+  generated Gdańsk history (LP3)), the **Language** card (System, English, Polski). **Developer
+  tools** show in dev builds, or after five long presses on the version: the device token and a
+  server URL override for testing (`cloud-backup/ui/backup-developer-card.tsx`), **Seed demo
+  history** (90 days around the current location, `apps/mobile/src/dev/demo-history.ts`) and, on
+  iOS, **Add sample workouts to Apple Health** (`apps/mobile/src/dev/health-seed.ts`) and Remove
+  demo data (`apps/mobile/src/dev/developer-tools.tsx`).
 - **Your city** (`apps/mobile/src/app/city.tsx` → `territory/ui/city-picker.tsx`): choose the Home
-  City from a bundled catalogue (23 Polish, 15 European cities); search ignores accents ("krakow"
+  City from a bundled catalogue (<!-- probe:cities-pl -->23<!-- /probe --> Polish,
+  <!-- probe:cities-europe -->15<!-- /probe --> European cities); search ignores accents ("krakow"
   finds Kraków); the current city is ticked; "Clear <city>". Stored per user (`ter_home_city`); its
   id and time go to the server only with Cloud backup on.
-- **Sign in** (`apps/mobile/src/app/sign-in.tsx`): the mock account; a wrong password shows
-  `sign-in-error`.
 
 ## 3. Behind the screens
 
@@ -155,24 +170,52 @@ The Me tab doesn't open a screen: it slides in a drawer from the right with **Pr
 - **Apple Health sync** (iOS): imports new walks, hikes, runs and rides with routes whenever the app
   comes to the foreground (full history the first time) and saves each new recording to Health with
   its route. No duplicates: `hs_links` remembers every workout in both directions.
+- **Accounts**: any email gets a 6-digit code from the API
+  (`identity/infrastructure/api-auth-gateway.ts`), which creates the account on first use; the two
+  local profiles (`mock-auth-gateway.ts`) keep working in every build. The first account sign-in can
+  adopt the `admin` profile's history.
 - **Cloud backup** (opt-in, `contexts/cloud-backup`): one-way copy to the CityTurfer API (contract
   `apps/api/openapi.json`). Turning it on records the consent, compares the history with the
   server's manifest and uploads what is missing, oldest first, two at a time; afterwards new
-  recordings, deletes, corrected tracks, gap routes and the Home City follow via the outbox. Never
-  `demo-*`; `hk-*` only with the Apple Health switch. Network work runs in the foreground only
-  (launch, app active, after each outbox run); the outbox handlers just queue (`cb_activities`).
+  recordings, renames, deletes, corrected tracks, gap routes and the Home City follow via the
+  outbox, and changes made while backup was off are reconciled on the next run. `demo-*` never,
+  except `demo-gdansk-n<i>` from the demo profile to demo@'s own account (LP3; its recordings and
+  Apple Health imports stay on the phone); `hk-*` only with the Apple Health switch. Network work
+  runs in the foreground only (launch, app active, after each outbox run); the outbox handlers just
+  queue (`cb_activities`).
+- **Restore**: a new phone signed in to an account with a backup imports it (origin `restore`),
+  resumable and paused while recording (`cloud-backup/application/restore.ts`).
 
-## 4. Known gaps — claims that aren't true yet
+## 4. Beyond the phone
+
+- **Server turf** (since API contract 0.6.0, `apps/api/src/territory/`): the API builds its own turf
+  projection from backed-up activities, with the same rules from `@cityturfer/core`
+  (`/v1/turf/cells`, `/v1/turf/summary`, `/v1/activity-totals`). A parity golden keeps phone and
+  server turf equal. Only for activities in the backup; nothing on the phone reads it yet.
+- **Web portal Slice 0** (`apps/web/src/app/[locale]/account/`): sign in on the website by e-mailed
+  code, or create an account from the site header (`/[locale]/account/register`); one page shows
+  what the server holds, the backup state, export, delete account and signed-in devices. One
+  `__Host-` session cookie through `/api/v1`; public pages stay cookie-free. Design:
+  `docs/decisions/web-portal-2026-10-22.md`.
+- **Web portal activity history** (v0.11.0, `apps/web/src/app/[locale]/account/(signed-in)/`): all
+  backed-up activities with all-time totals, a type filter and a list by month; one activity's
+  stats, splits and route as an inline SVG (gap estimates dashed), no basemap or tile requests.
+  Read-only. Plan: `docs/plans/web-portal-history-2026-10-23.md`.
+- **Not built yet:** the Turf Map on the web (cells, tiles), the phone pulling changes from the
+  server, a web delete removing the activity everywhere, the staff admin portal's data views
+  (`apps/admin` is a scaffold with staff sign-in only; no `/internal/admin` routes). Planned in
+  `docs/decisions/data-flow-2026-10-23.md` (proposed).
+
+## 5. Known gaps — claims that aren't true yet
 
 - **Apple Health is tested on the Simulator only.** Apple Watch workouts, real permission history
   and large imports need the iPhone (`docs/operations/apple-health.md`).
-- **Android has never run on a device.** Both platforms are first-class on paper, but there is no
-  Android SDK on the dev Mac; the native background session is iOS-only and Maestro runs on the iOS
-  Simulator only (`apps/mobile/e2e/run.sh`).
+- **Android has never run on a phone.** Both platforms are first-class on paper. The sideloaded APK
+  ran on an emulator (2026-10-18, part of the Maestro suite; `docs/operations/android-release.md`);
+  the native background session is iOS-only and `apps/mobile/e2e/run.sh` drives the iOS Simulator
+  only.
 - **GPX export doesn't exist.** `expo-file-system` and `expo-sharing` are not installed. GPX is read
   only by tests (`apps/mobile/src/test-support/fixtures.ts`).
-- **Rename activity has no UI.** `RenameActivity` is in Activity Log's API and `useActivity()`
-  returns `rename`, but no screen calls it.
 - **Totals stop at 500 activities.** Dashboard, Stats, Profile, Achievements and the Turf map's
   tracks all read `useActivities()` with its default `limit = 500` (`activity-log/ui/hooks.ts`) and
   aggregate in memory. "All time" undercounts past that.
@@ -185,9 +228,10 @@ The Me tab doesn't open a screen: it slides in a drawer from the right with **Pr
 - **The PoC report (M6) isn't written** and the Q4 performance budget (a year of history on a
   mid-range Android) is unmeasured.
 - **Achievements have no unlock dates or celebration.**
-- **Cloud backup is one-way and untested against the real server.** No pull, restore or second
-  device; renames are not sent (no `ActivityRenamed` event); bodies are plain JSON (no gzip); the
-  server's `trackHash` is not sent; deletes made while backup is off stay on the server. Tests use
-  an in-memory server (`cloud-backup/test-support/fake-api-server.ts`); no Maestro flow.
-- **Sign-in is a mock.** One account; the app refuses to start with mock auth in a production
-  environment.
+- **Cloud backup is one-way.** The phone never pulls changes: two phones on one account don't merge,
+  and a change made on the web doesn't reach the phone. Bodies are plain JSON (no gzip). Tested
+  against the fake server in `pnpm test` and the real API on PGlite in `pnpm test:chain`
+  (`tools/chain/run.mjs`, not in CI yet); never against Neon. No Maestro flow covers backup.
+- **The phone's "new cells" can differ from the server's.** For a late Apple Health import the phone
+  counts first claims by import order; the server keeps the canonical first claimer. Pinned by a
+  test; the web takes "new turf" from the server.

@@ -25,7 +25,7 @@ The phone is local-first and authoritative for what it recorded; the server stor
 **First upload of an existing history**
 1. \`PUT /v1/me/consents/cloud-sync\` (and \`apple-health-in-cloud-sync\` to include Apple Health imports).
 2. \`GET /v1/sync/changes\` without a cursor, every page: what the server already has (the manifest).
-3. For each local activity, oldest first (never \`demo-…\`): absent → \`PUT /v1/activities/{id}\`; same \`trackHash\` → done; different → \`PUT\` with \`If-Match\`; tombstoned → delete it locally.
+3. For each local activity, oldest first (\`demo-…\` only from the demo profile, as \`import\`): absent → \`PUT /v1/activities/{id}\`; same \`trackHash\` → done; different → \`PUT\` with \`If-Match\`; tombstoned → delete it locally.
 4. \`PUT /v1/activities/{id}/gap-routes\` once the phone checked the gaps (an empty list when there are none); \`PUT /v1/turf/home-city\`.
 5. Keep the last \`nextCursor\`.
 

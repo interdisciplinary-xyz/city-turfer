@@ -36,8 +36,8 @@ describe('Me › Account rows', () => {
     });
     expect(r.name).toEqual({ value: 'Ola', enabled: true });
     expect(r.email).toEqual({ value: 'ola@example.com', enabled: true });
-    expect(r.password.value).toBe('Set · 20 Oct 2026');
-    expect(r.password.enabled).toBe(true);
+    expect(r.password?.value).toBe('Set · 20 Oct 2026');
+    expect(r.password?.enabled).toBe(true);
     expect(r.signIn).toBe('Email code · account password');
     expect(r.retry).toBe(false);
   });
@@ -48,7 +48,7 @@ describe('Me › Account rows', () => {
       settings: { kind: 'account', email: 'ola@example.com', name: null, hasPassword: false, passwordChangedAt: null },
     });
     expect(r.name.value).toBe(VALUE.notSet);
-    expect(r.password.value).toBe(VALUE.notSet);
+    expect(r.password?.value).toBe(VALUE.notSet);
     expect(r.signIn).toBe('Email code');
   });
 
@@ -110,6 +110,56 @@ describe('Me › Account rows', () => {
       expect(r.signIn).toBe('Local profile on this phone');
       expect(r.retry).toBe(false);
     }
+  });
+});
+
+describe('Me › Account rows: a local profile linked to its own address (admin, demo)', () => {
+  const linkedAdmin: User = {
+    id: 'admin' as User['id'],
+    email: 'admin@cityturfer.com',
+    displayName: 'admin',
+    name: 'Admin',
+    accountId: 'u-admin',
+  };
+  const ready = {
+    status: 'ready' as const,
+    settings: {
+      kind: 'account' as const,
+      email: 'admin@cityturfer.com',
+      name: 'Admin',
+      hasPassword: false,
+      passwordChangedAt: null,
+    },
+  };
+
+  it('shows the address but never opens the email change; the password row is gone', () => {
+    const r = rowsIn(linkedAdmin, ready, t, 'en-GB', true);
+    expect(r.emailFixed).toBe(true);
+    expect(r.email).toEqual({ value: 'admin@cityturfer.com', enabled: false });
+    expect(r.password).toBeNull();
+  });
+
+  it('the name and the rest stay as for any account', () => {
+    const fixed = rowsIn(linkedAdmin, ready, t, 'en-GB', true);
+    const plain = rowsIn(linkedAdmin, ready, t, 'en-GB');
+    expect(fixed.name).toEqual({ value: 'Admin', enabled: true });
+    expect(fixed.name).toEqual(plain.name);
+    expect(fixed.signIn).toBe(plain.signIn);
+    expect(fixed.local).toBe(false);
+  });
+
+  it('offline it still shows the address itself (nothing to change there anyway)', () => {
+    const r = rowsIn(linkedAdmin, { status: 'offline' }, t, 'en-GB', true);
+    expect(r.email).toEqual({ value: 'admin@cityturfer.com', enabled: false });
+    expect(r.password).toBeNull();
+    expect(r.name).toEqual({ value: 'Needs internet', enabled: false });
+  });
+
+  it('a real account keeps its email and password rows', () => {
+    const r = accountRows(account, { ...ready, settings: { ...ready.settings, email: 'ola@example.com' } });
+    expect(r.emailFixed).toBe(false);
+    expect(r.email.enabled).toBe(true);
+    expect(r.password).not.toBeNull();
   });
 });
 
@@ -183,7 +233,7 @@ describe('account copy', () => {
       translator('account', 'pl'),
       'pl'
     );
-    expect(ready.password.value).toBe('Ustawione · 20 paź 2026');
+    expect(ready.password?.value).toBe('Ustawione · 20 paź 2026');
     expect(ready.signIn).toBe('Kod z e-maila · hasło do konta');
   });
 });

@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-20
+verified: 2026-10-23
 owner: founder
 scope:
   [
@@ -30,16 +30,19 @@ language is `docs/poc-plan.md` §2. Where this doc and the code disagree, the co
 There are <!-- probe:contexts -->7<!-- /probe --> bounded contexts, one directory each in
 `apps/mobile/src/contexts/`:
 
-- **identity** (generic): `AuthGateway` port, `MockAuthGateway`, session in `expo-secure-store`.
-  Layers: `domain/ application/ infrastructure/`, no `ui/`.
+- **identity** (generic): `AuthGateway` port with two adapters, `MockAuthGateway` (the local `admin`
+  and `demo` profiles) and `ApiAuthGateway` (accounts by e-mailed code or account password, account
+  settings); session, credential and profile stores in `expo-secure-store`. Domain and application
+  in core; the app holds `infrastructure/` and `ui/` (sign-in steps, the Account screens).
 - **recording** (core): the `RecordingSession` aggregate (auto-pause included), Fix Filter,
   `TrackingProfile`, the background task and the iOS background session. Publishes
   `SessionFinished`.
 - **activity-log** (supporting): the `Activity` aggregate, history, detail, splits, gap-route
-  estimates, demo import. Publishes `ActivityRecorded`, `ActivityDeleted`, `ActivityTrackCorrected`
-  (`contract.ts`).
+  estimates, rename, demo and restore import. Publishes `ActivityRecorded`, `ActivityDeleted`,
+  `ActivityRenamed`, `ActivityTrackCorrected`, `ActivityDistanceEstimated` (`contract.ts`).
 - **territory** (core): the `Claim` aggregate, turf strength, the `ter_cells` projection, the Turf
-  Map. Publishes `TurfClaimed`, `TurfReleased` (`contract.ts`).
+  Map, the Home City. Publishes `TurfClaimed`, `TurfReleased`, `HomeCityChosen` (`contract.ts`). The
+  API runs the same domain and use cases for its server turf (`apps/api/src/territory/`).
 - **health-sync** (supporting): Apple Health import and export, an anti-corruption layer ("workout"
   never leaves it). `HealthStore` port (HealthKit adapter on iOS), links and anchor in `hs_links` /
   `hs_state`. Imports through Activity Log's `importActivity`; exports on `ActivityRecorded` with
@@ -47,11 +50,15 @@ There are <!-- probe:contexts -->7<!-- /probe --> bounded contexts, one director
 - **cloud-backup** (supporting): one-way, opt-in backup to the CityTurfer API. `ApiClient` port
   (fetch adapter = the anti-corruption layer for HTTP), device token in `expo-secure-store`, state
   in `cb_state` / `cb_activities`. Reads Activity Log's `archive` query and Territory's
-  `homeCityChoice`; its outbox handlers on `ActivityRecorded`, `ActivityDeleted`,
+  `homeCityChoice`; its outbox handlers on `ActivityRecorded`, `ActivityDeleted`, `ActivityRenamed`,
   `ActivityTrackCorrected`, `ActivityDistanceEstimated` and `HomeCityChosen` only queue work, which
-  `RunBackup` sends in the foreground. Never `demo-*`; `hk-*` only with its own consent.
-- **achievements** (supporting): pure `evaluateAchievements` / `summarizeAchievements` over facts
-  the UI passes in. Layers: `domain/ ui/`, no persistence.
+  `RunBackup` sends in the foreground. Restore imports a backup onto a new phone through Activity
+  Log (origin `restore`). `demo-*` never, except the demo profile's generated Gdańsk history
+  (`demo-gdansk-n<i>`, to demo@'s own account; LP3 in
+  `docs/decisions/local-profile-backup-2026-10-24.md`); `hk-*` only with its own consent.
+- **achievements** (supporting): pure `evaluateAchievements` / `summarizeAchievements` and the
+  getting-started steps over facts the UI passes in. Domain in core; the app holds `ui/` and
+  `infrastructure/` (only the onboarding card's dismissal flag).
 
 ```
             SessionFinished                ActivityRecorded · ActivityDeleted
@@ -59,8 +66,9 @@ Recording ──────────────────▶ Activity Log
           ◀── FinishedTrackQuery ──────    ◀── ActivityTrackQuery ─────────
               (Activity Log pulls the track)    (Territory pulls the track)
 Health Sync ── importActivity ──▶ Activity Log ── ActivityRecorded (origin recording) ──▶ Health Sync
-Activity Log, Territory ── ActivityRecorded · Deleted · TrackCorrected · DistanceEstimated · HomeCityChosen ──▶ Cloud Backup
+Activity Log, Territory ── ActivityRecorded · Deleted · Renamed · TrackCorrected · DistanceEstimated · HomeCityChosen ──▶ Cloud Backup
           ◀── archive · homeCityChoice ── (Cloud Backup pulls the activity and the Home City, then PUTs them)
+Cloud Backup ── restore import ──▶ Activity Log ── ActivityRecorded (origin restore) ──▶ Health Sync (remembers restored imports)
 Identity: selects the user's database at sign-in; other contexts see only a user id.
 Achievements: no events; screens pass it Activity Log and Territory facts.
 ```
@@ -69,7 +77,8 @@ Achievements: no events; screens pass it Activity Log and Territory facts.
 `apps/mobile/src/wiring.ts`: it subscribes each context's use cases to the other contexts' events on
 the `EventDispatcher`, and injects the track queries as ports (`tracks: { trackOf: … }`). Screens
 are where contexts meet in the UI: the Dashboard composes Identity, Activity Log, Territory,
-Achievements and Recording through their `ui/` hooks; the Info screen adds Health Sync's card.
+Achievements, Recording and Cloud Backup (the restore card) through their `ui/` hooks; the Info
+screen adds Health Sync's and Cloud Backup's cards.
 
 Events travel through the transactional outbox (`apps/mobile/src/platform/outbox.ts`): an aggregate
 change and its events commit in one SQLite transaction, and handlers are idempotent. Why: the outbox
@@ -83,9 +92,10 @@ Each context has some of `domain/`, `application/`, `infrastructure/`, `ui/`, pl
 **`packages/core` (`@cityturfer/core`)** holds what the phone and the server both run: the shared
 kernel, the core constants and the `domain/` + `application/` + `contract.ts` + `index.ts` of
 Territory, Activity Log, Achievements and Identity, each with a `ports.ts` adapter SPI, plus the H3
-adapter (`packages/core/src/h3/`). The app keeps those contexts' adapters and UI, and `index.ts` /
-`contract.ts` as `export *` shims. Recording and Health Sync live wholly in the app (device only).
-Outside the contexts:
+adapter (`packages/core/src/h3/`) and the Gdańsk demo generator (`packages/core/src/demo/`, entry
+`@cityturfer/core/demo`, shared with the API's local mock accounts). The app keeps those contexts'
+adapters and UI, and `index.ts` / `contract.ts` as `export *` shims. Recording and Health Sync live
+wholly in the app (device only). Outside the contexts:
 
 - `packages/core/src/shared-kernel/`: pure value objects and maths in SI units (geo, track,
   track-analyzer, time, events, errors); `apps/mobile/src/shared-kernel/index.ts` re-exports it
@@ -98,7 +108,7 @@ Outside the contexts:
   the UI and the headless background task
 - `apps/mobile/src/ui-kit/`: theme, formatting, shared components, `AppProvider`, the Me drawer
 - `apps/mobile/src/app/`: expo-router screens, thin
-- `index.ts` (repo root): imports the background task first, then `expo-router/entry`
+- `apps/mobile/index.ts`: imports the background task first, then `expo-router/entry`
 
 Allowed directions: `ui → application → domain → shared-kernel`; `infrastructure` implements ports
 from `application`/`domain`; `wiring` and `composition-root` may import anything.
@@ -113,9 +123,10 @@ from `application`/`domain`; `wiring` and `composition-root` may import anything
 (`__tests__/`, `test-support/`) are exempt from the first three.
 
 - **`domain-is-pure`**: `apps/mobile/src/shared-kernel/` and every `domain/` import nothing from
-  react, react-native, expo-\*, zustand, h3-js, MapLibre or better-sqlite3, nor from
-  `apps/mobile/src/platform`, `composition-root`, `wiring`, `apps/mobile/src/app`,
-  `apps/mobile/src/ui-kit`, or any context's `application/`, `infrastructure/` or `ui/`.
+  react, react-native, expo-\*, HealthKit or Nitro modules, zustand, h3-js (or core's `h3/`),
+  MapLibre, better-sqlite3 or `@cityturfer/ui`, nor from `apps/mobile/src/platform`,
+  `composition-root`, `wiring`, `apps/mobile/src/app`, `apps/mobile/src/ui-kit`, or any context's
+  `application/`, `infrastructure/` or `ui/`.
 - **`application-no-infra-or-ui`**: `application/` imports no react, react-native, expo-\*, h3-js or
   MapLibre, no `infrastructure/` or `ui/` of any context, and not `composition-root`, `wiring`,
   `apps/mobile/src/app` or `apps/mobile/src/ui-kit`.
@@ -130,10 +141,14 @@ from `application`/`domain`; `wiring` and `composition-root` may import anything
   expo, MapLibre, HealthKit, better-sqlite3, `@cityturfer/ui` / `@cityturfer/brand` or an app.
 - **`h3-only-in-h3`** (core): only `packages/core/src/h3/` imports h3-js.
 - **`core-via-entry-points`** (app): app code imports core only through its `exports` entries
-  (`@cityturfer/core/<entry>`), never files under `packages/core/src/` directly.
+  (`@cityturfer/core/<entry>`: constants, shared-kernel, h3, demo, `<ctx>` and `<ctx>/ports`), never
+  files under `packages/core/src/` directly.
 - **`core-ports-for-own-adapters`** / **`core-ports-only-of-own-context`** (app):
   `@cityturfer/core/<ctx>/ports` is imported only by that context's `infrastructure/`, test doubles,
   tests and the wiring.
+- **`background-task-stays-offline`** (app): the background location task and its batch handler
+  import no Cloud Backup, no `api-auth-gateway` or credential store, and no `fetch-`/`api-`/`osm-`
+  adapter: they reach the rest only through `getContainer()`.
 - **`no-circular`**: no import cycles anywhere.
 
 Not enforced (by design or not yet):
@@ -141,10 +156,10 @@ Not enforced (by design or not yet):
 - `wiring.ts` and `composition-root.ts` import context internals (repositories, adapters): they are
   the composition root and appear in no rule's `from`.
 - `ui/` may import `@/composition-root` (e.g. `use-live-session.ts` reads `liveSessionStore`).
-- The root `index.ts` and `tools/` are outside the cruise (`exclude: '^tools'`, and depcruise runs
-  on `src` only).
-- Migration table prefixes per context (`rec_`, `log_`, `ter_`, `sys_`) are a convention in
-  `apps/mobile/src/platform/migrations.ts`, not checked by a tool.
+- `apps/mobile/index.ts` and `tools/` are outside the cruise (`exclude: '^tools'`, and depcruise
+  runs on `src` only).
+- Migration table prefixes per context (`rec_`, `log_`, `ter_`, `hs_`, `cb_`, `sys_`) are a
+  convention in `apps/mobile/src/platform/migrations.ts`, not checked by a tool.
 
 ## 4. Maintenance rules
 

@@ -2,7 +2,9 @@
  * Cloud Backup correctness (contract 0.4.0) through the real wiring and SQL: changes made while
  * backup was off are reconciled, another account or server starts from scratch, renames go up as
  * PATCH, an empty gap-routes check goes up too, a withdrawn consent leaves "nothing on the server",
- * a retry after travelling sends the same content, and the demo profile never sends a request.
+ * a retry after travelling sends the same content, the demo profile backs up its planned demo history
+ * (only it, never its recordings or Apple Health imports, and only to its own account), a profile
+ * without credentials never sends a request, and a build without a backup server sends nothing at all.
  */
 import { SqliteActivityRepository } from '@/contexts/activity-log/infrastructure/sqlite-activity-repository';
 import { phone, type PhoneContainer, walk } from '@/test-support/backup-phone';
@@ -18,6 +20,10 @@ const rows = (t: ReturnType<typeof phone>) =>
   t.db.all<{ id: string; status: string; op: string | null }>(
     'SELECT activity_id AS id, status, op FROM cb_activities ORDER BY started_at'
   );
+
+/** The withdrawals still to deliver and the account the state is about. */
+const pending = async (t: ReturnType<typeof phone>) =>
+  t.db.first<{ w: string | null; k: string | null }>('SELECT withdrawals_pending AS w, account_key AS k FROM cb_state');
 
 describe('Cloud Backup: changes made while backup was off', () => {
   it('reconciles deletes, corrections, renames and gap checks on the next comparison', async () => {
@@ -285,11 +291,6 @@ describe('Cloud Backup: another account or server', () => {
 });
 
 describe('Cloud Backup: a withdrawal pending when the account changes', () => {
-  const pending = async (t: ReturnType<typeof phone>) =>
-    t.db.first<{ w: string | null; k: string | null }>(
-      'SELECT withdrawals_pending AS w, account_key AS k FROM cb_state'
-    );
-
   it('is delivered to the previous account (its device token) before switching', async () => {
     const t = phone({ token: 'secret-token' });
     const c = await t.container();
@@ -330,6 +331,41 @@ describe('Cloud Backup: a withdrawal pending when the account changes', () => {
     await c.cloudBackup.run.execute();
     expect(t.server.activities.size).toBe(0);
     expect(await pending(t)).toEqual({ w: null, k: expect.stringContaining('|acct-1') });
+  });
+});
+
+describe('Cloud Backup: a withdrawal for a local profile’s former account', () => {
+  /** admin@ linked (acct-1), backed up; a password sign-in drops the session; turned off then. */
+  async function offForGoneAccount() {
+    const t = phone({ profile: 'admin', account: ACCOUNT, token: null });
+    const c = await t.container();
+    await c.add('rec-1', walk(0));
+    await backedUp(c);
+    t.account.value = null;
+    expect(await c.cloudBackup.disable.execute()).toEqual({ kind: 'failed', error: 'no-token' });
+    // acct-1 is deleted on the web; the next code to admin@ makes a new account.
+    t.server.moreTokens.set('token-2', 'acct-2');
+    t.account.value = { token: 'token-2', accountId: 'acct-2' };
+    return { t, c };
+  }
+
+  it('no token reaches it any more and the address has a new account: it no longer blocks backup', async () => {
+    const { t, c } = await offForGoneAccount();
+    expect(await c.cloudBackup.run.execute()).toEqual({ kind: 'skipped', reason: 'off' });
+    expect(await pending(t)).toEqual({ w: null, k: expect.stringContaining('|acct-2') });
+    expect(await c.cloudBackup.enable.execute()).toEqual({ kind: 'ok' });
+    expect(await c.cloudBackup.run.execute()).toMatchObject({ kind: 'done', report: { error: null } });
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ enabled: true, withdrawalPending: false });
+  });
+
+  it('while the server can’t be asked (offline), the withdrawal is kept', async () => {
+    const { t, c } = await offForGoneAccount();
+    t.server.failNext('me', { kind: 'offline' });
+    await c.cloudBackup.run.execute();
+    expect(await pending(t)).toEqual({
+      w: expect.stringContaining('cloud-sync'),
+      k: expect.stringContaining('|acct-1'),
+    });
   });
 });
 
@@ -389,24 +425,159 @@ describe('Cloud Backup: time zone', () => {
   });
 });
 
-describe('Cloud Backup: profiles without an account', () => {
-  it('the demo profile sends no request at all, whatever is configured', async () => {
+describe('Cloud Backup: demo history (LP3)', () => {
+  it('the demo profile backs up its seeded demo history, as import', async () => {
     const t = phone({ profile: 'demo', account: ACCOUNT });
+    const c = await t.container();
+    await c.add('demo-gdansk-n0', walk(0));
+    await c.add('demo-gdansk-n1', walk(1));
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ available: true, hasToken: true, total: 2 });
+    const result = await backedUp(c);
+    expect(result).toEqual({ kind: 'done', report: { uploaded: 2, deleted: 0, failed: 0, refused: 0, error: null } });
+    expect(t.server.uploads()).toEqual(['demo-gdansk-n0', 'demo-gdansk-n1']);
+    expect(t.server.activities.get('demo-gdansk-n0')?.source).toBe('import');
+    // Demo activities added later (a resumed seed) are queued through the outbox like any other.
+    await c.add('demo-gdansk-n2', walk(3));
+    await c.cloudBackup.run.execute();
+    expect(t.server.activities.get('demo-gdansk-n2')?.source).toBe('import');
+  });
+
+  it('on the demo profile, recordings and Apple Health imports stay on the phone: not uploaded, queued or counted', async () => {
+    const t = phone({ profile: 'demo', account: ACCOUNT });
+    const c = await t.container();
+    await c.add('demo-gdansk-n0', walk(0));
+    await c.add('rec-1', walk(1)); // a real walk recorded on the demo profile (e.g. for screenshots)
+    await c.add('hk-1', walk(2));
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ total: 1 });
+    await backedUp(c);
+    expect(await c.cloudBackup.includeHealth.execute(true)).toEqual({ kind: 'ok' });
+    await c.cloudBackup.run.execute({ now: true });
+    // Recorded and imported while backup (and Apple Health) is on: not queued either.
+    await c.add('rec-2', walk(3));
+    await c.add('hk-2', walk(4));
+    await c.dispatcher.dispatchPending();
+    await c.cloudBackup.run.execute({ now: true });
+    expect(t.server.uploads()).toEqual(['demo-gdansk-n0']);
+    expect((await rows(t)).map((r) => r.id)).toEqual(['demo-gdansk-n0']);
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ backedUp: 1, total: 1, unsynced: 0 });
+
+    // A recording queued on the demo profile before this rule: never sent, and not shown as waiting.
+    await t.db.run(
+      "INSERT INTO cb_activities (activity_id, started_at, status, op, gaps_pending, rev, attempts, rename_pending) VALUES ('rec-1', ?, 'none', 'upload', 0, 0, 0, 0)",
+      [Date.parse('2026-10-02T07:00:00Z')]
+    );
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ total: 1, unsynced: 0 });
+    await c.cloudBackup.run.execute({ now: true });
+    expect(t.server.uploads()).toEqual(['demo-gdansk-n0']);
+  });
+
+  it('on the demo profile, the Developer tools seeder’s demo-<ms> tracks (real position) never leave the phone', async () => {
+    const t = phone({ profile: 'demo', account: ACCOUNT });
+    const c = await t.container();
+    await c.add('demo-gdansk-n0', walk(0));
+    await c.add(`demo-${Date.parse('2026-10-01T07:00:00Z')}`, walk(1));
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ total: 1 });
+    await backedUp(c);
+    await c.add(`demo-${Date.parse('2026-10-02T07:00:00Z')}`, walk(2)); // seeded while backup is on
+    await c.cloudBackup.run.execute({ now: true });
+    expect(t.server.uploads()).toEqual(['demo-gdansk-n0']);
+    expect((await rows(t)).map((r) => r.id)).toEqual(['demo-gdansk-n0']);
+  });
+
+  it('the demo profile ignores a Developer tools device token: its history goes only to demo@’s linked account', async () => {
+    const t = phone({ profile: 'demo', token: 'secret-token', account: null });
+    const c = await t.container();
+    await c.add('demo-gdansk-n0', walk(0));
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ hasToken: false, hasDeviceToken: true });
+    expect(await c.cloudBackup.enable.execute()).toEqual({ kind: 'failed', error: 'no-token' });
+    expect(await c.cloudBackup.run.execute()).toEqual({ kind: 'skipped', reason: 'off' });
+    await c.runLaunchMaintenance();
+    expect(t.server.requests).toEqual([]);
+
+    t.account.value = ACCOUNT; // linked by a code: demo@'s own session
+    expect(await backedUp(c)).toMatchObject({ kind: 'done', report: { uploaded: 1, error: null } });
+    expect(t.server.uploads()).toEqual(['demo-gdansk-n0']);
+  });
+
+  it('demo history seeded on another profile (Developer tools) never leaves the phone', async () => {
+    const t = phone({ profile: 'admin', account: ACCOUNT });
     const c = await t.container();
     await c.add('demo-1', walk(0));
     await c.add('rec-1', walk(1));
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ available: true, total: 1 });
+    await backedUp(c);
+    await c.add('demo-2', walk(2)); // seeded while backup is on: not queued either
+    await c.cloudBackup.run.execute({ now: true });
+    expect(t.server.uploads()).toEqual(['rec-1']); // another profile's recording goes up
+    expect(t.server.activities.get('rec-1')?.source).toBe('recording');
+    expect([...t.server.activities.keys()]).toEqual(['rec-1']);
+    expect((await rows(t)).map((r) => r.id)).toEqual(['rec-1']);
+  });
+});
+
+describe('Cloud Backup: a build without a backup server', () => {
+  it('sends nothing and reads no credentials: every switch fails as not-available, runs are skipped', async () => {
+    const t = phone({ noBackupAdapters: true, account: ACCOUNT });
+    const c = await t.container();
+    await c.add('rec-1', walk(0));
     await c.territory.chooseHomeCity.execute('pl-gdansk');
     await c.dispatcher.dispatchPending();
     expect(await c.cloudBackup.enable.execute()).toEqual({ kind: 'failed', error: 'not-available' });
+    expect(await c.cloudBackup.includeHealth.execute(true)).toEqual({ kind: 'failed', error: 'not-available' });
     expect(await c.cloudBackup.includeHealth.execute(false)).toEqual({ kind: 'failed', error: 'not-available' });
     expect(await c.cloudBackup.disable.execute()).toEqual({ kind: 'failed', error: 'not-available' });
-    await c.cloudBackup.saveToken.execute('secret-token');
+    expect(await c.cloudBackup.afterCredentials.execute()).toEqual({ kind: 'failed', error: 'not-available' });
     expect(await c.cloudBackup.run.execute({ now: true })).toEqual({ kind: 'skipped', reason: 'not-available' });
     await c.runLaunchMaintenance();
     expect(await c.cloudBackup.status.execute()).toMatchObject({ available: false, enabled: false, hasToken: false });
     expect(t.server.requests).toEqual([]);
     expect(t.account.reads).toBe(0);
     expect(await rows(t)).toEqual([]);
+  });
+});
+
+describe('Cloud Backup: profiles without credentials', () => {
+  it('the demo profile opened with its password (no code yet) sends nothing, its history included', async () => {
+    const t = phone({ profile: 'demo', account: null, token: null });
+    const c = await t.container();
+    await c.add('demo-gdansk-n0', walk(0));
+    await c.add('rec-1', walk(1));
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ available: true, hasToken: false, total: 1 });
+    expect(await c.cloudBackup.enable.execute()).toEqual({ kind: 'failed', error: 'no-token' });
+    expect(await c.cloudBackup.run.execute({ now: true })).toEqual({ kind: 'skipped', reason: 'off' });
+    await c.runLaunchMaintenance();
+    expect(t.server.requests).toEqual([]);
+  });
+
+  it('credentials cleared, then revoked, between uploads: no-token, then auth; a new code resumes cleanly', async () => {
+    const t = phone({ profile: 'admin', account: ACCOUNT, token: null });
+    const c = await t.container();
+    await c.add('rec-1', walk(0));
+    await backedUp(c);
+
+    // A password sign-in (LP2): no credentials; backup stays on and waits, without a request.
+    t.account.value = null;
+    await c.add('rec-2', walk(1));
+    const sent = t.server.requests.length;
+    expect(await c.cloudBackup.run.execute({ now: true })).toEqual({ kind: 'skipped', reason: 'no-token' });
+    expect(t.server.requests.length).toBe(sent);
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ enabled: true, lastError: 'no-token' });
+
+    // A session the server no longer accepts (revoked on the web, or expired): auth, not retried.
+    t.account.value = { token: 'revoked-token', accountId: 'acct-1' };
+    expect(await c.cloudBackup.run.execute({ now: true })).toMatchObject({ kind: 'done', report: { error: 'auth' } });
+    expect(await c.cloudBackup.run.execute({ now: true })).toEqual({ kind: 'skipped', reason: 'waiting-for-token' });
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ enabled: true, hasToken: true, lastError: 'auth' });
+    expect(t.server.activities.has('rec-2')).toBe(false);
+
+    // A new code: the link screen's path carries on (no new consent) and the run sends rec-2.
+    t.server.moreTokens.set('token-new', 'acct-1');
+    t.account.value = { token: 'token-new', accountId: 'acct-1' };
+    expect(await c.cloudBackup.afterCredentials.execute()).toEqual({ kind: 'carried-on' });
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ lastError: null });
+    expect(await c.cloudBackup.run.execute({ now: true })).toMatchObject({ kind: 'done', report: { error: null } });
+    expect(t.server.activities.has('rec-2')).toBe(true);
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ enabled: true, backedUp: 2, lastError: null });
   });
 
   it('a profile with no account and no token sends nothing either', async () => {

@@ -1,0 +1,73 @@
+'use client';
+
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useEffect, useMemo } from 'react';
+
+import { isActivityId } from '@/api/activity-id';
+import { forgetActivity, useActivity, usePortal, useTrack } from '@/api/hooks';
+import { activitiesHref } from '@/api/next-path';
+
+import { ActivityDetailView } from '../activity-detail';
+import { ActivityState } from '../activity-state';
+import { browserZone } from '../activity-time';
+import { type ActivityPageProps, activityView } from './activity-page.constants';
+
+/**
+ * `/[locale]/account/activity?id=…` (H2): one activity from the backed-up copy. The id is the
+ * phone's opaque id; it is only sent to the API when it has the contract's shape.
+ */
+export function ActivityPage({ locale }: ActivityPageProps) {
+  const t = useTranslations('portal.activities');
+  const router = useRouter();
+  const { queryClient } = usePortal();
+  const rawId = useSearchParams().get('id');
+  const id = isActivityId(rawId) ? rawId : null;
+  const detail = useActivity(id);
+  // The hash of the detail in memory (kept through a failed background refresh).
+  const track = useTrack(id, detail.data?.trackHash ?? null);
+  const zone = useMemo(() => browserZone(), []);
+  const view = activityView({ rawId, validId: id !== null, hasData: detail.data !== undefined, error: detail.error });
+
+  const gone = id !== null && (view.kind === 'not-found' || view.kind === 'deleted');
+  useEffect(() => {
+    if (gone) {
+      forgetActivity(queryClient, id);
+    }
+  }, [gone, id, queryClient]);
+
+  useEffect(() => {
+    if (view.kind === 'to-list') {
+      router.replace(`/${locale}${activitiesHref()}`);
+    }
+  }, [view.kind, router, locale]);
+
+  switch (view.kind) {
+    case 'activity':
+      return detail.data ? (
+        <ActivityDetailView
+          activity={detail.data}
+          track={track.data ?? null}
+          trackFailed={track.isError && track.error.code !== 'signed-out'}
+          locale={locale}
+          browserZone={zone}
+        />
+      ) : null;
+    case 'to-list':
+      return (
+        <p className='portal-hint' role='status'>
+          {t('detail.redirecting')}
+        </p>
+      );
+    case 'leaving':
+      return null;
+    case 'loading':
+    case 'not-found':
+    case 'deleted':
+    case 'unreachable':
+    case 'error':
+      return (
+        <ActivityState view={view} locale={locale} onRetry={() => void detail.refetch()} retrying={detail.isFetching} />
+      );
+  }
+}

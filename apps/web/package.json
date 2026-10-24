@@ -1,6 +1,6 @@
 {
   "name": "@cityturfer/web",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "private": true,
   "description": "CityTurfer landing page: a static showcase (Next.js static export, hosted on Vercel)",
   "scripts": {
@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@cityturfer/brand": "workspace:*",
+    "@cityturfer/core": "workspace:*",
     "@gsap/react": "^2.1.2",
     "@interdisciplinary/dev-toolbar": "workspace:*",
     "@tanstack/react-query": "^5.104.5",

@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-17
+verified: 2026-10-23
 owner: founder
 scope: [tools/docs-audit.mjs, docs]
 summary: Every doc with its status, generated from frontmatter
@@ -33,8 +33,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   trade-off
 - ✅ [`engineering/domain-architecture.md`](engineering/domain-architecture.md): The bounded
   contexts, how they talk, the layer rules dependency-cruiser enforces, and how to change them
-- ✅ [`engineering/features.md`](engineering/features.md): Inventory of every shipped feature by tab
-  and screen, where it lives, and the claims that aren't true yet
+- ✅ [`engineering/features.md`](engineering/features.md): Inventory of every shipped app feature by
+  tab and screen, where it lives, what the server and web portal add, and the claims that aren't
+  true yet
 
 ## What we build and why
 
@@ -73,7 +74,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   tokens, support requests (find, delete), checking health
 - ✅ [`operations/apple-health.md`](operations/apple-health.md): Install the Apple Health build on
   the iPhone and check import and export with real data
-- ❔ [`operations/observability.md`](operations/observability.md): _no frontmatter_
+- ✅ [`operations/observability.md`](operations/observability.md): What the app and the API record
+  about themselves, the no-coordinates rule, on-device diagnostics, API request logs and the
+  audit:logs check
 - ✅ [`operations/ota-release.md`](operations/ota-release.md): How to ship a JS-only change over the
   air on EAS channel production, check it landed, and when a reinstall is needed instead
 - ✅ [`operations/runbook.md`](operations/runbook.md): Paste-and-run checklists for the incidents
@@ -83,9 +86,12 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 
 `docs/quality/` — Test inventory and QA policy.
 
-- ❔ [`quality/e2e.md`](quality/e2e.md): _no frontmatter_
-- ❔ [`quality/quality-assurance.md`](quality/quality-assurance.md): _no frontmatter_
-- ❔ [`quality/smoke-test.md`](quality/smoke-test.md): _no frontmatter_
+- ✅ [`quality/e2e.md`](quality/e2e.md): Maestro critical paths, flow inventory, known gaps and how
+  to add a flow
+- ✅ [`quality/quality-assurance.md`](quality/quality-assurance.md): QA charter for scope → release
+  — the ci:quality gate, testing rules and the release checklist
+- ✅ [`quality/smoke-test.md`](quality/smoke-test.md): Manual physical-iPhone checklist before scope
+  → release (screen-off walk, kill mid-run, OTA)
 
 ## How we work
 
@@ -104,29 +110,37 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 
 - 🕰️ [`sessions/v0.1.0.md`](sessions/v0.1.0.md): Session log v0.1.0 (2026-10-15 → 16) — from empty
   folder to the iOS PoC, background tracking fix
-- ✅ [`sessions/v0.10.0.md`](sessions/v0.10.0.md): Session log v0.10.0 — cut from main at the v0.9.0
-  release; versions pinned to 0.10.0; carries the checks v0.9.0 shipped without (Maestro, device,
-  browser, API deploy) and its follow-ups; light site, Street Plate type (native), account settings
-  (API 0.5.0), web portal Slice 0, admin scaffold, sync-chain tests, server turf (API 0.6.0), local
-  mock accounts
+- 🕰️ [`sessions/v0.10.0.md`](sessions/v0.10.0.md): Session log v0.10.0 (released 2026-10-23, tag
+  v0.10.0) — light site, Street Plate type (native), account settings (API 0.5.0), web portal Slice
+  0, admin scaffold, sync-chain tests with turf and data-flow decisions F1–F4, server turf (API
+  0.6.0), local mock accounts, achievements 12 → 20, the app in English and Polish; what carries
+  into v0.11.0
+- ✅ [`sessions/v0.11.0.md`](sessions/v0.11.0.md): Session log v0.11.0 (in progress, scope PR 160
+  open) — docs refresh, web portal activity history, hero lockup, Polish "terytorium", cloud backup
+  for the admin@ and demo@ local profiles (API 0.6.1); JS only; open founder decisions and the
+  auth:adopt pre-step
 - 🕰️ [`sessions/v0.2.0.md`](sessions/v0.2.0.md): Session log v0.2.0 through the Me menu and
   achievements; predates the Dashboard, Me drawer and login rename (PRs 23–25) and still says
   app.json is unpinned (pinned in f04bcf3)
-- ✅ [`sessions/v0.3.0.md`](sessions/v0.3.0.md): Session log v0.3.0 — v0.2.0 released, scope/v0.3.0
+- 🕰️ [`sessions/v0.3.0.md`](sessions/v0.3.0.md): Session log v0.3.0 — v0.2.0 released, scope/v0.3.0
   opened, monorepo (Turborepo) designed
-- ✅ [`sessions/v0.4.0.md`](sessions/v0.4.0.md): Session log v0.4.0 — v0.3.0 released; Apple Health
+- 🕰️ [`sessions/v0.4.0.md`](sessions/v0.4.0.md): Session log v0.4.0 — v0.3.0 released; Apple Health
   integration; Android APK from the website, store buttons, waitlist, GSAP motion; iOS stays
   free-tier
-- ✅ [`sessions/v0.5.0.md`](sessions/v0.5.0.md): Session log v0.5.0 — shared design system (tokens,
+- 🕰️ [`sessions/v0.5.0.md`](sessions/v0.5.0.md): Session log v0.5.0 — shared design system (tokens,
   @cityturfer/ui, one Storybook) for the app and the website, shipped over the air
-- ✅ [`sessions/v0.6.0.md`](sessions/v0.6.0.md): Session log v0.6.0 — v0.5.0 released; Storybook
+- 🕰️ [`sessions/v0.6.0.md`](sessions/v0.6.0.md): Session log v0.6.0 — v0.5.0 released; Storybook
   branded as CityTurfer, docs pages and stories for every shared and website component, served at
   cityturfer.local/storybook; no app change
-- ✅ [`sessions/v0.7.0.md`](sessions/v0.7.0.md): Session log v0.7.0 — v0.6.0 released; Home City and
+- 🕰️ [`sessions/v0.7.0.md`](sessions/v0.7.0.md): Session log v0.7.0 — v0.6.0 released; Home City and
   the city picker (catalogue of 38 cities, migration 7), Turf and Record maps open on the chosen
   city; JS-only, ships over the air
-- ✅ [`sessions/v0.8.0.md`](sessions/v0.8.0.md): Session log v0.8.0 — API from skeleton (#89,
-- ✅ [`sessions/v0.9.0.md`](sessions/v0.9.0.md): Session log v0.9.0 — dark app with Turf Map colours
+- 🕰️ [`sessions/v0.8.0.md`](sessions/v0.8.0.md): Session log v0.8.0 — API from skeleton (#89, #90)
+  and sync contract (#96) to a live one-way backup on Postgres (#104) with the phone's opt-in Cloud
+  backup (#105), on @cityturfer/core (#101); Archivo and brand foundations, a native change (#95),
+  applied across the app (#103), Swagger (#102) and a /branding page (#106); turf toggle on the
+  Record map (#94); Product Owner (#88); guard hooks (#98)
+- 🕰️ [`sessions/v0.9.0.md`](sessions/v0.9.0.md): Session log v0.9.0 — dark app with Turf Map colours
   on Record (native change), accounts by e-mailed code with restore, delete, export and rename (API
   0.4.0), demo account, website header and loader, internal /branding page with the ICP, Swagger
   contents, and the agent harness rewrite
@@ -184,21 +198,28 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`decisions/brand-typography-2026-10-22.md`](decisions/brand-typography-2026-10-22.md): Brand
   type changes from Archivo to the "Street Plate" pairing: Big Shoulders Display Black in capitals
   for headings, Barlow Semi Condensed ExtraBold for numbers, Barlow for website body text; the
-  wordmark is redrawn in Big Shoulders Display (CITY Medium + TURFER Black)
+  wordmark is redrawn in Big Shoulders Display Black (CITY and TURFER told apart by colour), and the
+  tagline is Barlow Semi Condensed Black Italic (web only)
 - 🚧 [`decisions/data-flow-2026-10-23.md`](decisions/data-flow-2026-10-23.md): Founder decisions
   2026-10-23 on how data flows between the phone, the API, the web portal and the admin portal —
   records are created on the phone, managed (deleted) on the web, adjusted (all but tracks) by
-  staff, and the phone pulls those changes; built in v0.11.0
+  staff, and the phone pulls those changes; not built, and not in v0.11.0, slipping to the next
+  scope
 - ✅ [`decisions/design-system-2026-10-19.md`](decisions/design-system-2026-10-19.md): v0.5.0 design
   system — tokens in @cityturfer/brand (TS + CSS variables), React Native components in
   @cityturfer/ui, one Storybook (react-native-web) for the app and the website, shipped OTA
 - ✅ [`decisions/home-city-2026-10-19.md`](decisions/home-city-2026-10-19.md): v0.7.0 Home City —
   the Turfer picks a city from a bundled catalogue and the Turf Map (and the Record map before the
-  first fix) opens on it; stored per user, never sent anywhere
+  first fix) opens on it; stored per user as a catalogue id, sent to the API only with cloud backup
+  consent
+- ✅ [`decisions/local-profile-backup-2026-10-24.md`](decisions/local-profile-backup-2026-10-24.md):
+  The local profiles admin@ and demo@cityturfer.com can back up to the server after the Turfer
+  proves the profile's mailbox with an e-mailed code; the app password still opens them on the
+  phone, and the demo profile uploads its generated Gdańsk history
 - ✅
   [`decisions/maplibre-over-react-native-maps-2026-10-15.md`](decisions/maplibre-over-react-native-maps-2026-10-15.md):
   Decision record — MapLibre + OpenFreeMap for every map instead of react-native-maps
-- 🚧 [`decisions/mobile-i18n-2026-10-23.md`](decisions/mobile-i18n-2026-10-23.md): The app speaks
+- ✅ [`decisions/mobile-i18n-2026-10-23.md`](decisions/mobile-i18n-2026-10-23.md): The app speaks
   English and Polish — use-intl (the core of the website's next-intl, ICU messages, same JSON style)
   with the catalogue in apps/mobile/messages/<locale>/<namespace>.json, language from an in-app
   setting (System, English, Polski) else the phone, locale-aware numbers and dates, checked by
@@ -219,15 +240,18 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`plans/account-settings-2026-10-22.md`](plans/account-settings-2026-10-22.md): A complete
   Account tab on the phone and on the web portal — change name, e-mail and password — over one set
   of API routes and one set of rules in core; passwords as an optional second sign-in method beside
-  e-mailed codes (reverses A1, needs a decision), step-up codes, security mails, tests at every
-  layer
-- 🚧 [`plans/backend-plan-2026-10-22.md`](plans/backend-plan-2026-10-22.md): Plan for the first
+  e-mailed codes (AC1 decided yes), step-up codes, security mails. API and phone shipped in
+- ✅ [`plans/backend-plan-2026-10-22.md`](plans/backend-plan-2026-10-22.md): Plan for the first
   back-end release (opt-in backup, real accounts, restore to a new phone, delete account, export) —
-  founder decisions of 2026-10-22, what feat/backend-sync built, and what is left before testers can
-  use it
-- 🚧 [`plans/sync-chain-testing-2026-10-22.md`](plans/sync-chain-testing-2026-10-22.md): How to test
+  founder decisions of 2026-10-22, what feat/backend-sync built (shipped in v0.9.0), what changed
+  since, and what is left before testers can use it
+- ✅ [`plans/sync-chain-testing-2026-10-22.md`](plans/sync-chain-testing-2026-10-22.md): How to test
   that the four apps stay one system — every scenario starts on the phone (the source of truth) or
   reaches it, and is checked in the API, the web portal and the admin portal as each is built today;
   scenarios report pending until the routes they need exist
+- ✅ [`plans/web-portal-history-2026-10-23.md`](plans/web-portal-history-2026-10-23.md): Plan for
+  the web portal's activity history (v0.11.0) — a list of the backed-up walks, runs and rides with
+  totals and a type filter, and a detail page with stats, splits and the route shape; read-only, no
+  map tiles, numbers from core's formatters shared with the app
 
 <!-- docs-index:end -->

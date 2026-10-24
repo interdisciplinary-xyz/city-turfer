@@ -14,8 +14,12 @@ export interface AccountRows {
   /** A local profile (mock admin, demo): no email or password to change. */
   local: boolean;
   name: AccountRow;
+  /** `enabled` false and no flow on a fixed address (see `fixedAddress`). */
   email: AccountRow;
-  password: AccountRow;
+  /** Null: hidden (a fixed address: a server password could never open this profile on the phone). */
+  password: AccountRow | null;
+  /** The email is the profile's identity (a linked local profile): shown, never changed here. */
+  emailFixed: boolean;
   signIn: string;
   /** "Try again" is offered (offline, or the server didn't answer). */
   retry: boolean;
@@ -45,8 +49,17 @@ function blockedValue(state: AccountSettingsState, t: T<'account'>): string | nu
  * While a `ready` answer is being asked again, what depends on `hasPassword` (the password row and
  * the sign-in methods) reads "Checking…" and the password row stays closed until the fresh answer.
  * `t`: the `account` messages (`useT` in the component, `translator` in tests); `locale` for the date.
+ * `fixedAddress`: a local profile linked to its own address (mock admin, demo): the address is the
+ * profile's identity and the phone opens it with the app password, so changing the email and the
+ * account password are hidden; the name and the rest stay as for any account.
  */
-export function accountRows(user: User, state: AccountSettingsState, t: T<'account'>, locale?: string): AccountRows {
+export function accountRows(
+  user: User,
+  state: AccountSettingsState,
+  t: T<'account'>,
+  locale?: string,
+  fixedAddress = false
+): AccountRows {
   const settings = state.status === 'ready' ? state.settings : null;
   const local = settings ? settings.kind === 'local' : user.accountId == null;
   const account = settings?.kind === 'account' ? settings : null;
@@ -58,6 +71,7 @@ export function accountRows(user: User, state: AccountSettingsState, t: T<'accou
       name: { value: name, enabled: true },
       email: { value: t('value.createAccount'), enabled: false },
       password: { value: t('value.createAccount'), enabled: false },
+      emailFixed: false,
       signIn: t('value.localProfile'),
       retry: false,
       retrying: false,
@@ -75,8 +89,11 @@ export function accountRows(user: User, state: AccountSettingsState, t: T<'accou
   return {
     local,
     name: { value: blocked ?? name, enabled: account != null },
-    email: { value: blocked ?? account?.email ?? user.email, enabled: account != null },
-    password: { value: blocked ?? password, enabled: account != null && !stale },
+    email: fixedAddress
+      ? { value: account?.email ?? user.email, enabled: false }
+      : { value: blocked ?? account?.email ?? user.email, enabled: account != null },
+    password: fixedAddress ? null : { value: blocked ?? password, enabled: account != null && !stale },
+    emailFixed: fixedAddress,
     signIn: stale ? t('value.checking') : account?.hasPassword ? t('value.codeAndPassword') : t('value.codeOnly'),
     retry: blocked != null,
     retrying: (state.status === 'offline' || state.status === 'failed') && state.retrying === true,

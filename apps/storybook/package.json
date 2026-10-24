@@ -1,6 +1,6 @@
 {
   "name": "@cityturfer/storybook",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "private": true,
   "description": "One Storybook for the CityTurfer design system: @cityturfer/ui (React Native, rendered with react-native-web) and the website's pieces from apps/web. Static build hosted on Vercel.",
   "scripts": {

@@ -93,8 +93,8 @@ number to the plural selector and a pre-formatted `fixed(n, 0)` string for the t
 
 | English                  | Polish                                                                                                              |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| turf                     | **turf**, inflected: Twój turf, Mapa turfu, staje się Twoim turfem                                                  |
-| Turf Map                 | Mapa turfu                                                                                                          |
+| turf                     | **terytorium** (founder, 2026-10-24; was "turf"): Twoje terytorium, staje się Twoim terytorium, 3,02 km² terytorium |
+| Turf Map                 | Mapa terytorium (tab and stat label: Terytorium; screen title: Twoje terytorium)                                    |
 | cells                    | komórki (1530 komórek)                                                                                              |
 | Walk / Run / Ride (type) | Spacer / Bieg / Rower                                                                                               |
 | walks, runs and rides    | spacery, biegi i przejażdżki                                                                                        |
@@ -108,14 +108,19 @@ number to the plural selector and a pre-formatted `fixed(n, 0)` string for the t
 | ride (the activity)      | przejażdżka (Poranna przejażdżka); **jazda** only in tight live UI (Zacznij jazdę, banner)                          |
 | record / recording       | nagraj, nagrywać / nagrywanie, nagranie (tab: Nagraj)                                                               |
 | pause / paused           | Pauza (button and status), Autopauza; resume = Wznów                                                                |
-| claim turf               | zdobywać turf (Zdobywam Twój turf…, nie dają turfu)                                                                 |
-| tiers faint…blazing      | Blade, Świecące, Mocne, Płonące (plural, agree with komórki/ulice); Siła turfu                                      |
+| claim turf, turf gained  | dodawać ulice do terytorium (Dodaję ulice…), Twoje terytorium liczy…; Nowe terytorium; never zdobywać (conquest)    |
+| tiers faint…blazing      | Blade, Świecące, Mocne, Płonące (plural, agree with komórki/ulice); Siła terytorium                                 |
 | Dashboard / Me (tabs)    | Pulpit / Ja                                                                                                         |
 | Splits                   | Międzyczasy                                                                                                         |
 | GPS gap                  | luka GPS (not przerwa: that reads as a pause)                                                                       |
 | track (GPS trace)        | ślad (route = trasa)                                                                                                |
 | Apple Health             | Apple Health as the integration; **aplikacja Zdrowie** only for a path on the iPhone (Zdrowie › Profil › Aplikacje) |
 | city names               | Polish exonyms (Londyn, Wiedeń, Wilno); in labels keep the name in the nominative: Pokaż miasto {city}              |
+
+**Terytorium** (founder decision, 2026-10-24) is neuter and stays unchanged in the singular in
+everyday Polish, so adjectives, pronouns and verbs agree in the neuter: Twoje, całe, nowe, zdobyte,
+"jest bezpieczne", "może wyglądać na mniejsze". Polish copy never says "turf". The rule "never
+territory" in `brand-system` is for English only. The brand name CityTurfer and "Turfer" stay.
 
 Address the Turfer informally and **capitalise** the forms of Ty: Ty, Twój, Twoja, Twoje, Ciebie, Ci
 ("Ulice są Twoje"); the reflexive swój/swoją stays lowercase. Decimal comma, `km²`. Natural Polish
@@ -148,9 +153,9 @@ simulator.
 
 Maestro pitfalls with a second language:
 
-- Every flow starts through `e2e/subflows/launch.yaml`; it matches the sign-in and onboarding texts
-  in **both** languages, so a run left in Polish still starts. Add the Polish text there when a
-  launch screen's copy changes.
+- Every flow starts through `apps/mobile/e2e/subflows/launch.yaml`; it matches the sign-in and
+  onboarding texts in **both** languages, so a run left in Polish still starts. Add the Polish text
+  there when a launch screen's copy changes.
 - The iOS back button is labelled by the OS in the app's language: tap `Back|Wstecz`
   (`subflows/back.yaml`).
 - A flow that switches language ends with `onFlowComplete: reset-language.yaml`, so a failed assert

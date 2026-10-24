@@ -152,7 +152,7 @@ export function serverCopyOf(detail: unknown, track: unknown): ServerActivityCop
     type,
     name,
     version,
-    source: detail.source === 'apple-health' ? 'apple-health' : 'recording',
+    source: detail.source === 'apple-health' || detail.source === 'import' ? detail.source : 'recording',
     startedAt,
     endedAt,
     timeZone: typeof detail.timeZone === 'string' ? detail.timeZone : null,

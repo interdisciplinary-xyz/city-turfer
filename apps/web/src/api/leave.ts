@@ -2,11 +2,11 @@
 // query client and a location, so they run (and are tested) without React or a browser.
 import type { QueryClient } from '@tanstack/react-query';
 
-import { signInUrl } from './next-path';
+import { safeNextPath, signInUrl } from './next-path';
 import type { PortalApiContextValue } from './provider.constants';
 
 /** The part of `window.location` the portal uses to leave. */
-export type LeaveLocation = Pick<Location, 'pathname' | 'replace' | 'reload'>;
+export type LeaveLocation = Pick<Location, 'pathname' | 'replace' | 'reload'> & Partial<Pick<Location, 'search'>>;
 
 type QueryCache = Pick<QueryClient, 'cancelQueries' | 'clear'>;
 
@@ -34,7 +34,14 @@ export function createLeave({
     void queryClient.cancelQueries();
     queryClient.clear();
     const here = location();
-    const next = returnHere ? here.pathname : null;
+    // With the query only when it survives the guard (an activity's valid `?id=`); otherwise the
+    // path alone, as before.
+    const withQuery = `${here.pathname}${here.search ?? ''}`;
+    const next = returnHere
+      ? here.search && safeNextPath(withQuery, locale) === withQuery
+        ? withQuery
+        : here.pathname
+      : null;
     here.replace(signInUrl(locale, { next, reason }));
   };
 }

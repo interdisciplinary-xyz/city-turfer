@@ -78,7 +78,8 @@ describe('Me › Account: what it shows', () => {
     const t = setup({ names: true });
     expect(await t.api.accountSettings.execute()).toEqual({ kind: 'not-signed-in' });
     await t.api.signIn.execute('demo@cityturfer.com', 'demo1234');
-    expect(await t.api.accountSettings.execute()).toEqual({ kind: 'local', name: null });
+    // The local profile's default name (MockAuthGateway's) until one is kept on this phone.
+    expect(await t.api.accountSettings.execute()).toEqual({ kind: 'local', name: 'Ola' });
     expect(t.gateway.calls).toEqual([]);
   });
 

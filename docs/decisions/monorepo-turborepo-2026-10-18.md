@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-18
+verified: 2026-10-23
 owner: founder
 scope: [package.json, .github/workflows, tools]
 summary:
@@ -112,6 +112,21 @@ city-turfer/
 - `react-dom` in the workspace makes Expo add `web` to the app's platforms; `app.json` pins
   `platforms: ios, android`. `apps/mobile/fingerprint.config.js` keeps `package.json` scripts out of
   the runtime fingerprint.
+
+## Since v0.3.0 (checked 2026-10-23)
+
+The shape held; the workspace grew. `pnpm-workspace.yaml` still lists `apps/*` and `packages/*`.
+
+- **Apps:** `mobile`, `web`, plus `api` (Hono, v0.8.0), `storybook` (v0.5.0) and `admin` (Payload
+  scaffold, v0.10.0).
+- **Packages:** `brand`, `config`, plus `core` (shared domain), `ui` (React Native components),
+  `eslint-config` and `dev-toolbar` (both `@interdisciplinary/*`, from empatalk).
+- **Turborepo tasks** (`turbo.json`): `typecheck`, `lint`, `arch`, `test:unit`, `build` (web, admin,
+  API and Storybook), `dev`. `pnpm test` runs `arch` and `test:unit` plus the tool tests.
+- **Root `ci:quality`** also runs `audit:harness`, `audit:i18n` and the admin's generated-types
+  check. `pre-push` runs `turbo run typecheck arch test:unit` (no `--affected`).
+- **Landing page:** no longer forms-free: the waitlist form posts emails to Brevo (double opt-in),
+  and the signed-in portal lives under `/[locale]/account` (see Web app above).
 
 ## Risks
 

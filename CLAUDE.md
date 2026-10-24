@@ -221,13 +221,14 @@ node apps/mobile/tools/turf-preview.mjs apps/mobile/tools/fixtures/history --out
   `web-motion`, `design-system`, `api-design`, `product-knowledge` (what the product is; docs in
   `docs/product/`), `product-discovery`, `product-strategy`, `product-launch`, `verify-change`
   (prove a change before calling it done), `ship-branch` (commit, push, PR per the branch flow),
-  `ai-harness` (this setup), `mobile-i18n` (app languages, Polish glossary).
+  `ai-harness` (this setup), `mobile-i18n` (app languages, Polish glossary), `web-portal` (signed-in
+  portal in apps/web).
 - Agents (`.claude/agents/`): `rn-architect`, `location-engineer`, `mobile-ui-engineer`,
   `mobile-test-engineer`, `qa-engineer` (release QA and acceptance testing across all apps),
-  `mobile-reviewer`, `brand-designer`, `health-engineer` (Apple Health), `web-engineer` (apps/web),
-  `api-engineer` (back end: apps/api, server data, sync), `product-manager` (the Product Owner
-  persona; talk to it as the main session with the agent flag), `harness-engineer` (skills, agents,
-  hooks, audits).
+  `mobile-reviewer`, `brand-designer`, `health-engineer` (Apple Health), `web-engineer` (apps/web
+  landing and hosting), `portal-engineer` (signed-in web portal), `api-engineer` (back end:
+  apps/api, server data, sync), `product-manager` (the Product Owner persona; talk to it as the main
+  session with the agent flag), `harness-engineer` (skills, agents, hooks, audits).
 - Commands (`.claude/commands/`): `audit-docs` (`/audit-docs`).
 - Hooks (`.claude/settings.json`, rules in `tools/harness/hook-rules.mjs`): deny edits that break
   the dependency rule, touch `CHANGELOG.md`, secret files or generated native folders; deny push to

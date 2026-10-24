@@ -1,10 +1,9 @@
 ---
 name: brand-system
 description: >-
-  "is this on-brand?", user-facing copy, choosing a colour or font, restyling a screen, app icon,
-  splash, store listing or screenshots, social image. CityTurfer name, voice, colour tokens (turf
-  Ramp), typefaces (Big Shoulders Display, Barlow), logo, WCAG contrast and rendering assets with
-  render-assets.mjs.
+  Use for "is this on-brand?", user-facing copy, a colour or font, restyling a screen, app icon,
+  splash, store listing, screenshots or social image. CityTurfer name, voice, colour tokens (turf
+  ramp), typefaces (Big Shoulders Display, Barlow), logo, WCAG contrast, render-assets.mjs.
 ---
 
 # CityTurfer brand system
@@ -34,6 +33,8 @@ Pillars: **Your streets** (ownership is permanent) · **The glow** (repetition i
 - **Do:** say "your turf", "claim", "glow", "streets you own". **Don't:** "territory" (internal/code
   term only), "score", "points", "conquer" (too aggressive).
 - Users are **Turfers**. Their claimed area is **turf**; one hexagon is a **cell**.
+- **Polish:** turf is **terytorium** (founder decision, 2026-10-24: "Twoje terytorium", "Mapa
+  terytorium"); the "territory" ban above is for English only. Glossary in the `mobile-i18n` skill.
 - Use the ubiquitous language from `docs/poc-plan.md` §2 in UI copy (Walk / Run / Ride, Turf, Cell,
   Strength tiers). The UI says **Ride**; code, tokens and data say `cycle` (`TYPE_COLOR.cycle`, CSS
   `--ride`). Change the label, never the identifier.

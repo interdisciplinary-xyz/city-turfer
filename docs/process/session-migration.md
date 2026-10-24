@@ -1,8 +1,8 @@
 ---
 status: canonical
-verified: 2026-10-17
+verified: 2026-10-23
 owner: founder
-scope: [docs/sessions, NOTEBOOK.md]
+scope: [docs/sessions, docs/plans, NOTEBOOK.md]
 summary:
   How to hand a session off and pick it up again without losing context — the version session log is
   the source of truth
@@ -27,12 +27,14 @@ re-learning the repo.
   same file (v0.1.0's "Day 2 — background tracking fixed (2026-10-16)"). **The newest section of the
   current version's log is the source of truth.**
 - **Backlog** `NOTEBOOK.md` (repo root): one block per version, `- [ ] AREA: item` with the commit
-  scope as the area.
+  scope as the area. It has blocks only for v0.2.0 and v0.3.0; since v0.4.0 open items live in the
+  session logs (in **Open / next** where the log has one) and in the live plans in `docs/plans/`.
 - **Milestone scope**: the open `scope/vX.Y.Z → release/vX.Y.Z` PR body on GitHub (#18 for v0.2.0).
 - **Cross-session memory**: `~/.claude/projects/<repo>/memory/MEMORY.md` and its files, auto-loaded
-  by Claude Code (for example: ask before copying data off the founder's iPhone).
-- **Canon**: `CLAUDE.md`, `docs/engineering/` and `docs/INDEX.md`. Long-lived, and only as good as
-  their `verified:` date: check against code.
+  by Claude Code (for example: ask before copying data off the founder's iPhone). Agents with their
+  own memory keep it in `.claude/agent-memory/<agent>/`.
+- **Canon**: `CLAUDE.md`, `docs/engineering/`, `docs/decisions/` and `docs/INDEX.md`. Long-lived,
+  and only as good as their `verified:` date: check against code.
 
 ## 3. Offload ("hands off")
 
@@ -45,16 +47,17 @@ Before ending a session or switching machine, terminal, developer or agent:
 3. Write down, at minimum:
    - current branch, target branch, PR numbers and their state (open / draft / merged)
    - done this session and not done
-   - decisions and why (big ones also go into `docs/engineering/architecture-decisions.md`)
+   - decisions and why (a big one gets its own record in `docs/decisions/<topic>-YYYY-MM-DD.md`)
    - problems found, fixed or not
    - environment gotchas (Node from `.nvmrc`, Xcode 26.4+, vendored MapLibre, watchman disabled,
      pnpm with `node-linker=hoisted`)
    - device state: installed build, its runtime fingerprint, the latest OTA id, the signing expiry
      date
    - **exact next steps**, ordered, with commands
-4. Move open items into `NOTEBOOK.md` under the version they belong to; tick what shipped.
-5. Record which gates ran and their result (`pnpm run ci:quality`, `pnpm run test:e2e`, simulator
-   replay, device) or "not run".
+4. Move open items into the session log's **Open / next** (or the live plan in `docs/plans/` they
+   belong to); tick what shipped.
+5. Record which gates ran and their result (`pnpm run ci:quality`, `pnpm run test:e2e`,
+   `pnpm test:chain`, simulator replay, device) or "not run".
 6. Leave committing uncommitted work to the founder: the log says _what_ is uncommitted; it doesn't
    commit it.
 
@@ -62,8 +65,9 @@ Before ending a session or switching machine, terminal, developer or agent:
 
 When starting, onboarding or resuming:
 
-1. Read the newest session log (`ls docs/sessions/`, then its last section and **Open / next**),
-   then `NOTEBOOK.md`, then `CLAUDE.md`. Memory loads on its own.
+1. Read the newest session log (`ls docs/sessions | sort -V | tail -1`, then its last section and
+   **Open / next**), then the live plans in `docs/plans/`, then `CLAUDE.md`. Memory loads on its
+   own.
 2. Treat the newest session log as the source of truth; where older docs or memory disagree, they
    are stale (the log should say so).
 3. Check the repo before trusting the notes:

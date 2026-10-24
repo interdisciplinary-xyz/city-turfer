@@ -3,7 +3,10 @@ import type { ReactNode } from 'react';
 import type { PortalError } from '@/api/errors';
 import type { Locale } from '@/i18n/routing';
 
-export type SessionGateProps = { locale: Locale; path: string; children: ReactNode };
+export type SessionGateProps = { locale: Locale; children: ReactNode };
+
+/** The gate's body: its props plus the page's query (null in the static HTML, before hydration). */
+export type GateBodyProps = SessionGateProps & { search: URLSearchParams | null };
 
 /**
  * What the gate shows:

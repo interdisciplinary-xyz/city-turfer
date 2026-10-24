@@ -17,7 +17,7 @@ import type {
   Sha256,
   UploadSource,
 } from '../application/ports';
-import { trackHashInput } from '../domain/backup-policy';
+import { trackHashInput, uploadSourceOf } from '../domain/backup-policy';
 
 type Method = keyof ApiClient;
 
@@ -102,7 +102,7 @@ export class FakeApiServer {
     this.activities.set(a.id, {
       version,
       content: 'seeded',
-      source: a.id.startsWith('hk-') ? 'apple-health' : 'recording',
+      source: uploadSourceOf(a.id),
       timeZone,
       name: a.name,
       renamedAt: a.renamedAt,

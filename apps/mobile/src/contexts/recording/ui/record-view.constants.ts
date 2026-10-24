@@ -37,6 +37,28 @@ export const LIVE_TRACK_BOTTOM_LAYER = 'live-track-gap';
 /** Zoom for showing a whole city on the Record map. */
 export const CITY_ZOOM = 13;
 
+/** Distance of the map chips from the screen's left and right edges (pt). */
+export const CHIP_INSET = 12;
+
+/** Space kept between the city chip and the chip column on the right (pt). */
+export const CHIP_ROW_GAP = 8;
+
+/** The city chip takes at most this share of the screen width (the look on 375 pt and wider). */
+export const CITY_CHIP_MAX_SHARE = 0.55;
+
+/**
+ * Widest the city chip may be: its share of the screen, but never into the chip column at the top
+ * right (`chipColumnWidth`, 0 before it has been laid out). On 320 pt with the turf chip the column
+ * wins; on 375 pt and wider the share does, as before.
+ */
+export const cityChipMaxWidth = (windowWidth: number, chipColumnWidth: number): number => {
+  const share = windowWidth * CITY_CHIP_MAX_SHARE;
+  if (chipColumnWidth <= 0) {
+    return share;
+  }
+  return Math.max(0, Math.min(share, windowWidth - 2 * CHIP_INSET - CHIP_ROW_GAP - chipColumnWidth));
+};
+
 /** How long the Stop button must be held before the recording finishes. */
 export const HOLD_MS = 900;
 

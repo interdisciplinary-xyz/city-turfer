@@ -85,6 +85,15 @@ function metres(a: GeoPoint, b: GeoPoint): number {
 
 /** A planned demo activity's id: its place in the plan, the same on every day (resumable). */
 export const demoActivityId = (index: number) => `${DEMO_PREFIX}gdansk-n${index}`;
+
+const PLAN_ID = /^demo-gdansk-n\d+$/;
+
+/**
+ * Is this the id of a planned Gdańsk demo activity (`demoActivityId`)? Only these are the demo
+ * profile's content (LP3); every other `demo-…` id (the Developer tools seeder's tracks around the
+ * phone's real position, legacy `demo-gdansk-<ms>` ids) is not.
+ */
+export const isGdanskPlanActivityId = (id: string): boolean => PLAN_ID.test(id);
 export interface PlannedActivity {
   id: string;
   route: DemoRoute;

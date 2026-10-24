@@ -7,7 +7,7 @@ import { useT } from '@/i18n';
 import { Button, Card } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
 
-import { ERROR_KEY } from './cloud-backup-card.constants';
+import { ERROR_KEY, type RestoreCardProps } from './cloud-backup-card.constants';
 import { describeOffer, describeRestoreProgress, describeRestoreResult } from './format';
 import { useRestore } from './hooks';
 
@@ -15,7 +15,7 @@ import { useRestore } from './hooks';
  * Home screen card when the account's backup holds activities this phone doesn't have:
  * Restore / Not now; afterwards "Turn on backup" if the restore couldn't turn it on itself.
  */
-export function RestoreCard() {
+export function RestoreCard({ localProfile = false }: RestoreCardProps) {
   const p = usePalette();
   const t = useT('backup');
   const tc = useT('common');
@@ -23,7 +23,7 @@ export function RestoreCard() {
   const { offer, progress, result, running, start, dismiss, turnOnBackup } = useRestore();
   const [enabling, setEnabling] = useState(false);
   const [enableError, setEnableError] = useState<keyof typeof ERROR_KEY | null>(null);
-  const message = describeRestoreResult(result, t, { health: Platform.OS === 'ios' });
+  const message = describeRestoreResult(result, t, { health: Platform.OS === 'ios', localProfile });
   const offered = offer && offer.kind !== 'none' ? offer : null;
   if (!offered && !message) {
     return null;
