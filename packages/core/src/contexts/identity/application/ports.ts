@@ -8,8 +8,10 @@ export type SignInOutcome = { kind: 'signed-in'; user: User } | { kind: 'invalid
 export interface AuthGateway {
   signIn(email: Email, password: string): Promise<SignInOutcome>;
   userById(id: UserId): Promise<User | null>;
-  /** This email is a local profile (password), not a CityTurfer account (one-time code). */
-  hasLocalAccount?(email: Email): boolean;
+  /** The local profile this e-mail opens with its password; null: a CityTurfer account's (one-time code). */
+  localProfileOf(email: Email): UserId | null;
+  /** A local profile's own e-mail (where its backup link code goes); null: no local profile. */
+  localEmailOf(profileId: string): Email | null;
 }
 
 /** Persists which local profile is signed in, readable by the headless background task. */

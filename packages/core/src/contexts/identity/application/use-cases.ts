@@ -54,6 +54,26 @@ export async function withName(d: IdentityDeps, user: User): Promise<User> {
   return name === undefined ? user : { ...user, name };
 }
 
+/**
+ * The user of an account's profile entry. A local profile linked to its own address (backup, LP1)
+ * stays the same profile, so it keeps the local profile's default name (mock admin: "Admin") while
+ * no name is kept on this phone; that name stays on the phone, never sent to the server.
+ */
+export async function accountUser(d: IdentityDeps, e: AccountProfileEntry): Promise<User> {
+  const user = userOf(e);
+  const own = d.auth.localEmailOf(e.profileId);
+  const local =
+    own && own.value === e.email.trim().toLowerCase() ? await d.auth.userById(e.profileId).catch(() => null) : null;
+  if (!local) {
+    return withName(d, user);
+  }
+  return withName(d, {
+    ...user,
+    displayName: local.displayName,
+    ...(local.name !== undefined ? { name: local.name } : {}),
+  });
+}
+
 export async function loadProfiles(a: AccountDeps): Promise<AccountProfiles> {
   const state = await a.profiles.read();
   return state ? AccountProfiles.rehydrate(state) : AccountProfiles.empty();
@@ -80,7 +100,7 @@ async function enterProfile(
   await a.credentials.save(session);
   await a.profiles.write(profiles.toState());
   await d.sessions.write(profileId);
-  return withName(d, userOf(profiles.current!));
+  return accountUser(d, profiles.current!);
 }
 
 /**
@@ -109,12 +129,14 @@ async function placeSession(
 export type SignInResult =
   | SignInOutcome
   | { kind: 'invalid-email' }
-  /** The local profile now holds a CityTurfer account's data: sign in with that account's email. */
+  /** The local profile now holds another address's account data: sign in with that account's email. */
   | { kind: 'linked-to-account' };
 
 /**
  * Signs a local profile in with its password (the mock admin and demo accounts), unless an account
- * has adopted that profile: then only the account's own sign-in opens it.
+ * of another e-mail has adopted that profile: then only the account's own sign-in opens it. Linked
+ * to its own address (backup), the password still opens it, on this phone only (LP2): no account
+ * is signed in and no server session is kept, so backup waits for a new code (LinkSignedInProfile).
  */
 export class SignIn {
   constructor(private readonly d: IdentityDeps) {}
@@ -127,11 +149,33 @@ export class SignIn {
     if (outcome.kind !== 'signed-in') {
       return outcome;
     }
-    if (this.d.accounts && !(await loadProfiles(this.d.accounts)).opensWithPassword(outcome.user.id)) {
-      return { kind: 'linked-to-account' };
+    const a = this.d.accounts;
+    if (a) {
+      const profiles = await loadProfiles(a);
+      if (!profiles.opensWithPassword(outcome.user.id, outcome.user.email)) {
+        return { kind: 'linked-to-account' };
+      }
+      await dropAccountSession(a, profiles);
     }
     await this.d.sessions.write(outcome.user.id);
     return { kind: 'signed-in', user: await withName(this.d, outcome.user) };
+  }
+}
+
+/**
+ * No account signed in on this phone: the profile map first (what AccountBearer trusts), then the
+ * keychain's session revoked (best effort, not awaited: offline it simply expires) and forgotten.
+ * A failed keychain write leaves a token nothing hands out (the map names no current account).
+ */
+async function dropAccountSession(a: AccountDeps, profiles: AccountProfiles): Promise<void> {
+  if (profiles.current) {
+    profiles.signedOut();
+    await a.profiles.write(profiles.toState());
+  }
+  const session = await a.credentials.read().catch(() => null);
+  if (session) {
+    void a.gateway.revoke(session.token).catch(() => null);
+    await a.credentials.clear().catch(() => undefined);
   }
 }
 
@@ -153,7 +197,7 @@ export class StartSignIn {
     if (!parsed) {
       return { kind: 'invalid-email' };
     }
-    if (this.d.auth.hasLocalAccount?.(parsed)) {
+    if (this.d.auth.localProfileOf(parsed)) {
       return { kind: 'password' };
     }
     if (!this.d.accounts) {
@@ -222,7 +266,7 @@ export class SignInWithPassword {
     if (!parsed) {
       return { kind: 'invalid-email' };
     }
-    if (this.d.auth.hasLocalAccount?.(parsed)) {
+    if (this.d.auth.localProfileOf(parsed)) {
       return new SignIn(this.d).execute(rawEmail, password);
     }
     const a = this.d.accounts;
@@ -272,7 +316,7 @@ export class GetCurrentUser {
     }
     const current = this.d.accounts ? (await loadProfiles(this.d.accounts)).current : null;
     if (current?.profileId === id) {
-      return withName(this.d, userOf(current));
+      return accountUser(this.d, current);
     }
     const user = await this.d.auth.userById(id);
     return user ? withName(this.d, user) : null;
