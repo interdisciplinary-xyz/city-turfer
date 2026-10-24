@@ -1,7 +1,7 @@
 {
   "activities": "Aktywności",
   "distance": "Dystans",
-  "turf": "Turf",
+  "turf": "Terytorium",
   "achievements": "Osiągnięcia",
   "achievementsCount": "{unlocked} / {total} ›",
   "achievementsLabel": "Osiągnięcia, odblokowane: {unlocked} z {total}"

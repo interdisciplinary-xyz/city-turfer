@@ -5,7 +5,7 @@
   "time": "Czas",
   "activities": "Aktywności",
   "weeksChartLabel": "{weeks, plural, one {Dystans tygodniowo, ostatni tydzień} few {Dystans tygodniowo, ostatnie # tygodnie} many {Dystans tygodniowo, ostatnie # tygodni} other {Dystans tygodniowo, ostatnie # tygodnia}}",
-  "turf": "Turf",
+  "turf": "Terytorium",
   "area": "Obszar",
   "cells": "Komórki",
   "allTime": "Od początku",

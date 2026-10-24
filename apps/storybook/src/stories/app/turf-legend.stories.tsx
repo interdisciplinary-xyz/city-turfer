@@ -26,9 +26,9 @@ export const Compact: StoryObj<typeof meta> = { args: { compact: true, style: { 
 export const Translated: StoryObj<typeof meta> = {
   args: {
     style: { maxWidth: 360 },
-    title: 'Siła turfu',
-    labels: { faint: 'Blady', glowing: 'Świecący', strong: 'Mocny', blazing: 'Płonący' },
-    accessibilityLabel: 'Siła turfu: Blady, Świecący, Mocny, Płonący, od najsłabszego do najmocniejszego',
+    title: 'Siła terytorium',
+    labels: { faint: 'Blade', glowing: 'Świecące', strong: 'Mocne', blazing: 'Płonące' },
+    accessibilityLabel: 'Siła terytorium: Blade, Świecące, Mocne, Płonące, od najsłabszego do najmocniejszego',
   },
 };
 
