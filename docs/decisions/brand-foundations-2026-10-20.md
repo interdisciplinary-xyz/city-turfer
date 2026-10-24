@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-20
+verified: 2026-10-23
 owner: founder
 scope: [packages/brand, apps/mobile/tools/brand, apps/web/src/app, .claude/skills/brand-system]
 summary:
@@ -122,16 +122,17 @@ Failures as of 2026-10-20 and the suggested fixes (kept as the record; see the u
 
 All rendered by `apps/mobile/tools/brand/render-assets.mjs` with headless Chrome:
 
-- `packages/brand/svg/wordmark.svg` (dark backgrounds) and `wordmark-light.svg` (light: "City" in
-  night, "Turfer" in faint → glow, the part of the Ramp that holds on white). Since the light
-  website, `wordmark-light.svg` is the site's wordmark and `wordmark.svg` is for night panels
+- `packages/brand/svg/wordmark.svg` (dark backgrounds) and `wordmark-light.svg` (light: "CITY" in
+  night, "TURFER" in faint → glow, the part of the Ramp that holds on white; both redrawn in Big
+  Shoulders Display, `docs/decisions/brand-typography-2026-10-22.md`). Since the light website,
+  `wordmark-light.svg` is the site's wordmark and `wordmark.svg` is for night panels
   (`docs/decisions/brand-light-theme-2026-10-22.md`).
 - `apps/web/public/og-image.png`: 1200×630 social image from
   `packages/brand/templates/og-image.html`.
 - `apps/mobile/assets/brand/out/store/`: App Store 6.9" (1290×2796) and Google Play (1080×2340)
   screenshots from `packages/brand/templates/store-screenshot.html`. They frame the screenshots in
-  `apps/web/public/screens/`, which are 720 px wide and predate Archivo: recapture them at full
-  resolution from a build with the new fonts before submitting.
+  `apps/web/public/screens/`, which are 720 px wide and predate the brand fonts: recapture them at
+  full resolution from a build with the new fonts before submitting.
 
 `packages/brand/src/__tests__/asset-colors.test.ts` keeps the hex values in SVGs and templates in
 sync with the tokens.

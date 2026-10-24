@@ -16,7 +16,8 @@ summary:
 
 🚧 **Proposed by the product owner, no user evidence yet** (the discovery board's evidence log is
 empty). The founder accepts or edits it; the list lives in
-`packages/core/src/contexts/achievements/domain/achievements.ts`.
+`packages/core/src/contexts/achievements/domain/achievements.ts`. Built in #155 and shipped in
+v0.10.0; the founder's acceptance is still open.
 
 ## Why change it
 
@@ -72,5 +73,6 @@ Strong = strength ≥ 0.66 (`isStrong` in the territory domain); with k = 3 that
 - Unlock moments and unlock dates (product brief, open question 5): need a stored "seen" state and a
   "glow, never casino" design. A next step, not part of this change.
 - A Blazing achievement (cells at the top tier) needs a blazing-cell count from Territory.
-- Polish copy waits for the app's i18n work.
+- Polish copy: done, translated in #158 (`apps/mobile/messages/pl/achievements.json`); the gendered
+  titles are an open copy choice in `docs/decisions/mobile-i18n-2026-10-23.md`.
 - Brand-designer review of the new titles and descriptions.

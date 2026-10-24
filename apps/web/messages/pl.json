@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "CityTurfer — Surfuj po mieście. Ulice są Twoje.",
-    "description": "Chodź, biegaj albo jeździj na rowerze — każda ulica, którą pokonasz, staje się Twoim turfem. Wracaj i patrz, jak świeci coraz jaśniej.",
+    "description": "Chodź, biegaj albo jeździj na rowerze — każda ulica, którą pokonasz, staje się Twoim terytorium. Wracaj i patrz, jak świeci coraz jaśniej.",
     "ogAlt": "CityTurfer: świecące trasy na ciemnej mapie miasta i hasło „Surfuj po mieście. Ulice są Twoje”."
   },
   "header": {
@@ -15,13 +15,13 @@
     "skip": "Przejdź do treści",
     "taglineLead": "Surfuj po mieście.",
     "taglineRamp": "Ulice są Twoje.",
-    "lede": "Chodź, biegaj albo jeździj na rowerze — każda ulica, którą pokonasz, staje się Twoim turfem. Wracaj i patrz, jak świeci coraz jaśniej."
+    "lede": "Chodź, biegaj albo jeździj na rowerze — każda ulica, którą pokonasz, staje się Twoim terytorium. Wracaj i patrz, jak świeci coraz jaśniej."
   },
   "screens": {
     "turfMap": {
-      "title": "Mapa turfu",
+      "title": "Mapa terytorium",
       "body": "Wszystkie spacery, biegi i przejażdżki na jednej ciemnej mapie — świecą najmocniej tam, gdzie bywasz najczęściej.",
-      "alt": "Mapa turfu: świecące trasy w Warszawie, 3,02 km² turfu, 1530 komórek i filtry spacer, bieg, rower."
+      "alt": "Mapa terytorium: świecące trasy w Warszawie, 3,02 km² terytorium, 1530 komórek i filtry spacer, bieg, rower."
     },
     "dashboard": {
       "title": "Twój tydzień w skrócie",
@@ -88,7 +88,7 @@
     },
     "unreachable": {
       "title": "Nie możemy teraz połączyć się z Twoją kopią",
-      "body": "Twój turf na telefonie jest bezpieczny. Sprawdź połączenie i spróbuj ponownie."
+      "body": "Twoje terytorium na telefonie jest bezpieczne. Sprawdź połączenie i spróbuj ponownie."
     },
     "signIn": {
       "title": "Zaloguj się, aby zobaczyć swoją kopię",
@@ -138,10 +138,10 @@
       "backup": {
         "title": "Kopia zapasowa",
         "on": "Kopia zapasowa jest włączona od {date}.",
-        "never": "Twój turf jest na Twoim telefonie. Nic nie zostało jeszcze zapisane w chmurze.",
+        "never": "Twoje terytorium jest na Twoim telefonie. Nic nie zostało jeszcze zapisane w chmurze.",
         "withdrawn": "Wyłączono kopię zapasową {date}, więc usunęliśmy kopię w chmurze. Wszystko nadal jest na Twoim telefonie.",
         "healthOn": "Treningi z Apple Health są w kopii od {date}.",
-        "healthOff": "Treningi z Apple Health zostają na Twoim telefonie. Twój turf może tu wyglądać na mniejszy.",
+        "healthOff": "Treningi z Apple Health zostają na Twoim telefonie. Twoje terytorium może tu wyglądać na mniejsze.",
         "policy": "Wersja polityki prywatności {version}",
         "changeInApp": "Aby zmienić te ustawienia, otwórz aplikację: Informacje › Kopia w chmurze."
       },
@@ -266,7 +266,7 @@
     },
     "errors": {
       "generic": "Coś poszło nie tak po naszej stronie. Spróbuj ponownie za chwilę.",
-      "unreachable": "Nie możemy teraz połączyć się z Twoją kopią. Twój turf na telefonie jest bezpieczny.",
+      "unreachable": "Nie możemy teraz połączyć się z Twoją kopią. Twoje terytorium na telefonie jest bezpieczne.",
       "signed-out": "Sesja wygasła. Zaloguj się ponownie.",
       "invalid-request": "Coś tu się nie zgadza. Sprawdź i spróbuj ponownie.",
       "auth": {
@@ -288,7 +288,7 @@
         "rate-limited": "O kopię możesz prosić raz dziennie."
       },
       "storage": {
-        "unavailable": "Twoja kopia chwilowo odpoczywa. Twój turf na telefonie jest bezpieczny. Spróbuj za chwilę."
+        "unavailable": "Twoja kopia chwilowo odpoczywa. Twoje terytorium na telefonie jest bezpieczne. Spróbuj za chwilę."
       }
     }
   }

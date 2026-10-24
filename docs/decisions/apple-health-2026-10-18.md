@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-18
+verified: 2026-10-23
 owner: founder
 scope:
   [apps/mobile/src/contexts/health-sync, apps/mobile/app.json, apps/mobile/react-native.config.js]
@@ -42,13 +42,18 @@ Apple Health ──HealthStore port──▶ Health Sync ──ActivityGateway�
 - **Import:** anchored query, 25 workouts per page, anchor saved after each page. Workout type →
   Activity Type (walking/hiking → walk, running → run, cycling → cycle). Route → Track Points (bad
   and > 50 m points dropped, Segments at gaps). Activity id `hk-<Health UUID>` through
-  `ImportActivity`, which now marks `ActivityRecorded` with `origin: 'import'`.
-- **Export:** handler on `ActivityRecorded` with origin `recording`, after Territory's claim. Saves
-  the workout with metadata `CityTurferActivityId` and its route. Never throws (strict-FIFO outbox);
-  failures go to diagnostics and are not retried.
+  `ImportActivity`, which now marks `ActivityRecorded` with `origin: 'import'`. A workout that
+  overlaps an Activity of the same type by at least half (`isSameOuting`) counts as a duplicate and
+  is skipped. Workouts with no route yet (Apple Watch still syncing) are retried for 3 days.
+- **Export:** handler on `ActivityRecorded` with origin `recording` (`ExportActivityToHealth`),
+  after Territory's claim. It queues the Activity and, in the foreground, saves the workout with
+  metadata `CityTurferActivityId` and its route (`FlushHealthExports`). Before saving it asks Health
+  whether that Activity is already there, so nothing is written twice. Never throws (strict-FIFO
+  outbox); failures go to diagnostics and are retried up to 5 times (`MAX_EXPORT_ATTEMPTS`). Imports
+  and restored Activities are never exported.
 - **Memory:** `hs_links` (Activity ↔ Health UUID, direction) without a foreign key, so deleted
   imports stay deleted and nothing is exported twice; `hs_state` (connection, switches, anchor, last
-  import). Migration 6.
+  import); `hs_pending_imports` and `hs_pending_exports` (the retries). Migration 6.
 - **When:** foreground launch and whenever the app becomes active, plus "Import now". Never
   headless.
 - **UI:** an Apple Health card on the Info screen (connect, two switches, last import, import now,

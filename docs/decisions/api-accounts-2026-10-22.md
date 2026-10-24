@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-22
+verified: 2026-10-23
 owner: founder
 scope: [apps/api/src/identity, apps/api/src/routes/identity.ts, apps/api/scripts/auth-adopt.ts]
 summary:
@@ -17,7 +17,16 @@ export and account deletion. This record replaces T1 of
 `docs/decisions/api-device-tokens-2026-10-20.md` (device tokens keep working for one release) and
 narrows D7 of `docs/decisions/api-sync-2026-10-20.md` (Sign in with Apple later). Operations:
 `docs/operations/api-deploy.md`. A1 is narrowed by `docs/decisions/account-settings-2026-10-22.md`
-(contract 0.5.0): codes stay the default, a Turfer may add a password.
+(contract 0.5.0): codes stay the default, a Turfer may add a password. Browser sign-in by cookie is
+[`api-web-sessions-2026-10-22.md`](api-web-sessions-2026-10-22.md).
+
+**Since this record (facts, not new decisions):** on the local dev server on PGlite, the app's mock
+accounts (admin@ and demo@cityturfer.com, `apps/api/src/dev/mock-accounts.ts`, #151) also get
+`AUTH_FIXED_CODE`, which defaults to `000000` there; never in the Vercel entry. The production boot
+guard (A9) now also requires `DATABASE_URL` and `CRON_SECRET`, and `WEB_EDGE_SECRET` whenever
+`WEB_ORIGIN` is set (`checkProductionEnv` in `apps/api/src/wiring.ts`). Sign-in codes still get 10
+more minutes on a resend (Better Auth's `reuse`); step-up and new-address codes keep their first
+expiry since #154 (`apps/api/src/identity/codes.ts`).
 
 ## Decisions
 
@@ -41,7 +50,8 @@ narrows D7 of `docs/decisions/api-sync-2026-10-20.md` (Sign in with Apple later)
    wrong, expired or burnt → `401 auth.invalid-code`.
 3. Requests send `Authorization: Bearer <token>`; `DELETE /v1/auth/session` revokes it.
 4. `GET /v1/me` → `{ id, email | null, displayName, createdAt }` (device-token users: `email` from
-   `API_TOKENS` or null).
+   `API_TOKENS` or null). Since 0.5.0 also `name`, `hasPassword` and `passwordChangedAt`;
+   `displayName` is deprecated (`account-settings-2026-10-22.md`).
 
 ## Privacy
 
@@ -56,11 +66,11 @@ only. A mail failure answers 202 and logs the event name only.
 
 `DELETE /v1/me` → `204`, synchronous: one transaction deletes `auth_users` (sessions and accounts
 cascade), the pending codes for the address, and `users`, from which consents, activities (tracks,
-gap routes), tombstones, the Home City and exports cascade. Afterwards the session token answers
-401; signing in with the same address starts a new, empty account. A device token still
-authenticates until it is removed from `API_TOKENS` (its next request starts an empty account).
-Rate-limit rows are HMAC-keyed and expire within about 25 hours. Database backups keep the rows for
-Neon's restore window (to be stated with the plan).
+gap routes, turf claims), tombstones, the Home City, turf cells and exports cascade. Afterwards the
+session token answers 401; signing in with the same address starts a new, empty account. A device
+token still authenticates until it is removed from `API_TOKENS` (its next request starts an empty
+account). Rate-limit rows are HMAC-keyed and expire within about 25 hours. Database backups keep the
+rows for Neon's restore window (to be stated with the plan).
 
 ## Data export
 

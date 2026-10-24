@@ -199,7 +199,7 @@ describe('TurfLegend', () => {
   });
 
   it('takes a translated screen-reader sentence', () => {
-    const label = 'Siła turfu: Blady, Świecący, Mocny, Płonący, od najsłabszego do najmocniejszego';
+    const label = 'Siła terytorium: Blade, Świecące, Mocne, Płonące, od najsłabszego do najmocniejszego';
     const tree = render(<TurfLegend testID='legend' accessibilityLabel={label} />);
     expect(host(tree, 'legend').props.accessibilityLabel).toBe(label);
   });
