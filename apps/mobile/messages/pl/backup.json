@@ -1,6 +1,6 @@
 {
   "title": "Kopia w chmurze",
-  "pitch": "Trzymaj kopię swoich spacerów, biegów i przejażdżek na serwerze CityTurfer, żeby nowy telefon nigdy nie oznaczał budowania turfu od zera.",
+  "pitch": "Trzymaj kopię swoich spacerów, biegów i przejażdżek na serwerze CityTurfer, żeby nowy telefon nigdy nie oznaczał budowania terytorium od zera.",
   "switchLabel": "Kopiuj do chmury CityTurfer",
   "privacy": "Twoje trasy są przechowywane na naszym serwerze w UE. Wyłączenie usuwa tę kopię, ale nic na tym telefonie.",
   "offConfirmTitle": "Wyłączyć kopię w chmurze?",
@@ -20,7 +20,7 @@
   },
   "restore": {
     "title": "Witaj z powrotem",
-    "offer": "{count, plural, one {W Twojej kopii jest # aktywność, której nie ma na tym telefonie. Przenieś ją, a Twój turf wróci razem z nią. Nic tutaj nie zostanie zastąpione.} few {W Twojej kopii są # aktywności, których nie ma na tym telefonie. Przenieś je, a Twój turf wróci razem z nimi. Nic tutaj nie zostanie zastąpione.} many {W Twojej kopii jest # aktywności, których nie ma na tym telefonie. Przenieś je, a Twój turf wróci razem z nimi. Nic tutaj nie zostanie zastąpione.} other {W Twojej kopii jest # aktywności, których nie ma na tym telefonie. Przenieś je, a Twój turf wróci razem z nimi. Nic tutaj nie zostanie zastąpione.}}",
+    "offer": "{count, plural, one {W Twojej kopii jest # aktywność, której nie ma na tym telefonie. Przenieś ją, a Twoje terytorium wróci razem z nią. Nic tutaj nie zostanie zastąpione.} few {W Twojej kopii są # aktywności, których nie ma na tym telefonie. Przenieś je, a Twoje terytorium wróci razem z nimi. Nic tutaj nie zostanie zastąpione.} many {W Twojej kopii jest # aktywności, których nie ma na tym telefonie. Przenieś je, a Twoje terytorium wróci razem z nimi. Nic tutaj nie zostanie zastąpione.} other {W Twojej kopii jest # aktywności, których nie ma na tym telefonie. Przenieś je, a Twoje terytorium wróci razem z nimi. Nic tutaj nie zostanie zastąpione.}}",
     "resume": "Przywracanie kopii zatrzymało się na {done} z {total} aktywności. Dokończ od tego miejsca.",
     "action": "Przywróć z kopii",
     "actionNote": "Przenosi wszystko z Twojej kopii, czego nie ma na tym telefonie. Nic tutaj nie zostanie zastąpione ani zdublowane.",

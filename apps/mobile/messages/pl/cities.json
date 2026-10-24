@@ -1,6 +1,6 @@
 {
   "picker": {
-    "lede": "Mapa turfu otwiera się na Twoim mieście. Ten wybór zostaje na telefonie, tak jak Twoje trasy.",
+    "lede": "Mapa terytorium otwiera się na Twoim mieście. Ten wybór zostaje na telefonie, tak jak Twoje trasy.",
     "searchPlaceholder": "Szukaj miasta",
     "searchLabel": "Szukaj miasta",
     "clear": "Usuń wybór: {city}",

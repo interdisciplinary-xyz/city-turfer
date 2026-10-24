@@ -13,12 +13,12 @@
     "elapsed": "Czas całkowity",
     "elevation": "Przewyższenie ≈"
   },
-  "estimatedNote": "W tym {distance} oszacowano wzdłuż ulic tam, gdzie GPS zgubił sygnał (linia przerywana). Oszacowane odcinki nie dają turfu.",
+  "estimatedNote": "W tym {distance} oszacowano wzdłuż ulic tam, gdzie GPS zgubił sygnał (linia przerywana). Oszacowane odcinki nie wliczają się do terytorium.",
   "splitsTitle": "Międzyczasy",
   "splitKm": "km {km}",
   "deleteButton": "Usuń aktywność",
   "deleteTitle": "Usunąć aktywność?",
-  "deleteBody": "Turf z tej aktywności też zniknie.",
+  "deleteBody": "Terytorium z tej aktywności też zniknie.",
   "rename": {
     "action": "Zmień nazwę",
     "title": "Zmień nazwę aktywności",

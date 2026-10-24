@@ -415,3 +415,456 @@
 .portal-sign-out-error {
   margin-bottom: var(--space-lg);
 }
+
+/* ---------- Section links (signed-in header) ---------- */
+
+/* Below the logo row on phones, inline beside the logo from 720px. */
+.portal-nav {
+  order: 3;
+  flex-basis: 100%;
+}
+
+.portal-nav-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-md);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.portal-nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-xs);
+  border-bottom: 2px solid transparent;
+  color: var(--text);
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+}
+
+.portal-nav-link:hover {
+  border-bottom-color: var(--border-control);
+}
+
+.portal-nav-link[aria-current] {
+  border-bottom-color: var(--accent-text);
+  color: var(--accent-text);
+}
+
+@media (min-width: 720px) {
+  .portal-nav {
+    order: 0;
+    flex-basis: auto;
+    margin-left: var(--space-lg);
+  }
+}
+
+/* ---------- Activity history ---------- */
+
+/* The brand's per-type colours: text on light (labels) and graphics (route strokes, 3:1). */
+.portal-type-walk {
+  --type-text: var(--walk-text);
+  --type-graphic: var(--walk-graphic);
+}
+
+.portal-type-run {
+  --type-text: var(--run-text);
+  --type-graphic: var(--run-graphic);
+}
+
+.portal-type-ride {
+  --type-text: var(--ride-text);
+  --type-graphic: var(--ride-graphic);
+}
+
+.portal-type-label {
+  color: var(--type-text, var(--text));
+  font-weight: var(--font-weight-bold);
+}
+
+.portal-unit {
+  color: var(--muted);
+  font-size: 0.85em;
+}
+
+.portal-health {
+  display: inline-block;
+  margin-left: var(--space-sm);
+  padding: 0 var(--space-xs);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-chip);
+  color: var(--muted);
+  font-size: var(--font-caption);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+/* Totals: one tile for all, one per type with something backed up. */
+.portal-totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.portal-total {
+  display: grid;
+  gap: var(--space-xxs);
+  padding: var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  box-shadow: inset 0 4px 0 var(--type-graphic, var(--text));
+}
+
+.portal-total-label {
+  color: var(--type-text, var(--text));
+  font-weight: var(--font-weight-bold);
+}
+
+.portal-total-value {
+  font-family: var(--numeric);
+  font-size: var(--font-stat);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.portal-total-meta {
+  color: var(--muted);
+  font-size: var(--font-caption);
+}
+
+/* Filter: radio buttons as chips; the input stays (keyboard and screen readers), visually hidden. */
+.portal-filter {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.portal-filter-legend {
+  padding: 0;
+  margin-bottom: var(--space-xs);
+  font-weight: var(--font-weight-bold);
+}
+
+.portal-filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.portal-chip {
+  position: relative;
+  display: inline-flex;
+}
+
+.portal-chip input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.portal-chip span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-lg);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-full);
+  background: var(--bg);
+  color: var(--text);
+  font-weight: var(--font-weight-bold);
+}
+
+.portal-chip input:checked + span {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--bg);
+}
+
+.portal-chip input:focus-visible + span {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
+}
+
+/* The list, by month. */
+.portal-months {
+  display: grid;
+  gap: var(--space-xl);
+}
+
+.portal-month {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.portal-month-title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.2rem;
+  font-weight: normal;
+  font-synthesis: none;
+  text-transform: capitalize;
+}
+
+.portal-activities {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  overflow: hidden;
+}
+
+.portal-activity + .portal-activity {
+  border-top: 1px solid var(--border);
+}
+
+.portal-activity-link {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  grid-template-areas:
+    'shape text'
+    'shape stats';
+  align-items: center;
+  gap: var(--space-xxs) var(--space-md);
+  padding: var(--space-md);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.portal-activity-link:hover {
+  background: var(--bg);
+}
+
+.portal .portal-activity-link:focus-visible {
+  outline-offset: -2px;
+}
+
+@media (min-width: 640px) {
+  .portal-activity-link {
+    grid-template-columns: 64px minmax(0, 1fr) auto;
+    grid-template-areas: 'shape text stats';
+  }
+}
+
+.portal-activity-shape {
+  grid-area: shape;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+}
+
+.portal-activity-text {
+  grid-area: text;
+  display: grid;
+  gap: var(--space-xxs);
+  min-width: 0;
+}
+
+.portal-activity-name {
+  font-weight: var(--font-weight-bold);
+  overflow-wrap: anywhere;
+}
+
+.portal-activity-meta {
+  color: var(--muted);
+  font-size: var(--font-caption);
+}
+
+.portal-activity-stats {
+  grid-area: stats;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-md);
+  font-family: var(--numeric);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.portal-show-more {
+  justify-self: center;
+}
+
+/* The route's shape (inline SVG, no basemap). Strokes keep their width at any size. */
+.portal-route {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.portal-route path {
+  fill: none;
+  stroke: var(--type-graphic, var(--text));
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.portal-route-track {
+  stroke-width: 2.5px;
+}
+
+.portal-route-gap {
+  stroke-width: 2px;
+  stroke-dasharray: 4 5;
+  stroke-linecap: butt;
+}
+
+.portal-route-start {
+  fill: var(--type-graphic, var(--text));
+  stroke: var(--card);
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
+}
+
+.portal-route-end {
+  fill: var(--card);
+  stroke: var(--text);
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
+}
+
+.portal-route-frame {
+  width: 100%;
+  height: clamp(10rem, 56vw, 26rem);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+}
+
+.portal-route-frame .portal-route-track {
+  stroke-width: 4px;
+}
+
+.portal-route-frame .portal-route-gap {
+  stroke-width: 3px;
+  stroke-dasharray: 6 7;
+}
+
+.portal-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-lg);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: var(--font-caption);
+}
+
+.portal-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.portal-legend-line {
+  flex: none;
+  width: 28px;
+  height: 0;
+  border-top: 4px solid var(--type-graphic, var(--text));
+}
+
+.portal-legend-dashed {
+  border-top-width: 3px;
+  border-top-style: dashed;
+}
+
+/* One activity. */
+.portal-back {
+  margin: 0;
+}
+
+.portal-back a {
+  color: var(--accent-text);
+  font-weight: var(--font-weight-bold);
+  text-underline-offset: 3px;
+}
+
+.portal-detail-head {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.portal-detail-head .portal-title {
+  overflow-wrap: anywhere;
+}
+
+.portal-detail-meta {
+  margin: 0;
+  color: var(--muted);
+}
+
+.portal-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: var(--space-md);
+  margin: 0;
+}
+
+.portal-stat {
+  display: grid;
+  gap: var(--space-xxs);
+}
+
+.portal-stat dt {
+  color: var(--muted);
+  font-size: var(--font-caption);
+}
+
+.portal-stat dd {
+  margin: 0;
+  font-family: var(--numeric);
+  font-size: var(--font-stat);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.portal-splits {
+  width: 100%;
+  max-width: 24rem;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.portal-splits th,
+.portal-splits td {
+  padding: var(--space-xs) 0;
+  border-top: 1px solid var(--border);
+  text-align: left;
+}
+
+.portal-splits thead th {
+  border-top: 0;
+  color: var(--muted);
+  font-size: var(--font-caption);
+  font-weight: normal;
+}
+
+.portal-splits tbody th {
+  font-weight: normal;
+  color: var(--muted);
+}
+
+.portal-splits td,
+.portal-splits thead th:last-child {
+  text-align: right;
+}
+
+.portal-splits td {
+  font-family: var(--numeric);
+}

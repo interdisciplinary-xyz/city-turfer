@@ -16,7 +16,8 @@ const config: NextConfig = {
   pageExtensions: [...DEFAULT_PAGE_EXTENSIONS, ...(process.env.NODE_ENV === 'production' ? [] : ['dev.tsx'])],
   ...(process.env.NODE_ENV === 'production' ? { output: 'export' as const } : {}),
   images: { unoptimized: true },
-  transpilePackages: ['@cityturfer/brand', '@interdisciplinary/dev-toolbar'],
+  // @cityturfer/core ships TypeScript source; the portal uses its shared kernel (formatters, simplify).
+  transpilePackages: ['@cityturfer/brand', '@cityturfer/core', '@interdisciplinary/dev-toolbar'],
   reactStrictMode: true,
   // The portal's API client sends `CityTurfer-Client: web/<version>` (src/api/client.ts).
   env: { CITYTURFER_WEB_VERSION: pkg.version },

@@ -19,3 +19,21 @@ export type SessionList = ApiPaths['/v1/auth/sessions']['get']['responses'][200]
 export type AuthSession = SessionList['sessions'][number];
 /** `DELETE /v1/auth/sessions?scope=`: `others` keeps this browser, `all` signs out everywhere, phones too. */
 export type SessionScope = ApiPaths['/v1/auth/sessions']['delete']['parameters']['query']['scope'];
+
+/** Activity history (contract 0.6.0, docs/plans/web-portal-history-2026-10-23.md). */
+export type ActivityType = Schemas['ActivityType'];
+export type ActivitySource = Schemas['ActivitySource'];
+export type ActivityList = Schemas['ActivityList'];
+export type ActivitySummary = Schemas['ActivitySummary'];
+export type ActivityDetail = Schemas['ActivityDetail'];
+export type ActivityTotals = Schemas['ActivityTotals'];
+/** What a phone uploads (`PUT /v1/activities/{id}`); the portal never does: only its E2E seeds with it. */
+export type ActivityUpload = Schemas['ActivityUpload'];
+export type Totals = Schemas['Totals'];
+export type Track = Schemas['Track'];
+export type TrackPoint = Schemas['TrackPoint'];
+export type GapRoute = Schemas['GapRoute'];
+export type Split = Schemas['Split'];
+export type LonLat = Schemas['LonLat'];
+/** The query of `GET /v1/activities`: page size, cursor and type filter. */
+export type ActivityListQuery = NonNullable<ApiPaths['/v1/activities']['get']['parameters']['query']>;

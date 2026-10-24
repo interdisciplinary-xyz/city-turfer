@@ -117,6 +117,7 @@ export const EXTERNAL_SKILLS = new Set([
   'web-vitals-a11y-audit',
   'seo-checker',
   'data-privacy-reviewer',
+  'appsec-engineer',
 ]);
 
 /**

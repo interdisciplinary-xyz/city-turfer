@@ -8,4 +8,6 @@ export type PortalHeaderProps = {
   path: string;
   /** Right-hand actions, e.g. the sign-out button on signed-in pages. */
   actions?: ReactNode;
+  /** The section links (signed-in pages only). */
+  nav?: ReactNode;
 };

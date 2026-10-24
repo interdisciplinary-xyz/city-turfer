@@ -1,19 +1,19 @@
 {
-  "title": "Twój turf",
+  "title": "Twoje terytorium",
   "summary": "{cellCount, plural, one {{cells} komórka} few {{cells} komórki} many {{cells} komórek} other {{cells} komórki}} · {strongCount, plural, one {{strong} mocna} few {{strong} mocne} many {{strong} mocnych} other {{strong} mocnej}} · +{area} w tym tygodniu",
-  "filterLabel": "{type, select, walk {Turf ze spacerów} run {Turf z biegów} cycle {Turf z przejażdżek} other {Turf}}",
+  "filterLabel": "{type, select, walk {Terytorium ze spacerów} run {Terytorium z biegów} cycle {Terytorium z przejażdżek} other {Terytorium}}",
   "showCity": "Pokaż miasto {city}",
   "cityHint": "Przytrzymaj, aby wybrać inne miasto",
   "chooseAnotherCity": "Wybierz inne miasto",
   "chooseCity": "Wybierz swoje miasto",
   "yourCity": "Twoje miasto",
-  "showAllLabel": "Pokaż cały turf",
+  "showAllLabel": "Pokaż całe terytorium",
   "showAll": "Wszystko",
   "empty": "Nagraj spacer, bieg albo przejażdżkę — każda ulica, którą pokonasz, stanie się Twoja.",
   "gained": {
-    "title": "Zdobyty turf",
-    "newTurf": "+{area} nowego turfu",
+    "title": "Zdobyte terytorium",
+    "newTurf": "+{area} nowego terytorium",
     "cells": "{addedCount, plural, one {{added} nowa komórka} few {{added} nowe komórki} many {{added} nowych komórek} other {{added} nowej komórki}} · {reinforcedCount, plural, one {{reinforced} wzmocniona} few {{reinforced} wzmocnione} many {{reinforced} wzmocnionych} other {{reinforced} wzmocnionej}}",
-    "claiming": "Zdobywam Twój turf…"
+    "claiming": "Zdobywam Twoje terytorium…"
   }
 }

@@ -62,6 +62,8 @@ If the working tree holds the user's unrelated work in progress, verify only you
     skill
   - Schema changed: `pnpm --filter @cityturfer/api run db:generate` and commit `apps/api/drizzle/`
 - `apps/web/**` — `pnpm exec turbo run typecheck lint build --filter=@cityturfer/web`
+  - Portal paths (account pages, `apps/web/src/api/`, portal E2E): also the `web-portal` skill's
+    "How to verify" (unit tests, HTTPS E2E with the network allow-list, axe)
 - `apps/mobile/messages/**` or `apps/web/messages/**` — `pnpm run audit:i18n` (mobile-i18n skill)
 - `tools/**` — `pnpm run test:tools` and `pnpm exec eslint tools`
 - `docs/**` or any `*.md` with paths — `pnpm run audit:docs`

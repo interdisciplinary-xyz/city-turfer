@@ -1,12 +1,15 @@
 // The portal E2E's `test`: every page records its requests, and each test ends by checking the
-// network allow-list (self only: the site and its `/api/v1` route; no tiles in Slice 0), that no
-// URL carries an e-mail address, and that the CSP blocked nothing.
+// network allow-list (self only: the site and its `/api/v1` route; no tiles in Slice 0 or the
+// history), that no URL carries an e-mail address or a coordinate, and that the CSP blocked nothing.
 import { randomBytes } from 'node:crypto';
 
 import AxeBuilder from '@axe-core/playwright';
 import { type BrowserContext, expect, type Page, test as base } from '@playwright/test';
 
 import { E2E_CODE, E2E_EMAIL_DOMAIN, SESSION_COOKIE } from './constants';
+
+/** A decimal degree as tracks carry them (4+ decimals); no portal URL has one (ids are opaque). */
+const COORDINATE = /-?\d{1,3}\.\d{4,}/;
 
 type Network = {
   /** Every request URL the context made, in order. */
@@ -38,6 +41,10 @@ export const test = base.extend<{ network: Network }>({
       expect(
         network.urls.filter((url) => decodeURIComponent(url).includes(`@${E2E_EMAIL_DOMAIN}`)),
         'an e-mail address in a URL'
+      ).toEqual([]);
+      expect(
+        network.urls.filter((url) => COORDINATE.test(decodeURIComponent(url))),
+        'a coordinate in a URL'
       ).toEqual([]);
       expect(cspViolations, 'CSP violations').toEqual([]);
     },
