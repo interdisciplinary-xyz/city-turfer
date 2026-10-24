@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useMemo } from 'react';
 
 import { isActivityId } from '@/api/activity-id';
-import { useActivity, useTrack } from '@/api/hooks';
+import { forgetActivity, useActivity, usePortal, useTrack } from '@/api/hooks';
 import { activitiesHref } from '@/api/next-path';
 import { Link } from '@/i18n/navigation';
 
@@ -24,12 +24,20 @@ export function ActivityPage({ locale }: ActivityPageProps) {
   const t = useTranslations('portal.activities');
   const tp = useTranslations('portal');
   const router = useRouter();
+  const { queryClient } = usePortal();
   const rawId = useSearchParams().get('id');
   const id = isActivityId(rawId) ? rawId : null;
   const detail = useActivity(id);
   const track = useTrack(id, { enabled: detail.isSuccess });
   const zone = useMemo(() => browserZone(), []);
   const view = activityView({ rawId, validId: id !== null, hasData: detail.data !== undefined, error: detail.error });
+
+  const gone = id !== null && (view.kind === 'not-found' || view.kind === 'deleted');
+  useEffect(() => {
+    if (gone) {
+      forgetActivity(queryClient, id);
+    }
+  }, [gone, id, queryClient]);
 
   useEffect(() => {
     if (view.kind === 'to-list') {

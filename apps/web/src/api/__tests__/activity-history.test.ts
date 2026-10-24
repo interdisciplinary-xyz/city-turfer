@@ -2,6 +2,7 @@
 // own zone (H5), the route → SVG projection (H1) and the numbers from core's formatters (H4).
 // Positions are made up around Gdańsk's Long Market (a public square), never a real trace.
 import { formatDistance, formatDuration, formatPaceOrSpeed } from '@cityturfer/core/shared-kernel';
+import { QueryClient } from '@tanstack/react-query';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -29,6 +30,7 @@ import {
 } from '../../app/[locale]/account/_portal/route-shape';
 import { isActivityId } from '../activity-id';
 import { PortalError } from '../errors';
+import { forgetActivity, QUERY_KEYS } from '../hooks';
 import { activityListQuery } from '../portal-api';
 
 const at = (startedAt: string, timeZone: string | null = 'Europe/Warsaw', id = startedAt) => ({
@@ -318,6 +320,35 @@ describe('activityView', () => {
     expect(activityView({ ...base, hasData: true, error: new PortalError('signed-out', { status: 401 }) })).toEqual({
       kind: 'leaving',
     });
+  });
+});
+
+describe('a gone activity wins over what is in memory', () => {
+  const base = { rawId: 'abc', validId: true, hasData: true };
+  it('a refetch answering 410 → deleted, 404 → not found, even with data cached', () => {
+    expect(activityView({ ...base, error: new PortalError('activity.deleted', { status: 410 }) })).toEqual({
+      kind: 'deleted',
+    });
+    expect(activityView({ ...base, error: new PortalError('not-found', { status: 404 }) })).toEqual({
+      kind: 'not-found',
+    });
+  });
+
+  it('a failed background refresh (outage, 500) keeps the activity on screen', () => {
+    expect(activityView({ ...base, error: new PortalError('unreachable') }).kind).toBe('activity');
+    expect(activityView({ ...base, error: new PortalError('generic', { status: 500 }) }).kind).toBe('activity');
+  });
+
+  it('forgetActivity drops the cached detail and every cached track of that id, nothing else', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(QUERY_KEYS.activity('abc'), { id: 'abc' });
+    queryClient.setQueryData(['track', 'abc', 'h1'], { points: [] });
+    queryClient.setQueryData(['track', 'abc', 'h2'], { points: [] });
+    queryClient.setQueryData(QUERY_KEYS.activity('other'), { id: 'other' });
+    forgetActivity(queryClient, 'abc');
+    expect(queryClient.getQueryData(QUERY_KEYS.activity('abc'))).toBeUndefined();
+    expect(queryClient.getQueriesData({ queryKey: ['track', 'abc'] })).toEqual([]);
+    expect(queryClient.getQueryData(QUERY_KEYS.activity('other'))).toEqual({ id: 'other' });
   });
 });
 

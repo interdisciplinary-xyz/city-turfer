@@ -16,7 +16,8 @@ export type ActivityView =
 
 /**
  * No id → back to the list; an id the contract can't hold, or a 404 (deleted for good, or not this
- * user's: the API doesn't tell them apart) → "not found"; a 410 → "deleted on your phone".
+ * user's: the API doesn't tell them apart) → "not found"; a 410 → "deleted on your phone", both
+ * even when an earlier answer is still in memory. A failed background refresh keeps the activity.
  */
 export function activityView({
   rawId,
@@ -38,14 +39,16 @@ export function activityView({
   if (error?.code === 'signed-out') {
     return { kind: 'leaving' };
   }
-  if (hasData) {
-    return { kind: 'activity' };
-  }
+  // Gone wins over what's in memory: a refetch that says 404 or 410 means the copy on screen is
+  // no longer on the server (deleted on the phone, or not this user's any more).
   if (error?.code === 'not-found') {
     return { kind: 'not-found' };
   }
   if (error?.code === 'activity.deleted') {
     return { kind: 'deleted' };
+  }
+  if (hasData) {
+    return { kind: 'activity' };
   }
   if (error) {
     return error.unreachable ? { kind: 'unreachable', error } : { kind: 'error', error };

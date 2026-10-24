@@ -1,7 +1,7 @@
 'use client';
 
 // Data hooks of the portal (TanStack Query, in memory only). Pages use these, never the client.
-import { type InfiniteData, useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
+import { type InfiniteData, type QueryClient, useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
 import { useContext } from 'react';
 
 import { deleteAccountMutation, revokeSessionsMutation, SESSIONS_KEY, signOutMutation } from './account-mutations';
@@ -44,6 +44,19 @@ export const QUERY_KEYS = {
   track: (id: string) => ['track', id],
   activityTotals: ['activity-totals'],
 } as const;
+
+/**
+ * An activity the API says is gone (404, or 410 `activity.deleted`): drop what memory still holds
+ * of it. Its track goes (every `trackHash`); the detail keeps its error but loses its data, without
+ * a refetch (removing an observed query would fetch it again, and again).
+ */
+export function forgetActivity(queryClient: QueryClient, id: string): void {
+  queryClient.removeQueries({ queryKey: ['track', id] });
+  queryClient
+    .getQueryCache()
+    .find({ queryKey: QUERY_KEYS.activity(id), exact: true })
+    ?.setState({ data: undefined, dataUpdatedAt: 0 });
+}
 
 export function usePortal(): PortalApiContextValue {
   const value = useContext(PortalApiContext);
