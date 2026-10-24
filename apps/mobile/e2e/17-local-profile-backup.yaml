@@ -1,0 +1,77 @@
+# Cloud backup for the local profile admin@cityturfer.com (docs/decisions/local-profile-backup-2026-10-24.md,
+# LP1-LP2): Info > Cloud backup offers "Email me a code" (backup-link-request); a wrong code is
+# refused, the right one links the profile and turns backup on; after signing out, the app password
+# opens the same profile with no server credentials and the offer is back.
+#
+# Needs the API dev server on PGlite, which knows admin@cityturfer.com and accepts the fixed code
+# for it (apps/api/src/server.ts), and an app bundle built with EXPO_PUBLIC_API_URL pointing at it
+# (run.sh checks the API; docs/quality/e2e.md):
+#   AUTH_FIXED_CODE=000000 pnpm --filter @cityturfer/api dev                 # API on :8787
+#   EXPO_PUBLIC_API_URL=http://127.0.0.1:8787 pnpm -C apps/mobile start      # Metro bakes the URL in
+#   apps/mobile/e2e/run.sh 17-local-profile-backup
+# A server address other than :8787: E2E_API_URL=http://127.0.0.1:<port> for run.sh. The flow sends one
+# code request (admin@'s own bucket: 1 a minute), so a second run within a minute waits on the
+# resend timer, never fails.
+appId: com.turftrack.poc
+tags: [account]
+env:
+  AUTH_FIXED_CODE: '000000'
+---
+- runFlow: subflows/launch.yaml
+# Start from the password sign-in of admin (a profile already linked by an earlier run opens with
+# no server credentials, so the offer is there either way).
+- runFlow:
+    when: { visible: { id: 'tab-me' } }
+    commands:
+      - runFlow: subflows/open-account.yaml
+      - scrollUntilVisible: { element: { id: 'sign-out' }, direction: DOWN, timeout: 10000 }
+      - tapOn: { id: 'sign-out' }
+      - runFlow:
+          when: { visible: 'Sign out anyway|Wyloguj mimo to' }
+          commands: [{ tapOn: 'Sign out anyway|Wyloguj mimo to' }]
+- extendedWaitUntil: { visible: { id: 'sign-in-email' }, timeout: 10000 }
+- runFlow: { file: subflows/sign-in.yaml, env: { EMAIL: 'admin@cityturfer.com', PASSWORD: 'admin1234' } }
+- extendedWaitUntil: { visible: { id: 'dashboard-greeting' }, timeout: 20000 }
+
+# --- 1. The offer, then the code screen (it asks for the code itself) ---
+- runFlow: subflows/open-info.yaml
+- scrollUntilVisible: { element: { id: 'backup-link-offer' }, direction: DOWN, timeout: 15000, centerElement: true }
+- assertVisible: { id: 'backup-link-request' }
+- takeScreenshot: 17-offer
+- tapOn: { id: 'backup-link-request' }
+- extendedWaitUntil: { visible: { id: 'backup-link-code' }, timeout: 20000 }
+- takeScreenshot: 17-code
+
+# --- 2. A wrong code is refused, the right one links and turns backup on ---
+- tapOn: { id: 'backup-link-code' }
+- inputText: '111111'
+- tapOn: { id: 'backup-link-submit' }
+- extendedWaitUntil: { visible: { id: 'backup-link-error' }, timeout: 15000 }
+- takeScreenshot: 17-wrong-code
+- tapOn: { id: 'backup-link-code' }
+- eraseText: 10
+- inputText: ${AUTH_FIXED_CODE}
+- tapOn: { id: 'backup-link-submit' }
+# Back on Info with the switch on (the screen closes itself once backup is on).
+- extendedWaitUntil: { visible: { id: 'backup-switch' }, timeout: 30000 }
+- scrollUntilVisible: { element: { id: 'backup-status' }, direction: DOWN, timeout: 10000, centerElement: true }
+- assertVisible: { id: 'backup-switch', checked: true }
+- assertNotVisible: { id: 'backup-link-offer' }
+- extendedWaitUntil: { notVisible: { id: 'backup-error' }, timeout: 30000 }
+- takeScreenshot: 17-backup-on
+
+# --- 3. LP2: sign out, the app password opens the profile again, with no server credentials ---
+- runFlow: subflows/open-account.yaml
+- scrollUntilVisible: { element: { id: 'sign-out' }, direction: DOWN, timeout: 10000 }
+- tapOn: { id: 'sign-out' }
+- runFlow:
+    when: { visible: 'Sign out anyway|Wyloguj mimo to' }
+    commands: [{ tapOn: 'Sign out anyway|Wyloguj mimo to' }]
+- extendedWaitUntil: { visible: { id: 'sign-in-email' }, timeout: 10000 }
+- runFlow: { file: subflows/sign-in.yaml, env: { EMAIL: 'admin@cityturfer.com', PASSWORD: 'admin1234' } }
+- extendedWaitUntil: { visible: { id: 'dashboard-greeting' }, timeout: 20000 }
+- runFlow: subflows/open-info.yaml
+- scrollUntilVisible: { element: { id: 'backup-link-offer' }, direction: DOWN, timeout: 15000, centerElement: true }
+- assertVisible: { id: 'backup-link-request' }
+- takeScreenshot: 17-offer-again
+# The flow ends signed in to admin, as the other flows expect.

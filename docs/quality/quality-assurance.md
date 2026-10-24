@@ -38,7 +38,7 @@ pnpm run ci:quality   # format + lint + (typecheck, arch, unit, build via turbo)
 | E2E (manual)  | `pnpm run test:e2e`                         | every Maestro flow green on the iOS Simulator (needs a dev build)                 |
 | Release smoke | [`smoke-test.md`](./smoke-test.md)          | every box ticked on a physical iPhone                                             |
 
-The Maestro suite has <!-- probe:e2e-flows -->16<!-- /probe --> flows. It takes several minutes
+The Maestro suite has <!-- probe:e2e-flows -->17<!-- /probe --> flows. It takes several minutes
 because the demo-history seed step waits up to 240 seconds, and `15-account-settings` sleeps about 2
 minutes on purpose; record the real figure of your run in the release PR. Record the Jest and tool
 test counts of the gate run in the release PR too.
