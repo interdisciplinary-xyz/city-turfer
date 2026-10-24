@@ -37,7 +37,7 @@ export function BackupLinkFlow({ onLinked, onDone, turnsOn }: BackupLinkFlowProp
   /** Turning backup on failed after the link: its message (the code is used up, so only that is retried). */
   const [turnOnError, setTurnOnError] = useState<string | null>(null);
   /** Linked, and backup stays off (the Turfer had turned it off): say so, then Done. */
-  const [stayedOff, setStayedOff] = useState(false);
+  const [stayedOff, setStayedOff] = useState<string | null>(null);
   const fieldRef = useRef<TextInput>(null);
   const requested = useRef(false);
   const email = sentTo || target?.email || '';
@@ -71,7 +71,7 @@ export function BackupLinkFlow({ onLinked, onDone, turnsOn }: BackupLinkFlowProp
   const linked = async () => {
     setTurnOnError(null);
     const r = await onLinked();
-    setStayedOff(r.kind === 'stayed-off');
+    setStayedOff(r.kind === 'stayed-off' ? r.message : null);
     setTurnOnError(r.kind === 'failed' ? r.message : null);
   };
 
@@ -178,13 +178,15 @@ export function BackupLinkFlow({ onLinked, onDone, turnsOn }: BackupLinkFlowProp
           <Text testID='backup-link-linked' style={[s.text, { color: p.text }]}>
             {busy && turnsOn ? t('link.turningOn') : t('link.linked', { email })}
           </Text>
-          {stayedOff && (
+          {stayedOff !== null && (
             <Text testID='backup-link-stayed-off' style={[s.text, { color: p.text }]}>
-              {t('link.stayedOff')}
+              {stayedOff}
             </Text>
           )}
           {errorText}
-          {stayedOff && <Button testID='backup-link-done' label={tc('done')} color={ACCENT} onPress={onDone} />}
+          {stayedOff !== null && (
+            <Button testID='backup-link-done' label={tc('done')} color={ACCENT} onPress={onDone} />
+          )}
           {!busy && turnOnError && (
             <Button
               testID='backup-link-turn-on'

@@ -84,9 +84,8 @@ export function CloudBackupCard({ link }: CloudBackupCardProps) {
     health: Platform.OS === 'ios',
     localProfile: typeof link === 'object' && link !== null,
   });
-  // A linkable profile whose server session died (auth) gets the code offer: "Sign in again" would
-  // only reopen the local profile with its password (LP2), never reach the server.
-  const lastError = mode.offerLink && status.lastError === 'auth' ? null : shownLastError(status, mode);
+  // shownLastError also hides `auth` while the code offer shows ("Sign in again" can't reach the server).
+  const lastError = shownLastError(status, mode);
   const offNotice = offPendingNotice(status, mode);
   const errorKey = notice ?? offNotice ?? (lastError ? ERROR_KEY[lastError] : null);
   const error = errorKey ? te(errorKey) : null;
