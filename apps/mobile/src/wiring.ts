@@ -31,6 +31,7 @@ import { createHealthSyncApi, type HealthStore } from '@/contexts/health-sync';
 import { SqliteHealthSyncRepository } from '@/contexts/health-sync/infrastructure/sqlite-health-sync-repository';
 import { UNAVAILABLE_HEALTH_STORE } from '@/contexts/health-sync/infrastructure/unavailable-health-store';
 import { DEMO_PROFILE_ID } from '@/contexts/identity';
+import { MockAuthGateway } from '@/contexts/identity/infrastructure/mock-auth-gateway';
 import { createRecordingApi, SerialCommandExecutor, type SessionFinished } from '@/contexts/recording';
 import type { LiveSessionNotifier, LocationTracker, PermissionGateway } from '@/contexts/recording/application/ports';
 import { SqliteRecordingSessionRepository } from '@/contexts/recording/infrastructure/sqlite-recording-session-repository';
@@ -204,6 +205,7 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     available: a.cloudBackup != null,
     // Only the demo profile uploads its planned Gdańsk history (`demo-gdansk-n<i>`, LP3).
     demoProfile,
+    localProfile: new MockAuthGateway().localEmailOf(userId) != null,
     repo: new SqliteBackupRepository(db),
     api: backupAdapters.api,
     tokens: deviceToken,

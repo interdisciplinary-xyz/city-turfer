@@ -20,6 +20,10 @@ const rows = (t: ReturnType<typeof phone>) =>
     'SELECT activity_id AS id, status, op FROM cb_activities ORDER BY started_at'
   );
 
+/** The withdrawals still to deliver and the account the state is about. */
+const pending = async (t: ReturnType<typeof phone>) =>
+  t.db.first<{ w: string | null; k: string | null }>('SELECT withdrawals_pending AS w, account_key AS k FROM cb_state');
+
 describe('Cloud Backup: changes made while backup was off', () => {
   it('reconciles deletes, corrections, renames and gap checks on the next comparison', async () => {
     const t = phone({ account: ACCOUNT });
@@ -286,11 +290,6 @@ describe('Cloud Backup: another account or server', () => {
 });
 
 describe('Cloud Backup: a withdrawal pending when the account changes', () => {
-  const pending = async (t: ReturnType<typeof phone>) =>
-    t.db.first<{ w: string | null; k: string | null }>(
-      'SELECT withdrawals_pending AS w, account_key AS k FROM cb_state'
-    );
-
   it('is delivered to the previous account (its device token) before switching', async () => {
     const t = phone({ token: 'secret-token' });
     const c = await t.container();
@@ -331,6 +330,41 @@ describe('Cloud Backup: a withdrawal pending when the account changes', () => {
     await c.cloudBackup.run.execute();
     expect(t.server.activities.size).toBe(0);
     expect(await pending(t)).toEqual({ w: null, k: expect.stringContaining('|acct-1') });
+  });
+});
+
+describe('Cloud Backup: a withdrawal for a local profile’s former account', () => {
+  /** admin@ linked (acct-1), backed up; a password sign-in drops the session; turned off then. */
+  async function offForGoneAccount() {
+    const t = phone({ profile: 'admin', account: ACCOUNT, token: null });
+    const c = await t.container();
+    await c.add('rec-1', walk(0));
+    await backedUp(c);
+    t.account.value = null;
+    expect(await c.cloudBackup.disable.execute()).toEqual({ kind: 'failed', error: 'no-token' });
+    // acct-1 is deleted on the web; the next code to admin@ makes a new account.
+    t.server.moreTokens.set('token-2', 'acct-2');
+    t.account.value = { token: 'token-2', accountId: 'acct-2' };
+    return { t, c };
+  }
+
+  it('no token reaches it any more and the address has a new account: it no longer blocks backup', async () => {
+    const { t, c } = await offForGoneAccount();
+    expect(await c.cloudBackup.run.execute()).toEqual({ kind: 'skipped', reason: 'off' });
+    expect(await pending(t)).toEqual({ w: null, k: expect.stringContaining('|acct-2') });
+    expect(await c.cloudBackup.enable.execute()).toEqual({ kind: 'ok' });
+    expect(await c.cloudBackup.run.execute()).toMatchObject({ kind: 'done', report: { error: null } });
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ enabled: true, withdrawalPending: false });
+  });
+
+  it('while the server can’t be asked (offline), the withdrawal is kept', async () => {
+    const { t, c } = await offForGoneAccount();
+    t.server.failNext('me', { kind: 'offline' });
+    await c.cloudBackup.run.execute();
+    expect(await pending(t)).toEqual({
+      w: expect.stringContaining('cloud-sync'),
+      k: expect.stringContaining('|acct-1'),
+    });
   });
 });
 

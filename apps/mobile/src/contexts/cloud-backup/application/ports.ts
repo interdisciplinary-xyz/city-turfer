@@ -214,6 +214,12 @@ export interface CloudBackupDeps {
    * there stays on the phone; other `demo-…` ids stay on the phone on every profile.
    */
   demoProfile: boolean;
+  /**
+   * A local profile (mock admin, demo): its only account is the one of its own fixed address,
+   * linked by a code (LP1). Lets a withdrawal for that address's former account (deleted, then
+   * made anew by a code) stop blocking backup (see backup-access deliverToPrevious). Omitted: false.
+   */
+  localProfile?: boolean;
   repo: BackupRepository;
   api: ApiClientFactory;
   /** The Developer tools device token (until the Turfer signs in with a code). */

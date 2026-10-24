@@ -32,7 +32,7 @@ export type Connection =
 export async function connect(
   d: Pick<
     CloudBackupDeps,
-    'available' | 'credentials' | 'api' | 'defaultServerUrl' | 'repo' | 'tokens' | 'policyVersion'
+    'available' | 'credentials' | 'api' | 'defaultServerUrl' | 'repo' | 'tokens' | 'policyVersion' | 'localProfile'
   >,
   s: BackupSettings,
   refusedToken: string | null = null
@@ -101,9 +101,16 @@ async function credentialsFor(
  * account's bearer (only to the built-in server, see credentialsFor). A token counts only when that
  * server names the same account. Returns null once
  * every withdrawal arrived, else why not (no token for that account any more: `auth`).
+ *
+ * One exception, so a local profile is never blocked for good: its account is always the one of
+ * its own fixed address (LP1). When it is now linked (Identity's session) to another account of
+ * the built-in server than the previous one, and no token here reaches the previous one (each
+ * answers 401 or names another account), that address's earlier account is gone: deleted (the
+ * server erased its copy with it, which is what the withdrawal asked for) or moved to another
+ * address (its owner deletes the copy there). The switch goes ahead: null.
  */
 async function deliverToPrevious(
-  d: Pick<CloudBackupDeps, 'tokens' | 'api' | 'repo' | 'policyVersion' | 'defaultServerUrl'>,
+  d: Pick<CloudBackupDeps, 'tokens' | 'api' | 'repo' | 'policyVersion' | 'defaultServerUrl' | 'localProfile'>,
   s: BackupSettings,
   previous: string,
   signedIn: Credentials
@@ -127,7 +134,12 @@ async function deliverToPrevious(
     }
     return deliverWithdrawals(d, api, s);
   }
-  return error;
+  const formerAccountOfOwnAddress =
+    d.localProfile === true &&
+    baseUrl === d.defaultServerUrl &&
+    signedIn.accountId != null &&
+    signedIn.accountId !== accountId;
+  return error === 'auth' && formerAccountOfOwnAddress ? null : error;
 }
 
 /** What a delivered withdrawal erased on the server (contract: no tombstones, no feed entries). */
