@@ -277,6 +277,32 @@ describe('after linking: the password still opens the profile, on this phone onl
     expect(await t.api.accountBearer.execute('admin')).toBeNull();
   });
 
+  it('demo, then admin on the same phone: one credential slot; demo’s session is revoked, never reused for admin', async () => {
+    const t = setup();
+    // One account per address, as on the server.
+    t.gateway.verifyCode = async (email) => {
+      const id = email.value.startsWith('demo@') ? 'u-demo' : 'u-admin';
+      return {
+        kind: 'verified',
+        session: { token: `tok-${id}`, expiresAt: 9e15, account: { id, email: email.value } },
+      };
+    };
+    await t.api.signIn.execute('demo@cityturfer.com', 'demo1234');
+    expect(await t.api.linkSignedInProfile.execute('demo', '000000')).toMatchObject({ kind: 'linked' });
+    expect(await t.api.accountBearer.execute('demo')).toEqual({ token: 'tok-u-demo', accountId: 'u-demo' });
+    // While demo is the linked one, admin's profile has no bearer at all (not demo's token).
+    expect(await t.api.accountBearer.execute('admin')).toBeNull();
+
+    await t.api.signOut.execute();
+    await t.api.signIn.execute(ADMIN_EMAIL, 'admin1234');
+    expect(await t.api.accountBearer.execute('admin')).toBeNull();
+    expect(await t.api.linkSignedInProfile.execute('admin', '000000')).toMatchObject({ kind: 'linked' });
+    expect(t.gateway.revoked).toContain('tok-u-demo');
+    expect(t.credentials()?.token).toBe('tok-u-admin');
+    expect(await t.api.accountBearer.execute('admin')).toEqual({ token: 'tok-u-admin', accountId: 'u-admin' });
+    expect(await t.api.accountBearer.execute('demo')).toBeNull();
+  });
+
   it('a wrong password still opens nothing', async () => {
     const t = await linkedAdmin();
     await t.api.signOut.execute();
