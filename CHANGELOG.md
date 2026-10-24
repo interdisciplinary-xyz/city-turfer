@@ -2,6 +2,85 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.11.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.10.0...v0.11.0) (2026-10-24)
+
+
+### Features
+
+* **app:** back up a local profile from info by e-mail code ([cab011c](https://github.com/interdisciplinary-xyz/city-turfer/commit/cab011cdfb969269031ef56604906df55945a656))
+* **cloud-backup:** demo history uploads from the demo profile ([b2697b8](https://github.com/interdisciplinary-xyz/city-turfer/commit/b2697b8d41486428353f1cc646973165f73eb217))
+* **i18n:** polish says terytorium instead of turf ([cfb8944](https://github.com/interdisciplinary-xyz/city-turfer/commit/cfb89440bbd13fe7b30d4884ec5a985d62bebe98))
+* **identity:** link a local profile to its own account by e-mail code ([e0df4f2](https://github.com/interdisciplinary-xyz/city-turfer/commit/e0df4f28a2768c96f123aa5c7ac03c5aa6e0f487))
+* **shared-kernel:** number formatters in core for the app and the web ([2b361a0](https://github.com/interdisciplinary-xyz/city-turfer/commit/2b361a036f9a10b2dbc61ddca55a55b1626fad84))
+* **tooling:** probe the Home City catalogue counts ([9b8777d](https://github.com/interdisciplinary-xyz/city-turfer/commit/9b8777d69a0b1756c204d22a3f7eddc8034cc347))
+* **web:** activity history in the web portal ([fe1b176](https://github.com/interdisciplinary-xyz/city-turfer/commit/fe1b176705a32a26a93ab6b06b1952acad06ca36))
+* **web:** app icon and wordmark in one row in the hero ([6227e71](https://github.com/interdisciplinary-xyz/city-turfer/commit/6227e71fdbe0a6292b439a0885c7aed2c0f10a86))
+
+
+### Bug Fixes
+
+* **app:** backup link and restore copy from the review ([32a059f](https://github.com/interdisciplinary-xyz/city-turfer/commit/32a059f50d36c205fdb43f24272717b36cc1df6c))
+* **app:** keep the record city chip clear of the turf chip on narrow screens ([76c243b](https://github.com/interdisciplinary-xyz/city-turfer/commit/76c243bcdf8a0070ed63f2d81b0954235e9f48c2))
+* **app:** never leave backup silently off after a code to a new account ([38e4823](https://github.com/interdisciplinary-xyz/city-turfer/commit/38e4823167889ec53f44143e40ed113091adabbf))
+* **app:** render the stayed-off message from the outcome, one auth suppression in card state ([c29e83a](https://github.com/interdisciplinary-xyz/city-turfer/commit/c29e83a2217c0d3c31e05620a288ccf98f4c1d85))
+* **app:** soften the pl turf copy, no conquest wording ([a238142](https://github.com/interdisciplinary-xyz/city-turfer/commit/a238142c95b97f6f23c7651243132b3c82191804))
+* **app:** wording from the brand pass on the link-flow strings ([1046207](https://github.com/interdisciplinary-xyz/city-turfer/commit/1046207e66b24227a9846d795e25f0ffbffd3151))
+* **cloud-backup:** back up the demo profile only to demo@'s linked account ([8a8761b](https://github.com/interdisciplinary-xyz/city-turfer/commit/8a8761b98c4d9134c782f669c17bec083616010a))
+* **cloud-backup:** offer the code again after a revoked or expired session ([ae8fdcc](https://github.com/interdisciplinary-xyz/city-turfer/commit/ae8fdcc0dd0b3df9ac49ef0f7b516f6e8c90bfc3))
+* **cloud-backup:** privacy note before the code turns backup on ([5628f22](https://github.com/interdisciplinary-xyz/city-turfer/commit/5628f22700315a02680a81de551aa31cda40541a))
+* **cloud-backup:** stop a former account's withdrawal blocking a local profile ([ff208ff](https://github.com/interdisciplinary-xyz/city-turfer/commit/ff208ffac75ef1d9d20e945e0661ddc854a285c1))
+* **cloud-backup:** the demo profile uploads only its Gdańsk plan ([9681369](https://github.com/interdisciplinary-xyz/city-turfer/commit/968136950f6f1e8fc3c517dd1d03f0805cca889e))
+* **cloud-backup:** upload only the planned Gdańsk history from the demo profile ([4b7a11c](https://github.com/interdisciplinary-xyz/city-turfer/commit/4b7a11ca15989dbf2cf8a8df581a6f2e354a1a81))
+* **identity:** open the code field when a code went out recently ([0f59f34](https://github.com/interdisciplinary-xyz/city-turfer/commit/0f59f34a6baa8b1b8fc6aedbfe400f455c87de9e))
+* **web:** a deleted or unknown activity wins over its cached copy ([ca84a8c](https://github.com/interdisciplinary-xyz/city-turfer/commit/ca84a8cb3bc02c70b43a601f0439732967f4731d))
+* **web:** decide what the history shows on this visit's consents ([44a19f4](https://github.com/interdisciplinary-xyz/city-turfer/commit/44a19f4fab50b1cfc13e8ee5686ea591b1a9a3b1))
+* **web:** draw routes that cross the antimeridian as they are ([18efd60](https://github.com/interdisciplinary-xyz/city-turfer/commit/18efd60ea00f800e193c258e812ed302a2bfcf6a))
+* **web:** hide the cached history once backup is off ([1661df2](https://github.com/interdisciplinary-xyz/city-turfer/commit/1661df2ca5f11ab78c326dfcde4f2d36d02667b2))
+* **web:** keep the full route through a failed detail refresh ([e8bdcab](https://github.com/interdisciplinary-xyz/city-turfer/commit/e8bdcab70c3e5fb3f47261c6b4f25289da37aa92))
+* **web:** key the cached track by its trackHash ([e8565d9](https://github.com/interdisciplinary-xyz/city-turfer/commit/e8565d9044c131b0cb876a8b97ad0c982ed4cd25))
+* **web:** one proportional size for the hero lockup, no rotation or offset shadow on the mark ([ab65f02](https://github.com/interdisciplinary-xyz/city-turfer/commit/ab65f025d7a0eae95fd17a239fdc0f548ccad4c1))
+* **web:** portal dates on english pages in en-GB style, 24-hour ([46c2a88](https://github.com/interdisciplinary-xyz/city-turfer/commit/46c2a880ead305e68c902736962b822fb014e56d))
+* **web:** portal history copy from the brand review ([b02c0cb](https://github.com/interdisciplinary-xyz/city-turfer/commit/b02c0cb829dd5b4bdc1efd162bd2c1ca4e2e856f))
+* **web:** say when the activity totals fail to load ([ad21c85](https://github.com/interdisciplinary-xyz/city-turfer/commit/ad21c852666df7199a25f47c52e211d2aff03f3d))
+
+
+### Refactoring
+
+* **cloud-backup:** decide after a code in an application use case ([7ed1dfa](https://github.com/interdisciplinary-xyz/city-turfer/commit/7ed1dfa90a0da4ead236ee446027d6f4a413f512))
+
+
+### Documentation
+
+* check the readme and docs/ against the code after v0.10.0 ([fd7dc74](https://github.com/interdisciplinary-xyz/city-turfer/commit/fd7dc7406390805a207f85afc563e2aba7cb8919))
+* **claude:** api-design names the demo profile's upload exception ([186824a](https://github.com/interdisciplinary-xyz/city-turfer/commit/186824a7e2c0b93fda03f6cf5e53c9b4c196d7b6))
+* **claude:** pl glossary for turf gained and the turf map title ([579839b](https://github.com/interdisciplinary-xyz/city-turfer/commit/579839bde8748c0d27a5280a32b4a34d1412ad82))
+* **claude:** skills match v0.11.0, forced gate for qa-engineer ([2a6fb1a](https://github.com/interdisciplinary-xyz/city-turfer/commit/2a6fb1a8df739bef88a11e7d4c0f1507c8e5574b))
+* **decisions:** cloud backup for the local profiles ([6d73c4e](https://github.com/interdisciplinary-xyz/city-turfer/commit/6d73c4edaeed290d84f9c621a730debb9ba4d168))
+* **decisions:** local profile backup review outcomes, LP3 supersedes D8's demo rule ([fd82482](https://github.com/interdisciplinary-xyz/city-turfer/commit/fd824820665a7cffb07be885c849ce8549d40101))
+* demo uploads only its Gdansk history, portal history built, F1-F4 slip ([ccfa5d3](https://github.com/interdisciplinary-xyz/city-turfer/commit/ccfa5d3ec03aca9c5d707da22f07d75741a2603e))
+* **docs:** record that the demo profile uploads only its plan (LP3) ([7d3801c](https://github.com/interdisciplinary-xyz/city-turfer/commit/7d3801cc8c86598fdabf2b39c9ba51a8a6210af4))
+* **e2e:** flow 17 (cp-14) not run on the simulator yet ([1361e4f](https://github.com/interdisciplinary-xyz/city-turfer/commit/1361e4fa9a4b0201e6793945ba530e0a31d5a460))
+* **e2e:** record the local profile backup simulator run ([b7871b2](https://github.com/interdisciplinary-xyz/city-turfer/commit/b7871b2ef25e21f1f72b40c16a50b3e9990baf1a))
+* **plans:** web portal activity history plan ([6cd749e](https://github.com/interdisciplinary-xyz/city-turfer/commit/6cd749efcb0980a695a7ae3cb39cf917c6e080ee))
+* **plans:** web portal history executed, open founder choices ([e0b59a4](https://github.com/interdisciplinary-xyz/city-turfer/commit/e0b59a403887ed1983a884fffe16dd1a817c12a7)), closes [#162](https://github.com/interdisciplinary-xyz/city-turfer/issues/162)
+* **process:** v0.11.0 OTA options, forced release gate, newest session log ([f6793f1](https://github.com/interdisciplinary-xyz/city-turfer/commit/f6793f124a331616713752bce9e82e836f2edee3))
+* **sessions:** v0.11.0 session log ([c6ff1e6](https://github.com/interdisciplinary-xyz/city-turfer/commit/c6ff1e6c8795c31d24aff6e8c4ae76df85809571)), closes [#161](https://github.com/interdisciplinary-xyz/city-turfer/issues/161) [-#165](https://github.com/interdisciplinary-xyz/-/issues/165)
+
+
+### Tests
+
+* **app:** match the reworded linkedElsewhere copy ([2e390e8](https://github.com/interdisciplinary-xyz/city-turfer/commit/2e390e86da981240254f8014bedf2d3cfb744e87))
+* **cloud-backup:** make the local profile chain test able to fail ([54c957f](https://github.com/interdisciplinary-xyz/city-turfer/commit/54c957fa602d5eea8e2792aa59a9931eb0413d31))
+* **cloud-backup:** pin not-available and lost credentials between uploads ([9616769](https://github.com/interdisciplinary-xyz/city-turfer/commit/9616769f40c2813b1c5298d36dc988c2bb3e0220))
+* **e2e:** flow 17 waits on known test ids, not a regex ([8e45391](https://github.com/interdisciplinary-xyz/city-turfer/commit/8e45391ae38dbba1e3254745d2855c8fa4040fa0))
+* **e2e:** local profile backup in the sync chain and maestro ([bc08bea](https://github.com/interdisciplinary-xyz/city-turfer/commit/bc08beaab0cedd51d1e74c6bc0844fda4613db05))
+* **e2e:** local profile backup survives a rate limit or a send error ([5815066](https://github.com/interdisciplinary-xyz/city-turfer/commit/5815066e2a1ab4cea742a65f2b851eda925aee1b))
+* **e2e:** say the chain's fixed code also serves the local mock accounts ([6f205e2](https://github.com/interdisciplinary-xyz/city-turfer/commit/6f205e226295588c9931f91df7b4ae17cccbd4a2))
+* **identity:** demo then admin on one phone share no session ([b3301d2](https://github.com/interdisciplinary-xyz/city-turfer/commit/b3301d2286a8565202e00f518c7f3661a1dcc543))
+* **web:** e2e for the sign-in round trip, keyboard reach and a withdrawn backup ([20f3b6f](https://github.com/interdisciplinary-xyz/city-turfer/commit/20f3b6fab23a87f08fd74812d8cf494ca9a5bf98))
+* **web:** pin the paths and queries of the history reads ([4f40f20](https://github.com/interdisciplinary-xyz/city-turfer/commit/4f40f20f4bf002b44710a734058c3f2ec135e0e6))
+* **web:** stories for the activity page's loading, not-found and deleted states ([5438886](https://github.com/interdisciplinary-xyz/city-turfer/commit/5438886b8f05c57e36d766649b65d824277d4da7))
+
 ## [0.10.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.9.0...v0.10.0) (2026-10-23)
 
 
