@@ -46,6 +46,6 @@
   },
   "notification": {
     "title": "{type, select, walk {Nagrywam Twój spacer} run {Nagrywam Twój bieg} cycle {Nagrywam Twoją jazdę} other {Nagrywam Twoją aktywność}}",
-    "body": "{app} zdobywa Twoje ulice. Stuknij, aby otworzyć."
+    "body": "{app} dodaje Twoje ulice do terytorium. Stuknij, aby otworzyć."
   }
 }
