@@ -10,8 +10,11 @@
 #   EXPO_PUBLIC_API_URL=http://127.0.0.1:8787 pnpm -C apps/mobile start      # Metro bakes the URL in
 #   apps/mobile/e2e/run.sh 17-local-profile-backup
 # A server address other than :8787: E2E_API_URL=http://127.0.0.1:<port> for run.sh. The flow sends one
-# code request (admin@'s own bucket: 1 a minute), so a second run within a minute waits on the
-# resend timer, never fails.
+# code request (admin@'s own bucket: 1 a minute, 3 per 10 minutes, also used by `pnpm test:chain`).
+# A rerun inside that window gets 429 rate-limited: the screen treats it as "a code went out
+# recently" and still opens the code field (with the resend held), so the fixed code goes in as
+# usual. Any other error on the send (offline, server) leaves the screen on the request step: the
+# flow waits for the send button to be enabled again (up to about 70 s) and taps it once.
 appId: com.turftrack.poc
 tags: [account]
 env:
@@ -39,6 +42,14 @@ env:
 - assertVisible: { id: 'backup-link-request' }
 - takeScreenshot: 17-offer
 - tapOn: { id: 'backup-link-request' }
+# The code field, or an error on the request step (ids are regexes).
+- extendedWaitUntil: { visible: { id: 'backup-link-code|backup-link-error' }, timeout: 20000 }
+- runFlow:
+    when: { visible: { id: 'backup-link-error' }, notVisible: { id: 'backup-link-code' } }
+    commands:
+      - takeScreenshot: 17-send-error
+      - extendedWaitUntil: { visible: { id: 'backup-link-send', enabled: true }, timeout: 70000 }
+      - tapOn: { id: 'backup-link-send' }
 - extendedWaitUntil: { visible: { id: 'backup-link-code' }, timeout: 20000 }
 - takeScreenshot: 17-code
 
