@@ -204,8 +204,10 @@ img {
     order: 4;
     grid-column: 1 / -1;
   }
-  .hero-copy .mark,
-  .hero-copy .wordmark,
+  .hero-copy .hero-brand {
+    justify-content: flex-start;
+    margin-bottom: 20px;
+  }
   .hero-copy h1,
   .hero-copy .lede {
     margin-left: 0;
@@ -213,13 +215,8 @@ img {
   .hero-copy h1 {
     font-size: clamp(3rem, 5vw, 4.2rem);
   }
-  .hero-copy .mark {
-    width: 104px;
-    margin-bottom: 16px;
-  }
-  .hero-copy .wordmark {
-    width: 220px;
-    margin-bottom: 20px;
+  .hero-copy .hero-brand {
+    --lockup: 72px;
   }
 }
 
@@ -234,16 +231,36 @@ img {
   z-index: -1;
 }
 
+/* The app icon and the wordmark side by side: centred on phones, left-aligned next to the phones on desktop.
+   One size variable (--lockup = the tile) drives every part, so the proportions never drift:
+   wordmark height 0.66 of the tile, gap 0.25 (clear space >= 0.16). Breakpoints change only --lockup. */
+.hero-brand {
+  --lockup: clamp(56px, 16vw, 84px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--lockup) * 0.25);
+  margin-bottom: 28px;
+}
+
 .mark {
-  width: clamp(88px, 22vw, 132px);
-  margin: 0 auto 20px;
+  width: var(--lockup);
+  margin: 0;
   border-radius: 23%;
-  box-shadow: 0 10px 40px color-mix(in srgb, var(--faint) 24%, transparent);
+  /* a centred glow, not a drop shadow (the brand allows none on the mark) */
+  box-shadow: 0 0 40px color-mix(in srgb, var(--faint) 24%, transparent);
 }
 
 .wordmark {
-  width: clamp(180px, 54vw, 280px);
-  margin: 0 auto 28px;
+  /* height drives the size; the .wordmark class outranks the global img { height: auto } */
+  height: calc(var(--lockup) * 0.66);
+  width: auto;
+  /* wordmark-light.svg has ~0.04 of the tile of padding before the first glyph: pull it in so the visible gap is 0.25 */
+  margin-left: calc(var(--lockup) * -0.04);
+  max-width: none;
+  margin-top: 0;
+  margin-bottom: 0;
+  margin-right: 0;
 }
 
 h1 {
@@ -538,12 +555,10 @@ h1 {
   .hero {
     padding-top: 0;
   }
-  .mark {
-    width: 64px;
-    margin-bottom: 12px;
-  }
-  .wordmark {
-    width: 170px;
+  .hero-brand {
     margin-bottom: 16px;
+  }
+  .hero-brand {
+    --lockup: 48px;
   }
 }

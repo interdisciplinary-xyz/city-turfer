@@ -58,11 +58,7 @@ export function HeroMotion({ className, children }: HeroMotionProps) {
           } else {
             window.addEventListener(PAGE_LOADED_EVENT, play, { once: true });
           }
-          tl.fromTo(
-            '[data-anim="mark"]',
-            { autoAlpha: 0, scale: 0.7, rotate: -10 },
-            { autoAlpha: 1, scale: 1, rotate: 0, duration: 1 }
-          )
+          tl.fromTo('[data-anim="mark"]', { autoAlpha: 0, scale: 0.7 }, { autoAlpha: 1, scale: 1, duration: 1 })
             .fromTo('[data-anim="wordmark"]', { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.7 }, '-=0.7')
             .fromTo(
               '[data-anim="line"]',
