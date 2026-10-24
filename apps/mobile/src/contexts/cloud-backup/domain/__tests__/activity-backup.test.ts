@@ -1,5 +1,13 @@
 import { ActivityBackup } from '../activity-backup';
-import { deviceToken, mayUpload, nameToUpload, retryDelayMs, sourceOf, trackHashInput } from '../backup-policy';
+import {
+  deviceToken,
+  mayUpload,
+  nameToUpload,
+  retryDelayMs,
+  sourceOf,
+  trackHashInput,
+  uploadSourceOf,
+} from '../backup-policy';
 import { BackupSettings } from '../backup-settings';
 
 const NOW = 1_000_000;
@@ -22,14 +30,25 @@ describe('backup policy', () => {
     expect(nameToUpload(phone(20), server(null))).toBe('Phone A name');
   });
 
-  it('never uploads demo history; Apple Health imports only with their consent', () => {
+  it('uploads demo history only from the demo profile, as import; Apple Health imports only with their consent', () => {
     expect(sourceOf('demo-123')).toBe('demo');
     expect(sourceOf('hk-ABC')).toBe('apple-health');
     expect(sourceOf('3f9c2a64-5d1e')).toBe('recording');
-    expect(mayUpload('demo-1', true)).toBe(false);
-    expect(mayUpload('hk-1', false)).toBe(false);
-    expect(mayUpload('hk-1', true)).toBe(true);
-    expect(mayUpload('session-1', false)).toBe(true);
+    const scope = (healthIncluded: boolean, demoProfile: boolean) => ({ healthIncluded, demoProfile });
+    // demo-… : only on the demo profile (LP3), whatever the Apple Health consent
+    expect(mayUpload('demo-1', scope(true, false))).toBe(false);
+    expect(mayUpload('demo-1', scope(false, false))).toBe(false);
+    expect(mayUpload('demo-1', scope(false, true))).toBe(true);
+    expect(mayUpload('demo-1', scope(true, true))).toBe(true);
+    // hk-… : only with its consent, on any profile
+    for (const demoProfile of [false, true]) {
+      expect(mayUpload('hk-1', scope(false, demoProfile))).toBe(false);
+      expect(mayUpload('hk-1', scope(true, demoProfile))).toBe(true);
+      expect(mayUpload('session-1', scope(false, demoProfile))).toBe(true);
+    }
+    expect(uploadSourceOf('demo-1')).toBe('import');
+    expect(uploadSourceOf('hk-1')).toBe('apple-health');
+    expect(uploadSourceOf('session-1')).toBe('recording');
   });
 
   it('backs off 30 s, doubling, up to 6 h', () => {

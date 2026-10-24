@@ -26,8 +26,8 @@ export type Connection =
 /**
  * An authenticated client for the configured server, with the settings for that server and account
  * (another account than last time resets them: see BackupSettings.useAccount; consent withdrawals
- * still pending for the previous one are delivered to it first). Profiles without an
- * account (demo) and phones without credentials never send a request.
+ * still pending for the previous one are delivered to it first). Without credentials (a local
+ * profile opened with its password and not linked by an e-mailed code, LP1–LP2) no request is sent.
  */
 export async function connect(
   d: Pick<

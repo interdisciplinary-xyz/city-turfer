@@ -14,7 +14,9 @@ export class GetBackupStatus {
     const s = await this.d.repo.settings();
     const st = s.toState();
     const eligible = new Set(
-      (await this.d.activities.timeline()).map((a) => a.id).filter((id) => mayUpload(id, s.healthIncluded))
+      (await this.d.activities.timeline())
+        .map((a) => a.id)
+        .filter((id) => mayUpload(id, { healthIncluded: s.healthIncluded, demoProfile: this.d.demoProfile }))
     );
     const count = (ids: string[]) => ids.filter((id) => eligible.has(id)).length;
     const credentials = this.d.available ? await this.d.credentials.current().catch(() => null) : null;
@@ -23,6 +25,7 @@ export class GetBackupStatus {
     return {
       available: this.d.available,
       enabled: s.enabled,
+      withdrawalPending: s.withdrawalsPending.includes('cloud-sync'),
       healthIncluded: s.healthIncluded,
       hasToken: credentials != null,
       hasDeviceToken: deviceToken != null,

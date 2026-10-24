@@ -30,7 +30,7 @@ import { SqliteBackupRepository } from '@/contexts/cloud-backup/infrastructure/s
 import { createHealthSyncApi, type HealthStore } from '@/contexts/health-sync';
 import { SqliteHealthSyncRepository } from '@/contexts/health-sync/infrastructure/sqlite-health-sync-repository';
 import { UNAVAILABLE_HEALTH_STORE } from '@/contexts/health-sync/infrastructure/unavailable-health-store';
-import { isLocalOnlyProfile } from '@/contexts/identity';
+import { DEMO_PROFILE_ID } from '@/contexts/identity';
 import { createRecordingApi, SerialCommandExecutor, type SessionFinished } from '@/contexts/recording';
 import type { LiveSessionNotifier, LocationTracker, PermissionGateway } from '@/contexts/recording/application/ports';
 import { SqliteRecordingSessionRepository } from '@/contexts/recording/infrastructure/sqlite-recording-session-repository';
@@ -187,8 +187,10 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
   const backupAdapters = a.cloudBackup ?? NO_CLOUD_BACKUP;
   const deviceToken = backupAdapters.tokens(userId);
   const cloudBackupDeps: CloudBackupDeps = {
-    // The demo profile never talks to the API, whatever is configured.
-    available: a.cloudBackup != null && !isLocalOnlyProfile(userId),
+    // Every profile with a server configured; it sends nothing until it has credentials (LP1).
+    available: a.cloudBackup != null,
+    // Only the demo profile uploads its generated `demo-…` history (LP3).
+    demoProfile: userId === DEMO_PROFILE_ID,
     repo: new SqliteBackupRepository(db),
     api: backupAdapters.api,
     tokens: deviceToken,

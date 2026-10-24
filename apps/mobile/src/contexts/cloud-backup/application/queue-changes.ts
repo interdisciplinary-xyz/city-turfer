@@ -18,7 +18,7 @@ import type { CloudBackupDeps } from './ports';
  * while backup is off (turning it on compares the whole history with the server instead).
  */
 export class QueueBackupChanges {
-  constructor(private readonly d: Pick<CloudBackupDeps, 'repo' | 'available'>) {}
+  constructor(private readonly d: Pick<CloudBackupDeps, 'repo' | 'available' | 'demoProfile'>) {}
 
   async activityRecorded(e: ActivityRecorded): Promise<void> {
     if (e.origin === 'restore') {
@@ -76,6 +76,8 @@ export class QueueBackupChanges {
       return false;
     }
     const s = await this.d.repo.settings();
-    return s.acceptsChanges && mayUpload(activityId, s.healthIncluded);
+    return (
+      s.acceptsChanges && mayUpload(activityId, { healthIncluded: s.healthIncluded, demoProfile: this.d.demoProfile })
+    );
   }
 }
