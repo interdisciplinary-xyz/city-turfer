@@ -67,6 +67,19 @@ describe('AfterCredentialsArrived', () => {
     expect(t.server.calls('setConsent')).toHaveLength(consents); // no new consent asked for
   });
 
+  it('on, but the address’s account is a new one (the old one was deleted): asks for the consent tap', async () => {
+    const { t, c } = await linked({ enabled: true });
+    t.server.moreTokens.set('token-2', 'acct-2');
+    t.account.value = { token: 'token-2', accountId: 'acct-2' }; // the code made a new account
+    const consents = t.server.calls('setConsent').length;
+    expect(await c.cloudBackup.afterCredentials.execute()).toEqual({ kind: 'needs-consent' });
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ enabled: false });
+    expect(t.server.calls('setConsent')).toHaveLength(consents); // nothing implied by "Confirm code"
+    // "Turn on backup" (the flow's retry): the consent for the new account, then backup is on.
+    expect(await c.cloudBackup.afterCredentials.execute()).toEqual({ kind: 'turned-on' });
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ enabled: true });
+  });
+
   it('turned off without credentials: delivers the withdrawal, and backup stays off', async () => {
     const { t, c } = await linked({ enabled: false, offWithoutCredentials: true });
     expect(t.server.activities.has('rec-1')).toBe(true);

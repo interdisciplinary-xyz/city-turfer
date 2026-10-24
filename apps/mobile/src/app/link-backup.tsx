@@ -16,9 +16,11 @@ import { usePalette } from '@/ui-kit/theme';
  * (`afterCredentials`, from the settings read right then):
  * - off with nothing pending: the Turfer came to turn it on (consent `cloud-sync` only; Apple
  *   Health stays a separate switch), the first run starts, back to Info;
- * - on already (opened by password, LP2, or its session ran out): a run, back to Info;
+ * - on already (opened by password, LP2, or its session ran out): a run, back to Info; decided
+ *   once connected: if the address's account is a new one (the old one was deleted), backup is off
+ *   for it and the flow asks for "Turn on backup" (the consent tap) instead;
  * - turned off while it had no credentials: a run delivers that withdrawal (the server deletes its
- *   copy) and backup stays off; never turned back on from here.
+ *   copy) and backup stays off, worded from whether it arrived; never turned back on from here.
  */
 export default function LinkBackupScreen() {
   const p = usePalette();
@@ -26,10 +28,16 @@ export default function LinkBackupScreen() {
 
   const onLinked = async (): Promise<LinkedOutcome> => {
     const te = translator('errors');
+    const t = translator('backup');
     try {
       const r = await afterCredentials();
       if (r.kind === 'stayed-off') {
-        return { kind: 'stayed-off' };
+        const message = r.delivered ? t('link.stayedOff') : t('link.stayedOffPending');
+        return { kind: 'stayed-off', delivered: r.delivered, message };
+      }
+      if (r.kind === 'needs-consent') {
+        // A new account for this address: on only with the Turfer's "Turn on backup" (the retry).
+        return { kind: 'failed', message: t('link.newAccount') };
       }
       if (r.kind === 'failed') {
         return { kind: 'failed', message: te(ERROR_KEY[r.error]) };

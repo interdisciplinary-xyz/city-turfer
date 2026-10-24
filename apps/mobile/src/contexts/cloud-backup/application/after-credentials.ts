@@ -1,4 +1,5 @@
 import type { BackupErrorCode, BackupStatus } from '../contract';
+import { connect } from './backup-access';
 import type { CloudBackupDeps } from './ports';
 import type { RunBackup } from './run-backup';
 import type { EnableBackup } from './settings-use-cases';
@@ -25,12 +26,16 @@ export function afterCredentialsPlan(s: Pick<BackupStatus, 'enabled' | 'withdraw
  *   Either way the caller starts a run (and shows its progress).
  * - `stayed-off`: backup stays off; `delivered`: the server has heard the withdrawal (its copy is
  *   deleted), else it hears it on a later run.
+ * - `needs-consent`: backup was on, but the address's account is not the one it was on for (that
+ *   one was deleted and the code made a new one): the new account starts afresh, off. Turning it on
+ *   records a consent, so it is the Turfer's tap ("Turn on backup"), never implied by "Confirm code".
  * - `failed`: turning backup on failed (why); trying again is safe.
  */
 export type AfterCredentialsResult =
   | { kind: 'turned-on' }
   | { kind: 'carried-on' }
   | { kind: 'stayed-off'; delivered: boolean }
+  | { kind: 'needs-consent' }
   | { kind: 'failed'; error: BackupErrorCode };
 
 /**
@@ -64,6 +69,11 @@ export class AfterCredentialsArrived {
       const r = await this.enable.execute();
       return r.kind === 'ok' ? { kind: 'turned-on' } : r;
     }
-    return { kind: 'carried-on' };
+    // Decided only once connected: another account than last time resets the state (off).
+    const c = await connect(this.d, s);
+    if (c.kind === 'connected' && !c.settings.enabled) {
+      return { kind: 'needs-consent' };
+    }
+    return { kind: 'carried-on' }; // a failure to connect is the run's to report (the card shows it)
   }
 }

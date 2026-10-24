@@ -57,6 +57,8 @@
     "turningOn": "Turning on backup…",
     "linked": "Code accepted. This profile is now linked to the account for {email}.",
     "confirm": "Confirm code",
-    "stayedOff": "Backup stays off. The server deletes its copy as soon as this phone reaches it."
+    "stayedOff": "Backup stays off. The server’s copy is deleted. Everything stays on this phone.",
+    "stayedOffPending": "Backup stays off. The server’s copy is deleted the next time this phone is online. Everything stays on this phone.",
+    "newAccount": "This address has a new CityTurfer account, so backup is off for it. Tap Turn on backup to back up to it."
   }
 }
