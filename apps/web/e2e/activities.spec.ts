@@ -115,7 +115,7 @@ test('history: totals, list by month, show more, filter, detail with splits and 
   await expect(page.getByRole('heading', { level: 2, name: 'September 2026' })).toBeVisible();
   const first = rows(page).first();
   await expect(first).toContainText('Run with a gap');
-  await expect(first).toContainText('Thu, Oct 22, 09:12 AM');
+  await expect(first).toContainText('Thu 22 Oct, 09:12');
   await expect(first).toContainText('≈');
   await expect(first).toContainText(shown(formatDistance(withGap.distanceM, 'en')));
   await expect(first).toContainText(formatDuration(withGap.movingS));
@@ -152,7 +152,7 @@ test('history: totals, list by month, show more, filter, detail with splits and 
   await expect(page).toHaveURL(new RegExp(`/en/account/activity\\?id=${gappedId}$`));
   await expect(page.getByRole('heading', { level: 1, name: 'Run with a gap' })).toBeVisible();
   await expect(page.locator('.portal-detail-meta time')).toHaveText(
-    /^Thursday, October 22, 2026 at 09:12 AM (GMT\+2|CEST)$/
+    /^Thursday, 22 October 2026 at 09:12 (GMT\+2|CEST)$/
   );
   const stats = page.locator('.portal-stats');
   await expect(stats).toContainText(`Distance≈ about ${shown(formatDistance(withGap.distanceM, 'en'))}`);
@@ -294,10 +294,8 @@ test('H5: months and times follow the activity zone, not the browser zone', asyn
   await page.goto('/en/account/activities');
   await expect(page.getByRole('heading', { level: 2, name: 'November 2026' })).toBeVisible();
   await expect(page.getByRole('heading', { level: 2, name: 'October 2026' })).toHaveCount(0);
-  await expect(rows(page).first()).toContainText('Sun, Nov 1, 12:30 AM');
+  await expect(rows(page).first()).toContainText('Sun 1 Nov, 00:30');
 
   await rows(page).first().getByRole('link').click();
-  await expect(page.locator('.portal-detail-meta time')).toHaveText(
-    /^Sunday, November 1, 2026 at 12:30 AM (GMT\+1|CET)$/
-  );
+  await expect(page.locator('.portal-detail-meta time')).toHaveText(/^Sunday, 1 November 2026 at 00:30 (GMT\+1|CET)$/);
 });

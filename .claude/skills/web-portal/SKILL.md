@@ -111,7 +111,8 @@ API calls, no third-party scripts for a signed-out visitor.** The portal never w
   there from the app by `location-engineer`), so the numbers match the app. apps/web uses core's
   shared kernel only; never re-implement a formatter.
 - H5: day and time in the activity's own `timeZone` (the browser's when null); months group by that
-  local day. Dates elsewhere in the portal use `_portal/format.ts` (the visitor's zone).
+  local day. Dates elsewhere in the portal use `_portal/format.ts` (the visitor's zone). English
+  pages format every date en-GB style (day first, 24-hour) through `dateLocale` in `format.ts`.
 - H6: `GET /v1/activities` cursor pages of 50 with "Show more"; the type filter in page state, not
   the URL. Totals from `GET /v1/activity-totals`.
 

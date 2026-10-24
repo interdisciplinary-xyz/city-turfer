@@ -25,6 +25,7 @@ import {
   rowWhen,
 } from '../../app/[locale]/account/_portal/activity-time';
 import { totalsTiles } from '../../app/[locale]/account/_portal/activity-totals/activity-totals.constants';
+import { dateLocale, formatDate } from '../../app/[locale]/account/_portal/format';
 import { portalLocation } from '../../app/[locale]/account/_portal/portal-nav/portal-nav.constants';
 import {
   previewLines,
@@ -97,21 +98,29 @@ describe('times in the activity zone (H5)', () => {
     expect(groupByMonth([])).toEqual([]);
   });
 
+  it('formats English pages the British way (24-hour), whatever the route says', () => {
+    expect(dateLocale('en')).toBe('en-GB');
+    expect(dateLocale('pl')).toBe('pl');
+    expect(formatDate('en', '2026-10-22T12:00:00Z')).toBe('22 October 2026');
+    expect(formatDate('pl', '2026-10-22T12:00:00Z')).toBe('22 października 2026');
+    expect(rowWhen('en', at('2026-10-22T13:12:00Z'))).toBe('Thu 22 Oct, 15:12');
+  });
+
   it('names months in the page language', () => {
-    expect(monthLabel('en-GB', '2026-10')).toBe('October 2026');
+    expect(monthLabel('en', '2026-10')).toBe('October 2026');
     expect(monthLabel('pl', '2026-10')).toBe('październik 2026');
   });
 
   it('shows day and time as the phone recorded them', () => {
     const run = at('2026-10-22T05:12:00Z', 'Europe/Warsaw');
-    expect(rowWhen('en-GB', run)).toBe('Thu 22 Oct, 07:12');
+    expect(rowWhen('en', run)).toBe('Thu 22 Oct, 07:12');
     expect(rowWhen('pl', run)).toBe('czw., 22 paź, 07:12');
     // The zone's name only when it isn't the browser's.
-    expect(detailWhen('en-GB', run, 'Europe/Warsaw')).toBe('Thursday, 22 October 2026 at 07:12');
-    expect(detailWhen('en-GB', run, 'Europe/London')).toMatch(/^Thursday, 22 October 2026 at 07:12 (CEST|GMT\+2)$/);
+    expect(detailWhen('en', run, 'Europe/Warsaw')).toBe('Thursday, 22 October 2026 at 07:12');
+    expect(detailWhen('en', run, 'Europe/London')).toMatch(/^Thursday, 22 October 2026 at 07:12 (CEST|GMT\+2)$/);
     // The browser's zone unknown: name the activity's; no zone at all: nothing to name.
-    expect(detailWhen('en-GB', run, undefined)).toMatch(/07:12 (CEST|GMT\+2)$/);
-    expect(detailWhen('en-GB', at('2026-10-22T05:12:00Z', null), undefined)).not.toMatch(/GMT|CEST|UTC/);
+    expect(detailWhen('en', run, undefined)).toMatch(/07:12 (CEST|GMT\+2)$/);
+    expect(detailWhen('en', at('2026-10-22T05:12:00Z', null), undefined)).not.toMatch(/GMT|CEST|UTC/);
   });
 });
 

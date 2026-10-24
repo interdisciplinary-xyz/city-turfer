@@ -1,7 +1,9 @@
 // When an activity happened, as the phone recorded it (docs/plans/web-portal-history-2026-10-23.md,
 // H5): day and time in the activity's own IANA `timeZone`, the browser's zone when it is null or
 // unknown to this browser; months group by that local day. Pure (the zone fallback is a parameter),
-// so tests pin it. Other portal dates (sign-in, devices) use format.ts: the visitor's zone.
+// so tests pin it. Other portal dates (sign-in, devices) use format.ts: the visitor's zone. Both
+// take the route locale and format with format.ts's `dateLocale` (English pages: en-GB style).
+import { dateLocale } from './format';
 
 export type Dated = { startedAt: string; timeZone: string | null };
 
@@ -66,14 +68,14 @@ export function groupByMonth<T extends Dated>(items: readonly T[], fallbackZone?
 /** "October 2026" / "październik 2026" for a `YYYY-MM` key. */
 export function monthLabel(locale: string, key: string): string {
   const [year, month] = key.split('-').map(Number);
-  return new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(
+  return new Intl.DateTimeFormat(dateLocale(locale), { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(
     new Date(Date.UTC(year, month - 1, 15))
   );
 }
 
 /** A list row's day and time in the activity's zone: "Thu 22 Oct, 07:12" / "czw., 22 paź, 07:12". */
 export function rowWhen(locale: string, item: Dated, fallbackZone?: string): string {
-  return new Intl.DateTimeFormat(locale, {
+  return new Intl.DateTimeFormat(dateLocale(locale), {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
@@ -92,7 +94,7 @@ export function detailWhen(locale: string, item: Dated, browserZone?: string): s
   const zone = displayZone(item.timeZone, browserZone);
   // Named when it isn't the browser's own, or when the browser's zone is unknown.
   const showZone = zone !== undefined && zone !== browserZone;
-  return new Intl.DateTimeFormat(locale, {
+  return new Intl.DateTimeFormat(dateLocale(locale), {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
