@@ -1,6 +1,6 @@
 ---
-status: proposed
-verified: 2026-10-23
+status: canonical
+verified: 2026-10-24
 owner: founder
 scope:
   - 'apps/web/src/app/[locale]/account'
@@ -99,6 +99,25 @@ needed for reads:
 6. No coordinates or cell ids in URLs, `console` or storage; nothing written to `localStorage`.
 7. axe: no serious or critical findings; 320 px without horizontal scroll; keyboard reachable.
 8. EN and PL copy reviewed; no banned words (territory, score, points, sync, dashboard…).
+
+## Executed (2026-10-24)
+
+Built on `feat/web-portal-history` (PR #162, into `scope/v0.11.0`): work items 1–6. The Activities
+page (totals, type filter, list by month, "Show more") and the Activity page (stats, splits, the
+route as an inline SVG with dashed gap estimates, not-found and deleted states), every empty state,
+`portal.activities.*` copy in en and pl, core's shared-kernel formatters (H4), stories in
+`apps/storybook/src/stories/portal/activity-history.stories.tsx` and the Playwright E2E in
+`apps/web/e2e/activities.spec.ts` (with the sign-in round trip to an activity and keyboard reach).
+After code review: a 404 or 410 wins over a cached detail, the track is cached per `trackHash`,
+cached lists and totals hide when the consents say backup is off, routes across 180° draw as they
+are.
+
+Open for the founder:
+
+- English dates read en-GB style (day first, 24-hour) on every portal page (`dateLocale` in
+  `_portal/format.ts`); the default until the founder chooses otherwise.
+- Acceptance 8: brand-designer's review of the Polish copy is applied (the Polish glossary says
+  _terytorium_ now, not turf); the founder's approval of the wording is still open.
 
 ## Not in this plan
 
