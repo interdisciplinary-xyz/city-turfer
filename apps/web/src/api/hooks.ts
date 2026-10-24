@@ -41,7 +41,10 @@ export const QUERY_KEYS = {
   export: (id: string) => ['export', id],
   activities: (type: ActivityType | null) => ['activities', type ?? 'all'],
   activity: (id: string) => ['activity', id],
-  track: (id: string) => ['track', id],
+  /** Every cached track of one activity, whatever its hash. */
+  tracksOf: (id: string) => ['track', id],
+  /** By id and the detail's `trackHash`: a re-upload (new hash) is a new track, never the old one. */
+  track: (id: string, trackHash: string) => ['track', id, trackHash],
   activityTotals: ['activity-totals'],
 } as const;
 
@@ -51,7 +54,7 @@ export const QUERY_KEYS = {
  * a refetch (removing an observed query would fetch it again, and again).
  */
 export function forgetActivity(queryClient: QueryClient, id: string): void {
-  queryClient.removeQueries({ queryKey: ['track', id] });
+  queryClient.removeQueries({ queryKey: QUERY_KEYS.tracksOf(id) });
   queryClient
     .getQueryCache()
     .find({ queryKey: QUERY_KEYS.activity(id), exact: true })
@@ -136,14 +139,17 @@ export function useActivity(id: string | null) {
   });
 }
 
-/** Every point of one activity (up to 40,000), for its route shape; in memory only, like the rest. */
-export function useTrack(id: string | null, { enabled = true }: { enabled?: boolean } = {}) {
+/**
+ * Every point of one activity (up to 40,000), for its route shape; in memory only, like the rest.
+ * Keyed by the detail's `trackHash` and off until it is known, so a re-uploaded track is read anew.
+ */
+export function useTrack(id: string | null, trackHash: string | null) {
   const { api } = usePortal();
   return useQuery<Awaited<ReturnType<typeof api.track>>, PortalError>({
-    queryKey: QUERY_KEYS.track(id ?? ''),
+    queryKey: QUERY_KEYS.track(id ?? '', trackHash ?? ''),
     queryFn: () => api.track(id ?? ''),
-    enabled: enabled && isActivityId(id),
-    // A track changes only with a new upload (a new `trackHash`): keep it while it's in memory.
+    enabled: isActivityId(id) && Boolean(trackHash),
+    // The same hash is the same track: keep it while it's in memory.
     staleTime: Infinity,
     refetchOnWindowFocus: false,
   });

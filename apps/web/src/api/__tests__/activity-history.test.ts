@@ -342,13 +342,21 @@ describe('a gone activity wins over what is in memory', () => {
   it('forgetActivity drops the cached detail and every cached track of that id, nothing else', () => {
     const queryClient = new QueryClient();
     queryClient.setQueryData(QUERY_KEYS.activity('abc'), { id: 'abc' });
-    queryClient.setQueryData(['track', 'abc', 'h1'], { points: [] });
-    queryClient.setQueryData(['track', 'abc', 'h2'], { points: [] });
+    queryClient.setQueryData(QUERY_KEYS.track('abc', 'h1'), { points: [] });
+    queryClient.setQueryData(QUERY_KEYS.track('abc', 'h2'), { points: [] });
     queryClient.setQueryData(QUERY_KEYS.activity('other'), { id: 'other' });
     forgetActivity(queryClient, 'abc');
     expect(queryClient.getQueryData(QUERY_KEYS.activity('abc'))).toBeUndefined();
-    expect(queryClient.getQueriesData({ queryKey: ['track', 'abc'] })).toEqual([]);
+    expect(queryClient.getQueriesData({ queryKey: QUERY_KEYS.tracksOf('abc') })).toEqual([]);
     expect(queryClient.getQueryData(QUERY_KEYS.activity('other'))).toEqual({ id: 'other' });
+  });
+});
+
+describe('the track query key', () => {
+  it('is the id and the trackHash: a re-upload is a new track, under the same id prefix', () => {
+    expect(QUERY_KEYS.track('abc', 'h1')).toEqual(['track', 'abc', 'h1']);
+    expect(QUERY_KEYS.track('abc', 'h2')).not.toEqual(QUERY_KEYS.track('abc', 'h1'));
+    expect(QUERY_KEYS.track('abc', 'h1').slice(0, 2)).toEqual(QUERY_KEYS.tracksOf('abc'));
   });
 });
 
