@@ -422,6 +422,21 @@ describe('Cloud Backup: demo history (LP3)', () => {
     expect((await rows(t)).map((r) => r.id)).toEqual(['demo-gdansk-n0']);
   });
 
+  it('the demo profile ignores a Developer tools device token: its history goes only to demo@’s linked account', async () => {
+    const t = phone({ profile: 'demo', token: 'secret-token', account: null });
+    const c = await t.container();
+    await c.add('demo-gdansk-n0', walk(0));
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ hasToken: false, hasDeviceToken: true });
+    expect(await c.cloudBackup.enable.execute()).toEqual({ kind: 'failed', error: 'no-token' });
+    expect(await c.cloudBackup.run.execute()).toEqual({ kind: 'skipped', reason: 'off' });
+    await c.runLaunchMaintenance();
+    expect(t.server.requests).toEqual([]);
+
+    t.account.value = ACCOUNT; // linked by a code: demo@'s own session
+    expect(await backedUp(c)).toMatchObject({ kind: 'done', report: { uploaded: 1, error: null } });
+    expect(t.server.uploads()).toEqual(['demo-gdansk-n0']);
+  });
+
   it('demo history seeded on another profile (Developer tools) never leaves the phone', async () => {
     const t = phone({ profile: 'admin', account: ACCOUNT });
     const c = await t.container();

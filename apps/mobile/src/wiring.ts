@@ -89,6 +89,17 @@ const deviceTokenCredentials = (tokens: DeviceTokenStore): BackupCredentials => 
   },
 });
 
+/**
+ * The demo profile backs up only to demo@'s own account, linked by a code (LP3): Identity's
+ * account session for this profile, never a Developer tools device token (which may name any user).
+ */
+const accountSessionOnly = (c: BackupCredentials): BackupCredentials => ({
+  current: async () => {
+    const signedIn = await c.current();
+    return signedIn?.accountId != null ? signedIn : null;
+  },
+});
+
 /** No server configured (most tests): every request answers "offline", and there is never a token. */
 const NO_CLOUD_BACKUP: CloudBackupAdapters = {
   api: () => {
@@ -186,15 +197,17 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
 
   const backupAdapters = a.cloudBackup ?? NO_CLOUD_BACKUP;
   const deviceToken = backupAdapters.tokens(userId);
+  const demoProfile = userId === DEMO_PROFILE_ID;
+  const credentials = backupAdapters.credentials?.(userId, deviceToken) ?? deviceTokenCredentials(deviceToken);
   const cloudBackupDeps: CloudBackupDeps = {
     // Every profile with a server configured; it sends nothing until it has credentials (LP1).
     available: a.cloudBackup != null,
     // Only the demo profile uploads its planned Gdańsk history (`demo-gdansk-n<i>`, LP3).
-    demoProfile: userId === DEMO_PROFILE_ID,
+    demoProfile,
     repo: new SqliteBackupRepository(db),
     api: backupAdapters.api,
     tokens: deviceToken,
-    credentials: backupAdapters.credentials?.(userId, deviceToken) ?? deviceTokenCredentials(deviceToken),
+    credentials: demoProfile ? accountSessionOnly(credentials) : credentials,
     sha256: backupAdapters.sha256,
     activities: {
       timeline: () => activityLog.archive.timeline(),
