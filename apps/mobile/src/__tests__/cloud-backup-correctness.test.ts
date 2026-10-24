@@ -3,8 +3,8 @@
  * backup was off are reconciled, another account or server starts from scratch, renames go up as
  * PATCH, an empty gap-routes check goes up too, a withdrawn consent leaves "nothing on the server",
  * a retry after travelling sends the same content, the demo profile backs up its planned demo history
- * (only it, only to its own account), a profile without credentials never sends a request, and a
- * build without a backup server sends nothing at all.
+ * (only it, never its recordings or Apple Health imports, and only to its own account), a profile
+ * without credentials never sends a request, and a build without a backup server sends nothing at all.
  */
 import { SqliteActivityRepository } from '@/contexts/activity-log/infrastructure/sqlite-activity-repository';
 import { phone, type PhoneContainer, walk } from '@/test-support/backup-phone';
@@ -431,17 +431,44 @@ describe('Cloud Backup: demo history (LP3)', () => {
     const c = await t.container();
     await c.add('demo-gdansk-n0', walk(0));
     await c.add('demo-gdansk-n1', walk(1));
-    await c.add('rec-1', walk(2));
-    expect(await c.cloudBackup.status.execute()).toMatchObject({ available: true, hasToken: true, total: 3 });
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ available: true, hasToken: true, total: 2 });
     const result = await backedUp(c);
-    expect(result).toEqual({ kind: 'done', report: { uploaded: 3, deleted: 0, failed: 0, refused: 0, error: null } });
-    expect(t.server.uploads()).toEqual(['demo-gdansk-n0', 'demo-gdansk-n1', 'rec-1']);
+    expect(result).toEqual({ kind: 'done', report: { uploaded: 2, deleted: 0, failed: 0, refused: 0, error: null } });
+    expect(t.server.uploads()).toEqual(['demo-gdansk-n0', 'demo-gdansk-n1']);
     expect(t.server.activities.get('demo-gdansk-n0')?.source).toBe('import');
-    expect(t.server.activities.get('rec-1')?.source).toBe('recording');
     // Demo activities added later (a resumed seed) are queued through the outbox like any other.
     await c.add('demo-gdansk-n2', walk(3));
     await c.cloudBackup.run.execute();
     expect(t.server.activities.get('demo-gdansk-n2')?.source).toBe('import');
+  });
+
+  it('on the demo profile, recordings and Apple Health imports stay on the phone: not uploaded, queued or counted', async () => {
+    const t = phone({ profile: 'demo', account: ACCOUNT });
+    const c = await t.container();
+    await c.add('demo-gdansk-n0', walk(0));
+    await c.add('rec-1', walk(1)); // a real walk recorded on the demo profile (e.g. for screenshots)
+    await c.add('hk-1', walk(2));
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ total: 1 });
+    await backedUp(c);
+    expect(await c.cloudBackup.includeHealth.execute(true)).toEqual({ kind: 'ok' });
+    await c.cloudBackup.run.execute({ now: true });
+    // Recorded and imported while backup (and Apple Health) is on: not queued either.
+    await c.add('rec-2', walk(3));
+    await c.add('hk-2', walk(4));
+    await c.dispatcher.dispatchPending();
+    await c.cloudBackup.run.execute({ now: true });
+    expect(t.server.uploads()).toEqual(['demo-gdansk-n0']);
+    expect((await rows(t)).map((r) => r.id)).toEqual(['demo-gdansk-n0']);
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ backedUp: 1, total: 1, unsynced: 0 });
+
+    // A recording queued on the demo profile before this rule: never sent, and not shown as waiting.
+    await t.db.run(
+      "INSERT INTO cb_activities (activity_id, started_at, status, op, gaps_pending, rev, attempts, rename_pending) VALUES ('rec-1', ?, 'none', 'upload', 0, 0, 0, 0)",
+      [Date.parse('2026-10-02T07:00:00Z')]
+    );
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ total: 1, unsynced: 0 });
+    await c.cloudBackup.run.execute({ now: true });
+    expect(t.server.uploads()).toEqual(['demo-gdansk-n0']);
   });
 
   it('on the demo profile, the Developer tools seeder’s demo-<ms> tracks (real position) never leave the phone', async () => {
@@ -481,7 +508,8 @@ describe('Cloud Backup: demo history (LP3)', () => {
     await backedUp(c);
     await c.add('demo-2', walk(2)); // seeded while backup is on: not queued either
     await c.cloudBackup.run.execute({ now: true });
-    expect(t.server.uploads()).toEqual(['rec-1']);
+    expect(t.server.uploads()).toEqual(['rec-1']); // another profile's recording goes up
+    expect(t.server.activities.get('rec-1')?.source).toBe('recording');
     expect([...t.server.activities.keys()]).toEqual(['rec-1']);
     expect((await rows(t)).map((r) => r.id)).toEqual(['rec-1']);
   });
@@ -514,7 +542,7 @@ describe('Cloud Backup: profiles without credentials', () => {
     const c = await t.container();
     await c.add('demo-gdansk-n0', walk(0));
     await c.add('rec-1', walk(1));
-    expect(await c.cloudBackup.status.execute()).toMatchObject({ available: true, hasToken: false, total: 2 });
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ available: true, hasToken: false, total: 1 });
     expect(await c.cloudBackup.enable.execute()).toEqual({ kind: 'failed', error: 'no-token' });
     expect(await c.cloudBackup.run.execute({ now: true })).toEqual({ kind: 'skipped', reason: 'off' });
     await c.runLaunchMaintenance();

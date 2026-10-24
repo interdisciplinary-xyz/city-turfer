@@ -29,7 +29,11 @@ export class GetBackupStatus {
       healthIncluded: s.healthIncluded,
       hasToken: credentials != null,
       hasDeviceToken: deviceToken != null,
-      unsynced: s.enabled ? (await this.d.repo.withWork()).length : 0,
+      // Work that will go up: deletes always; uploads, renames and gap checks only of what may leave
+      // the phone (never a demo-profile recording or an hk-… without its consent, which wait forever).
+      unsynced: s.enabled
+        ? (await this.d.repo.withWork()).filter((b) => b.toState().op === 'delete' || eligible.has(b.activityId)).length
+        : 0,
       serverUrl: st.serverUrl ?? this.d.defaultServerUrl,
       serverUrlOverridden: st.serverUrl != null,
       backedUp,
