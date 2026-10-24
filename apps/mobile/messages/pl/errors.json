@@ -36,10 +36,11 @@
     "not-ready": "Serwer kopii nie jest jeszcze gotowy. Twoje aktywności bezpiecznie czekają na tym telefonie.",
     "busy": "Serwer jest zajęty. Spróbujemy ponownie za chwilę.",
     "outdated": "Zaktualizuj CityTurfer, aby dalej tworzyć kopię zapasową.",
-    "not-available": "Konto demo zostaje na tym telefonie: nigdy nie trafia do kopii.",
+    "not-available": "Kopia w chmurze nie jest dostępna w tej wersji aplikacji: wszystko zostaje na tym telefonie.",
     "needs-device-token": "Serwer testowy wymaga tokenu urządzenia. Dodaj go w Narzędziach dewelopera albo wróć do wbudowanego serwera."
   },
   "backupOffPending": "Kopia zapasowa jest wyłączona. Damy znać serwerowi, gdy następnym razem będziesz online.",
+  "backupOffNeedsCode": "Kopia zapasowa jest wyłączona, ale serwer wciąż ma Twoje aktywności. Aby je usunąć, potwierdź adres e-mail kodem.",
   "backupWaitingForRestore": "Najpierw przywracamy Twoją kopię. Tworzenie kopii ruszy, gdy to się skończy.",
   "backupAction": {
     "invalid-token": "To nie wygląda na token urządzenia. Wklej go ponownie.",
@@ -47,5 +48,13 @@
     "on": "Najpierw wyłącz kopię zapasową.",
     "off": "Najpierw włącz kopię zapasową.",
     "withdrawal-pending": "Serwer nie usunął jeszcze Twojej kopii. Spróbuj ponownie, gdy będziesz online."
+  },
+  "backupLink": {
+    "offline": "Brak połączenia. Wysłanie i sprawdzenie kodu wymaga internetu; nic nie zostało zmienione.",
+    "notLocalProfile": "Tej kopii nie da się włączyć stąd. Wyloguj się, a potem zaloguj adresem e-mail, aby tworzyć kopię zapasową.",
+    "notSignedIn": "Ten profil nie jest już otwarty na tym telefonie. Wróć do ekranu Informacje i spróbuj ponownie.",
+    "emailMismatch": "Ten kod dotyczy innego adresu. Użyj najnowszego kodu wysłanego na adres {email}.",
+    "profileTaken": "Historia tego profilu należy teraz do innego konta CityTurfer. Zaloguj się adresem e-mail tego konta, aby tworzyć jej kopię zapasową.",
+    "linkedElsewhere": "Konto {email} ma już swoją historię w innym profilu na tym telefonie. Aby włączyć kopię tamtego profilu, wyloguj się, a potem zaloguj kodem wysłanym na adres {email}."
   }
 }

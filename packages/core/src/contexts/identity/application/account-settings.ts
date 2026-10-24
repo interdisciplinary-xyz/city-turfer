@@ -102,9 +102,20 @@ async function followEmail(d: IdentityDeps, before: SignedInAccount, email: stri
   await at.a.credentials.save({ ...at.session, account: { ...at.session.account, email } });
 }
 
-/** Caches the account's name for offline display (best effort: the server holds the real one). */
+/**
+ * Caches the account's name for offline display (best effort: the server holds the real one). A
+ * server without a name over a phone that keeps none writes nothing: both show the same, and a
+ * linked local profile keeps its default name (accountUser).
+ */
 async function cacheName(d: IdentityDeps, at: SignedInAccount, name: string | null): Promise<void> {
-  await d.names?.write(at.entry.profileId, name).catch(() => undefined);
+  const names = d.names;
+  if (!names) {
+    return;
+  }
+  if (name === null && (await names.read(at.entry.profileId).catch(() => undefined)) === undefined) {
+    return;
+  }
+  await names.write(at.entry.profileId, name).catch(() => undefined);
 }
 
 /**

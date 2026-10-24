@@ -9,7 +9,7 @@ import { ActivityType, BoundingBox, Cursor, IsoDateTime, Limit, LonLat, TimeZone
 
 export const ActivitySource = z.enum(['recording', 'apple-health', 'import']).openapi('ActivitySource', {
   description:
-    '`recording`: a finished Recording Session; `apple-health`: imported from Apple Health (`hk-…` id, needs the `apple-health-in-cloud-sync` consent); `import`: any other import. Demo history (`demo-…`) is never uploaded.',
+    '`recording`: a finished Recording Session; `apple-health`: imported from Apple Health (`hk-…` id, needs the `apple-health-in-cloud-sync` consent); `import`: any other import. Demo history (`demo-…` ids) is uploaded only from the demo profile (demo@cityturfer.com), as `import`; demo history seeded on any other profile never leaves the phone.',
   example: 'recording',
 });
 

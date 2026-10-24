@@ -80,7 +80,7 @@ export function describeRestoreProgress(p: RestoreProgress | null, t: T<'backup'
 export function describeRestoreResult(
   r: RestoreResult | null,
   t: T<'backup'>,
-  { health = false }: { health?: boolean } = {}
+  { health = false, localProfile = false }: { health?: boolean; localProfile?: boolean } = {}
 ): string | null {
   if (!r) {
     return null;
@@ -99,6 +99,10 @@ export function describeRestoreResult(
     case 'paused':
       return t(`paused.${r.reason}`);
     default:
-      return r.reason === 'no-token' ? t('restore.signInFirst') : null;
+      // A local profile (mock admin, demo) gets credentials from a code in Info, not a sign-in.
+      if (r.reason !== 'no-token') {
+        return null;
+      }
+      return localProfile ? t('restore.linkFirst') : t('restore.signInFirst');
   }
 }

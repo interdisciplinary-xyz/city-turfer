@@ -1,7 +1,7 @@
 import type { ActivityArchive } from '@/contexts/activity-log';
 
 import type { ActivityBackup, BackupStep } from '../domain/activity-backup';
-import { MAX_TRACK_POINTS, mayUpload, nameToUpload, sourceOf, trackHashInput } from '../domain/backup-policy';
+import { MAX_TRACK_POINTS, mayUpload, nameToUpload, trackHashInput, uploadSourceOf } from '../domain/backup-policy';
 import type { BackupErrorCode } from '../domain/backup-settings';
 import { connect, deliverWithdrawals, errorOf } from './backup-access';
 import type {
@@ -179,7 +179,8 @@ export class RunBackup {
       page = cursor;
     }
 
-    const local = (await this.d.activities.timeline()).filter((a) => mayUpload(a.id, healthIncluded));
+    const scope = { healthIncluded, demoProfile: this.d.demoProfile };
+    const local = (await this.d.activities.timeline()).filter((a) => mayUpload(a.id, scope));
     // What the phone has now of the Activities the server also has (one track at a time).
     const compared = new Map<
       string,
@@ -266,8 +267,8 @@ export class RunBackup {
       }
       return this.failure(b, step, rev, r.failure, report);
     }
-    if (!mayUpload(id, healthIncluded)) {
-      return null; // an Apple Health import without that consent: stays queued, not sent
+    if (!mayUpload(id, { healthIncluded, demoProfile: this.d.demoProfile })) {
+      return null; // an Apple Health import without that consent (or demo history elsewhere): stays queued, not sent
     }
     const archive = await this.d.activities.archiveOf(id);
     if (!archive) {
@@ -287,7 +288,7 @@ export class RunBackup {
     }
 
     const meta = {
-      source: sourceOf(id) === 'apple-health' ? ('apple-health' as const) : ('recording' as const),
+      source: uploadSourceOf(id), // demo history goes up as `import` (only from the demo profile)
       // Kept with the Activity when it was saved: a retry after travelling sends the same content.
       timeZone: archive.timeZone,
     };

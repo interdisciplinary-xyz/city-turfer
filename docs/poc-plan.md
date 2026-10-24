@@ -216,8 +216,9 @@ expo-task-mgr ─────▶ │  RECORDING  │ ───(outbox)───�
 - **Local profiles in every build** (superseded rule): the PoC once refused to start a production
   build in mock mode (`EXPO_PUBLIC_AUTH_MODE`). Founder decision B6
   (`docs/plans/backend-plan-2026-10-22.md`) replaced it: the local `admin` and `demo` profiles keep
-  working in every build, `demo` never talks to the API, and real accounts sign in with an email
-  code against the API. There is no auth-mode switch any more.
+  working in every build and real accounts sign in with an email code against the API. Since
+  2026-10-24 both local profiles can also back up after confirming their own address by code
+  (`docs/decisions/local-profile-backup-2026-10-24.md`). There is no auth-mode switch any more.
 
 ### 4.1 Recording context
 

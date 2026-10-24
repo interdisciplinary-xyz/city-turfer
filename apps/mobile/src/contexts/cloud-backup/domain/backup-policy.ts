@@ -1,3 +1,5 @@
+import { isGdanskPlanActivityId } from '@cityturfer/core/demo';
+
 import { DomainError, type TrackPoint } from '@/shared-kernel';
 
 /**
@@ -31,12 +33,44 @@ export function canonicalTrackPoints(track: readonly TrackPoint[]): [number, num
 /** The text whose SHA-256 is the server's `trackHash`. */
 export const trackHashInput = (track: readonly TrackPoint[]): string => JSON.stringify(canonicalTrackPoints(track));
 
+/** What decides whether an Activity may leave the phone, beyond its id. */
+export interface UploadScope {
+  /** The Turfer turned on "Include Apple Health workouts" (its own consent, decision D2). */
+  healthIncluded: boolean;
+  /** The signed-in profile is the demo profile: its generated Gdańsk history is its content (LP3). */
+  demoProfile: boolean;
+}
+
 /**
- * Demo history is never uploaded; Apple Health imports only with their own consent (decision D2).
+ * Recordings always; Apple Health imports only with their own consent (decision D2); demo history
+ * only from the demo profile, and only the planned Gdańsk history (`demo-gdansk-n<i>`, LP3). Any
+ * other `demo-…` Activity never leaves the phone: seeded on another profile, or by the Developer
+ * tools seeder (`demo-<ms>`, tracks around the phone's real position) on the demo profile itself.
  */
-export function mayUpload(activityId: string, healthIncluded: boolean): boolean {
-  const kind = sourceOf(activityId);
-  return kind === 'recording' || (kind === 'apple-health' && healthIncluded);
+export function mayUpload(activityId: string, scope: UploadScope): boolean {
+  switch (sourceOf(activityId)) {
+    case 'recording':
+      return true;
+    case 'apple-health':
+      return scope.healthIncluded;
+    case 'demo':
+      return scope.demoProfile && isGdanskPlanActivityId(activityId);
+  }
+}
+
+/** Where an uploaded Activity came from, as the server's `source` names it. */
+export type UploadSourceName = 'recording' | 'apple-health' | 'import';
+
+/** The `source` an upload carries: demo history is an import (as the local API seeds it). */
+export function uploadSourceOf(activityId: string): UploadSourceName {
+  switch (sourceOf(activityId)) {
+    case 'apple-health':
+      return 'apple-health';
+    case 'demo':
+      return 'import';
+    case 'recording':
+      return 'recording';
+  }
 }
 
 /** Wait before the n-th retry of one Activity: 30 s, doubling, at most 6 h. */

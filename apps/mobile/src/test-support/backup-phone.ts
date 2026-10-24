@@ -43,6 +43,8 @@ export interface PhoneOptions {
   route?: DeviceAdapters['router']['route'];
   /** Gap estimation on (default off). */
   gapRouting?: boolean;
+  /** No backup server configured in this build (`cloudBackup` adapters omitted): nothing is ever sent. */
+  noBackupAdapters?: boolean;
   /** Extra adapters (e.g. a HealthStore). */
   extra?: Partial<DeviceAdapters>;
 }
@@ -81,21 +83,23 @@ export function phone(options: PhoneOptions = {}) {
     ids: { next: () => `session-${++n}` },
     clock: { now: () => now },
     isForeground: () => app.foreground,
-    cloudBackup: {
-      api: server.factory,
-      tokens: () => tokens,
-      sha256: nodeSha256,
-      credentials: (_: string, device: DeviceTokenStore) => ({
-        current: async () => {
-          const signedIn = await account.current();
-          if (signedIn) {
-            return signedIn;
-          }
-          const token = await device.read();
-          return token ? { token, accountId: null } : null;
+    cloudBackup: options.noBackupAdapters
+      ? undefined
+      : {
+          api: server.factory,
+          tokens: () => tokens,
+          sha256: nodeSha256,
+          credentials: (_: string, device: DeviceTokenStore) => ({
+            current: async () => {
+              const signedIn = await account.current();
+              if (signedIn) {
+                return signedIn;
+              }
+              const token = await device.read();
+              return token ? { token, accountId: null } : null;
+            },
+          }),
         },
-      }),
-    },
     timeZone: () => app.timeZone,
     ...options.extra,
   };

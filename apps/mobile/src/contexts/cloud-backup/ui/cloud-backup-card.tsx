@@ -8,7 +8,13 @@ import { Button, Card } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
 
 import type { BackupCommandResult } from '../contract';
-import { ACTION_ERROR_KEY, type BackupErrorKey, ERROR_KEY } from './cloud-backup-card.constants';
+import {
+  ACTION_ERROR_KEY,
+  type BackupErrorKey,
+  type CloudBackupCardProps,
+  ERROR_KEY,
+} from './cloud-backup-card.constants';
+import { cloudBackupCardMode, offPendingNotice, shownLastError } from './cloud-backup-card-state';
 import { describeProgress, describeRefused, describeRestoreProgress, describeRestoreResult } from './format';
 import { useCloudBackup, useRestore } from './hooks';
 
@@ -30,9 +36,11 @@ const showError = (e: unknown) => {
 
 /**
  * Info screen card (the device token and testing server are in Developer tools): consent switch ("Back up to CityTurfer cloud"), Apple Health
- * switch, progress and "Back up now". The token is entered secure and never shown again.
+ * switch, progress and "Back up now". The token is entered secure and never shown again. A local
+ * profile without credentials gets "Email me a code" to its own address instead (`link`, from the
+ * screen: Identity knows the address).
  */
-export function CloudBackupCard() {
+export function CloudBackupCard({ link }: CloudBackupCardProps) {
   const p = usePalette();
   const t = useT('backup');
   const te = useT('errors');
@@ -63,42 +71,81 @@ export function CloudBackupCard() {
       .finally(() => setBusy(false));
   };
 
+  // Turning off that couldn't reach the server shows from the status (offPendingNotice), worded
+  // for whether this profile needs a code first.
   const switched = (r: BackupCommandResult, turningOn: boolean) => {
-    if (r.kind === 'failed') {
-      setNotice(turningOn ? ERROR_KEY[r.error] : 'backupOffPending');
+    if (r.kind === 'failed' && turningOn) {
+      setNotice(ERROR_KEY[r.error]);
     }
   };
 
-  const restoreMessage = describeRestoreResult(restore.result, t, { health: Platform.OS === 'ios' });
-  const errorKey = notice ?? (status.enabled && status.lastError ? ERROR_KEY[status.lastError] : null);
+  const mode = cloudBackupCardMode(status, link);
+  const restoreMessage = describeRestoreResult(restore.result, t, {
+    health: Platform.OS === 'ios',
+    localProfile: typeof link === 'object' && link !== null,
+  });
+  // shownLastError also hides `auth` while the code offer shows ("Sign in again" can't reach the server).
+  const lastError = shownLastError(status, mode);
+  const offNotice = offPendingNotice(status, mode);
+  const errorKey = notice ?? offNotice ?? (lastError ? ERROR_KEY[lastError] : null);
   const error = errorKey ? te(errorKey) : null;
+  /** Backup off with the server's copy still to delete: a status, not a failure. */
+  const errorIsStatus = !notice && offNotice !== null;
+  /** Restore needs a working server session: not while the code offer stands. */
+  const canRestore = status.hasToken && !mode.offerLink;
 
   return (
     <Card style={{ gap: SPACE.md }}>
       <Text style={[s.h2, { color: p.text }]}>{t('title')}</Text>
       <Text style={{ color: p.muted }}>{t('pitch')}</Text>
-      {!status.hasToken && (
+      {mode.signInFirst && (
         <Text testID='backup-sign-in-first' style={{ color: p.text }}>
           {te(ERROR_KEY['no-token'])}
         </Text>
       )}
+      {mode.offerLink && typeof link === 'object' && link && (
+        <>
+          <Text testID='backup-link-offer' style={{ color: p.text }}>
+            {t('link.offer', { email: link.email })}
+          </Text>
+          <Text style={{ color: p.muted, fontSize: FONT_SIZE.caption }}>{t('link.mailboxNote')}</Text>
+          {/* The code turns backup on (consent): where the data goes, when the switch isn't there to say it. */}
+          {!mode.showSwitch && (
+            <Text testID='backup-link-privacy' style={{ color: p.muted, fontSize: FONT_SIZE.caption }}>
+              {t('privacy')}
+            </Text>
+          )}
+          <Button
+            testID='backup-link-request'
+            label={t('link.request')}
+            color={ACCENT}
+            disabled={busy}
+            onPress={link.onRequestCode}
+          />
+        </>
+      )}
 
-      <View style={s.row}>
-        <Text style={[s.label, s.grow, { color: p.text }]}>{t('switchLabel')}</Text>
-        <Switch
-          testID='backup-switch'
-          accessibilityLabel={t('switchLabel')}
-          value={status.enabled}
-          disabled={busy || (!status.enabled && !status.hasToken)}
-          onValueChange={(on) =>
-            on
-              ? run(async () => switched(await setEnabled(true), true))
-              : confirmOff(() => run(async () => switched(await setEnabled(false), false)))
-          }
-          trackColor={{ true: ACCENT, false: p.border }}
-        />
-      </View>
-      <Text style={{ color: p.muted, fontSize: FONT_SIZE.caption }}>{t('privacy')}</Text>
+      {mode.showSwitch && (
+        <View style={s.row}>
+          <Text style={[s.label, s.grow, { color: p.text }]}>{t('switchLabel')}</Text>
+          <Switch
+            testID='backup-switch'
+            accessibilityRole='switch'
+            accessibilityLabel={t('switchLabel')}
+            accessibilityState={{ checked: status.enabled, disabled: busy || (!status.enabled && !status.hasToken) }}
+            value={status.enabled}
+            disabled={busy || (!status.enabled && !status.hasToken)}
+            onValueChange={(on) =>
+              on
+                ? run(async () => switched(await setEnabled(true), true))
+                : confirmOff(() => run(async () => switched(await setEnabled(false), false)))
+            }
+            trackColor={{ true: ACCENT, false: p.border }}
+          />
+        </View>
+      )}
+      {/* "Turning this off deletes that copy": only next to the switch it speaks of. */}
+      {mode.showSwitch && <Text style={{ color: p.muted, fontSize: FONT_SIZE.caption }}>{t('privacy')}</Text>}
 
       {status.enabled && Platform.OS === 'ios' && (
         <>
@@ -106,7 +153,9 @@ export function CloudBackupCard() {
             <Text style={[s.label, s.grow, { color: p.text }]}>{t('healthSwitchLabel')}</Text>
             <Switch
               testID='backup-health-switch'
+              accessibilityRole='switch'
               accessibilityLabel={t('healthSwitchLabel')}
+              accessibilityState={{ checked: status.healthIncluded, disabled: busy }}
               value={status.healthIncluded}
               disabled={busy}
               onValueChange={(on) => run(async () => switched(await setHealthIncluded(on), on))}
@@ -128,7 +177,7 @@ export function CloudBackupCard() {
         </Text>
       )}
       {error && (
-        <Text testID='backup-error' style={{ color: p.danger, fontSize: FONT_SIZE.caption }}>
+        <Text testID='backup-error' style={{ color: errorIsStatus ? p.muted : p.danger, fontSize: FONT_SIZE.caption }}>
           {error}
         </Text>
       )}
@@ -151,7 +200,7 @@ export function CloudBackupCard() {
         />
       )}
 
-      {status.hasToken && (
+      {canRestore && (
         <>
           <Text style={{ color: p.muted, fontSize: FONT_SIZE.caption }}>{t('restore.actionNote')}</Text>
           {restore.running && (

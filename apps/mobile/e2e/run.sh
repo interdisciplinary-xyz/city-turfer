@@ -47,12 +47,12 @@ API_URL="${E2E_API_URL:-http://127.0.0.1:8787}"
 AUTH_FIXED_CODE="${AUTH_FIXED_CODE:-000000}"
 EXCLUDE=()
 if ! curl -fs "$API_URL/v1/health" >/dev/null 2>&1 && ! curl -s -o /dev/null "$API_URL/"; then
-  if [[ $# -gt 0 && "$1" == "15-account-settings" ]]; then
+  if [[ $# -gt 0 && ( "$1" == "15-account-settings" || "$1" == "17-local-profile-backup" ) ]]; then
     echo "The API is not answering at $API_URL. Start it: AUTH_FIXED_CODE=$AUTH_FIXED_CODE pnpm --filter @cityturfer/api dev" >&2
     echo "and start Metro with EXPO_PUBLIC_API_URL=http://127.0.0.1:8787 (docs/quality/e2e.md)." >&2
     exit 1
   fi
-  echo "WARNING: API not answering at $API_URL; skipping flows tagged 'account' (15-account-settings NOT run)." >&2
+  echo "WARNING: API not answering at $API_URL; skipping flows tagged 'account' (15-account-settings and 17-local-profile-backup NOT run)." >&2
   EXCLUDE=(--exclude-tags=account)
 fi
 

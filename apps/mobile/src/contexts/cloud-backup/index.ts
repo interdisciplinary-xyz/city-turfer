@@ -1,4 +1,5 @@
 // Public API of the Cloud Backup context: one-way backup of Activities to the CityTurfer API.
+import { AfterCredentialsArrived } from './application/after-credentials';
 import type { CloudBackupDeps } from './application/ports';
 import { QueueBackupChanges } from './application/queue-changes';
 import { DismissRestoreOffer, GetRestoreOffer, RestoreFromBackup } from './application/restore';
@@ -20,12 +21,15 @@ export function createCloudBackupApi(deps: CloudBackupDeps) {
   const restore = new RestoreFromBackup(deps, () => run.whenIdle());
   run = new RunBackup(deps, () => restore.isRunning);
   const restoreOffer = new GetRestoreOffer(deps);
+  const enable = new EnableBackup(deps, () => run.whenIdle());
   return {
     status: new GetBackupStatus(deps, () => run.isRunning),
     saveToken: new SaveDeviceToken(deps),
     removeToken: new RemoveDeviceToken(deps),
     useServer: new UseBackupServer(deps),
-    enable: new EnableBackup(deps, () => run.whenIdle()),
+    enable,
+    /** A local profile's credentials arrived (linked by a code): turn on, carry on, or stay off. */
+    afterCredentials: new AfterCredentialsArrived(deps, enable, run),
     disable: new DisableBackup(deps),
     includeHealth: new IncludeHealthWorkouts(deps, () => run.whenIdle()),
     run,
@@ -37,6 +41,11 @@ export function createCloudBackupApi(deps: CloudBackupDeps) {
   };
 }
 export type CloudBackupApi = ReturnType<typeof createCloudBackupApi>;
+export {
+  type AfterCredentialsPlan,
+  afterCredentialsPlan,
+  type AfterCredentialsResult,
+} from './application/after-credentials';
 export type {
   ActivitySink,
   ActivitySource,

@@ -36,10 +36,11 @@
     "not-ready": "The backup server isn't ready yet. Your activities wait safely on this phone.",
     "busy": "The server is busy. We'll try again in a moment.",
     "outdated": "Update CityTurfer to keep backing up.",
-    "not-available": "The demo account stays on this phone: it is never backed up.",
+    "not-available": "Cloud backup isn’t available in this build: everything stays on this phone.",
     "needs-device-token": "A testing server needs a device token. Add one in Developer tools, or go back to the built-in server."
   },
   "backupOffPending": "Backup is off. We'll let the server know next time you're online.",
+  "backupOffNeedsCode": "Backup is off, but the server still has your copy. To have it deleted, confirm your email with a code.",
   "backupWaitingForRestore": "Restoring your backup first. Backing up carries on once it has finished.",
   "backupAction": {
     "invalid-token": "That doesn't look like a device token. Paste it again.",
@@ -47,5 +48,13 @@
     "on": "Turn backup off first.",
     "off": "Turn backup on first.",
     "withdrawal-pending": "The server hasn't deleted your backup copy yet. Try again once you're online."
+  },
+  "backupLink": {
+    "offline": "No connection. Sending and checking the code needs the internet; nothing was changed.",
+    "notLocalProfile": "This profile can’t be backed up from here. Sign out, then sign in with your email to back up.",
+    "notSignedIn": "This profile isn’t open on this phone any more. Go back to Info and try again.",
+    "emailMismatch": "That code is for another address. Use the latest code we sent to {email}.",
+    "profileTaken": "This profile’s history now belongs to another CityTurfer account. Sign in with that account’s email to back it up.",
+    "linkedElsewhere": "The account for {email} already keeps its history in another profile on this phone. To back that profile up, sign out, then sign in with a code sent to {email}."
   }
 }

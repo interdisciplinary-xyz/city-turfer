@@ -55,8 +55,10 @@ export interface User {
 }
 
 /**
- * Local profiles that never have an account and never talk to the API (the demo profile with its
- * generated Gdańsk history). Every other profile reaches the server only once it has credentials.
+ * Local profiles never placed for another account's sign-in (the demo profile with its generated
+ * Gdańsk history): no adoption, no "use this phone's history?". The profile may still be linked to
+ * an account for its own address (`AccountProfiles.linkOwn`, docs/decisions/local-profile-backup-2026-10-24.md).
  */
-const LOCAL_ONLY_PROFILES: readonly string[] = ['demo'];
-export const isLocalOnlyProfile = (profileId: string): boolean => LOCAL_ONLY_PROFILES.includes(profileId);
+export const DEMO_PROFILE_ID: UserId = userId('demo');
+export const NEVER_ADOPTED: readonly string[] = [DEMO_PROFILE_ID];
+export const isNeverAdopted = (profileId: string): boolean => NEVER_ADOPTED.includes(profileId);

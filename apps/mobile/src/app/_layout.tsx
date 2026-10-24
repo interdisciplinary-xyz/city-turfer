@@ -88,6 +88,10 @@ function Gate() {
           name='account-password'
           options={{ headerShown: true, title: t('screens.accountPassword'), headerBackTitle: back }}
         />
+        <Stack.Screen
+          name='link-backup'
+          options={{ headerShown: true, title: t('screens.linkBackup'), headerBackTitle: back }}
+        />
         <Stack.Screen name='info' options={{ headerShown: true, title: t('screens.info'), headerBackTitle: back }} />
         <Stack.Screen name='city' options={{ headerShown: true, title: t('screens.city'), headerBackTitle: back }} />
       </Stack.Protected>

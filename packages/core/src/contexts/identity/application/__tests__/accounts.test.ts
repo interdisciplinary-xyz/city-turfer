@@ -224,9 +224,9 @@ describe('signing out and deleting the account', () => {
 });
 
 describe('AccountProfiles', () => {
-  it('never links the demo profile, nor a profile another account holds', () => {
+  it('never places the demo profile for another account, nor a profile another account holds', () => {
     const p = AccountProfiles.empty();
-    expect(() => p.link({ id: 'u1', email: 'a@b.cd' }, userId('demo'))).toThrow('account.local-only-profile');
+    expect(() => p.link({ id: 'u1', email: 'a@b.cd' }, userId('demo'))).toThrow('account.never-adopted');
     p.link({ id: 'u1', email: 'a@b.cd' }, userId('admin'));
     expect(() => p.link({ id: 'u2', email: 'x@b.cd' }, userId('admin'))).toThrow('account.profile-taken');
   });

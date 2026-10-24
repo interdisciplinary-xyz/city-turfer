@@ -1,5 +1,5 @@
 import { DomainError } from '../../../shared-kernel';
-import { isLocalOnlyProfile, type UserId, userId } from './user';
+import { isNeverAdopted, type UserId, userId } from './user';
 
 /** A CityTurfer account (server user) as the phone knows it. */
 export interface Account {
@@ -27,6 +27,9 @@ export const ADOPTABLE_PROFILE = 'admin';
 
 const MAX_ID = 64;
 
+/** E-mails compare trimmed and case-insensitively (the server may keep another case). */
+const sameEmail = (a: string, b: string): boolean => a.trim().toLowerCase() === b.trim().toLowerCase();
+
 /** A new local profile id for an account: `a-` + its id, limited to what a profile id allows. */
 export function profileIdForAccount(accountId: string): UserId {
   return userId(`a-${accountId.replace(/[^a-z0-9_-]/gi, '_')}`.slice(0, MAX_ID));
@@ -36,9 +39,11 @@ export type ProfilePlacement = { kind: 'known'; profileId: UserId } | { kind: 'a
 
 /**
  * Accounts ↔ local profiles on this phone. Invariants: one profile per account and one account per
- * profile; a local-only profile (demo) never gets an account; the adoptable `admin` history is only
- * linked after the Turfer said yes, and from then on never opens with the mock password; a deleted
- * account's kept profile is found again by its email.
+ * profile; a never-adopted profile (demo) is only ever linked to its own address (`linkOwn`); the
+ * adoptable `admin` history goes to another address only after the Turfer said yes, and from then
+ * on never opens with the mock password; a local profile linked to its own address still does
+ * (LP2: the password opens the phone's data, never the server); a deleted account's kept profile
+ * is found again by its email.
  */
 export class AccountProfiles {
   private constructor(private state: AccountProfilesState) {}
@@ -97,12 +102,18 @@ export class AccountProfiles {
   }
 
   /**
-   * A local profile opens with its password (mock admin) only while no account's data lives in it.
-   * Once an account adopted it (or the account was deleted and its data kept here) only that
-   * account's email sign-in opens it: the mock password is public.
+   * A local profile opens with its password (mock admin, demo) while no other address's data lives
+   * in it. Once an account of another e-mail adopted it (or that account was deleted and its data
+   * kept here) only that account's sign-in opens it: the mock password is public. Linked to its
+   * own address (`linkOwn`) it still opens with the password, on this phone only.
    */
-  opensWithPassword(profileId: UserId): boolean {
-    return !this.state.entries.some((e) => e.profileId === profileId);
+  opensWithPassword(profileId: UserId, profileEmail: string): boolean {
+    return !this.heldByOtherEmail(profileId, profileEmail);
+  }
+
+  /** A local profile may be linked to its own address (`linkOwn`) while no other address holds it. */
+  linkableToOwnEmail(profileId: UserId, profileEmail: string): boolean {
+    return !this.heldByOtherEmail(profileId, profileEmail);
   }
 
   /**
@@ -114,7 +125,7 @@ export class AccountProfiles {
     if (linked) {
       return linked;
     }
-    if (!signedIn || isLocalOnlyProfile(signedIn)) {
+    if (!signedIn || isNeverAdopted(signedIn)) {
       return null;
     }
     const owner = this.state.entries.find((e) => e.profileId === signedIn && !e.deleted);
@@ -123,8 +134,12 @@ export class AccountProfiles {
 
   /** Links the account to a profile (replacing a deleted account's entry for it) and signs it in. */
   link(account: Account, profileId: UserId): void {
-    if (isLocalOnlyProfile(profileId)) {
-      throw new DomainError('account.local-only-profile', profileId);
+    // A never-adopted profile (demo) only ever goes back to its own address, linked by linkOwn.
+    if (
+      isNeverAdopted(profileId) &&
+      !this.state.entries.some((e) => e.profileId === profileId && sameEmail(e.email, account.email))
+    ) {
+      throw new DomainError('account.never-adopted', profileId);
     }
     const owner = this.state.entries.find((e) => e.profileId === profileId && !e.deleted);
     if (owner && owner.accountId !== account.id) {
@@ -134,6 +149,32 @@ export class AccountProfiles {
     const kept = this.state.entries.find((e) => e.profileId === profileId && e.deleted);
     if (kept && kept.email !== account.email) {
       throw new DomainError('account.profile-taken', profileId);
+    }
+    const others = this.state.entries.filter((e) => e.accountId !== account.id && e.profileId !== profileId);
+    this.state = {
+      entries: [...others, { accountId: account.id, email: account.email, profileId, deleted: false }],
+      current: account.id,
+    };
+  }
+
+  /**
+   * Links a local profile (mock admin, demo) to the account of its own address, proven by an
+   * e-mailed code, and signs that account in: same profile id, same database. Refuses another
+   * address (`account.email-mismatch`), a profile whose data belongs to another address
+   * (`account.profile-taken`) and an account whose data already lives in another profile here
+   * (`account.linked-elsewhere`). An entry of the same address (an older account for it, deleted
+   * or not) is replaced: the code proves the mailbox. Linking again is a no-op.
+   */
+  linkOwn(account: Account, profileId: UserId, profileEmail: string): void {
+    if (!sameEmail(account.email, profileEmail)) {
+      throw new DomainError('account.email-mismatch', profileId);
+    }
+    if (this.heldByOtherEmail(profileId, profileEmail)) {
+      throw new DomainError('account.profile-taken', profileId);
+    }
+    const elsewhere = this.profileOf(account.id);
+    if (elsewhere && elsewhere !== profileId) {
+      throw new DomainError('account.linked-elsewhere', elsewhere);
     }
     const others = this.state.entries.filter((e) => e.accountId !== account.id && e.profileId !== profileId);
     this.state = {
@@ -178,6 +219,11 @@ export class AccountProfiles {
 
   private isTaken(profileId: UserId): boolean {
     return this.state.entries.some((e) => e.profileId === profileId && !e.deleted);
+  }
+
+  /** Data of another address lives in the profile (an account's or a deleted account's kept data). */
+  private heldByOtherEmail(profileId: UserId, email: string): boolean {
+    return this.state.entries.some((e) => e.profileId === profileId && !sameEmail(e.email, email));
   }
 
   /** Any account's data lives in the profile, a deleted account's kept data included. */

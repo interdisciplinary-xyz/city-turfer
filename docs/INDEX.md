@@ -207,6 +207,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   the Turfer picks a city from a bundled catalogue and the Turf Map (and the Record map before the
   first fix) opens on it; stored per user as a catalogue id, sent to the API only with cloud backup
   consent
+- ✅ [`decisions/local-profile-backup-2026-10-24.md`](decisions/local-profile-backup-2026-10-24.md):
+  The local profiles admin@ and demo@cityturfer.com can back up to the server after the Turfer
+  proves the profile's mailbox with an e-mailed code; the app password still opens them on the
+  phone, and the demo profile uploads its generated Gdańsk history
 - ✅
   [`decisions/maplibre-over-react-native-maps-2026-10-15.md`](decisions/maplibre-over-react-native-maps-2026-10-15.md):
   Decision record — MapLibre + OpenFreeMap for every map instead of react-native-maps

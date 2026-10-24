@@ -581,7 +581,7 @@ export interface components {
       status: 'ok';
       /**
        * @description Version of the API contract.
-       * @example 0.6.0
+       * @example 0.6.1
        */
       version: string;
       /**
@@ -996,7 +996,7 @@ export interface components {
      */
     ActivityType: 'walk' | 'run' | 'cycle';
     /**
-     * @description `recording`: a finished Recording Session; `apple-health`: imported from Apple Health (`hk-…` id, needs the `apple-health-in-cloud-sync` consent); `import`: any other import. Demo history (`demo-…`) is never uploaded.
+     * @description `recording`: a finished Recording Session; `apple-health`: imported from Apple Health (`hk-…` id, needs the `apple-health-in-cloud-sync` consent); `import`: any other import. Demo history (`demo-…` ids) is uploaded only from the demo profile (demo@cityturfer.com), as `import`; demo history seeded on any other profile never leaves the phone.
      * @example recording
      * @enum {string}
      */

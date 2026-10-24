@@ -49,14 +49,14 @@ migrations, Vercel env, `auth:adopt`) is not visible in the repo: pending (found
 
 ## Founder decisions (2026-10-22)
 
-| #   | Decision                                                                                                                                               |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| B1  | Backup stays **opt-in, off by default**; using the app without an account stays a full mode, with no nag                                               |
-| B2  | Release 1 = **real accounts + restore to a new phone + delete account + export + rename**. Two phones editing at once, server turf and social: later   |
-| B3  | Sign-in by **e-mailed one-time code** (Better Auth `emailOTP`, mail via Brevo). No passwords, no native module. Sign in with Apple with a later build  |
-| B4  | **Withdrawing a consent erases only the server copy**, never anything on a phone (no tombstones)                                                       |
-| B5  | Apple Health: unchanged from v0.8.0 — `hk-*` uploads only behind its own opt-in; withdrawing it erases those copies; `source` now derived from the id  |
-| B6  | The local `admin` and `demo` profiles keep working in every build; `demo` never talks to the API; `admin` history joins an account only after a prompt |
+| #   | Decision                                                                                                                                                                                                                                         |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| B1  | Backup stays **opt-in, off by default**; using the app without an account stays a full mode, with no nag                                                                                                                                         |
+| B2  | Release 1 = **real accounts + restore to a new phone + delete account + export + rename**. Two phones editing at once, server turf and social: later                                                                                             |
+| B3  | Sign-in by **e-mailed one-time code** (Better Auth `emailOTP`, mail via Brevo). No passwords, no native module. Sign in with Apple with a later build                                                                                            |
+| B4  | **Withdrawing a consent erases only the server copy**, never anything on a phone (no tombstones)                                                                                                                                                 |
+| B5  | Apple Health: unchanged from v0.8.0 — `hk-*` uploads only behind its own opt-in; withdrawing it erases those copies; `source` now derived from the id                                                                                            |
+| B6  | The local `admin` and `demo` profiles keep working in every build; `demo` never talks to the API (superseded 2026-10-24 by LP1–LP3 in `docs/decisions/local-profile-backup-2026-10-24.md`); `admin` history joins an account only after a prompt |
 
 ## What `feat/backend-sync` built
 

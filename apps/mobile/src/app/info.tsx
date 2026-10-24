@@ -1,6 +1,7 @@
 import { NAME, RADIUS, SPACE } from '@cityturfer/brand';
+import { router, useFocusEffect } from 'expo-router';
 import * as Updates from 'expo-updates';
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { ACCENT } from '@/constants/colors';
@@ -8,6 +9,7 @@ import { useGapEstimationSetting } from '@/contexts/activity-log/ui/hooks';
 import { BackupDeveloperCard } from '@/contexts/cloud-backup/ui/backup-developer-card';
 import { CloudBackupCard } from '@/contexts/cloud-backup/ui/cloud-backup-card';
 import { AppleHealthCard } from '@/contexts/health-sync/ui/apple-health-card';
+import { useBackupLinkTarget } from '@/contexts/identity/ui/hooks';
 import { announceDeveloperTools, DeveloperToolsCard } from '@/dev/developer-tools';
 import { LANGUAGE_SETTINGS, type LanguageSetting, type Locale, useLanguageSetting, useT } from '@/i18n';
 import { Button, Card, tint } from '@/ui-kit/components';
@@ -84,6 +86,27 @@ export default function InfoScreen() {
   const showDevTools = __DEV__ || devUnlocked;
   const [check, setCheck] = useState<UpdateCheck>('idle');
   const [estimateGaps, setEstimateGaps] = useGapEstimationSetting();
+  // A local profile (mock admin, demo) backs up after a code to its own address (Identity knows it).
+  const linkTarget = useBackupLinkTarget();
+  // One push per tap: a double tap would open the code screen twice (and send two codes). Ready
+  // again once Info is back in view.
+  const openingLink = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      openingLink.current = false;
+    }, [])
+  );
+  const requestCode = () => {
+    if (openingLink.current) {
+      return;
+    }
+    openingLink.current = true;
+    router.push('/link-backup');
+  };
+  const backupLink =
+    linkTarget === undefined
+      ? ('loading' as const)
+      : linkTarget && { email: linkTarget.email, onRequestCode: requestCode };
 
   const onVersionLongPress = () => {
     if (++taps.current >= DEV_TAPS && !devUnlocked) {
@@ -155,7 +178,7 @@ export default function InfoScreen() {
         <Text style={{ color: p.muted, fontSize: 13 }}>{t('estimateGapsOff')}</Text>
       </Card>
       <AppleHealthCard />
-      <CloudBackupCard />
+      <CloudBackupCard link={backupLink} />
       <LanguageCard />
       {showDevTools && <DeveloperToolsCard />}
       {showDevTools && <BackupDeveloperCard />}
