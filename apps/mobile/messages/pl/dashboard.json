@@ -1,6 +1,6 @@
 {
   "greeting": "{hasName, select, yes {Cześć, {name}} other {Cześć!}}",
-  "emptySubtitle": "Twój turf zaczyna się od pierwszego spaceru.",
-  "turfSubtitle": "{area} turfu · +{newArea} w tym tygodniu",
+  "emptySubtitle": "Twoje terytorium zaczyna się od pierwszego spaceru.",
+  "turfSubtitle": "{area} terytorium · +{newArea} w tym tygodniu",
   "startRecording": "Zacznij nagrywanie"
 }
