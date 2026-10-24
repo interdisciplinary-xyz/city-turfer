@@ -50,11 +50,11 @@
     "withdrawal-pending": "The server hasn't deleted your backup copy yet. Try again once you're online."
   },
   "backupLink": {
-    "offline": "No connection. Turning on backup needs the internet; nothing was changed.",
-    "notLocalProfile": "This profile can’t be backed up with a code. Sign in with your email to back up.",
+    "offline": "No connection. Sending and checking the code needs the internet; nothing was changed.",
+    "notLocalProfile": "This profile can’t be backed up from here. Sign out, then sign in with your email to back up.",
     "notSignedIn": "This profile isn’t open on this phone any more. Go back to Info and try again.",
     "emailMismatch": "That code is for another address. Use the latest code we sent to {email}.",
     "profileTaken": "This profile’s history now belongs to another CityTurfer account. Sign in with that account’s email to back it up.",
-    "linkedElsewhere": "The account for {email} already keeps its history in another profile on this phone."
+    "linkedElsewhere": "The account for {email} already keeps its history in another profile on this phone. To back that profile up, sign out, then sign in with an email code to {email}."
   }
 }

@@ -37,9 +37,11 @@ export function AccountGate({ children }: AccountGateProps) {
   const blocked = unreachable ? te(unreachable.key, unreachable.values) : null;
   const note = checking
     ? null
-    : fixedAddress || (state.status === 'ready' && state.settings.kind === 'local')
-      ? t('gate.local')
-      : blocked;
+    : fixedAddress
+      ? t('gate.fixedAddress')
+      : state.status === 'ready' && state.settings.kind === 'local'
+        ? t('gate.local')
+        : blocked;
   useAnnounce(note);
   const [opened, setOpened] = useState<AccountReady | null>(null);
   const fresh =

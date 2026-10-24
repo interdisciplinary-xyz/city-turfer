@@ -28,6 +28,7 @@
   "retry": "Spróbuj ponownie",
   "gate": {
     "local": "To profil lokalny na tym telefonie, więc nie ma adresu e-mail ani hasła konta do zmiany.",
+    "fixedAddress": "Adres e-mail tego profilu jest stały: na niego trafiają kody, a ten telefon otwiera profil własnym hasłem.",
     "noPassword": "Nie masz hasła do konta, więc nie ma czego usuwać. Logujesz się kodem z e-maila."
   },
   "name": {

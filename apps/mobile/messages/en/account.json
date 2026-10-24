@@ -28,6 +28,7 @@
   "retry": "Try again",
   "gate": {
     "local": "This is a local profile on this phone, so there’s no account email or password to change.",
+    "fixedAddress": "This profile’s email is fixed: it’s the address its codes go to, and this phone opens it with its own password.",
     "noPassword": "There’s no account password to remove. You sign in with an email code."
   },
   "name": {

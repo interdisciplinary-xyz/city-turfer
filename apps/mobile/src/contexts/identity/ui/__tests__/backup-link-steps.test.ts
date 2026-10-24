@@ -45,11 +45,11 @@ describe('backup link: "Email me a code"', () => {
 
   it('every other answer stays on the step with its own message', () => {
     expect(words(afterBackupLinkCode({ kind: 'offline' }))).toBe(
-      'No connection. Turning on backup needs the internet; nothing was changed.'
+      'No connection. Sending and checking the code needs the internet; nothing was changed.'
     );
     expect(words(afterBackupLinkCode({ kind: 'invalid-email' }))).toBe('That doesn’t look like an email address.');
     expect(words(afterBackupLinkCode({ kind: 'not-local-profile' }))).toBe(
-      'This profile can’t be backed up with a code. Sign in with your email to back up.'
+      'This profile can’t be backed up from here. Sign out, then sign in with your email to back up.'
     );
     expect(words(afterBackupLinkCode({ kind: 'accounts-unavailable' }))).toBe(
       'Signing in to an account is not available in this build.'
@@ -79,14 +79,14 @@ describe('backup link: the code', () => {
       ],
       [
         { kind: 'linked-elsewhere' },
-        `The account for ${EMAIL} already keeps its history in another profile on this phone.`,
+        `The account for ${EMAIL} already keeps its history in another profile on this phone. To back that profile up, sign out, then sign in with an email code to ${EMAIL}.`,
       ],
       [
         { kind: 'not-local-profile' },
-        'This profile can’t be backed up with a code. Sign in with your email to back up.',
+        'This profile can’t be backed up from here. Sign out, then sign in with your email to back up.',
       ],
       [{ kind: 'accounts-unavailable' }, 'Signing in to an account is not available in this build.'],
-      [{ kind: 'offline' }, 'No connection. Turning on backup needs the internet; nothing was changed.'],
+      [{ kind: 'offline' }, 'No connection. Sending and checking the code needs the internet; nothing was changed.'],
       [{ kind: 'auth' }, 'Our server had a hiccup. Try again in a moment.'],
       [{ kind: 'unavailable' }, 'Our server had a hiccup. Try again in a moment.'],
       [{ kind: 'rate-limited', retryAfterS: null }, 'Too many tries. Wait a few minutes and try again.'],

@@ -32,7 +32,8 @@
     "restoredSkipped": "Przywrócono: {restored}. {skipped, plural, one {# aktywności nie dało się odczytać, więc została na serwerze.} few {# aktywności nie dało się odczytać, więc zostały na serwerze.} many {# aktywności nie dało się odczytać, więc zostały na serwerze.} other {# aktywności nie dało się odczytać, więc zostały na serwerze.}}",
     "nothingToRestore": "Ten telefon ma już wszystko z Twojej kopii.",
     "restored": "Przywrócono {count, plural, one {# aktywność} few {# aktywności} many {# aktywności} other {# aktywności}}.",
-    "signInFirst": "Aby przywrócić kopię, najpierw potwierdź swój adres e-mail kodem.",
+    "signInFirst": "Zaloguj się adresem e-mail, aby przywrócić kopię.",
+    "linkFirst": "Aby przywrócić kopię, najpierw potwierdź adres e-mail kodem: Informacje › Kopia w chmurze.",
     "start": "Przywróć",
     "notNow": "Nie teraz"
   },
@@ -44,8 +45,8 @@
     "auth": "Twoje logowanie wygasło. Zaloguj się ponownie, aby przywrócić kopię."
   },
   "link": {
-    "offer": "Kopia tego profilu wymaga kodu, który wyślemy na adres {email}.",
-    "mailboxNote": "Każdy, kto czyta tę skrzynkę, ma dostęp do tej kopii.",
+    "offer": "Aby włączyć kopię tego profilu, potwierdź adres {email} kodem, który tam wyślemy.",
+    "mailboxNote": "Każdy, kto ma dostęp do tej skrzynki, może zalogować się i zobaczyć tę kopię.",
     "request": "Wyślij mi kod",
     "intro": "Wyślemy 6-cyfrowy kod na adres {email}.",
     "sending": "Wysyłamy kod…",

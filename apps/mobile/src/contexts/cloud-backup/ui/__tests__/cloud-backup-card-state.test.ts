@@ -109,7 +109,7 @@ describe('after the link', () => {
 describe('copy', () => {
   it('the offer names the fixed address in both languages', () => {
     expect(translator('backup', 'en')('link.offer', { email: 'admin@cityturfer.com' })).toBe(
-      'Backing up this profile needs a code, which we’ll email to admin@cityturfer.com.'
+      'To back up this profile, confirm admin@cityturfer.com with a code we’ll email there.'
     );
     expect(translator('backup', 'pl')('link.offer', { email: 'admin@cityturfer.com' })).toContain(
       'admin@cityturfer.com'
