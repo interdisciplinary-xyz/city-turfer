@@ -115,6 +115,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   0, admin scaffold, sync-chain tests with turf and data-flow decisions F1–F4, server turf (API
   0.6.0), local mock accounts, achievements 12 → 20, the app in English and Polish; what carries
   into v0.11.0
+- ✅ [`sessions/v0.11.0.md`](sessions/v0.11.0.md): Session log v0.11.0 (in progress, scope PR 160
+  open) — docs refresh, web portal activity history, hero lockup, Polish "terytorium", cloud backup
+  for the admin@ and demo@ local profiles (API 0.6.1); JS only; open founder decisions and the
+  auth:adopt pre-step
 - 🕰️ [`sessions/v0.2.0.md`](sessions/v0.2.0.md): Session log v0.2.0 through the Me menu and
   achievements; predates the Dashboard, Me drawer and login rename (PRs 23–25) and still says
   app.json is unpinned (pinned in f04bcf3)
@@ -199,7 +203,8 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - 🚧 [`decisions/data-flow-2026-10-23.md`](decisions/data-flow-2026-10-23.md): Founder decisions
   2026-10-23 on how data flows between the phone, the API, the web portal and the admin portal —
   records are created on the phone, managed (deleted) on the web, adjusted (all but tracks) by
-  staff, and the phone pulls those changes; planned for v0.11.0, not built
+  staff, and the phone pulls those changes; not built, and not in v0.11.0, slipping to the next
+  scope
 - ✅ [`decisions/design-system-2026-10-19.md`](decisions/design-system-2026-10-19.md): v0.5.0 design
   system — tokens in @cityturfer/brand (TS + CSS variables), React Native components in
   @cityturfer/ui, one Storybook (react-native-web) for the app and the website, shipped OTA
