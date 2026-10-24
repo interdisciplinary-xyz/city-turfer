@@ -19,13 +19,13 @@ summary:
 Taken by the founder on 2026-10-24, after finding the Cloud backup switch disabled on the iPhone's
 `admin@cityturfer.com` profile. Planned by rn-architect the same day.
 
-| #   | Decision            | Outcome                                                                                                                                                                                                                                                                      |
-| --- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| LP1 | Where they back up  | **Production, by e-mail code.** On a local profile, Info › Cloud backup offers "Email me a code" to the profile's own address. The code links a real server account for that address to the profile (same profile id, same database)                                         |
-| LP2 | The app password    | **Still opens the profile on the phone, never the server.** `admin1234` / `demo1234` are in the source, so they protect nothing on a server. A password sign-in opens the local data without a server session; backup waits until a new code                                 |
-| LP3 | Demo history        | **Uploads, from the demo profile only**, as source `import` with its stable `demo-gdansk-n<i>` ids, so the web portal shows the phone's Gdańsk history. Only those plan ids, and only to demo@'s own account; any other `demo-…` activity is never uploaded                  |
-| LP4 | Another phone       | Uploads go by id, so the server holds the union; the existing restore offer brings back what the phone lacks. Two phones on demo@ overwrite the same demo ids (acceptable for a screenshots profile)                                                                         |
-| LP5 | E-mail and password | **Fixed on the local profiles.** Me › Account hides "change e-mail" and "set password" on admin and demo: the address is what the code proves, and the phone always opens these profiles with the app password (taken by the main session on review, 2026-10-24; reversible) |
+| #   | Decision            | Outcome                                                                                                                                                                                                                                                                                                                                              |
+| --- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| LP1 | Where they back up  | **Production, by e-mail code.** On a local profile, Info › Cloud backup offers "Email me a code" to the profile's own address. The code links a real server account for that address to the profile (same profile id, same database)                                                                                                                 |
+| LP2 | The app password    | **Still opens the profile on the phone, never the server.** `admin1234` / `demo1234` are in the source, so they protect nothing on a server. A password sign-in opens the local data without a server session; backup waits until a new code                                                                                                         |
+| LP3 | Demo history        | **The demo profile uploads only its plan**: the generated Gdańsk history, as source `import` with its stable `demo-gdansk-n<i>` ids, so the web portal shows it, and only to demo@'s own account. Its recordings, its Apple Health imports and any other `demo-…` activity stay on the phone (privacy-first, taken on review 2026-10-24; reversible) |
+| LP4 | Another phone       | Uploads go by id, so the server holds the union; the existing restore offer brings back what the phone lacks. Two phones on demo@ overwrite the same demo ids (acceptable for a screenshots profile)                                                                                                                                                 |
+| LP5 | E-mail and password | **Fixed on the local profiles.** Me › Account hides "change e-mail" and "set password" on admin and demo: the address is what the code proves, and the phone always opens these profiles with the app password (taken by the main session on review, 2026-10-24; reversible)                                                                         |
 
 ## How it works
 
@@ -35,10 +35,13 @@ Taken by the founder on 2026-10-24, after finding the Cloud backup switch disabl
   account's sign-in. The session goes to the existing single credential slot; sign-out revokes it.
 - Password sign-in of a linked local profile opens it as today (no `linked-to-account` refusal for
   the profile's own address) and leaves no credentials, so the card offers the code again.
-- Cloud backup: `available` whenever the context exists; `mayUpload` lets only the planned Gdańsk
-  ids (`isGdanskPlanActivityId` from `@cityturfer/core/demo`) through, and only when the signed-in
-  profile is `demo`. The demo profile takes only Identity's account session (demo@'s, linked by a
-  code), never a Developer tools device token.
+- Cloud backup: `available` whenever the context exists; on the `demo` profile `mayUpload` lets only
+  the planned Gdańsk ids (`isGdanskPlanActivityId` from `@cityturfer/core/demo`) through, recordings
+  and `hk-…` included in what it keeps back; on any other profile no `demo-…` id goes up. The same
+  rule decides what is queued, what the full comparison sends, and the card's counts (`total`,
+  `backedUp`, and `unsynced`, which counts only work that will go up, deletes included). The demo
+  profile takes only Identity's account session (demo@'s, linked by a code), never a Developer tools
+  device token.
 - After the code, Cloud Backup's `afterCredentials` use case decides (not the screen): turn backup
   on only when it was off with nothing pending; carry on when it was on; deliver a pending
   withdrawal and stay off. It decides "carry on" only once connected: if the address's account is a
@@ -62,6 +65,14 @@ api-engineer (logic) and mobile-ui-engineer (copy and card) before merge.
   centred on the phone's real position; the demo profile let every `demo-…` id through. Now only
   `demo-gdansk-n<i>` uploads. Rejected: a new prefix for the seeder (the old prefix would still be
   on phones that seeded before).
+- **Recordings on the demo profile (privacy, fixed on scope review, PR #160).** `mayUpload` let
+  every recording through on any profile, so a real walk recorded while signed in as demo@ (for
+  record-screen screenshots) put real coordinates on the shared demo@ account and its web portal;
+  the same for Apple Health imports once included. Now the demo profile uploads only the plan (LP3).
+  Rejected: uploading them with a warning on the card (the account is shared by whoever reads its
+  mailbox, and the screenshots need no server copy), and a separate "back up recordings" switch on
+  the demo profile (more surface for a screenshots profile). Reversible: one branch in `mayUpload`;
+  a full comparison would then queue what stayed on the phone.
 - **Revoked or expired session (fixed).** The keychain kept the dead session, so the card said "sign
   in again", which on a local profile only opens the phone's data (LP2). With `lastError` `auth` on
   a linkable profile the card offers the code again; linking replaces the dead session and
@@ -93,3 +104,7 @@ api-engineer (logic) and mobile-ui-engineer (copy and card) before merge.
 - **Web deletes on the demo profile.** Deleting a demo activity on the web leaves a tombstone that
   deletes it on the phone; the phone's demo seeding then puts it back and uploads it again. Fine for
   a screenshots profile, or should the demo seed respect tombstones?
+- **Recordings on the demo profile.** Taken privacy-first on review: they stay on the phone (LP3).
+  Reverse it if demo@ should back up real recordings too. Recordings that went up from a demo
+  profile before this fix stay on demo@'s server account until deleted there (on the web) or the
+  backup is turned off.

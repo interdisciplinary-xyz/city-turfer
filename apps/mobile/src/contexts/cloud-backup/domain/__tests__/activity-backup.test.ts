@@ -40,15 +40,24 @@ describe('backup policy', () => {
     expect(mayUpload('demo-gdansk-n1', scope(false, false))).toBe(false);
     expect(mayUpload('demo-gdansk-n1', scope(false, true))).toBe(true);
     expect(mayUpload('demo-gdansk-n117', scope(true, true))).toBe(true);
-    // hk-… : only with its consent, on any profile
-    for (const demoProfile of [false, true]) {
-      expect(mayUpload('hk-1', scope(false, demoProfile))).toBe(false);
-      expect(mayUpload('hk-1', scope(true, demoProfile))).toBe(true);
-      expect(mayUpload('session-1', scope(false, demoProfile))).toBe(true);
-    }
+    // Any other profile (admin): recordings always, hk-… only with its consent
+    expect(mayUpload('session-1', scope(false, false))).toBe(true);
+    expect(mayUpload('session-1', scope(true, false))).toBe(true);
+    expect(mayUpload('hk-1', scope(false, false))).toBe(false);
+    expect(mayUpload('hk-1', scope(true, false))).toBe(true);
     expect(uploadSourceOf('demo-gdansk-n1')).toBe('import');
     expect(uploadSourceOf('hk-1')).toBe('apple-health');
     expect(uploadSourceOf('session-1')).toBe('recording');
+  });
+
+  it('the demo profile uploads only the plan: its recordings and Apple Health imports stay on the phone (LP3)', () => {
+    for (const healthIncluded of [false, true]) {
+      const demo = { healthIncluded, demoProfile: true };
+      expect(mayUpload('session-1', demo)).toBe(false);
+      expect(mayUpload('3f9c2a64-5d1e', demo)).toBe(false);
+      expect(mayUpload('hk-1', demo)).toBe(false);
+      expect(mayUpload('demo-gdansk-n0', demo)).toBe(true);
+    }
   });
 
   it('never uploads the Developer tools seeder’s demo-<ms> tracks (real position), not even from the demo profile', () => {

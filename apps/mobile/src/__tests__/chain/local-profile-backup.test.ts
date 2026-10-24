@@ -3,7 +3,8 @@
  * LP1-LP3): admin@ and demo@cityturfer.com link their server account with an e-mailed code, back up,
  * and a password sign-in afterwards opens the profile on the phone without server credentials.
  * Only the planned Gdańsk history (`demo-gdansk-n<i>`) leaves the demo profile, never another
- * `demo-…` id. Live API only (a run without it says so on stderr): the chain's API is the local dev server, which accepts the fixed code for these two
+ * `demo-…` id nor its recordings. Live API only (a run without it says so on stderr): the chain’s API
+ * is the local dev server, which accepts the fixed code for these two
  * addresses and seeds the demo account's Gdansk history by itself (see local-profile-phone.ts).
  */
 import { demoActivityId, planGdanskDemo } from '@cityturfer/core/demo';
@@ -100,6 +101,8 @@ describeLive('sync chain, cloud backup for the local profiles', () => {
     await addActivity(c, extra[0], 'walk', WALK);
     await addActivity(c, extra[1], 'run', RUN);
     await addActivity(c, `demo-${Date.parse('2026-10-01T07:00:00Z')}`, 'walk', WALK);
+    // A real walk recorded on the demo profile (e.g. for screenshots) stays on the phone too.
+    await addActivity(c, 'rec-on-demo', 'walk', WALK);
 
     expect(await phone.linkByCode('demo')).toMatchObject({ kind: 'linked', user: { id: 'demo' } });
     // The API's dev seed fills demo@ on start, in the background: wait for it (fail if it never

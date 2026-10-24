@@ -37,24 +37,33 @@ export const trackHashInput = (track: readonly TrackPoint[]): string => JSON.str
 export interface UploadScope {
   /** The Turfer turned on "Include Apple Health workouts" (its own consent, decision D2). */
   healthIncluded: boolean;
-  /** The signed-in profile is the demo profile: its generated Gdańsk history is its content (LP3). */
+  /**
+   * The signed-in profile is the demo profile: a shared account whose content is its generated
+   * Gdańsk history, and only that (LP3).
+   */
   demoProfile: boolean;
 }
 
 /**
- * Recordings always; Apple Health imports only with their own consent (decision D2); demo history
- * only from the demo profile, and only the planned Gdańsk history (`demo-gdansk-n<i>`, LP3). Any
- * other `demo-…` Activity never leaves the phone: seeded on another profile, or by the Developer
- * tools seeder (`demo-<ms>`, tracks around the phone's real position) on the demo profile itself.
+ * The demo profile backs up only its planned Gdańsk history (`demo-gdansk-n<i>`, LP3): its
+ * recordings and Apple Health imports are real tracks (a walk recorded for screenshots) and stay on
+ * the phone, never on the shared demo@ account or its web portal. Any other `demo-…` Activity
+ * never leaves the phone either (seeded on another profile, or the Developer tools seeder's
+ * `demo-<ms>` tracks around the phone's real position). Every other profile: recordings always,
+ * Apple Health imports only with their own consent (decision D2), no demo history.
  */
 export function mayUpload(activityId: string, scope: UploadScope): boolean {
-  switch (sourceOf(activityId)) {
+  const source = sourceOf(activityId);
+  if (scope.demoProfile) {
+    return source === 'demo' && isGdanskPlanActivityId(activityId);
+  }
+  switch (source) {
     case 'recording':
       return true;
     case 'apple-health':
       return scope.healthIncluded;
     case 'demo':
-      return scope.demoProfile && isGdanskPlanActivityId(activityId);
+      return false;
   }
 }
 

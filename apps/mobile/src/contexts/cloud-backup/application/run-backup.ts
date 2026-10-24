@@ -268,7 +268,7 @@ export class RunBackup {
       return this.failure(b, step, rev, r.failure, report);
     }
     if (!mayUpload(id, { healthIncluded, demoProfile: this.d.demoProfile })) {
-      return null; // an Apple Health import without that consent (or demo history elsewhere): stays queued, not sent
+      return null; // hk-… without its consent, demo history elsewhere, the demo profile's own recordings: not sent
     }
     const archive = await this.d.activities.archiveOf(id);
     if (!archive) {
