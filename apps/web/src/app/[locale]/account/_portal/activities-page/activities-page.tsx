@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { QUERY_KEYS, useActivities, useActivityTotals, useConsents, usePortal } from '@/api/hooks';
 
@@ -28,14 +28,17 @@ export function ActivitiesPage({ locale }: ActivitiesPageProps) {
   const type = filter === 'all' ? null : filter;
   const list = useActivities(type);
   const totals = useActivityTotals();
-  const consents = useConsents();
+  // Asked again on every visit: an answer cached elsewhere (Privacy & data) may predate a change
+  // on the phone, and it decides whether the list may show at all.
+  const consents = useConsents({ fresh: true });
   const zone = useMemo(() => browserZone(), []);
   const { queryClient } = usePortal();
 
-  const backup = consents.isSuccess ? backupState(consents.data.items) : null;
+  // Only an answer from this visit counts; until then the consents are pending.
+  const backup = consents.isSuccess && consents.isFetchedAfterMount ? backupState(consents.data.items) : null;
   const consentsAnswer: ConsentsAnswer = backup
     ? { status: 'success', backup }
-    : consents.isError
+    : consents.isError && consents.isFetchedAfterMount
       ? { status: 'error' }
       : { status: 'pending' };
   // Backup never on, or withdrawn on the phone: nothing cached from before is shown.
@@ -47,24 +50,27 @@ export function ActivitiesPage({ locale }: ActivitiesPageProps) {
   // The totals' own failure, when the list's error doesn't already say it.
   const totalsError =
     shown && !listError && totals.isError && !totals.data && totals.error.code !== 'signed-out' ? totals.error : null;
-  const moreError = list.isFetchNextPageError && list.error.code !== 'signed-out' ? list.error : null;
+  const moreError = shown && list.isFetchNextPageError && list.error.code !== 'signed-out' ? list.error : null;
   const empty = list.isSuccess ? historyEmpty({ consents: consentsAnswer, type, listed: items.length }) : null;
   // The consents failed and the list is empty: say why we can't tell more (a 401 is leaving).
   const consentsError =
     empty === 'unknown' && consents.isError && consents.error.code !== 'signed-out' ? consents.error : null;
   const somethingBackedUp = shown && (allCount > 0 || items.length > 0 || type !== null);
 
-  // The consents' answer changed (backup withdrawn or turned on again on the phone): re-read.
+  // The consents' answer changed (backup withdrawn or turned on again on the phone) since the
+  // lists in memory were shown: re-read them. Kept in the query cache, so it outlives this visit
+  // and goes with everything else on sign-out.
   const backupNow = backupKey(backup);
-  const lastBackup = useRef<string | null>(null);
   useEffect(() => {
-    if (backupChanged(lastBackup.current, backupNow)) {
+    if (backupNow === null) {
+      return;
+    }
+    const seen = queryClient.getQueryData<string>(QUERY_KEYS.historyBackup) ?? null;
+    if (backupChanged(seen, backupNow)) {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activityLists });
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activityTotals });
     }
-    if (backupNow !== null) {
-      lastBackup.current = backupNow;
-    }
+    queryClient.setQueryData(QUERY_KEYS.historyBackup, backupNow);
   }, [backupNow, queryClient]);
 
   return (
@@ -110,7 +116,7 @@ export function ActivitiesPage({ locale }: ActivitiesPageProps) {
         </p>
       ) : null}
       {moreError ? <ErrorMessage error={moreError} /> : null}
-      {list.hasNextPage ? (
+      {shown && list.hasNextPage ? (
         <button
           className='portal-button portal-button-secondary portal-show-more'
           type='button'

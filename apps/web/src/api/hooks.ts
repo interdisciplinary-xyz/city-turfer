@@ -48,6 +48,8 @@ export const QUERY_KEYS = {
   /** By id and the detail's `trackHash`: a re-upload (new hash) is a new track, never the old one. */
   track: (id: string, trackHash: string) => ['track', id, trackHash],
   activityTotals: ['activity-totals'],
+  /** The backup state (activities-page `backupKey`) the cached lists were last shown under; no fetch. */
+  historyBackup: ['history-backup'],
 } as const;
 
 /**
@@ -76,12 +78,14 @@ export function useMe() {
   return useQuery<Awaited<ReturnType<typeof api.me>>, PortalError>({ queryKey: QUERY_KEYS.me, queryFn: api.me });
 }
 
-export function useConsents({ enabled = true }: { enabled?: boolean } = {}) {
+/** The consents; `fresh`: always asked again when the page mounts, even if a cached answer is fresh. */
+export function useConsents({ enabled = true, fresh = false }: { enabled?: boolean; fresh?: boolean } = {}) {
   const { api } = usePortal();
   return useQuery<Awaited<ReturnType<typeof api.consents>>, PortalError>({
     queryKey: QUERY_KEYS.consents,
     queryFn: api.consents,
     enabled,
+    refetchOnMount: fresh ? 'always' : true,
   });
 }
 
