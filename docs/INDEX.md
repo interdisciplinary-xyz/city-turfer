@@ -240,5 +240,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   that the four apps stay one system — every scenario starts on the phone (the source of truth) or
   reaches it, and is checked in the API, the web portal and the admin portal as each is built today;
   scenarios report pending until the routes they need exist
+- ✅ [`plans/web-portal-history-2026-10-23.md`](plans/web-portal-history-2026-10-23.md): Plan for
+  the web portal's activity history (v0.11.0) — a list of the backed-up walks, runs and rides with
+  totals and a type filter, and a detail page with stats, splits and the route shape; read-only, no
+  map tiles, numbers from core's formatters shared with the app
 
 <!-- docs-index:end -->

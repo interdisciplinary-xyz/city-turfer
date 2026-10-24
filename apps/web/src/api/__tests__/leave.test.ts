@@ -6,12 +6,13 @@ import { createLeave, leaveOnUnauthorized, reloadOnRestore } from '../leave';
 import { portalApi } from '../portal-api';
 
 /** A fake `window.location`: records every replace and reload. */
-function fakeLocation(pathname = '/en/account/privacy') {
+function fakeLocation(pathname = '/en/account/privacy', search = '') {
   const replaced: string[] = [];
   let reloads = 0;
   return {
     location: {
       pathname,
+      search,
       replace: (url: string | URL) => {
         replaced.push(String(url));
       },
@@ -47,6 +48,21 @@ describe('createLeave', () => {
       returnHere: true,
     });
     expect(fake.replaced).toEqual(['/pl/account/sign-in?next=%2Fpl%2Faccount%2Fprivacy&reason=expired']);
+  });
+
+  it('returnHere keeps an activity id, and drops any other query', () => {
+    const activity = fakeLocation('/en/account/activity', '?id=abc-1');
+    createLeave({ queryClient: filledCache(), locale: 'en', location: () => activity.location })('expired', {
+      returnHere: true,
+    });
+    expect(activity.replaced).toEqual([
+      '/en/account/sign-in?next=%2Fen%2Faccount%2Factivity%3Fid%3Dabc-1&reason=expired',
+    ]);
+    const other = fakeLocation('/en/account/activities', '?lat=52.2');
+    createLeave({ queryClient: filledCache(), locale: 'en', location: () => other.location })('expired', {
+      returnHere: true,
+    });
+    expect(other.replaced).toEqual(['/en/account/sign-in?next=%2Fen%2Faccount%2Factivities&reason=expired']);
   });
 
   it('never carries a path outside the portal as next', () => {
