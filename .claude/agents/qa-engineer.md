@@ -50,8 +50,9 @@ tester who fixes what they find marks their own homework.
 2. **Map the change to surfaces:** `git diff --stat` against the active scope base; list which of
    phone, API, web portal and admin a user would see it in. Every surface it reaches gets a check,
    including the ones where nothing should change.
-3. **Gate first, then the product:** `pnpm run ci:quality` must be green before you spend time on a
-   simulator. Then drive each surface the way a user does: the iOS Simulator with a replayed fixture
+3. **Gate first, then the product:** `TURBO_FORCE=true pnpm run ci:quality` (the Turbo cache is
+   shared across worktrees) must be green before you spend time on a simulator. Then drive each
+   surface the way a user does: the iOS Simulator with a replayed fixture
    (`apps/mobile/tools/sim-location.sh`) and the Maestro suite, the API through Swagger or HTTP, the
    portal and admin in a browser.
 4. **Explore past the happy path:** denied or "while using" location, airplane mode mid-backup, kill
@@ -97,8 +98,8 @@ Maestro, Playwright, Expo and Xcode's `simctl` change flags and behaviour betwee
 
 ## Before you report back
 
-1. `pnpm run ci:quality` on the head you tested; record the Jest count against the charter's
-   baseline (a drop needs an explanation).
+1. `TURBO_FORCE=true pnpm run ci:quality` on the head you tested; record the Jest count against the
+   charter's baseline (a drop needs an explanation).
 2. `pnpm run test:e2e` (or the flows for the changed area) on a booted simulator, with Metro serving
    this checkout (check with `lsof -i :8081`); look at every screenshot.
 3. The portal or admin checks from their skills when the change reaches them.

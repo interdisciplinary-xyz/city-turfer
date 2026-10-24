@@ -9,7 +9,8 @@ description: >-
 
 # Web portal (signed-in pages in apps/web)
 
-Slice 0 (sign-in, sign-out, Privacy & data) is built. The decisions D1–D4 are in
+Slice 0 (sign-in, sign-out, Privacy & data) and the activity history (list and detail) are built;
+the Turf Map on the web is not. The decisions D1–D4 are in
 `docs/decisions/web-portal-2026-10-22.md`, the browser session (W1–W11) in
 `docs/decisions/api-web-sessions-2026-10-22.md`, the activity history (H1–H6) in
 `docs/plans/web-portal-history-2026-10-23.md`. Decisions are taken there, never in this file. Build
@@ -27,7 +28,7 @@ wording, "sign out everywhere", domain…) are still recommendations: for any of
 | Portal stories         | `apps/storybook/src/stories/portal/` (made-up data in `fixtures.ts`)                                  | `portal-engineer`                                  |
 | Portal E2E             | `apps/web/e2e/{portal,activities}.spec.ts`, `apps/web/e2e/support/`                                   | `portal-engineer`                                  |
 | Copy                   | `portal.*` in `apps/web/messages/en.json` and `pl.json`                                               | wording: `brand-designer`; keys: `portal-engineer` |
-| Route, CSP and headers | `apps/web/vercel.json`                                                                                | `web-engineer` edits, to `portal-engineer`'s spec  |
+| Route, CSP and headers | `apps/web/vercel.json`, `apps/web/next.config.ts`                                                     | `web-engineer` edits, to `portal-engineer`'s spec  |
 | Contract and cookie    | `apps/api/openapi.json` (generated), `apps/api/src/session-cookie.ts`, `apps/api/src/middleware.ts`   | `api-engineer`                                     |
 
 In code, link through `PORTAL_ROOT` (`apps/web/src/api/next-path.ts`); the route folder,
