@@ -238,10 +238,10 @@
       },
       "empty": {
         "never": "Twoje aktywności są zapisane na telefonie. Nic jeszcze nie trafiło do kopii, więc nie ma tu czego pokazać.",
-        "withdrawn": "Kopia zapasowa jest wyłączona, więc usunęliśmy stąd Twoją kopię. Wszystkie aktywności nadal są na Twoim telefonie.",
-        "nothingYet": "Kopia zapasowa jest włączona, ale nic jeszcze nie dotarło. Otwórz aplikację, gdy masz internet, a Twoje aktywności pojawią się tutaj.",
+        "withdrawn": "Kopia zapasowa jest wyłączona, więc usunęliśmy ją z chmury. Wszystkie aktywności nadal są na Twoim telefonie.",
+        "nothingYet": "Kopia zapasowa jest włączona, ale nic jeszcze nie dotarło. Otwórz aplikację, gdy masz połączenie z internetem, a Twoje aktywności pojawią się tutaj.",
         "filter": "{type, select, walk {W kopii nie ma jeszcze spacerów.} run {W kopii nie ma jeszcze biegów.} other {W kopii nie ma jeszcze przejażdżek.}}",
-        "unknown": "W Twojej kopii nie ma tu jeszcze nic do pokazania.",
+        "unknown": "W Twojej kopii nie ma jeszcze nic do pokazania.",
         "howTo": "Aby włączyć kopię, otwórz aplikację: Informacje › Kopia w chmurze."
       },
       "detail": {
@@ -251,11 +251,11 @@
         "notFoundTitle": "Nie znaleziono aktywności",
         "notFound": "Nie ma jej w Twojej kopii. Może została usunięta na telefonie albo trafiła do kopii z innego konta.",
         "statsTitle": "Statystyki",
-        "estimatedNote": "W tym {distance} oszacowano wzdłuż ulic tam, gdzie GPS zgubił sygnał (linia przerywana). Oszacowane odcinki nie dają turfu.",
+        "estimatedNote": "W tym {distance} oszacowano wzdłuż ulic tam, gdzie GPS zgubił sygnał (linia przerywana). Oszacowane odcinki nie wliczają się do terytorium.",
         "routeTitle": "Trasa",
         "routeLabel": "{gaps, select, yes {Kształt trasy, bez mapy. Linie przerywane łączą nagrane odcinki tam, gdzie była pauza albo luka GPS.} other {Kształt trasy, bez mapy.}}",
-        "routeRecorded": "Nagrane",
-        "routeBetween": "Między nagranymi odcinkami: pauza albo luka GPS oszacowana wzdłuż ulic",
+        "routeRecorded": "Nagrane odcinki",
+        "routeBetween": "Między nagranymi odcinkami: pauza albo luka GPS uzupełniona wzdłuż ulic",
         "routeNoMap": "Sam kształt, bez mapy: nie wczytujemy kafelków mapy z innych stron.",
         "routeSimplified": "Nie udało się wczytać całej trasy, więc to uproszczony kształt.",
         "splitsTitle": "Międzyczasy",

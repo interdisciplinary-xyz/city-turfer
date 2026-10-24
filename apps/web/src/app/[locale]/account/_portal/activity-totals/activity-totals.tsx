@@ -21,7 +21,7 @@ export function ActivityTotals({ totals, locale }: ActivityTotalsProps) {
           const { distance, moving } = totalsNumbers(tile, locale);
           return (
             <li key={key} className={`portal-total${key === 'all' ? '' : ` portal-type-${TYPE_TOKEN[key]}`}`}>
-              <span className='portal-total-label'>{key === 'all' ? t('totals.all') : t(`type.${key}`)}</span>
+              <span className='portal-total-label'>{key === 'all' ? t('totals.all') : t(`filter.${key}`)}</span>
               <span className='portal-total-value'>
                 {distance.value}
                 <span className='portal-unit'> {distance.unit}</span>

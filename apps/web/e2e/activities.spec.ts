@@ -105,7 +105,7 @@ test('history: totals, list by month, show more, filter, detail with splits and 
   await expect(allTile).toContainText(formatDistance(sum(seeded, 'distanceM'), 'en').value);
   await expect(allTile).toContainText(`54 activities · ${formatDuration(sum(seeded, 'movingS'))} moving`);
   const rides = seeded.filter((a) => a.type === 'cycle');
-  const rideTile = page.locator('.portal-total').filter({ hasText: 'Ride' });
+  const rideTile = page.locator('.portal-total').filter({ hasText: 'Rides' });
   await expect(rideTile).toContainText(formatDistance(sum(rides, 'distanceM'), 'en').value);
   await expect(rideTile).toContainText(`${rides.length} activities`);
 
