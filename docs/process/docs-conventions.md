@@ -106,7 +106,10 @@ Bounded contexts: <!-- probe:contexts -->7<!-- /probe -->
   (<!-- probe:e2e-flows -->17<!-- /probe -->)
 - `migrations`: `version:` entries in `apps/mobile/src/platform/migrations.ts`
   (<!-- probe:migrations -->13<!-- /probe -->)
-- `docs`: markdown files under `docs/` (<!-- probe:docs -->56<!-- /probe -->)
+- `cities-pl`, `cities-europe`: Home City catalogue entries in
+  `packages/core/src/contexts/territory/domain/city-catalog.ts` with a `pl-` id, and all the others
+  (<!-- probe:cities-pl -->23<!-- /probe -->, <!-- probe:cities-europe -->15<!-- /probe -->)
+- `docs`: markdown files under `docs/` (<!-- probe:docs -->58<!-- /probe -->)
 - `api-operations`: HTTP operations in `apps/api/openapi.json`
   (<!-- probe:api-operations -->34<!-- /probe -->)
 
