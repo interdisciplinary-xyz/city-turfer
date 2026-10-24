@@ -26,11 +26,21 @@ describe('backup link: "Email me a code"', () => {
     });
   });
 
-  it('a rate limit is a refusal (it holds the send buttons for its wait) worded with that wait', () => {
+  it('a rate limit means a code went out recently: the code field (what was typed stays), resend held for the wait', () => {
     const o = afterBackupLinkCode({ kind: 'rate-limited', retryAfterS: 42 });
-    expect(o).toEqual({ kind: 'refused', failure: { kind: 'rate-limited', retryAfterS: 42 } });
-    expect(words(o)).toBe('Too many tries. Wait 42 seconds and try again.');
-    expect(words(o, 'pl')).toBe('Za dużo prób. Odczekaj 42 sekundy i spróbuj ponownie.');
+    expect(o).toEqual({ kind: 'go', step: 'code', wait: { kind: 'rate-limited', retryAfterS: 42 } });
+    expect(words(o)).toBeNull(); // no "Too many tries" next to a code that is already in the inbox
+    // Without Retry-After too: the field, no countdown.
+    expect(afterBackupLinkCode({ kind: 'rate-limited', retryAfterS: null })).toEqual({
+      kind: 'go',
+      step: 'code',
+      wait: { kind: 'rate-limited', retryAfterS: null },
+    });
+  });
+
+  it('the code step says a code went out recently, in English and Polish', () => {
+    expect(translator('backup', 'en')('link.sentRecently', { email: EMAIL })).toContain(EMAIL);
+    expect(translator('backup', 'pl')('link.sentRecently', { email: EMAIL })).toContain(EMAIL);
   });
 
   it('every other answer stays on the step with its own message', () => {

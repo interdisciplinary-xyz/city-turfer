@@ -21,11 +21,17 @@ function common(
   }
 }
 
-/** "Email me a code": sent to the profile's own address → its code field (cleared). */
+/**
+ * "Email me a code": sent to the profile's own address → its code field (cleared). A rate limit
+ * means a code went out recently (the screen sends one each time it opens): the code field too,
+ * keeping what was typed, with the resend held for the wait.
+ */
 export function afterBackupLinkCode(r: RequestBackupLinkCodeResult): BackupLinkOutcome {
   switch (r.kind) {
     case 'sent':
       return { kind: 'go', step: 'code', sentTo: r.email, clear: 'code' };
+    case 'rate-limited':
+      return { kind: 'go', step: 'code', wait: r };
     case 'invalid-email':
       return { kind: 'error', error: { key: 'invalidEmail' } };
     default:

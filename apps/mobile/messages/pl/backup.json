@@ -50,6 +50,7 @@
     "intro": "Wyślemy 6-cyfrowy kod na adres {email}.",
     "sending": "Wysyłamy kod…",
     "sent": "Wysłaliśmy 6-cyfrowy kod na adres {email}. Działa przez 10 minut.",
+    "sentRecently": "Niedawno wysłaliśmy kod na adres {email}. Wpisz najnowszy; każdy kod działa przez 10 minut.",
     "codeLabel": "Kod",
     "submit": "Włącz kopię",
     "resend": "Wyślij nowy kod",

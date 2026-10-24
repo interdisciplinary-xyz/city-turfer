@@ -50,6 +50,7 @@
     "intro": "We’ll email a 6-digit code to {email}.",
     "sending": "Sending your code…",
     "sent": "We emailed a 6-digit code to {email}. It works for 10 minutes.",
+    "sentRecently": "We emailed a code to {email} recently. Enter the latest one; each code works for 10 minutes.",
     "codeLabel": "Code",
     "submit": "Turn on backup",
     "resend": "Send a new code",
