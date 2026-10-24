@@ -209,8 +209,9 @@ export interface CloudBackupDeps {
    */
   available: boolean;
   /**
-   * The signed-in profile is the demo profile (demo@cityturfer.com): its `demo-…` history is
-   * uploaded, as `import` (LP3). False everywhere else: demo history seeded there stays on the phone.
+   * The signed-in profile is the demo profile (demo@cityturfer.com): its planned Gdańsk history
+   * (`demo-gdansk-n<i>`) is uploaded, as `import` (LP3). False everywhere else: demo history seeded
+   * there stays on the phone; other `demo-…` ids stay on the phone on every profile.
    */
   demoProfile: boolean;
   repo: BackupRepository;

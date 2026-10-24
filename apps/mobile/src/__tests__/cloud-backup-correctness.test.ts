@@ -394,19 +394,32 @@ describe('Cloud Backup: demo history (LP3)', () => {
   it('the demo profile backs up its seeded demo history, as import', async () => {
     const t = phone({ profile: 'demo', account: ACCOUNT });
     const c = await t.container();
-    await c.add('demo-gdansk-a', walk(0));
-    await c.add('demo-gdansk-b', walk(1));
+    await c.add('demo-gdansk-n0', walk(0));
+    await c.add('demo-gdansk-n1', walk(1));
     await c.add('rec-1', walk(2));
     expect(await c.cloudBackup.status.execute()).toMatchObject({ available: true, hasToken: true, total: 3 });
     const result = await backedUp(c);
     expect(result).toEqual({ kind: 'done', report: { uploaded: 3, deleted: 0, failed: 0, refused: 0, error: null } });
-    expect(t.server.uploads()).toEqual(['demo-gdansk-a', 'demo-gdansk-b', 'rec-1']);
-    expect(t.server.activities.get('demo-gdansk-a')?.source).toBe('import');
+    expect(t.server.uploads()).toEqual(['demo-gdansk-n0', 'demo-gdansk-n1', 'rec-1']);
+    expect(t.server.activities.get('demo-gdansk-n0')?.source).toBe('import');
     expect(t.server.activities.get('rec-1')?.source).toBe('recording');
     // Demo activities added later (a resumed seed) are queued through the outbox like any other.
-    await c.add('demo-gdansk-c', walk(3));
+    await c.add('demo-gdansk-n2', walk(3));
     await c.cloudBackup.run.execute();
-    expect(t.server.activities.get('demo-gdansk-c')?.source).toBe('import');
+    expect(t.server.activities.get('demo-gdansk-n2')?.source).toBe('import');
+  });
+
+  it('on the demo profile, the Developer tools seeder’s demo-<ms> tracks (real position) never leave the phone', async () => {
+    const t = phone({ profile: 'demo', account: ACCOUNT });
+    const c = await t.container();
+    await c.add('demo-gdansk-n0', walk(0));
+    await c.add(`demo-${Date.parse('2026-10-01T07:00:00Z')}`, walk(1));
+    expect(await c.cloudBackup.status.execute()).toMatchObject({ total: 1 });
+    await backedUp(c);
+    await c.add(`demo-${Date.parse('2026-10-02T07:00:00Z')}`, walk(2)); // seeded while backup is on
+    await c.cloudBackup.run.execute({ now: true });
+    expect(t.server.uploads()).toEqual(['demo-gdansk-n0']);
+    expect((await rows(t)).map((r) => r.id)).toEqual(['demo-gdansk-n0']);
   });
 
   it('demo history seeded on another profile (Developer tools) never leaves the phone', async () => {

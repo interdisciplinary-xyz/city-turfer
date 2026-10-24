@@ -1,3 +1,5 @@
+import { isGdanskPlanActivityId } from '@cityturfer/core/demo';
+
 import { DomainError, type TrackPoint } from '@/shared-kernel';
 
 /**
@@ -35,13 +37,15 @@ export const trackHashInput = (track: readonly TrackPoint[]): string => JSON.str
 export interface UploadScope {
   /** The Turfer turned on "Include Apple Health workouts" (its own consent, decision D2). */
   healthIncluded: boolean;
-  /** The signed-in profile is the demo profile: its generated `demo-…` history is its content (LP3). */
+  /** The signed-in profile is the demo profile: its generated Gdańsk history is its content (LP3). */
   demoProfile: boolean;
 }
 
 /**
  * Recordings always; Apple Health imports only with their own consent (decision D2); demo history
- * only from the demo profile (LP3) — a `demo-…` Activity seeded on any other profile never leaves it.
+ * only from the demo profile, and only the planned Gdańsk history (`demo-gdansk-n<i>`, LP3). Any
+ * other `demo-…` Activity never leaves the phone: seeded on another profile, or by the Developer
+ * tools seeder (`demo-<ms>`, tracks around the phone's real position) on the demo profile itself.
  */
 export function mayUpload(activityId: string, scope: UploadScope): boolean {
   switch (sourceOf(activityId)) {
@@ -50,7 +54,7 @@ export function mayUpload(activityId: string, scope: UploadScope): boolean {
     case 'apple-health':
       return scope.healthIncluded;
     case 'demo':
-      return scope.demoProfile;
+      return scope.demoProfile && isGdanskPlanActivityId(activityId);
   }
 }
 

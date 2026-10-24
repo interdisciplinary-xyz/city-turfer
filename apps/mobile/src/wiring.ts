@@ -189,7 +189,7 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
   const cloudBackupDeps: CloudBackupDeps = {
     // Every profile with a server configured; it sends nothing until it has credentials (LP1).
     available: a.cloudBackup != null,
-    // Only the demo profile uploads its generated `demo-…` history (LP3).
+    // Only the demo profile uploads its planned Gdańsk history (`demo-gdansk-n<i>`, LP3).
     demoProfile: userId === DEMO_PROFILE_ID,
     repo: new SqliteBackupRepository(db),
     api: backupAdapters.api,
