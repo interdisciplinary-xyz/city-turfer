@@ -59,8 +59,8 @@
     "turningOn": "Włączamy kopię…",
     "linked": "Kod przyjęty. Ten profil jest teraz połączony z kontem {email}.",
     "confirm": "Potwierdź kod",
-    "stayedOff": "Kopia pozostaje wyłączona. Kopia na serwerze została usunięta. Wszystko zostaje na tym telefonie.",
-    "stayedOffPending": "Kopia pozostaje wyłączona. Serwer usunie swoją kopię przy najbliższym połączeniu. Wszystko zostaje na tym telefonie.",
-    "newAccount": "Ten adres ma nowe konto CityTurfer, więc kopia jest dla niego wyłączona. Stuknij „Włącz kopię”, aby ją włączyć."
+    "stayedOff": "Kopia pozostaje wyłączona, a ta na serwerze została usunięta. Wszystko zostaje na tym telefonie.",
+    "stayedOffPending": "Kopia pozostaje wyłączona. Kopia na serwerze zniknie, gdy telefon znów będzie online. Wszystko zostaje na tym telefonie.",
+    "newAccount": "Ten adres ma teraz nowe konto CityTurfer, a kopia dla niego jest wyłączona. Stuknij Włącz kopię, aby zacząć."
   }
 }

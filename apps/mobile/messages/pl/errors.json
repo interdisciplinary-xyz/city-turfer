@@ -55,6 +55,6 @@
     "notSignedIn": "Ten profil nie jest już otwarty na tym telefonie. Wróć do ekranu Informacje i spróbuj ponownie.",
     "emailMismatch": "Ten kod dotyczy innego adresu. Użyj najnowszego kodu wysłanego na adres {email}.",
     "profileTaken": "Historia tego profilu należy teraz do innego konta CityTurfer. Zaloguj się adresem e-mail tego konta, aby tworzyć jej kopię zapasową.",
-    "linkedElsewhere": "Konto {email} ma już swoją historię w innym profilu na tym telefonie. Aby tworzyć kopię tamtego profilu, wyloguj się, a potem zaloguj kodem wysłanym na adres {email}."
+    "linkedElsewhere": "Konto {email} ma już swoją historię w innym profilu na tym telefonie. Aby włączyć kopię tamtego profilu, wyloguj się, a potem zaloguj kodem wysłanym na adres {email}."
   }
 }
