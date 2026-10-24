@@ -8,6 +8,7 @@ import { ActivityDetailView } from '@/app/[locale]/account/_portal/activity-deta
 import { ActivityFilter } from '@/app/[locale]/account/_portal/activity-filter';
 import type { HistoryFilter } from '@/app/[locale]/account/_portal/activity-filter/activity-filter.constants';
 import { ActivityList } from '@/app/[locale]/account/_portal/activity-list';
+import { ActivityState } from '@/app/[locale]/account/_portal/activity-state';
 import { ActivityTotals } from '@/app/[locale]/account/_portal/activity-totals';
 import { PortalFrame } from '@/app/[locale]/account/_portal/portal-frame';
 import { PortalNav } from '@/app/[locale]/account/_portal/portal-nav';
@@ -21,7 +22,15 @@ import type { Locale } from '@/i18n/routing';
 import { ACTIVITIES, DETAIL, TOTALS, TRACK } from './fixtures';
 
 type Props = {
-  view: 'list' | 'detail' | 'detail-preview' | 'empty' | 'unreachable';
+  view:
+    | 'list'
+    | 'detail'
+    | 'detail-preview'
+    | 'detail-loading'
+    | 'detail-not-found'
+    | 'detail-deleted'
+    | 'empty'
+    | 'unreachable';
   empty: HistoryEmptyKind;
 };
 
@@ -33,7 +42,15 @@ function ActivityHistory({ view, empty }: Props) {
   const locale = useLocale() as Locale;
   const [filter, setFilter] = useState<HistoryFilter>('all');
   const items = filter === 'all' ? ACTIVITIES : ACTIVITIES.filter((a) => a.type === filter);
-  const detail = view === 'detail' || view === 'detail-preview';
+  const detail = view.startsWith('detail');
+  const state =
+    view === 'detail-loading'
+      ? ({ kind: 'loading' } as const)
+      : view === 'detail-not-found'
+        ? ({ kind: 'not-found' } as const)
+        : view === 'detail-deleted'
+          ? ({ kind: 'deleted' } as const)
+          : null;
   return (
     <PortalFrame
       locale={locale}
@@ -41,7 +58,9 @@ function ActivityHistory({ view, empty }: Props) {
       nav={<PortalNav locale={locale} section='activities' exact={!detail} />}
       headerActions={<SignOutButton onSignOut={() => undefined} pending={false} />}
     >
-      {detail ? (
+      {state ? (
+        <ActivityState view={state} locale={locale} onRetry={() => undefined} />
+      ) : detail ? (
         <ActivityDetailView
           activity={DETAIL}
           track={view === 'detail' ? TRACK : null}
@@ -77,7 +96,19 @@ const meta = {
   globals: { scheme: 'light' },
   args: { view: 'list', empty: 'never' },
   argTypes: {
-    view: { control: 'inline-radio', options: ['list', 'detail', 'detail-preview', 'empty', 'unreachable'] },
+    view: {
+      control: 'inline-radio',
+      options: [
+        'list',
+        'detail',
+        'detail-preview',
+        'detail-loading',
+        'detail-not-found',
+        'detail-deleted',
+        'empty',
+        'unreachable',
+      ],
+    },
     empty: { control: 'inline-radio', options: ['never', 'withdrawn', 'nothing-yet', 'filter'] },
   },
 } satisfies Meta<typeof ActivityHistory>;
@@ -91,6 +122,12 @@ export const DetailPreviewOnly: Story = {
   name: 'Activity, full route failed (simplified shape)',
   args: { view: 'detail-preview' },
 };
+export const DetailLoading: Story = { name: 'Activity, loading', args: { view: 'detail-loading' } };
+export const DetailNotFound: Story = {
+  name: 'Activity not found (unknown id, or not yours)',
+  args: { view: 'detail-not-found' },
+};
+export const DetailDeleted: Story = { name: 'Activity deleted on the phone', args: { view: 'detail-deleted' } };
 export const BackupNeverOn: Story = { name: 'Empty: backup never turned on', args: { view: 'empty', empty: 'never' } };
 export const BackupWithdrawn: Story = { name: 'Empty: backup withdrawn', args: { view: 'empty', empty: 'withdrawn' } };
 export const NothingYet: Story = {
