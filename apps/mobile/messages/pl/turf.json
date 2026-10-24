@@ -11,9 +11,9 @@
   "showAll": "Wszystko",
   "empty": "Nagraj spacer, bieg albo przejażdżkę — każda ulica, którą pokonasz, stanie się Twoja.",
   "gained": {
-    "title": "Zdobyte terytorium",
+    "title": "Nowe terytorium",
     "newTurf": "+{area} nowego terytorium",
     "cells": "{addedCount, plural, one {{added} nowa komórka} few {{added} nowe komórki} many {{added} nowych komórek} other {{added} nowej komórki}} · {reinforcedCount, plural, one {{reinforced} wzmocniona} few {{reinforced} wzmocnione} many {{reinforced} wzmocnionych} other {{reinforced} wzmocnionej}}",
-    "claiming": "Zdobywam Twoje terytorium…"
+    "claiming": "Dodaję ulice do Twojego terytorium…"
   }
 }
