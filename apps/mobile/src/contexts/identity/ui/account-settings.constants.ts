@@ -37,10 +37,18 @@ export type AccountRefusal = AccountFailure | NotSignedIn | { kind: 'unavailable
 
 /**
  * What a flow does with a use case's answer: go to a step (optionally clearing a code field, with
- * an error to show there), stay and show an error, or word a refusal.
+ * an error to show there, or starting a rate limit's wait without wording it: `wait`), stay and
+ * show an error, or word a refusal.
  */
 export type FlowOutcome<Step extends string> =
-  | { kind: 'go'; step: Step; error?: ErrorMessage; sentTo?: string; clear?: 'code' | 'step-up-code' }
+  | {
+      kind: 'go';
+      step: Step;
+      error?: ErrorMessage;
+      sentTo?: string;
+      clear?: 'code' | 'step-up-code';
+      wait?: AccountRefusal;
+    }
   | { kind: 'error'; error: ErrorMessage }
   | { kind: 'refused'; failure: AccountRefusal };
 

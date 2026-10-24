@@ -38,8 +38,8 @@ describe('cloud backup copy', () => {
     expect(describeProgress({ backedUp: 1, total: 1, lastRunAt: NOW - 120_000 }, NOW, pl, 'pl')).toBe(
       'W kopii 1 z 1 aktywności · ostatnio 2 min temu'
     );
-    expect(describeRefused(1, en)).toBe("1 activity can't be backed up (too long or unreadable).");
-    expect(describeRefused(2, en)).toBe("2 activities can't be backed up (too long or unreadable).");
+    expect(describeRefused(1, en)).toBe('1 activity can’t be backed up (too long or unreadable).');
+    expect(describeRefused(2, en)).toBe('2 activities can’t be backed up (too long or unreadable).');
     expect(describeRefused(1, pl)).toBe('Nie da się zapisać w kopii 1 aktywności (jest za długa lub nieczytelna).');
     expect(describeRefused(5, pl)).toBe('Nie da się zapisać w kopii 5 aktywności (są za długie lub nieczytelne).');
   });
@@ -72,10 +72,10 @@ describe('cloud backup copy', () => {
 describe('restore copy', () => {
   it('offers what the phone lacks, and says when there was nothing to bring', () => {
     expect(describeOffer({ kind: 'available', count: 1 }, en)).toBe(
-      "Your backup holds 1 activity that isn't on this phone. Bring it over and your turf comes back with it. Nothing here is replaced."
+      'Your backup holds 1 activity that isn’t on this phone. Bring it over and your turf comes back with it. Nothing here is replaced.'
     );
     expect(describeOffer({ kind: 'available', count: 3 }, en)).toMatch(
-      /^Your backup holds 3 activities that aren't on this phone\./
+      /^Your backup holds 3 activities that aren’t on this phone\./
     );
     expect(describeOffer({ kind: 'available', count: 1 }, pl)).toMatch(/^W Twojej kopii jest 1 aktywność, której/);
     expect(describeOffer({ kind: 'available', count: 3 }, pl)).toMatch(/^W Twojej kopii są 3 aktywności, których/);
@@ -85,7 +85,7 @@ describe('restore copy', () => {
     expect(describeRestoreResult(done(1), pl)).toBe('Przywrócono 1 aktywność.');
     expect(describeRestoreResult(done(22), pl)).toBe('Przywrócono 22 aktywności.');
     expect(describeRestoreResult(done(3, { skipped: 1 }), en)).toBe(
-      "Restored 3. 1 couldn't be read and stayed on the server."
+      'Restored 3. 1 couldn’t be read and stayed on the server.'
     );
     expect(describeRestoreProgress({ done: 2, total: 40 }, en)).toBe('Restoring 3 of 40…');
     expect(describeRestoreProgress(null, pl)).toBe('Przywracanie…');
@@ -94,15 +94,28 @@ describe('restore copy', () => {
   it('says Apple Health stayed off on this phone, and where to turn it on (iOS only)', () => {
     const r = done(2, { healthOffered: true });
     expect(describeRestoreResult(r, en, { health: true })).toBe(
-      "Restored 2 activities. Apple Health workouts aren't backed up from this phone. You can turn that on in Info › Cloud backup."
+      'Restored 2 activities. Apple Health workouts aren’t backed up from this phone. You can turn that on in Info › Cloud backup.'
     );
     expect(describeRestoreResult(r, en)).toBe('Restored 2 activities.');
+  });
+
+  it('no credentials: a real account signs in, a local profile confirms its email with a code in Info', () => {
+    const noToken = { kind: 'unavailable', reason: 'no-token' } as const;
+    expect(describeRestoreResult(noToken, en)).toBe('Sign in with your email to restore your backup.');
+    expect(describeRestoreResult(noToken, pl)).toBe('Zaloguj się adresem e-mail, aby przywrócić kopię.');
+    expect(describeRestoreResult(noToken, en, { localProfile: true })).toBe(
+      'To restore, first confirm your email with a code in Info › Cloud backup.'
+    );
+    expect(describeRestoreResult(noToken, pl, { localProfile: true })).toBe(
+      'Aby przywrócić kopię, najpierw potwierdź adres e-mail kodem: Informacje › Kopia w chmurze.'
+    );
+    expect(describeRestoreResult({ kind: 'unavailable', reason: 'busy' }, en, { localProfile: true })).toBeNull();
   });
 
   it('a paused restore says why', () => {
     const paused = { kind: 'paused', reason: 'offline', done: 0, total: 0 } as const;
     expect(describeRestoreResult(paused, en)).toBe(
-      "No connection right now. Tap Restore when you're online; it carries on where it stopped."
+      'No connection right now. Tap Restore when you’re online; it carries on where it stopped.'
     );
     expect(describeRestoreResult(paused, pl)).toMatch(/^Brak połączenia\./);
   });

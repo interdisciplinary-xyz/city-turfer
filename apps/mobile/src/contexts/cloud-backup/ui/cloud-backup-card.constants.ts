@@ -64,6 +64,12 @@ export type BackupLinkOffer = { email: string; onRequestCode: () => void };
 
 export type CloudBackupCardProps = { link: BackupLinkOffer | null | 'loading' };
 
+/**
+ * The Home screen's restore card. `localProfile`: a linkable local profile (mock admin, demo, from
+ * the screen: Identity knows), which gets credentials from a code in Info rather than a sign-in.
+ */
+export type RestoreCardProps = { localProfile?: boolean };
+
 /** Which of the card's parts show, from the status and the link offer. */
 export type CloudBackupCardMode = {
   /** "Backup needs a code sent to {email}" with "Email me a code". */

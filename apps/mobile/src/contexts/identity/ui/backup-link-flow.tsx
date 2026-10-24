@@ -32,6 +32,8 @@ export function BackupLinkFlow({ onLinked, onDone, turnsOn }: BackupLinkFlowProp
   const [step, setStep] = useState<BackupLinkStep>('request');
   const [sentTo, setSentTo] = useState('');
   const [code, setCode] = useState('');
+  /** On the code step after a rate limit: a code went out recently, not just now. */
+  const [sentRecently, setSentRecently] = useState(false);
   /** Turning backup on failed after the link: its message (the code is used up, so only that is retried). */
   const [turnOnError, setTurnOnError] = useState<string | null>(null);
   /** Linked, and backup stays off (the Turfer had turned it off): say so, then Done. */
@@ -55,6 +57,10 @@ export function BackupLinkFlow({ onLinked, onDone, turnsOn }: BackupLinkFlowProp
     if (o.sentTo) {
       setSentTo(o.sentTo);
     }
+    if (o.wait) {
+      refused(o.wait); // only its wait (the resend countdown): a code went out recently
+    }
+    setSentRecently(o.wait !== undefined);
     setStep(o.step);
     if (o.step === 'code') {
       setTimeout(() => fieldRef.current?.focus(), 50);
@@ -133,7 +139,7 @@ export function BackupLinkFlow({ onLinked, onDone, turnsOn }: BackupLinkFlowProp
       {step === 'code' && (
         <>
           <Text testID='backup-link-sent' style={[s.text, { color: p.text }]}>
-            {t('link.sent', { email })}
+            {sentRecently ? t('link.sentRecently', { email }) : t('link.sent', { email })}
           </Text>
           <AccountField
             ref={fieldRef}
@@ -150,6 +156,12 @@ export function BackupLinkFlow({ onLinked, onDone, turnsOn }: BackupLinkFlowProp
             editable={!busy}
           />
           {errorText}
+          {/* "Turn on backup" records consent: say where the data goes right next to it. */}
+          {turnsOn && (
+            <Text testID='backup-link-privacy' style={[s.note, { color: p.muted }]}>
+              {t('privacy')}
+            </Text>
+          )}
           <Button
             testID='backup-link-submit'
             label={turnsOn ? t('link.submit') : t('link.confirm')}
@@ -192,6 +204,7 @@ const s = StyleSheet.create({
   root: { gap: SPACE.lg },
   text: { fontSize: FONT_SIZE.body },
   error: { fontSize: FONT_SIZE.caption },
+  note: { fontSize: FONT_SIZE.caption },
   link: { fontWeight: FONT_WEIGHT.bold, textAlign: 'center' },
   linkTarget: { minHeight: 44, justifyContent: 'center' },
 });

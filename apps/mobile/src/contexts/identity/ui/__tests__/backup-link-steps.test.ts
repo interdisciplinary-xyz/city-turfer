@@ -26,20 +26,30 @@ describe('backup link: "Email me a code"', () => {
     });
   });
 
-  it('a rate limit is a refusal (it holds the send buttons for its wait) worded with that wait', () => {
+  it('a rate limit means a code went out recently: the code field (what was typed stays), resend held for the wait', () => {
     const o = afterBackupLinkCode({ kind: 'rate-limited', retryAfterS: 42 });
-    expect(o).toEqual({ kind: 'refused', failure: { kind: 'rate-limited', retryAfterS: 42 } });
-    expect(words(o)).toBe('Too many tries. Wait 42 seconds and try again.');
-    expect(words(o, 'pl')).toBe('Za dużo prób. Odczekaj 42 sekundy i spróbuj ponownie.');
+    expect(o).toEqual({ kind: 'go', step: 'code', wait: { kind: 'rate-limited', retryAfterS: 42 } });
+    expect(words(o)).toBeNull(); // no "Too many tries" next to a code that is already in the inbox
+    // Without Retry-After too: the field, no countdown.
+    expect(afterBackupLinkCode({ kind: 'rate-limited', retryAfterS: null })).toEqual({
+      kind: 'go',
+      step: 'code',
+      wait: { kind: 'rate-limited', retryAfterS: null },
+    });
+  });
+
+  it('the code step says a code went out recently, in English and Polish', () => {
+    expect(translator('backup', 'en')('link.sentRecently', { email: EMAIL })).toContain(EMAIL);
+    expect(translator('backup', 'pl')('link.sentRecently', { email: EMAIL })).toContain(EMAIL);
   });
 
   it('every other answer stays on the step with its own message', () => {
     expect(words(afterBackupLinkCode({ kind: 'offline' }))).toBe(
-      'No connection. Turning on backup needs the internet; nothing was changed.'
+      'No connection. Sending and checking the code needs the internet; nothing was changed.'
     );
     expect(words(afterBackupLinkCode({ kind: 'invalid-email' }))).toBe('That doesn’t look like an email address.');
     expect(words(afterBackupLinkCode({ kind: 'not-local-profile' }))).toBe(
-      'This profile can’t be backed up with a code. Sign in with your email to back up.'
+      'This profile can’t be backed up from here. Sign out, then sign in with your email to back up.'
     );
     expect(words(afterBackupLinkCode({ kind: 'accounts-unavailable' }))).toBe(
       'Signing in to an account is not available in this build.'
@@ -69,14 +79,14 @@ describe('backup link: the code', () => {
       ],
       [
         { kind: 'linked-elsewhere' },
-        `The account for ${EMAIL} already keeps its history in another profile on this phone.`,
+        `The account for ${EMAIL} already keeps its history in another profile on this phone. To back that profile up, sign out, then sign in with an email code to ${EMAIL}.`,
       ],
       [
         { kind: 'not-local-profile' },
-        'This profile can’t be backed up with a code. Sign in with your email to back up.',
+        'This profile can’t be backed up from here. Sign out, then sign in with your email to back up.',
       ],
       [{ kind: 'accounts-unavailable' }, 'Signing in to an account is not available in this build.'],
-      [{ kind: 'offline' }, 'No connection. Turning on backup needs the internet; nothing was changed.'],
+      [{ kind: 'offline' }, 'No connection. Sending and checking the code needs the internet; nothing was changed.'],
       [{ kind: 'auth' }, 'Our server had a hiccup. Try again in a moment.'],
       [{ kind: 'unavailable' }, 'Our server had a hiccup. Try again in a moment.'],
       [{ kind: 'rate-limited', retryAfterS: null }, 'Too many tries. Wait a few minutes and try again.'],
