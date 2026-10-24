@@ -55,6 +55,19 @@ feat/<domain>  ─PR→  scope/vX.Y.Z  ─PR→  release/vX.Y.Z  ─PR→  main 
      release commit itself makes OTA updates stop matching builds installed before it (the
      fingerprint a release PR lists is the one from before the bump). Open risk, not yet decided:
      `docs/decisions/design-system-2026-10-19.md`.
+   - **v0.11.0 (JS only), measured 2026-10-24 on `scope/v0.11.0`:** the fingerprint equals `main`'s
+     (tag `v0.10.0`): iOS `06aca0e17e430961e1ccb2fd755db451c830efda`, Android
+     `ab6e3dbbd0c2ab97a3bc6e8395b0b376a0bb4684`. The release commit's `app.json` bump to 0.11.0 will
+     change it, so builds installed from `v0.10.0` get no OTA published from the `v0.11.0` tag. The
+     founder chooses one of (not decided here):
+     1. Publish the v0.11.0 OTA from the release head **before** the bump (fingerprint as above),
+        then let the release commit land.
+     2. Skip `SourceSkips.ExpoConfigVersions` in `apps/mobile/fingerprint.config.js` so the version
+        no longer counts. Editing that config is itself a fingerprint change (measured: iOS moves to
+        `066c88f8…`), so it cuts off every binary installed before it; only worth it together with a
+        reinstall.
+     3. Reinstall the phones from the `v0.11.0` tag after the release and publish later OTAs from
+        there.
 7. Fixes after promotion to release: short `fix/<slug>` branch PR'd into `release/vX.Y.0`, then
    merged back down into the next scope.
 8. Hotfixes on `main` (`hotfix/*`) must be merged back down into the active `release/*` and

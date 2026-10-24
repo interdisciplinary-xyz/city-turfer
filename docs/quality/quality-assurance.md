@@ -81,7 +81,9 @@ Test counts may only go up. A drop means tests were deleted and needs an explana
 
 Copy into the `scope/vX.Y.Z` to `release/vX.Y.Z` PR description.
 
-- [ ] `pnpm run ci:quality` green on the scope branch head (record Jest count and runtime)
+- [ ] `TURBO_FORCE=true pnpm run ci:quality` green on the scope branch head (record Jest count and
+      runtime). Forced, because the Turbo cache is shared across worktrees and a cached pass may
+      come from another checkout
 - [ ] CI green on the PR (commit naming and quality jobs)
 - [ ] `pnpm run test:e2e`: every flow green on the iOS Simulator; report path noted
       (`e2e-results/<timestamp>`, kept local and never committed)

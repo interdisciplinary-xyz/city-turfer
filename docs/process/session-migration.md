@@ -65,8 +65,9 @@ Before ending a session or switching machine, terminal, developer or agent:
 
 When starting, onboarding or resuming:
 
-1. Read the newest session log (`ls docs/sessions/`, then its last section and **Open / next**),
-   then the live plans in `docs/plans/`, then `CLAUDE.md`. Memory loads on its own.
+1. Read the newest session log (`ls docs/sessions | sort -V | tail -1`, then its last section and
+   **Open / next**), then the live plans in `docs/plans/`, then `CLAUDE.md`. Memory loads on its
+   own.
 2. Treat the newest session log as the source of truth; where older docs or memory disagree, they
    are stale (the log should say so).
 3. Check the repo before trusting the notes:
