@@ -39,6 +39,8 @@ export const QUERY_KEYS = {
   consents: ['consents'],
   sessions: SESSIONS_KEY,
   export: (id: string) => ['export', id],
+  /** Every list of activities, whatever the filter. */
+  activityLists: ['activities'],
   activities: (type: ActivityType | null) => ['activities', type ?? 'all'],
   activity: (id: string) => ['activity', id],
   /** Every cached track of one activity, whatever its hash. */

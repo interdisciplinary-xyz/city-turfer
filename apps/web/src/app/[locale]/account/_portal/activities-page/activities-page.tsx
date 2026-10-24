@@ -1,9 +1,9 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { useActivities, useActivityTotals, useConsents } from '@/api/hooks';
+import { QUERY_KEYS, useActivities, useActivityTotals, useConsents, usePortal } from '@/api/hooks';
 
 import { ActivitiesEmpty } from '../activities-empty';
 import { type ConsentsAnswer, healthLeftOut, historyEmpty } from '../activities-empty/activities-empty.constants';
@@ -15,7 +15,7 @@ import { ActivityTotals } from '../activity-totals';
 import { backupState } from '../backup-status/backup-status.constants';
 import { ErrorMessage } from '../error-message';
 import { Unreachable } from '../unreachable';
-import type { ActivitiesPageProps } from './activities-page.constants';
+import { type ActivitiesPageProps, backupChanged, backupKey, historyShown } from './activities-page.constants';
 
 /**
  * Activities: the backed-up walks, runs and rides (read-only, H3). Totals, a type filter (page
@@ -30,6 +30,7 @@ export function ActivitiesPage({ locale }: ActivitiesPageProps) {
   const totals = useActivityTotals();
   const consents = useConsents();
   const zone = useMemo(() => browserZone(), []);
+  const { queryClient } = usePortal();
 
   const backup = consents.isSuccess ? backupState(consents.data.items) : null;
   const consentsAnswer: ConsentsAnswer = backup
@@ -37,8 +38,10 @@ export function ActivitiesPage({ locale }: ActivitiesPageProps) {
     : consents.isError
       ? { status: 'error' }
       : { status: 'pending' };
-  const items = list.data?.pages.flatMap((page) => page.items) ?? [];
-  const allCount = totals.data?.allTime.count ?? 0;
+  // Backup never on, or withdrawn on the phone: nothing cached from before is shown.
+  const shown = historyShown(consentsAnswer);
+  const items = shown ? (list.data?.pages.flatMap((page) => page.items) ?? []) : [];
+  const allCount = shown ? (totals.data?.allTime.count ?? 0) : 0;
   // A 401 is on its way to sign-in: say nothing else. A failed background refresh keeps the list.
   const listError = list.isError && !list.data && list.error.code !== 'signed-out' ? list.error : null;
   const moreError = list.isFetchNextPageError && list.error.code !== 'signed-out' ? list.error : null;
@@ -46,7 +49,20 @@ export function ActivitiesPage({ locale }: ActivitiesPageProps) {
   // The consents failed and the list is empty: say why we can't tell more (a 401 is leaving).
   const consentsError =
     empty === 'unknown' && consents.isError && consents.error.code !== 'signed-out' ? consents.error : null;
-  const somethingBackedUp = allCount > 0 || items.length > 0 || type !== null;
+  const somethingBackedUp = shown && (allCount > 0 || items.length > 0 || type !== null);
+
+  // The consents' answer changed (backup withdrawn or turned on again on the phone): re-read.
+  const backupNow = backupKey(backup);
+  const lastBackup = useRef<string | null>(null);
+  useEffect(() => {
+    if (backupChanged(lastBackup.current, backupNow)) {
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activityLists });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activityTotals });
+    }
+    if (backupNow !== null) {
+      lastBackup.current = backupNow;
+    }
+  }, [backupNow, queryClient]);
 
   return (
     <div className='portal-page'>

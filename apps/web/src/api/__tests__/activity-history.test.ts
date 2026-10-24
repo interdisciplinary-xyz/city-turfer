@@ -9,6 +9,11 @@ import {
   healthLeftOut,
   historyEmpty,
 } from '../../app/[locale]/account/_portal/activities-empty/activities-empty.constants';
+import {
+  backupChanged,
+  backupKey,
+  historyShown,
+} from '../../app/[locale]/account/_portal/activities-page/activities-page.constants';
 import { activityNumbers, splitPace } from '../../app/[locale]/account/_portal/activity-numbers';
 import { activityView } from '../../app/[locale]/account/_portal/activity-page/activity-page.constants';
 import {
@@ -295,6 +300,30 @@ describe('historyEmpty', () => {
     expect(healthLeftOut({ ...on, health: { included: true, since: 'x' } })).toBe(false);
     expect(healthLeftOut({ kind: 'never' })).toBe(false);
     expect(healthLeftOut(null)).toBe(false);
+  });
+});
+
+describe('the list follows the backup', () => {
+  const on = { kind: 'on', since: 'x', policyVersion: '2026-10', health: { included: false } } as const;
+  it('shows nothing cached when backup was never on or is withdrawn', () => {
+    expect(historyShown({ status: 'success', backup: { kind: 'never' } })).toBe(false);
+    expect(historyShown({ status: 'success', backup: { kind: 'withdrawn', at: 'x' } })).toBe(false);
+    expect(historyShown({ status: 'success', backup: on })).toBe(true);
+    expect(historyShown({ status: 'pending' })).toBe(true);
+    expect(historyShown({ status: 'error' })).toBe(true);
+  });
+
+  it('re-reads when the consents answer changes, not on the first answer or a repeat', () => {
+    const before = backupKey(on);
+    const withdrawn = backupKey({ kind: 'withdrawn', at: '2026-10-24T08:00:00Z' });
+    const healthOn = backupKey({ ...on, health: { included: true, since: 'y' } });
+    expect(backupKey(null)).toBeNull();
+    expect(backupChanged(null, before)).toBe(false);
+    expect(backupChanged(before, backupKey({ ...on }))).toBe(false);
+    expect(backupChanged(before, withdrawn)).toBe(true);
+    expect(backupChanged(withdrawn, backupKey({ kind: 'withdrawn', at: '2026-10-25T08:00:00Z' }))).toBe(true);
+    expect(backupChanged(before, healthOn)).toBe(true);
+    expect(backupChanged(before, null)).toBe(false);
   });
 });
 
