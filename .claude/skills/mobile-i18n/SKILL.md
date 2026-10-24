@@ -94,7 +94,7 @@ number to the plural selector and a pre-formatted `fixed(n, 0)` string for the t
 | English                  | Polish                                                                                                              |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------- |
 | turf                     | **terytorium** (founder, 2026-10-24; was "turf"): Twoje terytorium, staje się Twoim terytorium, 3,02 km² terytorium |
-| Turf Map                 | Mapa terytorium (tab, stat and screen label: Terytorium)                                                            |
+| Turf Map                 | Mapa terytorium (tab and stat label: Terytorium; screen title: Twoje terytorium)                                    |
 | cells                    | komórki (1530 komórek)                                                                                              |
 | Walk / Run / Ride (type) | Spacer / Bieg / Rower                                                                                               |
 | walks, runs and rides    | spacery, biegi i przejażdżki                                                                                        |
@@ -108,7 +108,7 @@ number to the plural selector and a pre-formatted `fixed(n, 0)` string for the t
 | ride (the activity)      | przejażdżka (Poranna przejażdżka); **jazda** only in tight live UI (Zacznij jazdę, banner)                          |
 | record / recording       | nagraj, nagrywać / nagrywanie, nagranie (tab: Nagraj)                                                               |
 | pause / paused           | Pauza (button and status), Autopauza; resume = Wznów                                                                |
-| claim turf, turf gained  | zdobywać terytorium (Zdobywam Twoje terytorium…); Zdobyte terytorium, +{area} nowego terytorium                     |
+| claim turf, turf gained  | dodawać ulice do terytorium (Dodaję ulice…), Twoje terytorium liczy…; Nowe terytorium; never zdobywać (conquest)    |
 | tiers faint…blazing      | Blade, Świecące, Mocne, Płonące (plural, agree with komórki/ulice); Siła terytorium                                 |
 | Dashboard / Me (tabs)    | Pulpit / Ja                                                                                                         |
 | Splits                   | Międzyczasy                                                                                                         |
