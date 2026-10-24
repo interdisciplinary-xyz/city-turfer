@@ -44,6 +44,9 @@ export function ActivitiesPage({ locale }: ActivitiesPageProps) {
   const allCount = shown ? (totals.data?.allTime.count ?? 0) : 0;
   // A 401 is on its way to sign-in: say nothing else. A failed background refresh keeps the list.
   const listError = list.isError && !list.data && list.error.code !== 'signed-out' ? list.error : null;
+  // The totals' own failure, when the list's error doesn't already say it.
+  const totalsError =
+    shown && !listError && totals.isError && !totals.data && totals.error.code !== 'signed-out' ? totals.error : null;
   const moreError = list.isFetchNextPageError && list.error.code !== 'signed-out' ? list.error : null;
   const empty = list.isSuccess ? historyEmpty({ consents: consentsAnswer, type, listed: items.length }) : null;
   // The consents failed and the list is empty: say why we can't tell more (a 401 is leaving).
@@ -71,9 +74,23 @@ export function ActivitiesPage({ locale }: ActivitiesPageProps) {
       {healthLeftOut(backup) ? <p className='portal-hint'>{t('healthOff')}</p> : null}
 
       {totals.data && allCount > 0 ? <ActivityTotals totals={totals.data} locale={locale} /> : null}
+      {totalsError?.unreachable ? (
+        <Unreachable onRetry={() => void totals.refetch()} retrying={totals.isFetching} />
+      ) : null}
+      {totalsError && !totalsError.unreachable ? <ErrorMessage error={totalsError} /> : null}
       {somethingBackedUp ? <ActivityFilter value={filter} onChange={setFilter} /> : null}
 
-      {listError?.unreachable ? <Unreachable onRetry={() => void list.refetch()} retrying={list.isFetching} /> : null}
+      {listError?.unreachable ? (
+        <Unreachable
+          onRetry={() => {
+            void list.refetch();
+            if (totals.isError) {
+              void totals.refetch();
+            }
+          }}
+          retrying={list.isFetching}
+        />
+      ) : null}
       {listError && !listError.unreachable ? <ErrorMessage error={listError} /> : null}
       {(list.isPending && !listError) || empty === 'waiting' ? (
         <p className='portal-hint' role='status'>
