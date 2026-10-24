@@ -45,6 +45,29 @@ describe('Cloud backup card: which parts show', () => {
     });
   });
 
+  it('a local profile whose session was revoked or expired (auth): the code offer again, with the switch', () => {
+    const revoked = { ...st(true, true), lastError: 'auth' as const };
+    const mode = cloudBackupCardMode(revoked, offer('admin@cityturfer.com'));
+    expect(mode).toEqual({ offerLink: true, signInFirst: false, showSwitch: true });
+    expect(cloudBackupCardMode(revoked, offer('demo@cityturfer.com')).offerLink).toBe(true);
+    // The offer says it: no "sign in again" (a password would only open the phone's data, LP2).
+    expect(shownLastError(revoked, mode)).toBeNull();
+    // Turned off meanwhile with the withdrawal pending: it needs the code too.
+    const off = { ...st(true, false, true), lastError: 'auth' as const };
+    expect(offPendingNotice(off, cloudBackupCardMode(off, offer('admin@cityturfer.com')))).toBe('backupOffNeedsCode');
+  });
+
+  it('a refused session on a real account (or while the offer loads) keeps "sign in again"', () => {
+    const revoked = { ...st(true, true), lastError: 'auth' as const };
+    expect(cloudBackupCardMode(revoked, null)).toEqual(NORMAL);
+    expect(shownLastError(revoked, cloudBackupCardMode(revoked, null))).toBe('auth');
+    expect(cloudBackupCardMode(revoked, 'loading')).toEqual(NORMAL);
+    // Other errors on a linked local profile: the normal card.
+    expect(cloudBackupCardMode({ ...st(true, true), lastError: 'offline' }, offer('admin@cityturfer.com'))).toEqual(
+      NORMAL
+    );
+  });
+
   it('a real account is unchanged: with credentials the normal card, without them "Sign in with your email"', () => {
     expect(cloudBackupCardMode(st(true, true), null)).toEqual(NORMAL);
     expect(cloudBackupCardMode(st(false, false), null)).toEqual({
