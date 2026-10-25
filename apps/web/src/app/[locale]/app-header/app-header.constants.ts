@@ -8,8 +8,6 @@ export type AppHeaderProps = {
   waitlist: boolean;
   /** Where "Join the waitlist" goes: the section on the home page, `/<locale>#waitlist` elsewhere. */
   waitlistHref?: string;
-  /** The page's own logo; the header's logo shows once it has scrolled away (none: at once). */
-  lockupSelector?: string;
   /** Show "Sign in" and "Create account" (the web portal). Default true. */
   account?: boolean;
 };
@@ -31,5 +29,4 @@ export type AppHeaderViewProps = {
   account: { signIn: AppHeaderLink; register: AppHeaderLink } | null;
   /** The language switcher. */
   languages: ReactNode;
-  lockupSelector?: string;
 };

@@ -15,19 +15,21 @@ CityTurfer in step with `packages/brand`, and about changing several surfaces at
 ## The map
 
 `tools/brand/surfaces.mjs` lists every surface: scheme, owner agent, status and the files that carry
-its theme, fonts, logo and copy. It is the source; this table is a summary.
+its theme, fonts, logo and copy. It is the source; this table is a summary. `site` means the surface
+follows `SITE_SCHEME`: dark since v0.12.0, the app's palette (the app is the source of truth,
+`docs/decisions/brand-dark-site-2026-10-25.md`).
 
 | Surface       | Scheme | Owner                | Brand comes in through                                                                 |
 | ------------- | ------ | -------------------- | -------------------------------------------------------------------------------------- |
 | `mobile`      | dark   | `mobile-ui-engineer` | `usePalette()` + `@cityturfer/ui`; fonts and icons are native (`apps/mobile/app.json`) |
-| `web`         | light  | `web-engineer`       | `cssVariables(SITE_SCHEME)` in the layout, `next/font` (`apps/web/src/app/fonts.ts`)   |
-| `portal`      | light  | `portal-engineer`    | the website's variables and fonts, plus `account/portal.css`                           |
-| `branding`    | light  | `brand-designer`     | `/branding`, dev only: the living brand book                                           |
-| `swagger-dev` | light  | `web-engineer`       | `apps/web/tools/swagger-brand.mjs` + `swagger-theme.css` (dev page)                    |
-| `swagger-api` | light  | `api-engineer`       | nothing yet: stock `@hono/swagger-ui` (`apps/api/src/app.ts`)                          |
-| `storybook`   | light  | `mobile-ui-engineer` | `.storybook/theme.ts` from tokens; `@font-face` by hand in `*-head.html`               |
+| `web`         | site   | `web-engineer`       | `cssVariables(SITE_SCHEME)` in the layout, `next/font` (`apps/web/src/app/fonts.ts`)   |
+| `portal`      | site   | `portal-engineer`    | the website's variables and fonts, plus `account/portal.css`                           |
+| `branding`    | site   | `brand-designer`     | `/branding`, dev only: the living brand book                                           |
+| `swagger-dev` | site   | `web-engineer`       | `apps/web/tools/swagger-brand.mjs` + `swagger-theme.css` (dev page)                    |
+| `swagger-api` | site   | `api-engineer`       | nothing yet: stock `@hono/swagger-ui` (`apps/api/src/app.ts`)                          |
+| `storybook`   | site   | `mobile-ui-engineer` | `.storybook/theme.ts` from tokens; `@font-face` by hand in `*-head.html`               |
 | `assets`      | dark   | `brand-designer`     | `packages/brand/templates` + `render-assets.mjs` (icon, splash, OG, store shots)       |
-| `admin`       | light  | `brand-designer`     | paused: `apps/admin/src/brand/` maps tokens onto Payload's two schemes                 |
+| `admin`       | site   | `brand-designer`     | paused: `apps/admin/src/brand/` maps tokens onto Payload's two schemes                 |
 
 A new surface (a page, a tool UI, an e-mail) gets an entry in the manifest in the same PR; the audit
 then checks it.
@@ -44,7 +46,7 @@ pnpm run brand:snapshot -- --only web,swagger-api --out <dir>
 - **audit:brand** (`tools/brand-audit.mjs`) checks the mechanical rules: brand colours as hex or
   `rgb()` outside `packages/brand`, a scheme picked by name, `@font-face` families and files that
   aren't the brand's, the name's spelling, "territory" in English copy, drifted logo copies, and the
-  manifest itself (files exist, owners are agents, light themes go through `SITE_SCHEME`).
+  manifest itself (files exist, owners are agents, site themes go through `SITE_SCHEME`).
 - **Known drift** (`tools/brand/known-drift.mjs`): accepted findings, each with a reason;
   `todo: true` marks what the plan should fix. Fixing one means deleting its entry: the audit errors
   on an entry that no longer matches, so the list can't hide a regression.
@@ -63,8 +65,7 @@ pnpm run brand:snapshot -- --only web,swagger-api --out <dir>
 2. **One owner per surface.** Hand each surface to its owner from the map; a change spanning many
    starts with rn-architect only when it also crosses the app and the API.
 3. **Before and after.** `pnpm run brand:snapshot -- --out <before>` on the base, then again on the
-   branch; compare the two contact sheets. Light surfaces must look like one family, and every map
-   stays on a night panel.
+   branch; compare the two contact sheets. Every surface must look like one family with the app.
 4. **Gate.** `pnpm run audit:brand`, `pnpm --filter @cityturfer/brand test:unit`, then the owners'
    checks (the `verify-change` skill). A Storybook or packages/ui change: check the fingerprint (the
    `design-system` skill).
@@ -74,11 +75,11 @@ pnpm run brand:snapshot -- --only web,swagger-api --out <dir>
 ## What the audit can't see
 
 Use the contact sheet for these: display text in capitals with `DISPLAY_TRACKING` on every surface,
-one primary-button look per scheme, the same label tracking, focus rings in `accentText`, the Ramp
-only where it belongs on light, titles in the same format, and the app (dark) next to the portal
-(light) showing the same concepts (stat tiles, activity rows, type colours, tier legend) the same
-way. `@cityturfer/ui` renders on the web only inside Storybook, so the website shares tokens and a
-spec with the app, not components.
+one primary-button look per scheme, the same label tracking, focus rings in `accentText`, the full
+Ramp where the app draws it, titles in the same format, and the app next to the portal showing the
+same concepts (stat tiles, activity rows, type colours, tier legend) the same way. `@cityturfer/ui`
+renders on the web only inside Storybook, so the website shares tokens and a spec with the app, not
+components.
 
 ## Where we are
 

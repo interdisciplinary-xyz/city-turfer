@@ -16,15 +16,16 @@ test('bundles the site header and its stylesheet for the dev pages', async () =>
   assert.match(js, /data:image\/svg\+xml/);
   // The website's (light) brand variables only on the header, then app-header.css itself.
   const { cssVariables, SITE_SCHEME } = await loadBrand(WEB);
-  assert.equal(SITE_SCHEME, 'light');
+  assert.equal(SITE_SCHEME, 'dark');
   assert.match(css, /^\.app-header \{\n {2}--bg: /);
   assert.ok(css.includes(`--bg: ${cssVariables(SITE_SCHEME).bg ?? cssVariables(SITE_SCHEME)['--bg']};`));
   assert.doesNotMatch(css, /^:root \{\n {2}--bg/m);
-  assert.match(css, /\.app-header\[data-scrolled\]/);
+  // Solid at once: no scroll state, an opaque bar over the host page.
+  assert.doesNotMatch(css, /data-scrolled/);
+  assert.match(css, /#app-header-root \.app-header \{\n {2}background: var\(--bg\);/);
   assert.match(css, /#app-header-root \{\n {2}display: contents;/);
 });
 
-test('the mount point names the page lockup, escaped', () => {
+test('the mount point is a plain root and the bundle script', () => {
   assert.equal(appHeaderMarkup(), '<div id="app-header-root"></div><script src="./__app-header.js"></script>');
-  assert.match(appHeaderMarkup({ lockup: '.a[x="1"]' }), /data-lockup="\.a\[x=&quot;1&quot;\]"/);
 });

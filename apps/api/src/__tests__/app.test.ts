@@ -189,7 +189,7 @@ describe('routes', () => {
     expect(html).toContain('swagger');
     expect(html).toContain('showExtensions');
     // Light code blocks, matching the site's light theme.
-    expect(html).toContain('syntaxHighlight: {"activated":true,"theme":"idea"}');
+    expect(html).toContain('syntaxHighlight: {"activated":true,"theme":"obsidian"}');
   });
 });
 

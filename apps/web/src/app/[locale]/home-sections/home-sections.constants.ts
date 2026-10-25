@@ -1,0 +1,43 @@
+import { TIER_ORDER } from '@cityturfer/brand';
+
+/** The three activity types as the app names them (`cycle` is shown as "Ride"). */
+export type HomeActivityType = 'walk' | 'run' | 'cycle';
+
+/** The glyphs the app puts in its activity badges (apps/mobile/src/constants/activity.ts). */
+export const TYPE_GLYPH: Record<HomeActivityType, string> = { walk: '🚶', run: '🏃', cycle: '🚴' };
+
+/** CSS class suffix per type: the site's variables call the ride colour `--ride`. */
+export const TYPE_CLASS: Record<HomeActivityType, string> = { walk: 'walk', run: 'run', cycle: 'ride' };
+
+export const HOME_TYPES: readonly HomeActivityType[] = ['walk', 'run', 'cycle'];
+
+export const HOME_TIERS = TIER_ORDER;
+
+/**
+ * The example week on the Dashboard card: the same numbers as the Dashboard screenshot in the hero
+ * (the Gdańsk demo profile), so the card and the phone agree. Copy keys live under home.week.
+ */
+export const EXAMPLE_WEEK = { distanceKm: 43.64, time: '2:41:33', count: 4 } as const;
+
+export type ExampleActivity = {
+  key: 'walk' | 'run' | 'ride';
+  type: HomeActivityType;
+  distanceKm: number;
+  /** Moving time, as the app prints it. */
+  time: string;
+  /** Pace per km for walks and runs; rides show speed instead. */
+  pace?: string;
+  speedKmh?: number;
+};
+
+export const EXAMPLE_ACTIVITIES: readonly ExampleActivity[] = [
+  { key: 'walk', type: 'walk', distanceKm: 2.89, time: '30:45', pace: '10:39' },
+  { key: 'run', type: 'run', distanceKm: 9.01, time: '49:30', pace: '5:30' },
+  { key: 'ride', type: 'cycle', distanceKm: 17.85, time: '45:33', speedKmh: 23.5 },
+];
+
+/** Achievements on the example card: unlocked of the app's total (packages/core achievements). */
+export const EXAMPLE_ACHIEVEMENTS = { unlocked: 9, total: 20 } as const;
+
+/** Turf gained on the example card (activity detail in the app). */
+export const EXAMPLE_GAIN = { areaKm2: 0.12, added: 56, reinforced: 340 } as const;

@@ -12,8 +12,6 @@ export const BRANDING_DESCRIPTION =
   'CityTurfer brand definition: positioning, personality, logo, colour, type, visual language and accessibility.';
 /** /branding is English only, like the brand docs; the site header uses this language. */
 export const BRANDING_LOCALE: Locale = 'en';
-/** The hero wordmark: the site header's logo shows once it has scrolled away. */
-export const BRAND_LOCKUP_SELECTOR = '.brand-hero-wordmark';
 export const DECISION_DOC_URL =
   'https://github.com/interdisciplinary-xyz/city-turfer/blob/main/docs/decisions/brand-foundations-2026-10-20.md';
 
@@ -340,7 +338,7 @@ export const CONTRAST_FIXES: readonly ContrastFix[] = [
   },
 ];
 export const CONTRAST_FIXES_NOTE =
-  'The website, Swagger and Storybook are light (docs/decisions/brand-light-theme-2026-10-22.md); the light rows above are fixed. The app stays dark and keeps these two known failures so it does not shift over the air.';
+  'The website, Swagger and Storybook are dark like the app (docs/decisions/brand-dark-site-2026-10-25.md). The web labels pink fills in night ink (WEB_ON_ACCENT, 5.5:1); the app keeps these two known failures so it does not shift over the air.';
 
 export type BrandAsset = { name: string; where: string; note: string };
 export const ASSETS: readonly BrandAsset[] = [

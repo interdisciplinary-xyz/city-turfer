@@ -6,11 +6,11 @@
  *
  * Errors (exit 1):
  *   manifest      a surface names a file that does not exist, an owner agent that does not exist, or
- *                 a light surface whose theme files never mention SITE_SCHEME / cssVariables
+ *                 a site surface whose theme files never mention SITE_SCHEME / cssVariables
  *   brand-hex     a brand colour written as hex outside packages/brand (allowlist: ALLOWED_HEX)
  *   brand-rgb     a brand colour written as rgb()/rgba() channels outside packages/brand
  *   named-scheme  a scheme picked by name (cssVariables('light'), THEMES.dark…) outside packages/brand,
- *                 where SITE_SCHEME (light surfaces) or usePalette() (the app) must decide
+ *                 where SITE_SCHEME (site surfaces) or usePalette() (the app) must decide
  *   font-face     an @font-face or font file reference that is not a brand family or not a file in
  *                 packages/brand/fonts
  *   name          the product name spelt any way other than "CityTurfer" in user-facing copy
@@ -187,7 +187,7 @@ export function literalFindings(file, text, brand) {
       'named-scheme',
       'error',
       m.index,
-      `${m[0]}: pick the scheme through SITE_SCHEME (light surfaces) or usePalette() (the app)`
+      `${m[0]}: pick the scheme through SITE_SCHEME (site surfaces) or usePalette() (the app)`
     );
   }
 
@@ -254,7 +254,7 @@ export function copyFindings(file, text, { english = false } = {}) {
   return findings;
 }
 
-/** Manifest findings: missing files, unknown owners, light surfaces whose theme ignores SITE_SCHEME. */
+/** Manifest findings: missing files, unknown owners, site surfaces whose theme ignores SITE_SCHEME. */
 export function manifestFindings(surfaces, { exists, agents, read }) {
   const findings = [];
   const ids = new Set();
@@ -287,14 +287,14 @@ export function manifestFindings(surfaces, { exists, agents, read }) {
         findings.push({ rule: 'unthemed', level: 'warning', file, message: `${s.name} loads no brand fonts` });
       }
     }
-    if (s.scheme === 'light' && s.theme.length > 0) {
+    if (s.scheme === 'site' && s.theme.length > 0) {
       const texts = s.theme.filter(exists).map(read);
       if (!texts.some((t) => /SITE_SCHEME|cssVariables|var\(--(bg|card|text)\)/.test(t))) {
         findings.push({
           rule: 'manifest',
           level: 'error',
           file,
-          message: `light surface ${s.id}: no theme file uses SITE_SCHEME, cssVariables() or the brand variables`,
+          message: `site surface ${s.id}: no theme file uses SITE_SCHEME, cssVariables() or the brand variables`,
         });
       }
     }

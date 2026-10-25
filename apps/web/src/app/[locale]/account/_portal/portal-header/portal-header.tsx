@@ -1,5 +1,5 @@
 import mark from '@cityturfer/brand/svg/mark.svg';
-import wordmark from '@cityturfer/brand/svg/wordmark-light.svg';
+import wordmark from '@cityturfer/brand/svg/wordmark.svg';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 

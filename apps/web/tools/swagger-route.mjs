@@ -19,8 +19,8 @@ export const DEFAULT_API_URL = 'http://localhost:8787';
 /** The table of contents script (a browser module next to this file), served as ./ct-toc.mjs. */
 const TOC_FILE = path.join(import.meta.dirname, 'swagger-toc.mjs');
 
-/** Brand files the page may load (packages/brand/svg): the tab icon and the light-surface wordmark. */
-export const BRAND_FILES = ['mark.svg', 'wordmark-light.svg'];
+/** Brand files the page may load (packages/brand/svg): the tab icon. The logo is the site header's. */
+export const BRAND_FILES = ['mark.svg'];
 
 /** Brand fonts the page may load (packages/brand/fonts), served as ./fonts/<name>; nothing else. */
 export const FONT_FILES = [
@@ -42,7 +42,7 @@ export function swaggerHtml({ toolbar = false } = {}) {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="light" />
+    <meta name="color-scheme" content="dark" />
     <title>CityTurfer API</title>
     <link rel="icon" type="image/svg+xml" href="./brand/mark.svg" />
     <link rel="stylesheet" href="./swagger-ui.css" />
@@ -53,11 +53,7 @@ export function swaggerHtml({ toolbar = false } = {}) {
     ${appHeaderMarkup()}
     <header class="ct-header">
       <div class="ct-header-inner">
-        <h1>
-          <img class="ct-mark" src="./brand/mark.svg" alt="" width="44" height="44" />
-          <img class="ct-wordmark" src="./brand/wordmark-light.svg" alt="CityTurfer" height="22" />
-          <span>API</span>
-        </h1>
+        <h1>API docs</h1>
         <p class="ct-tagline">Local API docs · planned routes answer 501</p>
       </div>
     </header>
@@ -100,8 +96,8 @@ export function swaggerHtml({ toolbar = false } = {}) {
         persistAuthorization: true,
         showExtensions: true,
         docExpansion: 'list',
-        // Light code blocks for the light theme (same as apps/api/src/spec.ts SWAGGER_UI_OPTIONS).
-        syntaxHighlight: { activated: true, theme: 'idea' },
+        // Dark code blocks for the dark theme (same as apps/api/src/spec.ts SWAGGER_UI_OPTIONS).
+        syntaxHighlight: { activated: true, theme: 'obsidian' },
         presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
         plugins: [GuideLast],
         layout: 'StandaloneLayout',
