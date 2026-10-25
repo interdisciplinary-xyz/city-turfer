@@ -19,6 +19,11 @@ summary:
 
 # Brand inventory (2026-10-25)
 
+> **Update (2026-10-25, later):** the site went dark like the app
+> (`docs/decisions/brand-dark-site-2026-10-25.md`). Item 5 is resolved (one full Ramp on every
+> surface) and item 17 is moot (the social image matches the site). Items that say "on light" now
+> apply to the admin's light mode only.
+
 Input for the branding unification plan. Made on `scope/v0.12.0` by brand-designer (read-only), from
 `pnpm run audit:brand` and from `pnpm run brand:snapshot`. The surfaces and tools are described in
 the `brand-surfaces` skill. Line numbers are from that day; check them again before acting.

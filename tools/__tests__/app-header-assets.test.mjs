@@ -16,7 +16,7 @@ test('bundles the site header and its stylesheet for the dev pages', async () =>
   assert.match(js, /data:image\/svg\+xml/);
   // The website's (light) brand variables only on the header, then app-header.css itself.
   const { cssVariables, SITE_SCHEME } = await loadBrand(WEB);
-  assert.equal(SITE_SCHEME, 'light');
+  assert.equal(SITE_SCHEME, 'dark');
   assert.match(css, /^\.app-header \{\n {2}--bg: /);
   assert.ok(css.includes(`--bg: ${cssVariables(SITE_SCHEME).bg ?? cssVariables(SITE_SCHEME)['--bg']};`));
   assert.doesNotMatch(css, /^:root \{\n {2}--bg/m);

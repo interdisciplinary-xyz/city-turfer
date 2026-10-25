@@ -1,0 +1,59 @@
+---
+status: canonical
+verified: 2026-10-25
+owner: founder
+scope: [packages/brand/src, apps/web/src/app, apps/web/tools, apps/storybook/.storybook]
+summary:
+  The app is the brand's source of truth, so the website, portal, Swagger and Storybook go dark
+  (SITE_SCHEME = 'dark', the app's DARK palette, night wordmark, full Ramp); pink buttons keep a
+  night label (WEB_ON_ACCENT) for AA. Replaces brand-light-theme-2026-10-22.
+---
+
+# Dark website, like the app (v0.12.0)
+
+## Decision
+
+The founder asked to unify the website with the app and to treat **the app as the source of truth**:
+the web takes the app's dark background and light text. This reverses
+`docs/decisions/brand-light-theme-2026-10-22.md` (light site since v0.10.0).
+
+- **`SITE_SCHEME` is `'dark'`** (`packages/brand/src/tokens.ts`). It is still the one place that
+  names the site's scheme, so the website, the signed-in portal, `/branding`, the dev Swagger page
+  and Storybook (its UI and every story) all follow without naming a scheme themselves. There is no
+  theme switch.
+- **The palette is the app's `DARK`**, unchanged and still pinned in
+  `packages/brand/src/__tests__/tokens.test.ts`. Nothing in the app changes, and the runtime
+  fingerprint does not move.
+- **One exception, for accessibility:** pink fills on the web keep a night label, `WEB_ON_ACCENT`
+  (`#0B0D12`, 5.5:1), in both schemes, emitted as `--on-accent` and `--on-glow` by `cssVariables()`.
+  The app still draws white on pink (3.5:1, below AA), its known failure; when the app adopts the
+  night label, `DARK.onAccent` and `WEB_ON_ACCENT` become the same value.
+- **Logo:** the site, portal header, dev-page header, Swagger and Storybook use
+  `packages/brand/svg/wordmark.svg` (white "CITY", "TURFER" in the Ramp), as the app does.
+  `wordmark-light.svg` stays for light surfaces (the admin's light mode, print).
+- **Ramp:** the site's `--ramp` is the full Ramp (`--ramp-stops`, faint → blazing), as the app and
+  the night wordmark draw it; the shortened light ramp (faint → accent-text) is gone.
+- **Swagger (dev page):** dark code blocks (`syntaxHighlight` theme `obsidian`, also in the API's
+  `SWAGGER_UI_OPTIONS` so both pages keep the same options); method badges re-paired for AA on dark
+  (PUT night on amber 10.6:1, PATCH light text on faint 5.2:1, the contents' PATCH label 5.3:1),
+  checked by `tools/__tests__/swagger-contrast.test.mjs`.
+- **`LIGHT` stays** in `@cityturfer/brand`: the admin maps both of Payload's schemes, and a light
+  mode could come back later. The surface map (`tools/brand/surfaces.mjs`) now calls the web
+  surfaces `scheme: 'site'` (they follow `SITE_SCHEME`) instead of `'light'`.
+
+## Why
+
+- One look for one product: someone who sees the site and then opens the app should see the same
+  night palette, the same wordmark and the same glowing Ramp.
+- The turf colours were tuned to glow on night. On the light site they needed text and graphic
+  variants and a shortened Ramp, and maps still had to sit on night panels. On dark, the `-text` and
+  `-graphic` variables equal the brand colours again.
+
+## Consequences
+
+- The website changes over a normal web deploy; the app is untouched (JS and native).
+- Night map panels on the site now match the page instead of standing out.
+- Light-only guidance (`-text` variants as the only way to draw pink text, "never blazing on light")
+  still applies to any light surface, but the site no longer is one.
+- Not in this change: the social image and store templates (already dark), the API's own stock
+  `/swagger` page (still unthemed, inventory item 1), the admin (paused).

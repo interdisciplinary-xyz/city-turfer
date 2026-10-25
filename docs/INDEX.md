@@ -194,14 +194,19 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`decisions/apple-health-2026-10-18.md`](decisions/apple-health-2026-10-18.md): v0.4.0
   integrates Apple Health — a Health Sync context imports walks, hikes, runs and rides with routes
   (full history) as Activities that claim turf, and saves recordings to Health with routes
+- ✅ [`decisions/brand-dark-site-2026-10-25.md`](decisions/brand-dark-site-2026-10-25.md): The app
+  is the brand's source of truth, so the website, portal, Swagger and Storybook go dark (SITE_SCHEME
+  = 'dark', the app's DARK palette, night wordmark, full Ramp); pink buttons keep a night label
+  (WEB_ON_ACCENT) for AA. Replaces brand-light-theme-2026-10-22.
 - ✅ [`decisions/brand-foundations-2026-10-20.md`](decisions/brand-foundations-2026-10-20.md): Brand
   foundations (positioning for three audiences, personality, pillars), Archivo as the brand typeface
   (superseded by brand-typography-2026-10-22), visual language beyond colour, WCAG contrast rules
   with the open palette fixes, and the asset set (outlined wordmarks, social image, store
   screenshots)
-- ✅ [`decisions/brand-light-theme-2026-10-22.md`](decisions/brand-light-theme-2026-10-22.md): The
-  website, Swagger and Storybook switch to a light theme (SITE_SCHEME) while the app and every map
-  stay dark; the AA light palette, its new tokens and ratios, night labels on pink buttons
+- ⚠️ [`decisions/brand-light-theme-2026-10-22.md`](decisions/brand-light-theme-2026-10-22.md):
+  Superseded by brand-dark-site-2026-10-25 (the site is dark again, like the app). The website,
+  Swagger and Storybook switch to a light theme (SITE_SCHEME) while the app and every map stay dark;
+  the AA light palette, its new tokens and ratios, night labels on pink buttons
 - ✅ [`decisions/brand-typography-2026-10-22.md`](decisions/brand-typography-2026-10-22.md): Brand
   type changes from Archivo to the "Street Plate" pairing: Big Shoulders Display Black in capitals
   for headings, Barlow Semi Condensed ExtraBold for numbers, Barlow for website body text; the

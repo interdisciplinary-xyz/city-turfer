@@ -70,9 +70,9 @@ test('the page loads Swagger UI with the spec next to it', () => {
   // routes are visible through their x-cityturfer-status extension.
   assert.match(html, /showExtensions: true/);
   assert.match(html, /docExpansion: 'list'/);
-  assert.match(html, /syntaxHighlight: \{ activated: true, theme: 'idea' \}/);
-  // Light page: the browser's own controls and scrollbars follow.
-  assert.match(html, /<meta name="color-scheme" content="light" \/>/);
+  assert.match(html, /syntaxHighlight: \{ activated: true, theme: 'obsidian' \}/);
+  // Dark page, like the app: the browser's own controls and scrollbars follow.
+  assert.match(html, /<meta name="color-scheme" content="dark" \/>/);
   // Table of contents: an empty nav beside Swagger UI, filled by ./ct-toc.mjs once the spec is in.
   assert.match(html, /<nav id="ct-toc"/);
   assert.match(html, /<script type="module" src="\.\/ct-toc\.mjs"><\/script>/);

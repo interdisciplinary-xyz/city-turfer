@@ -12,15 +12,15 @@
   --numeric: var(--face-numeric), var(--font-family-numeric);
   --tagline: var(--face-tagline, 'BarlowSemiCondensed-BlackItalic'), var(--font-family-tagline);
   --body: var(--face-body, 'Barlow'), var(--font-family-body);
-  /* Readable on the light page: faint to accent-text, like the light wordmark (no blazing). */
-  --ramp: linear-gradient(45deg, var(--faint), var(--accent-text));
+  /* The full Ramp, as the app and the night wordmark draw it. */
+  --ramp: linear-gradient(45deg, var(--ramp-stops));
   margin: 0;
   background: var(--bg);
   color: var(--text);
   font-family: var(--body);
   font-size: var(--font-body);
   line-height: 1.55;
-  color-scheme: light;
+  color-scheme: dark;
   -webkit-text-size-adjust: 100%;
 }
 

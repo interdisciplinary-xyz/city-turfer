@@ -121,7 +121,7 @@ export default async function BrandingPage() {
         <header className='brand-hero'>
           <div className='brand-wrap'>
             <p className='brand-kicker'>{BRANDING_TITLE}</p>
-            <Image src={wordmarkLight} alt={NAME} width={420} height={90} priority className='brand-hero-wordmark' />
+            <Image src={wordmark} alt={NAME} width={420} height={90} priority className='brand-hero-wordmark' />
             <p className='brand-tagline'>{TAGLINES[0]}</p>
             <p className='brand-lede'>{PROMO}</p>
           </div>
@@ -299,8 +299,19 @@ export default async function BrandingPage() {
               <LogoTile src={mark} label='Mark' file='mark.svg' />
               <LogoTile src={markForeground} label='Mark foreground (adaptive icon)' file='mark-foreground.svg' />
               <LogoTile src={markMonochrome} label='Monochrome (themed icon)' file='mark-monochrome.svg' />
-              <LogoTile src={wordmark} label='Wordmark on night (maps, dark panels)' file='wordmark.svg' wide night />
-              <LogoTile src={wordmarkLight} label='Wordmark on light (the website)' file='wordmark-light.svg' wide />
+              <LogoTile
+                src={wordmark}
+                label='Wordmark on night (the app, the website, maps)'
+                file='wordmark.svg'
+                wide
+                night
+              />
+              <LogoTile
+                src={wordmarkLight}
+                label='Wordmark on light (admin light mode, print)'
+                file='wordmark-light.svg'
+                wide
+              />
             </div>
             <p className='brand-muted'>
               The wordmark is outlined Big Shoulders Display in capitals (“CITY” and “TURFER” both Black, told apart by
@@ -339,8 +350,8 @@ export default async function BrandingPage() {
             </div>
             <h3>Themes</h3>
             <div className='brand-grid brand-grid-2'>
-              <ThemeCard name='Dark (the app, the Turf Map, splash)' theme={DARK} />
-              <ThemeCard name='Light (website, Swagger, Storybook: SITE_SCHEME)' theme={LIGHT} />
+              <ThemeCard name='Dark (the app, website, Swagger, Storybook: SITE_SCHEME)' theme={DARK} />
+              <ThemeCard name='Light (admin light mode)' theme={LIGHT} />
             </div>
           </Section>
 

@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 export const viewport: Viewport = { themeColor: THEMES[SITE_SCHEME].bg, colorScheme: SITE_SCHEME };
 
 /** Design tokens from @cityturfer/brand as CSS variables, so globals.css never hard-codes a value.
- * The site is light (SITE_SCHEME); the app and the Turf Map stay dark. */
+ * The site is dark like the app (SITE_SCHEME). */
 const tokens = cssVariables(SITE_SCHEME) as CSSProperties;
 
 export default async function LocaleLayout({

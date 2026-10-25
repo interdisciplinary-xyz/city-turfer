@@ -1,6 +1,6 @@
 /* App header: the sticky top bar of the landing page, also on /branding and (dev only) on the local
    Storybook and Swagger pages. Self-contained, so it looks the same on pages without globals.css:
-   it needs only the brand variables from cssVariables(SITE_SCHEME): light, like the website. */
+   it needs only the brand variables from cssVariables(SITE_SCHEME): dark, like the website and the app. */
 
 :root {
   --header-h: 56px;

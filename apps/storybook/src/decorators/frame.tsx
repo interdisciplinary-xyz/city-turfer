@@ -7,7 +7,7 @@ import { PAGE_LOADED_CLASS, PAGE_LOADED_EVENT } from '../../../web/src/app/[loca
 import { type FrameProps, MESSAGES, type NightPanelProps } from './frame.constants';
 
 /**
- * Wraps every story in the site's one scheme (SITE_SCHEME, light; there is no theme switch): the
+ * Wraps every story in the site's one scheme (SITE_SCHEME, dark like the app; there is no theme switch): the
  * palette for @cityturfer/ui (ThemeProvider), the design tokens as CSS variables on <html> (as
  * apps/web's layout sets them), and the website's messages for the chosen language.
  */
@@ -47,7 +47,7 @@ export function Frame({ locale, web, pageLoaded = true, children }: FrameProps) 
 }
 
 /**
- * A night panel inside the light page, for map pieces (Turf Map, a legend over a map): maps stay
+ * A night panel inside the page, for map pieces (Turf Map, a legend over a map): maps stay
  * dark everywhere, and the tier colours glow only on night. Everything inside gets the dark palette.
  */
 export function NightPanel({ children }: NightPanelProps) {

@@ -85,7 +85,7 @@ test('manifest: missing files, unknown owners and a light theme that ignores SIT
   const surface = {
     id: 's',
     name: 'S',
-    scheme: 'light',
+    scheme: 'site',
     owner: 'nobody',
     status: 'live',
     theme: ['a.css'],
@@ -103,7 +103,7 @@ test('manifest: missing files, unknown owners and a light theme that ignores SIT
     [
       'owner nobody is not an agent in .claude/agents/',
       'fonts: gone.ts does not exist',
-      'light surface s: no theme file uses SITE_SCHEME, cssVariables() or the brand variables',
+      'site surface s: no theme file uses SITE_SCHEME, cssVariables() or the brand variables',
     ]
   );
 });
@@ -135,7 +135,7 @@ test('every surface has a unique id, a known scheme and status', () => {
   const ids = SURFACES.map((s) => s.id);
   assert.equal(new Set(ids).size, ids.length);
   for (const s of SURFACES) {
-    assert.ok(['dark', 'light'].includes(s.scheme), s.id);
+    assert.ok(['dark', 'site'].includes(s.scheme), s.id);
     assert.ok(['live', 'dev', 'paused'].includes(s.status), s.id);
   }
 });
