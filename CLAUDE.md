@@ -228,7 +228,10 @@ node apps/mobile/tools/turf-preview.mjs apps/mobile/tools/fixtures/history --out
   `mobile-reviewer`, `brand-designer`, `health-engineer` (Apple Health), `web-engineer` (apps/web
   landing and hosting), `portal-engineer` (signed-in web portal), `api-engineer` (back end:
   apps/api, server data, sync), `product-manager` (the Product Owner persona; talk to it as the main
-  session with the agent flag), `harness-engineer` (skills, agents, hooks, audits).
+  session with the agent flag), `harness-engineer` (skills, agents, hooks, audits), `docs-engineer`
+  (release docs: scope and release PR bodies, session log, CHANGELOG preview, stale docs). When the
+  founder says **"update all docs"**, start `docs-engineer` (worktree isolation) before scope →
+  release or release → main.
 - Commands (`.claude/commands/`): `audit-docs` (`/audit-docs`).
 - Hooks (`.claude/settings.json`, rules in `tools/harness/hook-rules.mjs`): deny edits that break
   the dependency rule, touch `CHANGELOG.md`, secret files or generated native folders; deny push to

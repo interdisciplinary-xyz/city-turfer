@@ -51,6 +51,7 @@ Activity Log, Achievements and Identity (domain + application) lives in
 | `docs/quality/quality-assurance.md`, `docs/quality/smoke-test.md`, the release QA report in the scope → release PR                | `qa-engineer`          | verify-change, mobile-testing    |
 | `.claude/`, `tools/` (audits, harness, release), `packages/config/`, `packages/eslint-config/`, CI, `.husky/`                     | `harness-engineer`     | ai-harness                       |
 | `docs/product/`, product specs in `docs/plans/`                                                                                   | `product-manager`      | product-knowledge                |
+| `docs/sessions/`, `docs/INDEX.md`, scope/release PR bodies (not the QA report), CHANGELOG preview, docs facts                     | `docs-engineer`        | ship-branch                      |
 
 Other `docs/` files belong to the owner of the area they describe. **Integration:** the main session
 commits and opens the PR (`ship-branch` skill); the founder merges. Cloud Backup belongs to

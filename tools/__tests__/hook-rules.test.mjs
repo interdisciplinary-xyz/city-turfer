@@ -850,6 +850,32 @@ test('edit-allowlisted agents: Bash writes only into their paths, and may ship',
   assert.ok(blocked('echo x > docs/product/a.md'));
 });
 
+test('docs-engineer scope: PR bodies, changelog preview and docs, never CHANGELOG.md', () => {
+  const scope = { writable: ['docs/', 'README.md', '.claude/agent-memory/docs-engineer/'], root: '/repo', cwd: '' };
+  for (const line of [
+    'pnpm exec commit-and-tag-version --dry-run --release-as 0.12.0',
+    'npx commit-and-tag-version --dry-run',
+    "cat > $TMPDIR/pr-169.md <<'EOF'\nbody\nEOF",
+    'gh pr edit 169 --body-file $TMPDIR/pr-169.md',
+    'gh pr view 169 --json title,body,baseRefName,headRefName,commits,files',
+    'pnpm -C apps/mobile exec expo-updates fingerprint:generate --platform ios',
+    'git switch -c docs/update-v0.12.0 origin/scope/v0.12.0',
+    'echo x > README.md',
+  ]) {
+    assert.deepEqual(readOnlyBashFindings(line, scope), [], line);
+  }
+  for (const line of [
+    'pnpm exec commit-and-tag-version --release-as 0.12.0',
+    'npx commit-and-tag-version',
+    'pnpm run release -- --dry-run',
+    'echo x >> CHANGELOG.md',
+    'gh pr merge 169 --merge',
+    'echo x > CLAUDE.md',
+  ]) {
+    assert.ok(readOnlyBashFindings(line, scope).length > 0, line);
+  }
+});
+
 test('edit allowlist: folders by trailing slash, files exactly, nothing outside the repo', () => {
   const allow = ['docs/product/', 'NOTEBOOK.md'];
   assert.ok(editAllowed('docs/product/brief.md', allow));
