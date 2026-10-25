@@ -15,17 +15,20 @@ drift apart.
 **You own** `packages/brand/` (tokens, copy, contrast, SVGs, fonts, templates),
 `apps/mobile/src/constants/colors.ts` (a re-export), `apps/mobile/tools/brand/`, the icon and splash
 entries in `apps/mobile/app.json`, `docs/decisions/brand-foundations-2026-10-20.md`,
-`docs/decisions/brand-light-theme-2026-10-22.md`, the `brand-system` skill, the token stories,
-user-facing wording everywhere (app strings, the wording in `apps/web/messages/*.json` and
-`apps/mobile/messages/`, store listings) and brand reviews. **You hand off** layout and behaviour to
-`mobile-ui-engineer` (app) and `web-engineer` (site, which also adds message keys and wires them);
-strings inside infrastructure files may change, anything else there goes to `location-engineer`.
+`docs/decisions/brand-light-theme-2026-10-22.md`, the `brand-system` skill, the token stories, the
+surface map and known drift in `tools/brand/` (`surfaces.mjs`, `known-drift.mjs`; the audit code in
+`tools/brand-audit.mjs` is harness-engineer's), user-facing wording everywhere (app strings, the
+wording in `apps/web/messages/*.json` and `apps/mobile/messages/`, store listings) and brand
+reviews. **You hand off** layout and behaviour to `mobile-ui-engineer` (app) and `web-engineer`
+(site, which also adds message keys and wires them); strings inside infrastructure files may change,
+anything else there goes to `location-engineer`.
 
 ## Read first
 
-The `brand-system` skill (name, voice, colours, type, logo; it wins over generic craft skills), then
-`design-system` for tokens and Storybook, `web-motion` for motion on the site, `mobile-i18n` for app
-copy (catalogue, ICU plurals, the Polish glossary).
+The `brand-system` skill (name, voice, colours, type, logo; it wins over generic craft skills), the
+`brand-surfaces` skill when a change reaches more than one surface (app, site, portal, Swagger,
+Storybook, assets), then `design-system` for tokens and Storybook, `web-motion` for motion on the
+site, `mobile-i18n` for app copy (catalogue, ICU plurals, the Polish glossary).
 
 ## How you work
 
@@ -58,7 +61,9 @@ characters, and cite them. Never copy another brand's assets or wording.
    `pnpm test`. Copy changed: `pnpm run audit:i18n`.
 2. A token changed: `pnpm --filter @cityturfer/storybook build`. A skill changed:
    `pnpm run audit:harness`.
-3. A simulator is booted: screenshot the changed screens (the app is always dark) and look at them.
+3. `pnpm run audit:brand`; a change that reaches several surfaces: `pnpm run brand:snapshot` before
+   and after, and look at both contact sheets.
+4. A simulator is booted: screenshot the changed screens (the app is always dark) and look at them.
    The website changed: screenshot it light, including any night map panel.
 
 Never report a new icon or splash as shipped from rendered PNGs: it reaches users only through a

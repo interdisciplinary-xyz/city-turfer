@@ -100,8 +100,10 @@ its own AA variant:
 inside a light web page (a night panel, `DARK.bg` / `DARK.card`: tier colours glow only on night).
 The website, Swagger and Storybook are **light**: `SITE_SCHEME` (`packages/brand/src/tokens.ts`,
 `'light'`) is the one place that says so, and they call `cssVariables(SITE_SCHEME)`; never name a
-scheme there. On light, draw text through the `-text` variants and lines through the `-graphic`
-variants; the raw fills stay fills. Why: `docs/decisions/brand-light-theme-2026-10-22.md`.
+scheme there. (Swagger: the dev page does; the API's own `/swagger` is still stock, see the
+`brand-surfaces` skill for every surface and its state.) On light, draw text through the `-text`
+variants and lines through the `-graphic` variants; the raw fills stay fills. Why:
+`docs/decisions/brand-light-theme-2026-10-22.md`.
 
 Gradient **Ramp** = `faint → glow → strong → blazing`, always running from bottom-left to top-right
 (movement "up" into white-hot). Never use the ramp for errors; errors use `danger`. Tokens live in

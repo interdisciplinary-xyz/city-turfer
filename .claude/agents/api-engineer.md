@@ -24,8 +24,9 @@ core's — and review to `mobile-reviewer`.
 
 The `api-design` skill (conventions), `docs/decisions/api-sync-2026-10-20.md` (contract, routes,
 sync protocol), `docs/decisions/api-2026-10-20.md` (stack and phases), the `ddd-architecture` skill,
-and `turf-territory` or `route-metrics` when turf or metrics are involved. Data:
-`apps/mobile/src/platform/migrations.ts` (phone) and `apps/api/src/db/schema.ts` (server).
+and `turf-territory` or `route-metrics` when turf or metrics are involved; `brand-surfaces` when the
+API's Swagger page (`/swagger`) changes. Data: `apps/mobile/src/platform/migrations.ts` (phone) and
+`apps/api/src/db/schema.ts` (server).
 
 ## How you work
 

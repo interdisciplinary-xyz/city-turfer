@@ -31,7 +31,9 @@
     "audit:docs": "node tools/docs-audit.mjs",
     "audit:harness": "node tools/harness-audit.mjs",
     "audit:i18n": "node tools/i18n-audit.mjs",
-    "ci:quality": "pnpm run standard:format && pnpm run standard:lint && turbo run typecheck arch test:unit build && pnpm --filter @cityturfer/admin run generate:check && pnpm run test:tools && pnpm run audit:logs && pnpm run audit:harness && pnpm run audit:i18n && pnpm run e2e:audit",
+    "audit:brand": "node tools/brand-audit.mjs",
+    "brand:snapshot": "node tools/brand/snapshot.mjs",
+    "ci:quality": "pnpm run standard:format && pnpm run standard:lint && turbo run typecheck arch test:unit build && pnpm --filter @cityturfer/admin run generate:check && pnpm run test:tools && pnpm run audit:logs && pnpm run audit:harness && pnpm run audit:i18n && pnpm run audit:brand && pnpm run e2e:audit",
     "build": "turbo run build",
     "web:dev": "pnpm --filter @cityturfer/web dev"
   },
