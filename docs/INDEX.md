@@ -86,6 +86,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 
 `docs/quality/` — Test inventory and QA policy.
 
+- 🚧 [`quality/brand-inventory-2026-10-25.md`](quality/brand-inventory-2026-10-25.md): Where the
+  app, website, portal, Swagger, Storybook and assets diverge from packages/brand and from each
+  other on 2026-10-25; the input for the branding unification plan, ranked
 - ✅ [`quality/e2e.md`](quality/e2e.md): Maestro critical paths, flow inventory, known gaps and how
   to add a flow
 - ✅ [`quality/quality-assurance.md`](quality/quality-assurance.md): QA charter for scope → release

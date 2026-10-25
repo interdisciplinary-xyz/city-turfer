@@ -195,6 +195,8 @@ pnpm -C apps/mobile exec expo install <pkg>                     # add a native d
 #   node-linker=hoisted (.npmrc). iOS needs Xcode 26.4+ (Expo SDK 57). Xcode's SPM hangs downloading
 #   MapLibre here, so run apps/mobile/tools/fetch-maplibre-ios.sh once before prebuild —
 #   apps/mobile/plugins/with-local-maplibre points SPM at apps/mobile/vendor/maplibre-spm
+pnpm run audit:brand             # every brand surface draws from @cityturfer/brand (tools/brand/surfaces.mjs)
+pnpm run brand:snapshot          # screenshots of every surface + contact sheet (needs web:dev, API, simulator)
 pnpm run test:e2e                # Maestro flows in apps/mobile/e2e/
 node apps/mobile/tools/gen-route.mjs --type run --km 5 > apps/mobile/tools/fixtures/run-5k.gpx   # synthetic route
 node apps/mobile/tools/route-stats.mjs apps/mobile/tools/fixtures/run-5k.gpx                     # reference stats
@@ -211,7 +213,8 @@ node apps/mobile/tools/turf-preview.mjs apps/mobile/tools/fixtures/history --out
   `main` — never edit by hand.
 - `pnpm run ci:quality` = Prettier check + ESLint + tsc + dependency rules + Jest + audits
   (`audit:logs`, `audit:harness`, `audit:i18n`: same keys, valid ICU and full plurals in every
-  locale of the app and website catalogues). `pnpm run test:e2e` = Maestro suite in
+  locale of the app and website catalogues; `audit:brand`: every surface in
+  `tools/brand/surfaces.mjs` draws from `@cityturfer/brand`). `pnpm run test:e2e` = Maestro suite in
   `apps/mobile/e2e/` (iOS Simulator).
 
 ## Claude Code setup
@@ -222,7 +225,7 @@ node apps/mobile/tools/turf-preview.mjs apps/mobile/tools/fixtures/history --out
   `docs/product/`), `product-discovery`, `product-strategy`, `product-launch`, `verify-change`
   (prove a change before calling it done), `ship-branch` (commit, push, PR per the branch flow),
   `ai-harness` (this setup), `mobile-i18n` (app languages, Polish glossary), `web-portal` (signed-in
-  portal in apps/web).
+  portal in apps/web), `brand-surfaces` (one brand across app, site, portal, Swagger, Storybook).
 - Agents (`.claude/agents/`): `rn-architect`, `location-engineer`, `mobile-ui-engineer`,
   `mobile-test-engineer`, `qa-engineer` (release QA and acceptance testing across all apps),
   `mobile-reviewer`, `brand-designer`, `health-engineer` (Apple Health), `web-engineer` (apps/web

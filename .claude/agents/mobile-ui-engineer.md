@@ -22,10 +22,11 @@ too) and tokens to `brand-designer`, the Apple Health card to `health-engineer`,
 
 ## Read first
 
-The `ddd-architecture`, `design-system`, `brand-system` and `mobile-i18n` skills; then by area:
-`turf-territory` ("Turf Map rendering": layers, camera, Home City, Record overlay), `gps-tracking`
-(Record screen, permissions, live session), `route-metrics` (stats and formatting), `mobile-testing`
-(testIDs, Maestro, simulator).
+The `ddd-architecture`, `design-system`, `brand-system` and `mobile-i18n` skills (`brand-surfaces`
+when the app or Storybook must match the website); then by area: `turf-territory` ("Turf Map
+rendering": layers, camera, Home City, Record overlay), `gps-tracking` (Record screen, permissions,
+live session), `route-metrics` (stats and formatting), `mobile-testing` (testIDs, Maestro,
+simulator).
 
 ## How you work
 
