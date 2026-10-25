@@ -21,22 +21,22 @@ The single local gate, also run by CI (`.github/workflows/ci.yml`) on every PR i
 `release/**` and `main`:
 
 ```bash
-pnpm run ci:quality   # format + lint + (typecheck, arch, unit, build via turbo) + admin types + tool tests + log, harness, i18n and e2e audits
+pnpm run ci:quality   # format + lint + (typecheck, arch, unit, build via turbo) + admin types + tool tests + log, harness, i18n, brand and e2e audits
 ```
 
-| Check         | Command                                     | Pass bar                                                                          |
-| ------------- | ------------------------------------------- | --------------------------------------------------------------------------------- |
-| Format        | `pnpm run standard:format`                  | Prettier clean                                                                    |
-| Lint          | `pnpm run standard:lint`                    | 0 errors (`tools/` and every workspace)                                           |
-| Types         | `pnpm run test:types`                       | `tsc --noEmit` 0 errors (strict) in every workspace                               |
-| Architecture  | `pnpm run test:arch`                        | dependency-cruiser: 0 violations (layers and context boundaries)                  |
-| Unit          | `pnpm run test:unit`                        | all green: Jest in each workspace, plus the node tool tests in `tools/__tests__/` |
-| Build         | `pnpm run build`                            | web export, admin and API builds succeed                                          |
-| Audits        | `audit:logs`, `audit:harness`, `audit:i18n` | 0 errors                                                                          |
-| E2E audit     | `pnpm run e2e:audit`                        | 0 errors: flows, `config.yaml`, CP table and `testID`s agree                      |
-| Sync chain    | `pnpm test:chain` (`tools/chain/run.mjs`)   | every scenario green (phone → API → web portal); manual, no CI job yet            |
-| E2E (manual)  | `pnpm run test:e2e`                         | every Maestro flow green on the iOS Simulator (needs a dev build)                 |
-| Release smoke | [`smoke-test.md`](./smoke-test.md)          | every box ticked on a physical iPhone                                             |
+| Check         | Command                                                    | Pass bar                                                                          |
+| ------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Format        | `pnpm run standard:format`                                 | Prettier clean                                                                    |
+| Lint          | `pnpm run standard:lint`                                   | 0 errors (`tools/` and every workspace)                                           |
+| Types         | `pnpm run test:types`                                      | `tsc --noEmit` 0 errors (strict) in every workspace                               |
+| Architecture  | `pnpm run test:arch`                                       | dependency-cruiser: 0 violations (layers and context boundaries)                  |
+| Unit          | `pnpm run test:unit`                                       | all green: Jest in each workspace, plus the node tool tests in `tools/__tests__/` |
+| Build         | `pnpm run build`                                           | web export, admin and API builds succeed                                          |
+| Audits        | `audit:logs`, `audit:harness`, `audit:i18n`, `audit:brand` | 0 errors                                                                          |
+| E2E audit     | `pnpm run e2e:audit`                                       | 0 errors: flows, `config.yaml`, CP table and `testID`s agree                      |
+| Sync chain    | `pnpm test:chain` (`tools/chain/run.mjs`)                  | every scenario green (phone → API → web portal); manual, no CI job yet            |
+| E2E (manual)  | `pnpm run test:e2e`                                        | every Maestro flow green on the iOS Simulator (needs a dev build)                 |
+| Release smoke | [`smoke-test.md`](./smoke-test.md)                         | every box ticked on a physical iPhone                                             |
 
 The Maestro suite has <!-- probe:e2e-flows -->17<!-- /probe --> flows. It takes several minutes
 because the demo-history seed step waits up to 240 seconds, and `15-account-settings` sleeps about 2
