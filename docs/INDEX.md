@@ -119,6 +119,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   open) — docs refresh, web portal activity history, hero lockup, Polish "terytorium", cloud backup
   for the admin@ and demo@ local profiles (API 0.6.1); JS only; open founder decisions and the
   auth:adopt pre-step
+- ✅ [`sessions/v0.12.0.md`](sessions/v0.12.0.md): Session log v0.12.0 (in progress, scope PR 169
+  draft) — scope and release branches cut from release/v0.11.0 before v0.11.0 reached main; website
+  language switch reloads the page (#168); JS only; candidates carried over from v0.11.0
 - 🕰️ [`sessions/v0.2.0.md`](sessions/v0.2.0.md): Session log v0.2.0 through the Me menu and
   achievements; predates the Dashboard, Me drawer and login rename (PRs 23–25) and still says
   app.json is unpinned (pinned in f04bcf3)
