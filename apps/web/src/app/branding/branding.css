@@ -46,16 +46,6 @@
   border-bottom: 1px solid var(--border);
   overflow: hidden;
 }
-.brand-hero::before {
-  content: '';
-  position: absolute;
-  inset: auto -20% -60% 30%;
-  height: 120%;
-  background: var(--ramp);
-  opacity: 0.18;
-  filter: blur(80px);
-  pointer-events: none;
-}
 .brand-hero .brand-wrap {
   position: relative;
 }
