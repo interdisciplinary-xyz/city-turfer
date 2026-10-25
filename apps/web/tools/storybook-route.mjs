@@ -72,10 +72,13 @@ export function withToolbar(html) {
 
 /**
  * Storybook's index.html under the site's header (the same bar as /en): the header first in the
- * body, and Storybook's UI (#root) pinned to the space below it.
+ * body, and Storybook's UI (#root) pinned to the space below it. The header carries the logo, so
+ * the sidebar swaps its own logo for a plain "Design system" label (theme.ts BRAND_TITLE).
  */
 export function withAppHeader(html) {
-  const layout = '<style>#root { position: fixed; inset: var(--header-h) 0 0 0; }</style>';
+  const layout =
+    '<style>#root { position: fixed; inset: var(--header-h) 0 0 0; } ' +
+    '.ct-sb-logo { display: none !important; } .ct-sb-label { display: inline !important; }</style>';
   return html
     .replace('</head>', `${appHeaderStylesheet()}${layout}</head>`)
     .replace(/<body([^>]*)>/, (body) => `${body}${appHeaderMarkup()}`);

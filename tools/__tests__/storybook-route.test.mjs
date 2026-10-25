@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -124,4 +124,13 @@ test('Storybook UI is pinned below the header', () => {
   const html = withAppHeader('<html><head></head><body class="sb"><div id="root"></div></body></html>');
   assert.match(html, /#root \{ position: fixed; inset: var\(--header-h\) 0 0 0; \}/);
   assert.match(html, /<body class="sb"><div id="app-header-root">/);
+});
+
+test('under the site header the sidebar shows a label instead of a second logo', async () => {
+  const html = withAppHeader('<html><head></head><body><div id="root"></div></body></html>');
+  assert.match(html, /\.ct-sb-logo \{ display: none !important; \}/);
+  assert.match(html, /\.ct-sb-label \{ display: inline !important; \}/);
+  const theme = await readFile(path.resolve(import.meta.dirname, '../../apps/storybook/.storybook/theme.ts'), 'utf8');
+  assert.match(theme, /class="ct-sb-logo"/);
+  assert.match(theme, /class="ct-sb-label" style="display:none"/);
 });

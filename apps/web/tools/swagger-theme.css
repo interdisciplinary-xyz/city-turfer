@@ -90,7 +90,7 @@ a {
   text-decoration: none;
 }
 
-/* Header: mark + wordmark + "API", closed by a Ramp rule. */
+/* The page's title bar under the site header (which carries the logo), closed by a Ramp rule. */
 .ct-header {
   border-bottom: 3px solid transparent;
   border-image: var(--ct-ramp) 1;
@@ -111,24 +111,13 @@ a {
   align-items: center;
   gap: var(--space-md);
   font-family: var(--font-family-display);
-  font-size: 1.7rem;
+  font-size: 1.35rem;
   font-weight: normal;
   font-synthesis: none;
   line-height: 1;
   text-transform: var(--display-case);
   letter-spacing: var(--display-tracking);
   color: var(--text);
-}
-.ct-mark {
-  display: block;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-sm);
-}
-.ct-wordmark {
-  display: block;
-  height: 22px;
-  width: auto;
 }
 .ct-tagline {
   margin: 0 0 0 auto;

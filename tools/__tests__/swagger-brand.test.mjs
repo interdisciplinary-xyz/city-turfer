@@ -65,8 +65,9 @@ test('the page has the CityTurfer header, tab icon and the theme, but no toolbar
   const html = swaggerHtml();
   assert.match(html, /<title>CityTurfer API<\/title>/);
   assert.match(html, /rel="icon"[^>]*brand\/mark\.svg/);
-  assert.match(html, /brand\/wordmark\.svg/);
-  assert.doesNotMatch(html, /brand\/wordmark-light\.svg/);
+  // One logo on the page: the site header's. The title bar has none of its own.
+  assert.doesNotMatch(html, /brand\/wordmark/);
+  assert.match(html, /<h1>API docs<\/h1>/);
   assert.match(html, /ct-theme\.css/);
   assert.doesNotMatch(html, /toolbar/);
 });
@@ -78,13 +79,10 @@ test('the page carries the dev toolbar only when asked', () => {
   assert.match(html, /__toolbar\.js/);
 });
 
-test('only the mark and the night wordmark are served as brand files', () => {
+test('only the mark is served as a brand file', () => {
   assert.deepEqual(swaggerTarget('/d', '/swagger/brand/mark.svg'), { kind: 'brand', name: 'mark.svg' });
-  assert.deepEqual(swaggerTarget('/d', '/swagger/brand/wordmark.svg'), {
-    kind: 'brand',
-    name: 'wordmark.svg',
-  });
-  // The light wordmark is for light surfaces; this page is dark like the app.
+  // The wordmarks are the site header's, never this page's.
+  assert.equal(swaggerTarget('/d', '/swagger/brand/wordmark.svg'), null);
   assert.equal(swaggerTarget('/d', '/swagger/brand/wordmark-light.svg'), null);
   assert.equal(swaggerTarget('/d', '/swagger/brand/../secret'), null);
   assert.equal(swaggerTarget('/d', '/swagger/brand/other.svg'), null);
@@ -161,8 +159,6 @@ test('serves the theme and the logos', async () => {
   assert.equal(await mark.text(), '<svg id="mark"/>');
   // Exists on disk, but is not a file this page may load: not a Swagger path, so it goes to `next`.
   assert.equal(await (await fetch(`${url}/swagger/brand/wordmark-light.svg`)).text(), 'next');
-  // Allowed, but missing from this brand folder.
-  assert.equal((await fetch(`${url}/swagger/brand/wordmark.svg`)).status, 404);
 });
 
 test('the page opens with the site header, solid at once over the dark skin', () => {
