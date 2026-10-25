@@ -14,7 +14,6 @@ gsap.registerPlugin(useGSAP);
 /**
  * Entrance and ambient motion for the hero (`web-motion` skill):
  * - entrance: mark → wordmark → headline lines → lede → calls to action, phones rise alongside;
- * - the headline's ramp shimmers slowly;
  * - on desktop with a mouse, the phones tilt a little towards the pointer.
  * Only transform/opacity are animated (no layout shift). Reduced motion: everything is shown,
  * nothing moves. Elements opt in with `data-anim`.
@@ -41,17 +40,8 @@ export function HeroMotion({ className, children }: HeroMotionProps) {
 
           // Paused until the page loader fades out, so the entrance is not played underneath it.
           const tl = gsap.timeline({ paused: true, defaults: { ease: EASE } });
-          const rampTween = gsap.to('.ramp-text', {
-            backgroundPosition: '100% 50%',
-            duration: 6,
-            ease: 'sine.inOut',
-            repeat: -1,
-            yoyo: true,
-            paused: true,
-          });
           const play = () => {
             tl.play();
-            rampTween.play();
           };
           if (html.classList.contains(PAGE_LOADED_CLASS)) {
             play();
@@ -79,8 +69,6 @@ export function HeroMotion({ className, children }: HeroMotionProps) {
               0.25
             );
           html.classList.add('motion-ready');
-
-          // The ramp in the headline drifts slowly, like turf glowing (rampTween, started with the entrance).
 
           const stopWaiting = () => window.removeEventListener(PAGE_LOADED_EVENT, play);
           if (!tilt || !root.current) {

@@ -17,7 +17,7 @@ export function HeroCopy() {
         <span className='line' data-anim='line'>
           {t('taglineLead')}
         </span>{' '}
-        <span className='ramp-text' data-anim='line'>
+        <span className='line' data-anim='line'>
           {t('taglineRamp')}
         </span>
       </h1>

@@ -9,8 +9,6 @@
 }
 
 :root {
-  /* The full Ramp, as the app and the night wordmark draw it. */
-  --ramp: linear-gradient(45deg, var(--ramp-stops));
   --radius: var(--radius-panel);
   color-scheme: dark;
   /* next/font sets --face-*; the brand variables from cssVariables() are the fallback stack. The
@@ -273,16 +271,6 @@ h1 {
    motion is allowed, and removed after 2.5 s if the script never runs. */
 .motion [data-anim] {
   visibility: hidden;
-}
-
-.ramp-text {
-  display: block;
-  background: var(--ramp);
-  background-size: 200% 100%;
-  background-position: 0% 50%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
 }
 
 .lede {
