@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "CityTurfer — Surfuj po mieście. Ulice są Twoje.",
-    "description": "Chodź, biegaj albo jeździj na rowerze — każda ulica, którą pokonasz, staje się Twoim terytorium. Wracaj i patrz, jak świeci coraz jaśniej.",
+    "description": "Spacery, bieganie albo jazda na rowerze, solo lub z psem — każda ulica, którą pokonasz, staje się Twoim terytorium. Wracaj i patrz, jak świeci coraz jaśniej.",
     "ogAlt": "CityTurfer: świecące trasy na ciemnej mapie miasta i hasło „Surfuj po mieście. Ulice są Twoje”."
   },
   "header": {
@@ -15,7 +15,7 @@
     "skip": "Przejdź do treści",
     "taglineLead": "Surfuj po mieście.",
     "taglineRamp": "Ulice są Twoje.",
-    "lede": "Chodź, biegaj albo jeździj na rowerze — każda ulica, którą pokonasz, staje się Twoim terytorium. Wracaj i patrz, jak świeci coraz jaśniej."
+    "lede": "Spacery, bieganie albo jazda na rowerze, solo lub z psem — każda ulica, którą pokonasz, staje się Twoim terytorium. Wracaj i patrz, jak świeci coraz jaśniej."
   },
   "screens": {
     "turfMap": {
