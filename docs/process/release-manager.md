@@ -25,10 +25,12 @@ feat/<domain>  ─PR→  scope/vX.Y.Z  ─PR→  release/vX.Y.Z  ─PR→  main 
 - `scope/vX.Y.Z`
   - Purpose: Integration branch for the milestone version; target of all feature branches.
   - Validation: CI on every PR into `scope/**` (quality + commit naming), plus local
-    `pnpm run test:e2e`
+    `pnpm run test:e2e`; before the scope → release merge, "update all docs" (the `docs-engineer`
+    agent: PR bodies, session log, CHANGELOG preview, stale docs)
 - `release/vX.Y.Z`
   - Purpose: Stabilisation: cloud CI, e2e, real-device field test, OTA to testers.
-  - Validation: CI (`.github/workflows/ci.yml`)
+  - Validation: CI (`.github/workflows/ci.yml`); "update all docs" again before the founder merges
+    to `main`
 - `main`
   - Purpose: Validated, releasable code only.
   - Validation: CI + release workflow tags it

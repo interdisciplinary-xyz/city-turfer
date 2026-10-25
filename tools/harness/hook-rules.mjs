@@ -1116,6 +1116,7 @@ const PNPM_EXEC_READ_ONLY = new Set([
   'expo-updates',
   'prettier',
   'redocly',
+  'commit-and-tag-version',
 ]);
 
 /** `pnpm exec <bin> …` / `npx <bin> …`: only checkers, never in a mode that rewrites files. */
@@ -1136,6 +1137,9 @@ function execReason(bin, rest) {
     if (!tasks.length || bad) {
       return `\`turbo run ${bad ?? ''}\` is not on the read-only task list`;
     }
+  }
+  if (bin === 'commit-and-tag-version' && !rest.includes('--dry-run')) {
+    return '`commit-and-tag-version` without `--dry-run` writes CHANGELOG.md, versions and a tag';
   }
   if (bin === 'expo-updates' && rest[0] !== 'fingerprint:generate') {
     return '`expo-updates` other than `fingerprint:generate`';
