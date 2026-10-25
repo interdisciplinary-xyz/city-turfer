@@ -320,15 +320,17 @@ h1 {
   gap: 12px;
 }
 
+/* The app's Button (packages/ui): 56 px tall, control radius, lead-size bold label. */
 .store-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  min-height: 52px;
-  padding: 14px 26px;
-  border-radius: 999px;
-  font-weight: 700;
+  min-height: 56px;
+  padding: 14px var(--space-xxl);
+  border-radius: var(--radius-control);
+  font-size: var(--font-lead);
+  font-weight: var(--font-weight-bold);
   text-decoration: none;
 }
 

@@ -90,9 +90,16 @@
   gap: var(--space-lg);
 }
 
-/* A compact form, on the page gutter like every other page's content. */
+/* Sign-in and Create account: a compact form centred on the page, like the app's sign-in screen.
+   Title and short lines centre; the form keeps its labels and fields left-aligned. */
 .portal-sign-in {
   max-width: 28rem;
+  margin: clamp(var(--space-lg), 8vh, 96px) auto 0;
+  text-align: center;
+}
+
+.portal-sign-in .portal-form {
+  text-align: left;
 }
 
 .portal-title {
