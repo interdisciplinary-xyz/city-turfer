@@ -265,5 +265,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   the web portal's activity history (v0.11.0) — a list of the backed-up walks, runs and rides with
   totals and a type filter, and a detail page with stats, splits and the route shape; read-only, no
   map tiles, numbers from core's formatters shared with the app
+- 🚧 [`plans/web-scroll-motion-2026-10-25.md`](plans/web-scroll-motion-2026-10-25.md): Plan for GSAP
+  ScrollTrigger reveals on the landing page below the hero (waitlist, how it works, your week,
+  local-first, closing call to action) in the brand's glow-in language, with nothing hidden by CSS,
+  a reduced-motion path, no layout shift and one small client bundle
 
 <!-- docs-index:end -->
