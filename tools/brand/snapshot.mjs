@@ -82,6 +82,8 @@ async function captureDirect(url, sizes, dir) {
         '--disable-gpu',
         '--hide-scrollbars',
         '--ignore-certificate-errors',
+        // Reduced motion: the page loader and the hero entrance never hide the page in a still.
+        '--force-prefers-reduced-motion',
         `--window-size=${width},${h}`,
         `--virtual-time-budget=${wait}`,
         `--screenshot=${file}`,
@@ -157,6 +159,9 @@ for (const s of SURFACES.filter((x) => x.snapshot && (only.length === 0 || only.
       dir,
       '--wait',
       wait,
+      // Brand stills compare the static look: skip the loader and the entrance (they caught the
+      // landing page behind its loader before).
+      '--reduced-motion',
     ],
     { timeout: 300000 }
   );

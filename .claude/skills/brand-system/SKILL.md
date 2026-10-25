@@ -202,7 +202,9 @@ node apps/mobile/tools/brand/render-assets.mjs --check      # list targets
 node apps/mobile/tools/brand/render-assets.mjs store og     # only outputs whose path contains a word
 ```
 
-- Icons, splash, favicon, wordmark PNGs → `apps/mobile/assets/brand/out/`.
+- Icons, splash, favicon, wordmark PNGs → `apps/mobile/assets/brand/out/`. The app's sign-in screen
+  loads `wordmark.png` (not the SVG), so **after changing a wordmark SVG, re-render**
+  `render-assets.mjs wordmark.png og-image` or the app and the share image keep the old logo.
 - Social image (1200×630) → `apps/web/public/og-image.png`, from
   `packages/brand/templates/og-image.html`.
 - Store screenshots, App Store 6.9" (1290×2796) and Play (1080×2340) →
