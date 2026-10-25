@@ -118,13 +118,14 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   0, admin scaffold, sync-chain tests with turf and data-flow decisions F1–F4, server turf (API
   0.6.0), local mock accounts, achievements 12 → 20, the app in English and Polish; what carries
   into v0.11.0
-- ✅ [`sessions/v0.11.0.md`](sessions/v0.11.0.md): Session log v0.11.0 (in progress, scope PR 160
-  open) — docs refresh, web portal activity history, hero lockup, Polish "terytorium", cloud backup
-  for the admin@ and demo@ local profiles (API 0.6.1); JS only; open founder decisions and the
-  auth:adopt pre-step
+- 🕰️ [`sessions/v0.11.0.md`](sessions/v0.11.0.md): Session log v0.11.0 (released 2026-10-24, tag
+  v0.11.0) — docs refresh, web portal activity history, hero lockup, Polish "terytorium", cloud
+  backup for the admin@ and demo@ local profiles (API 0.6.1); JS only; open founder decisions and
+  the auth:adopt pre-step
 - ✅ [`sessions/v0.12.0.md`](sessions/v0.12.0.md): Session log v0.12.0 (in progress, scope PR 169
-  draft) — scope and release branches cut from release/v0.11.0 before v0.11.0 reached main; website
-  language switch reloads the page (#168); JS only; candidates carried over from v0.11.0
+  open) — branches cut from release/v0.11.0; v0.11.0 released 2026-10-24, main still to merge into
+  release/v0.12.0; website language switch reloads the page (#168); docs-engineer agent (#171);
+  brand surface map and audit:brand (#172); JS only
 - 🕰️ [`sessions/v0.2.0.md`](sessions/v0.2.0.md): Session log v0.2.0 through the Me menu and
   achievements; predates the Dashboard, Me drawer and login rename (PRs 23–25) and still says
   app.json is unpinned (pinned in f04bcf3)

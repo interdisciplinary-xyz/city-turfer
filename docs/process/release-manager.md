@@ -59,9 +59,9 @@ feat/<domain>  ─PR→  scope/vX.Y.Z  ─PR→  release/vX.Y.Z  ─PR→  main 
      `docs/decisions/design-system-2026-10-19.md`.
    - **v0.11.0 (JS only), measured 2026-10-24 on `scope/v0.11.0`:** the fingerprint equals `main`'s
      (tag `v0.10.0`): iOS `06aca0e17e430961e1ccb2fd755db451c830efda`, Android
-     `ab6e3dbbd0c2ab97a3bc6e8395b0b376a0bb4684`. The release commit's `app.json` bump to 0.11.0 will
-     change it, so builds installed from `v0.10.0` get no OTA published from the `v0.11.0` tag. The
-     founder chooses one of (not decided here):
+     `ab6e3dbbd0c2ab97a3bc6e8395b0b376a0bb4684`. The release commit's `app.json` bump to 0.11.0
+     (`34b3d17`, 2026-10-24) changes it, so builds installed from `v0.10.0` get no OTA published
+     from the `v0.11.0` tag. The founder chooses one of (not decided here):
      1. Publish the v0.11.0 OTA from the release head **before** the bump (fingerprint as above),
         then let the release commit land.
      2. Skip `SourceSkips.ExpoConfigVersions` in `apps/mobile/fingerprint.config.js` so the version
