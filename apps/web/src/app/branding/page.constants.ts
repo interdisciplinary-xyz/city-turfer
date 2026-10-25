@@ -252,7 +252,7 @@ export const TIER_MEANING: Record<TierName, string> = {
   faint: 'Tier 1, gradient start',
   glowing: 'Tier 2 and the primary accent fill: buttons, selection. Pink text on light is accent-text',
   strong: 'Tier 3, highlights',
-  blazing: 'Tier 4, “City” in the logotype, headlines on night panels',
+  blazing: 'Tier 4, the end of the Ramp in “TURFER”, headlines on night panels',
 };
 
 export const ACTIVITY_LABEL: Record<BrandActivityType, string> = { walk: 'Walk', run: 'Run', cycle: 'Ride' };
