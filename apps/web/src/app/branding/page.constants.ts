@@ -12,8 +12,6 @@ export const BRANDING_DESCRIPTION =
   'CityTurfer brand definition: positioning, personality, logo, colour, type, visual language and accessibility.';
 /** /branding is English only, like the brand docs; the site header uses this language. */
 export const BRANDING_LOCALE: Locale = 'en';
-/** The hero wordmark: the site header's logo shows once it has scrolled away. */
-export const BRAND_LOCKUP_SELECTOR = '.brand-hero-wordmark';
 export const DECISION_DOC_URL =
   'https://github.com/interdisciplinary-xyz/city-turfer/blob/main/docs/decisions/brand-foundations-2026-10-20.md';
 

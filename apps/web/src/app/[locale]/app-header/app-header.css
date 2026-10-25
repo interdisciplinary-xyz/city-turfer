@@ -26,15 +26,15 @@
   position: sticky;
   top: 0;
   z-index: 5;
-  background: transparent;
-  border-bottom: 1px solid transparent;
+  /* Solid from the first frame, logo included: the same bar on every page. */
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
   color: var(--text);
   font-family: var(--face-body, 'Barlow'), var(--font-family-body);
   font-size: 17px;
   line-height: 1.55;
-  transition:
-    background-color 200ms ease-out,
-    border-color 200ms ease-out;
 }
 
 .app-header *,
@@ -43,15 +43,8 @@
   box-sizing: border-box;
 }
 
-.app-header[data-scrolled] {
-  background: color-mix(in srgb, var(--bg) 90%, transparent);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border-bottom-color: var(--border);
-}
-
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .app-header[data-scrolled] {
+  .app-header {
     background: var(--bg);
   }
 }
@@ -68,21 +61,10 @@
   padding: 0 var(--gutter);
 }
 
-/* The logo only shows once the page's own logo (the lockup) has left the screen. */
 .app-header-home {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  opacity: 0;
-  visibility: hidden;
-  transition:
-    opacity 200ms ease-out,
-    visibility 200ms;
-}
-
-.app-header[data-scrolled] .app-header-home {
-  opacity: 1;
-  visibility: visible;
 }
 
 .app-header-home:focus-visible,

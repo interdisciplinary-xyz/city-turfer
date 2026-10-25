@@ -43,7 +43,6 @@ import {
   ANDROID_CHECK,
   ASSETS,
   AUDIENCES,
-  BRAND_LOCKUP_SELECTOR,
   BRANDING_DESCRIPTION,
   BRANDING_LOCALE,
   BRANDING_TITLE,
@@ -115,7 +114,6 @@ export default async function BrandingPage() {
             locale={BRANDING_LOCALE}
             waitlist={Boolean(WAITLIST)}
             waitlistHref={`/${BRANDING_LOCALE}#waitlist`}
-            lockupSelector={BRAND_LOCKUP_SELECTOR}
           />
         </NextIntlClientProvider>
         <header className='brand-hero'>

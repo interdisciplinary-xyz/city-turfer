@@ -49,7 +49,6 @@ if (host) {
           register: { href: `/${LOCALE}/account/register`, label: en.header.register },
         },
         languages,
-        lockupSelector: host.dataset.lockup,
       })
     );
   });

@@ -10,17 +10,10 @@ import type { AppHeaderProps } from './app-header.constants';
 import { AppHeaderView } from './app-header-view';
 
 /**
- * Sticky top bar. At rest the waitlist link, "Sign in", "Create account" and the language switcher
- * show; once the page's own logo has scrolled away the bar gets a background and its logo fades in
- * (`ScrollState`).
+ * Sticky top bar, solid from the start: the logo, the waitlist link, "Sign in", "Create account"
+ * and the language switcher.
  */
-export function AppHeader({
-  locale,
-  waitlist,
-  waitlistHref = '#waitlist',
-  lockupSelector,
-  account = true,
-}: AppHeaderProps) {
+export function AppHeader({ locale, waitlist, waitlistHref = '#waitlist', account = true }: AppHeaderProps) {
   const t = useTranslations('header');
   return (
     <AppHeaderView
@@ -42,7 +35,6 @@ export function AppHeader({
           : null
       }
       languages={<LanguageSwitcher locale={locale} />}
-      lockupSelector={lockupSelector}
     />
   );
 }
