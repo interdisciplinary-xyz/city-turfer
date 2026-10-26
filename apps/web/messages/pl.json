@@ -2,7 +2,7 @@
   "meta": {
     "title": "CityTurfer — Surfuj po mieście. Ulice są Twoje.",
     "description": "Spacery, bieganie albo jazda na rowerze, solo lub z psem — każda ulica, którą pokonasz, staje się Twoim terytorium. Wracaj i patrz, jak świeci coraz jaśniej.",
-    "ogAlt": "CityTurfer: świecące trasy na ciemnej mapie miasta i hasło „Surfuj po mieście. Ulice są Twoje”."
+    "ogAlt": "CityTurfer: świecące trasy na ciemnej mapie miasta i angielskie hasło „Surf your city. Own your streets.”"
   },
   "header": {
     "home": "CityTurfer, strona główna",
@@ -35,20 +35,20 @@
       "title": "Jedna pętla. Każda ulica.",
       "record": {
         "title": "Nagraj spacer, bieg albo przejażdżkę",
-        "body": "Mapa i statystyki na żywo, automatyczna pauza. Na koniec przytrzymaj, żeby zakończyć."
+        "body": "Mapa i statystyki na żywo, autopauza. Żeby zakończyć, przytrzymaj przycisk."
       },
       "gain": {
         "label": "Nowe terytorium",
         "area": "+{area} km² nowego terytorium",
         "cells": "{added, plural, one {# nowa komórka} few {# nowe komórki} many {# nowych komórek} other {# nowej komórki}} · {reinforced, plural, one {# wzmocniona} few {# wzmocnione} many {# wzmocnionych} other {# wzmocnionej}}",
         "title": "Każda ulica staje się Twoja",
-        "body": "Każdy sześciokąt (ok. 50 m), przez który przejdzie Twoja trasa, zostaje Twoim terytorium na dobre."
+        "body": "Każdy sześciokąt (ok. 50 m), przez który prowadzi Twoja trasa, na dobre staje się Twoim terytorium."
       },
       "glow": {
         "legendTitle": "Siła terytorium",
         "legendLabel": "Siła terytorium: Blade, Świecące, Mocne, Płonące, od najsłabszej do najmocniejszej",
         "title": "Wracaj i patrz, jak świeci",
-        "body": "Każdy powrót sprawia, że ulica świeci jaśniej: od „Blade” po „Płonące”. Nic nie blednie, więc nigdy nie zostajesz w tyle."
+        "body": "Z każdym powrotem ulica świeci jaśniej: od „Blade” po „Płonące”. Nic nie blednie: ulica zostaje Twoja, nawet jeśli długo Cię tam nie było."
       }
     },
     "types": {
@@ -64,12 +64,16 @@
     },
     "week": {
       "eyebrow": "Pulpit",
-      "title": "Twój tydzień w skrócie",
+      "title": "Tak wyglądał Twój tydzień",
       "body": "Dystans, czas i liczba aktywności w tym tygodniu, ostatnie spacery, biegi i przejażdżki oraz najbliższe osiągnięcie.",
       "thisWeek": "W tym tygodniu",
       "distance": "Dystans",
       "time": "Czas",
       "count": "Aktywności",
+      "unitKm": "km",
+      "rowDistance": "{distance} km",
+      "rowPace": "{time} · {pace}/km",
+      "rowSpeed": "{time} · {speed} km/h",
       "recent": "Ostatnie aktywności",
       "seeAll": "Wszystkie ›",
       "achievements": "Osiągnięcia",
@@ -91,16 +95,16 @@
       }
     },
     "local": {
-      "eyebrow": "Najpierw telefon",
+      "eyebrow": "Tylko Twoje",
       "title": "Oryginał zostaje na Twoim telefonie",
       "phone": "Twoje aktywności są zapisane na telefonie, w aplikacji.",
-      "backup": "Kopia w chmurze jest wyłączona, dopóki jej nie włączysz, i możesz ją wyłączyć w każdej chwili.",
+      "backup": "Kopia w chmurze jest wyłączona, dopóki jej nie włączysz. Gdy ją wyłączysz, kopia na naszym serwerze zostanie usunięta.",
       "portal": "Po zalogowaniu w przeglądarce widzisz tylko to, co trafiło do kopii."
     },
     "cta": {
-      "title": "Twoje terytorium zaczyna się za drzwiami",
+      "title": "Twoje terytorium zaczyna się za progiem",
       "body": "Zostaw e-mail, a damy znać, gdy aplikacja będzie gotowa do pobrania.",
-      "join": "Zapisz się na listę"
+      "join": "Dołącz do listy"
     }
   },
   "language": {

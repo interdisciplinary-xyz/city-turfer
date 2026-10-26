@@ -62,7 +62,6 @@ function PortalPage({ page }: Props) {
 const meta = {
   title: 'Portal/Pages',
   component: PortalPage,
-  globals: { scheme: 'light' },
   args: { page: 'privacy' },
   argTypes: { page: { control: 'inline-radio', options: ['privacy', 'sign-in'] } },
 } satisfies Meta<typeof PortalPage>;

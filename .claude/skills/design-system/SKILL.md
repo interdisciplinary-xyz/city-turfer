@@ -75,7 +75,7 @@ pnpm --filter @cityturfer/storybook build    # apps/storybook/storybook-static (
 
 - Every story renders with `SITE_SCHEME` (dark), like the website and the app; there is no theme
   toolbar. Toolbar: **Language** (en/pl; website copy from `apps/web/messages`). A map inside a
-  story sits on a night panel, as on the site.
+  story sits on night, the same ground as the rest of the site.
 - Website components come from `apps/web/src` through the `@/` alias. `next/image` and next-intl's
   `Link` are shimmed (`apps/storybook/src/shims/`); async server components can't render, so keep
   website pieces synchronous (`useTranslations`, not `await getTranslations`).

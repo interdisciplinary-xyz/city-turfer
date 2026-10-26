@@ -112,14 +112,14 @@ export function YourWeek() {
           </h2>
           <p className='home-lede'>{t('body')}</p>
         </div>
-        <figure className='home-dashboard'>
+        <figure className='home-dashboard' aria-describedby='week-caption'>
           <div className='app-card'>
             <h3 className='app-card-title'>{t('thisWeek')}</h3>
             <div className='app-stats'>
               <div className='app-stat'>
                 <span className='app-stat-figure'>
                   <span className='app-stat-value'>{km(EXAMPLE_WEEK.distanceKm)}</span>
-                  <span className='app-stat-unit'>km</span>
+                  <span className='app-stat-unit'>{t('unitKm')}</span>
                 </span>
                 <span className='app-label'>{t('distance')}</span>
               </div>
@@ -154,12 +154,14 @@ export function YourWeek() {
                   <span className='app-row-small'>{t(`activities.${a.key}.when`)}</span>
                 </span>
                 <span className='app-row-end'>
-                  <span className='app-row-value'>{km(a.distanceKm)} km</span>
+                  <span className='app-row-value'>{t('rowDistance', { distance: km(a.distanceKm) })}</span>
                   <span className='app-row-small'>
-                    {a.time} ·{' '}
                     {a.speedKmh === undefined
-                      ? `${a.pace}/km`
-                      : `${format.number(a.speedKmh, { maximumFractionDigits: 1 })} km/h`}
+                      ? t('rowPace', { time: a.time, pace: a.pace ?? '' })
+                      : t('rowSpeed', {
+                          time: a.time,
+                          speed: format.number(a.speedKmh, { maximumFractionDigits: 1 }),
+                        })}
                   </span>
                 </span>
               </li>
@@ -186,7 +188,9 @@ export function YourWeek() {
               <span className='app-fill' style={{ width: `${progress}%` }} />
             </div>
           </div>
-          <figcaption className='home-caption'>{t('caption')}</figcaption>
+          <figcaption id='week-caption' className='home-caption'>
+            {t('caption')}
+          </figcaption>
         </figure>
       </div>
     </section>

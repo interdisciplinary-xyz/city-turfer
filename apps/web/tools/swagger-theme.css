@@ -446,7 +446,7 @@ a {
 .swagger-ui .btn.authorize span {
   color: var(--on-accent);
 }
-/* Blazing is near white on a light page, so hover warms to strong (night label 10:1). */
+/* Blazing is near white on the dark page, so hover warms to strong (night label 10:1). */
 .swagger-ui .btn.execute:hover,
 .swagger-ui .btn.authorize:hover {
   background: var(--strong);

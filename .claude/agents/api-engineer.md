@@ -4,7 +4,7 @@ description: >-
   Back-end engineer: apps/api (Hono on Vercel, OpenAPI, Postgres, auth, deploys) and the app's
   cloud-backup context (opt-in sync to the server). Use when designing, building or debugging the
   API, sync or backup, server data or GPS privacy, or asked "what should the back end look like?".
-tools: Read, Write, Edit, Grep, Glob, Bash, WebSearch, WebFetch
+tools: Read, Write, Edit, Grep, Glob, Bash, WebSearch, WebFetch, Skill
 model: opus
 ---
 

@@ -10,7 +10,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Turf strength tiers, weakest to strongest. New in v0.5.0: not on any app screen yet. On a light page it sits on a card; over a map it sits on night (maps stay dark), where the tiers glow.',
+          'Turf strength tiers, weakest to strongest. New in v0.5.0: not on any app screen yet. On a page it sits on a card; over a map it sits on night, where the tiers glow. Both are dark, like the app.',
       },
     },
   },
@@ -32,7 +32,7 @@ export const Translated: StoryObj<typeof meta> = {
   },
 };
 
-/** Over a map: maps stay dark, so the legend takes the dark palette on a night panel. */
+/** Over a map: the legend on a night panel, the map's ground, in the dark palette like the rest of the site. */
 export const OnMap: StoryObj<typeof meta> = {
   args: { style: { maxWidth: 360 } },
   render: (args) => (

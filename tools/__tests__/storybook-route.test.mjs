@@ -1,11 +1,14 @@
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { after, before, test } from 'node:test';
 
+import { build } from 'esbuild';
+
 import { contentTypeOf, storybookFile, withAppHeader, withStorybook } from '../../apps/web/tools/storybook-route.mjs';
+import { loadBrand } from '../../apps/web/tools/swagger-brand.mjs';
 
 const ROOT = path.resolve('/srv/storybook-static');
 
@@ -126,11 +129,55 @@ test('Storybook UI is pinned below the header', () => {
   assert.match(html, /<body class="sb"><div id="app-header-root">/);
 });
 
+/**
+ * The Storybook theme object as Storybook receives it: theme.ts bundled with esbuild, its
+ * `create()` from storybook/theming replaced by the identity, so the test reads the real values.
+ */
+async function storybookTheme() {
+  const { outputFiles } = await build({
+    entryPoints: [path.resolve(import.meta.dirname, '../../apps/storybook/.storybook/theme.ts')],
+    bundle: true,
+    write: false,
+    format: 'esm',
+    platform: 'node',
+    logLevel: 'silent',
+    plugins: [
+      {
+        name: 'theming-stub',
+        setup(b) {
+          b.onResolve({ filter: /^storybook\/theming$/ }, () => ({ path: 'theming', namespace: 'stub' }));
+          b.onLoad({ filter: /.*/, namespace: 'stub' }, () => ({ contents: 'export const create = (t) => t;' }));
+        },
+      },
+    ],
+  });
+  const url = `data:text/javascript;base64,${Buffer.from(outputFiles[0].text).toString('base64')}`;
+  return (await import(url)).cityTurferTheme;
+}
+
+/** `{ tag, class, style }` of each element in a small HTML fragment (no nesting needed here). */
+const elements = (html) =>
+  [...html.matchAll(/<(\w+)([^>]*)>/g)].map(([, tag, attrs]) => ({
+    tag,
+    ...Object.fromEntries([...attrs.matchAll(/([\w-]+)="([^"]*)"/g)].map(([, k, v]) => [k, v])),
+  }));
+
 test('under the site header the sidebar shows a label instead of a second logo', async () => {
   const html = withAppHeader('<html><head></head><body><div id="root"></div></body></html>');
   assert.match(html, /\.ct-sb-logo \{ display: none !important; \}/);
   assert.match(html, /\.ct-sb-label \{ display: inline !important; \}/);
-  const theme = await readFile(path.resolve(import.meta.dirname, '../../apps/storybook/.storybook/theme.ts'), 'utf8');
-  assert.match(theme, /class="ct-sb-logo"/);
-  assert.match(theme, /class="ct-sb-label" style="display:none"/);
+  // The sidebar title Storybook renders: the logo by default, the label hidden until the header shows.
+  const theme = await storybookTheme();
+  const byClass = Object.fromEntries(elements(theme.brandTitle).map((e) => [e.class, e]));
+  assert.ok(byClass['ct-sb-logo'], theme.brandTitle);
+  assert.equal(byClass['ct-sb-label']?.style, 'display:none');
+  assert.ok(elements(theme.brandTitle).some((e) => e.tag === 'img' && e.alt === 'CityTurfer'));
+});
+
+test('the Storybook UI theme uses the site scheme', async () => {
+  const theme = await storybookTheme();
+  const { SITE_SCHEME, THEMES } = await loadBrand(path.resolve(import.meta.dirname, '../../apps/web'));
+  assert.equal(theme.base, SITE_SCHEME);
+  assert.equal(theme.appBg, THEMES[SITE_SCHEME].bg);
+  assert.equal(theme.textColor, THEMES[SITE_SCHEME].text);
 });

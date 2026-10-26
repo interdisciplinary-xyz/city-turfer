@@ -4,7 +4,7 @@ verified: 2026-10-25
 owner: founder
 scope: [packages/brand/src, packages/brand/svg]
 summary:
-  Superseded by brand-dark-site-2026-10-25 (the site is dark again, like the app). The website,
+  Superseded by brand-dark-site-2026-10-25.md (the site is dark again, like the app). The website,
   Swagger and Storybook switch to a light theme (SITE_SCHEME) while the app and every map stay dark;
   the AA light palette, its new tokens and ratios, night labels on pink buttons
 ---

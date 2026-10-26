@@ -4,7 +4,7 @@ description: >-
   Use after a feature is built and before committing, or when asked for a review. Reviews CityTurfer
   diffs (apps/mobile, packages/core, apps/api, apps/web, .claude) for data loss, permissions,
   metrics, turf, migrations, privacy, DDD boundaries, OTA vs native. Read-only.
-tools: Read, Grep, Glob, Bash, WebFetch
+tools: Read, Grep, Glob, Bash, WebFetch, Skill
 model: opus
 hooks:
   PreToolUse:

@@ -7,7 +7,6 @@ import { ERRORS } from './fixtures';
 const meta = {
   title: 'Portal/DeleteAccount',
   component: DeleteAccount,
-  globals: { scheme: 'light' },
   args: { onDelete: () => undefined, pending: false, error: null },
   parameters: {
     layout: 'padded',

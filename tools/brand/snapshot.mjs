@@ -15,9 +15,16 @@
  * listed as skipped, never captured as an error page. The simulator is captured only when one is
  * booted, as it is (navigate to the screen first). Screenshots stay local: the app's screens can
  * show routes, so never upload or commit them (CLAUDE.md, location data is personal data).
+ *
+ * Output: <out>/<surface>/<path>-<w>x<h>-reduced.png per page and size (every still uses reduced
+ * motion, so no loader or entrance hides the page), ios-simulator.png for the app, and
+ * <out>/index.html. Each run first deletes the stills it is about to replace in a surface's folder
+ * (only file names this tool writes), so reusing an --out folder never mixes old shots in. Pages
+ * that refuse frames are captured by headless Chrome directly; it is at least 500 px wide, so their
+ * phone size reads 500x… in the name, and the sheet says "captured directly".
  */
 import { execFile } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -59,6 +66,21 @@ async function refusesFrames(url) {
   }
 }
 
+/** File names this tool (and apps/web/tools/viewports.mjs under it) writes into a surface folder. */
+const OWN_FILE = /^(?:[\w-]+-\d+x\d+(?:-reduced)?(?:-direct)?\.png|ios-simulator\.png|\.done)$/;
+
+/** Delete the previous run's stills in `dir`: regular files with our names only, never folders. */
+function clearShots(dir) {
+  if (!existsSync(dir)) {
+    return;
+  }
+  for (const f of readdirSync(dir)) {
+    if (OWN_FILE.test(f) && lstatSync(join(dir, f)).isFile()) {
+      rmSync(join(dir, f));
+    }
+  }
+}
+
 const CHROME = [
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   '/Applications/Chromium.app/Contents/MacOS/Chromium',
@@ -67,14 +89,14 @@ const CHROME = [
 
 /**
  * Direct capture for pages that refuse frames: headless Chrome's window is at least 500 px wide,
- * so phone sizes come out at 500 px (the caption says so).
+ * so phone sizes come out at 500 px (the caption says so). Named like viewports.mjs's stills.
  */
 async function captureDirect(url, sizes, dir) {
   const files = [];
   for (const size of sizes) {
     const [w, h] = size.split('x').map(Number);
     const width = Math.max(w, 500);
-    const file = join(dir, `${new URL(url).pathname.replace(/\W+/g, '') || 'root'}-${width}x${h}-direct.png`);
+    const file = join(dir, `${new URL(url).pathname.replace(/\W+/g, '') || 'root'}-${width}x${h}-reduced.png`);
     await run(
       CHROME,
       [
@@ -114,6 +136,7 @@ const rows = [];
 
 for (const s of SURFACES.filter((x) => x.snapshot && (only.length === 0 || only.includes(x.id)))) {
   const dir = join(out, s.id);
+  clearShots(dir);
   if ('ios' in s.snapshot) {
     const device = await bootedSimulator();
     if (!device) {

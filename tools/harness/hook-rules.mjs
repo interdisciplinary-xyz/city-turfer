@@ -316,11 +316,14 @@ const WRAPPERS = {
 /**
  * Commands plus the redirections between them. `redirects` holds `{ op, target }` for every `>`,
  * `>>`, `&>` or `<` with a file target (`2>&1` has none), including those inside `bash -c '…'`.
- * `assignments` holds every `NAME=value` the line sets (prefix, `env` or `export`).
- * @returns {{ commands: string[][], redirects: { op: string, target: string }[], assignments: string[] }}
+ * `assignments` holds every `NAME=value` the line sets (prefix, `env` or `export`). `depths[i]` is
+ * how many subshells command i runs in (`( … )`, `bash -c`), so a `cd` there does not outlive it.
+ * @returns {{ commands: string[][], redirects: { op: string, target: string }[], assignments: string[], depths: number[] }}
  */
 export function parseShell(line) {
   const commands = [];
+  const commandDepths = [];
+  let depth = 0;
   const redirects = [];
   let redirectOp = '';
   let words = [];
@@ -342,6 +345,7 @@ export function parseShell(line) {
     endWord();
     if (words.length) {
       commands.push(words);
+      commandDepths.push(depth);
     }
     words = [];
   };
@@ -464,6 +468,11 @@ export function parseShell(line) {
     const op = line.slice(i).match(/^(&&|\|\||[;|&\n()])/);
     if (op) {
       endCommand();
+      if (op[0] === '(') {
+        depth += 1;
+      } else if (op[0] === ')') {
+        depth = Math.max(0, depth - 1); // also a `case` pattern's `)`
+      }
       i += op[0].length;
       continue;
     }
@@ -487,8 +496,10 @@ export function parseShell(line) {
   // command (`command`/`exec`/`env`/`sudo`/`nohup`/`time`/`timeout`/`nice`/`xargs`), `{` groups,
   // and `bash -c '…'` / `eval '…'` (their string is parsed as commands of its own).
   const out = [];
+  const depths = [];
   const assignments = [];
-  for (let w of commands) {
+  for (const [n, command] of commands.entries()) {
+    let w = command;
     if (['export', 'declare', 'typeset', 'readonly'].includes(w[0])) {
       assignments.push(...w.slice(1).filter((x) => /^[A-Za-z_]\w*=/.test(x)));
     }
@@ -526,13 +537,16 @@ export function parseShell(line) {
     if (inner !== null) {
       const parsed = parseShell(inner);
       out.push(...parsed.commands);
+      // `bash -c` runs in a child shell; `eval` in this one
+      depths.push(...parsed.depths.map((d) => d + commandDepths[n] + (cFlag > 0 ? 1 : 0)));
       redirects.push(...parsed.redirects);
       assignments.push(...parsed.assignments);
       continue;
     }
     out.push(w);
+    depths.push(commandDepths[n]);
   }
-  return { commands: out, redirects, assignments };
+  return { commands: out, redirects, assignments, depths };
 }
 
 /** @deprecated kept for callers that only need the command strings */
@@ -540,22 +554,33 @@ export function simpleCommands(line) {
   return shellCommands(line).map((w) => w.join(' '));
 }
 
-/** `git` subcommand and its arguments, past global options (-C dir, -c k=v, --no-pager …). */
+/**
+ * `git` subcommand and its arguments, past global options (-C dir, -c k=v, --no-pager …).
+ * `chdir`: the `-C` folders, in order; `gitDir`: `--git-dir`/`--work-tree` point git elsewhere.
+ */
 function gitCall(words) {
   if (!/^(?:.*\/)?git$/.test(words[0] ?? '')) {
     return null;
   }
   let k = 1;
   const config = [];
+  const chdir = [];
+  let gitDir = false;
   while (k < words.length && words[k].startsWith('-')) {
     if (words[k] === '-c') {
       config.push(words[k + 1] ?? '');
     } else if (words[k].startsWith('--config-env=')) {
       config.push(words[k].slice('--config-env='.length));
+    } else if (words[k] === '-C') {
+      chdir.push(words[k + 1] ?? '');
+    } else if (/^-C./.test(words[k])) {
+      chdir.push(words[k].slice(2));
+    } else if (/^--(git-dir|work-tree)(=|$)/.test(words[k])) {
+      gitDir = true;
     }
     k += ['-C', '-c', '--git-dir', '--work-tree', '--namespace', '--exec-path'].includes(words[k]) ? 2 : 1;
   }
-  return k < words.length ? { sub: words[k], args: words.slice(k + 1), config } : null;
+  return k < words.length ? { sub: words[k], args: words.slice(k + 1), config, chdir, gitDir } : null;
 }
 
 /** Positional arguments and flags, skipping the values of the given value-taking options. */
@@ -777,11 +802,112 @@ function ghCall(words) {
 }
 
 const PUSH_VALUE_OPTIONS = ['-o', '--push-option', '--repo', '--receive-pack', '--exec'];
-const RELEASE_DRY_RUN = (words) => words.includes('--dry-run');
+
+/** A version `--release-as` may name in a preview. */
+const RELEASE_AS = /^(\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?|major|minor|patch)$/;
+
+/**
+ * True when commit-and-tag-version's arguments only preview the release: exactly one `--dry-run`
+ * and at most one `--release-as <version>`. Anything else is refused, because it can switch the
+ * dry run off (`--no-dry-run`, `--dry-run=false`, `--dry-run false`, `-- --dry-run`) or run code
+ * even in a dry run (`--config <file>` is require()d, `--bumpFiles`/`--packageFiles` load updaters,
+ * `--scripts` runs lifecycle commands, `--preset` loads a module).
+ */
+export function releasePreviewOnly(args) {
+  let dryRun = 0;
+  let releaseAs = 0;
+  for (let k = 0; k < args.length; k++) {
+    const a = args[k];
+    if (a === '--dry-run') {
+      dryRun += 1;
+    } else if (a === '--release-as' && RELEASE_AS.test(args[k + 1] ?? '')) {
+      releaseAs += 1;
+      k += 1;
+    } else if (a.startsWith('--release-as=') && RELEASE_AS.test(a.slice('--release-as='.length))) {
+      releaseAs += 1;
+    } else {
+      return false;
+    }
+  }
+  return dryRun === 1 && releaseAs <= 1;
+}
+
+const PM_VALUE_OPTIONS = ['-C', '--dir', '--filter', '-F', '--prefix', '--cwd', '--workspace'];
+
+/** Stands in for arguments that never reach commit-and-tag-version as written: never a preview. */
+const NOT_AS_WRITTEN = ['<arguments the package manager rewrites>'];
+
+/**
+ * The arguments a command hands commit-and-tag-version (run directly, through npx/bunx, `pnpm exec`
+ * or `dlx`, or as the root `release` script), or null when it does not run it. Script runs differ by
+ * package manager (measured with pnpm 10 and npm 10): pnpm passes everything after the script name
+ * on, `--` included, and yargs reads `-- --dry-run` as dry-run false (the real release); npm strips
+ * `--` but reads a `--dry-run` before it as its own option. So only `pnpm run release --dry-run` and
+ * `npm run release -- --dry-run` preview; yarn and bun script runs never count as one.
+ */
+function releaseArgs(words) {
+  const runner = (words[0] ?? '').replace(/^.*\//, '');
+  if (runner === 'commit-and-tag-version') {
+    return words.slice(1);
+  }
+  if (runner === 'npx' || runner === 'bunx') {
+    let k = 1;
+    while (k < words.length && words[k].startsWith('-')) {
+      k += ['-p', '--package', '-c', '--call'].includes(words[k]) ? 2 : 1;
+    }
+    return (words[k] ?? '').replace(/^.*\//, '') === 'commit-and-tag-version' ? words.slice(k + 1) : null;
+  }
+  if (!['pnpm', 'npm', 'yarn', 'bun'].includes(runner)) {
+    return null;
+  }
+  let k = 1;
+  while (k < words.length && words[k].startsWith('-')) {
+    k += PM_VALUE_OPTIONS.includes(words[k]) ? 2 : 1;
+  }
+  const verb = words[k];
+  if (['run', 'run-script', 'exec', 'dlx', 'x'].includes(verb)) {
+    k += 1;
+  }
+  const target = (words[k] ?? '').replace(/^.*\//, '');
+  const rest = words.slice(k + 1);
+  if (target === 'commit-and-tag-version') {
+    return rest;
+  }
+  if (target === 'release' && !['exec', 'dlx', 'x'].includes(verb)) {
+    if (runner === 'pnpm') {
+      return rest;
+    }
+    if (runner === 'npm' && rest[0] === '--') {
+      return rest.slice(1);
+    }
+    return rest.length === 0 ? rest : NOT_AS_WRITTEN;
+  }
+  return null;
+}
+
+/**
+ * The folder `cd <arg>` lands in from `from`, or null when the line cannot tell (`cd -`, `~`, a
+ * glob, a variable the line does not set). `vars`: literal values the line assigns (`W=/x && cd "$W"`).
+ */
+function movedTo(from, arg, vars = new Map()) {
+  const v = arg?.match(/^\$(?:(\w+)|\{(\w+)\})(\/.*)?$/);
+  if (v && vars.has(v[1] ?? v[2])) {
+    arg = vars.get(v[1] ?? v[2]) + (v[3] ?? '');
+  }
+  if (arg === undefined || arg === '' || arg === '-' || /[$`~*?{}[\]]/.test(arg)) {
+    return null;
+  }
+  if (arg.startsWith('/')) {
+    return posix.normalize(arg).replace(/(.)\/$/, '$1');
+  }
+  return from ? posix.resolve(from, arg) : null;
+}
 
 /**
  * @param {string} line  the Bash command
- * @param {{ branch?: string, activeScope?: string }} ctx  current branch and newest scope/vX.Y.Z
+ * @param {{ branch?: string, activeScope?: string, cwd?: string, branchAt?: (dir: string) => string | undefined }} ctx
+ *   current branch and newest scope/vX.Y.Z; `cwd` (absolute) and `branchAt` let a `cd` or
+ *   `git -C` in the line read the branch of the folder it moves to
  * @returns {{ decision: 'deny' | 'ask', rule: string, message: string }[]}
  */
 export function bashFindings(line, ctx = {}) {
@@ -789,17 +915,53 @@ export function bashFindings(line, ctx = {}) {
   const deny = (rule, message) => out.push({ decision: 'deny', rule, message });
   const ask = (rule, message) => out.push({ decision: 'ask', rule, message });
 
-  const { commands, assignments } = parseShell(line);
+  const { commands, assignments, depths } = parseShell(line);
   const hooksOffByEnv = assignments.some((a) => HOOKS_OFF_ENV.test(a));
   // The branch HEAD is on as the line runs: `git switch main && git push` pushes main.
-  // null = unknown (`git switch -`).
+  // null = unknown (`git switch -`): a bare push or a PR without --head must then name its branch.
+  // ctx.branch is the checkout the hook ran in. A `cd`/`pushd` or `git -C` to a literal folder reads
+  // that folder's branch through ctx.branchAt; the branch stays unknown for the rest of the line
+  // after GIT_DIR/GIT_WORK_TREE, a `cd` inside a subshell (it ends with the subshell), or any folder
+  // change after a switch (git would still report the old HEAD).
   let branch = ctx.branch;
-  for (const words of commands) {
+  let cwd = ctx.cwd ?? null;
+  let switched = false;
+  let blind = assignments.some((a) => /^GIT_(DIR|WORK_TREE)=/.test(a));
+  if (blind) {
+    branch = null;
+  }
+  // Literal values the line assigns (last wins), for `cd "$W"`; a value with $ or ` stays unknown.
+  const vars = new Map(
+    assignments.map((a) => a.match(/^(\w+)=(.*)$/)).flatMap((m) => (m && !/[$`]/.test(m[2]) ? [[m[1], m[2]]] : []))
+  );
+  const branchIn = (dir) => (dir && ctx.branchAt && !switched && !blind ? (ctx.branchAt(dir) ?? null) : null);
+  for (const [n, words] of commands.entries()) {
+    if (['cd', 'pushd', 'popd'].includes(words[0])) {
+      if (depths[n] > 0) {
+        blind = true;
+        branch = null;
+      } else {
+        const arg = words[0] === 'popd' ? undefined : words.slice(1).find((w) => !/^-[LPe@]+$/.test(w));
+        cwd = movedTo(cwd, arg, vars);
+        branch = branchIn(cwd);
+      }
+      continue;
+    }
     const git = gitCall(words);
+    // `git -C <dir> …` / `--git-dir`: this one command runs in another checkout.
+    let here = branch;
+    if (git?.gitDir) {
+      here = null;
+    } else if (git?.chdir.length) {
+      here = branchIn(git.chdir.reduce((dir, d) => movedTo(dir, d, vars), cwd));
+    }
     if (git?.sub === 'switch' || git?.sub === 'checkout') {
       const next = switchedTo(git.sub, git.args);
       if (next !== undefined) {
-        branch = next;
+        // a switch through -C or --git-dir moved some checkout: which one the line cannot tell
+        branch = blind || git.gitDir || git.chdir.length ? null : next;
+        here = branch;
+        switched = true;
       }
     }
 
@@ -839,7 +1001,7 @@ export function bashFindings(line, ctx = {}) {
         hasFlag(flags, '--force-with-lease') ||
         refspecs.some((r) => r.startsWith('+'));
       const toBranch = (r) => {
-        const name = r === 'HEAD' && branch ? branch : r.replace(/^refs\/heads\//, '');
+        const name = r === 'HEAD' && here ? here : r.replace(/^refs\/heads\//, '');
         return name;
       };
       const deleted = [];
@@ -852,14 +1014,14 @@ export function bashFindings(line, ctx = {}) {
           targets.push(dst);
         }
       }
-      if (!refspecs.length && branch && !deleting) {
-        targets.push(branch);
+      if (!refspecs.length && here && !deleting) {
+        targets.push(here);
       }
-      const unknownHead = branch === null && (!refspecs.length || refspecs.some((r) => /^\+?HEAD(:|$)/.test(r)));
+      const unknownHead = here === null && (!refspecs.length || refspecs.some((r) => /^\+?HEAD$/.test(r)));
       if (unknownHead && !deleting) {
         deny(
           'push-main',
-          'This push follows `git switch -` (or `@{-N}`), so its branch cannot be told from the line. Push the branch by name: git push origin <branch>.'
+          'The branch of this push cannot be told from the line: it follows `git switch -` (or `@{-N}`), a `cd`/`pushd`, `git -C <dir>`, or GIT_DIR. Push the branch by name: git push origin <branch>.'
         );
       }
       if (hasFlag(flags, '--no-verify')) {
@@ -929,33 +1091,11 @@ export function bashFindings(line, ctx = {}) {
     }
 
     // Release tooling: commit-and-tag-version writes CHANGELOG.md, bumps versions and tags.
-    const runner = words[0];
-    const isPm = ['pnpm', 'npm', 'yarn', 'bun'].includes(runner);
-    if (isPm && !RELEASE_DRY_RUN(words)) {
-      let k = 1;
-      while (k < words.length && words[k].startsWith('-')) {
-        k += ['-C', '--dir', '--filter', '-F', '--prefix', '--cwd'].includes(words[k]) ? 2 : 1;
-      }
-      if (['run', 'run-script', 'exec', 'dlx', 'x'].includes(words[k])) {
-        k += 1;
-      }
-      if (words[k] === 'release' || words[k] === 'commit-and-tag-version') {
-        deny(
-          'release',
-          'The release (commit-and-tag-version: version bump, CHANGELOG.md, tag) runs only in release.yml on merge to main. Never run it locally; `--dry-run` is fine.'
-        );
-      }
-    }
-    if (
-      !isPm &&
-      !RELEASE_DRY_RUN(words) &&
-      (/^(?:.*\/)?commit-and-tag-version$/.test(runner) ||
-        (['npx', 'bunx'].includes(runner) &&
-          words.find((w, k) => k > 0 && !w.startsWith('-')) === 'commit-and-tag-version'))
-    ) {
+    const release = releaseArgs(words);
+    if (release && !releasePreviewOnly(release)) {
       deny(
         'release',
-        'The release (commit-and-tag-version: version bump, CHANGELOG.md, tag) runs only in release.yml on merge to main. Never run it locally; `--dry-run` is fine.'
+        'The release (commit-and-tag-version: version bump, CHANGELOG.md, tag) runs only in release.yml on merge to main. Never run it locally. The preview is allowed in exactly this form: `pnpm exec commit-and-tag-version --dry-run [--release-as X.Y.Z]` (no other options: `--config`, `--scripts`, `--bumpFiles` and `-- --dry-run` can run code or switch the dry run off).'
       );
     }
 
@@ -989,7 +1129,7 @@ export function bashFindings(line, ctx = {}) {
       if (action === 'create' || action === 'edit') {
         let head;
         if (action === 'create') {
-          head = optionValue(args, '--head', '-H') ?? branch ?? undefined;
+          head = optionValue(args, '--head', '-H') ?? here ?? undefined;
         } else {
           const { positional } = splitArgs(args, [
             '--title',
@@ -1014,7 +1154,13 @@ export function bashFindings(line, ctx = {}) {
             '-R',
           ]);
           const target = positional[0];
-          head = target === undefined ? (branch ?? undefined) : /^\d+$|^https?:/.test(target) ? undefined : target;
+          head = target === undefined ? (here ?? undefined) : /^\d+$|^https?:/.test(target) ? undefined : target;
+        }
+        if (action === 'create' && here === null && optionValue(args, '--head', '-H') === null) {
+          deny(
+            'pr-base',
+            'The head of this PR cannot be told from the line (it follows `cd`, `git switch -` or GIT_DIR), so its title and base cannot be checked. Pass it: gh pr create --head <branch> --base <target> --title "city-turfer - <branch>".'
+          );
         }
         const base = optionValue(args, '--base', '-B');
         const title = optionValue(args, '--title', '-t');
@@ -1138,8 +1284,8 @@ function execReason(bin, rest) {
       return `\`turbo run ${bad ?? ''}\` is not on the read-only task list`;
     }
   }
-  if (bin === 'commit-and-tag-version' && !rest.includes('--dry-run')) {
-    return '`commit-and-tag-version` without `--dry-run` writes CHANGELOG.md, versions and a tag';
+  if (bin === 'commit-and-tag-version' && !releasePreviewOnly(rest)) {
+    return '`commit-and-tag-version` other than `--dry-run [--release-as X.Y.Z]` writes CHANGELOG.md, versions and a tag, or runs code';
   }
   if (bin === 'expo-updates' && rest[0] !== 'fingerprint:generate') {
     return '`expo-updates` other than `fingerprint:generate`';

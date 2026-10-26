@@ -8,6 +8,7 @@ tools: Read, Write, Edit, Grep, Glob, Bash, Skill
 model: opus
 color: cyan
 memory: project
+isolation: worktree
 hooks:
   PreToolUse:
     - matcher: Edit|Write|MultiEdit|NotebookEdit
@@ -54,9 +55,10 @@ From the `add-feature` skill's ownership map (§2):
 Conventional Commits when the release merges to `main`, and a hook denies every edit. You keep it
 right _before_ it is written:
 
-1. Preview the next section: `pnpm exec commit-and-tag-version --dry-run --release-as X.Y.Z` (only
-   `--dry-run` is allowed; it writes nothing). The range starts at the newest tag reachable from the
-   branch; while the previous release is not tagged yet, its commits appear too: say so.
+1. Preview the next section: `pnpm exec commit-and-tag-version --dry-run --release-as X.Y.Z`
+   (exactly this form passes the guard; it writes nothing. Never `pnpm run release -- --dry-run`:
+   pnpm passes the `--` on and the dry run is off). The range starts at the newest tag reachable
+   from the branch; while the previous release is not tagged yet, its commits appear too: say so.
 2. Read every line as a user would. Flag commits that would read badly or land in the wrong group (a
    user-visible fix typed `chore`, a refactor typed `feat`, a vague subject, a missing scope). You
    cannot rewrite history on scope or release; list them for the founder with the wording you
@@ -80,10 +82,11 @@ right _before_ it is written:
    the newest tag, and what is on each branch but not its base:
    `git log --oneline --first-parent origin/<base>..origin/<head>` and the PRs merged into it
    (`gh pr list --base <branch> --state all`). Note which PRs are merged, open or draft.
-2. **Branch.** You run in your own worktree. For each target branch you change docs on, cut a branch
-   named docs/update-vX.Y.Z from it (`git switch -c` with that name and `origin/scope/vX.Y.Z`; for a
-   release branch, docs/update-release-vX.Y.Z from `origin/release/vX.Y.Z`). Never commit on scope,
-   release or main directly.
+2. **Branch.** You run in your own worktree (`isolation: worktree`), which Claude Code cuts from the
+   default branch, not from the session's branch. For each target branch you change docs on, cut a
+   branch named docs/update-vX.Y.Z from it (`git switch -c` with that name and
+   `origin/scope/vX.Y.Z`; for a release branch, docs/update-release-vX.Y.Z from
+   `origin/release/vX.Y.Z`). Never commit on scope, release or main directly.
 3. **Session log.** Bring the newest log up to date: the branch table (PR, branch, state, merge
    commit, what), one short section per user-visible change, the environment (fingerprint, devices,
    the last test runs with dates and results), open founder decisions, carried-over items, gates.
@@ -105,8 +108,10 @@ right _before_ it is written:
    a result came from (this run, a PR, the session log) and its date.
 6. **Ship the docs.** `git add <explicit paths>`, a Conventional Commit (`docs(docs): …`; body lines
    ≤ 100 characters), `git push -u origin <branch>`, then
-   `gh pr create --base <target> --title "city-turfer - <branch>" --body-file <file>`. Write body
-   files with a shell heredoc into `$TMPDIR` (outside the repo), never into the repo.
+   `gh pr create --head <branch> --base <target> --title "city-turfer - <branch>" --body-file <file>`.
+   Always pass `--head`: the branch guard then checks title and base against your branch, wherever
+   the command runs. Write body files with a shell heredoc into `$TMPDIR` (outside the repo), never
+   into the repo.
 7. **PR descriptions last**, once your docs PR exists: rewrite the scope and release PR bodies with
    `gh pr edit <n> --body-file <file>`, following the template and the previous release PR's
    structure: Summary, What ships (every PR, merged or open), Test plan (only what ran, with the

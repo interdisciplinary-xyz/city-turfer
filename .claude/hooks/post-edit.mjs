@@ -6,21 +6,24 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, relative, resolve } from 'node:path';
+import { join } from 'node:path';
 
 import { auditSource } from '../../tools/audit-logs.mjs';
+import { checkoutOf } from '../../tools/harness/git-context.mjs';
 import { brandHexFindings, remindersFor } from '../../tools/harness/hook-rules.mjs';
 
 const payload = JSON.parse(readFileSync(0, 'utf8') || '{}');
-const root = process.env.CLAUDE_PROJECT_DIR ?? payload.cwd ?? process.cwd();
+const project = process.env.CLAUDE_PROJECT_DIR ?? payload.cwd ?? process.cwd();
 const file = payload.tool_input?.file_path;
 if (!file || !existsSync(file)) {
   process.exit(0);
 }
-const rel = relative(root, resolve(root, file)).split('\\').join('/');
-if (rel.startsWith('..') || rel.startsWith('.claude/worktrees/')) {
+// The file's own checkout (main or a worktree): its brand tokens and HEAD are the ones to compare.
+const where = checkoutOf(file, project);
+if (!where || where.rel.startsWith('..')) {
   process.exit(0);
 }
+const { root, rel } = where;
 const isSource = /\.(ts|tsx)$/.test(rel) && !/(__tests__|test-support)\/|\.test\.tsx?$/.test(rel);
 const problems = [];
 

@@ -14,8 +14,8 @@ const TOOLS = path.join(WEB, 'tools');
 const HEX = /#[0-9a-fA-F]{3,8}\b/;
 
 test('the theme stylesheet is the site scheme variables plus a skin that only uses them', async () => {
+  // Which scheme the site uses is pinned once, in packages/brand/src/__tests__/tokens.test.ts.
   const { cssVariables, SITE_SCHEME } = await loadBrand(WEB);
-  assert.equal(SITE_SCHEME, 'dark');
   const vars = cssVariables(SITE_SCHEME);
   const css = await swaggerThemeCss(WEB);
   for (const [name, value] of Object.entries(vars)) {

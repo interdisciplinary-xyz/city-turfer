@@ -204,7 +204,7 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   with the open palette fixes, and the asset set (outlined wordmarks, social image, store
   screenshots)
 - ⚠️ [`decisions/brand-light-theme-2026-10-22.md`](decisions/brand-light-theme-2026-10-22.md):
-  Superseded by brand-dark-site-2026-10-25 (the site is dark again, like the app). The website,
+  Superseded by brand-dark-site-2026-10-25.md (the site is dark again, like the app). The website,
   Swagger and Storybook switch to a light theme (SITE_SCHEME) while the app and every map stay dark;
   the AA light palette, its new tokens and ratios, night labels on pink buttons
 - ✅ [`decisions/brand-typography-2026-10-22.md`](decisions/brand-typography-2026-10-22.md): Brand

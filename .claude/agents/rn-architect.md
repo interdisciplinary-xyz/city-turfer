@@ -4,7 +4,7 @@ description: >-
   Use at the start of any non-trivial feature, when choosing a library, or when a change spans
   tracking + storage + UI, or the app and apps/api or packages/core. Plans user flow, files, data,
   owner agents, risks and acceptance criteria. Read-only; returns a plan.
-tools: Read, Grep, Glob, Bash, WebSearch, WebFetch
+tools: Read, Grep, Glob, Bash, WebSearch, WebFetch, Skill
 model: opus
 hooks:
   PreToolUse:

@@ -5,7 +5,7 @@ description: >-
   Dashboard, detail, theming, accessibility, @cityturfer/ui components and the Storybook setup. Use
   for apps/mobile/src/app/, contexts/*/ui/, ui-kit/, packages/ui/, apps/storybook/ or "the map looks
   wrong".
-tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch, WebSearch
+tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch, WebSearch, Skill
 model: opus # the map traps (layer order, re-serialisation, iOS camera timing) fail quietly
 ---
 

@@ -251,6 +251,27 @@ test('agent tools: allowlist required, Agent(x) targets exist, read-only is enfo
   assert.deepEqual(scopedNoBash, []);
 });
 
+test('an agent sent to a skill needs the Skill tool or the skill preloaded; isolation is worktree', () => {
+  const run = (fm, body) =>
+    auditHarness(
+      fixture({
+        'package.json': PKG,
+        'CLAUDE.md': CLAUDE_MD(['ship'], ['a-engineer']),
+        '.claude/skills/ship/SKILL.md': skill('ship'),
+        '.claude/agents/a-engineer.md': `---\nname: a-engineer\ndescription: x\n${fm}---\n\n${body}\n\n## Report\n\nNot verified.\n`,
+      })
+    ).map((f) => `${f.severity}:${f.kind}:${f.message.slice(0, 30)}`);
+  assert.deepEqual(run('tools: Read, Grep\n', 'Read the `ship` skill first.'), [
+    'error:tools:names the `ship` skill(s) but ',
+  ]);
+  // false positives: Skill granted, the skill preloaded, no skill named
+  assert.deepEqual(run('tools: Read, Skill\n', 'Read the `ship` skill first.'), []);
+  assert.deepEqual(run('tools: Read\nskills:\n  - ship\n', 'Read the `ship` skill first.'), []);
+  assert.deepEqual(run('tools: Read\n', 'No skills named here.'), []);
+  assert.deepEqual(run('tools: Read\nisolation: worktree\n', 'x'), []);
+  assert.deepEqual(run('tools: Read\nisolation: true\n', 'x'), ['error:frontmatter:isolation `true`: the only val']);
+});
+
 test('agent frontmatter typos and a missing Not verified report are warnings', () => {
   const found = auditHarness(
     fixture({

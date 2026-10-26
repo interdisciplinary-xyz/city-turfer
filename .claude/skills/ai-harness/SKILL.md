@@ -26,6 +26,11 @@ description: >-
 ### Hooks today
 
 - **SessionStart** `session-start.mjs`: branch, active scope, PR base and title, dirty tree.
+- **Which checkout:** the hooks judge the checkout Claude works in, not the folder the session
+  started in. Bash hooks read the payload's `cwd` (it follows Claude into worktrees and after `cd`;
+  `CLAUDE_PROJECT_DIR` stays put); edit hooks resolve the edited file's own checkout (`checkoutOf`
+  in `tools/harness/git-context.mjs`), so worktrees of this repo are guarded too and other
+  repositories are skipped.
 - **PreToolUse Edit|Write|MultiEdit** `pre-edit.mjs` (deny): `CHANGELOG.md`; secret files (rules
   from `tools/check-secret-files.mjs`); the generated native folders (apps/mobile/ios and android,
   git-ignored); DDD dependency rule on imports the edit adds (mirror of
@@ -33,14 +38,20 @@ description: >-
 - **PreToolUse Bash** `pre-bash.mjs`: commands are tokenised (quotes, heredocs, `bash -c`, `git -c`,
   `then`/`do`, wrappers such as `env`, `timeout`, `nice`, `xargs`), so text inside a message or body
   never counts. A bare push is judged on the branch a `git switch`/`checkout` earlier in the line
-  left. Long options match by unambiguous prefix (`--no-veri`, `--del`), as git does. Deny push to
-  main (also `--all`, `--mirror`, glob refspecs), force-push or delete of main/scope/release (remote
-  or local), `git tag` and `gh release create|edit|delete`, `--no-verify` on commit or push (also
-  `HUSKY=0` and a `core.hooksPath` override), the release (`pnpm run release`,
-  `commit-and-tag-version`; `--dry-run` passes), wrong PR title/base on `gh pr create` and
-  `gh pr edit` (`--fill` still needs `--title`; a head outside the branch naming may target only a
-  scope), squash merges (`--squash=true` too); ask for `gh pr merge`, `git reset --hard`, copying
-  data off a physical iPhone.
+  left, or the branch of the folder a top-level `cd`/`pushd` or `git -C` names (a literal path, or a
+  variable the line sets to one). The branch is unknown after `git switch -`, a `cd` inside a
+  subshell, a non-literal folder, `GIT_DIR`, or a folder change after a switch: then a bare push or
+  `HEAD` refspec is denied (push by name) and `gh pr create` needs `--head`. Long options match by
+  unambiguous prefix (`--no-veri`, `--del`), as git does. Deny push to main (also `--all`,
+  `--mirror`, glob refspecs), force-push or delete of main/scope/release (remote or local),
+  `git tag` and `gh release create|edit|delete`, `--no-verify` on commit or push (also `HUSKY=0` and
+  a `core.hooksPath` override), the release (`pnpm run release`, `commit-and-tag-version`; only the
+  preview passes: exactly `--dry-run` plus an optional `--release-as <version>`, as
+  `pnpm exec commit-and-tag-version …`, `npx …` or `pnpm run release --dry-run`; pnpm passes `--` on
+  to the script, so `pnpm run release -- --dry-run` is the real release), wrong PR title/base on
+  `gh pr create` and `gh pr edit` (`--fill` still needs `--title`; a head outside the branch naming
+  may target only a scope), squash merges (`--squash=true` too); ask for `gh pr merge`,
+  `git reset --hard`, copying data off a physical iPhone.
 - **Agent-scoped Bash** `read-only-bash.mjs` (in an agent's `hooks:`): an allowlist of reading
   commands and of pnpm scripts that only check (`PNPM_READ_ONLY_SCRIPT`); with `--allow <paths>`
   also redirects into those paths and branch/commit/push/PR, for agents with an edit allowlist.
@@ -94,7 +105,10 @@ what the process forbids outright.
     some paths gets `.claude/hooks/edit-allowlist.mjs` (`--allow` / `--ask`) and, if it has Bash,
     `read-only-bash.mjs --allow <the same paths>` (it may also branch, commit, push and open PRs;
     audit:harness errors without it, since Bash would route around the allowlist). `Agent(a, b)`
-    limits which agents it may spawn (main-session agents only).
+    limits which agents it may spawn (main-session agents only). An agent whose body names a skill
+    needs `Skill` in `tools:` (or the skill preloaded under `skills:`); audit:harness errors
+    otherwise. `isolation: worktree` (the only value) runs it in its own worktree, cut from the
+    default branch.
   - **Model by the cost of a silent mistake**, not the role's seniority: `opus` where an error is
     subtle and surfaces late (tracking, data, maps, privacy, architecture); a cheaper model only
     where output is visible or mechanically checked, recorded as a YAML comment on the `model:` line
