@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.11.0...v0.12.0) (2026-10-26)
+
+
+### Features
+
+* **brand:** dark website like the app, the brand's source of truth ([f136781](https://github.com/interdisciplinary-xyz/city-turfer/commit/f1367818859e3f3b783841cafd21733c188c3eaf))
+* **brand:** white CITY in the night wordmark ([35e532c](https://github.com/interdisciplinary-xyz/city-turfer/commit/35e532c98aaf34149acf40f744af82573a0add67))
+* **claude:** brand surface map, audit:brand and brand:snapshot ([4945778](https://github.com/interdisciplinary-xyz/city-turfer/commit/49457781d4da17c59c95aa39d54297975f3179e2))
+* **web:** homepage in the app's pieces, waitlist first ([570abf2](https://github.com/interdisciplinary-xyz/city-turfer/commit/570abf23e4e6b75171b936921975243fe86a5cc9))
+
+
+### Bug Fixes
+
+* **brand:** pin the dark site's colour pairs and correct the docs ([3c634ac](https://github.com/interdisciplinary-xyz/city-turfer/commit/3c634ac25cdcc386133f79d8c697425f7d953c47))
+* **claude:** hooks judge the worktree's branch and allow only a plain release preview ([07de166](https://github.com/interdisciplinary-xyz/city-turfer/commit/07de166878f01646414e49e630fb00bc1ebb3b95))
+* **tooling:** brand audit catches alpha hex, space rgb and the old name ([dc0fa36](https://github.com/interdisciplinary-xyz/city-turfer/commit/dc0fa3687a052d11842028a59242c2bdacd0f1ab))
+* **tooling:** brand snapshots render with reduced motion ([46af84d](https://github.com/interdisciplinary-xyz/city-turfer/commit/46af84db43d812560ece14ac2166a5e0160c6938))
+* **web:** button hover passes contrast and the page story matches the page ([fc7d09d](https://github.com/interdisciplinary-xyz/city-turfer/commit/fc7d09d5a50ec5afd067e9d99c567e3e9dbce7b9))
+* **web:** centre only the sign-in title and switch line ([038f44c](https://github.com/interdisciplinary-xyz/city-turfer/commit/038f44c71ce2fe26e725e8f63857ac55ddcd0abc))
+* **web:** hero headline in the default text colour ([d4e026a](https://github.com/interdisciplinary-xyz/city-turfer/commit/d4e026a315033cbc57aa80404ad9066809081e89))
+* **web:** hero lede in pl mentions walking with a dog ([f8ee46c](https://github.com/interdisciplinary-xyz/city-turfer/commit/f8ee46c1cf3321e272049a388c7294ca3daf4d93))
+* **web:** homepage copy in the brand voice, en and pl ([e61a42e](https://github.com/interdisciplinary-xyz/city-turfer/commit/e61a42e7a42c0baafd06e51bebb6209e1d3c3b07))
+* **web:** one logo on the Swagger and Storybook dev pages ([296083b](https://github.com/interdisciplinary-xyz/city-turfer/commit/296083babe31caba1676c77f520609747240828b))
+* **web:** pl meta description matches the new hero lede ([2540111](https://github.com/interdisciplinary-xyz/city-turfer/commit/2540111f453721717a0dea6a5214c859413ac736))
+* **web:** reload the page when switching language ([d89fc1d](https://github.com/interdisciplinary-xyz/city-turfer/commit/d89fc1dcbe55eb32e72c18bacdf770a60416c5fb))
+* **web:** show the site header in full from the start ([a3bdf80](https://github.com/interdisciplinary-xyz/city-turfer/commit/a3bdf80b11519e6a3e78ecf061997669ecde3a3d))
+* **web:** wider hero phones and a flat dark background ([6648a67](https://github.com/interdisciplinary-xyz/city-turfer/commit/6648a67d9b4cd2845a0aa8d5e4d6471ff8b66f93))
+
+
+### Documentation
+
+* **docs:** start the v0.12.0 session log ([e0eb58e](https://github.com/interdisciplinary-xyz/city-turfer/commit/e0eb58ecdbac2c75ac8858f23aa9998cc13a2a66)), closes [#168](https://github.com/interdisciplinary-xyz/city-turfer/issues/168)
+* **docs:** update all docs for v0.12.0 after the v0.11.0 release ([6866ff3](https://github.com/interdisciplinary-xyz/city-turfer/commit/6866ff31c809057886db845ad630ccdeecca634b)), closes [#168](https://github.com/interdisciplinary-xyz/city-turfer/issues/168) [-#172](https://github.com/interdisciplinary-xyz/-/issues/172)
+* **web:** plan for scroll motion on the landing page ([6177647](https://github.com/interdisciplinary-xyz/city-turfer/commit/617764738f431399197be08258d2028cccb9a6af))
+
 ## [0.11.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.10.0...v0.11.0) (2026-10-24)
 
 
