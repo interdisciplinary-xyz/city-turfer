@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.13.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.12.0...v0.13.0) (2026-10-26)
+
+
+### Bug Fixes
+
+* **territory:** turf this week counts from local Monday, like the week card ([ff242a7](https://github.com/interdisciplinary-xyz/city-turfer/commit/ff242a75ad277d6be3bb0b36b6e280dacac51ff9))
+* **web:** hero headline in the lede's muted colour ([15ae73b](https://github.com/interdisciplinary-xyz/city-turfer/commit/15ae73bddd315a87af4e6029b8e58fdd6a345a3d))
+
+
+### Documentation
+
+* **docs:** record the v0.13.0 changelog preview in the session log ([1869fdb](https://github.com/interdisciplinary-xyz/city-turfer/commit/1869fdb6cdd53b8830650b4aaf19f12ad5196d13))
+* **docs:** update all docs for v0.13.0 after the v0.12.0 release ([889953f](https://github.com/interdisciplinary-xyz/city-turfer/commit/889953f537ae7bd3e4643f8560a43ed0ee683b0c))
+
 ## [0.12.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.11.0...v0.12.0) (2026-10-26)
 
 
