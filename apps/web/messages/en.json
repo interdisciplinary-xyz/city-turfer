@@ -40,15 +40,15 @@
       "gain": {
         "label": "Turf gained",
         "area": "+{area} km² new turf",
-        "cells": "{added, plural, one {# new cell} other {# new cells}} · {reinforced, plural, one {# reinforced} other {# reinforced}}",
+        "cells": "{added, plural, one {# new cell} other {# new cells}} · {reinforced} reinforced",
         "title": "Every street becomes yours",
-        "body": "Each ~50 m hexagon your track passes through is your turf, for good."
+        "body": "Each hexagon (about 50 m across) your track passes through is your turf, for good."
       },
       "glow": {
         "legendTitle": "Turf strength",
         "legendLabel": "Turf strength: Faint, Glowing, Strong, Blazing, from weakest to strongest",
         "title": "Come back and watch it glow",
-        "body": "Every return makes a street brighter, from Faint to Blazing. Nothing fades, so you’re never behind."
+        "body": "Every return makes a street brighter, from Faint to Blazing. Nothing fades: a street you’ve claimed stays yours, however long you’re away."
       }
     },
     "types": {
@@ -64,12 +64,16 @@
     },
     "week": {
       "eyebrow": "Dashboard",
-      "title": "Your week at a glance",
+      "title": "What your week added up to",
       "body": "This week’s distance, time and activities, your latest walks, runs and rides, and the next achievement within reach.",
       "thisWeek": "This week",
       "distance": "Distance",
       "time": "Time",
       "count": "Activities",
+      "unitKm": "km",
+      "rowDistance": "{distance} km",
+      "rowPace": "{time} · {pace}/km",
+      "rowSpeed": "{time} · {speed} km/h",
       "recent": "Recent activities",
       "seeAll": "See all ›",
       "achievements": "Achievements",
@@ -91,10 +95,10 @@
       }
     },
     "local": {
-      "eyebrow": "Local-first",
+      "eyebrow": "Yours alone",
       "title": "Your phone keeps the original",
       "phone": "Your activities are stored on your phone, in the app.",
-      "backup": "Cloud backup stays off until you turn it on, and you can turn it off again at any time.",
+      "backup": "Cloud backup stays off until you turn it on. Turn it off and the copy on our server is deleted.",
       "portal": "Signed in on the web, you see only what you backed up."
     },
     "cta": {
