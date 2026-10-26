@@ -35,7 +35,7 @@ export function registerTerritory(app: OpenAPIHono<AppEnv>): void {
       operationId: 'getTurfSummary',
       summary: 'Turf summary',
       description:
-        "Area, cells, strong cells, new in the last 7 and 30 days (rolling, at the server's now, time-zone free), cells per type (use case GetTurfSummary). Recomputed by the server from uploaded tracks; activities not claimed yet (a start in the future, not backfilled) do not count. `Cache-Control: private, no-store`.",
+        "Area, cells, strong cells, new this week (first claimed since Monday 00:00 in the server's time zone, UTC; the phone counts from its local Monday, like its This week card) and in the last 30 days (rolling, at the server's now), cells per type (use case GetTurfSummary). Recomputed by the server from uploaded tracks; activities not claimed yet (a start in the future, not backfilled) do not count. `Cache-Control: private, no-store`.",
       responses: {
         200: { description: 'The summary.', content: json(TurfSummary) },
         ...AUTH_ERRORS,

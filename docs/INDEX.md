@@ -122,10 +122,14 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   v0.11.0) — docs refresh, web portal activity history, hero lockup, Polish "terytorium", cloud
   backup for the admin@ and demo@ local profiles (API 0.6.1); JS only; open founder decisions and
   the auth:adopt pre-step
-- ✅ [`sessions/v0.12.0.md`](sessions/v0.12.0.md): Session log v0.12.0 (in progress, scope PR 169
-  open) — branches cut from release/v0.11.0; v0.11.0 released 2026-10-24, main still to merge into
-  release/v0.12.0; website language switch reloads the page (#168); docs-engineer agent (#171);
-  brand surface map and audit:brand (#172); JS only
+- 🕰️ [`sessions/v0.12.0.md`](sessions/v0.12.0.md): Session log v0.12.0 (released 2026-10-26, tag
+  v0.12.0) — dark website like the app, homepage in the app's pieces, hero and wordmark fixes,
+  language switch reload, docs-engineer agent, audit:brand, review fixes; JS only; iPhone
+  reinstalled from the tag (fingerprint ff7765f0…)
+- ✅ [`sessions/v0.13.0.md`](sessions/v0.13.0.md): Session log v0.13.0 (in progress, scope PR 182
+  draft) — cut from main after the v0.12.0 release; turf "this week" counts from local Monday like
+  the This week card (#183); JS only, same iOS fingerprint as the v0.12.0 install on the founder's
+  iPhone
 - 🕰️ [`sessions/v0.2.0.md`](sessions/v0.2.0.md): Session log v0.2.0 through the Me menu and
   achievements; predates the Dashboard, Me drawer and login rename (PRs 23–25) and still says
   app.json is unpinned (pinned in f04bcf3)
