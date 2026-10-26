@@ -256,8 +256,9 @@ ls -t apps/mobile/e2e-results | head -1              # newest run: junit report 
 ## #7 — The app won't open: free Apple ID signing expired
 
 **Symptom:** The app on the iPhone closes immediately or iOS says it can't be verified. Builds
-signed with a free Apple ID expire after 7 days. The current install is a Release build of `549c873`
-(scope v0.10.0, before the release commit), installed 2026-10-23: it expires around **2026-10-30**.
+signed with a free Apple ID expire after 7 days. The current install is a Release build of `fc6fa57`
+(tag `v0.12.0`, iOS fingerprint `ff7765f0f2943b53eaa6b537d7821d9599e485dd`), installed 2026-10-26
+over the earlier build: it expires around **2026-11-02**.
 
 **Triage**
 
@@ -282,8 +283,18 @@ referenced the old Archivo font after the Street Plate typefaces (#140) replaced
 `expo prebuild --platform ios --clean` fixed the build. `--clean` deletes `ios/` and the vendored
 MapLibre path is re-applied by the plugin (incident #5).
 
+**"No profiles for 'com.turftrack.poc'"** from `expo run:ios --device` means the Mac has no
+provisioning profile left and Xcode has no Apple account signed in (seen 2026-10-26). Sign in under
+Xcode › Settings › Apple Accounts, then build with automatic provisioning and install the app by
+hand:
+
+```bash
+xcodebuild … -allowProvisioningUpdates                                    # Release build for the device
+xcrun devicectl device install app --device <device-udid> <path/to/the.app>
+```
+
 A reinstall is also the moment for anything that changes the runtime fingerprint (pending native
 changes, the `app.json` version pin). After it, OTAs must be published from a checkout with the same
-fingerprint (incident #3). The `549c873` install predates the v0.10.0 release commit's `app.json`
-bump (fingerprint iOS `1b3ffa48…`), so updates published from `main` at or after `8f21e57` won't
-reach it: reinstall from tag `v0.10.0` or later first.
+fingerprint (incident #3). The `fc6fa57` install includes the v0.12.0 release commit's `app.json`
+bump; `scope/v0.13.0` at `1caf481` has the same iOS fingerprint (measured 2026-10-26), so updates
+published from it reach the phone. The v0.13.0 release commit's bump will move it again.

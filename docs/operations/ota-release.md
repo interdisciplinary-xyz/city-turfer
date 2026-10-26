@@ -50,8 +50,15 @@ iOS `06aca0e17e430961e1ccb2fd755db451c830efda`, Android `ab6e3dbbd0c2ab97a3bc6e8
 
 v0.11.0 is JS only, released 2026-10-24: the code before the release commit has the fingerprint
 above. The release commit `34b3d17` bumps `app.json` to 0.11.0, so the tag `v0.11.0` has a new
-fingerprint (not measured yet). Which installs take which OTA depends on the founder's choice in
+fingerprint (not measured). Which installs take which OTA depends on the founder's choice in
 `docs/process/release-manager.md` ("Pin at cut", v0.11.0).
+
+v0.12.0 is JS only, released 2026-10-26: before its release commit the fingerprint was still the one
+above (#181). The release commit `fc6fa57` bumps `app.json` to 0.12.0; at the tag `v0.12.0` iOS is
+`ff7765f0f2943b53eaa6b537d7821d9599e485dd` (Android not measured). The founder's iPhone was
+reinstalled from that tag on 2026-10-26 (runbook #7), so it takes OTAs published from `v0.12.0` or
+from `scope/v0.13.0` while the fingerprint stays equal (equal at `1caf481`, measured 2026-10-26). No
+OTA is recorded for v0.11.0 or v0.12.0 in the session logs.
 
 To check, compare the fingerprint of the checkout you'll publish from with the runtime of the latest
 update the phone already runs:
