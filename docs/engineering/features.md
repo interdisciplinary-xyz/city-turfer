@@ -17,9 +17,11 @@ summary:
 
 # Features
 
-Every feature in the app on `scope/v0.11.0` (the v0.10.0 release), grouped by where a person meets
-it: the five tabs, the Me drawer, and the screens pushed from them; then what the server and the web
-portal add. Format adapted from empatalk's `FEATURES.md`.
+Every feature in the app, derived on `scope/v0.11.0` (the v0.10.0 release) and kept up to date
+since; v0.12.0 changed the app only in its sign-in wordmark, v0.13.0 so far the turf week (under
+Dashboard). Grouped by where a person meets it: the five tabs, the Me drawer, and the screens pushed
+from them; then what the server and the web portal add. Format adapted from empatalk's
+`FEATURES.md`.
 
 > **Derived from code on 2026-10-23.** Where this doc and the code disagree, the code wins. Don't
 > hand-edit counts; re-derive them:
