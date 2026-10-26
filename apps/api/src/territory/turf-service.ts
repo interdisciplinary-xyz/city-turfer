@@ -155,7 +155,7 @@ export class TurfService {
     throw new AppError('turf.busy', { 'Retry-After': String(TURF_BUSY_RETRY_S) });
   }
 
-  /** GetTurfSummary at the server's now (new this week and month are rolling windows). */
+  /** GetTurfSummary at the server's now (new this week from Monday 00:00 UTC, the month a rolling 30 days). */
   summary(userId: string) {
     return this.api(this.store.read(userId)).summary.execute();
   }

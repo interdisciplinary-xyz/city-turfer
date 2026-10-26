@@ -146,12 +146,13 @@ function render() {
   document.getElementById('kLbl').textContent = k;
   glow.clearLayers(); turf.clearLayers(); tracks.clearLayers();
   let active = 0, strong = 0, fresh = 0;
+  const monday = now - ((now + 3) % 7);           // Monday of the week (day 0, 1970-01-01, was a Thursday)
   if (document.getElementById('showTurf').checked) for (const c of D.cells) {
     const visits = c.v.filter((d) => d <= now);
     if (!visits.length) continue;                  // not claimed yet at this date
     const s = 1 - Math.exp(-visits.length / k);
     active++; if (s >= 0.66) strong++;
-    if (Math.min(...visits) > now - 7) fresh++;    // claimed in the last 7 days
+    if (Math.min(...visits) >= monday) fresh++;    // first claimed this calendar week (UTC days)
     const b = [[c.b[0], c.b[1]], [c.b[2], c.b[3]]];
     L.rectangle(b, { pane: 'glow', stroke: false, fillColor: ramp(s), fillOpacity: 0.25 + 0.5 * s }).addTo(glow);
     L.rectangle(b, { pane: 'turf', stroke: false, fillColor: ramp(s), fillOpacity: 0.15 + 0.55 * s }).addTo(turf);

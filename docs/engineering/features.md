@@ -48,7 +48,7 @@ opens on Dashboard after sign-in.
 ### Dashboard (`apps/mobile/src/app/(tabs)/index.tsx`)
 
 - Greeting with the name chosen in Me › Account ("Turfer" without one); turf area and "+ this week"
-  under it.
+  under it (turf first claimed since local Monday 00:00, the same week as the This week card).
 - Restore card (below) and the getting-started card: five steps (first walk, see your turf, walk run
   and ride, come back to a street, unlock 3 achievements), hideable
   (`packages/core/src/contexts/achievements/domain/onboarding.ts`).
