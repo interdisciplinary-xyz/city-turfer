@@ -107,7 +107,9 @@
   --chip: var(--ride-graphic);
 }
 
-/* The Record tab's button: a glow disc with a ring and a white dot. */
+/* The Record tab's button: a glow disc with a ring and a white
+   dot (--text on glow is 3.13:1: it passes the 3:1 graphic threshold, and matches the app). `--glow`
+   has no `-graphic` variant in cssVariables(), so graphics here use it raw. */
 .app-record {
   display: grid;
   place-items: center;
@@ -368,13 +370,13 @@
 
 .home-dashboard {
   display: grid;
-  gap: 14px;
+  gap: 14px; /* no spacing token is 14px (--space-md is 12); kept as designed */
   width: 100%;
   max-width: 420px;
   margin: 0 auto;
   padding: var(--space-lg);
   border: 1px solid var(--border);
-  border-radius: 32px;
+  border-radius: 32px; /* the phone-screen corner; no radius token this large */
   background: var(--bg);
   box-shadow: 0 24px 64px color-mix(in srgb, var(--faint) 20%, transparent);
 }
@@ -455,7 +457,10 @@
   margin: 16px auto 28px;
 }
 
-/* The app's Button (packages/ui): glow fill, night label, 56 px, control radius. */
+/* The app's Button (packages/ui) shape: glow fill, 56 px, control radius. The label is night ink
+   (`--on-glow` = WEB_ON_ACCENT) on purpose: the app's Button draws white (DARK.onAccent), the web
+   differs for contrast on the pink. Hover mixes toward --text, not --on-glow (which would darken
+   the pink and drop the label to 4.27:1; this keeps about 6:1). */
 .app-button {
   display: inline-flex;
   align-items: center;
@@ -472,7 +477,7 @@
 
 .app-button:hover,
 .app-button:focus-visible {
-  background: color-mix(in srgb, var(--glow) 86%, var(--on-glow));
+  background: color-mix(in srgb, var(--glow) 86%, var(--text));
 }
 
 .app-button:focus-visible {

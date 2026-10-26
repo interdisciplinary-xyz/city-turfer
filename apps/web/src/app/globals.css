@@ -186,8 +186,8 @@ img {
     gap: 40px 48px;
   }
   /* Phones follow the height left under the bar (header, hero padding, captions and the second
-     phone's stagger take about 250px; a frame is about 2.2× as tall as wide), so both fit in one
-     view on most laptops. Never below 220px: on shorter windows the page scrolls rather than the
+     phone's stagger take about 250px; a frame is about 2.2× as tall as wide), so both can fit in one
+     view on tall windows; at 1440x900 the second phone's caption still falls below the fold. Never below 220px: on shorter windows the page scrolls rather than the
      phones turning into thumbnails. Only the frame shrinks; the caption keeps the column's width. */
   .screens .phone {
     /* Black, a shade below the page: the bezel frames the app and the Turf Map. */
@@ -280,7 +280,9 @@ h1 {
   margin: 0 auto 28px;
 }
 
-/* ---------- Download ---------- */
+/* ---------- Download (parked) ----------
+   StoreButtons is hidden on the page pending the open APK decision; the component and its story
+   are kept, so this block (.download, .store-*, .download-note) stays until that is settled. */
 
 .download {
   display: flex;
@@ -319,7 +321,7 @@ h1 {
 
 .store-btn-android:hover,
 .store-btn-android:focus-visible {
-  background: color-mix(in srgb, var(--glow) 86%, var(--on-glow));
+  background: color-mix(in srgb, var(--glow) 86%, var(--text));
 }
 
 .store-btn-android:focus-visible {

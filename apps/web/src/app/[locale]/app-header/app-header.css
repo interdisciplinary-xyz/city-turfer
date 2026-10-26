@@ -162,13 +162,6 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .app-header,
-  .app-header-home {
-    transition: none;
-  }
-}
-
 /* Language switcher (language-switcher/, or plain links on the dev pages). */
 .lang {
   display: inline-flex;
