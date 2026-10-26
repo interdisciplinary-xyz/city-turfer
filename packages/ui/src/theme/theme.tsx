@@ -9,7 +9,7 @@ const SchemeOverride = createContext<ColorScheme | undefined>(undefined);
 /**
  * Optional: forces a colour scheme for everything below it. The app doesn't need it (it is dark
  * only, and components follow the device setting); Storybook wraps every story in it with
- * SITE_SCHEME (light), and map panels inside a light page force dark.
+ * SITE_SCHEME (dark, like the website), and its night map panels force dark too.
  */
 export function ThemeProvider({ scheme, children }: ThemeProviderProps) {
   return <SchemeOverride.Provider value={scheme}>{children}</SchemeOverride.Provider>;

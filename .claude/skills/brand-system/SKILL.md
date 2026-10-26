@@ -61,39 +61,41 @@ The brand palette **is** the turf strength ramp — the app's core mechanic is t
 Brand names (left) are what people say; code names are what you import (`@cityturfer/brand`), CSS
 names what the website uses.
 
-| Brand name     | Code                                  | CSS                        | Hex                            | Use                                                  |
-| -------------- | ------------------------------------- | -------------------------- | ------------------------------ | ---------------------------------------------------- |
-| `night`        | `DARK.bg`                             | `--bg` (dark)              | `#0B0D12`                      | Background of the app, every map panel, splash, icon |
-| `night-raised` | `DARK.card`                           | `--card` (dark)            | `#151924`                      | Cards on night                                       |
-| `faint`        | `TIER_COLOR.faint`                    | `--faint`                  | `#7B2FF7`                      | Turf tier 1, gradient start                          |
-| `glow`         | `TIER_COLOR.glowing`, `ACCENT`        | `--glow`, `--accent`       | `#F72FA8`                      | Tier 2; accent fill: buttons, selection              |
-| `strong`       | `TIER_COLOR.strong`                   | `--strong`                 | `#FFB02E`                      | Turf tier 3, highlights                              |
-| `blazing`      | `TIER_COLOR.blazing`                  | `--blazing`                | `#FFF3C4`                      | Turf tier 4, the end of the Ramp in "TURFER"         |
-| Ramp           | `RAMP`                                | `--ramp-stops`             | the four tiers                 | Gradient, in tier order                              |
-| walk/run/ride  | `TYPE_COLOR.walk` / `.run` / `.cycle` | `--walk`/`--run`/`--ride`  | `#2BD48B`/`#FF8A3D`/`#3DB8FF`  | Activity type fills only                             |
-| on-accent      | `ON_ACCENT` (app), `<theme>.onAccent` | `--on-accent`, `--on-glow` | white (app) / `#0B0D12` (site) | Label on `glow` fills                                |
-| on-tier        | `ON_TIER.<tier>`                      | (app only)                 | white / `#0B0D12`              | Text on a tier fill (white on faint/glowing)         |
-| on-light       | `ON_LIGHT`, `ON_TYPE_COLOR.<type>`    | `--on-type`                | `#0B0D12`                      | Text on light fills and activity colours             |
+| Brand name     | Code                                  | CSS                        | Hex                           | Use                                                  |
+| -------------- | ------------------------------------- | -------------------------- | ----------------------------- | ---------------------------------------------------- |
+| `night`        | `DARK.bg`                             | `--bg` (dark)              | `#0B0D12`                     | Background of the app, every map panel, splash, icon |
+| `night-raised` | `DARK.card`                           | `--card` (dark)            | `#151924`                     | Cards on night                                       |
+| `faint`        | `TIER_COLOR.faint`                    | `--faint`                  | `#7B2FF7`                     | Turf tier 1, gradient start                          |
+| `glow`         | `TIER_COLOR.glowing`, `ACCENT`        | `--glow`, `--accent`       | `#F72FA8`                     | Tier 2; accent fill: buttons, selection              |
+| `strong`       | `TIER_COLOR.strong`                   | `--strong`                 | `#FFB02E`                     | Turf tier 3, highlights                              |
+| `blazing`      | `TIER_COLOR.blazing`                  | `--blazing`                | `#FFF3C4`                     | Turf tier 4, the end of the Ramp in "TURFER"         |
+| Ramp           | `RAMP`                                | `--ramp-stops`             | the four tiers                | Gradient, in tier order                              |
+| walk/run/ride  | `TYPE_COLOR.walk` / `.run` / `.cycle` | `--walk`/`--run`/`--ride`  | `#2BD48B`/`#FF8A3D`/`#3DB8FF` | Activity type fills only                             |
+| on-accent      | `ON_ACCENT` (app), `WEB_ON_ACCENT`    | `--on-accent`, `--on-glow` | white (app) / `#0B0D12` (web) | Label on `glow` fills                                |
+| on-tier        | `ON_TIER.<tier>`                      | (app only)                 | white / `#0B0D12`             | Text on a tier fill (white on faint/glowing)         |
+| on-light       | `ON_LIGHT`, `ON_TYPE_COLOR.<type>`    | `--on-type`                | `#0B0D12`                     | Text on light fills and activity colours             |
 
 The raw fills (`--accent`, `--glow`, `--strong`, `--walk`, `--run`, `--ride`) are the same in both
-schemes and tuned to glow on night. Themes (`THEMES.dark` = `DARK`, `THEMES.light` = `LIGHT`) share
-one `Palette` type, so every key exists in both; `DARK` repeats the brand fill where `LIGHT` needs
-its own AA variant:
+schemes and tuned to glow on night. So is the web's pink label: `cssVariables()` emits
+`WEB_ON_ACCENT` (`#0B0D12`, 5.5:1) for `--on-accent` and `--on-glow` in both schemes, never
+`<theme>.onAccent`; the app keeps `DARK.onAccent` white (3.5:1). Themes (`THEMES.dark` = `DARK`,
+`THEMES.light` = `LIGHT`) share one `Palette` type, so every key exists in both; `DARK` repeats the
+brand fill where `LIGHT` needs its own AA variant:
 
-| `Palette` key                                 | CSS                                                   | `LIGHT`                           | `DARK`    | Use                                   |
-| --------------------------------------------- | ----------------------------------------------------- | --------------------------------- | --------- | ------------------------------------- |
-| `bg`                                          | `--bg`                                                | `#F6F7FB`                         | `#0B0D12` | Page background                       |
-| `card`                                        | `--card`                                              | `#FFFFFF`                         | `#151924` | Cards, panels                         |
-| `text`                                        | `--text`                                              | `#0E1116`                         | `#EEF1F7` | Body text                             |
-| `muted`                                       | `--muted`                                             | `#5A6375`                         | `#9AA3B5` | Secondary text                        |
-| `border`                                      | `--border`                                            | `#E3E6EE`                         | `#242A38` | Hairlines and dividers                |
-| `danger`                                      | `--danger`                                            | `#C92A33`                         | `#FF6369` | Errors                                |
-| `accentText`                                  | `--accent-text`                                       | `#C2127F`                         | `#F72FA8` | Pink as text and links                |
-| `onAccent`                                    | `--on-accent`                                         | `#0B0D12`                         | `#FFFFFF` | Label on a `glow` fill (pink buttons) |
-| `borderControl`                               | `--border-control`                                    | `#848DA0`                         | `#9AA3B5` | Edges of inputs and buttons (≥ 3:1)   |
-| `strongText`                                  | `--strong-text`                                       | `#9A5B00`                         | `#FFB02E` | The strong tier as text               |
-| `walkText` / `runText` / `cycleText`          | `--walk-text` / `--run-text` / `--ride-text`          | `#0F7A4F` / `#B84E0A` / `#0B6FA8` | the fills | Activity colours as text              |
-| `walkGraphic` / `runGraphic` / `cycleGraphic` | `--walk-graphic` / `--run-graphic` / `--ride-graphic` | `#169E63` / `#E0661A` / `#1C8FD6` | the fills | Activity lines, icons, dots           |
+| `Palette` key                                 | CSS                                                   | `LIGHT`                           | `DARK`    | Use                                 |
+| --------------------------------------------- | ----------------------------------------------------- | --------------------------------- | --------- | ----------------------------------- |
+| `bg`                                          | `--bg`                                                | `#F6F7FB`                         | `#0B0D12` | Page background                     |
+| `card`                                        | `--card`                                              | `#FFFFFF`                         | `#151924` | Cards, panels                       |
+| `text`                                        | `--text`                                              | `#0E1116`                         | `#EEF1F7` | Body text                           |
+| `muted`                                       | `--muted`                                             | `#5A6375`                         | `#9AA3B5` | Secondary text                      |
+| `border`                                      | `--border`                                            | `#E3E6EE`                         | `#242A38` | Hairlines and dividers              |
+| `danger`                                      | `--danger`                                            | `#C92A33`                         | `#FF6369` | Errors                              |
+| `accentText`                                  | `--accent-text`                                       | `#C2127F`                         | `#F72FA8` | Pink as text and links              |
+| `onAccent`                                    | app only; the web's `--on-accent` is `WEB_ON_ACCENT`  | `#0B0D12`                         | `#FFFFFF` | Label on a `glow` fill in the app   |
+| `borderControl`                               | `--border-control`                                    | `#848DA0`                         | `#9AA3B5` | Edges of inputs and buttons (≥ 3:1) |
+| `strongText`                                  | `--strong-text`                                       | `#9A5B00`                         | `#FFB02E` | The strong tier as text             |
+| `walkText` / `runText` / `cycleText`          | `--walk-text` / `--run-text` / `--ride-text`          | `#0F7A4F` / `#B84E0A` / `#0B6FA8` | the fills | Activity colours as text            |
+| `walkGraphic` / `runGraphic` / `cycleGraphic` | `--walk-graphic` / `--run-graphic` / `--ride-graphic` | `#169E63` / `#E0661A` / `#1C8FD6` | the fills | Activity lines, icons, dots         |
 
 **The app is the source of truth, one scheme everywhere, no theme switch.** The app is dark
 (`userInterfaceStyle: "dark"` in `apps/mobile/app.json`, so `usePalette()` returns `DARK`), and so
@@ -182,15 +184,19 @@ by `packages/brand/scripts/make-fonts.py`), names in `FONT_FAMILY` and `BODY_FON
 WCAG 2.2 AA: 4.5:1 body text, 3:1 large text (≥ 24 px or ≥ 18.5 px bold), icons and UI boundaries.
 Check a pair with `contrastRatio(fg, bg)` from `@cityturfer/brand`
 (`packages/brand/src/contrast.ts`). `packages/brand/src/__tests__/contrast.test.ts` covers every
-pairing the apps draw, including each light `-text` / `-graphic` variant on `LIGHT.bg` and
-`LIGHT.card`. Its `KNOWN_FAILURES` are what remains:
+pairing the apps draw: each light `-text` / `-graphic` variant on `LIGHT.bg` and `LIGHT.card`, and
+the site's own pairs read from `cssVariables(SITE_SCHEME)` (night label on glow 5.49, the primary
+button hover `color-mix(in srgb, var(--glow) 86%, var(--text))` 6.06, accent text and the glow disc
+on card 4.95, glow on border 4.05, the faint legend step on bg 3.32). Its `KNOWN_FAILURES` are what
+remains:
 
 - **Live in the app (dark):** white on glow (`ON_ACCENT`, 3.5:1) and the same pair on the glow tier
   chip (`ON_TIER.glowing`), plus white on the dark `danger` fill (2.9:1). Kept so the app does not
   shift; fixing them changes the app.
-- **Guards, not bugs:** the raw fills on light surfaces (glow 3.3–3.5:1, walk/run/ride 1.8–2.4:1).
-  The site never draws them as text or lines; it uses `accentText` and the `-text` / `-graphic`
-  variants. They stay listed so nobody reaches for them on light by mistake.
+- **Guards, not bugs:** the raw fills on light surfaces (glow 3.3–3.5:1, walk/run/ride 1.8–2.4:1). A
+  light surface (the admin's light mode) never draws them as text or lines; it uses `accentText` and
+  the `-text` / `-graphic` variants. They stay listed so nobody reaches for them on light by
+  mistake.
 
 Fixing one means removing it from the list (the test fails on an entry that passes).
 
