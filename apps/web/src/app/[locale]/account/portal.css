@@ -90,16 +90,17 @@
   gap: var(--space-lg);
 }
 
-/* Sign-in and Create account: a compact form centred on the page, like the app's sign-in screen.
-   Title and short lines centre; the form keeps its labels and fields left-aligned. */
+/* Sign-in and Create account: a compact column centred on the page, like the app's sign-in screen.
+   Only the title and the one-line "New here? / Have an account?" switch centre; everything else
+   (notice, lede, form, alerts, countdown, retry line, cookie fineprint) stays left-aligned. */
 .portal-sign-in {
   max-width: 28rem;
   margin: clamp(var(--space-lg), 8vh, 96px) auto 0;
-  text-align: center;
 }
 
-.portal-sign-in .portal-form {
-  text-align: left;
+.portal-sign-in > .portal-title,
+.portal-sign-in > .portal-switch {
+  text-align: center;
 }
 
 .portal-title {
@@ -470,7 +471,7 @@
 
 /* ---------- Activity history ---------- */
 
-/* The brand's per-type colours: text on light (labels) and graphics (route strokes, 3:1). */
+/* The brand's per-type colours: text on the dark site (labels) and graphics (route strokes, 3:1). */
 .portal-type-walk {
   --type-text: var(--walk-text);
   --type-graphic: var(--walk-graphic);

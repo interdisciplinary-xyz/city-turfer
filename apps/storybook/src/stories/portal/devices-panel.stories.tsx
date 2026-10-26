@@ -7,7 +7,6 @@ import { ERRORS, SESSIONS } from './fixtures';
 const meta = {
   title: 'Portal/DevicesPanel',
   component: DevicesPanel,
-  globals: { scheme: 'light' },
   args: {
     sessions: SESSIONS,
     loading: false,

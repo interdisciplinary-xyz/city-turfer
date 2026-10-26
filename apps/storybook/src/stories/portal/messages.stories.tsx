@@ -25,7 +25,6 @@ function Messages() {
 const meta = {
   title: 'Portal/Messages',
   component: Messages,
-  globals: { scheme: 'light' },
   parameters: { layout: 'padded' },
 } satisfies Meta<typeof Messages>;
 
