@@ -357,6 +357,22 @@ export function auditHarness(root) {
     if (fm.model && typeof fm.model === 'string' && !KNOWN_MODELS.has(fm.model) && !fm.model.startsWith('claude-')) {
       add('error', file, 'frontmatter', `unknown model \`${fm.model}\``);
     }
+    if (fm.isolation !== undefined && fm.isolation !== 'worktree') {
+      add('error', file, 'frontmatter', `isolation \`${fm.isolation}\`: the only value is \`worktree\``);
+    }
+    // An allowlist without Skill cannot load the skills its body sends it to (preloaded ones are in).
+    const preloaded = new Set(Array.isArray(fm.skills) ? fm.skills.map(String) : []);
+    const named = [...body.matchAll(/`([a-z][a-z0-9-]+)` skill|\bthe ([a-z][a-z0-9]*(?:-[a-z0-9]+)+) skill\b/g)]
+      .map((m) => m[1] ?? m[2])
+      .filter((s) => skills.includes(s) && !preloaded.has(s));
+    if (fm.tools !== undefined && named.length && !tools.includes('Skill')) {
+      add(
+        'error',
+        file,
+        'tools',
+        `names the ${[...new Set(named)].map((s) => `\`${s}\``).join(', ')} skill(s) but has no \`Skill\` tool to load them: add Skill to \`tools:\` (or preload them under \`skills:\`)`
+      );
+    }
   }
   for (const name of skills) {
     const file = `.claude/skills/${name}/SKILL.md`;

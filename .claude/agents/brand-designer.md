@@ -16,12 +16,12 @@ drift apart.
 `apps/mobile/src/constants/colors.ts` (a re-export), `apps/mobile/tools/brand/`, the icon and splash
 entries in `apps/mobile/app.json`, `docs/decisions/brand-foundations-2026-10-20.md`,
 `docs/decisions/brand-dark-site-2026-10-25.md`, the `brand-system` skill, the token stories, the
-surface map and known drift in `tools/brand/` (`surfaces.mjs`, `known-drift.mjs`; the audit code in
-`tools/brand-audit.mjs` is harness-engineer's), user-facing wording everywhere (app strings, the
-wording in `apps/web/messages/*.json` and `apps/mobile/messages/`, store listings) and brand
-reviews. **You hand off** layout and behaviour to `mobile-ui-engineer` (app) and `web-engineer`
-(site, which also adds message keys and wires them); strings inside infrastructure files may change,
-anything else there goes to `location-engineer`.
+surface map and known drift in `tools/brand/` (`surfaces.mjs`, `known-drift.mjs`; the code of
+`tools/brand-audit.mjs` and `tools/brand/snapshot.mjs` is harness-engineer's), user-facing wording
+everywhere (app strings, the wording in `apps/web/messages/*.json` and `apps/mobile/messages/`,
+store listings) and brand reviews. **You hand off** layout and behaviour to `mobile-ui-engineer`
+(app) and `web-engineer` (site, which also adds message keys and wires them); strings inside
+infrastructure files may change, anything else there goes to `location-engineer`.
 
 ## Read first
 

@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { dirname, resolve } from 'node:path';
+import { mkdirSync, mkdtempSync, realpathSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { newestScope } from '../harness/git-context.mjs';
+import { checkoutOf, gitContext, newestScope } from '../harness/git-context.mjs';
 import {
   allowedBases,
   bashFindings,
@@ -262,6 +264,86 @@ test('a bare push after git switch/checkout in the same line targets the new bra
     bashFindings('git switch -c feat/z && gh pr create --base scope/v0.9.0 --title "city-turfer - feat/z"', feat),
     []
   );
+});
+
+test('cd, pushd and git -C judge the folder they move to; unknown folders need the branch named', () => {
+  // The hook's branch is the checkout Claude is in; these lines act in another one.
+  const where = { '/main': 'main', '/scope': 'scope/v0.12.0', '/wt': 'fix/scope012-review', '/repo/apps': 'feat/x' };
+  const at = (branch) => ({ branch, activeScope: 'scope/v0.12.0', cwd: '/repo', branchAt: (d) => where[d] });
+  const feat = at('feat/x');
+  const scope = at('scope/v0.12.0');
+  // the folder's own branch decides
+  for (const cmd of [
+    'cd /main && git push',
+    'cd /main/ && git push -u origin HEAD',
+    'pushd /main && git push',
+    'git -C /main push',
+    'git -C/main push -u origin HEAD',
+    'cd /wt && git switch main && git push', // a switch in that folder still counts
+  ]) {
+    assert.deepEqual(rules(bashFindings(cmd, feat)), ['push-main'], cmd);
+  }
+  assert.deepEqual(rules(bashFindings('cd /scope && git push --force-with-lease', feat)), ['force-push']);
+  assert.deepEqual(rules(bashFindings('cd apps && cd .. && cd ../scope && git push -f', feat)), ['force-push']);
+  // unknown: no literal folder, a subshell's cd, GIT_DIR, --git-dir, a folder change after a switch
+  for (const cmd of [
+    'cd ~/x && git push',
+    'cd "$WT" && git push',
+    'W=$(pwd) && cd "$W" && git push', // not a literal value
+    'cd - && git push',
+    '(cd /wt && git status) && git push',
+    "bash -c 'cd /wt' && git push",
+    'git --git-dir=/main/.git push',
+    'GIT_DIR=/main/.git git push',
+    'git switch -c feat/y && cd /wt && git push',
+    'git -C /wt switch feat/y && git push', // switched some checkout
+    'cd /nowhere && git push', // not a repository
+  ]) {
+    assert.deepEqual(rules(bashFindings(cmd, feat)), ['push-main'], cmd);
+  }
+  // without a resolver every folder change is unknown
+  assert.deepEqual(rules(bashFindings('cd /wt && git push', { branch: 'feat/x' })), ['push-main']);
+  // named pushes are judged by the name, wherever they run
+  assert.deepEqual(rules(bashFindings('cd /wt && git push origin main', feat)), ['push-main']);
+  assert.deepEqual(rules(bashFindings('git -C /wt push --force origin scope/v0.12.0', feat)), ['force-push']);
+  // false positives: the review's case (a feature worktree force-pushed while the session sits on
+  // the scope), HEAD:<name>, read-only git, -C binding one command, a cd back home
+  for (const cmd of [
+    'cd /wt && git push --force-with-lease',
+    'cd /wt && git add -A && git commit -m "fix(x): y" && git push -u origin HEAD',
+    'git -C /wt push --force-with-lease',
+    'cd "$WT" && git push origin HEAD:feat/web-hero-lockup',
+    'W=/wt && cd "$W" && git commit -q -m x && git push -q -u origin HEAD',
+    'W=/wt; cd ${W} && git push --force-with-lease',
+    '(cd /main) ; git push origin fix/scope012-review',
+    'git -C /wt status && git -C /main log -3',
+    'cd apps && pnpm test',
+  ]) {
+    assert.deepEqual(bashFindings(cmd, scope), [], cmd);
+  }
+  assert.deepEqual(bashFindings('git -C /main diff && git push', feat), []);
+
+  // gh pr create takes its head from the folder it runs in
+  const pr = 'gh pr create --base scope/v0.12.0 --title "city-turfer - fix/scope012-review" --body x';
+  assert.deepEqual(bashFindings(`cd /wt && ${pr}`, scope), []);
+  assert.deepEqual(rules(bashFindings(`cd /main && ${pr}`, scope)), ['pr-title']); // head: main
+  assert.deepEqual(rules(bashFindings(`cd "$WT" && ${pr}`, scope)), ['pr-base']); // unknown: --head
+  assert.deepEqual(bashFindings(`cd "$WT" && ${pr} --head fix/scope012-review`, scope), []);
+  // an explicit --head wins over the checkout's branch, also on an integration branch
+  assert.deepEqual(bashFindings(`${pr} --head fix/scope012-review`, scope), []);
+  assert.deepEqual(rules(bashFindings('gh pr create --head fix/x --base main --title "city-turfer - fix/x"', scope)), [
+    'pr-base',
+  ]);
+  assert.deepEqual(
+    rules(bashFindings('gh pr create --head fix/x --base scope/v0.12.0 --title "city-turfer - scope/v0.12.0"', scope)),
+    ['pr-title']
+  );
+});
+
+test('parseShell: subshell depth per command', () => {
+  assert.deepEqual(parseShell('a; (b && (c)); d').depths, [0, 1, 2, 0]);
+  assert.deepEqual(parseShell("bash -c 'cd x' && eval 'cd y'").depths, [1, 0]);
+  assert.ok(parseShell('case $x in a) cd /w;; esac; git push').depths.every((d) => d === 0));
 });
 
 test('git push --all, --branches, --mirror and glob refspecs count as pushing main', () => {
@@ -541,12 +623,53 @@ test('the release runs only in release.yml', () => {
   ]) {
     assert.deepEqual(rules(bashFindings(cmd, CTX)), ['release'], cmd);
   }
-  // false positives
-  assert.deepEqual(bashFindings('pnpm run release -- --dry-run', CTX), []);
-  assert.deepEqual(bashFindings('npx commit-and-tag-version --dry-run', CTX), []);
+  // false positives: the preview in its allowed forms, mentions, other scripts
+  for (const cmd of [
+    'pnpm exec commit-and-tag-version --dry-run',
+    'pnpm exec commit-and-tag-version --dry-run --release-as 0.12.0',
+    'pnpm exec commit-and-tag-version --release-as=0.12.0 --dry-run',
+    'pnpm exec commit-and-tag-version --dry-run --release-as minor',
+    'npx commit-and-tag-version --dry-run',
+    'npx --yes commit-and-tag-version --dry-run --release-as 1.0.0-rc.1',
+    'commit-and-tag-version --dry-run',
+    'pnpm run release --dry-run --release-as 0.12.0',
+    'npm run release -- --dry-run',
+  ]) {
+    assert.deepEqual(bashFindings(cmd, CTX), [], cmd);
+  }
   assert.deepEqual(bashFindings('grep commit-and-tag-version package.json', CTX), []);
   assert.deepEqual(bashFindings('pnpm run release:notes', CTX), []);
   assert.deepEqual(bashFindings('git log release/v0.8.0', CTX), []);
+});
+
+test('a release "dry run" that switches the dry run off or runs code is the release', () => {
+  for (const cmd of [
+    // the dry run switched off again (yargs: last wins, `false` is a value, `--` ends options)
+    'pnpm exec commit-and-tag-version --dry-run --no-dry-run',
+    'pnpm exec commit-and-tag-version --dry-run false',
+    'pnpm exec commit-and-tag-version --dry-run=false',
+    'pnpm exec commit-and-tag-version --dry-run --dry-run=false',
+    'npx commit-and-tag-version -- --dry-run',
+    // pnpm 10 passes `--` on to the script, so this one is the real release
+    'pnpm run release -- --dry-run',
+    'pnpm -w run release -- --dry-run --release-as 0.12.0',
+    // npm reads a --dry-run before `--` as its own option and runs the script without it
+    'npm run release --dry-run',
+    'yarn release --dry-run',
+    // code that runs even in a dry run
+    'pnpm exec commit-and-tag-version --dry-run --config /tmp/evil.js',
+    'npx commit-and-tag-version --dry-run --bumpFiles /tmp/updater.js',
+    'pnpm exec commit-and-tag-version --dry-run --packageFiles x.json',
+    'pnpm exec commit-and-tag-version --dry-run --scripts.prerelease "rm -rf ."',
+    'pnpm exec commit-and-tag-version --dry-run --preset ./evil',
+    // anything else, and a malformed version
+    'pnpm exec commit-and-tag-version --dry-run --skip.tag',
+    'pnpm exec commit-and-tag-version --dry-run --release-as "0.12.0; rm -rf ."',
+    'pnpm exec commit-and-tag-version --dry-run --release-as',
+    'pnpm exec commit-and-tag-version --dry-run --release-as 0.12.0 --release-as 1.0.0',
+  ]) {
+    assert.deepEqual(rules(bashFindings(cmd, CTX)), ['release'], cmd);
+  }
 });
 
 test('gh pr: attached short values (-Bmain) are read like -B main', () => {
@@ -671,6 +794,88 @@ test('pre-bash hook denies pushing to main and ignores unrelated commands', () =
   const release = runHook('pre-bash.mjs', { tool_name: 'Bash', tool_input: { command: 'pnpm run release' } });
   assert.equal(release.hookSpecificOutput.permissionDecision, 'deny');
   assert.match(release.hookSpecificOutput.permissionDecisionReason, /\[release\]/);
+});
+
+/** A throwaway repo on `scope/v0.12.0` with a worktree on `wtBranch`; removed by the caller. */
+function repoWithWorktree(wtBranch) {
+  const base = realpathSync(mkdtempSync(join(tmpdir(), 'hook-wt-')));
+  const main = join(base, 'main');
+  const wt = join(base, 'wt');
+  const git = (cwd, ...args) => {
+    const r = spawnSync('git', args, { cwd, encoding: 'utf8' });
+    assert.equal(r.status, 0, r.stderr);
+  };
+  mkdirSync(main);
+  git(main, 'init', '-q', '-b', 'scope/v0.12.0');
+  git(main, '-c', 'user.name=t', '-c', 'user.email=t@example.invalid', 'commit', '-q', '--allow-empty', '-m', 'init');
+  git(main, 'worktree', 'add', '-q', '-b', wtBranch, wt);
+  return { base, main, wt };
+}
+
+function runHookIn(script, payload, projectDir) {
+  const r = spawnSync('node', [resolve(ROOT, '.claude/hooks', script)], {
+    input: JSON.stringify(payload),
+    encoding: 'utf8',
+    env: { ...process.env, CLAUDE_PROJECT_DIR: projectDir },
+  });
+  assert.equal(r.status, 0, r.stderr);
+  return r.stdout ? JSON.parse(r.stdout) : null;
+}
+
+test('pre-bash and session-start read the checkout Claude is in, not the session start folder', () => {
+  const { base, main, wt } = repoWithWorktree('fix/scope012-review');
+  try {
+    assert.equal(gitContext(wt).branch, 'fix/scope012-review');
+    assert.equal(gitContext(main).branch, 'scope/v0.12.0');
+    const bash = (command, cwd) =>
+      runHookIn('pre-bash.mjs', { tool_name: 'Bash', cwd, tool_input: { command } }, main)?.hookSpecificOutput
+        ?.permissionDecision ?? 'allow';
+    // the review's false positive: a feature worktree's force-push judged on the main checkout's scope
+    assert.equal(bash('git push --force-with-lease', wt), 'allow');
+    assert.equal(bash('git push --force-with-lease', main), 'deny');
+    assert.equal(
+      bash('gh pr create --base scope/v0.12.0 --title "city-turfer - fix/scope012-review" --body x', wt),
+      'allow'
+    );
+    // `cd` and `git -C` are judged on the folder's own branch
+    assert.equal(bash(`cd ${wt} && git push --force-with-lease`, main), 'allow');
+    assert.equal(bash(`git -C ${wt} push --force-with-lease`, main), 'allow');
+    assert.equal(bash(`cd ${main} && git push --force-with-lease`, wt), 'deny');
+    // and the false negative: a worktree on main pushes main, whatever the session started on
+    assert.equal(spawnSync('git', ['switch', '-q', '-c', 'main'], { cwd: wt }).status, 0);
+    assert.equal(bash('git push', wt), 'deny');
+    assert.equal(bash(`cd ${wt} && git push`, main), 'deny');
+    assert.equal(bash(`git -C ${wt} push -u origin HEAD`, main), 'deny');
+
+    const start = spawnSync('node', [resolve(ROOT, '.claude/hooks/session-start.mjs')], {
+      input: JSON.stringify({ cwd: main }),
+      encoding: 'utf8',
+      env: { ...process.env, CLAUDE_PROJECT_DIR: wt },
+    });
+    assert.match(start.stdout, /on `scope\/v0\.12\.0`/);
+  } finally {
+    rmSync(base, { recursive: true, force: true });
+  }
+});
+
+test('pre-edit guards files in a worktree of the repo, and skips other repositories', () => {
+  const { base, main, wt } = repoWithWorktree('feat/x');
+  const other = realpathSync(mkdtempSync(join(tmpdir(), 'hook-other-')));
+  spawnSync('git', ['init', '-q'], { cwd: other });
+  try {
+    assert.deepEqual(checkoutOf(join(wt, 'apps/new/x.ts'), main), { root: wt, rel: 'apps/new/x.ts' });
+    assert.equal(checkoutOf(join(other, 'CHANGELOG.md'), main), null);
+    const edit = (file) =>
+      runHookIn('pre-edit.mjs', { tool_name: 'Write', tool_input: { file_path: file, content: 'x' } }, main)
+        ?.hookSpecificOutput?.permissionDecision ?? 'allow';
+    assert.equal(edit(join(wt, 'CHANGELOG.md')), 'deny');
+    assert.equal(edit(join(main, 'CHANGELOG.md')), 'deny');
+    assert.equal(edit(join(wt, 'docs/x.md')), 'allow');
+    assert.equal(edit(join(other, 'CHANGELOG.md')), 'allow');
+  } finally {
+    rmSync(base, { recursive: true, force: true });
+    rmSync(other, { recursive: true, force: true });
+  }
 });
 
 // --- agent-scoped guards ---------------------------------------------------
@@ -868,6 +1073,10 @@ test('docs-engineer scope: PR bodies, changelog preview and docs, never CHANGELO
     'pnpm exec commit-and-tag-version --release-as 0.12.0',
     'npx commit-and-tag-version',
     'pnpm run release -- --dry-run',
+    'pnpm exec commit-and-tag-version --dry-run --no-dry-run',
+    'pnpm exec commit-and-tag-version --dry-run=false',
+    'pnpm exec commit-and-tag-version --dry-run --config /tmp/x.cjs',
+    'npx commit-and-tag-version --dry-run --scripts.postbump "touch x"',
     'echo x >> CHANGELOG.md',
     'gh pr merge 169 --merge',
     'echo x > CLAUDE.md',

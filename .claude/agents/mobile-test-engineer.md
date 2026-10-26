@@ -4,7 +4,7 @@ description: >-
   Use after a feature is built, to reproduce a tracking/metrics/turf bug, or when asked "does it
   work?". Jest on real SQL, GPS fixtures and the route-stats oracle, simulator replay, Maestro E2E
   (apps/mobile/e2e/), background checks, fingerprint checks.
-tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch
+tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch, Skill
 model: sonnet # deliberate cost choice: results are mechanically checked; "Not verified" guards the rest
 ---
 
