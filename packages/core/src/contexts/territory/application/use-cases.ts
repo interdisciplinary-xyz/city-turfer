@@ -7,6 +7,7 @@ import {
   DomainError,
   trackFromPoints,
   type TrackPoint,
+  weekStartOf,
 } from '../../../shared-kernel';
 import type { ClaimView, TurfCellCounts, TurfCellPage, TurfCellView, TurfSummaryView } from '../contract';
 import type { CellGrid, CellId } from '../domain/cell-grid';
@@ -140,6 +141,10 @@ export class GetTurfSummary {
   async execute(): Promise<TurfSummaryView> {
     const rows = await this.d.repo.allCells();
     const now = this.d.clock.now();
+    // "This week" is the calendar week, as on the This week card and in Achievements: from Monday
+    // 00:00 in the process's time zone (the phone's local time; the API's is UTC). "This month" is
+    // still the last 30 days (not shown in any UI).
+    const weekStart = weekStartOf(now);
     let area = 0,
       week = 0,
       month = 0,
@@ -149,7 +154,7 @@ export class GetTurfSummary {
       const a = this.d.grid.areaM2(r.cell);
       const visits = r.walk + r.run + r.cycle;
       area += a;
-      if (now - r.firstAt <= 7 * 86_400_000) {
+      if (r.firstAt >= weekStart) {
         week += a;
       }
       if (now - r.firstAt <= 30 * 86_400_000) {

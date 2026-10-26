@@ -49,7 +49,9 @@ export interface TurfSummaryView {
   cellCount: number;
   areaKm2: number;
   strongCells: number;
+  /** First claimed since Monday 00:00 of the current week, local time (`weekStartOf`). */
   newThisWeekKm2: number;
+  /** First claimed in the last 30 days (rolling). */
   newThisMonthKm2: number;
   byType: Record<ActivityType, number>; // cells touched per type
 }

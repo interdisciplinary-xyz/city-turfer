@@ -15,7 +15,8 @@
  * The golden is a rebuild from the claims that survive the operations, never the incremental
  * result: per cell the visit counts by type and `firstAt`, the start of its first claimer (D4, the
  * earliest `(startedAt, activityId)` with ids in JS string order, whatever the upload order), plus
- * the summary at the fixed `now` and each surviving claim's canonical new cells.
+ * the summary at the fixed `now` (new this week from local Monday 00:00, new this month over the
+ * last 30 days) and each surviving claim's canonical new cells.
  *
  * What it does **not** pin: rasterisation. Each claim's cell set comes from `Claim.fromTrack` and
  * strong cells from `strengthOf` / `isStrong`, the code under test, so a change to the corridor
@@ -26,7 +27,14 @@
  */
 import { ACTIVITY_TYPES } from '../../../constants/activity';
 import { H3CellGrid } from '../../../h3';
-import { type ActivityType, distanceM, interpolate, trackFromPoints, type TrackPoint } from '../../../shared-kernel';
+import {
+  type ActivityType,
+  distanceM,
+  interpolate,
+  trackFromPoints,
+  type TrackPoint,
+  weekStartOf,
+} from '../../../shared-kernel';
 import type { CellId } from '../domain/cell-grid';
 import { Claim } from '../domain/claim';
 import { isStrong, strengthOf } from '../domain/strength';
@@ -83,7 +91,12 @@ export interface ParityExpected {
 }
 
 const DAY = 86_400_000;
-const NOW = Date.parse('2026-10-20T12:00:00Z');
+// A Thursday noon UTC. "New this week" counts from local Monday 00:00 (`weekStartOf`), which in
+// any time zone from UTC−12 to UTC+14 falls between Sun 18 Oct 10:00Z and Mon 19 Oct 12:00Z. Every
+// start below is a whole number of days before NOW (noon UTC), so none lands inside that band
+// except NOW − 3 days = Mon 19 Oct 12:00Z, at or after it everywhere: the golden is the same in
+// every time zone.
+const NOW = Date.parse('2026-10-22T12:00:00Z');
 
 // Public landmarks of Gdańsk Main Town, [lat, lon] (approximate, ~10 m).
 const L = {
@@ -262,6 +275,7 @@ export function buildParityExpected(input: ParityInput, grid = new H3CellGrid())
     }
   }
 
+  const weekStart = weekStartOf(input.now);
   let area = 0;
   let week = 0;
   let month = 0;
@@ -270,7 +284,7 @@ export function buildParityExpected(input: ParityInput, grid = new H3CellGrid())
   for (const [c, row] of cells) {
     const a = grid.areaM2(c);
     area += a;
-    if (input.now - row.first.startedAt <= 7 * DAY) {
+    if (row.first.startedAt >= weekStart) {
       week += a;
     }
     if (input.now - row.first.startedAt <= 30 * DAY) {
