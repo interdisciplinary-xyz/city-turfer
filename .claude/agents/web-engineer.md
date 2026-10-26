@@ -25,7 +25,8 @@ report what needs setting.
 
 - The `web-motion` skill: its **Site ground rules** bind every change here; its motion rules bind
   any animation.
-- The `brand-system` and `design-system` skills (voice, tokens, CSS variables, website stories).
+- The `brand-system` and `design-system` skills (voice, tokens, CSS variables, website stories);
+  `brand-surfaces` when a change should match other surfaces (dev Swagger, portal, app).
 - User-level skills when present: `gsap-react`, `next-best-practices`, `web-vitals-a11y-audit`,
   `data-privacy-reviewer` (run it on any change to what the waitlist collects or says).
 

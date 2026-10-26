@@ -12,8 +12,6 @@ export const BRANDING_DESCRIPTION =
   'CityTurfer brand definition: positioning, personality, logo, colour, type, visual language and accessibility.';
 /** /branding is English only, like the brand docs; the site header uses this language. */
 export const BRANDING_LOCALE: Locale = 'en';
-/** The hero wordmark: the site header's logo shows once it has scrolled away. */
-export const BRAND_LOCKUP_SELECTOR = '.brand-hero-wordmark';
 export const DECISION_DOC_URL =
   'https://github.com/interdisciplinary-xyz/city-turfer/blob/main/docs/decisions/brand-foundations-2026-10-20.md';
 
@@ -148,13 +146,6 @@ export const ICP_NOT_FIT: readonly string[] = [
 export const ICP_CONTEXT =
   'Context (dated desk research): iOS is ~36 % of mobile in Poland (StatCounter, Sept 2026), so this profile reaches about a third of the market until Android is proven. Walking became Strava’s #2 activity in 2025; cycling is Poland’s most common sport (GUS 2025).';
 
-export const ANDROID_CHECK: FactCheck = {
-  line: '“Download for Android” (website)',
-  today:
-    'The website’s main call to action is an Android APK, while this profile is iPhone-first and Android recording hasn’t been checked on a real phone (docs/product/product-brief.md, assumption A3).',
-  proposal: 'Decide whether the site leads with the waitlist until iOS TestFlight exists.',
-};
-
 export type IcpSegment = { name: string; who: string; gap: string };
 export const ICP_TEST_SEGMENTS: readonly IcpSegment[] = [
   {
@@ -252,9 +243,9 @@ export const NAME_RULES: readonly string[] = [
 
 export const TIER_MEANING: Record<TierName, string> = {
   faint: 'Tier 1, gradient start',
-  glowing: 'Tier 2 and the primary accent fill: buttons, selection. Pink text on light is accent-text',
+  glowing: 'Tier 2 and the primary accent fill: buttons, selection. Pink text goes through accent-text',
   strong: 'Tier 3, highlights',
-  blazing: 'Tier 4, “City” in the logotype, headlines on night panels',
+  blazing: 'Tier 4, the end of the Ramp in “TURFER”, headlines on night',
 };
 
 export const ACTIVITY_LABEL: Record<BrandActivityType, string> = { walk: 'Walk', run: 'Run', cycle: 'Ride' };
@@ -340,7 +331,7 @@ export const CONTRAST_FIXES: readonly ContrastFix[] = [
   },
 ];
 export const CONTRAST_FIXES_NOTE =
-  'The website, Swagger and Storybook are light (docs/decisions/brand-light-theme-2026-10-22.md); the light rows above are fixed. The app stays dark and keeps these two known failures so it does not shift over the air.';
+  'The website, Swagger and Storybook are dark like the app (docs/decisions/brand-dark-site-2026-10-25.md). The web labels pink fills in night ink (WEB_ON_ACCENT, 5.5:1); the app keeps these two known failures so it does not shift over the air.';
 
 export type BrandAsset = { name: string; where: string; note: string };
 export const ASSETS: readonly BrandAsset[] = [

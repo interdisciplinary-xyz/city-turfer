@@ -93,7 +93,6 @@ function ActivityHistory({ view, empty }: Props) {
 const meta = {
   title: 'Portal/ActivityHistory',
   component: ActivityHistory,
-  globals: { scheme: 'light' },
   args: { view: 'list', empty: 'never' },
   argTypes: {
     view: {

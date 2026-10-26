@@ -5,17 +5,17 @@ import { AppHeader } from '@/app/[locale]/app-header';
 import { HeroCopy } from '@/app/[locale]/hero-copy';
 import { HeroMotion } from '@/app/[locale]/hero-motion';
 import { HeroScreens } from '@/app/[locale]/hero-screens';
-import { StoreButtons } from '@/app/[locale]/store-buttons';
+import { FinalCta, HowItWorks, LocalFirst, YourWeek } from '@/app/[locale]/home-sections';
 import { WaitlistForm } from '@/app/[locale]/waitlist-form';
 import type { Locale } from '@/i18n/routing';
 
-type PageProps = { apkUrl: string | null; waitlist: boolean };
+type PageProps = { waitlist: boolean };
 
 /**
  * The whole landing page as apps/web/src/app/[locale]/page.tsx composes it (a server component,
  * so it can't render here directly). The waitlist posts to an address that never answers.
  */
-function Page({ apkUrl, waitlist }: PageProps) {
+function Page({ waitlist }: PageProps) {
   const locale = useLocale() as Locale;
   const t = useTranslations();
   return (
@@ -29,7 +29,6 @@ function Page({ apkUrl, waitlist }: PageProps) {
           <HeroMotion className='wrap hero-grid'>
             <HeroCopy />
             <HeroScreens />
-            <StoreButtons apkUrl={apkUrl} />
           </HeroMotion>
         </div>
         {waitlist ? (
@@ -44,6 +43,10 @@ function Page({ apkUrl, waitlist }: PageProps) {
             </div>
           </section>
         ) : null}
+        <HowItWorks />
+        <YourWeek />
+        <LocalFirst />
+        {waitlist ? <FinalCta /> : null}
       </main>
     </>
   );
@@ -52,12 +55,12 @@ function Page({ apkUrl, waitlist }: PageProps) {
 const meta = {
   title: 'Website/Page',
   component: Page,
-  args: { apkUrl: 'https://example.invalid/cityturfer.apk', waitlist: true },
+  args: { waitlist: true },
   parameters: {
     docs: {
       description: {
         component:
-          'The full landing page: hero (with its entrance animation), store buttons and the waitlist section. `waitlist` mirrors the NEXT_PUBLIC_WAITLIST_* variables being set; `apkUrl` mirrors NEXT_PUBLIC_ANDROID_APK_URL.',
+          'The full landing page: hero (with its entrance animation), the waitlist section, how it works, your week, local-first and the closing call to action (shown only with the waitlist). `waitlist` mirrors the NEXT_PUBLIC_WAITLIST_* variables being set. The APK download buttons are hidden for now.',
       },
     },
   },
@@ -68,5 +71,5 @@ export default meta;
 export const Launch: StoryObj<typeof meta> = {};
 
 export const BeforeLaunch: StoryObj<typeof meta> = {
-  args: { apkUrl: null, waitlist: false },
+  args: { waitlist: false },
 };

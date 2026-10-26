@@ -7,7 +7,6 @@ import { ERRORS, exportJob, USER } from './fixtures';
 const meta = {
   title: 'Portal/ExportPanel',
   component: ExportPanel,
-  globals: { scheme: 'light' },
   args: { email: USER.email, locale: 'en', job: null, onRequest: () => undefined, pending: false, error: null },
   parameters: { layout: 'padded' },
 } satisfies Meta<typeof ExportPanel>;

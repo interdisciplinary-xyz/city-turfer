@@ -1,8 +1,8 @@
 {
   "meta": {
     "title": "CityTurfer — Surfuj po mieście. Ulice są Twoje.",
-    "description": "Chodź, biegaj albo jeździj na rowerze — każda ulica, którą pokonasz, staje się Twoim terytorium. Wracaj i patrz, jak świeci coraz jaśniej.",
-    "ogAlt": "CityTurfer: świecące trasy na ciemnej mapie miasta i hasło „Surfuj po mieście. Ulice są Twoje”."
+    "description": "Spacery, bieganie albo jazda na rowerze, solo lub z psem — każda ulica, którą pokonasz, staje się Twoim terytorium. Wracaj i patrz, jak świeci coraz jaśniej.",
+    "ogAlt": "CityTurfer: świecące trasy na ciemnej mapie miasta i angielskie hasło „Surf your city. Own your streets.”"
   },
   "header": {
     "home": "CityTurfer, strona główna",
@@ -15,7 +15,7 @@
     "skip": "Przejdź do treści",
     "taglineLead": "Surfuj po mieście.",
     "taglineRamp": "Ulice są Twoje.",
-    "lede": "Chodź, biegaj albo jeździj na rowerze — każda ulica, którą pokonasz, staje się Twoim terytorium. Wracaj i patrz, jak świeci coraz jaśniej."
+    "lede": "Spacery, bieganie albo jazda na rowerze, solo lub z psem — każda ulica, którą pokonasz, staje się Twoim terytorium. Wracaj i patrz, jak świeci coraz jaśniej."
   },
   "screens": {
     "turfMap": {
@@ -27,6 +27,84 @@
       "title": "Twój tydzień w skrócie",
       "body": "Dystans, czas, ostatnie aktywności i najbliższe osiągnięcie w zasięgu ręki.",
       "alt": "Pulpit: dystans, czas i liczba aktywności w tym tygodniu, ostatnie aktywności i najbliższe osiągnięcie."
+    }
+  },
+  "home": {
+    "how": {
+      "eyebrow": "Jak to działa",
+      "title": "Jedna pętla. Każda ulica.",
+      "record": {
+        "title": "Nagraj spacer, bieg albo przejażdżkę",
+        "body": "Mapa i statystyki na żywo, autopauza. Żeby zakończyć, przytrzymaj przycisk."
+      },
+      "gain": {
+        "label": "Nowe terytorium",
+        "area": "+{area} km² nowego terytorium",
+        "cells": "{added, plural, one {# nowa komórka} few {# nowe komórki} many {# nowych komórek} other {# nowej komórki}} · {reinforced, plural, one {# wzmocniona} few {# wzmocnione} many {# wzmocnionych} other {# wzmocnionej}}",
+        "title": "Każda ulica staje się Twoja",
+        "body": "Każdy sześciokąt (ok. 50 m), przez który prowadzi Twoja trasa, na dobre staje się Twoim terytorium."
+      },
+      "glow": {
+        "legendTitle": "Siła terytorium",
+        "legendLabel": "Siła terytorium: Blade, Świecące, Mocne, Płonące, od najsłabszej do najmocniejszej",
+        "title": "Wracaj i patrz, jak świeci",
+        "body": "Z każdym powrotem ulica świeci jaśniej: od „Blade” po „Płonące”. Nic nie blednie: ulica zostaje Twoja, nawet jeśli długo Cię tam nie było."
+      }
+    },
+    "types": {
+      "walk": "Spacer",
+      "run": "Bieg",
+      "cycle": "Rower"
+    },
+    "tiers": {
+      "faint": "Blade",
+      "glowing": "Świecące",
+      "strong": "Mocne",
+      "blazing": "Płonące"
+    },
+    "week": {
+      "eyebrow": "Pulpit",
+      "title": "Tak wyglądał Twój tydzień",
+      "body": "Dystans, czas i liczba aktywności w tym tygodniu, ostatnie spacery, biegi i przejażdżki oraz najbliższe osiągnięcie.",
+      "thisWeek": "W tym tygodniu",
+      "distance": "Dystans",
+      "time": "Czas",
+      "count": "Aktywności",
+      "unitKm": "km",
+      "rowDistance": "{distance} km",
+      "rowPace": "{time} · {pace}/km",
+      "rowSpeed": "{time} · {speed} km/h",
+      "recent": "Ostatnie aktywności",
+      "seeAll": "Wszystkie ›",
+      "achievements": "Osiągnięcia",
+      "nextUp": "Następne: <b>Półmaraton</b> · Przejdź lub przebiegnij 21,1 km za jednym razem.",
+      "caption": "Przykładowy tydzień, tak jak pokazuje go aplikacja.",
+      "activities": {
+        "walk": {
+          "title": "Poranny spacer",
+          "when": "pt., 16 paź, 06:00"
+        },
+        "run": {
+          "title": "Popołudniowy bieg",
+          "when": "śr., 14 paź, 13:00"
+        },
+        "ride": {
+          "title": "Poranna przejażdżka",
+          "when": "wt., 13 paź, 09:00"
+        }
+      }
+    },
+    "local": {
+      "eyebrow": "Tylko Twoje",
+      "title": "Oryginał zostaje na Twoim telefonie",
+      "phone": "Twoje aktywności są zapisane na telefonie, w aplikacji.",
+      "backup": "Kopia w chmurze jest wyłączona, dopóki jej nie włączysz. Gdy ją wyłączysz, kopia na naszym serwerze zostanie usunięta.",
+      "portal": "Po zalogowaniu w przeglądarce widzisz tylko to, co trafiło do kopii."
+    },
+    "cta": {
+      "title": "Twoje terytorium zaczyna się za progiem",
+      "body": "Zostaw e-mail, a damy znać, gdy aplikacja będzie gotowa do pobrania.",
+      "join": "Dołącz do listy"
     }
   },
   "language": {

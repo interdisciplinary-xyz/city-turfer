@@ -4,7 +4,17 @@
  * Values come from the screens as they were in v0.4.0, so adopting a token never changes a pixel.
  * Plain values only (`design-system` skill).
  */
-import { ACCENT, DARK, LIGHT, ON_TYPE_COLOR, type Palette, RAMP, TIER_COLOR, TYPE_COLOR } from './colors';
+import {
+  ACCENT,
+  DARK,
+  LIGHT,
+  ON_TYPE_COLOR,
+  type Palette,
+  RAMP,
+  TIER_COLOR,
+  TYPE_COLOR,
+  WEB_ON_ACCENT,
+} from './colors';
 
 /** Spacing scale in points (app) and CSS pixels (web). */
 export const SPACE = { xxs: 2, xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 } as const;
@@ -77,11 +87,11 @@ export type ColorScheme = 'light' | 'dark';
 export const THEMES: Record<ColorScheme, Palette> = { light: LIGHT, dark: DARK };
 
 /**
- * The one place that says which theme the website, Swagger and Storybook use: light, with no theme
- * switch. The app and every map panel stay dark (`DARK`) whatever this says.
- * `docs/decisions/brand-light-theme-2026-10-22.md`.
+ * The one place that says which theme the website, Swagger and Storybook use: dark, the app's
+ * palette (the app is the source of truth), with no theme switch.
+ * `docs/decisions/brand-dark-site-2026-10-25.md` (replaces the light theme of 2026-10-22).
  */
-export const SITE_SCHEME: ColorScheme = 'light';
+export const SITE_SCHEME: ColorScheme = 'dark';
 
 /** A CSS custom property name and its value. */
 export type CssVariables = Record<`--${string}`, string>;
@@ -120,10 +130,10 @@ export function cssVariables(scheme: ColorScheme): CssVariables {
     '--run-graphic': theme.runGraphic,
     '--ride-graphic': theme.cycleGraphic,
     '--accent': ACCENT,
-    '--on-accent': theme.onAccent,
+    '--on-accent': WEB_ON_ACCENT,
     '--faint': TIER_COLOR.faint,
     '--glow': TIER_COLOR.glowing,
-    '--on-glow': theme.onAccent,
+    '--on-glow': WEB_ON_ACCENT,
     '--strong': TIER_COLOR.strong,
     '--blazing': TIER_COLOR.blazing,
     '--walk': TYPE_COLOR.walk,

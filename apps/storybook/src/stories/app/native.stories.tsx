@@ -27,7 +27,7 @@ export const TurfMap: StoryObj<typeof meta> = {
     note: 'Dark OpenFreeMap tiles with glowing turf cells and tracks (contexts/territory/ui/turf-map-view.tsx).',
     height: 420,
   },
-  // The map stays dark on a light page: a night panel, as on the website.
+  // The map sits on a night panel, as on the website (dark, SITE_SCHEME), so it keeps the map's palette.
   render: (args) => (
     <NightPanel>
       <View style={{ gap: 12 }}>

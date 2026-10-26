@@ -46,9 +46,9 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
   no third-party scripts; the waitlist form posts emails straight to Brevo (double opt-in, personal
   data). Signed-in portal under `/[locale]/account`: one strictly necessary session cookie through
   the `/api/v1` route to the API (`docs/decisions/web-portal-2026-10-22.md`). Languages via
-  `next-intl` (`/en`, `/pl`; copy in `apps/web/messages/*.json`, no CMS). Light theme (`SITE_SCHEME`
-  in `@cityturfer/brand`, also Swagger and Storybook); the app and the Turf Map stay dark
-  (`docs/decisions/brand-light-theme-2026-10-22.md`)
+  `next-intl` (`/en`, `/pl`; copy in `apps/web/messages/*.json`, no CMS). Dark theme like the app,
+  the brand's source of truth (`SITE_SCHEME` in `@cityturfer/brand`, also portal, Swagger and
+  Storybook; `docs/decisions/brand-dark-site-2026-10-25.md`)
 - **Admin** (scaffold, not deployed): Payload CMS 3.91 on Next 16 in `apps/admin` (same next/react
   pins as apps/web). Payload holds only staff accounts, in its **own** Postgres database
   (`PAYLOAD_DATABASE_URL`, never the API's), schema via committed migrations (`push: false`);
@@ -195,6 +195,8 @@ pnpm -C apps/mobile exec expo install <pkg>                     # add a native d
 #   node-linker=hoisted (.npmrc). iOS needs Xcode 26.4+ (Expo SDK 57). Xcode's SPM hangs downloading
 #   MapLibre here, so run apps/mobile/tools/fetch-maplibre-ios.sh once before prebuild —
 #   apps/mobile/plugins/with-local-maplibre points SPM at apps/mobile/vendor/maplibre-spm
+pnpm run audit:brand             # every brand surface draws from @cityturfer/brand (tools/brand/surfaces.mjs)
+pnpm run brand:snapshot          # screenshots of every surface + contact sheet (needs web:dev, API, simulator)
 pnpm run test:e2e                # Maestro flows in apps/mobile/e2e/
 node apps/mobile/tools/gen-route.mjs --type run --km 5 > apps/mobile/tools/fixtures/run-5k.gpx   # synthetic route
 node apps/mobile/tools/route-stats.mjs apps/mobile/tools/fixtures/run-5k.gpx                     # reference stats
@@ -211,7 +213,8 @@ node apps/mobile/tools/turf-preview.mjs apps/mobile/tools/fixtures/history --out
   `main` — never edit by hand.
 - `pnpm run ci:quality` = Prettier check + ESLint + tsc + dependency rules + Jest + audits
   (`audit:logs`, `audit:harness`, `audit:i18n`: same keys, valid ICU and full plurals in every
-  locale of the app and website catalogues). `pnpm run test:e2e` = Maestro suite in
+  locale of the app and website catalogues; `audit:brand`: every surface in
+  `tools/brand/surfaces.mjs` draws from `@cityturfer/brand`). `pnpm run test:e2e` = Maestro suite in
   `apps/mobile/e2e/` (iOS Simulator).
 
 ## Claude Code setup
@@ -222,13 +225,16 @@ node apps/mobile/tools/turf-preview.mjs apps/mobile/tools/fixtures/history --out
   `docs/product/`), `product-discovery`, `product-strategy`, `product-launch`, `verify-change`
   (prove a change before calling it done), `ship-branch` (commit, push, PR per the branch flow),
   `ai-harness` (this setup), `mobile-i18n` (app languages, Polish glossary), `web-portal` (signed-in
-  portal in apps/web).
+  portal in apps/web), `brand-surfaces` (one brand across app, site, portal, Swagger, Storybook).
 - Agents (`.claude/agents/`): `rn-architect`, `location-engineer`, `mobile-ui-engineer`,
   `mobile-test-engineer`, `qa-engineer` (release QA and acceptance testing across all apps),
   `mobile-reviewer`, `brand-designer`, `health-engineer` (Apple Health), `web-engineer` (apps/web
   landing and hosting), `portal-engineer` (signed-in web portal), `api-engineer` (back end:
   apps/api, server data, sync), `product-manager` (the Product Owner persona; talk to it as the main
-  session with the agent flag), `harness-engineer` (skills, agents, hooks, audits).
+  session with the agent flag), `harness-engineer` (skills, agents, hooks, audits), `docs-engineer`
+  (release docs: scope and release PR bodies, session log, CHANGELOG preview, stale docs). When the
+  founder says **"update all docs"**, start `docs-engineer` (worktree isolation) before scope →
+  release or release → main.
 - Commands (`.claude/commands/`): `audit-docs` (`/audit-docs`).
 - Hooks (`.claude/settings.json`, rules in `tools/harness/hook-rules.mjs`): deny edits that break
   the dependency rule, touch `CHANGELOG.md`, secret files or generated native folders; deny push to

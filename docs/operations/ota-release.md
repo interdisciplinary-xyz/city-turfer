@@ -48,6 +48,11 @@ bump to 0.10.0 both moved the fingerprint. Before the bump (scope up to `549c873
 After it, measured on `scope/v0.11.0` at `20431a7` (tag `v0.10.0` plus package.json version pins):
 iOS `06aca0e17e430961e1ccb2fd755db451c830efda`, Android `ab6e3dbbd0c2ab97a3bc6e8395b0b376a0bb4684`.
 
+v0.11.0 is JS only, released 2026-10-24: the code before the release commit has the fingerprint
+above. The release commit `34b3d17` bumps `app.json` to 0.11.0, so the tag `v0.11.0` has a new
+fingerprint (not measured yet). Which installs take which OTA depends on the founder's choice in
+`docs/process/release-manager.md` ("Pin at cut", v0.11.0).
+
 To check, compare the fingerprint of the checkout you'll publish from with the runtime of the latest
 update the phone already runs:
 

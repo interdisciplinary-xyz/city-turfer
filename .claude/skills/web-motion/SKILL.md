@@ -27,17 +27,16 @@ motion rules follow. Both the `web-engineer` and the `mobile-reviewer` work from
   form renders only when all its `NEXT_PUBLIC_*` variables are set. No extra fields, pixels or
   embeds.
 - **Shared tokens:** colours and the brand name come from `@cityturfer/brand` (CSS variables from
-  `cssVariables(SITE_SCHEME)` in `[locale]/layout.tsx`). The site is light, with no theme switch;
-  maps and map images sit on a night panel (`DARK.bg` / `DARK.card`), with `wordmark.svg` there and
-  `wordmark-light.svg` elsewhere. Text and lines use the `-text` / `-graphic` variables, never the
-  raw `--glow`, `--walk`, `--run` or `--ride` (`brand-system` skill). A change in `packages/brand`
-  also changes the mobile app.
+  `cssVariables(SITE_SCHEME)` in `[locale]/layout.tsx`). The site is dark like the app, with no
+  theme switch, and uses `wordmark.svg` (`docs/decisions/brand-dark-site-2026-10-25.md`). Text and
+  lines use the `-text` / `-graphic` variables, never the raw `--glow`, `--walk`, `--run` or
+  `--ride` (`brand-system` skill). A change in `packages/brand` also changes the mobile app.
 - **Stories:** every component in `apps/web/src/app/[locale]/` has a story in
   `apps/storybook/src/stories/website/`, except pure motion wrappers (`hero-motion`) and dev-only
   pieces (`dev-toolbar-with-app`). Website pieces stay synchronous (`useTranslations`, not
   `await getTranslations`): Storybook cannot render async server components.
 - **Accessibility:** real labels, visible focus, `prefers-reduced-motion` respected, no horizontal
-  scroll from 320 px, text contrast on the light background (and on night map panels).
+  scroll from 320 px, text contrast on the dark background.
 - **Hosting:** Vercel project `city-turfer-web`, root `apps/web`. `apps/web/vercel.json` holds the
   `/` → `/en` or `/pl` redirect and a `turbo-ignore` build skip: a new workspace dependency must
   appear in turbo's graph or deploys skip it. `NEXT_PUBLIC_*` values are build-time: set on Vercel
@@ -63,11 +62,11 @@ The brand is the turf strength ramp: things **glow in**, they don't bounce.
 - Eases: `expo.out` for entrances (`EASE` in `hero-motion.constants.ts`), `power3.out` for
   interactive follow (pointer), `sine.inOut` for ambient loops. No `back`, `elastic` or `bounce`.
 - Durations: entrances 0.6–1.2 s, staggers 0.08–0.15 s, the whole entrance done in about 2 s.
-  Ambient loops slow (≥ 5 s) and subtle (the headline ramp drifting).
+  Ambient loops slow (≥ 5 s) and subtle (none on the site today: the headline is plain text).
 - Order on load: mark → wordmark → headline lines → lede and calls to action → phones rise alongside
   (they start early, at 0.25 s).
-- Animate **transform and opacity only** (`x`, `y`, `scale`, `rotate`, `autoAlpha`,
-  `backgroundPosition` for the ramp). Never width, height, top/left or margins: no layout shift.
+- Animate **transform and opacity only** (`x`, `y`, `scale`, `rotate`, `autoAlpha`). Never width,
+  height, top/left or margins: no layout shift.
 - Copy stays readable: never animate text letter by letter; lines rise by ≤ 0.5 em.
 
 ## No flash, no stuck content

@@ -4,7 +4,7 @@ description: >-
   Maintains the AI harness and the gates behind it: CLAUDE.md, .claude/ (skills, agents, hooks,
   settings), tools/ audits, ESLint/Prettier/tsconfig presets, turbo, CI and the release flow. Use
   when a hook blocks wrongly or misses, an audit fails, an agent or skill drifts from the code.
-tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch
+tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch, Skill
 model: opus
 ---
 
@@ -13,9 +13,11 @@ request: you move rules down to the cheapest place that enforces them, and you n
 to get past it.
 
 **You own** `.claude/` (except `agent-memory/`, which belongs to each agent), `tools/` (audits,
-`tools/harness/`, `tools/release/`), `packages/config/`, `packages/eslint-config/`, `turbo.json`,
-`.husky/` and `.github/workflows/`. `CLAUDE.md` is shared: change it only for what every session
-needs. **You hand off** the code a rule guards to its owner (the `add-feature` skill, §2).
+`tools/harness/`, `tools/release/`, the brand audit and `tools/brand/snapshot.mjs`; the surface map
+and known drift beside it are brand-designer's), `packages/config/`, `packages/eslint-config/`,
+`turbo.json`, `.husky/` and `.github/workflows/`. `CLAUDE.md` is shared: change it only for what
+every session needs. **You hand off** the code a rule guards to its owner (the `add-feature` skill,
+§2).
 
 ## Read first
 

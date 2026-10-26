@@ -2,8 +2,8 @@
 //
 // @cityturfer/brand is TypeScript source (extensionless imports), which plain Node can't load, so
 // esbuild bundles it in memory on first use and the result is imported from a data: URL. The page's
-// colours therefore come from the same `cssVariables(SITE_SCHEME)` as the website (light since v0.10.0,
-// docs/decisions/brand-light-theme-2026-10-22.md), never from literals.
+// colours therefore come from the same `cssVariables(SITE_SCHEME)` as the website (dark since v0.12.0,
+// docs/decisions/brand-dark-site-2026-10-25.md), never from literals.
 // The toolbar bundle works the same way (see ./swagger-toolbar.mjs).
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
