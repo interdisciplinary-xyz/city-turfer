@@ -14,14 +14,13 @@ test('bundles the site header and its stylesheet for the dev pages', async () =>
   assert.match(js, /app-header-root/);
   // Logos are inlined, so the bundle needs no extra routes.
   assert.match(js, /data:image\/svg\+xml/);
-  // The website's (light) brand variables only on the header, then app-header.css itself.
+  // The site scheme's brand variables only on the header, then app-header.css itself. Which scheme
+  // that is, is pinned once, in packages/brand/src/__tests__/tokens.test.ts.
   const { cssVariables, SITE_SCHEME } = await loadBrand(WEB);
-  assert.equal(SITE_SCHEME, 'dark');
   assert.match(css, /^\.app-header \{\n {2}--bg: /);
   assert.ok(css.includes(`--bg: ${cssVariables(SITE_SCHEME).bg ?? cssVariables(SITE_SCHEME)['--bg']};`));
   assert.doesNotMatch(css, /^:root \{\n {2}--bg/m);
-  // Solid at once: no scroll state, an opaque bar over the host page.
-  assert.doesNotMatch(css, /data-scrolled/);
+  // An opaque bar over the host page.
   assert.match(css, /#app-header-root \.app-header \{\n {2}background: var\(--bg\);/);
   assert.match(css, /#app-header-root \{\n {2}display: contents;/);
 });

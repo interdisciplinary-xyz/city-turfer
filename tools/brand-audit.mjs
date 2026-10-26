@@ -6,15 +6,20 @@
  *
  * Errors (exit 1):
  *   manifest      a surface names a file that does not exist, an owner agent that does not exist, or
- *                 a site surface whose theme files never mention SITE_SCHEME / cssVariables
+ *                 a site surface with a theme file whose code (comments ignored) neither reads the
+ *                 brand (SITE_SCHEME, cssVariables(), THEMES, a brand CSS variable) nor imports a
+ *                 theme file of the same surface
  *   brand-hex     a brand colour written as hex outside packages/brand (allowlist: ALLOWED_HEX)
  *   brand-rgb     a brand colour written as rgb()/rgba() channels outside packages/brand
  *   named-scheme  a scheme picked by name (cssVariables('light'), THEMES.dark…) outside packages/brand,
- *                 where SITE_SCHEME (site surfaces) or usePalette() (the app) must decide
+ *                 where SITE_SCHEME (site surfaces) or usePalette() (the app) must decide; in site
+ *                 code also the DARK / LIGHT palettes imported directly (allowlist: NAMED_SCHEME_ALLOWED)
  *   font-face     an @font-face or font file reference that is not a brand family or not a file in
  *                 packages/brand/fonts
- *   name          the product name spelt any way other than "CityTurfer" in user-facing copy
+ *   name          the product name spelt any way other than "CityTurfer" in user-facing copy, the old
+ *                 name TurfTrack included (lower-case slugs and bundle ids such as turftrack stay)
  *   territory     "territory" in English user-facing copy (Polish "terytorium" is right)
+ *   vocabulary    "score", "points" or "conquer" in English catalogues (brand-system: too aggressive)
  *   logo-copy     a mark / wordmark SVG outside packages/brand/svg that differs from the original
  *
  * Warnings (reported, exit 0): other hex literals, surfaces without a theme or fonts (the plan's
@@ -25,7 +30,7 @@
  */
 import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { basename, dirname, extname, join, relative, resolve } from 'node:path';
+import { basename, dirname, extname, join, posix, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { KNOWN_DRIFT } from './brand/known-drift.mjs';
@@ -55,6 +60,19 @@ export const ALLOWED_HEX = {
   'apps/mobile/app.json': 'native config: Expo reads JSON, no imports (splash and adaptive icon background)',
 };
 
+/**
+ * Site files that may import the DARK / LIGHT palettes by name, with the reason. Everything else on
+ * a site surface takes its palette through SITE_SCHEME.
+ */
+export const NAMED_SCHEME_ALLOWED = {
+  'apps/web/src/app/branding/page.dev.tsx': 'the brand book shows both palettes and their contrast side by side',
+  'apps/storybook/src/decorators/frame.tsx':
+    'NightPanel frames map pieces, and maps are always dark (never SITE_SCHEME)',
+};
+
+/** Site code, where the scheme is SITE_SCHEME's choice. The app (apps/mobile, packages/ui) is always dark. */
+const SITE_CODE = /^apps\/(web|storybook|api|admin)\//;
+
 /** User-facing copy: catalogues and the words other surfaces show. */
 export const COPY_FILES = [
   'apps/web/messages',
@@ -71,8 +89,14 @@ export const COPY_FILES = [
 /** English catalogues, where "territory" is banned (brand-system: internal term only). */
 export const ENGLISH_COPY = ['apps/web/messages/en.json', 'apps/mobile/messages/en'];
 
-/** Wrong spellings of the name. Lower-case `cityturfer` is a domain or package name, not copy. */
-const BAD_NAME = /\b(City[ -][Tt]urfer|Cityturfer|CityTurFer|Cityturfers)\b/g;
+/**
+ * Wrong spellings of the name, and the old name. Lower-case `cityturfer` / `turftrack` are domains,
+ * slugs, bundle ids and package names, not copy; `turf-track` is the repository's folder.
+ */
+const BAD_NAME = /\b(City[ -][Tt]urfer|Cityturfer|CityTurFer|Cityturfers|Turf[ -]?Track|TURF ?TRACK)\b/g;
+
+/** Words the brand never uses in English copy (brand-system: "score", "points", "conquer"). */
+const BANNED_WORDS = /\b(scores?|scored|scoring|points|conquer(?:s|ed|ing)?)\b/gi;
 
 /** Where logo copies could hide. */
 const LOGO_DIRS = [
@@ -115,8 +139,8 @@ export function brandHexes(brand) {
       return;
     }
     if (typeof v === 'string') {
-      for (const m of v.match(/#[0-9a-fA-F]{6}\b/g) ?? []) {
-        found.add(m.toUpperCase());
+      for (const m of v.matchAll(HEX)) {
+        found.add(`#${m[1].toUpperCase()}`);
       }
     } else if (typeof v === 'object') {
       Object.values(v).forEach((x) => visit(x, depth + 1));
@@ -135,6 +159,9 @@ export function brandFamilies(brand) {
   );
 }
 
+/** `#RRGGBB` or `#RRGGBBAA`; group 1 is the colour, group 2 the alpha. */
+const HEX = /#([0-9a-fA-F]{6})([0-9a-fA-F]{2})?\b/g;
+
 const hexToRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(',');
 
 /** Line number (1-based) of an index in a text. */
@@ -152,15 +179,16 @@ export function literalFindings(file, text, brand) {
   const add = (rule, level, index, message) => findings.push({ rule, level, file, line: lineOf(text, index), message });
 
   if (!ALLOWED_HEX[file]) {
-    for (const m of text.matchAll(/#[0-9a-fA-F]{6}\b/g)) {
-      const hex = m[0].toUpperCase();
+    for (const m of text.matchAll(HEX)) {
+      const hex = `#${m[1].toUpperCase()}`;
       // Skip anchors and ids such as href="#a1b2c3" and colour-free hashes in URLs.
       const before = text.slice(Math.max(0, m.index - 6), m.index);
       if (/(href=["']|url\(|\/)$/.test(before)) {
         continue;
       }
       if (brand.hexes.has(hex)) {
-        add('brand-hex', 'error', m.index, `${m[0]} is a brand colour: take it from @cityturfer/brand`);
+        const alpha = m[2] ? ` (${hex} with alpha)` : '';
+        add('brand-hex', 'error', m.index, `${m[0]}${alpha} is a brand colour: take it from @cityturfer/brand`);
       } else {
         add('hex', 'warning', m.index, `${m[0]} is not a brand token: add a token or explain it`);
       }
@@ -168,7 +196,8 @@ export function literalFindings(file, text, brand) {
   }
 
   const rgbBrand = new Map([...brand.hexes].map((h) => [hexToRgb(h), h]));
-  for (const m of text.matchAll(/rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})/g)) {
+  // Comma syntax `rgba(123, 47, 247, 0.5)` and space syntax `rgb(123 47 247 / 55%)`.
+  for (const m of text.matchAll(/rgba?\(\s*(\d{1,3})[\s,]+(\d{1,3})[\s,]+(\d{1,3})\b/g)) {
     const key = `${Number(m[1])},${Number(m[2])},${Number(m[3])}`;
     if (rgbBrand.has(key)) {
       add(
@@ -189,6 +218,26 @@ export function literalFindings(file, text, brand) {
       m.index,
       `${m[0]}: pick the scheme through SITE_SCHEME (site surfaces) or usePalette() (the app)`
     );
+  }
+  if (SITE_CODE.test(file) && !NAMED_SCHEME_ALLOWED[file]) {
+    for (const m of text.matchAll(/import\s*(?:type\s*)?\{([^}]*)\}\s*from\s*['"]@cityturfer\/brand['"]/g)) {
+      // `{ DARK, type Palette, LIGHT as L }`: the imported name is the first word of each specifier
+      const names = m[1].split(',').map(
+        (x) =>
+          x
+            .trim()
+            .replace(/^type\s+/, '')
+            .split(/\s/)[0]
+      );
+      for (const name of names.filter((n) => n === 'DARK' || n === 'LIGHT')) {
+        add(
+          'named-scheme',
+          'error',
+          m.index,
+          `${name} imported from @cityturfer/brand: site code reads THEMES[SITE_SCHEME] or cssVariables(SITE_SCHEME)`
+        );
+      }
+    }
   }
 
   for (const m of text.matchAll(/@font-face\s*{([^}]*)}/g)) {
@@ -249,21 +298,66 @@ export function copyFindings(file, text, { english = false } = {}) {
       for (const m of value.matchAll(/\bterritor(y|ies)\b/gi)) {
         findings.push({ rule: 'territory', level: 'error', file, key, message: `"${m[0]}" in English copy: say turf` });
       }
+      for (const m of value.matchAll(BANNED_WORDS)) {
+        findings.push({
+          rule: 'vocabulary',
+          level: 'error',
+          file,
+          key,
+          message: `"${m[0]}" in English copy: the brand says claim, glow, your turf (brand-system)`,
+        });
+      }
     }
   }
   return findings;
 }
 
-/** Manifest findings: missing files, unknown owners, site surfaces whose theme ignores SITE_SCHEME. */
-export function manifestFindings(surfaces, { exists, agents, read }) {
+/** Code without its comments (CSS, JS/TS and HTML), so a comment that names SITE_SCHEME proves nothing. */
+export function stripComments(text) {
+  return text
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/(^|[^:'"`\\\w])\/\/.*$/gm, '$1');
+}
+
+/** Relative modules a file imports (`import … from './x'`, `import './x.css'`, `@import`, require). */
+function relativeImports(file, code) {
+  const out = [];
+  for (const m of code.matchAll(
+    /(?:\bfrom\s*|\bimport\s*\(?\s*|@import\s+(?:url\()?\s*|\brequire\(\s*)['"](\.{1,2}\/[^'"]+)['"]/g
+  )) {
+    const base = posix.normalize(posix.join(posix.dirname(file), m[1]));
+    out.push(base, ...['.ts', '.tsx', '.mjs', '.js', '.css'].map((ext) => `${base}${ext}`));
+  }
+  return out;
+}
+
+/** What counts as drawing from the brand in a theme file's code. */
+function brandEvidence(brandVars) {
+  const vars = [...brandVars].map((v) => v.replace(/^--/, '')).join('|') || 'bg|card|text';
+  return new RegExp(
+    `\\bSITE_SCHEME\\b|\\bcssVariables\\s*\\(|\\bTHEMES\\b|['"]@cityturfer\\/brand['"]|var\\(--(${vars})\\s*[,)]`
+  );
+}
+
+/**
+ * Manifest findings: missing files, unknown owners, and site surfaces with a theme file that does not
+ * draw from the brand. Every listed theme file of a 'site' or 'both' surface must, in its code (not a
+ * comment), read the brand itself or import another theme file of the same surface.
+ */
+export function manifestFindings(surfaces, { exists, agents, read, brandVars = new Set() }) {
   const findings = [];
   const ids = new Set();
+  const evidence = brandEvidence(brandVars);
   for (const s of surfaces) {
     const file = `tools/brand/surfaces.mjs#${s.id}`;
     if (ids.has(s.id)) {
       findings.push({ rule: 'manifest', level: 'error', file, message: `duplicate surface id ${s.id}` });
     }
     ids.add(s.id);
+    if (!['dark', 'site', 'both'].includes(s.scheme)) {
+      findings.push({ rule: 'manifest', level: 'error', file, message: `scheme ${s.scheme}: dark, site or both` });
+    }
     if (!agents.has(s.owner)) {
       findings.push({
         rule: 'manifest',
@@ -287,15 +381,18 @@ export function manifestFindings(surfaces, { exists, agents, read }) {
         findings.push({ rule: 'unthemed', level: 'warning', file, message: `${s.name} loads no brand fonts` });
       }
     }
-    if (s.scheme === 'site' && s.theme.length > 0) {
-      const texts = s.theme.filter(exists).map(read);
-      if (!texts.some((t) => /SITE_SCHEME|cssVariables|var\(--(bg|card|text)\)/.test(t))) {
-        findings.push({
-          rule: 'manifest',
-          level: 'error',
-          file,
-          message: `site surface ${s.id}: no theme file uses SITE_SCHEME, cssVariables() or the brand variables`,
-        });
+    if (s.scheme === 'site' || s.scheme === 'both') {
+      const listed = new Set(s.theme);
+      for (const p of s.theme.filter(exists)) {
+        const code = stripComments(read(p));
+        if (!evidence.test(code) && !relativeImports(p, code).some((i) => i !== p && listed.has(i))) {
+          findings.push({
+            rule: 'manifest',
+            level: 'error',
+            file,
+            message: `theme file ${p} of ${s.id} draws nothing from the brand in its code (SITE_SCHEME, cssVariables(), THEMES, a brand variable, or another theme file of the surface); comments do not count`,
+          });
+        }
       }
     }
   }
@@ -353,6 +450,7 @@ export async function audit() {
     ...manifestFindings(SURFACES, {
       exists: (p) => existsSync(join(ROOT, p)),
       agents,
+      brandVars: new Set(Object.keys(brand.cssVariables(brand.SITE_SCHEME))),
       read: (p) => (statSync(join(ROOT, p)).isDirectory() ? '' : readFileSync(join(ROOT, p), 'utf8')),
     })
   );
@@ -375,26 +473,39 @@ export async function audit() {
 }
 
 /**
- * Known drift (tools/brand/known-drift.mjs) turns matching errors into level "known"; an entry that
- * matches nothing becomes an error, so a fixed drift must also leave the list.
+ * Known drift (tools/brand/known-drift.mjs) turns matching errors into level "known", up to each
+ * entry's `count` (default 1): one more occurrence of a known literal stays an error. An entry that
+ * matches fewer findings than its count is an error too, so a fixed drift must also leave the list.
  */
 export function applyKnown(findings, known) {
-  const used = new Set();
+  const used = known.map(() => 0);
   const out = findings.map((f) => {
     const i = known.findIndex((k) => k.rule === f.rule && k.file === f.file && f.message.includes(k.match));
     if (i === -1 || f.level !== 'error') {
       return f;
     }
-    used.add(i);
+    const allowed = known[i].count ?? 1;
+    used[i] += 1;
+    if (used[i] > allowed) {
+      return { ...f, message: `${f.message} (known drift allows ${allowed}; this one is new)` };
+    }
     return { ...f, level: 'known', message: `${f.message} (known: ${known[i].reason})`, todo: Boolean(known[i].todo) };
   });
   known.forEach((k, i) => {
-    if (!used.has(i)) {
+    const allowed = k.count ?? 1;
+    if (used[i] === 0) {
       out.push({
         rule: 'known-drift',
         level: 'error',
         file: 'tools/brand/known-drift.mjs',
         message: `${k.rule} in ${k.file} ("${k.match}") no longer occurs: delete the entry`,
+      });
+    } else if (used[i] < allowed) {
+      out.push({
+        rule: 'known-drift',
+        level: 'error',
+        file: 'tools/brand/known-drift.mjs',
+        message: `${k.rule} in ${k.file} ("${k.match}") occurs ${used[i]}×, count says ${allowed}: lower the count`,
       });
     }
   });

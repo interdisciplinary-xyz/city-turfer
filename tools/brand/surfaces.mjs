@@ -5,11 +5,13 @@
  *
  * Fields:
  *   id, name   stable key and human name
- *   scheme     'dark' (always dark: the app, every map) or 'site' (follows SITE_SCHEME, dark since
- *              v0.12.0: website, portal, Swagger, Storybook, admin)
+ *   scheme     'dark' (always dark: the app, every map), 'site' (follows SITE_SCHEME, dark since
+ *              v0.12.0: website, portal, Swagger, Storybook) or 'both' (maps both schemes because
+ *              the host switches them: the admin follows Payload's own light/dark toggle)
  *   owner      the agent that changes this surface (.claude/agents/<owner>.md)
  *   status     'live' | 'dev' (local only) | 'paused' (not deployed, not unified yet)
- *   theme      files that turn brand tokens into this surface's colours, or [] when it has none
+ *   theme      files that turn brand tokens into this surface's colours, or [] when it has none; on a
+ *              'site' or 'both' surface each one must draw from the brand in code (audit:brand)
  *   fonts      files that load the brand typefaces here, or [] when it uses none
  *   logo       files that place the mark / wordmark / favicon / icon here
  *   copy       files with this surface's user-facing words (product name, taglines, titles)
@@ -42,7 +44,11 @@ export const SURFACES = [
     scheme: 'site',
     owner: 'web-engineer',
     status: 'live',
-    theme: ['apps/web/src/app/[locale]/layout.tsx', 'apps/web/src/app/globals.css'],
+    theme: [
+      'apps/web/src/app/[locale]/layout.tsx',
+      'apps/web/src/app/globals.css',
+      'apps/web/src/app/[locale]/home-sections/home-sections.css',
+    ],
     fonts: ['apps/web/src/app/fonts.ts'],
     logo: ['apps/web/src/app/[locale]/layout.tsx', 'apps/web/public/og-image.png'],
     copy: ['apps/web/messages/en.json', 'apps/web/messages/pl.json'],
@@ -54,7 +60,8 @@ export const SURFACES = [
     scheme: 'site',
     owner: 'portal-engineer',
     status: 'live',
-    theme: ['apps/web/src/app/globals.css'],
+    // Under [locale]/layout.tsx, so globals.css applies; account/layout.tsx adds portal.css.
+    theme: ['apps/web/src/app/globals.css', 'apps/web/src/app/[locale]/account/portal.css'],
     fonts: ['apps/web/src/app/fonts.ts'],
     logo: ['apps/web/src/app/[locale]/app-header'],
     copy: ['apps/web/messages/en.json', 'apps/web/messages/pl.json'],
@@ -67,7 +74,8 @@ export const SURFACES = [
     scheme: 'site',
     owner: 'brand-designer',
     status: 'dev',
-    theme: ['apps/web/src/app/globals.css'],
+    // Outside [locale], so not globals.css: the page sets cssVariables(SITE_SCHEME) and branding.css.
+    theme: ['apps/web/src/app/branding/page.dev.tsx', 'apps/web/src/app/branding/branding.css'],
     fonts: ['apps/web/src/app/fonts.ts'],
     logo: ['apps/web/src/app/branding'],
     copy: ['apps/web/src/app/branding'],
@@ -125,11 +133,15 @@ export const SURFACES = [
   {
     id: 'admin',
     name: 'Admin portal (Payload)',
-    scheme: 'site',
+    scheme: 'both',
     // No admin agent yet; the theme mapping is brand-designer's (apps/admin/src/app/(payload)/custom.scss).
     owner: 'brand-designer',
     status: 'paused',
-    theme: ['apps/admin/src/brand/theme.ts', 'apps/admin/src/brand/brand-theme.tsx'],
+    theme: [
+      'apps/admin/src/brand/theme.ts',
+      'apps/admin/src/brand/brand-theme.constants.ts',
+      'apps/admin/src/brand/brand-theme.tsx',
+    ],
     fonts: ['apps/admin/src/brand/fonts.ts'],
     logo: ['apps/admin/src/brand/logo.tsx', 'apps/admin/src/brand/icon.tsx', 'apps/admin/src/payload.config.ts'],
     copy: ['apps/admin/src/payload.config.ts'],
@@ -142,7 +154,7 @@ export const SURFACES = [
  * @typedef {object} Surface
  * @property {string} id
  * @property {string} name
- * @property {'dark' | 'site'} scheme
+ * @property {'dark' | 'site' | 'both'} scheme
  * @property {string} owner
  * @property {'live' | 'dev' | 'paused'} status
  * @property {string[]} theme
