@@ -22,7 +22,7 @@ glows brighter each time you come back.
 **Not for:** competing for territory with other people, training plans or heart-rate analysis.
 CityTurfer is single-player and local-first: the phone is the source of truth.
 
-> [!NOTE] Status: **v0.11.0 released** (proof of concept: iOS dev builds, Android APK), **v0.12.0 in
+> [!NOTE] Status: **v0.12.0 released** (proof of concept: iOS dev builds, Android APK), **v0.13.0 in
 > progress**. Local profiles `admin@cityturfer.com` / `admin1234` and `demo@cityturfer.com` /
 > `demo1234` (Gdańsk demo data); any other e-mail signs in with an e-mailed code against the API.
 > Data stays on the phone unless you turn on **Cloud backup** (opt-in, one way, signed-in account).

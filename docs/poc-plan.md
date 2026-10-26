@@ -275,7 +275,8 @@ claimedAt (= the activity's startedAt, _not_ the import time), and `cells: Reado
 
 **Value objects**: `CellId`, `Strength` (0–1, with tier `faint | glowing | strong | blazing`),
 `TurfParameters` (saturationK = 3), and `TurfSummary` (total area in m², counts by tier, new area in
-the last 7 and 30 days, most-visited cell).
+the current week (from local Monday 00:00, like the This week card) and the last 30 days,
+most-visited cell).
 
 **Domain policy `TurfStrengthPolicy`** is the reference formula, identical to
 `apps/mobile/tools/turf-preview.mjs`:

@@ -84,7 +84,9 @@ isStrong(s): tier is 'strong' or 'blazing'
   core territory test and `apps/mobile/tools/__tests__/turf-parity.test.mjs` both assert against
   them.
 - Don't reintroduce time decay without a product decision. "Recent activity" belongs in the summary
-  (new turf this week or month), not in Strength.
+  (new turf this week or month), not in Strength. "This week" is the calendar week from local Monday
+  00:00 (`weekStartOf`, as the This week card and Achievements); "month" is a rolling 30 days, shown
+  nowhere yet.
 
 ## CellGrid port and H3
 

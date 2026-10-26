@@ -145,7 +145,8 @@ server's clock. Nothing is computed in the API but paging and tags.
   with `410` (later pages), so a page never mixes two versions (tested by committing a write during
   the read). A first page the turf changes under on every try (3, a phone backup uploading) answers
   **`503 turf.busy`** with `Retry-After: 5`; clients pause briefly before restarting after a `410`.
-- **`GET /v1/turf/summary`** — `private, no-store` (new this week/month depend on now).
+- **`GET /v1/turf/summary`** — `private, no-store` (new this week/month depend on now; since
+  2026-10-26 "this week" is the calendar week from Monday 00:00 in the server's time zone, UTC).
 - **`GET /v1/turf/claims/{activityId}`** — 404 `not-found` / 410 `activity.deleted` as every
   activity route; 404 also when the activity has no claim (a deferred start, not backfilled); cells
   `{ id, isNew }` sorted by id, "new" canonical (D4); `private, no-store`.
