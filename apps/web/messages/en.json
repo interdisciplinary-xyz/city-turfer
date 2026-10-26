@@ -29,6 +29,84 @@
       "alt": "The Dashboard: this week's distance, time and activities, recent activities and the next achievement."
     }
   },
+  "home": {
+    "how": {
+      "eyebrow": "How it works",
+      "title": "One loop. Every street.",
+      "record": {
+        "title": "Record a walk, run or ride",
+        "body": "Live map, live stats and auto-pause. Hold to finish when you’re done."
+      },
+      "gain": {
+        "label": "Turf gained",
+        "area": "+{area} km² new turf",
+        "cells": "{added, plural, one {# new cell} other {# new cells}} · {reinforced} reinforced",
+        "title": "Every street becomes yours",
+        "body": "Each hexagon (about 50 m across) your track passes through is your turf, for good."
+      },
+      "glow": {
+        "legendTitle": "Turf strength",
+        "legendLabel": "Turf strength: Faint, Glowing, Strong, Blazing, from weakest to strongest",
+        "title": "Come back and watch it glow",
+        "body": "Every return makes a street brighter, from Faint to Blazing. Nothing fades: a street you’ve claimed stays yours, however long you’re away."
+      }
+    },
+    "types": {
+      "walk": "Walk",
+      "run": "Run",
+      "cycle": "Ride"
+    },
+    "tiers": {
+      "faint": "Faint",
+      "glowing": "Glowing",
+      "strong": "Strong",
+      "blazing": "Blazing"
+    },
+    "week": {
+      "eyebrow": "Dashboard",
+      "title": "What your week added up to",
+      "body": "This week’s distance, time and activities, your latest walks, runs and rides, and the next achievement within reach.",
+      "thisWeek": "This week",
+      "distance": "Distance",
+      "time": "Time",
+      "count": "Activities",
+      "unitKm": "km",
+      "rowDistance": "{distance} km",
+      "rowPace": "{time} · {pace}/km",
+      "rowSpeed": "{time} · {speed} km/h",
+      "recent": "Recent activities",
+      "seeAll": "See all ›",
+      "achievements": "Achievements",
+      "nextUp": "Next up: <b>Half marathon</b> · Walk or run 21.1 km in one go.",
+      "caption": "An example week, as the app shows it.",
+      "activities": {
+        "walk": {
+          "title": "Morning walk",
+          "when": "Fri, 16 Oct at 06:00"
+        },
+        "run": {
+          "title": "Afternoon run",
+          "when": "Wed, 14 Oct at 13:00"
+        },
+        "ride": {
+          "title": "Morning ride",
+          "when": "Tue, 13 Oct at 09:00"
+        }
+      }
+    },
+    "local": {
+      "eyebrow": "Yours alone",
+      "title": "Your phone keeps the original",
+      "phone": "Your activities are stored on your phone, in the app.",
+      "backup": "Cloud backup stays off until you turn it on. Turn it off and the copy on our server is deleted.",
+      "portal": "Signed in on the web, you see only what you backed up."
+    },
+    "cta": {
+      "title": "Your turf starts at your door",
+      "body": "Leave your email and we’ll tell you when the app is ready to download.",
+      "join": "Join the waitlist"
+    }
+  },
   "language": {
     "label": "Language",
     "en": "English",

@@ -4,7 +4,7 @@ description: >-
   GPS tracking and the core engine: background location, permissions, Fix Filter, auto-pause, kill
   recovery, metrics, turf claims and strength, SQLite migrations. packages/core/,
   contexts/recording/, platform/. Bugs: route gaps, GPS jumps, wrong distance, lost activities.
-tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch
+tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch, Skill
 model: opus
 ---
 

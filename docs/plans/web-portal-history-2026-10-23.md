@@ -103,6 +103,8 @@ needed for reads:
 
 ## Executed (2026-10-24)
 
+Shipped in v0.11.0 (released 2026-10-24, tag `v0.11.0`).
+
 Built on `feat/web-portal-history` (PR #162, into `scope/v0.11.0`): work items 1–6. The Activities
 page (totals, type filter, list by month, "Show more") and the Activity page (stats, splits, the
 route as an inline SVG with dashed gap estimates, not-found and deleted states), every empty state,

@@ -7,7 +7,6 @@ import { after, ERRORS } from './fixtures';
 const meta = {
   title: 'Portal/SignInForm',
   component: SignInForm,
-  globals: { scheme: 'light' },
   args: { onRequestCode: after(600, 'ok'), onSignIn: after(800, ERRORS.wrongCode), reason: null },
   parameters: {
     layout: 'padded',

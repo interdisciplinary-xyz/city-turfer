@@ -24,7 +24,6 @@ function PrivacySections({ backup, withEmail }: Props) {
 const meta = {
   title: 'Portal/PrivacySections',
   component: PrivacySections,
-  globals: { scheme: 'light' },
   args: { backup: 'on', withEmail: true },
   argTypes: { backup: { control: 'inline-radio', options: Object.keys(CONSENTS) } },
   parameters: { layout: 'padded' },

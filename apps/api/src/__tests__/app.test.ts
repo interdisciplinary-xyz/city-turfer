@@ -188,8 +188,8 @@ describe('routes', () => {
     const html = await ui.text();
     expect(html).toContain('swagger');
     expect(html).toContain('showExtensions');
-    // Light code blocks, matching the site's light theme.
-    expect(html).toContain('syntaxHighlight: {"activated":true,"theme":"idea"}');
+    // Dark code blocks (obsidian), matching the site's dark theme.
+    expect(html).toContain('syntaxHighlight: {"activated":true,"theme":"obsidian"}');
   });
 });
 

@@ -4,7 +4,7 @@ Outlines render the same everywhere (no font needed by Chrome, Figma or the stor
 capitals like every display line (docs/decisions/brand-typography-2026-10-22.md): both words are
 Big Shoulders Display Black; "CITY" is solid, "TURFER" is filled with the Ramp, running from
 bottom-left to top-right, and the colour change keeps the two words apart. Two files: `wordmark.svg`
-for dark backgrounds, `wordmark-light.svg` for light ones ("CITY" in night; "TURFER" uses only
+for dark backgrounds ("CITY" in white), `wordmark-light.svg` for light ones ("CITY" in night; "TURFER" uses only
 faint -> glow, which stay legible on white).
 
 Usage (fonttools + uharfbuzz in a virtualenv):
@@ -23,9 +23,9 @@ from fontTools.ttLib import TTFont
 SIZE = 180  # font size in SVG units
 TRACKING = 0.01  # letter-spacing as a share of the font size (display capitals: a hair of air)
 PAD = 12
-NIGHT, BLAZING, FAINT, GLOW, STRONG = '#0B0D12', '#FFF3C4', '#7B2FF7', '#F72FA8', '#FFB02E'
+NIGHT, WHITE, BLAZING, FAINT, GLOW, STRONG = '#0B0D12', '#FFFFFF', '#FFF3C4', '#7B2FF7', '#F72FA8', '#FFB02E'
 VARIANTS = {
-    'wordmark.svg': {'city': BLAZING, 'ramp': [(0, GLOW), (0.7, STRONG), (1, BLAZING)], 'note': 'dark backgrounds'},
+    'wordmark.svg': {'city': WHITE, 'ramp': [(0, GLOW), (0.7, STRONG), (1, BLAZING)], 'note': 'dark backgrounds'},
     'wordmark-light.svg': {'city': NIGHT, 'ramp': [(0, FAINT), (1, GLOW)], 'note': 'light backgrounds'},
 }
 

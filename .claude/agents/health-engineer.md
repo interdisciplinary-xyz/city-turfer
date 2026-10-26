@@ -4,7 +4,7 @@ description: >-
   "Apple Watch workouts don't show up", duplicate or missing imports, save-to-Health failures, new
   Health data types, HealthKit permissions or plugin. Builds and fixes Health Sync
   (apps/mobile/src/contexts/health-sync/): adapter, Info-screen card, tests.
-tools: Read, Write, Edit, Grep, Glob, Bash, WebSearch, WebFetch
+tools: Read, Write, Edit, Grep, Glob, Bash, WebSearch, WebFetch, Skill
 model: opus
 ---
 

@@ -2,13 +2,12 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import type { Locale } from '@/i18n/routing';
 
-import { ANDROID_APK_URL } from '../download-url';
 import { WAITLIST } from '../waitlist-config';
 import { AppHeader } from './app-header';
 import { HeroCopy } from './hero-copy';
 import { HeroMotion } from './hero-motion';
 import { HeroScreens } from './hero-screens';
-import { StoreButtons } from './store-buttons';
+import { FinalCta, HowItWorks, LocalFirst, YourWeek } from './home-sections';
 import { WaitlistForm } from './waitlist-form';
 
 export default async function Home({ params }: { params: Promise<{ locale: Locale }> }) {
@@ -27,7 +26,7 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
           <HeroMotion className='wrap hero-grid'>
             <HeroCopy />
             <HeroScreens />
-            <StoreButtons apkUrl={ANDROID_APK_URL} />
+            {/* No download buttons for now: the waitlist comes first (StoreButtons stays for later). */}
           </HeroMotion>
         </div>
         {WAITLIST ? (
@@ -42,6 +41,10 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
             </div>
           </section>
         ) : null}
+        <HowItWorks />
+        <YourWeek />
+        <LocalFirst />
+        {WAITLIST ? <FinalCta /> : null}
       </main>
     </>
   );

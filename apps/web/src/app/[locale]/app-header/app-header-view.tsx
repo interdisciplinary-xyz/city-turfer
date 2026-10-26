@@ -1,20 +1,11 @@
 import type { AppHeaderViewProps } from './app-header.constants';
-import { ScrollState } from './scroll-state';
 
 /**
  * The header's markup, free of Next: the site renders it through `AppHeader`, and the local
  * Storybook and Swagger pages through `tools/app-header-entry.mjs`, so they never drift apart.
  * Styles: `app-header.css`.
  */
-export function AppHeaderView({
-  homeHref,
-  homeLabel,
-  logo,
-  waitlist,
-  account,
-  languages,
-  lockupSelector,
-}: AppHeaderViewProps) {
+export function AppHeaderView({ homeHref, homeLabel, logo, waitlist, account, languages }: AppHeaderViewProps) {
   return (
     <header className='app-header'>
       <div className='app-header-inner'>
@@ -42,7 +33,6 @@ export function AppHeaderView({
           ) : null}
           {languages}
         </div>
-        <ScrollState lockupSelector={lockupSelector} />
       </div>
     </header>
   );

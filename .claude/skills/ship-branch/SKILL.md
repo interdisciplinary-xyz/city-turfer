@@ -87,7 +87,9 @@ Body = `.github/pull_request_template.md`, filled honestly:
 - Report the PR URL and CI state (`gh pr checks <n>`).
 - **Never merge** (`gh pr merge` asks the user; squash/rebase are denied). Merge commits only.
 - Never tag, never run `pnpm run release` (commit-and-tag-version) and never edit `CHANGELOG.md`:
-  `release.yml` does all three on merge to main. `--dry-run` is fine for a preview.
+  `release.yml` does all three on merge to main. The preview is
+  `pnpm exec commit-and-tag-version --dry-run [--release-as X.Y.Z]` and nothing else (with pnpm,
+  `pnpm run release -- --dry-run` is the real release: the `--` reaches it).
 
 ## Starting the next version (scope cut)
 

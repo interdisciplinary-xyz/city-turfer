@@ -34,10 +34,11 @@ const PINNED_DARK_CSS = {
   '--border': '#242A38',
   '--danger': '#FF6369',
   '--accent': '#F72FA8',
-  '--on-accent': '#FFFFFF',
+  // The web's pink label is night ink in both schemes (WEB_ON_ACCENT, AA); the app keeps white.
+  '--on-accent': '#0B0D12',
   '--faint': '#7B2FF7',
   '--glow': '#F72FA8',
-  '--on-glow': '#FFFFFF',
+  '--on-glow': '#0B0D12',
   '--strong': '#FFB02E',
   '--blazing': '#FFF3C4',
   '--walk': '#2BD48B',
@@ -94,8 +95,8 @@ describe('design tokens', () => {
     });
   });
 
-  it('put the website, Swagger and Storybook on the light scheme', () => {
-    expect(SITE_SCHEME).toBe('light');
+  it("put the website, Swagger and Storybook on the app's dark scheme", () => {
+    expect(SITE_SCHEME).toBe('dark');
   });
 
   it('order the tiers like the Ramp', () => {
@@ -123,7 +124,7 @@ describe('cssVariables', () => {
       '--card': DARK.card,
       '--text': DARK.text,
       '--glow': TIER_COLOR.glowing,
-      '--on-glow': ON_ACCENT,
+      '--on-glow': ON_LIGHT,
       '--ride': TYPE_COLOR.cycle,
       '--space-lg': '16px',
       '--radius-panel': '20px',
@@ -159,6 +160,7 @@ describe('cssVariables', () => {
     });
   });
 
+  // The pink label is WEB_ON_ACCENT in both schemes, so it is not among the changed keys.
   it('switches only the theme colours between schemes', () => {
     const light: Record<string, string> = cssVariables('light');
     const dark: Record<string, string> = cssVariables('dark');
@@ -173,8 +175,6 @@ describe('cssVariables', () => {
         '--card',
         '--danger',
         '--muted',
-        '--on-accent',
-        '--on-glow',
         '--ride-graphic',
         '--ride-text',
         '--run-graphic',

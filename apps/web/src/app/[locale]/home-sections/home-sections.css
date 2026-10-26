@@ -1,0 +1,486 @@
+/* The homepage below the hero, in the app's pieces. Each .app-* class is the CSS twin of an
+   @cityturfer/ui component (packages/ui/src): same tokens from cssVariables(SITE_SCHEME), no hex.
+   Card: radius-card, padding lg, hairline border. ActivityRow: radius-control, padding md. Stat:
+   numeric face, tabular figures, uppercase label with label tracking. TurfLegend: a stepped Ramp. */
+
+.home-section {
+  padding: clamp(56px, 9vw, 112px) 0;
+}
+
+.home-section + .home-section {
+  padding-top: 0;
+}
+
+.home-eyebrow,
+.app-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--font-label);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+
+/* Section titles: the display face in capitals, like the app's screen titles. */
+.home-title {
+  margin: 8px 0 0;
+  font-family: var(--display);
+  font-weight: normal;
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  line-height: 1;
+  letter-spacing: var(--display-tracking);
+  text-transform: var(--display-case);
+}
+
+.home-title-small {
+  font-size: clamp(1.6rem, 3.6vw, 2.25rem);
+}
+
+.home-lede {
+  margin: 16px 0 0;
+  max-width: 34rem;
+  color: var(--muted);
+  font-size: var(--font-lead);
+  line-height: 1.5;
+}
+
+/* ---------- App pieces ---------- */
+
+.app-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: var(--space-lg);
+}
+
+/* The app's card heading (17 px, extra bold). */
+.app-card-title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: var(--font-weight-heavy);
+}
+
+.app-muted,
+.app-row-small {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--font-caption);
+}
+
+.app-strong {
+  color: var(--text);
+}
+
+.app-link {
+  color: var(--accent-text);
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-bold);
+}
+
+.app-list-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+/* Filter chips on the Turf Map: outlined in the type colour. */
+.app-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--chip, var(--border-control));
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--chip, var(--border)) 14%, var(--card));
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-bold);
+}
+
+.app-chip-walk {
+  --chip: var(--walk-graphic);
+}
+.app-chip-run {
+  --chip: var(--run-graphic);
+}
+.app-chip-ride {
+  --chip: var(--ride-graphic);
+}
+
+/* The Record tab's button: a glow disc with a ring and a white
+   dot (--text on glow is 3.13:1: it passes the 3:1 graphic threshold, and matches the app). `--glow`
+   has no `-graphic` variant in cssVariables(), so graphics here use it raw. */
+.app-record {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--glow);
+  box-shadow:
+    0 0 0 4px var(--card),
+    0 0 0 6px color-mix(in srgb, var(--glow) 45%, transparent),
+    0 10px 30px color-mix(in srgb, var(--glow) 35%, transparent);
+}
+
+.app-record-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 3px solid var(--text);
+  background: color-mix(in srgb, var(--text) 25%, transparent);
+}
+
+.app-gain {
+  display: grid;
+  gap: 4px;
+  padding: var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg);
+}
+
+.app-gain-area {
+  margin: 0;
+  color: var(--strong-text);
+  font-family: var(--numeric);
+  font-size: var(--font-stat);
+  font-variant-numeric: tabular-nums;
+}
+
+/* TurfLegend: four flat steps, weakest to strongest. */
+.app-legend {
+  display: grid;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-chip);
+  background: var(--bg);
+}
+
+.app-legend-bar {
+  display: flex;
+  gap: 2px;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.app-legend-step {
+  flex: 1;
+}
+.app-legend-faint {
+  background: var(--faint);
+}
+.app-legend-glowing {
+  background: var(--glow);
+}
+.app-legend-strong {
+  background: var(--strong);
+}
+.app-legend-blazing {
+  background: var(--blazing);
+}
+
+.app-legend-labels {
+  display: flex;
+}
+
+.app-legend-labels span {
+  flex: 1;
+  text-align: center;
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Stat: value + unit on one baseline, the label underneath. */
+.app-stats {
+  display: flex;
+  margin-top: var(--space-md);
+}
+
+.app-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xxs);
+}
+
+.app-stat-figure {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+}
+
+.app-stat-value {
+  font-family: var(--numeric);
+  font-size: var(--font-stat);
+  font-variant-numeric: tabular-nums;
+}
+
+.app-stat-unit {
+  color: var(--muted);
+  font-size: var(--font-unit);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ActivityRow: badge, name and date, distance and detail. */
+.app-rows {
+  display: grid;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.app-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+}
+
+.app-badge {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 20px;
+  background: color-mix(in srgb, var(--badge) 20%, transparent);
+}
+
+.app-badge-walk {
+  --badge: var(--walk-graphic);
+}
+.app-badge-run {
+  --badge: var(--run-graphic);
+}
+.app-badge-ride {
+  --badge: var(--ride-graphic);
+}
+
+.app-row-main,
+.app-row-end {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.app-row-main {
+  flex: 1;
+}
+
+.app-row-end {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.app-row-title {
+  font-weight: var(--font-weight-bold);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-row-value {
+  font-family: var(--numeric);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The achievements progress bar: 6 px, pink fill. */
+.app-track {
+  height: 6px;
+  margin-top: var(--space-md);
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--border);
+}
+
+.app-fill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--glow);
+}
+
+/* ---------- How it works ---------- */
+
+.home-steps {
+  display: grid;
+  gap: var(--space-lg);
+  margin: clamp(28px, 4vw, 44px) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-lg);
+}
+
+.home-step-n {
+  position: absolute;
+  top: var(--space-lg);
+  right: var(--space-lg);
+  color: var(--muted);
+  font-family: var(--numeric);
+  font-size: var(--font-caption);
+}
+
+.home-step .app-gain,
+.home-step .app-legend {
+  align-self: stretch;
+}
+
+.home-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.home-step-body {
+  margin: calc(var(--space-sm) * -1) 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+@media (min-width: 860px) {
+  .home-steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ---------- Your week ---------- */
+
+.home-split {
+  display: grid;
+  gap: clamp(28px, 5vw, 64px);
+  align-items: center;
+}
+
+.home-dashboard {
+  display: grid;
+  gap: 14px; /* no spacing token is 14px (--space-md is 12); kept as designed */
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: var(--space-lg);
+  border: 1px solid var(--border);
+  border-radius: 32px; /* the phone-screen corner; no radius token this large */
+  background: var(--bg);
+  box-shadow: 0 24px 64px color-mix(in srgb, var(--faint) 20%, transparent);
+}
+
+.home-caption {
+  color: var(--muted);
+  font-size: var(--font-label);
+  text-align: center;
+}
+
+@media (min-width: 860px) {
+  .home-split {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+  }
+}
+
+/* ---------- Local-first ---------- */
+
+.home-local {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: clamp(20px, 4vw, 36px);
+}
+
+.home-local-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  font-size: 26px;
+  background: color-mix(in srgb, var(--faint) 22%, transparent);
+}
+
+.home-points {
+  display: grid;
+  gap: var(--space-sm);
+  margin: var(--space-lg) 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.home-points li {
+  position: relative;
+  padding-left: 20px;
+}
+
+.home-points li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--glow);
+  transform: rotate(45deg);
+}
+
+@media (min-width: 720px) {
+  .home-local {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+/* ---------- Closing call to action ---------- */
+
+.home-cta {
+  text-align: center;
+}
+
+.home-cta .home-lede {
+  margin: 16px auto 28px;
+}
+
+/* The app's Button (packages/ui) shape: glow fill, 56 px, control radius. The label is night ink
+   (`--on-glow` = WEB_ON_ACCENT) on purpose: the app's Button draws white (DARK.onAccent), the web
+   differs for contrast on the pink. Hover mixes toward --text, not --on-glow (which would darken
+   the pink and drop the label to 4.27:1; this keeps about 6:1). */
+.app-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  padding: 14px var(--space-xxl);
+  border-radius: var(--radius-control);
+  background: var(--glow);
+  color: var(--on-glow);
+  font-size: var(--font-lead);
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+}
+
+.app-button:hover,
+.app-button:focus-visible {
+  background: color-mix(in srgb, var(--glow) 86%, var(--text));
+}
+
+.app-button:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
+}

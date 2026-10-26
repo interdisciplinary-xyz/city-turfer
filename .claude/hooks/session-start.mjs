@@ -11,7 +11,8 @@ try {
 } catch {
   // no payload: still print what git knows
 }
-const root = process.env.CLAUDE_PROJECT_DIR ?? payload.cwd ?? process.cwd();
+// The folder the session runs in (a worktree when Claude was started in one).
+const root = payload.cwd ?? process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
 const { branch, activeScope, dirty } = gitContext(root);
 if (!branch) {
   process.exit(0);

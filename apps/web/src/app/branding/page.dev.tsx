@@ -22,6 +22,7 @@ import {
   TIER_LABEL,
   TIER_ORDER,
   TYPE_COLOR,
+  WEB_ON_ACCENT,
 } from '@cityturfer/brand';
 import mark from '@cityturfer/brand/svg/mark.svg';
 import markForeground from '@cityturfer/brand/svg/mark-foreground.svg';
@@ -40,10 +41,8 @@ import { BrandNav } from './brand-nav';
 import {
   ACTIVITY_LABEL,
   ALTERNATIVES_CHECK,
-  ANDROID_CHECK,
   ASSETS,
   AUDIENCES,
-  BRAND_LOCKUP_SELECTOR,
   BRANDING_DESCRIPTION,
   BRANDING_LOCALE,
   BRANDING_TITLE,
@@ -115,13 +114,12 @@ export default async function BrandingPage() {
             locale={BRANDING_LOCALE}
             waitlist={Boolean(WAITLIST)}
             waitlistHref={`/${BRANDING_LOCALE}#waitlist`}
-            lockupSelector={BRAND_LOCKUP_SELECTOR}
           />
         </NextIntlClientProvider>
         <header className='brand-hero'>
           <div className='brand-wrap'>
             <p className='brand-kicker'>{BRANDING_TITLE}</p>
-            <Image src={wordmarkLight} alt={NAME} width={420} height={90} priority className='brand-hero-wordmark' />
+            <Image src={wordmark} alt={NAME} width={420} height={90} priority className='brand-hero-wordmark' />
             <p className='brand-tagline'>{TAGLINES[0]}</p>
             <p className='brand-lede'>{PROMO}</p>
           </div>
@@ -195,7 +193,6 @@ export default async function BrandingPage() {
               </div>
             </div>
             <p className='brand-muted'>{ICP_CONTEXT}</p>
-            <Check check={ANDROID_CHECK} />
 
             <h3>Segments to test</h3>
             <p className='brand-muted'>Recruit interviewees from these; don’t build for them yet.</p>
@@ -299,8 +296,19 @@ export default async function BrandingPage() {
               <LogoTile src={mark} label='Mark' file='mark.svg' />
               <LogoTile src={markForeground} label='Mark foreground (adaptive icon)' file='mark-foreground.svg' />
               <LogoTile src={markMonochrome} label='Monochrome (themed icon)' file='mark-monochrome.svg' />
-              <LogoTile src={wordmark} label='Wordmark on night (maps, dark panels)' file='wordmark.svg' wide night />
-              <LogoTile src={wordmarkLight} label='Wordmark on light (the website)' file='wordmark-light.svg' wide />
+              <LogoTile
+                src={wordmark}
+                label='Wordmark on night (the app, the website, maps)'
+                file='wordmark.svg'
+                wide
+                night
+              />
+              <LogoTile
+                src={wordmarkLight}
+                label='Wordmark on light (admin light mode, print)'
+                file='wordmark-light.svg'
+                wide
+              />
             </div>
             <p className='brand-muted'>
               The wordmark is outlined Big Shoulders Display in capitals (“CITY” and “TURFER” both Black, told apart by
@@ -339,8 +347,8 @@ export default async function BrandingPage() {
             </div>
             <h3>Themes</h3>
             <div className='brand-grid brand-grid-2'>
-              <ThemeCard name='Dark (the app, the Turf Map, splash)' theme={DARK} />
-              <ThemeCard name='Light (website, Swagger, Storybook: SITE_SCHEME)' theme={LIGHT} />
+              <ThemeCard name='Dark (the app, website, Swagger, Storybook: SITE_SCHEME)' theme={DARK} />
+              <ThemeCard name='Light (admin light mode)' theme={LIGHT} />
             </div>
           </Section>
 
@@ -441,18 +449,53 @@ export default async function BrandingPage() {
                   </tr>
                 </thead>
                 <tbody>
+                  <tr>
+                    <th colSpan={4} scope='rowgroup'>
+                      Night: the app, every map and the site (SITE_SCHEME)
+                    </th>
+                  </tr>
+                  <ContrastRow name='Text on night' fg={DARK.text} bg={DARK.bg} min={MIN_CONTRAST.text} />
+                  <ContrastRow name='Muted on night card' fg={DARK.muted} bg={DARK.card} min={MIN_CONTRAST.text} />
+                  <ContrastRow
+                    name='Link / pink text on night card'
+                    fg={DARK.accentText}
+                    bg={DARK.card}
+                    min={MIN_CONTRAST.text}
+                  />
+                  <ContrastRow
+                    name='Night label on glow button (web)'
+                    fg={WEB_ON_ACCENT}
+                    bg={ACCENT}
+                    min={MIN_CONTRAST.text}
+                  />
+                  <ContrastRow name='White label on glow (app)' fg={ON_ACCENT} bg={ACCENT} min={MIN_CONTRAST.text} />
+                  <ContrastRow name='Danger on night' fg={DARK.danger} bg={DARK.bg} min={MIN_CONTRAST.text} />
+                  <ContrastRow name='Input edge on night' fg={DARK.borderControl} bg={DARK.bg} min={MIN_CONTRAST.ui} />
+                  {(['walk', 'run', 'cycle'] as const).map((type) => (
+                    <ContrastRow
+                      key={type}
+                      name={`${ACTIVITY_LABEL[type]} line on night`}
+                      fg={DARK[`${type}Graphic`]}
+                      bg={DARK.bg}
+                      min={MIN_CONTRAST.ui}
+                    />
+                  ))}
+                  <ContrastRow name='Glow on night' fg={ACCENT} bg={DARK.bg} min={MIN_CONTRAST.text} />
+                  <ContrastRow name='Glow fill on hairline' fg={ACCENT} bg={DARK.border} min={MIN_CONTRAST.ui} />
+                  <ContrastRow name='Faint turf on night' fg={TIER_COLOR.faint} bg={DARK.bg} min={MIN_CONTRAST.ui} />
+                </tbody>
+                <tbody>
+                  <tr>
+                    <th colSpan={4} scope='rowgroup'>
+                      Light: the admin’s light mode only
+                    </th>
+                  </tr>
                   <ContrastRow name='Text on light' fg={LIGHT.text} bg={LIGHT.bg} min={MIN_CONTRAST.text} />
                   <ContrastRow name='Muted on light card' fg={LIGHT.muted} bg={LIGHT.card} min={MIN_CONTRAST.text} />
                   <ContrastRow
                     name='Link / pink text on light'
                     fg={LIGHT.accentText}
                     bg={LIGHT.bg}
-                    min={MIN_CONTRAST.text}
-                  />
-                  <ContrastRow
-                    name='Night label on glow button'
-                    fg={LIGHT.onAccent}
-                    bg={ACCENT}
                     min={MIN_CONTRAST.text}
                   />
                   <ContrastRow name='Danger on light' fg={LIGHT.danger} bg={LIGHT.bg} min={MIN_CONTRAST.text} />
@@ -471,11 +514,6 @@ export default async function BrandingPage() {
                       min={MIN_CONTRAST.ui}
                     />
                   ))}
-                  <ContrastRow name='Text on night' fg={DARK.text} bg={DARK.bg} min={MIN_CONTRAST.text} />
-                  <ContrastRow name='Muted on night card' fg={DARK.muted} bg={DARK.card} min={MIN_CONTRAST.text} />
-                  <ContrastRow name='Glow on night' fg={ACCENT} bg={DARK.bg} min={MIN_CONTRAST.text} />
-                  <ContrastRow name='Faint turf on night' fg={TIER_COLOR.faint} bg={DARK.bg} min={MIN_CONTRAST.ui} />
-                  <ContrastRow name='White label on glow (app)' fg={ON_ACCENT} bg={ACCENT} min={MIN_CONTRAST.text} />
                 </tbody>
               </table>
             </div>

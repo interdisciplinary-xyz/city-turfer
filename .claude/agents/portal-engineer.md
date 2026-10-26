@@ -30,7 +30,8 @@ core formatters and anything in `packages/core` to `location-engineer`; review t
   history: `docs/plans/web-portal-history-2026-10-23.md`). Build only on decided ones; for an open
   one, stop and ask.
 - The `web-motion` skill's Site ground rules (public pages), the `api-design` skill (contract,
-  errors), the `brand-system` skill for colours and voice.
+  errors), the `brand-system` skill for colours and voice, `brand-surfaces` to keep the portal in
+  step with the site and the app.
 - User-level skills when present: `data-privacy-reviewer` (every change that shows or collects
   personal data), `appsec-engineer` (auth, session, headers), `next-best-practices`,
   `web-vitals-a11y-audit`.

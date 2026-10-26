@@ -1,12 +1,12 @@
 /* CityTurfer skin for Swagger UI (dev only). No colour literals here: every colour is a variable
-   from @cityturfer/brand's cssVariables(SITE_SCHEME) (light, docs/decisions/brand-light-theme-2026-10-22.md),
+   from @cityturfer/brand's cssVariables(SITE_SCHEME) (dark, docs/decisions/brand-dark-site-2026-10-25.md),
    which swagger-brand.mjs puts in :root when it serves this file. Swagger's own stylesheet loads
-   first; the `.swagger-ui` prefix wins. On light, pink and amber text use the -text variants; the
+   first; the `.swagger-ui` prefix wins. Pink and amber text use the -text variants; the
    raw brand fills (--glow, --strong, --faint) only fill badges and buttons or draw edges. Label/fill
    pairs are checked for AA by tools/__tests__/swagger-contrast.test.mjs. */
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
   --ct-ramp: linear-gradient(45deg, var(--ramp-stops));
   --ct-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   --ct-focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--glow);
@@ -90,7 +90,7 @@ a {
   text-decoration: none;
 }
 
-/* Header: mark + wordmark + "API", closed by a Ramp rule. */
+/* The page's title bar under the site header (which carries the logo), closed by a Ramp rule. */
 .ct-header {
   border-bottom: 3px solid transparent;
   border-image: var(--ct-ramp) 1;
@@ -111,24 +111,13 @@ a {
   align-items: center;
   gap: var(--space-md);
   font-family: var(--font-family-display);
-  font-size: 1.7rem;
+  font-size: 1.35rem;
   font-weight: normal;
   font-synthesis: none;
   line-height: 1;
   text-transform: var(--display-case);
   letter-spacing: var(--display-tracking);
   color: var(--text);
-}
-.ct-mark {
-  display: block;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-sm);
-}
-.ct-wordmark {
-  display: block;
-  height: 22px;
-  width: auto;
 }
 .ct-tagline {
   margin: 0 0 0 auto;
@@ -457,7 +446,7 @@ a {
 .swagger-ui .btn.authorize span {
   color: var(--on-accent);
 }
-/* Blazing is near white on a light page, so hover warms to strong (night label 10:1). */
+/* Blazing is near white on the dark page, so hover warms to strong (night label 10:1). */
 .swagger-ui .btn.execute:hover,
 .swagger-ui .btn.authorize:hover {
   background: var(--strong);
@@ -585,11 +574,11 @@ a {
 }
 .swagger-ui .opblock.opblock-put {
   --ct-method: var(--strong);
-  --ct-method-label: var(--text);
+  --ct-method-label: var(--bg);
 }
 .swagger-ui .opblock.opblock-patch {
   --ct-method: var(--faint);
-  --ct-method-label: var(--card);
+  --ct-method-label: var(--text);
 }
 .swagger-ui .opblock.opblock-delete {
   --ct-method: var(--danger);
@@ -994,9 +983,9 @@ a {
 .ct-toc-method-put {
   color: var(--strong-text);
 }
-/* No violet text token: faint deepened towards the text colour. */
+/* No violet text token: faint lifted towards the text colour (5.3:1 on the dark card). */
 .ct-toc-method-patch {
-  color: color-mix(in srgb, var(--faint) 80%, var(--text));
+  color: color-mix(in srgb, var(--faint) 65%, var(--text));
 }
 .ct-toc-method-delete {
   color: var(--danger);

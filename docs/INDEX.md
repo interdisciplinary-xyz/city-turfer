@@ -86,6 +86,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 
 `docs/quality/` — Test inventory and QA policy.
 
+- 🚧 [`quality/brand-inventory-2026-10-25.md`](quality/brand-inventory-2026-10-25.md): Where the
+  app, website, portal, Swagger, Storybook and assets diverge from packages/brand and from each
+  other on 2026-10-25; the input for the branding unification plan, ranked
 - ✅ [`quality/e2e.md`](quality/e2e.md): Maestro critical paths, flow inventory, known gaps and how
   to add a flow
 - ✅ [`quality/quality-assurance.md`](quality/quality-assurance.md): QA charter for scope → release
@@ -115,10 +118,14 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   0, admin scaffold, sync-chain tests with turf and data-flow decisions F1–F4, server turf (API
   0.6.0), local mock accounts, achievements 12 → 20, the app in English and Polish; what carries
   into v0.11.0
-- ✅ [`sessions/v0.11.0.md`](sessions/v0.11.0.md): Session log v0.11.0 (in progress, scope PR 160
-  open) — docs refresh, web portal activity history, hero lockup, Polish "terytorium", cloud backup
-  for the admin@ and demo@ local profiles (API 0.6.1); JS only; open founder decisions and the
-  auth:adopt pre-step
+- 🕰️ [`sessions/v0.11.0.md`](sessions/v0.11.0.md): Session log v0.11.0 (released 2026-10-24, tag
+  v0.11.0) — docs refresh, web portal activity history, hero lockup, Polish "terytorium", cloud
+  backup for the admin@ and demo@ local profiles (API 0.6.1); JS only; open founder decisions and
+  the auth:adopt pre-step
+- ✅ [`sessions/v0.12.0.md`](sessions/v0.12.0.md): Session log v0.12.0 (in progress, scope PR 169
+  open) — branches cut from release/v0.11.0; v0.11.0 released 2026-10-24, main still to merge into
+  release/v0.12.0; website language switch reloads the page (#168); docs-engineer agent (#171);
+  brand surface map and audit:brand (#172); JS only
 - 🕰️ [`sessions/v0.2.0.md`](sessions/v0.2.0.md): Session log v0.2.0 through the Me menu and
   achievements; predates the Dashboard, Me drawer and login rename (PRs 23–25) and still says
   app.json is unpinned (pinned in f04bcf3)
@@ -187,14 +194,19 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`decisions/apple-health-2026-10-18.md`](decisions/apple-health-2026-10-18.md): v0.4.0
   integrates Apple Health — a Health Sync context imports walks, hikes, runs and rides with routes
   (full history) as Activities that claim turf, and saves recordings to Health with routes
+- ✅ [`decisions/brand-dark-site-2026-10-25.md`](decisions/brand-dark-site-2026-10-25.md): The app
+  is the brand's source of truth, so the website, portal, Swagger and Storybook go dark (SITE_SCHEME
+  = 'dark', the app's DARK palette, night wordmark, full Ramp); pink buttons keep a night label
+  (WEB_ON_ACCENT) for AA. Replaces brand-light-theme-2026-10-22.
 - ✅ [`decisions/brand-foundations-2026-10-20.md`](decisions/brand-foundations-2026-10-20.md): Brand
   foundations (positioning for three audiences, personality, pillars), Archivo as the brand typeface
   (superseded by brand-typography-2026-10-22), visual language beyond colour, WCAG contrast rules
   with the open palette fixes, and the asset set (outlined wordmarks, social image, store
   screenshots)
-- ✅ [`decisions/brand-light-theme-2026-10-22.md`](decisions/brand-light-theme-2026-10-22.md): The
-  website, Swagger and Storybook switch to a light theme (SITE_SCHEME) while the app and every map
-  stay dark; the AA light palette, its new tokens and ratios, night labels on pink buttons
+- ⚠️ [`decisions/brand-light-theme-2026-10-22.md`](decisions/brand-light-theme-2026-10-22.md):
+  Superseded by brand-dark-site-2026-10-25.md (the site is dark again, like the app). The website,
+  Swagger and Storybook switch to a light theme (SITE_SCHEME) while the app and every map stay dark;
+  the AA light palette, its new tokens and ratios, night labels on pink buttons
 - ✅ [`decisions/brand-typography-2026-10-22.md`](decisions/brand-typography-2026-10-22.md): Brand
   type changes from Archivo to the "Street Plate" pairing: Big Shoulders Display Black in capitals
   for headings, Barlow Semi Condensed ExtraBold for numbers, Barlow for website body text; the
@@ -253,5 +265,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   the web portal's activity history (v0.11.0) — a list of the backed-up walks, runs and rides with
   totals and a type filter, and a detail page with stats, splits and the route shape; read-only, no
   map tiles, numbers from core's formatters shared with the app
+- 🚧 [`plans/web-scroll-motion-2026-10-25.md`](plans/web-scroll-motion-2026-10-25.md): Plan for GSAP
+  ScrollTrigger reveals on the landing page below the hero (waitlist, how it works, your week,
+  local-first, closing call to action) in the brand's glow-in language, with nothing hidden by CSS,
+  a reduced-motion path, no layout shift and one small client bundle
 
 <!-- docs-index:end -->

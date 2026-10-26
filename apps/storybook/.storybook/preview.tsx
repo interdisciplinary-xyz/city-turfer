@@ -6,7 +6,7 @@ import { Frame } from '../src/decorators/frame';
 import type { Locale } from '../src/decorators/frame.constants';
 import { cityTurferTheme } from './theme';
 
-/** Toolbar: language (website copy). No theme switch: every story renders in SITE_SCHEME (light). */
+/** Toolbar: language (website copy). No theme switch: every story renders in SITE_SCHEME (dark, like the app). */
 const preview: Preview = {
   globalTypes: {
     locale: {

@@ -1,6 +1,6 @@
 import { useTranslations } from 'next-intl';
 
-import { Link } from '@/i18n/navigation';
+import { getPathname } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
 
 import type { LanguageSwitcherProps } from './language-switcher.constants';
@@ -8,6 +8,11 @@ import type { LanguageSwitcherProps } from './language-switcher.constants';
 /**
  * Links to the same page in every language; the current one is marked, not linked. The accessible
  * name starts with the visible code ("PL, Polski"), so voice control users can say what they see.
+ *
+ * Plain links, not next-intl's client-side Link: each language is its own root layout (it owns
+ * <html>), so a client-side switch rebuilds <html> in the browser. That drops the classes the boot
+ * scripts in <head> set (`loaded`), leaving the hero hidden, and React warns about the scripts. A
+ * full page load runs the boot scripts again.
  */
 export function LanguageSwitcher({ locale, className, href = '/' }: LanguageSwitcherProps) {
   const t = useTranslations('language');
@@ -19,9 +24,15 @@ export function LanguageSwitcher({ locale, className, href = '/' }: LanguageSwit
             {l.toUpperCase()}
           </span>
         ) : (
-          <Link key={l} href={href} locale={l} lang={l} hrefLang={l} aria-label={`${l.toUpperCase()}, ${t(l)}`}>
+          <a
+            key={l}
+            href={getPathname({ href, locale: l })}
+            lang={l}
+            hrefLang={l}
+            aria-label={`${l.toUpperCase()}, ${t(l)}`}
+          >
             {l.toUpperCase()}
-          </Link>
+          </a>
         )
       )}
     </nav>

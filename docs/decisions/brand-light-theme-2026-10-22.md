@@ -1,14 +1,20 @@
 ---
-status: canonical
-verified: 2026-10-23
+status: superseded
+verified: 2026-10-25
 owner: founder
 scope: [packages/brand/src, packages/brand/svg]
 summary:
-  The website, Swagger and Storybook switch to a light theme (SITE_SCHEME) while the app and every
-  map stay dark; the AA light palette, its new tokens and ratios, night labels on pink buttons
+  Superseded by brand-dark-site-2026-10-25.md (the site is dark again, like the app). The website,
+  Swagger and Storybook switch to a light theme (SITE_SCHEME) while the app and every map stay dark;
+  the AA light palette, its new tokens and ratios, night labels on pink buttons
 ---
 
 # Light theme for the website (v0.10.0)
+
+> **Superseded (2026-10-25):** the founder made the app the source of truth, and the website,
+> portal, Swagger and Storybook went back to dark (`SITE_SCHEME = 'dark'`):
+> `docs/decisions/brand-dark-site-2026-10-25.md`. The `LIGHT` palette below still exists (the
+> admin's light mode). Kept as the record of v0.10.0–v0.11.0.
 
 ## Decision
 

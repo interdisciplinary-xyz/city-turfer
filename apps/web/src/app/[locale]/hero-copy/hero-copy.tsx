@@ -1,6 +1,6 @@
 import { NAME } from '@cityturfer/brand';
 import mark from '@cityturfer/brand/svg/mark.svg';
-import wordmark from '@cityturfer/brand/svg/wordmark-light.svg';
+import wordmark from '@cityturfer/brand/svg/wordmark.svg';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 
@@ -17,7 +17,7 @@ export function HeroCopy() {
         <span className='line' data-anim='line'>
           {t('taglineLead')}
         </span>{' '}
-        <span className='ramp-text' data-anim='line'>
+        <span className='line' data-anim='line'>
           {t('taglineRamp')}
         </span>
       </h1>

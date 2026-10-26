@@ -1,6 +1,6 @@
 /* CityTurfer landing page. Colours are CSS variables set from @cityturfer/brand in layout.tsx.
-   The page is light (SITE_SCHEME in @cityturfer/brand; the app and the Turf Map stay dark). Raw glow/strong/activity
-   colours are fills only on light: text uses --accent-text and the -text variants. Body text is self-hosted Barlow; headings use the self-hosted Big Shoulders Display (fonts.ts), always in capitals. */
+   The page is dark like the app (SITE_SCHEME in @cityturfer/brand, the app is the source of truth). Text uses
+   --accent-text and the -text variants, which on dark equal the brand colours. Body text is self-hosted Barlow; headings use the self-hosted Big Shoulders Display (fonts.ts), always in capitals. */
 
 *,
 *::before,
@@ -9,10 +9,8 @@
 }
 
 :root {
-  /* Readable on light: faint to accent-text, like the light wordmark. No blazing, no near-white stops. */
-  --ramp: linear-gradient(45deg, var(--faint), var(--accent-text));
   --radius: var(--radius-panel);
-  color-scheme: light;
+  color-scheme: dark;
   /* next/font sets --face-*; the brand variables from cssVariables() are the fallback stack. The
      weight is baked into each font, so never bold them (font-synthesis: none). */
   --display: var(--face-display), var(--font-family-display);
@@ -187,14 +185,14 @@ img {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
     gap: 40px 48px;
   }
-  /* Phones shrink on short screens so text, phones and the buttons row fit in one view. Only the
-     phone frame shrinks, never below 140px: the caption keeps the column's width (it used to shrink
-     with the figure, to one word per line on wide, short windows). Shorter than that, the page
-     scrolls. */
+  /* Phones follow the height left under the bar (header, hero padding, captions and the second
+     phone's stagger take about 250px; a frame is about 2.2× as tall as wide), so both can fit in one
+     view on tall windows; at 1440x900 the second phone's caption still falls below the fold. Never below 220px: on shorter windows the page scrolls rather than the
+     phones turning into thumbnails. Only the frame shrinks; the caption keeps the column's width. */
   .screens .phone {
-    /* Deliberately black on the light page: the bezel frames the dark app and the dark Turf Map. */
+    /* Black, a shade below the page: the bezel frames the app and the Turf Map. */
     background: #000;
-    max-width: clamp(140px, calc((100svh - 400px) * 0.4), 280px);
+    max-width: clamp(220px, calc((100svh - 250px) * 0.45), 280px);
     margin-inline: auto;
   }
   .hero-copy {
@@ -218,17 +216,6 @@ img {
   .hero-copy .hero-brand {
     --lockup: 72px;
   }
-}
-
-.hero::before {
-  /* the turf glow behind the mark */
-  content: '';
-  position: absolute;
-  inset: -10% 10% auto;
-  height: 520px;
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--glow) 14%, transparent), transparent);
-  filter: blur(30px);
-  z-index: -1;
 }
 
 /* The app icon and the wordmark side by side: centred on phones, left-aligned next to the phones on desktop.
@@ -255,7 +242,7 @@ img {
   /* height drives the size; the .wordmark class outranks the global img { height: auto } */
   height: calc(var(--lockup) * 0.66);
   width: auto;
-  /* wordmark-light.svg has ~0.04 of the tile of padding before the first glyph: pull it in so the visible gap is 0.25 */
+  /* wordmark.svg has ~0.04 of the tile of padding before the first glyph: pull it in so the visible gap is 0.25 */
   margin-left: calc(var(--lockup) * -0.04);
   max-width: none;
   margin-top: 0;
@@ -286,16 +273,6 @@ h1 {
   visibility: hidden;
 }
 
-.ramp-text {
-  display: block;
-  background: var(--ramp);
-  background-size: 200% 100%;
-  background-position: 0% 50%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
 .lede {
   font-size: clamp(1.05rem, 2.4vw, 1.25rem);
   color: var(--muted);
@@ -303,7 +280,9 @@ h1 {
   margin: 0 auto 28px;
 }
 
-/* ---------- Download ---------- */
+/* ---------- Download (parked) ----------
+   StoreButtons is hidden on the page pending the open APK decision; the component and its story
+   are kept, so this block (.download, .store-*, .download-note) stays until that is settled. */
 
 .download {
   display: flex;
@@ -320,15 +299,17 @@ h1 {
   gap: 12px;
 }
 
+/* The app's Button (packages/ui): 56 px tall, control radius, lead-size bold label. */
 .store-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  min-height: 52px;
-  padding: 14px 26px;
-  border-radius: 999px;
-  font-weight: 700;
+  min-height: 56px;
+  padding: 14px var(--space-xxl);
+  border-radius: var(--radius-control);
+  font-size: var(--font-lead);
+  font-weight: var(--font-weight-bold);
   text-decoration: none;
 }
 
@@ -340,7 +321,7 @@ h1 {
 
 .store-btn-android:hover,
 .store-btn-android:focus-visible {
-  background: color-mix(in srgb, var(--glow) 86%, var(--on-glow));
+  background: color-mix(in srgb, var(--glow) 86%, var(--text));
 }
 
 .store-btn-android:focus-visible {
@@ -524,7 +505,7 @@ h1 {
 }
 
 .phone {
-  /* Deliberately black on the light page: the bezel frames the dark app and the dark Turf Map. */
+  /* Black, a shade below the page: the bezel frames the app and the Turf Map. */
   background: #000;
   border-radius: clamp(24px, 6vw, 40px);
   padding: clamp(6px, 1.5vw, 10px);

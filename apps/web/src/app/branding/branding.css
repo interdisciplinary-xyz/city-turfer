@@ -12,15 +12,15 @@
   --numeric: var(--face-numeric), var(--font-family-numeric);
   --tagline: var(--face-tagline, 'BarlowSemiCondensed-BlackItalic'), var(--font-family-tagline);
   --body: var(--face-body, 'Barlow'), var(--font-family-body);
-  /* Readable on the light page: faint to accent-text, like the light wordmark (no blazing). */
-  --ramp: linear-gradient(45deg, var(--faint), var(--accent-text));
+  /* The full Ramp, as the app and the night wordmark draw it. */
+  --ramp: linear-gradient(45deg, var(--ramp-stops));
   margin: 0;
   background: var(--bg);
   color: var(--text);
   font-family: var(--body);
   font-size: var(--font-body);
   line-height: 1.55;
-  color-scheme: light;
+  color-scheme: dark;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -45,16 +45,6 @@
   padding: 72px 0 40px;
   border-bottom: 1px solid var(--border);
   overflow: hidden;
-}
-.brand-hero::before {
-  content: '';
-  position: absolute;
-  inset: auto -20% -60% 30%;
-  height: 120%;
-  background: var(--ramp);
-  opacity: 0.18;
-  filter: blur(80px);
-  pointer-events: none;
 }
 .brand-hero .brand-wrap {
   position: relative;
