@@ -164,6 +164,11 @@ img {
   text-align: center;
 }
 
+/* The hero headline takes the lede's colour; other headings keep --text. */
+.hero-copy h1 {
+  color: var(--muted);
+}
+
 /* Phones: text, buttons, then the screenshots. Desktop: text + phones in one row, buttons under both. */
 .hero-copy {
   order: 1;
