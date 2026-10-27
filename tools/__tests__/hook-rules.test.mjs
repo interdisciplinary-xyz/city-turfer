@@ -236,6 +236,18 @@ test('git push: never to main, no force-push to integration branches', () => {
   assert.deepEqual(rules(bashFindings('pnpm test && git push origin main', CTX)), ['push-main']);
 });
 
+test('git push: a small change goes straight to scope as a fast-forward, never forced', () => {
+  // The direct-to-scope path in docs/process/release-manager.md ("Small changes").
+  const small = { branch: 'scope/v0.8.0', activeScope: 'scope/v0.8.0' };
+  assert.deepEqual(bashFindings('git push origin HEAD:refs/heads/scope/v0.8.0', small), []);
+  assert.deepEqual(bashFindings('git push origin HEAD:refs/heads/scope/v0.8.0', CTX), []);
+  assert.deepEqual(bashFindings('git push origin HEAD:refs/heads/scope/v0.8.0', { branch: 'HEAD' }), []);
+  assert.deepEqual(rules(bashFindings('git push origin +HEAD:refs/heads/scope/v0.8.0', CTX)), ['force-push']);
+  assert.deepEqual(rules(bashFindings('git push -f origin HEAD:refs/heads/scope/v0.8.0', small)), ['force-push']);
+  assert.deepEqual(rules(bashFindings('git push origin :refs/heads/scope/v0.8.0', small)), ['delete-branch']);
+  assert.deepEqual(rules(bashFindings('git push origin HEAD:refs/heads/main', small)), ['push-main']);
+});
+
 test('a bare push after git switch/checkout in the same line targets the new branch', () => {
   const feat = { branch: 'feat/harness', activeScope: 'scope/v0.9.0' };
   for (const cmd of [

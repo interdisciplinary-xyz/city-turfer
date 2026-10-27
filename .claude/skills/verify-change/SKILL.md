@@ -76,7 +76,9 @@ Across workspaces at once: `pnpm exec turbo run typecheck arch test:unit --affec
 ## 3. The full gate
 
 Before pushing: `pnpm run ci:quality` (Prettier, ESLint, tsc, dependency rules, Jest, tool tests,
-log audit, e2e audit) — the same job CI runs. For scope → release: `pnpm run test:e2e` too.
+log audit, e2e audit) — the same job CI runs. A small change pushed straight to scope gets no CI
+run, so it needs `TURBO_FORCE=true pnpm run ci:quality` (no cached results) to pass first
+(`ship-branch` skill, step 1a). For scope → release: `pnpm run test:e2e` too.
 
 ## 4. Review
 

@@ -1,9 +1,9 @@
 ---
 name: ship-branch
 description: >-
-  Commit, push and open the PR the CityTurfer way: feat/fix → scope → release → main, explicit
-  paths, Conventional Commits, title "city-turfer - <branch>", right base, honest template, never
-  merge. Use for "commit", "push", "open a PR", "ship it", "cut a branch" or "promote to release".
+  Commit, push and open the PR the CityTurfer way: feat/fix → scope → release → main (small changes
+  straight to scope), explicit paths, Conventional Commits, PR title and base, never merge. Use for
+  "commit", "push", "open a PR", "ship it", "cut a branch" or "promote to release".
 ---
 
 # Ship a branch
@@ -23,8 +23,35 @@ git branch --show-current
 git branch -r --list 'origin/scope/*' --sort=-v:refname | head -1
 ```
 
-- On `main`, `release/*` or `scope/*` with code changes → cut a branch first (step 1).
+- A **small change** (below) → straight to the active scope (step 1a).
+- On `main`, `release/*` or `scope/*` with any other change → cut a branch first (step 1).
 - On `feat/<domain>` (or `fix/` `chore/` `test/` `docs/`) → step 2.
+
+## 1a. Small change: commit straight to the active scope
+
+Policy: "Small changes straight to scope" in `docs/process/release-manager.md`. Small means **all**
+of:
+
+- one logical change in a handful of files, reviewable from the commit diff alone (a copy tweak, a
+  colour or token value, a CSS spacing fix, a doc correction, a one-function bug fix);
+- no native or runtime-fingerprint change (`apps/mobile/app.json`, `apps/mobile/plugins/`,
+  `apps/mobile/modules/`, native or `packages/ui` dependencies), no SQLite or Postgres migration, no
+  new dependency or lockfile change, no API contract or `apps/api/openapi.json` change, no auth,
+  privacy or security-sensitive code, no hook, guard or permission change;
+- the founder asked for it, or it is clearly trivial. **In doubt, use a branch and a PR.**
+
+```bash
+git fetch origin
+git switch scope/vX.Y.Z && git pull --ff-only       # or: git switch --detach origin/scope/vX.Y.Z
+TURBO_FORCE=true pnpm run ci:quality                # the full gate: no CI runs on a direct push
+git add <explicit paths> && git diff --staged --stat
+git commit -m "fix(web): …" -m "Co-Authored-By: …"  # Conventional Commit, as in step 2
+git push origin HEAD:refs/heads/scope/vX.Y.Z        # fast-forward only, never --force
+```
+
+Rejected push: `git pull --rebase origin scope/vX.Y.Z`, rerun the gate, push again. Report the short
+SHA (there is no PR); `docs-engineer` lists direct commits by SHA in the session log and the scope →
+release PR body. Never directly on `release/*` or `main`.
 
 ## 1. Cut a branch (from the active scope, never from main)
 
@@ -65,6 +92,7 @@ gh pr create --base scope/vX.Y.Z --title "city-turfer - feat/<domain>" --body-fi
 | Head                       | Base             | Notes                                            |
 | -------------------------- | ---------------- | ------------------------------------------------ |
 | `feat/` `fix/` `chore/` …  | `scope/vX.Y.Z`   | the active scope                                 |
+| small change (step 1a)     | `scope/vX.Y.Z`   | direct fast-forward push, no PR; report the SHA  |
 | `scope/vX.Y.Z`             | `release/vX.Y.Z` | `--draft`; needs `pnpm run test:e2e` first       |
 | `release/vX.Y.Z`           | `main`           | founder merges by hand                           |
 | `fix/<slug>` after promote | `release/vX.Y.Z` | then merge release back down into the next scope |

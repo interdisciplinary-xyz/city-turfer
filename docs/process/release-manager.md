@@ -1,11 +1,11 @@
 ---
 status: canonical
-verified: 2026-10-23
+verified: 2026-10-27
 owner: founder
 scope: [.github/workflows, .husky, .versionrc.json, commitlint.config.mjs, tools/release]
 summary:
-  Branch flow feat → scope → release → main, PR titles, Conventional Commits, changelog, OTA vs
-  native
+  Branch flow feat → scope → release → main, small changes straight to scope, PR titles,
+  Conventional Commits, changelog, OTA vs native
 ---
 
 # Branching, release & changelog policy
@@ -38,7 +38,8 @@ feat/<domain>  ─PR→  scope/vX.Y.Z  ─PR→  release/vX.Y.Z  ─PR→  main 
 ## Hard rules
 
 1. Always work against the current `scope/vX.Y.Z`. Feature branches are per **domain**
-   (`feat/recording`, `feat/territory`, …) and PR into scope — never into `release/*` or `main`.
+   (`feat/recording`, `feat/territory`, …) and PR into scope — never into `release/*` or `main`. The
+   one exception is a **small change** committed straight to scope (next section).
 2. `scope/vX.Y.Z` MUST target `release/vX.Y.Z`. Never merge `scope/*` directly into `main`.
 3. `release/vX.Y.Z` MUST target `main`. Promotion is PR-based and **merged manually by the founder**
    — automation never merges to `main`.
@@ -74,6 +75,43 @@ feat/<domain>  ─PR→  scope/vX.Y.Z  ─PR→  release/vX.Y.Z  ─PR→  main 
    merged back down into the next scope.
 8. Hotfixes on `main` (`hotfix/*`) must be merged back down into the active `release/*` and
    `scope/*`.
+
+## Small changes straight to scope
+
+A small change may be committed and pushed directly to the active `scope/vX.Y.Z`, without a feature
+branch or PR. Everything else takes the flow above. **Small** means all of:
+
+- **One logical change in a handful of files, reviewable from the commit diff alone**: a copy tweak,
+  a colour or token value, a CSS spacing fix, a doc correction, a one-function bug fix.
+- **Nothing that needs a PR's scrutiny:** no native or runtime-fingerprint change (nothing in
+  `apps/mobile/app.json`, `apps/mobile/plugins/`, `apps/mobile/modules/`, native dependencies or
+  `packages/ui` dependencies), no SQLite or Postgres migration, no new dependency or lockfile
+  change, no API contract or `apps/api/openapi.json` change, no auth, privacy or security-sensitive
+  code, no change to hooks, guards or permissions (`.claude/settings.json`, `.claude/hooks/`,
+  `tools/harness/`, `.husky/`, `.github/workflows/`).
+- **The founder asked for it, or it is clearly trivial.** In doubt, use a branch and a PR.
+
+How:
+
+1. Commit on top of the current `origin/scope/vX.Y.Z`: `git fetch origin`, then
+   `git switch scope/vX.Y.Z && git pull --ff-only`, or `git switch --detach origin/scope/vX.Y.Z`
+   when another worktree has the scope checked out.
+2. Run the full gate before the push: `TURBO_FORCE=true pnpm run ci:quality` passes.
+3. Stage explicit paths, one Conventional Commit as usual (the hooks still run; never
+   `--no-verify`).
+4. Fast-forward push: `git push origin HEAD:refs/heads/scope/vX.Y.Z`. Never force: if it is
+   rejected, `git pull --rebase origin scope/vX.Y.Z` on the local commit, rerun the gate, push
+   again.
+
+The commit lands in the CHANGELOG like any other (`release.yml` builds it from the Conventional
+Commits on merge to `main`). It has no PR number: the session log and the scope → release PR body
+list it by short SHA (`docs-engineer` reads them from `git log --first-parent`), and a reviewer can
+be asked to review it after the fact by SHA. No CI runs on a direct push to `scope/*` (CI runs on
+PRs and pushes to `main`), which is why the local full gate is required; the scope → release PR's CI
+covers it once that PR is ready for review.
+
+Never directly on `release/*` or `main`: fixes after promotion still go through a `fix/<slug>` PR
+(rule 7).
 
 ## Commits
 
