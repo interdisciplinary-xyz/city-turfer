@@ -27,6 +27,27 @@
       "title": "Your week at a glance",
       "body": "Distance, time, recent activities and the next achievement within reach.",
       "alt": "The Dashboard: this week's distance, time and activities, recent activities and the next achievement."
+    },
+    "proto": {
+      "time": "09:41",
+      "tabs": {
+        "dashboard": "Dashboard",
+        "turf": "Turf",
+        "record": "Record",
+        "stats": "Stats",
+        "me": "Me"
+      },
+      "turf": {
+        "title": "Your turf",
+        "area": "{area} km²",
+        "summary": "{cellCount, plural, one {{cells} cell} other {{cells} cells}} · {strongCount, plural, one {{strong} strong} other {{strong} strong}} · +{week} km² this week",
+        "all": "All",
+        "city": "WARSAW"
+      },
+      "dashboard": {
+        "greeting": "Hello, {name}",
+        "subtitle": "{area} km² of turf · +{week} km² this week"
+      }
     }
   },
   "home": {
