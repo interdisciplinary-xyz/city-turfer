@@ -92,7 +92,7 @@ export const DARK: Palette = {
   bg: '#0B0D12',
   card: '#151924',
   text: '#EEF1F7',
-  muted: '#9AA3B5',
+  muted: '#ADB5C5',
   border: '#242A38',
   danger: '#FF6369',
   accentText: ACCENT,
