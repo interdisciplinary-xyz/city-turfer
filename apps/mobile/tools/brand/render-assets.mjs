@@ -19,7 +19,7 @@ const ROOT = resolve(new URL('../..', import.meta.url).pathname);
 const BRAND = join(ROOT, '../../packages/brand/svg'); // @cityturfer/brand SVG sources
 const TEMPLATES = join(ROOT, '../../packages/brand/templates');
 const FONTS = join(ROOT, '../../packages/brand/fonts');
-const SCREENS = join(ROOT, '../web/public/screens'); // app screenshots the website already shows
+const SCREENS = join(ROOT, 'tools/brand/screens'); // app screenshots the OG and store templates frame (the site's hero now codes its screens)
 const WEB_PUBLIC = join(ROOT, '../web/public');
 // Staged here; copy into assets/ only together with a native reinstall
 // (icons are part of the runtime fingerprint, so OTA updates stop matching).

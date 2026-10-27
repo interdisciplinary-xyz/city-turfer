@@ -8,7 +8,7 @@ summary: >-
   capitals for headings, Barlow Semi Condensed ExtraBold for numbers, Barlow for website body text;
   the wordmark is redrawn in Big Shoulders Display Black (CITY and TURFER told apart by colour), and
   the tagline is Barlow Semi Condensed Black Italic (web only); amended 2026-10-27: the wordmark
-  alone is now outlined Anton
+  alone is now outlined Anton, then one solid colour (white on night, night on light)
 ---
 
 # Brand typography: Street Plate (v0.10.0)
@@ -60,6 +60,16 @@ tile; the glyphs fill 0.57 of it, as before). The font is only an outline source
 `packages/brand/fonts/Anton-Regular.ttf` with `OFL-Anton.txt`, is never bundled in the app (not in
 the `expo-font` plugin) and is not loaded by the website. The sign-in PNG is a JS asset, so the app
 gets the new wordmark over the air; the runtime fingerprint does not change.
+
+**Fourth amendment (2026-10-27, founder decision):** the wordmark is **one solid colour**. "TURFER"
+loses the Ramp gradient: the whole word CITYTURFER is white (`#FFFFFF`, 19.4 : 1 on `night`) in
+`wordmark.svg` and `night` (`#0B0D12`, 18.2 : 1 on the light theme's background) in
+`wordmark-light.svg`, the same rule on both. The Ramp stays in the mark, app icon and splash, which
+are unchanged, so the logo lockup still glows while the name reads calm. Anton, tracking 0.03 and
+the 815 × 182 proportions are unchanged; with no colour change the two words read as one, which is
+how the name is written. `outline-wordmark.py` now writes a single path with one fill (no gradient
+defs). Re-rendered: `wordmark.png` (sign-in screen, over the air; fingerprint unchanged) and the
+social image (`og-image.png?v=4`).
 
 This supersedes "Typography: Archivo" in `docs/decisions/brand-foundations-2026-10-20.md`.
 

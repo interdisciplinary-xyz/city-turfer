@@ -8,7 +8,7 @@ const FONT = `'${BODY_FONT_FAMILY}', ${SYSTEM_FONT_STACK}`;
 const SITE = THEMES[SITE_SCHEME];
 
 /**
- * Sidebar logo: the brand mark plus the night wordmark ("CITY" in white, "TURFER" in the Ramp). Under the
+ * Sidebar logo: the brand mark plus the night wordmark (CITYTURFER in solid white). Under the
  * site header (https://cityturfer.local/storybook, apps/web/tools/storybook-route.mjs) the header has the
  * logo, so the logo hides and the "Design system" label shows instead. As HTML because Storybook shows
  * `brandTitle` as markup when there is no `brandImage`. Relative paths, so it also works under
