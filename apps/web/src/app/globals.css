@@ -186,6 +186,19 @@ img {
   .hero {
     padding: 16px 0 40px;
   }
+  /* Two equal spacers keep the content centred, and the top one never drops below 104px, so the
+     first phone sits at least 120px (with the 16px padding) under the bar on short windows. */
+  .hero::before,
+  .hero::after {
+    content: '';
+    flex: 1 1 0;
+  }
+  .hero::before {
+    min-height: 104px;
+  }
+  .hero-grid {
+    flex: none;
+  }
   .hero-grid {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
     gap: 40px 48px;
