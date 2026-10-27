@@ -231,17 +231,31 @@ img {
   .hero-copy h1 {
     font-size: clamp(3rem, 5vw, 4.2rem);
   }
+  /* Side by side, the lockup is about 4.27 tiles wide (tile + gap + wordmark at 4.64 × 0.66), so the
+     144px tile shrinks only when the text column is narrower than that. */
   .hero-copy .hero-brand {
-    --lockup: 72px;
+    --lockup: min(144px, calc(100cqw / 4.3));
+    flex-direction: row;
+  }
+  .hero-copy .hero-brand .wordmark {
+    margin-left: calc(var(--lockup) * -0.04);
   }
 }
 
-/* The app icon and the wordmark side by side: centred on phones, left-aligned next to the phones on desktop.
+/* The hero text column is a size container, so the lockup can size itself to the column. */
+.hero-copy {
+  container-type: inline-size;
+}
+
+/* The app icon and the wordmark: stacked and centred on phones (side by side they would not fit at
+   this size), in one row left-aligned next to the phones on desktop.
    One size variable (--lockup = the tile) drives every part, so the proportions never drift:
-   wordmark height 0.66 of the tile, gap 0.25 (clear space >= 0.16). Breakpoints change only --lockup. */
+   wordmark height 0.66 of the tile, gap 0.25 (clear space >= 0.16). Breakpoints change only --lockup.
+   On phones the wordmark (3.06 tiles wide) caps the tile at the column width. */
 .hero-brand {
-  --lockup: clamp(56px, 16vw, 84px);
+  --lockup: min(clamp(112px, 32vw, 168px), calc(100cqw / 3.1));
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: calc(var(--lockup) * 0.25);
@@ -260,8 +274,9 @@ img {
   /* height drives the size; the .wordmark class outranks the global img { height: auto } */
   height: calc(var(--lockup) * 0.66);
   width: auto;
-  /* wordmark.svg has ~0.04 of the tile of padding before the first glyph: pull it in so the visible gap is 0.25 */
-  margin-left: calc(var(--lockup) * -0.04);
+  /* wordmark.svg has ~0.04 of the tile of padding before the first glyph: side by side (desktop),
+     that is pulled in so the visible gap is 0.25; stacked, it stays centred */
+  margin-left: 0;
   max-width: none;
   margin-top: 0;
   margin-bottom: 0;
@@ -559,5 +574,9 @@ h1 {
   }
   .hero-brand {
     --lockup: 48px;
+    flex-direction: row;
+  }
+  .hero-brand .wordmark {
+    margin-left: calc(var(--lockup) * -0.04);
   }
 }
