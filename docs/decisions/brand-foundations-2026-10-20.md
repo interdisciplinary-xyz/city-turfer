@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-23
+verified: 2026-10-27
 owner: founder
 scope: [packages/brand, apps/mobile/tools/brand, apps/web/src/app, .claude/skills/brand-system]
 summary:
@@ -51,8 +51,9 @@ visibly), **Yours alone** (local-first, no tracking).
 ## Typography: Archivo
 
 > **Superseded (2026-10-22):** the brand type is now Big Shoulders Display + Barlow ("Street
-> Plate"), `docs/decisions/brand-typography-2026-10-22.md`. The wordmark is redrawn in Big Shoulders
-> Display too.
+> Plate"), `docs/decisions/brand-typography-2026-10-22.md`. The wordmark was redrawn in Big
+> Shoulders Display too, and since 2026-10-27 is outlined Anton (same decision record, third
+> amendment).
 
 Decision: **Archivo** (Omnibus-Type, SIL Open Font License) for display and numbers; system fonts
 (SF Pro, Roboto) for body text and labels.

@@ -354,7 +354,7 @@ export const ASSETS: readonly BrandAsset[] = [
   {
     name: 'Fonts (OFL)',
     where: 'packages/brand/fonts/',
-    note: 'Big Shoulders Display Black, Barlow Semi Condensed ExtraBold (TTF + WOFF2), Barlow 400–700 (WOFF2, web only)',
+    note: 'Big Shoulders Display Black, Barlow Semi Condensed ExtraBold (TTF + WOFF2), Barlow 400–700 (WOFF2, web only), Anton (TTF, wordmark outline source only)',
   },
 ];
 export const RENDER_COMMAND = 'node apps/mobile/tools/brand/render-assets.mjs';

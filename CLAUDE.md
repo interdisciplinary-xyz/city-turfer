@@ -25,10 +25,11 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
 - **Design system**: tokens in `@cityturfer/brand` (`packages/brand/src/tokens.ts`; the web gets
   them as CSS variables from `cssVariables()`; brand typefaces Big Shoulders Display + Barlow
   (`docs/decisions/brand-typography-2026-10-22.md`), bundled in the app via the `expo-font` plugin;
-  brand foundations in `docs/decisions/brand-foundations-2026-10-20.md`), React Native components in
-  `@cityturfer/ui` (`packages/ui`, peer dependencies only, no native code), one Storybook in
-  `apps/storybook` (Storybook 10 + react-native-web, port 6006; static build, Vercel project
-  pending). Design: `docs/decisions/design-system-2026-10-19.md`
+  the wordmark is outlined Anton (outline source only, never bundled); brand foundations in
+  `docs/decisions/brand-foundations-2026-10-20.md`), React Native components in `@cityturfer/ui`
+  (`packages/ui`, peer dependencies only, no native code), one Storybook in `apps/storybook`
+  (Storybook 10 + react-native-web, port 6006; static build, Vercel project pending). Design:
+  `docs/decisions/design-system-2026-10-19.md`
 - **App languages** (in progress): English (source) and Polish via `use-intl` (ICU, the website's
   message syntax), catalogue `apps/mobile/messages/<locale>/<namespace>.json`, never raw text in UI
   (`mobile-i18n` skill). Design: `docs/decisions/mobile-i18n-2026-10-23.md`

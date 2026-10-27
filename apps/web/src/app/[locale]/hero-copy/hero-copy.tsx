@@ -11,7 +11,7 @@ export function HeroCopy() {
     <div className='hero-copy'>
       <div className='hero-brand'>
         <Image className='mark' data-anim='mark' src={mark} alt='' priority width={132} height={132} />
-        <Image className='wordmark' data-anim='wordmark' src={wordmark} alt={NAME} priority width={320} height={69} />
+        <Image className='wordmark' data-anim='wordmark' src={wordmark} alt={NAME} priority width={320} height={71} />
       </div>
       <h1>
         <span className='line' data-anim='line'>
