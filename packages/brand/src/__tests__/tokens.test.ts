@@ -20,7 +20,7 @@ const PINNED_DARK = {
   bg: '#0B0D12',
   card: '#151924',
   text: '#EEF1F7',
-  muted: '#C8CEDA',
+  muted: '#D6DAE3',
   border: '#242A38',
   danger: '#FF6369',
 };
@@ -30,7 +30,7 @@ const PINNED_DARK_CSS = {
   '--bg': '#0B0D12',
   '--card': '#151924',
   '--text': '#EEF1F7',
-  '--muted': '#C8CEDA',
+  '--muted': '#D6DAE3',
   '--border': '#242A38',
   '--danger': '#FF6369',
   '--accent': '#F72FA8',

@@ -88,7 +88,7 @@ brand fill where `LIGHT` needs its own AA variant:
 | `bg`                                          | `--bg`                                                | `#F6F7FB`                         | `#0B0D12` | Page background                     |
 | `card`                                        | `--card`                                              | `#FFFFFF`                         | `#151924` | Cards, panels                       |
 | `text`                                        | `--text`                                              | `#0E1116`                         | `#EEF1F7` | Body text                           |
-| `muted`                                       | `--muted`                                             | `#5A6375`                         | `#C8CEDA` | Secondary text                      |
+| `muted`                                       | `--muted`                                             | `#5A6375`                         | `#D6DAE3` | Secondary text                      |
 | `border`                                      | `--border`                                            | `#E3E6EE`                         | `#242A38` | Hairlines and dividers              |
 | `danger`                                      | `--danger`                                            | `#C92A33`                         | `#FF6369` | Errors                              |
 | `accentText`                                  | `--accent-text`                                       | `#C2127F`                         | `#F72FA8` | Pink as text and links              |
