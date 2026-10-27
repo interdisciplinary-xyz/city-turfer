@@ -42,8 +42,9 @@ the web takes the app's dark background and light text. This reverses
   (`wordmark-light.svg`: night on light); "TURFER" drops the Ramp. Details in
   `docs/decisions/brand-typography-2026-10-22.md` (fourth amendment).
 - **Lighter secondary text (2026-10-27, founder request):** `DARK.muted` (`--muted`) goes from
-  `#9AA3B5` to `#ADB5C5`, 9.4:1 on `bg` and 8.5:1 on `card` (was 7.7 and 6.9). `borderControl` keeps
-  `#9AA3B5`: control edges aren't text. The app reads it at runtime, so it ships over the air.
+  `#9AA3B5` to `#C8CEDA` (via `#ADB5C5` the same day): closer to white, 12.3:1 on `bg` and 11.1:1 on
+  `card` (was 7.7 and 6.9), still 1.4:1 below body text `#EEF1F7` so the two levels stay apart.
+  `borderControl` keeps `#9AA3B5`: control edges aren't text. The app reads it at runtime (OTA).
 - **Flat background:** the homepage and `/branding` lose their blurred glow behind the hero; the
   page is plain `--bg`, like the app's screens.
 - **Ramp:** the site's `--ramp` is the full Ramp (`--ramp-stops`, faint → blazing), as the app and

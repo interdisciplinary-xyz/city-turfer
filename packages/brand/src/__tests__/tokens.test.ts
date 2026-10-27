@@ -20,7 +20,7 @@ const PINNED_DARK = {
   bg: '#0B0D12',
   card: '#151924',
   text: '#EEF1F7',
-  muted: '#ADB5C5',
+  muted: '#C8CEDA',
   border: '#242A38',
   danger: '#FF6369',
 };
@@ -30,7 +30,7 @@ const PINNED_DARK_CSS = {
   '--bg': '#0B0D12',
   '--card': '#151924',
   '--text': '#EEF1F7',
-  '--muted': '#ADB5C5',
+  '--muted': '#C8CEDA',
   '--border': '#242A38',
   '--danger': '#FF6369',
   '--accent': '#F72FA8',
@@ -63,7 +63,7 @@ describe('design tokens', () => {
     expect(DARK).toMatchObject({
       accentText: ACCENT,
       onAccent: ON_ACCENT,
-      // Control edges keep the old muted grey; text moved to #ADB5C5 on 2026-10-27.
+      // Control edges keep the old muted grey; text moved lighter on 2026-10-27.
       borderControl: '#9AA3B5',
       strongText: TIER_COLOR.strong,
       walkText: TYPE_COLOR.walk,
