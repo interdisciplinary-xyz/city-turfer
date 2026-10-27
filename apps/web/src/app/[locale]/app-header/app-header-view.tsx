@@ -5,7 +5,7 @@ import type { AppHeaderViewProps } from './app-header.constants';
  * Storybook and Swagger pages through `tools/app-header-entry.mjs`, so they never drift apart.
  * Styles: `app-header.css`.
  */
-export function AppHeaderView({ homeHref, homeLabel, logo, waitlist, account, languages }: AppHeaderViewProps) {
+export function AppHeaderView({ homeHref, homeLabel, logo, waitlist, languages }: AppHeaderViewProps) {
   return (
     <header className='app-header'>
       <div className='app-header-inner'>
@@ -20,16 +20,6 @@ export function AppHeaderView({ homeHref, homeLabel, logo, waitlist, account, la
                 {waitlist.shortLabel}
               </span>
             </a>
-          ) : null}
-          {account ? (
-            <>
-              <a className='app-header-link' href={account.signIn.href}>
-                {account.signIn.label}
-              </a>
-              <a className='app-header-cta' href={account.register.href}>
-                {account.register.label}
-              </a>
-            </>
           ) : null}
           {languages}
         </div>

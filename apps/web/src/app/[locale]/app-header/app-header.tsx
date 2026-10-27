@@ -9,11 +9,8 @@ import { LanguageSwitcher } from '../language-switcher';
 import type { AppHeaderProps } from './app-header.constants';
 import { AppHeaderView } from './app-header-view';
 
-/**
- * Sticky top bar, solid from the start: the logo, the waitlist link, "Sign in", "Create account"
- * and the language switcher.
- */
-export function AppHeader({ locale, waitlist, waitlistHref = '#waitlist', account = true }: AppHeaderProps) {
+/** Sticky top bar, solid from the start: the logo, the waitlist link and the language switcher. */
+export function AppHeader({ locale, waitlist, waitlistHref = '#waitlist' }: AppHeaderProps) {
   const t = useTranslations('header');
   return (
     <AppHeaderView
@@ -26,14 +23,6 @@ export function AppHeader({ locale, waitlist, waitlistHref = '#waitlist', accoun
         </>
       }
       waitlist={waitlist ? { href: waitlistHref, label: t('waitlist'), shortLabel: t('waitlistShort') } : null}
-      account={
-        account
-          ? {
-              signIn: { href: `/${locale}/account/sign-in`, label: t('signIn') },
-              register: { href: `/${locale}/account/register`, label: t('register') },
-            }
-          : null
-      }
       languages={<LanguageSwitcher locale={locale} />}
     />
   );
