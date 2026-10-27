@@ -20,7 +20,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Sticky top bar with the waitlist link, Sign in and Create account (the web portal; Create account hides below 600 px). Solid from the start, logo included, on every page.',
+          'Sticky top bar with the logo, the waitlist link and the language switcher. Solid from the start, on every page. The portal (sign in, create account) is reached by its own URLs, not from here.',
       },
     },
   },
@@ -33,5 +33,3 @@ export const English: StoryObj<typeof meta> = {};
 export const Polish: StoryObj<typeof meta> = { args: { locale: 'pl' } };
 
 export const NoWaitlist: StoryObj<typeof meta> = { args: { waitlist: false } };
-
-export const NoAccountLinks: StoryObj<typeof meta> = { args: { account: false } };

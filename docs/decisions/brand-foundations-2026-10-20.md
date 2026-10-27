@@ -132,12 +132,17 @@ All rendered by `apps/mobile/tools/brand/render-assets.mjs` with headless Chrome
   (`docs/decisions/brand-light-theme-2026-10-22.md`). Since the dark website (v0.12.0) the site
   draws `wordmark.svg` again, with a white "CITY", and `wordmark-light.svg` is for light surfaces
   only, such as the admin's light mode and print (`docs/decisions/brand-dark-site-2026-10-25.md`).
+  **Amended 2026-10-27 (founder decision):** the wordmark is outlined Anton in one solid colour,
+  white in `wordmark.svg` and night in `wordmark-light.svg`; "TURFER" no longer carries the Ramp,
+  which stays in the mark, icon and splash (`docs/decisions/brand-typography-2026-10-22.md`, fourth
+  amendment).
 - `apps/web/public/og-image.png`: 1200×630 social image from
   `packages/brand/templates/og-image.html`.
 - `apps/mobile/assets/brand/out/store/`: App Store 6.9" (1290×2796) and Google Play (1080×2340)
-  screenshots from `packages/brand/templates/store-screenshot.html`. They frame the screenshots in
-  `apps/web/public/screens/`, which are 720 px wide and predate the brand fonts: recapture them at
-  full resolution from a build with the new fonts before submitting.
+  screenshots from `packages/brand/templates/store-screenshot.html`. They (and the social image)
+  frame the screenshots in `apps/mobile/tools/brand/screens/` (moved out of the website's public
+  folder when its hero switched to coded screens), which are 720 px wide and predate the brand
+  fonts: recapture them at full resolution from a build with the new fonts before submitting.
 
 `packages/brand/src/__tests__/asset-colors.test.ts` keeps the hex values in SVGs and templates in
 sync with the tokens.

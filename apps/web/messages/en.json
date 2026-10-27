@@ -7,9 +7,7 @@
   "header": {
     "home": "CityTurfer, home",
     "waitlist": "Join the waitlist",
-    "waitlistShort": "Waitlist",
-    "signIn": "Sign in",
-    "register": "Create account"
+    "waitlistShort": "Waitlist"
   },
   "hero": {
     "skip": "Skip to content",

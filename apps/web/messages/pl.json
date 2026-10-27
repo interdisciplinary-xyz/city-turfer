@@ -7,9 +7,7 @@
   "header": {
     "home": "CityTurfer, strona główna",
     "waitlist": "Dołącz do listy",
-    "waitlistShort": "Lista",
-    "signIn": "Zaloguj się",
-    "register": "Załóż konto"
+    "waitlistShort": "Lista"
   },
   "hero": {
     "skip": "Przejdź do treści",
