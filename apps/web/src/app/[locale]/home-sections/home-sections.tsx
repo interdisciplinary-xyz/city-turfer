@@ -197,7 +197,10 @@ export function YourWeek() {
   );
 }
 
-/** Local-first, in the app's words: the phone keeps the original, backup is opt-in. */
+/**
+ * Local-first, in the app's words: the phone keeps the original, backup is opt-in, and exactly what
+ * does leave the phone (docs/product/launch-readiness.md, "What leaves the phone").
+ */
 export function LocalFirst() {
   const t = useTranslations('home.local');
   return (
@@ -216,6 +219,9 @@ export function LocalFirst() {
               <li>{t('phone')}</li>
               <li>{t('backup')}</li>
               <li>{t('portal')}</li>
+              <li>{t('leaves')}</li>
+              <li>{t('account')}</li>
+              <li>{t('site')}</li>
             </ul>
           </div>
         </div>

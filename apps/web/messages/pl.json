@@ -13,7 +13,9 @@
     "skip": "Przejdź do treści",
     "taglineLead": "Surfuj po mieście.",
     "taglineRamp": "Ulice są Twoje.",
-    "lede": "Spacery, bieganie albo jazda na rowerze, solo lub z psem — każda ulica, którą pokonasz, staje się Twoim terytorium. Wracaj i patrz, jak świeci coraz jaśniej."
+    "lede": "Spacery, bieganie albo jazda na rowerze, solo lub z psem — każda ulica, którą pokonasz, staje się Twoim terytorium. Wracaj i patrz, jak świeci coraz jaśniej.",
+    "badge": "Wczesny prototyp",
+    "audience": "Dla tych, którzy co tydzień chodzą, biegają albo jeżdżą tymi samymi ulicami."
   },
   "screens": {
     "turfMap": {
@@ -118,13 +120,142 @@
       "title": "Oryginał zostaje na Twoim telefonie",
       "phone": "Twoje aktywności są zapisane na telefonie, w aplikacji.",
       "backup": "Kopia w chmurze jest wyłączona, dopóki jej nie włączysz. Gdy ją wyłączysz, kopia na naszym serwerze zostanie usunięta.",
-      "portal": "Po zalogowaniu w przeglądarce widzisz tylko to, co trafiło do kopii."
+      "portal": "Po zalogowaniu w przeglądarce widzisz tylko to, co trafiło do kopii.",
+      "leaves": "Co opuszcza telefon: kafelki mapy dla oglądanego obszaru, sprawdzanie aktualizacji oraz, jeśli nie wyłączysz uzupełniania luk, dwa końce luki GPS.",
+      "account": "Na razie do aplikacji logujesz się kontem.",
+      "site": "Ta strona nie zapisuje ciasteczek i nie ładuje skryptów śledzących."
     },
     "cta": {
       "title": "Twoje terytorium zaczyna się za progiem",
       "body": "Zostaw e-mail, a damy znać, gdy aplikacja będzie gotowa do pobrania.",
       "join": "Dołącz do listy"
+    },
+    "demo": {
+      "eyebrow": "Siła terytorium",
+      "title": "Wracaj. Świeci jaśniej.",
+      "body": "Jedna ulica na Głównym Mieście w Gdańsku, raz po razie. A potem całe miasto po czterech miesiącach spacerów, biegów i przejażdżek.",
+      "step": "{visits, plural, one {# raz} few {# razy} many {# razy} other {# razy}} · {tier}",
+      "cityStep": "Cztery miesiące",
+      "stepsLabel": "Pokaż etap",
+      "replay": "Jeszcze raz",
+      "alt": "Ulica w Gdańsku narysowana jako komórki terytorium. Po {faint, plural, one {# razie} few {# razach} many {# razach} other {# razach}} jest blada, po {glowing} świeci, po {strong} jest mocna, a po {blazing} płonie. Potem całe miasto po czterech miesiącach, najjaśniejsze na najczęstszych trasach.",
+      "caption": "Przykładowe dane z konta demo: {activities, plural, one {# spacer, bieg lub przejażdżka} few {# spacery, biegi i przejażdżki} many {# spacerów, biegów i przejażdżek} other {# spaceru, biegu lub przejażdżki}} w Gdańsku · {area} km² · {cells, plural, one {# komórka} few {# komórki} many {# komórek} other {# komórki}}."
+    },
+    "audience": {
+      "eyebrow": "Dla kogo",
+      "title": "Spaceruj. Biegaj. Jeźdź.",
+      "walk": "Do pracy, z psem, najdłuższą drogą do domu.",
+      "run": "Znana pętla i zakręt, w który jeszcze nie skręcasz.",
+      "cycle": "Niedzielne przejażdżki, które powoli wypełniają mapę.",
+      "notFor": "Nie dla Ciebie, jeśli szukasz rankingów, drużyn albo stref treningowych. CityTurfer to Ty i Twoje ulice."
+    },
+    "highlights": {
+      "eyebrow": "W aplikacji",
+      "title": "Co prototyp potrafi już dziś",
+      "iphone": "Tylko iPhone",
+      "gain": {
+        "title": "Nowe terytorium po każdym wyjściu",
+        "body": "Po zakończeniu aplikacja pokazuje, ile terytorium przybyło i które ulice świecą jaśniej."
+      },
+      "record": {
+        "title": "Nagrywa przy wygaszonym ekranie",
+        "body": "Mapa i statystyki na żywo, autopauza, przytrzymaj, by zakończyć. Zablokuj telefon i ruszaj dalej."
+      },
+      "health": {
+        "title": "Spacery z Apple Watch się liczą",
+        "body": "Zaimportuj dawne spacery, biegi i przejażdżki z trasami z Apple Health, a od pierwszego dnia staną się terytorium."
+      },
+      "achievements": {
+        "title": "Osiągnięcia bez serii",
+        "body": "Dwadzieścia osiągnięć do odblokowania po drodze. Nie ma serii do pilnowania."
+      },
+      "city": {
+        "title": "Zaczyna się w Twoim mieście",
+        "body": "Wybierz swoje miasto z listy, a mapa otworzy się właśnie tam. Po polsku i po angielsku."
+      }
+    },
+    "differs": {
+      "eyebrow": "Czym się różni",
+      "title": "Dla ulic, do których wracasz",
+      "repeats": {
+        "title": "Powroty się liczą",
+        "body": "Większość map zaznacza ulicę raz. Tu każdy powrót sprawia, że świeci jaśniej."
+      },
+      "fades": {
+        "title": "Nic nie blednie",
+        "body": "Twoje terytorium nie znika, nawet jeśli długo Cię nie było."
+      },
+      "private": {
+        "title": "Prywatne od początku",
+        "body": "Bez tablicy aktywności, obserwujących i publicznego profilu."
+      }
+    },
+    "status": {
+      "eyebrow": "Na jakim etapie",
+      "title": "Uczciwie: to wczesny prototyp",
+      "body": "Co działa, co testujemy i czego jeszcze nie ma.",
+      "works": {
+        "title": "Działa już dziś",
+        "record": "Nagrywanie przy wygaszonym ekranie (iPhone)",
+        "turf": "Mapa terytorium i jego siła",
+        "history": "Historia, statystyki i osiągnięcia",
+        "health": "Import i eksport z Apple Health (iPhone)",
+        "languages": "Polski i angielski"
+      },
+      "testing": {
+        "title": "W testach",
+        "android": "Aplikacja na Androida na prawdziwych telefonach",
+        "battery": "Zużycie baterii na długich wyjściach",
+        "backup": "Kopia w chmurze (po włączeniu)"
+      },
+      "notYet": {
+        "title": "Jeszcze nie",
+        "store": "Wydanie w App Store",
+        "gpx": "Eksport GPX",
+        "sharing": "Udostępnianie"
+      }
+    },
+    "faq": {
+      "eyebrow": "Pytania",
+      "title": "Dobre pytania",
+      "when": {
+        "q": "Kiedy mogę ją pobrać?",
+        "a": "Dołącz do listy, a napiszemy, gdy aplikacja będzie gotowa do pobrania."
+      },
+      "free": {
+        "q": "Czy jest darmowa?",
+        "a": "Tak, na czas testów. Zanim to się zmieni, powiemy o tym wprost."
+      },
+      "battery": {
+        "q": "Czy szybko rozładowuje baterię?",
+        "a": "Korzysta z GPS tylko podczas nagrywania. Zużycie baterii na długich wyjściach mierzymy teraz z testerami."
+      },
+      "account": {
+        "q": "Czy potrzebuję konta?",
+        "a": "Na razie tak: logujesz się adresem e-mail. Aktywności i tak zostają na Twoim telefonie."
+      },
+      "data": {
+        "q": "Czy mogę usunąć swoje dane?",
+        "a": "Aktywności są na Twoim telefonie, więc usunięcie ich tam je kasuje. Kopia w chmurze jest wyłączona, dopóki jej nie włączysz, a jej wyłączenie usuwa naszą kopię."
+      },
+      "android": {
+        "q": "Czy jest wersja na Androida?",
+        "a": "Jest wersja na Androida, ale nie przetestowaliśmy jej jeszcze na prawdziwych telefonach. Najpierw iPhone."
+      },
+      "watch": {
+        "q": "Czy potrzebuję Apple Watch?",
+        "a": "Nie. Aplikacja nagrywa na telefonie. Import z Apple Health to dodatek na iPhonie."
+      },
+      "cities": {
+        "q": "W jakich miastach działa?",
+        "a": "Nagrywanie działa wszędzie. Swoje miasto wybierasz z listy miast w Polsce i Europie, a mapa otwiera się właśnie tam."
+      }
     }
+  },
+  "footer": {
+    "label": "Stopka strony",
+    "contact": "Kontakt",
+    "rights": "© {year} CityTurfer"
   },
   "language": {
     "label": "Język",

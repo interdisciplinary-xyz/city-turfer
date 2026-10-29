@@ -484,3 +484,183 @@
   outline: 2px solid var(--text);
   outline-offset: 3px;
 }
+
+/* ---------- Grids shared by the newer sections ---------- */
+
+.home-grid {
+  display: grid;
+  gap: var(--space-lg);
+  margin: clamp(28px, 4vw, 44px) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 720px) {
+  .home-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .home-grid-highlights {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1040px) {
+  .home-grid-highlights {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  /* Two wide tiles on top (the "wow" ones), three below. */
+  .home-grid-highlights > :nth-child(-n + 2) {
+    grid-column: span 3;
+  }
+  .home-grid-highlights > :nth-child(n + 3) {
+    grid-column: span 2;
+  }
+}
+
+/* ---------- Who it's for ---------- */
+
+.home-type {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  border-top: 3px solid var(--badge-line, var(--border));
+}
+
+.home-type-walk {
+  --badge-line: var(--walk-graphic);
+}
+.home-type-run {
+  --badge-line: var(--run-graphic);
+}
+.home-type-ride {
+  --badge-line: var(--ride-graphic);
+}
+
+.home-type .home-step-body,
+.home-highlight .home-step-body {
+  margin: 0;
+}
+
+.home-not-for {
+  max-width: 44rem;
+}
+
+/* ---------- Highlights ---------- */
+
+.home-highlight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-md);
+}
+
+.home-highlight-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  color: var(--glow);
+  font-size: 22px;
+  background: color-mix(in srgb, var(--glow) 16%, transparent);
+}
+
+.home-tag {
+  margin-top: auto;
+  padding: 2px 10px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-full);
+  color: var(--muted);
+  font-size: var(--font-label);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+
+/* ---------- How it differs ---------- */
+
+.home-differs {
+  margin-bottom: 0;
+}
+
+.home-differ {
+  display: grid;
+  gap: var(--space-sm);
+  padding-left: var(--space-lg);
+  border-left: 2px solid var(--glow);
+}
+
+.home-differ dd {
+  margin: 0;
+}
+
+/* ---------- Where it stands ---------- */
+
+.home-status .home-points {
+  margin-top: var(--space-md);
+}
+
+.home-status-testing .home-points li::before {
+  background: var(--strong);
+}
+
+.home-status-notYet .home-points li::before {
+  background: var(--border-control);
+}
+
+/* ---------- FAQ ---------- */
+
+.home-faq-wrap {
+  max-width: 820px;
+}
+
+.home-faq {
+  display: grid;
+  gap: var(--space-sm);
+  margin-top: clamp(28px, 4vw, 44px);
+}
+
+.home-faq-item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--card);
+}
+
+.home-faq-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  list-style: none;
+}
+
+.home-faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.home-faq-item summary::after {
+  content: '+';
+  color: var(--accent-text);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.home-faq-item[open] summary::after {
+  content: '−';
+}
+
+.home-faq-item summary:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+  border-radius: var(--radius-control);
+}
+
+.home-faq-item p {
+  margin: 0;
+  padding: 0 var(--space-lg) var(--space-lg);
+  color: var(--muted);
+  line-height: 1.5;
+}
