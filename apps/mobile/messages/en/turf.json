@@ -15,5 +15,19 @@
     "newTurf": "+{area} new turf",
     "cells": "{addedCount, plural, one {{added} new cell} other {{added} new cells}} · {reinforcedCount, plural, one {{reinforced} reinforced} other {{reinforced} reinforced}}",
     "claiming": "Claiming your turf…"
+  },
+  "districts": {
+    "open": "Districts",
+    "openLabel": "Show {city} by district",
+    "summary": "{area} of turf in {withTurf} of {total} districts",
+    "rowArea": "of {area}",
+    "rowLabel": "{name}, {covered} of turf, district area {area}",
+    "selectHint": "Shows it on the map. Tap again for the whole city.",
+    "noCity": "Choose your city to see its districts.",
+    "noData": "Districts for {city} aren’t available yet.",
+    "noTurf": "Record a walk, run or ride in {city} and watch its districts fill with turf.",
+    "credit": "District boundaries © OpenStreetMap contributors",
+    "mapLabel": "Map of {city} by district",
+    "loadFailed": "Couldn’t load the districts. Close and try again."
   }
 }

@@ -29,5 +29,13 @@ export default function TurfScreen() {
   if (homeCity === undefined) {
     return <View style={{ flex: 1, backgroundColor: DARK.bg }} />;
   }
-  return <TurfMapView tracks={tracks} homeCity={homeCity} focused={focused} onPickCity={() => router.push('/city')} />;
+  return (
+    <TurfMapView
+      tracks={tracks}
+      homeCity={homeCity}
+      focused={focused}
+      onPickCity={() => router.push('/city')}
+      onOpenDistricts={() => router.push('/districts')}
+    />
+  );
 }

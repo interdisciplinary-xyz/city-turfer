@@ -1,6 +1,7 @@
-import { Stack } from 'expo-router';
+import { FONT_SIZE } from '@cityturfer/brand';
+import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ACCENT, DARK, DISPLAY_CASE, DISPLAY_TRACKING, FONT_FAMILY } from '@/constants/colors';
@@ -12,7 +13,9 @@ function Gate() {
   const { auth } = useApp();
   const [language] = useLanguageSetting();
   const t = useT('nav');
-  const back = useT('common')('back');
+  const common = useT('common');
+  const back = common('back');
+  const close = common('close');
   const p = usePalette();
   // The saved language is read alongside the session, so the first screen never flashes in the wrong one.
   if (auth.status === 'loading' || !language.ready) {
@@ -94,6 +97,19 @@ function Gate() {
         />
         <Stack.Screen name='info' options={{ headerShown: true, title: t('screens.info'), headerBackTitle: back }} />
         <Stack.Screen name='city' options={{ headerShown: true, title: t('screens.city'), headerBackTitle: back }} />
+        <Stack.Screen
+          name='districts'
+          options={{
+            presentation: 'modal',
+            headerShown: true,
+            title: t('screens.districts'),
+            headerRight: () => (
+              <Pressable testID='districts-close' onPress={() => router.back()} accessibilityRole='button' hitSlop={12}>
+                <Text style={{ color: p.text, fontSize: FONT_SIZE.body, fontWeight: '700' }}>{close}</Text>
+              </Pressable>
+            ),
+          }}
+        />
       </Stack.Protected>
     </Stack>
   );

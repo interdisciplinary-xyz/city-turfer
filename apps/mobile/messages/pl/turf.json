@@ -15,5 +15,19 @@
     "newTurf": "+{area} nowego terytorium",
     "cells": "{addedCount, plural, one {{added} nowa komórka} few {{added} nowe komórki} many {{added} nowych komórek} other {{added} nowej komórki}} · {reinforcedCount, plural, one {{reinforced} wzmocniona} few {{reinforced} wzmocnione} many {{reinforced} wzmocnionych} other {{reinforced} wzmocnionej}}",
     "claiming": "Dodaję ulice do Twojego terytorium…"
+  },
+  "districts": {
+    "open": "Dzielnice",
+    "openLabel": "Pokaż miasto {city} w podziale na dzielnice",
+    "summary": "{area} terytorium w {withTurf} z {total} dzielnic",
+    "rowArea": "z {area}",
+    "rowLabel": "{name}, {covered} terytorium, powierzchnia dzielnicy {area}",
+    "selectHint": "Pokazuje ją na mapie. Stuknij ponownie, aby zobaczyć całe miasto.",
+    "noCity": "Wybierz swoje miasto, aby zobaczyć jego dzielnice.",
+    "noData": "Dzielnice miasta {city} nie są jeszcze dostępne.",
+    "noTurf": "Nagraj spacer, bieg albo przejażdżkę w mieście {city}, a dzielnice zaczną wypełniać się terytorium.",
+    "credit": "Granice dzielnic © autorzy OpenStreetMap",
+    "mapLabel": "Mapa miasta {city} z podziałem na dzielnice",
+    "loadFailed": "Nie udało się wczytać dzielnic. Zamknij i spróbuj ponownie."
   }
 }

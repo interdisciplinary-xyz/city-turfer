@@ -16,6 +16,8 @@ export interface TurfMapViewProps {
   focused: boolean;
   /** Opens the city picker (the screen owns navigation). */
   onPickCity?: () => void;
+  /** Opens the Districts modal (the screen owns navigation); shown with a Home City. */
+  onOpenDistricts?: () => void;
 }
 
 /** Room for the summary card at the top when fitting tracks or a city. */

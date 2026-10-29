@@ -26,7 +26,7 @@ export type { TrackLine };
  * The screen mounts this only once the Home City has loaded: on iOS MapLibre applies a Camera's
  * initial view and follow mode only if the Camera exists at the map's first layout.
  */
-export function TurfMapView({ tracks, homeCity, focused, onPickCity }: TurfMapViewProps) {
+export function TurfMapView({ tracks, homeCity, focused, onPickCity, onOpenDistricts }: TurfMapViewProps) {
   const t = useT('turf');
   const tc = useT('common');
   const cityName = useCityName();
@@ -221,6 +221,18 @@ export function TurfMapView({ tracks, homeCity, focused, onPickCity }: TurfMapVi
               <Text style={s.chipText}>{t('yourCity')}</Text>
             </Pressable>
           ) : null}
+          {homeCity && onOpenDistricts && (
+            <Pressable
+              testID='turf-districts'
+              onPress={onOpenDistricts}
+              accessibilityRole='button'
+              accessibilityLabel={t('districts.openLabel', { city: cityName(homeCity) })}
+              style={[s.chip, { borderColor: DARK.border }]}
+            >
+              <AppSymbol name='square.grid.3x3' fallback='▦' size={FONT_SIZE.caption} color={DARK.text} />
+              <Text style={s.chipText}>{t('districts.open')}</Text>
+            </Pressable>
+          )}
           {allBounds && (
             <Pressable
               testID='turf-filter-all'

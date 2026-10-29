@@ -1,0 +1,32 @@
+# Districts: choose Gdańsk as the Home City, open Turf → Districts (modal), see the city's districts
+# with their turf, select one (map follows), close the modal, then clear the Home City so later flows
+# start without one.
+appId: com.turftrack.poc
+tags: [turf]
+---
+- runFlow: subflows/launch.yaml
+- tapOn: { id: 'tab-me' }
+- tapOn: { id: 'me-menu-city' }
+- tapOn: { id: 'city-search' }
+- inputText: 'gdansk'
+- tapOn: { id: 'city-pl-gdansk' }
+- extendedWaitUntil: { notVisible: { id: 'city-search' }, timeout: 5000 }
+- tapOn: { id: 'tab-turf' }
+- waitForAnimationToEnd
+- tapOn: { id: 'turf-districts' }
+- extendedWaitUntil: { visible: { id: 'districts-list' }, timeout: 10000 }
+- assertVisible: { id: 'districts-map' }
+- assertVisible: { id: 'districts-summary' }
+- assertVisible: 'Śródmieście.*'
+- tapOn: 'Śródmieście.*'
+- waitForAnimationToEnd
+- takeScreenshot: 18-districts
+- tapOn: { id: 'districts-close' }
+- extendedWaitUntil: { notVisible: { id: 'districts-list' }, timeout: 5000 }
+- assertVisible: { id: 'turf-city' }
+# Clear the Home City again.
+- tapOn: { id: 'tab-me' }
+- tapOn: { id: 'me-menu-city' }
+- extendedWaitUntil: { visible: { id: 'city-clear' }, timeout: 5000 }
+- tapOn: { id: 'city-clear' }
+- extendedWaitUntil: { notVisible: { id: 'city-search' }, timeout: 5000 }
