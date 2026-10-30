@@ -1,8 +1,11 @@
 # Districts: choose Gdańsk as the Home City, open Turf → Districts (modal), see the city's districts
-# with their turf, select one (map follows), close the modal, then clear the Home City so later flows
-# start without one.
+# with their turf, select the first row (map follows, row marked selected), close the modal. Rows are
+# found by testID, never by a district name or the sort order. The Home City is cleared again even
+# when an assertion fails (onFlowComplete), so later flows start without one.
 appId: com.turftrack.poc
 tags: [turf]
+onFlowComplete:
+  - runFlow: subflows/clear-home-city.yaml
 ---
 - runFlow: subflows/launch.yaml
 - tapOn: { id: 'tab-me' }
@@ -16,17 +19,13 @@ tags: [turf]
 - tapOn: { id: 'turf-districts' }
 - extendedWaitUntil: { visible: { id: 'districts-list' }, timeout: 10000 }
 - assertVisible: { id: 'districts-map' }
+- assertVisible: { id: 'districts-credit' }
 - assertVisible: { id: 'districts-summary' }
-- assertVisible: 'Śródmieście.*'
-- tapOn: 'Śródmieście.*'
+# The first district row (row ids are `district-osm-r<relation>`; `-covered` ids don't match).
+- tapOn: { id: 'district-osm-r[0-9]+', index: 0 }
 - waitForAnimationToEnd
+- assertVisible: { id: 'district-osm-r[0-9]+', selected: true }
 - takeScreenshot: 18-districts
 - tapOn: { id: 'districts-close' }
 - extendedWaitUntil: { notVisible: { id: 'districts-list' }, timeout: 5000 }
 - assertVisible: { id: 'turf-city' }
-# Clear the Home City again.
-- tapOn: { id: 'tab-me' }
-- tapOn: { id: 'me-menu-city' }
-- extendedWaitUntil: { visible: { id: 'city-clear' }, timeout: 5000 }
-- tapOn: { id: 'city-clear' }
-- extendedWaitUntil: { notVisible: { id: 'city-search' }, timeout: 5000 }

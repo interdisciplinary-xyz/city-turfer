@@ -21,12 +21,13 @@
     "openLabel": "Show {city} by district",
     "summary": "{area} of turf in {withTurf} of {total} districts",
     "rowArea": "of {area}",
-    "rowLabel": "{name}, {covered} of turf, district area {area}",
-    "selectHint": "Shows it on the map. Tap again for the whole city.",
+    "rowLabel": "{name}, {coveredUnit, select, m2 {{coveredCount, plural, one {{covered} square metre} other {{covered} square metres}}} other {{coveredCount, plural, one {{covered} square kilometre} other {{covered} square kilometres}}}} of turf, district area {areaUnit, select, m2 {{areaCount, plural, one {{area} square metre} other {{area} square metres}}} other {{areaCount, plural, one {{area} square kilometre} other {{area} square kilometres}}}}",
+    "selectHint": "Shows the district on the map. Tap again to see the whole city.",
     "noCity": "Choose your city to see its districts.",
     "noData": "Districts for {city} aren’t available yet.",
-    "noTurf": "Record a walk, run or ride in {city} and watch its districts fill with turf.",
-    "credit": "District boundaries © OpenStreetMap contributors",
+    "noTurf": "Record a walk, run or ride in {city} and watch its districts light up with turf.",
+    "credit": "District boundaries © OpenStreetMap contributors (ODbL)",
+    "creditHint": "Opens the OpenStreetMap copyright and licence page",
     "mapLabel": "Map of {city} by district",
     "loadFailed": "Couldn’t load the districts. Close and try again."
   }

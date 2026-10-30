@@ -5,7 +5,9 @@ import { type ActivityType, type BoundingBox } from '@/shared-kernel';
 import { useApp, useContainer } from '@/ui-kit/app-context';
 
 import type { CityView, ClaimView, DistrictsView, TurfCellView, TurfSummaryView } from '../contract';
+import { hasDistricts } from '../infrastructure/district-cities';
 import { turfOverlayPreference } from '../infrastructure/turf-overlay-preference';
+import { type DistrictsState, readDistricts } from './read-districts';
 import { overlayArea, overlayStillCovers } from './turf-overlay-area';
 import type { OverlayView } from './turf-overlay-area.constants';
 
@@ -161,14 +163,20 @@ export function useClaim(activityId: string): ClaimView | null {
   return v;
 }
 
+/** Whether the city has district boundaries in the app (the Turf tab's Districts chip). */
+export function useHasDistricts(cityId: string | null | undefined): boolean {
+  return useMemo(() => (cityId ? hasDistricts(cityId) : false), [cityId]);
+}
+
 /**
  * The Home City's districts with the turf held in each (Districts screen): `undefined` while
- * loading, `null` if they couldn't be read (an earlier answer is kept). Re-read after a new or deleted activity (`dataVersion`) and after a Home City choice.
+ * loading, `null` if they couldn't be read (an earlier answer is kept). Re-read after a new or
+ * deleted activity (`dataVersion`) and after a Home City choice.
  */
 export function useDistricts(): DistrictsView | null | undefined {
   const c = useContainer();
   const { dataVersion } = useApp();
-  const [v, set] = useState<DistrictsView | null | undefined>(undefined);
+  const [v, set] = useState<DistrictsState>(undefined);
   const [chosen, bump] = useState(0);
   useEffect(() => {
     const l = () => bump((n) => n + 1);
@@ -177,15 +185,6 @@ export function useDistricts(): DistrictsView | null | undefined {
       homeCityListeners.delete(l);
     };
   }, []);
-  useEffect(() => {
-    let live = true;
-    c.territory.districts.execute().then(
-      (r) => live && set(r),
-      () => live && set((cur) => cur ?? null)
-    );
-    return () => {
-      live = false;
-    };
-  }, [c, dataVersion, chosen]);
+  useEffect(() => readDistricts(() => c.territory.districts.execute(), set), [c, dataVersion, chosen]);
   return v;
 }

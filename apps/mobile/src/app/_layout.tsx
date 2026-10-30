@@ -1,4 +1,4 @@
-import { FONT_SIZE } from '@cityturfer/brand';
+import { FONT_SIZE, FONT_WEIGHT } from '@cityturfer/brand';
 import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
@@ -103,9 +103,11 @@ function Gate() {
             presentation: 'modal',
             headerShown: true,
             title: t('screens.districts'),
+            // Close is the one way out (and Android's back button): no back arrow next to it.
+            headerBackVisible: false,
             headerRight: () => (
               <Pressable testID='districts-close' onPress={() => router.back()} accessibilityRole='button' hitSlop={12}>
-                <Text style={{ color: p.text, fontSize: FONT_SIZE.body, fontWeight: '700' }}>{close}</Text>
+                <Text style={{ color: p.text, fontSize: FONT_SIZE.body, fontWeight: FONT_WEIGHT.bold }}>{close}</Text>
               </Pressable>
             ),
           }}

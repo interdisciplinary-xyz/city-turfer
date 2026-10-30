@@ -16,9 +16,15 @@ export interface TurfMapViewProps {
   focused: boolean;
   /** Opens the city picker (the screen owns navigation). */
   onPickCity?: () => void;
-  /** Opens the Districts modal (the screen owns navigation); shown with a Home City. */
+  /** Opens the Districts modal (the screen owns navigation); offered when the Home City has districts. */
   onOpenDistricts?: () => void;
 }
 
 /** Room for the summary card at the top when fitting tracks or a city. */
 export const FIT_PADDING = { top: 180, bottom: 60, left: 40, right: 40 };
+
+/**
+ * Extra touch area above and below a chip (about 28 pt tall), so it takes a 44 pt tap. Sideways the
+ * chips sit 8 pt apart, so they stay as they are.
+ */
+export const CHIP_HIT_SLOP = { top: 8, bottom: 8 };

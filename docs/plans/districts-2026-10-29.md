@@ -28,15 +28,15 @@ City split into its districts:
 - **List below**: every district with the turf area the Turfer holds there, in km², and the
   district's own area. Tapping a row selects the district and moves the map to it.
 
-This is the first step towards "conquering" districts (feasibility check, 2026-10-29). The coverage
-number is deliberately simple for now — **km² of turf cells whose centre lies in the district** —
-and will be replaced later by a fairer measure (share of the district's street cells, see §9). No
-threshold, no "conquered" state, no achievement yet.
+This is the first step towards districts the Turfer has **lit** up (working name, see §9;
+feasibility check, 2026-10-29). The coverage number is deliberately simple for now — **km² of turf
+cells whose centre lies in the district** — and will be replaced later by a fairer measure (share of
+the district's street cells, see §9). No threshold, no "lit" state, no achievement yet.
 
 ## 2. User flow
 
-1. Turf tab → new chip **Districts** in the chip row (next to the city chip; shown only when a Home
-   City is chosen).
+1. Turf tab → new chip **Districts** in the chip row (next to the city chip; shown only when the
+   Home City has district data, so Turfers elsewhere never meet "not available yet").
 2. The modal slides up (iOS sheet, Android full-screen modal) with the title "Districts" and a close
    button. Swipe down or Close returns to the Turf Map unchanged.
 3. The map fits the whole city; the list is sorted by the turf held, most first, then by name.
@@ -49,8 +49,8 @@ threshold, no "conquered" state, no achievement yet.
      showing the city.
    - **No turf in the city yet**: the list still shows every district at 0 km², plus a one-line hint
      to record an activity.
-6. Every list row reads well with VoiceOver/TalkBack: "Śródmieście, 0.42 km² of turf, district area
-   5.8 km²". The selected state is announced.
+6. Every list row reads well with VoiceOver/TalkBack, units spelled out: "Śródmieście, 0.42 square
+   kilometres of turf, district area 5.8 square kilometres". The selected state is announced.
 
 ## 3. Data: where district boundaries come from
 
@@ -122,20 +122,22 @@ the turf rules and the phone, API and portal can all use it later.
   layer ids):
   - top ~45% of the screen: MapLibre `Map` (`MAP_STYLE_DARK`), `Camera` fitted to the city (or the
     selected district), `TurfLayers` fed by `useTurfViewport` (the same turf look as the Turf tab),
-    a GeoJSON source of districts with a **fill** layer (glow colour, opacity rising with `share`,
-    stronger when selected) and a **line** layer (border colour, thicker and brighter when
-    selected). Tapping a fill selects that district.
+    a GeoJSON source of districts with a **fill** layer (glow colour, opacity rising with `share`;
+    none without turf), a faint neutral fill on the selected district and a **line** layer (border
+    colour; the selected one thicker, in the accent). Tapping the map selects the district whose
+    boundary holds the tap point.
   - below: a header (city name, total turf in districts) and a `FlatList` of rows (name; covered km²
     in the turf colour, tabular figures; "of {area}" muted). Selected row: accent border.
-  - footer line: the OSM credit.
+  - right under the map: the OSM credit with the licence ("© OpenStreetMap contributors (ODbL)"), a
+    link to openstreetmap.org/copyright.
   - edge states from §2.
   - Always dark, like the Turf Map (`DARK` palette).
 - `apps/mobile/src/app/districts.tsx`: thin route composing `DistrictsView`; "Choose your city" →
   `router.push('/city')`.
 - `apps/mobile/src/app/_layout.tsx`:
   `<Stack.Screen name='districts' options={{ presentation: 'modal', headerShown: true, title, headerRight: Close }} />`.
-- `contexts/territory/ui/turf-map-view.tsx`: a **Districts** chip (`testID='turf-districts'`) when a
-  Home City is set; new prop `onOpenDistricts`. `(tabs)/turf.tsx` passes
+- `contexts/territory/ui/turf-map-view.tsx`: a **Districts** chip (`testID='turf-districts'`) when
+  the Home City has district data; new prop `onOpenDistricts`. `(tabs)/turf.tsx` passes
   `router.push('/districts')`.
 - Copy: `nav.screens.districts` and `turf.districts.*` in `messages/en` and `messages/pl` (full
   Polish plurals; glossary: "terytorium", "dzielnice").
@@ -182,9 +184,11 @@ the turf rules and the phone, API and portal can all use it later.
   through), generated with the boundaries; the area of a district is mostly buildings, parks and
   water, so area share tops out near 40–50 % even after walking every street (Kraków check,
   2026-10-29).
-- **Conquered** state at a threshold (e.g. 60 % of street cells), a celebration in the brand's
-  "glow, never casino" voice, district achievements (the existing "District" achievement, 500 cells,
-  needs a new name first).
+- **Lit** state (working name) at a threshold (e.g. 60 % of street cells), a celebration in the
+  brand's "glow, never casino" voice, district achievements (the existing "District" achievement,
+  500 cells, needs a new name first). No military verbs (brand-system's banned words, in Polish
+  too); open founder decision: **Lit** (pl "rozświetlona dzielnica") or **Owned** (after "Own your
+  streets").
 - More cities (probe the rest of the catalogue), district labels on the map, the portal's Districts
   page through the API (`createTurfApi` + the same catalogue).
 

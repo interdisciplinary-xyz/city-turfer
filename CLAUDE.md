@@ -34,7 +34,8 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
   message syntax), catalogue `apps/mobile/messages/<locale>/<namespace>.json`, never raw text in UI
   (`mobile-i18n` skill). Design: `docs/decisions/mobile-i18n-2026-10-23.md`
 - **Spatial index**: `h3-js` (Turf Cells = H3 res 11), behind the Territory `CellGrid` port; the
-  adapter is `@cityturfer/core/h3`, the only place h3-js is declared (pinned exactly, one copy)
+  adapter is `@cityturfer/core/h3`, the only place h3-js is declared (pinned exactly, one copy); OSM
+  district boundaries (ODbL) are the app-only entry `@cityturfer/core/districts`
 - **Core**: `@cityturfer/core` (`packages/core`) holds the shared kernel, core constants and the
   domain + application layers of Territory, Activity Log, Achievements and Identity, so the phone
   and the API run the same rules. TS source, no React/Expo/native code; the app's old import paths

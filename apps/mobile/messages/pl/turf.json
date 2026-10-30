@@ -21,12 +21,13 @@
     "openLabel": "Pokaż miasto {city} w podziale na dzielnice",
     "summary": "{area} terytorium w {withTurf} z {total} dzielnic",
     "rowArea": "z {area}",
-    "rowLabel": "{name}, {covered} terytorium, powierzchnia dzielnicy {area}",
-    "selectHint": "Pokazuje ją na mapie. Stuknij ponownie, aby zobaczyć całe miasto.",
+    "rowLabel": "{name}, {coveredUnit, select, m2 {{coveredCount, plural, one {{covered} metr kwadratowy} few {{covered} metry kwadratowe} many {{covered} metrów kwadratowych} other {{covered} metra kwadratowego}}} other {{coveredCount, plural, one {{covered} kilometr kwadratowy} few {{covered} kilometry kwadratowe} many {{covered} kilometrów kwadratowych} other {{covered} kilometra kwadratowego}}}} terytorium, powierzchnia dzielnicy {areaUnit, select, m2 {{areaCount, plural, one {{area} metr kwadratowy} few {{area} metry kwadratowe} many {{area} metrów kwadratowych} other {{area} metra kwadratowego}}} other {{areaCount, plural, one {{area} kilometr kwadratowy} few {{area} kilometry kwadratowe} many {{area} kilometrów kwadratowych} other {{area} kilometra kwadratowego}}}}",
+    "selectHint": "Pokazuje dzielnicę na mapie. Stuknij ponownie, aby zobaczyć całe miasto.",
     "noCity": "Wybierz swoje miasto, aby zobaczyć jego dzielnice.",
     "noData": "Dzielnice miasta {city} nie są jeszcze dostępne.",
-    "noTurf": "Nagraj spacer, bieg albo przejażdżkę w mieście {city}, a dzielnice zaczną wypełniać się terytorium.",
-    "credit": "Granice dzielnic © autorzy OpenStreetMap",
+    "noTurf": "Nagraj spacer, bieg albo przejażdżkę w mieście {city}, a jego dzielnice rozbłysną Twoim terytorium.",
+    "credit": "Granice dzielnic © autorzy OpenStreetMap (ODbL)",
+    "creditHint": "Otwiera stronę OpenStreetMap o prawach autorskich i licencji",
     "mapLabel": "Mapa miasta {city} z podziałem na dzielnice",
     "loadFailed": "Nie udało się wczytać dzielnic. Zamknij i spróbuj ponownie."
   }

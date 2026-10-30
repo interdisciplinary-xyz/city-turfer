@@ -1,7 +1,21 @@
-import { FONT_SIZE, FONT_WEIGHT, RADIUS, SPACE } from '@cityturfer/brand';
-import { Camera, type CameraRef, GeoJSONSource, Layer, Map } from '@maplibre/maplibre-react-native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AccessibilityInfo, ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { DISPLAY_CASE, DISPLAY_TRACKING, FONT_SIZE, FONT_WEIGHT, RADIUS, SPACE } from '@cityturfer/brand';
+import { Camera, type CameraRef, GeoJSONSource, Layer, Map, type PressEvent } from '@maplibre/maplibre-react-native';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  AccessibilityInfo,
+  ActivityIndicator,
+  FlatList,
+  type LayoutChangeEvent,
+  Linking,
+  type ListRenderItem,
+  type NativeSyntheticEvent,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ACCENT, DARK, FONT_FAMILY, TIER_COLOR } from '@/constants/colors';
 import { MAP_STYLE_DARK } from '@/constants/map';
@@ -12,16 +26,31 @@ import { fixed, formatArea } from '@/ui-kit/format';
 import { usePalette } from '@/ui-kit/theme';
 
 import type { DistrictCoverageView } from '../contract';
+import { districtAt } from './district-at';
 import {
+  CREDIT_HIT_SLOP,
   DISTRICT_FILL,
+  DISTRICT_FIT_MS,
   DISTRICT_FIT_PADDING,
+  DISTRICT_HEADER_GAP,
+  DISTRICT_LAYER,
+  DISTRICT_LINE,
+  DISTRICT_LINE_LAYOUT,
   DISTRICT_MAP_HEIGHT,
+  DISTRICT_ROW,
+  DISTRICT_SELECTED_FILL,
   DISTRICT_SWATCH,
+  type DistrictRowProps,
   type DistrictsViewProps,
+  NO_DISTRICTS,
+  OSM_COPYRIGHT_URL,
 } from './districts-view.constants';
 import { useDistricts, useTurfViewport } from './hooks';
 import { TurfLayers } from './layers';
+import { spokenArea } from './spoken-area';
 import { useCityName } from './use-city-names';
+
+const keyOf = (d: DistrictCoverageView) => d.id;
 
 /**
  * The Home City split into its districts (Districts modal from the Turf tab): a dark map with the
@@ -35,8 +64,45 @@ export function DistrictsView({ onPickCity }: DistrictsViewProps) {
   const tc = useT('common');
   const cityName = useCityName();
   const view = useDistricts();
+  const insets = useSafeAreaInsets();
+  const { fontScale } = useWindowDimensions();
   const [selected, setSelected] = useState<string | null>(null);
+  const selectedRef = useRef<string | null>(null);
+  selectedRef.current = selected;
   const list = useRef<FlatList<DistrictCoverageView>>(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
+
+  const districts = view?.status === 'ready' ? view.districts : NO_DISTRICTS;
+  // Fixed rows (two lines of the name at the current text size), so `scrollToIndex` reaches any row.
+  const rowHeight = Math.ceil(
+    2 * (DISTRICT_ROW.border + DISTRICT_ROW.paddingVertical) + 2 * DISTRICT_ROW.nameLine * Math.max(1, fontScale)
+  );
+  const slot = rowHeight + DISTRICT_ROW.gap;
+  const getItemLayout = useCallback(
+    (_: unknown, index: number) => ({ length: slot, offset: SPACE.md + headerHeight + slot * index, index }),
+    [slot, headerHeight]
+  );
+
+  const toggle = useCallback((id: string) => setSelected((cur) => (cur === id ? null : id)), []);
+  // A district tapped on the map: select it and bring its row into view.
+  const selectFromMap = useCallback(
+    (id: string) => {
+      const next = selectedRef.current === id ? null : id;
+      setSelected(next);
+      const index = next ? districts.findIndex((d) => d.id === next) : -1;
+      if (index >= 0) {
+        void AccessibilityInfo.isReduceMotionEnabled().then((reduce) =>
+          list.current?.scrollToIndex({ index, viewPosition: 0.5, animated: !reduce })
+        );
+      }
+    },
+    [districts]
+  );
+  const renderItem = useCallback<ListRenderItem<DistrictCoverageView>>(
+    ({ item }) => <DistrictRow district={item} selected={item.id === selected} onToggle={toggle} height={rowHeight} />,
+    [selected, toggle, rowHeight]
+  );
+  const onHeaderLayout = useCallback((e: LayoutChangeEvent) => setHeaderHeight(e.nativeEvent.layout.height), []);
 
   if (view === null) {
     return (
@@ -61,17 +127,7 @@ export function DistrictsView({ onPickCity }: DistrictsViewProps) {
     );
   }
   const name = cityName(view.city);
-  const districts = view.status === 'ready' ? view.districts : [];
   const bounds = view.status === 'ready' ? view.bounds : view.city.bounds;
-  const toggle = (id: string) => setSelected((cur) => (cur === id ? null : id));
-  // A district tapped on the map: select it and bring its row into view.
-  const selectFromMap = (id: string) => {
-    toggle(id);
-    const index = districts.findIndex((d) => d.id === id);
-    if (index >= 0 && id !== selected) {
-      list.current?.scrollToIndex({ index, viewPosition: 0.5 });
-    }
-  };
   const withTurf = districts.filter((d) => d.cellCount > 0).length;
 
   return (
@@ -83,6 +139,19 @@ export function DistrictsView({ onPickCity }: DistrictsViewProps) {
         selected={selected}
         onSelect={selectFromMap}
       />
+      {districts.length > 0 && (
+        // Right under the map, as OpenStreetMap asks: the boundaries are OSM data (ODbL).
+        <Pressable
+          testID='districts-credit'
+          onPress={() => void Linking.openURL(OSM_COPYRIGHT_URL)}
+          accessibilityRole='link'
+          accessibilityHint={t('districts.creditHint')}
+          hitSlop={CREDIT_HIT_SLOP}
+          style={[s.credit, { borderBottomColor: p.border }]}
+        >
+          <Text style={[s.creditText, { color: p.muted }]}>{t('districts.credit')}</Text>
+        </Pressable>
+      )}
       {view.status === 'no-data' ? (
         <View style={s.center} testID='districts-no-data'>
           <Text style={[s.message, { color: p.text }]}>{t('districts.noData', { city: name })}</Text>
@@ -91,14 +160,13 @@ export function DistrictsView({ onPickCity }: DistrictsViewProps) {
         <FlatList
           ref={list}
           testID='districts-list'
-          onScrollToIndexFailed={({ averageItemLength, index }) =>
-            list.current?.scrollToOffset({ offset: averageItemLength * index })
-          }
           data={districts}
-          keyExtractor={(d) => d.id}
-          contentContainerStyle={s.list}
+          keyExtractor={keyOf}
+          getItemLayout={getItemLayout}
+          extraData={selected}
+          contentContainerStyle={[s.list, { paddingBottom: insets.bottom + SPACE.md }]}
           ListHeaderComponent={
-            <View style={s.header}>
+            <View style={s.header} onLayout={onHeaderLayout}>
               <Text style={[s.city, { color: p.text }]} accessibilityRole='header'>
                 {name}
               </Text>
@@ -114,41 +182,35 @@ export function DistrictsView({ onPickCity }: DistrictsViewProps) {
               )}
             </View>
           }
-          renderItem={({ item }) => (
-            <DistrictRow district={item} selected={item.id === selected} onPress={() => toggle(item.id)} />
-          )}
-          ListFooterComponent={<Text style={[s.credit, { color: p.muted }]}>{t('districts.credit')}</Text>}
+          renderItem={renderItem}
         />
       )}
     </View>
   );
 }
 
-function DistrictRow({
-  district: d,
-  selected,
-  onPress,
-}: {
-  district: DistrictCoverageView;
-  selected: boolean;
-  onPress: () => void;
-}) {
+const DistrictRow = memo(function DistrictRow({ district: d, selected, onToggle, height }: DistrictRowProps) {
   const p = usePalette();
   const t = useT('turf');
-  const covered = formatArea(d.coveredKm2);
-  const area = formatArea(d.areaKm2);
+  const covered = spokenArea(d.coveredKm2);
+  const area = spokenArea(d.areaKm2);
   return (
     <Pressable
       testID={`district-${d.id}`}
-      onPress={onPress}
+      onPress={() => onToggle(d.id)}
       accessibilityRole='button'
-      accessibilityLabel={t('districts.rowLabel', { name: d.name, covered, area })}
+      accessibilityLabel={t('districts.rowLabel', {
+        name: d.name,
+        coveredUnit: covered.unit,
+        coveredCount: covered.count,
+        covered: covered.text,
+        areaUnit: area.unit,
+        areaCount: area.count,
+        area: area.text,
+      })}
       accessibilityHint={t('districts.selectHint')}
       accessibilityState={{ selected }}
-      style={[
-        s.row,
-        { backgroundColor: p.card, borderColor: selected ? ACCENT : p.border, borderWidth: selected ? 2 : 1 },
-      ]}
+      style={[s.row, { height, backgroundColor: p.card, borderColor: selected ? ACCENT : p.border }]}
     >
       <View
         style={[
@@ -158,7 +220,7 @@ function DistrictRow({
                 backgroundColor: TIER_COLOR.glowing,
                 opacity: Math.min(1, DISTRICT_SWATCH.floor + d.share * DISTRICT_SWATCH.perShare),
               }
-            : { borderWidth: 1, borderColor: p.border },
+            : { borderWidth: 1, borderColor: p.borderControl },
         ]}
       />
       <Text style={[s.name, { color: p.text }]} numberOfLines={2}>
@@ -166,17 +228,17 @@ function DistrictRow({
       </Text>
       <View style={s.figures}>
         <Text style={[s.covered, { color: p.text }]} testID={`district-${d.id}-covered`}>
-          {covered}
+          {formatArea(d.coveredKm2)}
         </Text>
-        <Text style={[s.area, { color: p.muted }]}>{t('districts.rowArea', { area })}</Text>
+        <Text style={[s.area, { color: p.muted }]}>{t('districts.rowArea', { area: formatArea(d.areaKm2) })}</Text>
       </View>
     </Pressable>
   );
-}
+});
 
-/** The district's fill opacity on the map and in the row's swatch. */
-function fillOpacity(share: number): number {
-  return Math.min(DISTRICT_FILL.max, DISTRICT_FILL.floor + share * DISTRICT_FILL.perShare);
+/** The district's fill opacity on the map: none without turf, else from a floor rising with its share. */
+function fillOpacity(d: DistrictCoverageView): number {
+  return d.cellCount === 0 ? 0 : Math.min(DISTRICT_FILL.max, DISTRICT_FILL.floor + d.share * DISTRICT_FILL.perShare);
 }
 
 function DistrictsMap({
@@ -197,24 +259,11 @@ function DistrictsMap({
   const [viewport, setViewport] = useState<{ bbox: BoundingBox; zoom: number } | null>(null);
   const cells = useTurfViewport(viewport);
 
-  const shapes = useMemo<GeoJSON.FeatureCollection>(
-    () => ({
-      type: 'FeatureCollection',
-      features: districts.map((d) => ({
-        type: 'Feature',
-        id: d.id,
-        properties: { id: d.id, opacity: fillOpacity(d.share) },
-        geometry: { type: 'MultiPolygon', coordinates: d.polygons },
-      })),
-    }),
-    [districts]
-  );
-
   const fit = useCallback((box: BoundingBox) => {
     void AccessibilityInfo.isReduceMotionEnabled().then((reduce) =>
       camera.current?.fitBounds([...box] as [number, number, number, number], {
         padding: DISTRICT_FIT_PADDING,
-        duration: reduce ? 0 : 500,
+        duration: reduce ? 0 : DISTRICT_FIT_MS,
       })
     );
   }, []);
@@ -233,7 +282,21 @@ function DistrictsMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
 
-  const isSelected = ['==', ['get', 'id'], selected ?? ''] as never;
+  // The district under the finger, by its boundary (not the map's touch box, which on iOS also
+  // takes in the neighbour across a border). A tap outside every district does nothing.
+  const latest = useRef(districts);
+  latest.current = districts;
+  const onPress = useCallback(
+    (e: NativeSyntheticEvent<PressEvent>) => {
+      const [lon, lat] = e.nativeEvent.lngLat;
+      const id = districtAt(latest.current, lon, lat);
+      if (id) {
+        onSelect(id);
+      }
+    },
+    [onSelect]
+  );
+
   return (
     <View
       style={{ height: DISTRICT_MAP_HEIGHT }}
@@ -247,58 +310,81 @@ function DistrictsMap({
         logo={false}
         compass={false}
         attributionPosition={{ bottom: 6, right: 6 }}
+        onPress={onPress}
         onRegionDidChange={(e) => setViewport({ bbox: e.nativeEvent.bounds, zoom: e.nativeEvent.zoom })}
       >
         <Camera
           ref={camera}
           initialViewState={{ bounds: [...bounds] as [number, number, number, number], padding: DISTRICT_FIT_PADDING }}
         />
-        <GeoJSONSource
-          id='districts'
-          data={shapes}
-          // No extra touch margin: districts are small at city zoom, and a finger near a border must
-          // pick the district under it, not its neighbour.
-          hitbox={{ top: 0, right: 0, bottom: 0, left: 0 }}
-          onPress={(e) => {
-            const id = e.nativeEvent.features[0]?.properties?.id;
-            if (typeof id === 'string') {
-              onSelect(id);
-            }
-          }}
-        >
-          <Layer
-            id='districts-fill'
-            type='fill'
-            paint={{
-              'fill-color': TIER_COLOR.glowing,
-              'fill-opacity': ['case', isSelected, DISTRICT_FILL.selected, ['get', 'opacity']] as never,
-            }}
-          />
-        </GeoJSONSource>
-        <TurfLayers cells={cells} />
-        <GeoJSONSource id='districts-outline' data={shapes}>
-          <Layer
-            id='districts-line'
-            type='line'
-            layout={{ 'line-join': 'round' }}
-            paint={{
-              'line-color': ['case', isSelected, ACCENT, DARK.borderControl] as never,
-              'line-width': ['case', isSelected, 3, 1.2] as never,
-            }}
-          />
-        </GeoJSONSource>
+        {/* Mounted before the turf, which goes under the outline (`beforeId`): fills, turf, outline. */}
+        <DistrictLayers districts={districts} selected={selected} />
+        <TurfLayers cells={cells} beforeId={DISTRICT_LAYER.line} />
       </Map>
     </View>
   );
 }
 
+/**
+ * The district fills and outlines from one source. Memoised: a GeoJSON source re-serialises its
+ * data whenever it re-renders, and the map re-renders on every pan (the turf viewport).
+ */
+const DistrictLayers = memo(function DistrictLayers({
+  districts,
+  selected,
+}: {
+  districts: DistrictCoverageView[];
+  selected: string | null;
+}) {
+  const shapes = useMemo<GeoJSON.FeatureCollection>(
+    () => ({
+      type: 'FeatureCollection',
+      features: districts.map((d) => ({
+        type: 'Feature',
+        id: d.id,
+        properties: { id: d.id, opacity: fillOpacity(d) },
+        geometry: { type: 'MultiPolygon', coordinates: d.polygons },
+      })),
+    }),
+    [districts]
+  );
+  const style = useMemo(() => {
+    const isSelected = ['==', ['get', 'id'], selected ?? ''] as never;
+    return {
+      fill: { 'fill-color': TIER_COLOR.glowing, 'fill-opacity': ['get', 'opacity'] as never },
+      selected: { 'fill-color': DARK.text, 'fill-opacity': DISTRICT_SELECTED_FILL },
+      selectedFilter: isSelected,
+      line: {
+        'line-color': ['case', isSelected, ACCENT, DARK.borderControl] as never,
+        'line-width': ['case', isSelected, DISTRICT_LINE.selectedWidth, DISTRICT_LINE.width] as never,
+      },
+    };
+  }, [selected]);
+
+  return (
+    <GeoJSONSource id={DISTRICT_LAYER.source} data={shapes}>
+      <Layer id={DISTRICT_LAYER.fill} type='fill' paint={style.fill} />
+      <Layer id={DISTRICT_LAYER.selected} type='fill' filter={style.selectedFilter} paint={style.selected} />
+      <Layer id={DISTRICT_LAYER.line} type='line' layout={DISTRICT_LINE_LAYOUT} paint={style.line} />
+    </GeoJSONSource>
+  );
+});
+
 const s = StyleSheet.create({
   root: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: SPACE.md, padding: SPACE.lg },
   message: { fontSize: FONT_SIZE.body, textAlign: 'center' },
-  list: { padding: SPACE.md, gap: SPACE.sm },
-  header: { gap: 2, marginBottom: SPACE.sm },
-  city: { fontFamily: FONT_FAMILY.display, fontSize: 24, textTransform: 'uppercase' },
+  credit: { paddingHorizontal: SPACE.md, paddingVertical: SPACE.xs, borderBottomWidth: StyleSheet.hairlineWidth },
+  creditText: { fontSize: FONT_SIZE.label, textDecorationLine: 'underline' },
+  list: { paddingTop: SPACE.md, paddingHorizontal: SPACE.md },
+  // Padding, not margin: the header's measured height is the list's offset to the first row.
+  header: { gap: DISTRICT_HEADER_GAP, paddingBottom: SPACE.sm },
+  city: {
+    fontFamily: FONT_FAMILY.display,
+    fontSize: FONT_SIZE.stat,
+    textTransform: DISPLAY_CASE,
+    letterSpacing: DISPLAY_TRACKING,
+  },
   summary: { fontSize: FONT_SIZE.caption },
   hint: { fontSize: FONT_SIZE.caption, marginTop: SPACE.xs },
   row: {
@@ -306,14 +392,15 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: SPACE.sm,
     paddingHorizontal: SPACE.md,
-    paddingVertical: SPACE.sm,
+    paddingVertical: DISTRICT_ROW.paddingVertical,
+    marginBottom: DISTRICT_ROW.gap,
     borderRadius: RADIUS.card,
-    minHeight: 52,
+    borderWidth: DISTRICT_ROW.border,
+    overflow: 'hidden',
   },
-  swatch: { width: 12, height: 12, borderRadius: 3 },
-  name: { flex: 1, fontSize: FONT_SIZE.body, fontWeight: FONT_WEIGHT.bold },
+  swatch: { width: DISTRICT_SWATCH.size, height: DISTRICT_SWATCH.size, borderRadius: DISTRICT_SWATCH.radius },
+  name: { flex: 1, fontSize: FONT_SIZE.body, lineHeight: DISTRICT_ROW.nameLine, fontWeight: FONT_WEIGHT.bold },
   figures: { alignItems: 'flex-end' },
   covered: { fontFamily: FONT_FAMILY.numeric, fontSize: FONT_SIZE.body, fontVariant: ['tabular-nums'] },
   area: { fontSize: FONT_SIZE.caption },
-  credit: { fontSize: FONT_SIZE.caption, marginTop: SPACE.md, textAlign: 'center' },
 });
