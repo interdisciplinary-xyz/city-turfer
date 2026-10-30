@@ -19,7 +19,7 @@ export const MISSING_ADMIN_URL = 'https://admin-url-not-set.invalid';
 
 // Admin's own database (decision AD2): never the API's DATABASE_URL, which admin must not know.
 const databaseUrl = process.env.PAYLOAD_DATABASE_URL || MISSING_DATABASE_URL;
-// The public origin, e.g. https://admin.cityturfer.local in dev. It is the only origin allowed to
+// The public origin, e.g. https://cityturfer.local in dev (the panel at /admin). It is the only origin allowed to
 // send the staff cookie (CSRF) and the only CORS origin.
 const adminUrl = process.env.ADMIN_URL || MISSING_ADMIN_URL;
 
@@ -40,6 +40,9 @@ export function checkSecret(secret: string | undefined, env: string | undefined 
  */
 export default buildConfig({
   serverURL: adminUrl,
+  // Next's basePath (/admin, next.config.ts) already prefixes every route: the panel is its root and
+  // the REST API is /admin/api.
+  routes: { admin: '/' },
   secret: process.env.PAYLOAD_SECRET ?? '',
   admin: {
     user: Staff.slug,

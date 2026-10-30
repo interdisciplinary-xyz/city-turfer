@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { contentSecurityPolicy, ROOT_REDIRECT, SECURITY_HEADER_SOURCE, securityHeaders } from '../security-headers';
+import { contentSecurityPolicy, SECURITY_HEADER_SOURCE, securityHeaders } from '../security-headers';
 
 const header = (key: string, dev = false) => securityHeaders(dev).find((h) => h.key === key)?.value;
 
 describe('admin security headers', () => {
-  it('applies to every route, and the root goes to the panel', () => {
+  it('applies to every route', () => {
     expect(SECURITY_HEADER_SOURCE).toBe('/:path*');
-    expect(ROOT_REDIRECT).toEqual({ source: '/', destination: '/admin', permanent: false });
   });
 
   it('keeps admin out of search engines and frames', () => {

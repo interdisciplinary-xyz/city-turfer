@@ -32,6 +32,3 @@ export function securityHeaders(dev: boolean): { key: string; value: string }[] 
 }
 
 export const SECURITY_HEADER_SOURCE = '/:path*';
-
-/** Admin is the whole app: the root goes to the panel. */
-export const ROOT_REDIRECT = { source: '/', destination: '/admin', permanent: false } as const;

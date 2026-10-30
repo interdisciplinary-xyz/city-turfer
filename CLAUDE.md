@@ -186,7 +186,7 @@ pnpm --filter @cityturfer/storybook build   # static Storybook in apps/storybook
 #   …also served by `pnpm run web:dev` at https://cityturfer.local/storybook (rebuild to refresh)
 pnpm --filter @cityturfer/api dev           # API on http://localhost:8787 (Swagger at /swagger); web:dev proxies /api/* to it
 pnpm --filter @cityturfer/api run openapi   # regenerate apps/api/openapi.json after changing routes (a test checks it)
-pnpm --filter @cityturfer/admin dev         # admin at https://admin.cityturfer.local (needs PAYLOAD_DATABASE_URL, PAYLOAD_SECRET, ADMIN_URL: apps/admin/.env.example)
+pnpm --filter @cityturfer/admin dev         # admin on :3100, at https://cityturfer.local/admin through web:dev (needs PAYLOAD_DATABASE_URL, PAYLOAD_SECRET, ADMIN_URL: apps/admin/.env.example)
 pnpm --filter @cityturfer/admin migrate     # apply admin's Payload migrations (migrate:create after a collection change)
 pnpm --filter @cityturfer/admin generate    # payload-types.ts + importMap.js after a config change (ci:quality checks they are current)
 read -s STAFF_PASSWORD && export STAFF_PASSWORD && pnpm --filter @cityturfer/admin staff:create -- --email <e> --roles staff-admin   # a staff account

@@ -56,7 +56,12 @@ describe('payload config', async () => {
     expect(config.admin.avatar).toBe('default');
     expect(config.admin.meta.defaultOGImageType).toBe('off');
     expect(config.admin.meta.titleSuffix).toBe(` · ${NAME} admin`);
-    expect(JSON.stringify(config.admin.meta.icons)).toContain('/mark.svg');
+    expect(JSON.stringify(config.admin.meta.icons)).toContain('/admin/mark.svg');
+  });
+
+  it('puts the panel at the root of the /admin basePath, the REST API at /admin/api', () => {
+    expect(config.routes.admin).toBe('/');
+    expect(config.routes.api).toBe('/api');
   });
 
   it('leaves importMap.js to `pnpm run generate` (no rewrite by the dev server)', () => {
