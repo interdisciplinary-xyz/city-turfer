@@ -1,9 +1,10 @@
+import { EARTH_RADIUS_M } from '../../../../constants/geo';
 import type { CellGrid } from '../../domain/cell-grid';
 import type { District, Ring } from '../../domain/district';
 import type { DistrictCatalog } from '../../domain/district-catalog';
 import type { HomeCityRepository } from '../../domain/home-city-repository';
 import type { CellRow, TerritoryRepository } from '../../domain/territory-repository';
-import { GetDistrictCoverage } from '../districts';
+import { DISTRICT_CHUNK, GetDistrictCoverage } from '../districts';
 
 const square = (lon: number, lat: number, size: number): Ring => [
   [lon, lat],
@@ -32,7 +33,8 @@ const row = (cell: string, lon: number, lat: number): CellRow => ({
 function coverage(
   homeCityId: string | null,
   rows: CellRow[],
-  catalog: Record<string, District[]> = { 'pl-gdansk': DISTRICTS }
+  catalog: Record<string, District[]> = { 'pl-gdansk': DISTRICTS },
+  yieldToUi?: () => Promise<void>
 ) {
   const asked: unknown[] = [];
   const repo = {
@@ -44,7 +46,7 @@ function coverage(
   const homeCities = { homeCityId: async () => homeCityId } as unknown as HomeCityRepository;
   const districts: DistrictCatalog = { districtsOf: (id) => catalog[id] ?? [] };
   const grid = { areaM2: () => CELL_M2 } as unknown as CellGrid;
-  return { result: new GetDistrictCoverage({ repo, grid, homeCities, districts }).execute(), asked };
+  return { result: new GetDistrictCoverage({ repo, grid, homeCities, districts, yieldToUi }).execute(), asked };
 }
 
 describe('GetDistrictCoverage', () => {
@@ -84,7 +86,10 @@ describe('GetDistrictCoverage', () => {
     expect(asked[0]).toMatchObject({ types: ['walk', 'run', 'cycle'] });
     expect((asked[0] as { bbox: number[] }).bbox).toEqual(r.bounds);
     const east = r.districts[0];
-    expect(east.areaKm2).toBeCloseTo(0.05 * 111.32 * Math.cos((54.3 * Math.PI) / 180) * 0.05 * 110.54, 3);
+    // Spherical area, as H3 measures the cells: R² · Δλ · (sin φ₂ − sin φ₁).
+    const rad = Math.PI / 180;
+    const sphere = (EARTH_RADIUS_M ** 2 * 0.05 * rad * (Math.sin(54.35 * rad) - Math.sin(54.3 * rad))) / 1e6;
+    expect(east.areaKm2).toBeCloseTo(sphere, 6);
     expect(east.share).toBeCloseTo(0.02 / east.areaKm2, 10);
     expect(east.polygons).toEqual([[square(18.65, 54.3, 0.05)]]);
   });
@@ -95,5 +100,36 @@ describe('GetDistrictCoverage', () => {
       ['Wschód', 0],
       ['Zachód', 0],
     ]);
+  });
+
+  it('works through a big history in chunks, yielding between them, with the same totals', async () => {
+    const rows = Array.from({ length: DISTRICT_CHUNK * 2 + 5 }, (_, k) =>
+      row(`c${k}`, k % 2 === 0 ? 18.61 : 18.66, 54.31 + (k % 100) * 1e-4)
+    );
+    let yields = 0;
+    const r = await coverage('pl-gdansk', rows, undefined, async () => {
+      yields++;
+    }).result;
+    expect(yields).toBe(2);
+    expect(r.status === 'ready' && r.districts.map((d) => [d.name, d.cellCount])).toEqual([
+      ['Zachód', DISTRICT_CHUNK + 3],
+      ['Wschód', DISTRICT_CHUNK + 2],
+    ]);
+  });
+
+  it('rejects when the district catalogue fails, so the screen can show its failed state', async () => {
+    const homeCities = { homeCityId: async () => 'pl-gdansk' } as unknown as HomeCityRepository;
+    const failing: DistrictCatalog = {
+      districtsOf: () => {
+        throw new Error('bundle missing');
+      },
+    };
+    const uc = new GetDistrictCoverage({
+      repo: {} as TerritoryRepository,
+      grid: {} as CellGrid,
+      homeCities,
+      districts: failing,
+    });
+    await expect(uc.execute()).rejects.toThrow('bundle missing');
   });
 });

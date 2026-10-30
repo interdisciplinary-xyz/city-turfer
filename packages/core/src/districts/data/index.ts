@@ -13,12 +13,10 @@ export const DISTRICT_FILES: Readonly<Record<string, () => DistrictFile>> = {
   'pl-krakow': () => require('./pl-krakow.json') as DistrictFile,
   'pl-lodz': () => require('./pl-lodz.json') as DistrictFile,
   'pl-lublin': () => require('./pl-lublin.json') as DistrictFile,
-  'pl-olsztyn': () => require('./pl-olsztyn.json') as DistrictFile,
   'pl-opole': () => require('./pl-opole.json') as DistrictFile,
   'pl-poznan': () => require('./pl-poznan.json') as DistrictFile,
   'pl-rzeszow': () => require('./pl-rzeszow.json') as DistrictFile,
   'pl-szczecin': () => require('./pl-szczecin.json') as DistrictFile,
-  'pl-torun': () => require('./pl-torun.json') as DistrictFile,
   'pl-warsaw': () => require('./pl-warsaw.json') as DistrictFile,
   'pl-wroclaw': () => require('./pl-wroclaw.json') as DistrictFile,
 };
