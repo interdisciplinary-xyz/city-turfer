@@ -6,10 +6,18 @@ scope: [packages/brand/src, apps/web/src/app, apps/web/tools, apps/storybook/.st
 summary:
   The app is the brand's source of truth, so the website, portal, Swagger and Storybook go dark
   (SITE_SCHEME = 'dark', the app's DARK palette, night wordmark, full Ramp); pink buttons keep a
-  night label (WEB_ON_ACCENT) for AA. Replaces brand-light-theme-2026-10-22.
+  night label (WEB_ON_ACCENT) for AA. Replaces brand-light-theme-2026-10-22. Its website and portal
+  part is superseded by brand-light-website-2026-10-29 (v0.14.0); it still holds for Swagger,
+  Storybook, /branding and the app.
 ---
 
 # Dark website, like the app (v0.12.0)
+
+> **Superseded in part (v0.14.0):** the website and the signed-in portal are light again
+> (`WEB_SCHEME`), with night panels for the app's pieces
+> (`docs/decisions/brand-light-website-2026-10-29.md`). The rest, the dark Swagger, Storybook,
+> `/branding` and the app, still holds, so this doc stays `canonical`. Read "website" and "portal"
+> below as history.
 
 ## Decision
 

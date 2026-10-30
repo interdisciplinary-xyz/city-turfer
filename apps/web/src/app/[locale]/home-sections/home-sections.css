@@ -1,5 +1,7 @@
 /* The homepage below the hero, in the app's pieces. Each .app-* class is the CSS twin of an
-   @cityturfer/ui component (packages/ui/src): same tokens from cssVariables(SITE_SCHEME), no hex.
+   @cityturfer/ui component (packages/ui/src): same tokens from cssVariables(), no hex. The page is light (WEB_SCHEME); the pieces that draw turf
+   tiers (.app-record, .app-gain, .app-legend, .home-dashboard) are night panels: the component sets
+   cssVariables(APP_SCHEME) inline, so every var(--…) inside them is the app's dark value.
    Card: radius-card, padding lg, hairline border. ActivityRow: radius-control, padding md. Stat:
    numeric face, tabular figures, uppercase label with label tracking. TurfLegend: a stepped Ramp. */
 
@@ -107,9 +109,10 @@
   --chip: var(--ride-graphic);
 }
 
-/* The Record tab's button: a glow disc with a ring and a white
-   dot (--text on glow is 3.13:1: it passes the 3:1 graphic threshold, and matches the app). `--glow`
-   has no `-graphic` variant in cssVariables(), so graphics here use it raw. */
+/* The Record tab's button: a glow disc with a ring and a white dot, as in the app. It is a night
+   piece (APP_VARIABLES on the element), so --text is the app's near-white (3.13:1 on glow: passes
+   the 3:1 graphic threshold) and --card the app's card for the ring. `--glow` has no `-graphic`
+   variant in cssVariables(), so graphics here use it raw. */
 .app-record {
   display: grid;
   place-items: center;
@@ -138,6 +141,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
   background: var(--bg);
+  color: var(--text);
 }
 
 .app-gain-area {
@@ -156,6 +160,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-chip);
   background: var(--bg);
+  color: var(--text);
 }
 
 .app-legend-bar {
@@ -342,6 +347,13 @@
   align-self: stretch;
 }
 
+/* The step number sits in the card's corner: start the night panels below it, so it is never drawn
+   over the dark panel (muted ink on night). */
+.home-step .app-gain,
+.home-step .app-legend {
+  margin-top: 20px;
+}
+
 .home-chips {
   display: flex;
   flex-wrap: wrap;
@@ -378,6 +390,7 @@
   border: 1px solid var(--border);
   border-radius: 32px; /* the phone-screen corner; no radius token this large */
   background: var(--bg);
+  color: var(--text);
   box-shadow: 0 24px 64px color-mix(in srgb, var(--faint) 20%, transparent);
 }
 
@@ -459,8 +472,9 @@
 
 /* The app's Button (packages/ui) shape: glow fill, 56 px, control radius. The label is night ink
    (`--on-glow` = WEB_ON_ACCENT) on purpose: the app's Button draws white (DARK.onAccent), the web
-   differs for contrast on the pink. Hover mixes toward --text, not --on-glow (which would darken
-   the pink and drop the label to 4.27:1; this keeps about 6:1). */
+   differs for contrast on the pink. Hover mixes toward --blazing, not --text or --on-glow (those
+   darken the pink and drop the label under 4.5:1 on the light scheme; --blazing brightens it and
+   keeps about 6:1 in both schemes). */
 .app-button {
   display: inline-flex;
   align-items: center;
@@ -477,7 +491,7 @@
 
 .app-button:hover,
 .app-button:focus-visible {
-  background: color-mix(in srgb, var(--glow) 86%, var(--text));
+  background: color-mix(in srgb, var(--glow) 86%, var(--blazing));
 }
 
 .app-button:focus-visible {

@@ -1,6 +1,7 @@
 /* CityTurfer landing page. Colours are CSS variables set from @cityturfer/brand in layout.tsx.
-   The page is dark like the app (SITE_SCHEME in @cityturfer/brand, the app is the source of truth). Text uses
-   --accent-text and the -text variants, which on dark equal the brand colours. Body text is self-hosted Barlow; headings use the self-hosted Big Shoulders Display (fonts.ts), always in capitals. */
+   The page is light (WEB_SCHEME in @cityturfer/brand), so the app's dark screens stand out; the hero
+   phones keep the app's dark scheme (APP_SCHEME). Text uses --accent-text and the -text variants,
+   the light theme's AA versions of the brand colours. Body text is self-hosted Barlow; headings use the self-hosted Big Shoulders Display (fonts.ts), always in capitals. */
 
 *,
 *::before,
@@ -10,7 +11,7 @@
 
 :root {
   --radius: var(--radius-panel);
-  color-scheme: dark;
+  color-scheme: light;
   /* next/font sets --face-*; the brand variables from cssVariables() are the fallback stack. The
      weight is baked into each font, so never bold them (font-synthesis: none). */
   --display: var(--face-display), var(--font-family-display);
@@ -164,10 +165,7 @@ img {
   text-align: center;
 }
 
-/* The hero headline takes the lede's colour; other headings keep --text. */
-.hero-copy h1 {
-  color: var(--muted);
-}
+/* The hero headline keeps --text like every heading: on the light page --muted reads pale. */
 
 /* Phones: text, buttons, then the screenshots. Desktop: text + phones in one row, buttons under both. */
 .hero-copy {
@@ -354,7 +352,10 @@ h1 {
 
 .store-btn-android:hover,
 .store-btn-android:focus-visible {
-  background: color-mix(in srgb, var(--glow) 86%, var(--text));
+  /* Mixes toward --blazing, not --text: on the light scheme --text darkens the pink and drops the
+     night label to 4.29:1; --blazing brightens it in both schemes (about 6.1:1, pinned in
+     packages/brand contrast.test.ts). */
+  background: color-mix(in srgb, var(--glow) 86%, var(--blazing));
 }
 
 .store-btn-android:focus-visible {

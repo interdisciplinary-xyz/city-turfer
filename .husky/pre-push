@@ -1,3 +1,4 @@
-# Fast local gate (~15s). CI runs the full quality job (lint, format, types,
-# architecture rules, unit tests) on every pull request. Docs-only pushes may use --no-verify.
+# Fast local gate (~15s). CI runs the full quality job (lint, format, types, architecture rules,
+# unit tests, audits) on every non-draft pull request and on every push to main or scope/**.
+# Never skip it with --no-verify: fix the failing check instead.
 pnpm exec turbo run typecheck arch test:unit

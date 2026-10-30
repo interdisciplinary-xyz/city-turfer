@@ -7,7 +7,7 @@ export type Locale = 'en' | 'pl';
 
 export type FrameProps = {
   locale: Locale;
-  /** Website stories: they get the page-loaded class below. Same scheme (SITE_SCHEME) as every story. */
+  /** Website stories: light (WEB_SCHEME, like apps/web) and they get the page-loaded class below. */
   web?: boolean;
   /** Website stories: mark the page as loaded (the site's boot script does this) so the entrance plays. */
   pageLoaded?: boolean;

@@ -1,9 +1,9 @@
 ---
 name: ship-branch
 description: >-
-  Commit, push and open the PR the CityTurfer way: feat/fix → scope → release → main, explicit
-  paths, Conventional Commits, title "city-turfer - <branch>", right base, honest template, never
-  merge. Use for "commit", "push", "open a PR", "ship it", "cut a branch" or "promote to release".
+  Commit, push and open the PR the CityTurfer way: feat/fix → scope → release → main (small changes
+  straight to scope), explicit paths, Conventional Commits, PR title and base, never merge. Use for
+  "commit", "push", "open a PR", "ship it", "cut a branch" or "promote to release".
 ---
 
 # Ship a branch
@@ -23,8 +23,33 @@ git branch --show-current
 git branch -r --list 'origin/scope/*' --sort=-v:refname | head -1
 ```
 
-- On `main`, `release/*` or `scope/*` with code changes → cut a branch first (step 1).
+- A **small change** (below) → straight to the active scope (step 1a).
+- On `main`, `release/*` or `scope/*` with any other change → cut a branch first (step 1).
 - On `feat/<domain>` (or `fix/` `chore/` `test/` `docs/`) → step 2.
+
+## 1a. Small change: commit straight to the active scope
+
+What counts as small, with the **denylist of paths**, is defined once: "Small changes straight to
+scope" in `docs/process/release-manager.md`. Read it there before taking this path; a change that
+touches a denylisted path takes a branch and a PR. **In doubt, use a branch and a PR.**
+
+```bash
+git fetch origin
+git switch scope/vX.Y.Z && git pull --ff-only       # or: git switch --detach origin/scope/vX.Y.Z
+pnpm run check:secret-files -- --tracked            # the full gate = these two (CI's quality job,
+TURBO_FORCE=true pnpm run ci:quality                #   less the admin's Postgres tests)
+git add <explicit paths> && git diff --staged --stat
+# not copy/messages or docs? run the mobile-reviewer agent on `git diff --staged` first
+git commit -m "fix(web): …" -m "Reviewed-by: mobile-reviewer" -m "Co-Authored-By: …"
+git push origin HEAD:refs/heads/scope/vX.Y.Z        # never --force (fast-forward only)
+gh run list --branch scope/vX.Y.Z --limit 1         # CI runs after the push lands
+```
+
+Also run the `verify-change` checks for the touched area. Rejected push:
+`git pull --rebase origin scope/vX.Y.Z`, rerun the gate, push again. Report the short SHA (there is
+no PR); `docs-engineer` lists direct commits by SHA in the session log and the scope → release PR
+body. Never directly on `release/*` or `main` (the guard asks before a push onto `release/*` or an
+old scope).
 
 ## 1. Cut a branch (from the active scope, never from main)
 
@@ -52,8 +77,7 @@ git commit -m "feat(territory): show turf overlay on the record screen" -m "Why,
 End the message with the attribution line from the system reminder when one is given.
 
 If a hook fails, fix the cause. Never `--no-verify` a commit (it skips the secret-file guard) or a
-push (it skips the pre-push gate); `.husky/pre-push` allows that for docs-only pushes by a person,
-not by Claude.
+push (it skips the pre-push gate).
 
 ## 3. Push and open the PR (every branch gets one)
 
@@ -65,6 +89,7 @@ gh pr create --base scope/vX.Y.Z --title "city-turfer - feat/<domain>" --body-fi
 | Head                       | Base             | Notes                                            |
 | -------------------------- | ---------------- | ------------------------------------------------ |
 | `feat/` `fix/` `chore/` …  | `scope/vX.Y.Z`   | the active scope                                 |
+| small change (step 1a)     | `scope/vX.Y.Z`   | direct fast-forward push, no PR; report the SHA  |
 | `scope/vX.Y.Z`             | `release/vX.Y.Z` | `--draft`; needs `pnpm run test:e2e` first       |
 | `release/vX.Y.Z`           | `main`           | founder merges by hand                           |
 | `fix/<slug>` after promote | `release/vX.Y.Z` | then merge release back down into the next scope |

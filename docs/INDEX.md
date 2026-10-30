@@ -211,6 +211,11 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   Superseded by brand-dark-site-2026-10-25.md (the site is dark again, like the app). The website,
   Swagger and Storybook switch to a light theme (SITE_SCHEME) while the app and every map stay dark;
   the AA light palette, its new tokens and ratios, night labels on pink buttons
+- 🚧 [`decisions/brand-light-website-2026-10-29.md`](decisions/brand-light-website-2026-10-29.md):
+  The website and portal go light (WEB_SCHEME = 'light', day wordmark, white header via
+  HEADER_SCHEME) so the app's dark screens stand out; the hero phones keep the app's dark scheme
+  (APP_SCHEME); Swagger, Storybook and the app stay on SITE_SCHEME (dark). Narrows
+  brand-dark-site-2026-10-25 to those surfaces.
 - ✅ [`decisions/brand-typography-2026-10-22.md`](decisions/brand-typography-2026-10-22.md): Brand
   type changes from Archivo to the "Street Plate" pairing: Big Shoulders Display Black in capitals
   for headings, Barlow Semi Condensed ExtraBold for numbers, Barlow for website body text; the

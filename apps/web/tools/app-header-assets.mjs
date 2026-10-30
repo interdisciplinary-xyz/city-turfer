@@ -1,14 +1,12 @@
 // Dev only: the site's header on the local Storybook and Swagger pages (served by server.mjs).
 //
 // The header is the same React component as on /en (AppHeaderView), bundled here with esbuild, and
-// its stylesheet is app-header.css with the brand variables in front. Nothing is written to disk
+// its stylesheet is app-header.css (the header brings its own light variables inline). Nothing is written to disk
 // and nothing reaches the static export.
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { build } from 'esbuild';
-
-import { loadBrand, rootVariablesCss } from './swagger-brand.mjs';
 
 export const APP_HEADER_SCRIPT = '__app-header.js';
 export const APP_HEADER_STYLES = '__app-header.css';
@@ -49,14 +47,12 @@ export function appHeaderAssets(webRoot) {
       define,
       absWorkingDir: webRoot,
     });
-    const { cssVariables, SITE_SCHEME } = await loadBrand(webRoot);
     const stylesheet = await readFile(path.join(webRoot, 'src/app/[locale]/app-header/app-header.css'), 'utf8');
-    // The website's colours (SITE_SCHEME) on the header only, so the host page's own :root
-    // (Swagger's dark skin, Storybook) stays as it is.
-    const variables = rootVariablesCss(cssVariables(SITE_SCHEME)).replace(':root', '.app-header');
-    // Opaque on these pages, so the host page never shows through the bar.
-    const opaque = '#app-header-root .app-header {\n  background: var(--bg);\n}\n';
-    const css = `${variables}\n#app-header-root {\n  display: contents;\n}\n\n${stylesheet}\n${opaque}`;
+    // No variable block here: AppHeaderView sets the header's own scheme (HEADER_SCHEME) inline on
+    // the <header>, so the host page's :root (Swagger's dark skin, Storybook) stays as it is.
+    // Opaque on these pages, so the host page never shows through the bar: the header's white.
+    const opaque = '#app-header-root .app-header {\n  background: var(--card);\n}\n';
+    const css = `#app-header-root {\n  display: contents;\n}\n\n${stylesheet}\n${opaque}`;
     return { js: bundle.outputFiles[0].text, css };
   })();
   return assets;
