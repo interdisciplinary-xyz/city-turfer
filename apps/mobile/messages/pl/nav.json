@@ -17,6 +17,7 @@
     "accountPassword": "Hasło do konta",
     "info": "Informacje",
     "city": "Twoje miasto",
-    "linkBackup": "Kopia w chmurze"
+    "linkBackup": "Kopia w chmurze",
+    "districts": "Dzielnice"
   }
 }

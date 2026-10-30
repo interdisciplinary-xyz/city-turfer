@@ -1,0 +1,25 @@
+# Clear the Home City from wherever the app is (Districts modal, tab bar or Me drawer), so later
+# flows start without one. Safe when none is set: the picker then has no Clear button.
+appId: com.turftrack.poc
+---
+- runFlow:
+    when: { visible: { id: 'districts-close' } }
+    commands:
+      - tapOn: { id: 'districts-close' }
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: { id: 'tab-me' }
+      notVisible: { id: 'me-drawer' }
+    commands:
+      - tapOn: { id: 'tab-me' }
+- runFlow:
+    when: { visible: { id: 'me-menu-city' } }
+    commands:
+      - tapOn: { id: 'me-menu-city' }
+      - extendedWaitUntil: { visible: { id: 'city-search' }, timeout: 5000 }
+- runFlow:
+    when: { visible: { id: 'city-clear' } }
+    commands:
+      - tapOn: { id: 'city-clear' }
+      - extendedWaitUntil: { notVisible: { id: 'city-search' }, timeout: 5000 }

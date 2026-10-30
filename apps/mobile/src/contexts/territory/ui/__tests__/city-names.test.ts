@@ -1,10 +1,12 @@
-import { createTerritoryApi, type HomeCityDeps, type TerritoryDeps } from '@/contexts/territory';
+import { createTerritoryApi } from '@/contexts/territory';
 import { MESSAGES } from '@/i18n/catalogue';
 import { applyLanguageSetting, resetLanguageStateForTests } from '@/i18n/language-state';
 
 import { cityAliases, cityName, countryName } from '../city-names';
 
-const search = createTerritoryApi({} as TerritoryDeps & HomeCityDeps).searchCities;
+const search = createTerritoryApi({ districts: { districtsOf: () => [] } } as unknown as Parameters<
+  typeof createTerritoryApi
+>[0]).searchCities;
 const ALL = search.execute('');
 
 beforeEach(() => resetLanguageStateForTests('en-US'));

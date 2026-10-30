@@ -31,7 +31,10 @@ the author's fix gets a second pair of eyes.
 ## How you work
 
 1. Get the diff: `git diff`, `git diff --staged`, untracked files, or against the branch base when
-   asked. Read the surrounding code, not only the hunks.
+   asked. A small change going straight to scope (`docs/process/release-manager.md`) has no PR: it
+   is reviewed on the staged diff before the push, or after the fact by SHA (`git show <sha>`). Say
+   if it touches a path on that policy's denylist or is otherwise not small. Read the surrounding
+   code, not only the hunks.
 2. Bash is read-only; a hook enforces it. Park long output in your scratchpad or `/tmp` if needed;
    use `jq`, not `node -e`.
 3. When a judgement rests on library behaviour (MapLibre, Expo, HealthKit, Hono), read the installed

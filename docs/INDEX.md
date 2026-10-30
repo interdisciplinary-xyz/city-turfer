@@ -103,7 +103,7 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`process/docs-conventions.md`](process/docs-conventions.md): How docs/ declares its own
   freshness — frontmatter, folders, filenames, probes and the audit
 - ✅ [`process/release-manager.md`](process/release-manager.md): Branch flow feat → scope → release
-  → main, PR titles, Conventional Commits, changelog, OTA vs native
+  → main, small changes straight to scope, PR titles, Conventional Commits, changelog, OTA vs native
 - ✅ [`process/session-migration.md`](process/session-migration.md): How to hand a session off and
   pick it up again without losing context — the version session log is the source of truth
 
@@ -270,6 +270,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   back-end release (opt-in backup, real accounts, restore to a new phone, delete account, export) —
   founder decisions of 2026-10-22, what feat/backend-sync built (shipped in v0.9.0), what changed
   since, and what is left before testers can use it
+- 🚧 [`plans/districts-2026-10-29.md`](plans/districts-2026-10-29.md): Plan for the Districts
+  screen, a modal opened from the Turf tab that shows the Home City split into its administrative
+  districts (OpenStreetMap boundaries bundled with the app) on a map, with a list of districts and
+  the turf area the Turfer holds in each
 - 🚧 [`plans/homepage-sections-2026-10-28.md`](plans/homepage-sections-2026-10-28.md): Plan for the
   landing page's sections, top to bottom, presenting CityTurfer as an honest early prototype that
   recruits testers; a street-glow demo built from the Gdańsk demo data, audience, highlights,
