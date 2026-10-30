@@ -1,6 +1,8 @@
 import { translator } from '@/i18n/translator';
 import { fixed } from '@/ui-kit/format';
 
+import { spokenArea } from '../spoken-area';
+
 const summary = (locale: 'en' | 'pl', cells: number, strong: number) =>
   translator('turf', locale)('summary', {
     cellCount: cells,
@@ -28,6 +30,34 @@ describe('turf copy', () => {
     expect(t('gained.newTurf', { area: '0.02 km²' })).toMatch(/\+.* new turf/);
     expect(t('gained.cells', { addedCount: 40, added: '40', reinforcedCount: 2, reinforced: '2' })).toBe(
       '40 new cells · 2 reinforced'
+    );
+  });
+
+  it('spells out the units of a district row for VoiceOver, with Polish plurals', () => {
+    const row = (locale: 'en' | 'pl', coveredKm2: number, areaKm2: number) => {
+      const covered = spokenArea(coveredKm2, locale);
+      const area = spokenArea(areaKm2, locale);
+      return translator('turf', locale)('districts.rowLabel', {
+        name: 'Oliwa',
+        coveredUnit: covered.unit,
+        coveredCount: covered.count,
+        covered: covered.text,
+        areaUnit: area.unit,
+        areaCount: area.count,
+        area: area.text,
+      });
+    };
+    expect(row('en', 0.42, 5.8)).toBe('Oliwa, 0.42 square kilometres of turf, district area 5.8 square kilometres');
+    expect(row('en', 1, 1)).toBe('Oliwa, 1 square kilometre of turf, district area 1 square kilometre');
+    expect(row('en', 0.0042, 3)).toBe('Oliwa, 4200 square metres of turf, district area 3 square kilometres');
+    expect(row('pl', 1, 2)).toBe(
+      'Oliwa, 1 kilometr kwadratowy terytorium, powierzchnia dzielnicy 2 kilometry kwadratowe'
+    );
+    expect(row('pl', 0, 5)).toBe(
+      'Oliwa, 0 metrów kwadratowych terytorium, powierzchnia dzielnicy 5 kilometrów kwadratowych'
+    );
+    expect(row('pl', 0.42, 12.5)).toBe(
+      'Oliwa, 0,42 kilometra kwadratowego terytorium, powierzchnia dzielnicy 12,5 kilometra kwadratowego'
     );
   });
 });

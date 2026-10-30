@@ -12,6 +12,8 @@ CHANGELOG.md
 apps/mobile/tools/fixtures/
 apps/mobile/e2e/subflows/travel-*.yaml
 packages/core/src/demo/gdansk-routes.json
+# District boundaries from apps/mobile/tools/gen-districts.mjs (minified on purpose: bundle size)
+packages/core/src/districts/data/
 
 # pnpm lockfile
 pnpm-lock.yaml

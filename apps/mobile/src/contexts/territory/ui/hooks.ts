@@ -4,8 +4,10 @@ import { ACTIVITY_TYPES } from '@/constants/activity';
 import { type ActivityType, type BoundingBox } from '@/shared-kernel';
 import { useApp, useContainer } from '@/ui-kit/app-context';
 
-import type { CityView, ClaimView, TurfCellView, TurfSummaryView } from '../contract';
+import type { CityView, ClaimView, DistrictsView, TurfCellView, TurfSummaryView } from '../contract';
+import { hasDistricts } from '../infrastructure/district-cities';
 import { turfOverlayPreference } from '../infrastructure/turf-overlay-preference';
+import { type DistrictsState, readDistricts } from './read-districts';
 import { overlayArea, overlayStillCovers } from './turf-overlay-area';
 import type { OverlayView } from './turf-overlay-area.constants';
 
@@ -158,5 +160,31 @@ export function useClaim(activityId: string): ClaimView | null {
   useEffect(() => {
     c.territory.claimOf.execute(activityId).then(set);
   }, [c, activityId, dataVersion]);
+  return v;
+}
+
+/** Whether the city has district boundaries in the app (the Turf tab's Districts chip). */
+export function useHasDistricts(cityId: string | null | undefined): boolean {
+  return useMemo(() => (cityId ? hasDistricts(cityId) : false), [cityId]);
+}
+
+/**
+ * The Home City's districts with the turf held in each (Districts screen): `undefined` while
+ * loading, `null` if they couldn't be read (an earlier answer is kept). Re-read after a new or
+ * deleted activity (`dataVersion`) and after a Home City choice.
+ */
+export function useDistricts(): DistrictsView | null | undefined {
+  const c = useContainer();
+  const { dataVersion } = useApp();
+  const [v, set] = useState<DistrictsState>(undefined);
+  const [chosen, bump] = useState(0);
+  useEffect(() => {
+    const l = () => bump((n) => n + 1);
+    homeCityListeners.add(l);
+    return () => {
+      homeCityListeners.delete(l);
+    };
+  }, []);
+  useEffect(() => readDistricts(() => c.territory.districts.execute(), set), [c, dataVersion, chosen]);
   return v;
 }

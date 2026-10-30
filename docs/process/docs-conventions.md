@@ -103,13 +103,13 @@ Bounded contexts: <!-- probe:contexts -->7<!-- /probe -->
 - `achievements`: `id:` entries in `packages/core/src/contexts/achievements/domain/achievements.ts`
   (<!-- probe:achievements -->20<!-- /probe -->)
 - `e2e-flows`: `flowsOrder` entries in `apps/mobile/e2e/config.yaml`
-  (<!-- probe:e2e-flows -->17<!-- /probe -->)
+  (<!-- probe:e2e-flows -->18<!-- /probe -->)
 - `migrations`: `version:` entries in `apps/mobile/src/platform/migrations.ts`
   (<!-- probe:migrations -->13<!-- /probe -->)
 - `cities-pl`, `cities-europe`: Home City catalogue entries in
   `packages/core/src/contexts/territory/domain/city-catalog.ts` with a `pl-` id, and all the others
   (<!-- probe:cities-pl -->23<!-- /probe -->, <!-- probe:cities-europe -->15<!-- /probe -->)
-- `docs`: markdown files under `docs/` (<!-- probe:docs -->64<!-- /probe -->)
+- `docs`: markdown files under `docs/` (<!-- probe:docs -->65<!-- /probe -->)
 - `api-operations`: HTTP operations in `apps/api/openapi.json`
   (<!-- probe:api-operations -->34<!-- /probe -->)
 

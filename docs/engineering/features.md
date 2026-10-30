@@ -39,7 +39,7 @@ from them; then what the server and the web portal add. Format adapted from empa
 > | SQLite schema         | `apps/mobile/src/platform/migrations.ts`                                 |
 
 Today: <!-- probe:achievements -->20<!-- /probe --> achievements,
-<!-- probe:e2e-flows -->17<!-- /probe --> Maestro flows,
+<!-- probe:e2e-flows -->18<!-- /probe --> Maestro flows,
 <!-- probe:migrations -->13<!-- /probe --> migrations.
 
 ## 1. Tabs
@@ -71,6 +71,12 @@ opens on Dashboard after sign-in.
   `turf-city` chip (⌂ city name) recentres on it, a long press opens the picker. Without a Home City
   it fits all tracks once, or follows the Turfer when there are none, and the `turf-pick-city` chip
   ("⌂ Your city") opens the picker. "⤢ All" (`turf-filter-all`) fits all tracks.
+- **Districts** (`turf-districts` chip, with a Home City; modal `apps/mobile/src/app/districts.tsx`
+  → `territory/ui/districts-view.tsx`): the Home City split into its OpenStreetMap districts on a
+  dark map with the turf, and a list with the km² of turf in each (cells whose centre lies in the
+  district: a first measure). Tap a row or a district to fit the map to it. Boundaries are bundled
+  (`packages/core/src/districts/data`, from `apps/mobile/tools/gen-districts.mjs`); cities without
+  them say so. Plan: `docs/plans/districts-2026-10-29.md`.
 
 ### Record (`apps/mobile/src/app/(tabs)/record.tsx` → `recording/ui/record-view.tsx`)
 

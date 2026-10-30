@@ -103,7 +103,7 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`process/docs-conventions.md`](process/docs-conventions.md): How docs/ declares its own
   freshness — frontmatter, folders, filenames, probes and the audit
 - ✅ [`process/release-manager.md`](process/release-manager.md): Branch flow feat → scope → release
-  → main, PR titles, Conventional Commits, changelog, OTA vs native
+  → main, small changes straight to scope, PR titles, Conventional Commits, changelog, OTA vs native
 - ✅ [`process/session-migration.md`](process/session-migration.md): How to hand a session off and
   pick it up again without losing context — the version session log is the source of truth
 
@@ -201,7 +201,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`decisions/brand-dark-site-2026-10-25.md`](decisions/brand-dark-site-2026-10-25.md): The app
   is the brand's source of truth, so the website, portal, Swagger and Storybook go dark (SITE_SCHEME
   = 'dark', the app's DARK palette, night wordmark, full Ramp); pink buttons keep a night label
-  (WEB_ON_ACCENT) for AA. Replaces brand-light-theme-2026-10-22.
+  (WEB_ON_ACCENT) for AA. Replaces brand-light-theme-2026-10-22. Its website and portal part is
+  superseded by brand-light-website-2026-10-29 (v0.14.0); it still holds for Swagger, Storybook,
+  /branding and the app.
 - ✅ [`decisions/brand-foundations-2026-10-20.md`](decisions/brand-foundations-2026-10-20.md): Brand
   foundations (positioning for three audiences, personality, pillars), Archivo as the brand typeface
   (superseded by brand-typography-2026-10-22), visual language beyond colour, WCAG contrast rules
@@ -214,8 +216,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - 🚧 [`decisions/brand-light-website-2026-10-29.md`](decisions/brand-light-website-2026-10-29.md):
   The website and portal go light (WEB_SCHEME = 'light', day wordmark, white header via
   HEADER_SCHEME) so the app's dark screens stand out; the hero phones keep the app's dark scheme
-  (APP_SCHEME); Swagger, Storybook and the app stay on SITE_SCHEME (dark). Narrows
-  brand-dark-site-2026-10-25 to those surfaces.
+  (APP_SCHEME), and so does every turf piece (legend, gain, dashboard, Record disc: night panels);
+  Swagger, Storybook and the app stay on SITE_SCHEME (dark). Narrows brand-dark-site-2026-10-25 to
+  those surfaces. Status proposed; merging the PR that carries it accepts it.
 - ✅ [`decisions/brand-typography-2026-10-22.md`](decisions/brand-typography-2026-10-22.md): Brand
   type changes from Archivo to the "Street Plate" pairing: Big Shoulders Display Black in capitals
   for headings, Barlow Semi Condensed ExtraBold for numbers, Barlow for website body text; the
@@ -267,6 +270,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   back-end release (opt-in backup, real accounts, restore to a new phone, delete account, export) —
   founder decisions of 2026-10-22, what feat/backend-sync built (shipped in v0.9.0), what changed
   since, and what is left before testers can use it
+- 🚧 [`plans/districts-2026-10-29.md`](plans/districts-2026-10-29.md): Plan for the Districts
+  screen, a modal opened from the Turf tab that shows the Home City split into its administrative
+  districts (OpenStreetMap boundaries bundled with the app) on a map, with a list of districts and
+  the turf area the Turfer holds in each
 - ✅ [`plans/sync-chain-testing-2026-10-22.md`](plans/sync-chain-testing-2026-10-22.md): How to test
   that the four apps stay one system — every scenario starts on the phone (the source of truth) or
   reaches it, and is checked in the API, the web portal and the admin portal as each is built today;
