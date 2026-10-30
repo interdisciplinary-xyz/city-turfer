@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: canonical
 verified: 2026-10-29
 owner: founder
 scope:
@@ -13,10 +13,14 @@ scope:
 summary:
   Plan for the Districts screen, a modal opened from the Turf tab that shows the Home City split
   into its administrative districts (OpenStreetMap boundaries bundled with the app) on a map, with a
-  list of districts and the turf area the Turfer holds in each
+  list of districts and the turf area the Turfer holds in each; built in PR 195 (v0.14.0), its
+  "Later" section is not
 ---
 
 # Districts screen (plan)
+
+Status: **built in #195** (`feat/territory-districts`, merged into `scope/v0.14.0` on 2026-10-30,
+`ccaa8ea`), slices 1–4. Section 9 ("Later") is not built.
 
 ## 1. What we are building
 

@@ -126,10 +126,14 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   v0.12.0) — dark website like the app, homepage in the app's pieces, hero and wordmark fixes,
   language switch reload, docs-engineer agent, audit:brand, review fixes; JS only; iPhone
   reinstalled from the tag (fingerprint ff7765f0…)
-- ✅ [`sessions/v0.13.0.md`](sessions/v0.13.0.md): Session log v0.13.0 (in progress, scope PR 182
-  draft) — cut from main after the v0.12.0 release; turf "this week" counts from local Monday like
-  the This week card (#183); JS only, same iOS fingerprint as the v0.12.0 install on the founder's
-  iPhone
+- 🕰️ [`sessions/v0.13.0.md`](sessions/v0.13.0.md): Session log v0.13.0 (released 2026-10-26, tag
+  v0.13.0) — turf "this week" counts from local Monday like the This week card (#183), hero headline
+  in the muted grey (#185); JS only; the release commit bumps app.json to 0.13.0, so the iPhone's
+  0.12.0 build takes no later OTA
+- ✅ [`sessions/v0.14.0.md`](sessions/v0.14.0.md): Session log v0.14.0 (in progress, scope PR 188) —
+  Districts screen from the Turf tab, light website and portal, homepage sections with a street-glow
+  demo, staff admin under /admin, small changes straight to scope, hero and wordmark work; JS only
+  by inspection, fingerprint not measured
 - 🕰️ [`sessions/v0.2.0.md`](sessions/v0.2.0.md): Session log v0.2.0 through the Me menu and
   achievements; predates the Dashboard, Me drawer and login rename (PRs 23–25) and still says
   app.json is unpinned (pinned in f04bcf3)
@@ -213,12 +217,12 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   Superseded by brand-dark-site-2026-10-25.md (the site is dark again, like the app). The website,
   Swagger and Storybook switch to a light theme (SITE_SCHEME) while the app and every map stay dark;
   the AA light palette, its new tokens and ratios, night labels on pink buttons
-- 🚧 [`decisions/brand-light-website-2026-10-29.md`](decisions/brand-light-website-2026-10-29.md):
+- ✅ [`decisions/brand-light-website-2026-10-29.md`](decisions/brand-light-website-2026-10-29.md):
   The website and portal go light (WEB_SCHEME = 'light', day wordmark, white header via
   HEADER_SCHEME) so the app's dark screens stand out; the hero phones keep the app's dark scheme
   (APP_SCHEME), and so does every turf piece (legend, gain, dashboard, Record disc: night panels);
   Swagger, Storybook and the app stay on SITE_SCHEME (dark). Narrows brand-dark-site-2026-10-25 to
-  those surfaces. Status proposed; merging the PR that carries it accepts it.
+  those surfaces. Accepted: PR 198 merged into scope/v0.14.0 on 2026-10-30.
 - ✅ [`decisions/brand-typography-2026-10-22.md`](decisions/brand-typography-2026-10-22.md): Brand
   type changes from Archivo to the "Street Plate" pairing: Big Shoulders Display Black in capitals
   for headings, Barlow Semi Condensed ExtraBold for numbers, Barlow for website body text; the
@@ -270,10 +274,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   back-end release (opt-in backup, real accounts, restore to a new phone, delete account, export) —
   founder decisions of 2026-10-22, what feat/backend-sync built (shipped in v0.9.0), what changed
   since, and what is left before testers can use it
-- 🚧 [`plans/districts-2026-10-29.md`](plans/districts-2026-10-29.md): Plan for the Districts
+- ✅ [`plans/districts-2026-10-29.md`](plans/districts-2026-10-29.md): Plan for the Districts
   screen, a modal opened from the Turf tab that shows the Home City split into its administrative
   districts (OpenStreetMap boundaries bundled with the app) on a map, with a list of districts and
-  the turf area the Turfer holds in each
+  the turf area the Turfer holds in each; built in PR 195 (v0.14.0), its "Later" section is not
 - 🚧 [`plans/homepage-sections-2026-10-28.md`](plans/homepage-sections-2026-10-28.md): Plan for the
   landing page's sections, top to bottom, presenting CityTurfer as an honest early prototype that
   recruits testers; a street-glow demo built from the Gdańsk demo data, audience, highlights,

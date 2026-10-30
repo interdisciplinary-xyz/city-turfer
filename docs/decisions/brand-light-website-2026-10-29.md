@@ -1,6 +1,6 @@
 ---
-status: proposed
-verified: 2026-10-29
+status: canonical
+verified: 2026-10-30
 owner: founder
 scope:
   [
@@ -14,10 +14,13 @@ summary: >-
   HEADER_SCHEME) so the app's dark screens stand out; the hero phones keep the app's dark scheme
   (APP_SCHEME), and so does every turf piece (legend, gain, dashboard, Record disc: night panels);
   Swagger, Storybook and the app stay on SITE_SCHEME (dark). Narrows brand-dark-site-2026-10-25 to
-  those surfaces. Status proposed; merging the PR that carries it accepts it.
+  those surfaces. Accepted: PR 198 merged into scope/v0.14.0 on 2026-10-30.
 ---
 
 # Light website, dark app screens (v0.14.0)
+
+**Accepted 2026-10-30:** #198 (`feat/web-light-website`) merged into `scope/v0.14.0` (`2e32347`),
+which by the rule below accepts this decision.
 
 ## Decision
 
@@ -49,14 +52,15 @@ product when the page around them is light.
 
 ## Consequences
 
-- **Merging this PR accepts the decision** (the file stays `proposed` until the founder flips it).
-  The same PR updates the rulebook: `CLAUDE.md` (Web bullet), the skills `brand-system` (source of
-  truth, the four scheme constants table, logo, checklist), `brand-surfaces`, `web-motion`,
-  `design-system`, the `brand-designer` agent, `brand-foundations-2026-10-20.md`,
-  `brand-dark-site-2026-10-25.md` (website and portal part superseded, banner and summary; it stays
-  `canonical` because it still holds for Swagger, Storybook and the app), the `SITE_SCHEME`, `LIGHT`
-  and `DARK` doc comments, `tools/brand/surfaces.mjs` (`scheme: 'web'` for web and portal) and
-  `tools/brand-audit.mjs` (knows `WEB_SCHEME`, `HEADER_SCHEME`, `APP_SCHEME`).
+- **Merging this PR accepts the decision** (the file stayed `proposed` until #198 merged; flipped to
+  `canonical` in the v0.14.0 docs pass). The same PR updates the rulebook: `CLAUDE.md` (Web bullet),
+  the skills `brand-system` (source of truth, the four scheme constants table, logo, checklist),
+  `brand-surfaces`, `web-motion`, `design-system`, the `brand-designer` agent,
+  `brand-foundations-2026-10-20.md`, `brand-dark-site-2026-10-25.md` (website and portal part
+  superseded, banner and summary; it stays `canonical` because it still holds for Swagger, Storybook
+  and the app), the `SITE_SCHEME`, `LIGHT` and `DARK` doc comments, `tools/brand/surfaces.mjs`
+  (`scheme: 'web'` for web and portal) and `tools/brand-audit.mjs` (knows `WEB_SCHEME`,
+  `HEADER_SCHEME`, `APP_SCHEME`).
 - Contrast: `packages/brand/src/__tests__/contrast.test.ts` reads `WEB_SCHEME`, `APP_SCHEME` and
   `SITE_SCHEME` separately. The pink button hover mixes toward `--blazing` (about 6.1:1 in all
   three; toward `--text` it was 4.29:1 on light).
