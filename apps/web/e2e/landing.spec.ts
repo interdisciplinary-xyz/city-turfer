@@ -65,8 +65,11 @@ test('street demo: the step buttons pick a tier, Four months shows the city', as
   const player = page.locator('.turf-demo-player');
   const steps = page.getByRole('group', { name: 'Show a step' }).getByRole('button');
   await steps.first().scrollIntoViewIfNeeded();
-  await steps.nth(2).click();
-  await expect(player).toHaveAttribute('data-step', '2');
+  // The buttons are server-rendered: click only once hydration has started autoplay (or retry).
+  await expect(async () => {
+    await steps.nth(2).click();
+    await expect(player).toHaveAttribute('data-step', '2', { timeout: 1000 });
+  }).toPass();
   await expect(steps.nth(2)).toHaveAttribute('aria-pressed', 'true');
   await expect(steps.nth(2)).toHaveText('4 visits · Strong');
   await steps.nth(4).click();

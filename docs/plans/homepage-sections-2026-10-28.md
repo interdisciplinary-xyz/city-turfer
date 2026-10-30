@@ -173,14 +173,14 @@ It stays right under the hero, as today. It gets the waitlist question from slic
   - The visit counts per tier come out of the formula, not a hand-picked 1/3/6/12.
   - It picks the street as the most-repeated stretch in the demo, about 600 m, and pins it by route
     id so the output is stable.
-  - The output is `apps/web/src/app/[locale]/turf-demo/turf-demo.data.ts`: hex polygons projected to
-    a 1000 × 640 viewBox, rounded to 1 decimal, with the tier per step. Budget: ≤ 30 KB gzipped,
-    checked by the test. h3-js never reaches the browser.
+  - The output is `apps/web/src/app/[locale]/turf-demo/turf-demo.data.json`: hex polygons projected
+    to an 800 × 1000 viewBox (4:5), rounded to 1 decimal, with the tier per step. Budget: ≤ 30 KB
+    gzipped, checked by the test. h3-js never reaches the browser.
   - Spike question: can a `.mjs` tool import core's TS source directly, or does it need the runner
     the API's dev scripts use? Settle this in the slice-2 spike.
 - **Drawing:**
   - inline SVG in a server component (`turf-demo.tsx`), so the final frame is in the HTML;
-  - a client component (`turf-demo-motion.tsx`) only animates `fill-opacity` / class swaps per step;
+  - a client component (`turf-demo-player.tsx`) only steps `data-step` (CSS does the rest);
   - tier fills are `var(--turf-*)`, glow uses layered opacity rather than `feGaussianBlur` (Safari
     cost), and a fixed `aspect-ratio` prevents CLS;
   - streets under the cells are optional: reuse the hero-city-map generator's Gdańsk layer if that
@@ -194,9 +194,9 @@ It stays right under the hero, as today. It gets the waitlist question from slic
   glows brighter with each visit: Faint after 1, Glowing after {n}…"), and the step buttons announce
   the tier.
 - **Files:**
-  - new: `turf-demo/` (`turf-demo.tsx`, `turf-demo-motion.tsx`, `turf-demo.constants.ts`,
-    `turf-demo.data.ts`, `turf-demo.css`, `index.ts`);
-  - new: `apps/web/tools/gen-turf-demo.mjs` and its test;
+  - new: `turf-demo/` (`turf-demo.tsx`, `turf-demo-player.tsx`, `turf-demo.constants.ts`,
+    `turf-demo.data.json`, `turf-demo.css`, `index.ts`);
+  - new: `apps/web/tools/gen-turf-demo.mjs` and its test (`gen-turf-demo.spec.mjs`, run under tsx);
   - changed: `page.tsx`, `messages/*.json`;
   - new: a story with three states (play, reduced motion, each step).
 - **Accept:**

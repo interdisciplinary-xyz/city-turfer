@@ -39,7 +39,6 @@ export function TurfDemoPlayer({ labels, children }: { labels: TurfDemoLabels; c
     if (!node || !window.matchMedia('(prefers-reduced-motion: no-preference)').matches) {
       return stop;
     }
-    setStep(0);
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) {
@@ -49,7 +48,7 @@ export function TurfDemoPlayer({ labels, children }: { labels: TurfDemoLabels; c
           }
         }
       },
-      { threshold: 0.5 }
+      { threshold: 0.25 }
     );
     observer.observe(node);
     return () => {

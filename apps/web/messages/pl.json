@@ -15,7 +15,7 @@
     "taglineRamp": "Ulice są Twoje.",
     "lede": "Spacery, bieganie albo jazda na rowerze, solo lub z psem — każda ulica, którą pokonasz, staje się Twoim terytorium. Wracaj i patrz, jak świeci coraz jaśniej.",
     "badge": "Wczesny prototyp",
-    "audience": "Dla tych, którzy co tydzień chodzą, biegają albo jeżdżą tymi samymi ulicami."
+    "audience": "Dla każdego, kto chodzi, biega albo jeździ po swoim mieście i wciąż do niego wraca."
   },
   "screens": {
     "turfMap": {
@@ -121,9 +121,9 @@
       "phone": "Twoje aktywności są zapisane na telefonie, w aplikacji.",
       "backup": "Kopia w chmurze jest wyłączona, dopóki jej nie włączysz. Gdy ją wyłączysz, kopia na naszym serwerze zostanie usunięta.",
       "portal": "Po zalogowaniu w przeglądarce widzisz tylko to, co trafiło do kopii.",
-      "leaves": "Co opuszcza telefon: kafelki mapy dla oglądanego obszaru, sprawdzanie aktualizacji oraz, jeśli nie wyłączysz uzupełniania luk, dwa końce luki GPS.",
+      "leaves": "Co opuszcza telefon: kafelki mapy dla oglądanego obszaru, sprawdzanie aktualizacji oraz, jeśli nie wyłączysz uzupełniania luk, dwa końce luki GPS. Logowanie wysyła Twój adres e-mail na nasz serwer.",
       "account": "Na razie do aplikacji logujesz się kontem.",
-      "site": "Ta strona nie zapisuje ciasteczek i nie ładuje skryptów śledzących."
+      "site": "Publiczne strony nie zapisują ciasteczek i nie ładują skryptów śledzących."
     },
     "cta": {
       "title": "Twoje terytorium zaczyna się za progiem",
@@ -133,18 +133,18 @@
     "demo": {
       "eyebrow": "Siła terytorium",
       "title": "Wracaj. Świeci jaśniej.",
-      "body": "Jedna ulica na Głównym Mieście w Gdańsku, raz po razie. A potem całe miasto po czterech miesiącach spacerów, biegów i przejażdżek.",
+      "body": "Jedna ulica na Głównym Mieście w Gdańsku, wizyta po wizycie. A potem całe miasto po czterech miesiącach spacerów, biegów i przejażdżek.",
       "step": "{visits, plural, one {# raz} few {# razy} many {# razy} other {# razy}} · {tier}",
       "cityStep": "Cztery miesiące",
       "stepsLabel": "Pokaż etap",
       "replay": "Jeszcze raz",
-      "alt": "Ulica w Gdańsku narysowana jako komórki terytorium. Po {faint, plural, one {# razie} few {# razach} many {# razach} other {# razach}} jest blada, po {glowing} świeci, po {strong} jest mocna, a po {blazing} płonie. Potem całe miasto po czterech miesiącach, najjaśniejsze na najczęstszych trasach.",
+      "alt": "Ulica w Gdańsku narysowana jako komórki terytorium. Po {faint, plural, one {# razie} few {# razach} many {# razach} other {# razach}} jest blada, po {glowing, plural, one {# razie} few {# razach} many {# razach} other {# razach}} świeci, po {strong, plural, one {# razie} few {# razach} many {# razach} other {# razach}} jest mocna, a po {blazing, plural, one {# razie} few {# razach} many {# razach} other {# razach}} płonie. Potem całe miasto po czterech miesiącach, najjaśniejsze na najczęstszych trasach.",
       "caption": "Przykładowe dane z konta demo: {activities, plural, one {# spacer, bieg lub przejażdżka} few {# spacery, biegi i przejażdżki} many {# spacerów, biegów i przejażdżek} other {# spaceru, biegu lub przejażdżki}} w Gdańsku · {area} km² · {cells, plural, one {# komórka} few {# komórki} many {# komórek} other {# komórki}}."
     },
     "audience": {
       "eyebrow": "Dla kogo",
       "title": "Spaceruj. Biegaj. Jeźdź.",
-      "walk": "Do pracy, z psem, najdłuższą drogą do domu.",
+      "walk": "Do pracy, z psem, dłuższą drogą do domu.",
       "run": "Znana pętla i zakręt, w który jeszcze nie skręcasz.",
       "cycle": "Niedzielne przejażdżki, które powoli wypełniają mapę.",
       "notFor": "Nie dla Ciebie, jeśli szukasz rankingów, drużyn albo stref treningowych. CityTurfer to Ty i Twoje ulice."
@@ -162,12 +162,12 @@
         "body": "Mapa i statystyki na żywo, autopauza, przytrzymaj, by zakończyć. Zablokuj telefon i ruszaj dalej."
       },
       "health": {
-        "title": "Spacery z Apple Watch się liczą",
+        "title": "Spacery z Apple Health też się liczą",
         "body": "Zaimportuj dawne spacery, biegi i przejażdżki z trasami z Apple Health, a od pierwszego dnia staną się terytorium."
       },
       "achievements": {
         "title": "Osiągnięcia bez serii",
-        "body": "Dwadzieścia osiągnięć do odblokowania po drodze. Nie ma serii do pilnowania."
+        "body": "{count, plural, one {# osiągnięcie} few {# osiągnięcia} many {# osiągnięć} other {# osiągnięcia}} do odblokowania po drodze. Nie ma serii do pilnowania."
       },
       "city": {
         "title": "Zaczyna się w Twoim mieście",
@@ -183,7 +183,7 @@
       },
       "fades": {
         "title": "Nic nie blednie",
-        "body": "Twoje terytorium nie znika, nawet jeśli długo Cię nie było."
+        "body": "Twoje terytorium nie słabnie, nawet jeśli długo Cię nie było."
       },
       "private": {
         "title": "Prywatne od początku",
@@ -199,17 +199,17 @@
         "record": "Nagrywanie przy wygaszonym ekranie (iPhone)",
         "turf": "Mapa terytorium i jego siła",
         "history": "Historia, statystyki i osiągnięcia",
-        "health": "Import i eksport z Apple Health (iPhone)",
         "languages": "Polski i angielski"
       },
       "testing": {
         "title": "W testach",
-        "android": "Aplikacja na Androida na prawdziwych telefonach",
+        "health": "Import i eksport z Apple Health (iPhone, na razie tylko w Symulatorze)",
         "battery": "Zużycie baterii na długich wyjściach",
         "backup": "Kopia w chmurze (po włączeniu)"
       },
       "notYet": {
         "title": "Jeszcze nie",
+        "android": "Aplikacja na Androida na prawdziwych telefonach",
         "store": "Wydanie w App Store",
         "gpx": "Eksport GPX",
         "sharing": "Udostępnianie"
@@ -224,11 +224,11 @@
       },
       "free": {
         "q": "Czy jest darmowa?",
-        "a": "Tak, na czas testów. Zanim to się zmieni, powiemy o tym wprost."
+        "a": "Tak, na czas testów."
       },
       "battery": {
         "q": "Czy szybko rozładowuje baterię?",
-        "a": "Korzysta z GPS tylko podczas nagrywania. Zużycie baterii na długich wyjściach mierzymy teraz z testerami."
+        "a": "W tle korzysta z GPS tylko podczas nagrywania. Zużycie baterii na długich wyjściach wciąż mierzymy."
       },
       "account": {
         "q": "Czy potrzebuję konta?",
@@ -240,7 +240,7 @@
       },
       "android": {
         "q": "Czy jest wersja na Androida?",
-        "a": "Jest wersja na Androida, ale nie przetestowaliśmy jej jeszcze na prawdziwych telefonach. Najpierw iPhone."
+        "a": "Jest wersja na Androida, ale do tej pory działała tylko w emulatorze, nigdy na prawdziwym telefonie. Najpierw iPhone."
       },
       "watch": {
         "q": "Czy potrzebuję Apple Watch?",
@@ -254,7 +254,7 @@
   },
   "footer": {
     "label": "Stopka strony",
-    "contact": "Kontakt",
+    "contact": "Kontakt:",
     "rights": "© {year} CityTurfer"
   },
   "language": {
@@ -264,7 +264,7 @@
   },
   "download": {
     "cta": "Pobierz na Androida",
-    "note": "Plik APK na telefony z Androidem",
+    "note": "Plik APK na telefony z Androidem (jeszcze nieprzetestowany na prawdziwych telefonach)",
     "help": "Pierwsza instalacja? Przeglądarka zapyta o zgodę na instalowanie aplikacji — tak instaluje się aplikacje spoza Google Play.",
     "appStore": "App Store",
     "soon": "Wkrótce"

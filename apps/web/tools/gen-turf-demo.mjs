@@ -10,6 +10,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
+import { evaluateAchievements } from '@cityturfer/core/achievements';
 import { GDANSK_ROUTES, planGdanskDemo, pointsOf } from '@cityturfer/core/demo';
 import { H3CellGrid } from '@cityturfer/core/h3';
 import { strengthOf, tierOf } from '@cityturfer/core/territory';
@@ -52,7 +53,8 @@ export function buildTurfDemo() {
 
   // Visits per cell: each activity counts a cell once, as a Claim does. Claim.fromTrack also adds
   // cells between fixes more than half a cell apart; the demo's fixes are at most ~16 m apart (3 s at
-  // ride speed) against a ~43 m step, so the raw fixes give the same cells.
+  // ride speed) against a ~21.6 m step (cellWidthM / 2), so the raw fixes give the same cells (the worst case
+  // is ~17 m plus noise; the margin is thin, so the caption's cell count may sit a few below the app's).
   const visits = new Map();
   for (const activity of plan) {
     for (const cell of new Set(pointsOf(activity).map((p) => grid.cellOf(p)))) {
@@ -141,6 +143,7 @@ export function buildTurfDemo() {
       lines: lines.filter((l) => l.length > 2),
     },
     city: { radius: round(edgeM * city.scale * 1.1), ...cityByTier },
+    achievements: evaluateAchievements({ activities: [], turfCells: 0, strongCells: 0 }).length,
     totals: {
       activities: plan.length,
       cells: cells.length,

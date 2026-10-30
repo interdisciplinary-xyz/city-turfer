@@ -8,9 +8,9 @@
     "build": "next build && node tools/check-export.mjs",
     "start": "npx --yes serve@14 out",
     "turf-demo": "tsx tools/gen-turf-demo.mjs",
-    "test:unit": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test tools/__tests__/*.test.mjs && tsx tools/gen-turf-demo.mjs --check && vitest run",
+    "test:unit": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test tools/__tests__/*.test.mjs && tsx --test tools/__tests__/gen-turf-demo.spec.mjs && tsx tools/gen-turf-demo.mjs --check && vitest run",
     "test:e2e": "playwright test",
-    "arch": "depcruise src server.mjs next.config.ts --config .dependency-cruiser.cjs",
+    "arch": "depcruise src tools server.mjs next.config.ts --config .dependency-cruiser.cjs",
     "typecheck": "next typegen && tsc --noEmit",
     "lint": "eslint src tools e2e playwright.config.ts next.config.ts server.mjs",
     "api:types": "openapi-typescript ../api/openapi.json -o src/api/schema.gen.ts && prettier --write src/api/schema.gen.ts"

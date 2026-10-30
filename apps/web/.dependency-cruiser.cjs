@@ -44,7 +44,9 @@ module.exports = {
       severity: 'error',
       comment:
         'Public pages never load @cityturfer/core: its formatters are for the portal (docs/plans/web-portal-history-2026-10-23.md, H4).',
-      from: { path: site, pathNot: notPortal },
+      // tools/gen-turf-demo.mjs runs at build time only and writes plain numbers (turf-demo.data.json):
+      // core and h3-js never reach the browser, so it is the one named exception.
+      from: { path: site, pathNot: [notPortal, '^tools/gen-turf-demo\\.mjs$'] },
       to: { path: '(^|/)packages/core/', pathNot: '(^|/)packages/core/src/h3/' },
     },
     {

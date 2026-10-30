@@ -1,4 +1,5 @@
-import { TIER_ORDER } from '@cityturfer/brand';
+import { cssVariables, SITE_SCHEME, TIER_ORDER } from '@cityturfer/brand';
+import type { CSSProperties } from 'react';
 
 import data from './turf-demo.data.json';
 
@@ -20,9 +21,17 @@ export type TurfDemoData = {
   /** Beat 2: cell centres per tier, flat [x, y, …], drawn as dots of `radius`. */
   city: { radius: number } & Record<TurfTier, number[]>;
   totals: { activities: number; cells: number; areaKm2: number };
+  /** How many achievements the app has (core's list), for the highlights copy. */
+  achievements: number;
 };
 
 export const TURF_DEMO = data as TurfDemoData;
+
+/**
+ * The demo is always a dark night panel, whatever the page scheme. SITE_SCHEME is the app's dark
+ * scheme today; it becomes APP_SCHEME once the light website (#198) lands.
+ */
+export const DEMO_SCHEME_STYLE = cssVariables(SITE_SCHEME) as CSSProperties;
 
 /** The four tiers on one street (steps 0–3); step 4 is the whole city (turf-demo-player.constants). */
 export const DEMO_TIERS: readonly TurfTier[] = TIER_ORDER;

@@ -10,7 +10,7 @@ export function SiteFooter({ contactEmail }: { contactEmail?: string }) {
         <p>{t('rights', { year: new Date().getFullYear() })}</p>
         {contactEmail ? (
           <p>
-            {t('contact')}: <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+            {t('contact')} <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
           </p>
         ) : null}
       </div>

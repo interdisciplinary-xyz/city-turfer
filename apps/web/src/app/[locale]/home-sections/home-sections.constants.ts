@@ -48,8 +48,8 @@ export const HIGHLIGHTS: readonly { key: HighlightKey; icon: string; iphone: boo
   { key: 'gain', icon: '⬢', iphone: false },
   { key: 'record', icon: '●', iphone: true },
   { key: 'health', icon: '♥', iphone: true },
-  { key: 'achievements', icon: '🏅', iphone: false },
-  { key: 'city', icon: '📍', iphone: false },
+  { key: 'achievements', icon: '★', iphone: false },
+  { key: 'city', icon: '◎', iphone: false },
 ];
 
 export const DIFFERS = ['repeats', 'fades', 'private'] as const;
@@ -59,9 +59,9 @@ export const DIFFERS = ['repeats', 'fades', 'private'] as const;
  * Keys under home.status.<column>.<item>.
  */
 export const STATUS_COLUMNS = [
-  { key: 'works', items: ['record', 'turf', 'history', 'health', 'languages'] },
-  { key: 'testing', items: ['android', 'battery', 'backup'] },
-  { key: 'notYet', items: ['store', 'gpx', 'sharing'] },
+  { key: 'works', items: ['record', 'turf', 'history', 'languages'] },
+  { key: 'testing', items: ['health', 'battery', 'backup'] },
+  { key: 'notYet', items: ['android', 'store', 'gpx', 'sharing'] },
 ] as const;
 
 /** FAQ questions in page order; the FAQPage JSON-LD is built from the same keys. */

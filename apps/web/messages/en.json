@@ -15,7 +15,7 @@
     "taglineRamp": "Own your streets.",
     "lede": "Walk, run or ride — every street you cover becomes your turf. Come back and watch it glow.",
     "badge": "Early prototype",
-    "audience": "For people who walk, run or ride the same streets every week."
+    "audience": "For anyone who walks, runs or rides their city, and keeps coming back."
   },
   "screens": {
     "turfMap": {
@@ -121,9 +121,9 @@
       "phone": "Your activities are stored on your phone, in the app.",
       "backup": "Cloud backup stays off until you turn it on. Turn it off and the copy on our server is deleted.",
       "portal": "Signed in on the web, you see only what you backed up.",
-      "leaves": "What does leave the phone: map tiles for the area you’re viewing, update checks, and, unless you turn gap filling off, the two ends of a GPS gap.",
+      "leaves": "What does leave the phone: map tiles for the area you’re viewing, update checks, and, unless you turn gap filling off, the two ends of a GPS gap. Signing in sends your email address to our server.",
       "account": "For now, you sign in to the app with an account.",
-      "site": "This website sets no cookies and loads no trackers."
+      "site": "Our public pages set no cookies and load no trackers."
     },
     "cta": {
       "title": "Your turf starts at your door",
@@ -162,12 +162,12 @@
         "body": "Live map and stats, auto-pause, hold to finish. Lock the phone and keep going."
       },
       "health": {
-        "title": "Your Apple Watch walks count",
+        "title": "Your Apple Health walks count",
         "body": "Import past walks, runs and rides with their routes from Apple Health, and they become turf on day one."
       },
       "achievements": {
         "title": "Achievements, no streaks",
-        "body": "Twenty achievements to unlock along the way. There’s no streak to keep."
+        "body": "{count, plural, one {# achievement} other {# achievements}} to unlock along the way. There’s no streak to keep."
       },
       "city": {
         "title": "Starts in your city",
@@ -199,17 +199,17 @@
         "record": "Recording with the screen off (iPhone)",
         "turf": "The Turf Map and turf strength",
         "history": "History, stats and achievements",
-        "health": "Apple Health import and export (iPhone)",
         "languages": "English and Polish"
       },
       "testing": {
         "title": "Being tested",
-        "android": "The Android app on real phones",
+        "health": "Apple Health import and export (iPhone Simulator only so far)",
         "battery": "Battery use on long outings",
         "backup": "Opt-in cloud backup"
       },
       "notYet": {
         "title": "Not yet",
+        "android": "The Android app on real phones",
         "store": "App Store release",
         "gpx": "GPX export",
         "sharing": "Sharing"
@@ -224,11 +224,11 @@
       },
       "free": {
         "q": "Is it free?",
-        "a": "Yes, while it’s being tested. We’ll say so clearly before that changes."
+        "a": "Yes, while it’s being tested."
       },
       "battery": {
         "q": "Does it drain my battery?",
-        "a": "It uses GPS only while you record. We’re measuring battery use on long outings with testers now."
+        "a": "It tracks your location in the background only while you record. We’re still measuring battery use on long outings."
       },
       "account": {
         "q": "Do I need an account?",
@@ -240,7 +240,7 @@
       },
       "android": {
         "q": "Is there an Android app?",
-        "a": "There’s an Android build, but we haven’t tested it on real phones yet. iPhone comes first."
+        "a": "There’s an Android build, but so far it has only run on an emulator, never on a real phone. iPhone comes first."
       },
       "watch": {
         "q": "Do I need an Apple Watch?",
@@ -254,7 +254,7 @@
   },
   "footer": {
     "label": "Site footer",
-    "contact": "Contact",
+    "contact": "Contact:",
     "rights": "© {year} CityTurfer"
   },
   "language": {
@@ -264,7 +264,7 @@
   },
   "download": {
     "cta": "Download for Android",
-    "note": "APK for Android phones",
+    "note": "APK for Android phones (not yet tested on real phones)",
     "help": "First install? Your browser asks you to allow installing apps from it — that's how apps from outside Google Play install.",
     "appStore": "App Store",
     "soon": "Coming soon"

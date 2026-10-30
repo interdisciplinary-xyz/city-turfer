@@ -560,7 +560,7 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  color: var(--glow);
+  color: var(--accent-text);
   font-size: 22px;
   background: color-mix(in srgb, var(--glow) 16%, transparent);
 }
@@ -601,7 +601,7 @@
 }
 
 .home-status-testing .home-points li::before {
-  background: var(--strong);
+  background: var(--border-control);
 }
 
 .home-status-notYet .home-points li::before {

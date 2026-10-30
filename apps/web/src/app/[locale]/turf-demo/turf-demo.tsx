@@ -2,7 +2,7 @@ import './turf-demo.css';
 
 import { useFormatter, useTranslations } from 'next-intl';
 
-import { DEMO_TIERS, TURF_DEMO } from './turf-demo.constants';
+import { DEMO_SCHEME_STYLE, DEMO_TIERS, TURF_DEMO } from './turf-demo.constants';
 import { TurfDemoPlayer } from './turf-demo-player';
 
 const points = (flat: number[]) => {
@@ -49,7 +49,7 @@ export function TurfDemo() {
           </h2>
           <p className='home-lede'>{t('body')}</p>
         </div>
-        <figure className='turf-demo-figure' aria-describedby='demo-caption'>
+        <figure className='turf-demo-figure' aria-describedby='demo-caption' style={DEMO_SCHEME_STYLE}>
           <TurfDemoPlayer labels={{ steps, stepsLabel: t('stepsLabel'), replay: t('replay') }}>
             <svg
               className='turf-demo-svg'
