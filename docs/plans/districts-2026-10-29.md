@@ -66,16 +66,25 @@ the district's street cells, see §9). No threshold, no "lit" state, no achievem
   `--probe` (counts per level). Aim: roughly 8–60 districts. Poland mostly uses level 9 (dzielnice,
   osiedla); Berlin level 9 (12 Bezirke). Districts whose interior point lies outside the city
   boundary are dropped (neighbours sharing the border).
-- **Processing**: rings assembled from the relation's ways, holes attached to their outer ring,
-  Douglas–Peucker simplification at 20 m (about a street's width; Gdańsk: 46 KB instead of 60 KB at
-  12 m), coordinates rounded to 5 decimals (~1 m), names from the OSM `name` tag (local language, as
-  people know them: "Wrzeszcz Górny", not a translation).
-- **First cities** (generated 2026-10-29): Warsaw, Kraków, Łódź (level 10, 55 osiedla), Wrocław,
-  Poznań, Gdańsk, Szczecin (level 10, 37 osiedla), Bydgoszcz, Lublin, Białystok, Katowice, Gdynia,
-  Częstochowa, Rzeszów, Toruń, Olsztyn, Opole and Berlin (12 Bezirke): 18 cities, about 0.5 MB.
-  Kielce and Sopot have no usable district level in OSM; the other catalogue cities are not probed
-  yet. Cities without data show the "not available yet" state.
-- **Size budget**: ≤ 60 KB per city and ≤ 1 MB for all district files together (minified JSON, in
+- **Processing**: rings assembled from the relation's ways (dangling ends at most 50 m apart are
+  bridged by a straight line, only when that closes the relation; Łódź needs one), holes attached to
+  their outer ring, outer rings counter-clockwise and holes clockwise (RFC 7946). Simplification
+  works on a city's rings together: rings are split into arcs at junctions and each arc is
+  simplified once (Douglas–Peucker, 20 m), so neighbours share identical vertices; an arc whose
+  result would cross or touch another is redone at a smaller tolerance. Coordinates rounded to 5
+  decimals (~1 m), names from the OSM `name` tag (local language, as people know them: "Wrzeszcz
+  Górny", not a translation). Every dropped relation is reported with its OSM id and reason.
+- **Coverage gate**: the districts must cover 97–103 % of the city's area, or the generator does not
+  write the city and exits with an error. Gdańsk and Gdynia are measured against their official land
+  area (GUS), because their OSM city boundaries include part of the bay. Each file stores
+  `cityAreaM2`, and the data test checks coverage per city.
+- **First cities** (generated 2026-10-29, fixed 2026-10-30): Warsaw, Kraków, Łódź (level 10, 57
+  osiedla), Wrocław, Poznań, Gdańsk, Szczecin (level 10, 37 osiedla), Bydgoszcz, Lublin, Białystok,
+  Katowice, Gdynia, Częstochowa, Rzeszów, Opole and Berlin (12 Bezirke): 16 cities, about 477 KB.
+  Toruń (42 % covered in OSM) and Olsztyn (67 %) fail the coverage gate and stay out until OSM is
+  complete; Kielce and Sopot have no usable district level; the other catalogue cities are not
+  probed yet. Cities without data show no Districts chip.
+- **Size budget**: ≤ 60 KB per city and ≤ 600 KB for all district files together (minified JSON, in
   the JS bundle). A test enforces both.
 - **Files**: `packages/core/src/districts/data/<city-id>.json` (one per city) and the generated
   `data/index.ts`. Prettier ignores the data folder (generated, like `gdansk-routes.json`).
@@ -154,8 +163,10 @@ the turf rules and the phone, API and portal can all use it later.
 ## 7. Tests and checks
 
 - **Generator** (`apps/mobile/tools/__tests__/gen-districts.test.mjs`, node test): ring assembly
-  (reversed and split ways), holes, simplification keeps closed rings, neighbours outside the city
-  dropped, `index.ts` source.
+  (reversed and split ways, the 50 m bridge), holes, winding, shared-arc simplification keeps closed
+  rings with at least 4 points and identical shared vertices, interior points, neighbours outside
+  the city dropped, unclosed relations reported, the coverage gate and land area, admin-level
+  fallback, `index.ts` source.
 - **Data** (`packages/core/src/districts/__tests__/data.test.ts`, Jest): every file's city is in the
   catalogue and listed in `DISTRICT_FILES`; ids unique; names non-empty; rings closed with ≥ 4
   points; size budgets from §3; districts of one city don't overlap much (sample points).
