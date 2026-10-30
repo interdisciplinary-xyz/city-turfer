@@ -14,6 +14,26 @@
     "taglineLead": "Surfuj po mieście.",
     "taglineRamp": "Ulice są Twoje.",
     "lede": "Spacery, bieganie albo jazda na rowerze, solo lub z psem — każda ulica, którą pokonasz, staje się Twoim terytorium. Wracaj i patrz, jak świeci coraz jaśniej.",
+    "map": {
+      "streetsOf": "Ulice:",
+      "chooseCity": "Miasto na mapie",
+      "nearMe": "W pobliżu",
+      "locating": "Szukamy Twojego miasta…",
+      "tooFar": "Nie mamy jeszcze mapy w Twojej okolicy, więc zostaje ta. Kolejne miasta w drodze.",
+      "unavailable": "Lokalizacja jest niedostępna. Wybierz miasto z listy.",
+      "credit": "© współtwórcy OpenStreetMap",
+      "cities": {
+        "pl-gdansk": "Gdańsk",
+        "pl-warsaw": "Warszawa",
+        "pl-krakow": "Kraków",
+        "pl-wroclaw": "Wrocław",
+        "pl-poznan": "Poznań",
+        "de-berlin": "Berlin",
+        "gb-london": "Londyn",
+        "cz-prague": "Praga",
+        "lt-vilnius": "Wilno"
+      }
+    },
     "badge": "Wczesny prototyp",
     "audience": "Dla każdego, kto chodzi, biega albo jeździ po swoim mieście i wciąż do niego wraca."
   },

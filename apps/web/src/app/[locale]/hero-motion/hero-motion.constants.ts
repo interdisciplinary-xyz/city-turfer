@@ -14,3 +14,6 @@ export const MOTION_BOOT_SCRIPT = `(()=>{try{if(matchMedia('(prefers-reduced-mot
 
 /** Brand motion: calm and glowing, never bouncy (`web-motion` skill). */
 export const EASE = 'expo.out';
+
+/** How far (px, at the window's edge) the hero's city map drifts against the pointer. */
+export const MAP_DRIFT_PX = 20;

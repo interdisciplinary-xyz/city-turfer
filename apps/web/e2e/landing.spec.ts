@@ -60,6 +60,56 @@ for (const path of ['/en', '/pl']) {
   });
 }
 
+// The hero's street map (docs/plans/hero-city-map-2026-10-28.md): the city follows the time zone,
+// only that city's maps load, and "Near me" uses the location only after a click.
+const mapRequests = (urls: string[]) =>
+  urls.filter((url) => new URL(url).pathname.startsWith('/city-maps/')).map((url) => new URL(url).pathname);
+
+for (const [timezoneId, city] of [
+  ['Europe/Warsaw', 'pl-gdansk'],
+  ['Europe/London', 'gb-london'],
+  ['America/New_York', 'pl-gdansk'],
+] as const) {
+  test.describe(`hero map in ${timezoneId}`, () => {
+    test.use({ timezoneId });
+    test(`shows ${city} and loads only its maps`, async ({ page, network }) => {
+      await page.goto('/en');
+      await page.waitForLoadState('networkidle');
+      await expect(page.locator('.hero-city')).toHaveAttribute('data-city', city);
+      await expect(page.getByLabel('City on the map')).toHaveValue(city);
+      expect(mapRequests(network.urls).sort()).toEqual([
+        `/city-maps/${city}-streets.svg`,
+        `/city-maps/${city}-water.svg`,
+      ]);
+    });
+  });
+}
+
+test('hero map: picking a city swaps the map', async ({ page }) => {
+  await page.goto('/pl');
+  await page.getByLabel('Miasto na mapie').selectOption('pl-krakow');
+  await expect(page.locator('.hero-city')).toHaveAttribute('data-city', 'pl-krakow');
+});
+
+test.describe('hero map: Near me', () => {
+  test.use({ timezoneId: 'Europe/Warsaw', permissions: ['geolocation'] });
+
+  test('switches to the nearest city', async ({ page, context }) => {
+    await context.setGeolocation({ latitude: 52.25, longitude: 21.05 });
+    await page.goto('/en');
+    await page.getByRole('button', { name: 'Near me' }).click();
+    await expect(page.locator('.hero-city')).toHaveAttribute('data-city', 'pl-warsaw');
+  });
+
+  test('keeps the guess when no city is close', async ({ page, context }) => {
+    await context.setGeolocation({ latitude: 53.43, longitude: 14.55 });
+    await page.goto('/en');
+    await page.getByRole('button', { name: 'Near me' }).click();
+    await expect(page.getByRole('status')).toContainText('No map near you yet');
+    await expect(page.locator('.hero-city')).toHaveAttribute('data-city', 'pl-gdansk');
+  });
+});
+
 test('street demo: the step buttons pick a tier, Four months shows the city', async ({ page }) => {
   await page.goto('/en');
   const player = page.locator('.turf-demo-player');
