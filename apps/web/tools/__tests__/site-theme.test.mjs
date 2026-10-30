@@ -6,22 +6,28 @@ import { test } from 'node:test';
 const SRC = path.resolve(import.meta.dirname, '../../src/app');
 const read = (file) => readFile(path.join(SRC, file), 'utf8');
 
-test('the layout takes its scheme from SITE_SCHEME, never a literal', async () => {
+test('the layout takes its scheme from WEB_SCHEME, never a literal', async () => {
   const layout = await read('[locale]/layout.tsx');
-  assert.match(layout, /cssVariables\(SITE_SCHEME\)/);
-  assert.match(layout, /themeColor:\s*THEMES\[SITE_SCHEME\]\.bg/);
-  assert.match(layout, /colorScheme:\s*SITE_SCHEME/);
+  assert.match(layout, /cssVariables\(WEB_SCHEME\)/);
+  assert.match(layout, /themeColor:\s*THEMES\[WEB_SCHEME\]\.bg/);
+  assert.match(layout, /colorScheme:\s*WEB_SCHEME/);
   assert.doesNotMatch(layout, /cssVariables\(['"]/);
   assert.doesNotMatch(layout, /\bDARK\b/);
 });
 
-test('globals.css declares a dark colour scheme, like the app', async () => {
+test('globals.css declares a light colour scheme (WEB_SCHEME)', async () => {
   const css = await read('globals.css');
-  assert.match(css, /color-scheme:\s*dark\s*;/);
-  assert.doesNotMatch(css, /color-scheme:\s*light/);
+  assert.match(css, /color-scheme:\s*light\s*;/);
+  assert.doesNotMatch(css, /color-scheme:\s*dark/);
 });
 
-test('the site uses the night wordmark; the branding page uses the site scheme', async () => {
+test('the hero phones keep the dark app scheme on the light page', async () => {
+  const constants = await read('[locale]/hero-screens/hero-screens.constants.ts');
+  assert.match(constants, /cssVariables\(APP_SCHEME\)/);
+  assert.match(await read('[locale]/hero-screens/hero-screens.tsx'), /className='phone' style=\{PHONE_VARIABLES\}/);
+});
+
+test('the light site and its white header use the day wordmark; the branding page uses the site scheme', async () => {
   const files = [
     '[locale]/hero-copy/hero-copy.tsx',
     '[locale]/app-header/app-header.tsx',
@@ -29,8 +35,8 @@ test('the site uses the night wordmark; the branding page uses the site scheme',
   ];
   for (const file of files) {
     const source = await read(file);
-    assert.match(source, /svg\/wordmark\.svg/, file);
-    assert.doesNotMatch(source, /wordmark-light/, file);
+    assert.match(source, /svg\/wordmark-light\.svg/, file);
+    assert.doesNotMatch(source, /svg\/wordmark\.svg/, file);
   }
   const branding = await read('branding/page.dev.tsx');
   assert.match(branding, /cssVariables\(SITE_SCHEME\)/);

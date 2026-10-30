@@ -93,6 +93,27 @@ export const THEMES: Record<ColorScheme, Palette> = { light: LIGHT, dark: DARK }
  */
 export const SITE_SCHEME: ColorScheme = 'dark';
 
+/**
+ * The public website and the signed-in portal (apps/web): light, white surfaces and dark text, so
+ * the app's dark screens stand out (founder's call, 2026-10-29,
+ * `docs/decisions/brand-light-website-2026-10-29.md`). Swagger, Storybook and the app pieces keep
+ * SITE_SCHEME.
+ */
+export const WEB_SCHEME: ColorScheme = 'light';
+
+/**
+ * The website's sticky header (also on the local Storybook and Swagger pages): light, a white bar
+ * with dark text. The header scopes this scheme's CSS variables to itself, so it looks the same on
+ * the light website and on the dark Swagger and Storybook pages.
+ */
+export const HEADER_SCHEME: ColorScheme = 'light';
+
+/**
+ * The app's own scheme (always dark): coded prototypes of its screens on the website (the hero
+ * phones) scope this scheme's variables to themselves, so they look like the app on a light page.
+ */
+export const APP_SCHEME: ColorScheme = 'dark';
+
 /** A CSS custom property name and its value. */
 export type CssVariables = Record<`--${string}`, string>;
 

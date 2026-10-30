@@ -1,7 +1,13 @@
+import { APP_SCHEME, cssVariables } from '@cityturfer/brand';
+import type { CSSProperties } from 'react';
+
 /** The two app screens in the hero, each a coded prototype on a 390 × 844 canvas. */
 export const HERO_SCREENS = ['turfMap', 'dashboard'] as const;
 
 export type HeroScreenKey = (typeof HERO_SCREENS)[number];
+
+/** The app's colours (APP_SCHEME, dark) on each phone, so the prototypes look like the app on the light page. */
+export const PHONE_VARIABLES = cssVariables(APP_SCHEME) as CSSProperties;
 
 /** The design canvas (iPhone 390 × 844 points); hero-screens.css scales it to the phone frame. */
 export const PROTO_WIDTH = 390;

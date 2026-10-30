@@ -1,6 +1,8 @@
 /* App header: the sticky top bar of the landing page, also on /branding and (dev only) on the local
    Storybook and Swagger pages. Self-contained, so it looks the same on pages without globals.css:
-   it needs only the brand variables from cssVariables(SITE_SCHEME): dark, like the website and the app. */
+   it needs only the brand variables. The bar itself is light (HEADER_SCHEME in @cityturfer/brand):
+   AppHeaderView sets that scheme's variables on the <header>, so var(--text) etc. inside it are the
+   light theme's, while the page below stays on SITE_SCHEME (dark). */
 
 :root {
   --header-h: 56px;
@@ -26,10 +28,8 @@
   position: sticky;
   top: 0;
   z-index: 5;
-  /* Solid from the first frame, logo included: the same bar on every page. */
-  background: color-mix(in srgb, var(--bg) 90%, transparent);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  /* Solid white (the light theme's card colour) from the first frame: the same bar on every page. */
+  background: var(--card);
   border-bottom: 1px solid var(--border);
   color: var(--text);
   font-family: var(--face-body, 'Barlow'), var(--font-family-body);
@@ -41,12 +41,6 @@
 .app-header *::before,
 .app-header *::after {
   box-sizing: border-box;
-}
-
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .app-header {
-    background: var(--bg);
-  }
 }
 
 /* Full page width with the page gutter (48px from tablet width up, 16px on phones). */
