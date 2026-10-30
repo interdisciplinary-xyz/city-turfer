@@ -1,4 +1,4 @@
-import { createTerritoryApi, type HomeCityDeps, type TerritoryDeps } from '@/contexts/territory';
+import { createTerritoryApi, type HomeCityDeps } from '@/contexts/territory';
 import { migrate } from '@/platform/migrations';
 import { DomainError } from '@/shared-kernel';
 import { openNodeDatabase } from '@/test-support/node-database';
@@ -9,7 +9,10 @@ const NOW = Date.parse('2026-10-19T12:00:00Z');
 
 // The Home City use cases through Territory's public API (they live in @cityturfer/core); the
 // claim use cases are not exercised here, so their dependencies are left out.
-const homeCityApi = (deps: HomeCityDeps) => createTerritoryApi(deps as TerritoryDeps & HomeCityDeps);
+const homeCityApi = (deps: HomeCityDeps) =>
+  createTerritoryApi({ ...deps, districts: { districtsOf: () => [] } } as unknown as Parameters<
+    typeof createTerritoryApi
+  >[0]);
 
 async function setup() {
   const db = openNodeDatabase();

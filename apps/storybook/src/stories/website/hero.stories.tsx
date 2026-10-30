@@ -29,7 +29,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "The whole first screen of cityturfer.com, in the site's dark scheme (`SITE_SCHEME`, like the app). Switch the language in the toolbar (the language switcher lives in the sticky AppHeader). The entrance animation runs on load (GSAP, `web-motion` skill). The street map behind it follows your time zone; pick another city in the line under the hero.",
+          "The whole first screen of cityturfer.com, in the site's light scheme (`WEB_SCHEME`); the phones keep the app's dark scheme (`APP_SCHEME`). Switch the language in the toolbar (the language switcher lives in the sticky AppHeader). The entrance animation runs on load (GSAP, `web-motion` skill). The street map behind it follows your time zone; pick another city in the line under the hero.",
       },
     },
   },

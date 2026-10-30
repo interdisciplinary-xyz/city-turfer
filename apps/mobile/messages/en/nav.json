@@ -17,6 +17,7 @@
     "accountPassword": "Account password",
     "info": "Info",
     "city": "Your city",
-    "linkBackup": "Cloud backup"
+    "linkBackup": "Cloud backup",
+    "districts": "Districts"
   }
 }

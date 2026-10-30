@@ -4,7 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { withPayload } from '@payloadcms/next/withPayload';
 import type { NextConfig } from 'next';
 
-import { ROOT_REDIRECT, SECURITY_HEADER_SOURCE, securityHeaders } from './src/security-headers';
+import { ADMIN_BASE_PATH, ADMIN_DEV_ORIGINS } from './src/admin-path';
+import { headerRules, ROOT_REDIRECTS } from './src/security-headers';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -17,10 +18,12 @@ const config: NextConfig = {
   transpilePackages: ['@cityturfer/brand'],
   // The hoisted node_modules live at the repo root.
   turbopack: { root: path.resolve(dirname, '../..') },
-  // Dev only: the portless URL (`pnpm --filter @cityturfer/admin dev` -> https://admin.cityturfer.local).
-  allowedDevOrigins: ['admin.cityturfer.local', '*.admin.cityturfer.local'],
-  headers: async () => [{ source: SECURITY_HEADER_SOURCE, headers: securityHeaders(dev) }],
-  redirects: async () => [ROOT_REDIRECT],
+  // Everything under /admin (src/admin-path.ts): the panel is the basePath's root.
+  basePath: ADMIN_BASE_PATH,
+  // Dev only: the website's dev server proxies https://cityturfer.local/admin here.
+  allowedDevOrigins: ADMIN_DEV_ORIGINS,
+  headers: async () => headerRules(dev),
+  redirects: async () => ROOT_REDIRECTS,
 };
 
 export default withPayload(config, { devBundleServerPackages: false });

@@ -15,17 +15,19 @@ CityTurfer in step with `packages/brand`, and about changing several surfaces at
 ## The map
 
 `tools/brand/surfaces.mjs` lists every surface: scheme, owner agent, status and the files that carry
-its theme, fonts, logo and copy. It is the source; this table is a summary. `site` means the surface
-follows `SITE_SCHEME`: dark since v0.12.0, the app's palette (the app is the source of truth,
-`docs/decisions/brand-dark-site-2026-10-25.md`). `both` means the host switches schemes itself and
-the surface maps both (the admin follows Payload's own light/dark toggle). brand-designer keeps the
-map and the known drift; the audit and snapshot code is harness-engineer's.
+its theme, fonts, logo and copy. It is the source; this table is a summary. `web` means the surface
+follows `WEB_SCHEME`: light since v0.14.0, so the app's dark screens stand out
+(`docs/decisions/brand-light-website-2026-10-29.md`); its turf pieces and phones are night panels
+(`APP_SCHEME`), its header is `HEADER_SCHEME`. `site` means the surface follows `SITE_SCHEME`: dark,
+the app's palette (`docs/decisions/brand-dark-site-2026-10-25.md`). `both` means the host switches
+schemes itself and the surface maps both (the admin follows Payload's own light/dark toggle).
+brand-designer keeps the map and the known drift; the audit and snapshot code is harness-engineer's.
 
 | Surface       | Scheme | Owner                | Brand comes in through                                                                 |
 | ------------- | ------ | -------------------- | -------------------------------------------------------------------------------------- |
 | `mobile`      | dark   | `mobile-ui-engineer` | `usePalette()` + `@cityturfer/ui`; fonts and icons are native (`apps/mobile/app.json`) |
-| `web`         | site   | `web-engineer`       | `cssVariables(SITE_SCHEME)` in the layout, `next/font` (`apps/web/src/app/fonts.ts`)   |
-| `portal`      | site   | `portal-engineer`    | the website's variables and fonts, plus `account/portal.css`                           |
+| `web`         | web    | `web-engineer`       | `cssVariables(WEB_SCHEME)` in the layout, `next/font` (`apps/web/src/app/fonts.ts`)    |
+| `portal`      | web    | `portal-engineer`    | the website's variables and fonts, plus `account/portal.css`                           |
 | `branding`    | site   | `brand-designer`     | `/branding`, dev only: the living brand book                                           |
 | `swagger-dev` | site   | `web-engineer`       | `apps/web/tools/swagger-brand.mjs` + `swagger-theme.css` (dev page)                    |
 | `swagger-api` | site   | `api-engineer`       | nothing yet: stock `@hono/swagger-ui` (`apps/api/src/app.ts`)                          |
@@ -48,11 +50,12 @@ pnpm run brand:snapshot -- --only web,swagger-api --out <dir>
 - **audit:brand** (`tools/brand-audit.mjs`) checks the mechanical rules: brand colours as hex
   (`#RRGGBB` and `#RRGGBBAA`) or `rgb()` channels (comma or space syntax) outside `packages/brand`,
   a scheme picked by name (`cssVariables('light')`, `THEMES.dark`, and in site code the `DARK` /
-  `LIGHT` palettes imported directly), `@font-face` families and files that aren't the brand's, the
-  name's spelling (the old product name included), "territory", "score", "points" and "conquer" in
-  English catalogues, drifted logo copies, and the manifest itself (files exist, owners are agents,
-  and every theme file of a `site` or `both` surface draws from the brand in its code, not in a
-  comment, or imports a theme file of the same surface).
+  `LIGHT` palettes imported directly; use `WEB_SCHEME`, `HEADER_SCHEME`, `APP_SCHEME` or
+  `SITE_SCHEME`), `@font-face` families and files that aren't the brand's, the name's spelling (the
+  old product name included), "territory", "score", "points" and "conquer" in English catalogues,
+  drifted logo copies, and the manifest itself (files exist, owners are agents, and every theme file
+  of a `web`, `site` or `both` surface draws from the brand in its code, not in a comment, or
+  imports a theme file of the same surface).
 - **Known drift** (`tools/brand/known-drift.mjs`): accepted findings, each with a reason and a
   `count` (default 1); `todo: true` marks what the plan should fix. One occurrence more than the
   count is an error, and so is an entry matching fewer: fixing one means lowering the count or

@@ -5,8 +5,9 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     branches: [main, 'release/**', 'scope/**']
     paths-ignore: ['**/*.md', 'docs/**', 'LICENSE']
+  # scope/**: a small change may be pushed straight to the active scope (docs/process/release-manager.md)
   push:
-    branches: [main]
+    branches: [main, 'scope/**']
     paths-ignore: ['**/*.md', 'docs/**', 'LICENSE']
   workflow_dispatch:
 
@@ -17,13 +18,15 @@ concurrency:
 jobs:
   commitlint:
     name: commit naming
-    if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
+    if: >-
+      ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft == false) ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/scope/')) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
       - uses: wagoid/commitlint-github-action@v6
-        # No commitDepth: lint every commit in the PR range (base..head), not just the last one.
+        # No commitDepth: lint every commit in the PR range (base..head), or in a direct push to scope.
 
   quality:
     name: lint + format + types + arch + unit

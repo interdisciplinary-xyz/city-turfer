@@ -8,7 +8,19 @@ import { HeroCity, HeroCityLine } from './hero-city';
 import { HeroCopy } from './hero-copy';
 import { HeroMotion } from './hero-motion';
 import { HeroScreens } from './hero-screens';
-import { FinalCta, HowItWorks, LocalFirst, YourWeek } from './home-sections';
+import {
+  Audience,
+  Differs,
+  Faq,
+  FinalCta,
+  Highlights,
+  HowItWorks,
+  LocalFirst,
+  WhereItStands,
+  YourWeek,
+} from './home-sections';
+import { SiteFooter } from './site-footer';
+import { TurfDemo } from './turf-demo';
 import { WaitlistForm } from './waitlist-form';
 
 export default async function Home({ params }: { params: Promise<{ locale: Locale }> }) {
@@ -44,11 +56,18 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
             </div>
           </section>
         ) : null}
+        <TurfDemo />
         <HowItWorks />
+        <Audience />
+        <Highlights />
         <YourWeek />
+        <Differs />
         <LocalFirst />
+        <WhereItStands />
+        <Faq />
         {WAITLIST ? <FinalCta /> : null}
       </main>
+      <SiteFooter contactEmail={WAITLIST?.contactEmail} />
     </>
   );
 }

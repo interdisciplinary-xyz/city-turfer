@@ -1,6 +1,7 @@
 /* CityTurfer landing page. Colours are CSS variables set from @cityturfer/brand in layout.tsx.
-   The page is dark like the app (SITE_SCHEME in @cityturfer/brand, the app is the source of truth). Text uses
-   --accent-text and the -text variants, which on dark equal the brand colours. Body text is self-hosted Barlow; headings use the self-hosted Big Shoulders Display (fonts.ts), always in capitals. */
+   The page is light (WEB_SCHEME in @cityturfer/brand), so the app's dark screens stand out; the hero
+   phones keep the app's dark scheme (APP_SCHEME). Text uses --accent-text and the -text variants,
+   the light theme's AA versions of the brand colours. Body text is self-hosted Barlow; headings use the self-hosted Big Shoulders Display (fonts.ts), always in capitals. */
 
 *,
 *::before,
@@ -10,7 +11,7 @@
 
 :root {
   --radius: var(--radius-panel);
-  color-scheme: dark;
+  color-scheme: light;
   /* next/font sets --face-*; the brand variables from cssVariables() are the fallback stack. The
      weight is baked into each font, so never bold them (font-synthesis: none). */
   --display: var(--face-display), var(--font-family-display);
@@ -164,10 +165,28 @@ img {
   text-align: center;
 }
 
-/* The hero headline takes the lede's colour; other headings keep --text. */
-.hero-copy h1 {
+/* "Early prototype": a quiet pill, never the turf Ramp (docs/plans/homepage-sections-2026-10-28.md). */
+.hero-badge {
+  display: inline-block;
+  margin: 0 0 16px;
+  padding: 4px 12px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-full);
   color: var(--muted);
+  font-size: var(--font-label);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
 }
+
+.hero-audience {
+  margin: 12px auto 0;
+  max-width: 34rem;
+  color: var(--text);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* The hero headline keeps --text like every heading: on the light page --muted reads pale. */
 
 /* Phones: text, buttons, then the screenshots. Desktop: text + phones in one row, buttons under both. */
 .hero-copy {
@@ -225,7 +244,8 @@ img {
     margin-bottom: 20px;
   }
   .hero-copy h1,
-  .hero-copy .lede {
+  .hero-copy .lede,
+  .hero-copy .hero-audience {
     margin-left: 0;
   }
   .hero-copy h1 {
@@ -354,7 +374,10 @@ h1 {
 
 .store-btn-android:hover,
 .store-btn-android:focus-visible {
-  background: color-mix(in srgb, var(--glow) 86%, var(--text));
+  /* Mixes toward --blazing, not --text: on the light scheme --text darkens the pink and drops the
+     night label to 4.29:1; --blazing brightens it in both schemes (about 6.1:1, pinned in
+     packages/brand contrast.test.ts). */
+  background: color-mix(in srgb, var(--glow) 86%, var(--blazing));
 }
 
 .store-btn-android:focus-visible {
@@ -579,4 +602,28 @@ h1 {
   .hero-brand .wordmark {
     margin-left: calc(var(--lockup) * -0.04);
   }
+}
+
+/* Footer: one quiet row, hairline on top. */
+.site-footer {
+  padding: var(--space-xl) 0;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: var(--font-caption);
+}
+
+.site-footer-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md) var(--space-xl);
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+.site-footer a {
+  color: var(--accent-text);
 }

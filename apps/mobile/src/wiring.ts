@@ -3,6 +3,7 @@
  * Used by the composition root (with Expo adapters) and by integration tests
  * (with fakes). Contains no Expo imports.
  */
+import { bundledDistricts } from '@cityturfer/core/districts';
 import { H3CellGrid } from '@cityturfer/core/h3';
 
 import { API_BASE_URL, CLOUD_BACKUP_POLICY_VERSION } from '@/constants/api';
@@ -173,6 +174,7 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     homeCities: new SqliteHomeCityRepository(db),
     grid: new H3CellGrid(),
     tracks: { trackOf: (id) => activityLog.trackQuery.execute(id) },
+    districts: bundledDistricts,
     clock,
     afterCommit,
   });

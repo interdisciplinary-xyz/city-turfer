@@ -44,10 +44,15 @@ test('anchors and allowlisted native config are not colours', () => {
   assert.deepEqual(literalFindings('apps/mobile/app.json', '{"backgroundColor": "#7B2FF7"}', CTX), []);
 });
 
-test('a scheme chosen by name is an error; SITE_SCHEME is fine', () => {
+test('a scheme chosen by name is an error; the scheme constants are fine', () => {
   const bad = "cssVariables('light'); THEMES.dark; THEMES['light']";
   assert.equal(literalFindings('apps/web/src/x.ts', bad, CTX).filter((f) => f.rule === 'named-scheme').length, 3);
   assert.deepEqual(literalFindings('apps/web/src/x.ts', 'cssVariables(SITE_SCHEME); THEMES[SITE_SCHEME]', CTX), []);
+  const ok = 'cssVariables(WEB_SCHEME); cssVariables(HEADER_SCHEME); THEMES[APP_SCHEME]';
+  assert.deepEqual(literalFindings('apps/web/src/x.ts', ok, CTX), []);
+  // the message names the website's constant, not only SITE_SCHEME
+  const [first] = literalFindings('apps/web/src/x.ts', "cssVariables('light')", CTX);
+  assert.match(first.message, /WEB_SCHEME \(website, portal\).*SITE_SCHEME \(Swagger, Storybook\)/);
 });
 
 test('site code may not import the DARK / LIGHT palettes; the app and the brand book may', () => {
@@ -136,7 +141,7 @@ test('logo copies: identical warns, different is drift', () => {
   assert.deepEqual(rules(found), ['warning:logo-copy', 'error:logo-copy']);
 });
 
-test('manifest: missing files, unknown owners and a theme file that ignores SITE_SCHEME', () => {
+test('manifest: missing files, unknown owners and a theme file that ignores the scheme constants', () => {
   const surface = {
     id: 's',
     name: 'S',
@@ -158,7 +163,7 @@ test('manifest: missing files, unknown owners and a theme file that ignores SITE
     [
       'owner nobody is not an agent in .claude/agents/',
       'fonts: gone.ts does not exist',
-      'theme file a.css of s draws nothing from the brand in its code (SITE_SCHEME, cssVariables(), THEMES, a brand variable, or another theme file of the surface); comments do not count',
+      'theme file a.css of s draws nothing from the brand in its code (a scheme constant, cssVariables(), THEMES, a brand variable, or another theme file of the surface); comments do not count',
     ]
   );
 });
@@ -237,11 +242,41 @@ test('brand token helpers read hexes and families from the module', () => {
   assert.deepEqual([...brandFamilies(brand)].sort(), ['X', 'Y']);
 });
 
+test('the website and the portal follow WEB_SCHEME in the manifest, and WEB_SCHEME counts as brand evidence', () => {
+  assert.deepEqual(
+    SURFACES.filter((s) => s.scheme === 'web').map((s) => s.id),
+    ['web', 'portal']
+  );
+  const surface = {
+    id: 'w',
+    name: 'W',
+    scheme: 'web',
+    owner: 'web-engineer',
+    status: 'live',
+    theme: ['layout.tsx'],
+    fonts: [],
+    logo: [],
+    copy: [],
+  };
+  const run = (code) =>
+    manifestFindings([surface], { exists: () => true, agents: new Set(['web-engineer']), read: () => code }).filter(
+      (f) => f.rule === 'manifest'
+    );
+  assert.deepEqual(run('const t = cssVariables(WEB_SCHEME);'), []);
+  assert.equal(run('const t = { color: "red" };').length, 1);
+  const bad = manifestFindings([{ ...surface, scheme: 'light' }], {
+    exists: () => true,
+    agents: new Set(['web-engineer']),
+    read: () => 'WEB_SCHEME',
+  });
+  assert.match(bad[0].message, /scheme light: dark, web, site, both/);
+});
+
 test('every surface has a unique id, a known scheme and status', () => {
   const ids = SURFACES.map((s) => s.id);
   assert.equal(new Set(ids).size, ids.length);
   for (const s of SURFACES) {
-    assert.ok(['dark', 'site', 'both'].includes(s.scheme), s.id);
+    assert.ok(['dark', 'web', 'site', 'both'].includes(s.scheme), s.id);
     assert.ok(['live', 'dev', 'paused'].includes(s.status), s.id);
   }
 });

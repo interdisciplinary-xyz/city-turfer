@@ -26,7 +26,7 @@ export const ACCENT = '#F72FA8';
 export const ON_ACCENT = '#FFFFFF';
 
 /**
- * The label on an ACCENT fill on the web (site, portal, Swagger, Storybook chrome) in both schemes:
+ * The label on an ACCENT fill on the web (website, portal, Swagger, Storybook chrome) in both schemes:
  * night ink, 5.5:1 (AA). The app still draws ON_ACCENT (white, 3.5:1) until its contrast fix, so
  * `cssVariables()` uses this while `DARK.onAccent` stays pinned.
  */
@@ -63,7 +63,7 @@ export type Palette = {
   cycleGraphic: string;
 };
 
-/** The light theme: the admin's light mode only since the site went dark (`docs/decisions/brand-dark-site-2026-10-25.md`). */
+/** The light theme: the website and portal (`WEB_SCHEME`, `HEADER_SCHEME`) and the admin's light mode (`docs/decisions/brand-light-website-2026-10-29.md`). */
 export const LIGHT: Palette = {
   bg: '#F6F7FB',
   card: '#FFFFFF',
@@ -84,8 +84,8 @@ export const LIGHT: Palette = {
 };
 
 /**
- * The app (always dark, read at runtime, so also over OTA), every map panel and, since v0.12.0, the
- * website, Swagger and Storybook (`SITE_SCHEME`). Pinned in
+ * The app (always dark, read at runtime, so also over OTA), every map panel, the night panels on
+ * the website (`APP_SCHEME`), Swagger and Storybook (`SITE_SCHEME`). Pinned in
  * tokens.test.ts: a change here changes the app. The added keys repeat existing dark values.
  */
 export const DARK: Palette = {

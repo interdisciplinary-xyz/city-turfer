@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import { cssVariables, HEADER_SCHEME } from '@cityturfer/brand';
+import type { CSSProperties, ReactNode } from 'react';
 
 import type { Locale } from '@/i18n/routing';
 
@@ -20,3 +21,6 @@ export type AppHeaderViewProps = {
   /** The language switcher. */
   languages: ReactNode;
 };
+
+/** The header's own colours (HEADER_SCHEME, light), set on the <header> so they apply only inside it. */
+export const HEADER_VARIABLES = cssVariables(HEADER_SCHEME) as CSSProperties;
