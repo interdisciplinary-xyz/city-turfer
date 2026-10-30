@@ -1,4 +1,4 @@
-import type { AppHeaderViewProps } from './app-header.constants';
+import { type AppHeaderViewProps, HEADER_VARIABLES } from './app-header.constants';
 
 /**
  * The header's markup, free of Next: the site renders it through `AppHeader`, and the local
@@ -7,7 +7,7 @@ import type { AppHeaderViewProps } from './app-header.constants';
  */
 export function AppHeaderView({ homeHref, homeLabel, logo, waitlist, languages }: AppHeaderViewProps) {
   return (
-    <header className='app-header'>
+    <header className='app-header' style={HEADER_VARIABLES}>
       <div className='app-header-inner'>
         <a className='app-header-home' href={homeHref} aria-label={homeLabel}>
           {logo}

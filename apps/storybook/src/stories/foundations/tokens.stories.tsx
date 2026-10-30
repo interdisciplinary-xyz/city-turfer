@@ -1,7 +1,9 @@
 import {
   ACCENT,
+  APP_SCHEME,
   FONT_FAMILY,
   FONT_SIZE,
+  HEADER_SCHEME,
   LIGHT,
   ON_ACCENT,
   RADIUS,
@@ -13,6 +15,7 @@ import {
   TIER_ORDER,
   TYPE_COLOR,
   WEB_ON_ACCENT,
+  WEB_SCHEME,
 } from '@cityturfer/brand';
 import { usePalette } from '@cityturfer/ui';
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
@@ -70,8 +73,9 @@ function OnGlow({ name, label }: { name: string; label: string }) {
 }
 
 /**
- * Every token from @cityturfer/brand: the dark theme the app, every map and (via SITE_SCHEME) the
- * website, Swagger and Storybook use; the labels on glow; then the light theme of the admin.
+ * Every token from @cityturfer/brand: the four scheme constants (APP_SCHEME and SITE_SCHEME are dark: the app, every
+ * map, Swagger, Storybook; WEB_SCHEME and HEADER_SCHEME are light: the website, portal and header);
+ * the dark theme's keys; the labels on glow; then the light theme.
  */
 function Tokens() {
   const p = usePalette();
@@ -79,6 +83,12 @@ function Tokens() {
   const entries = Object.entries(site);
   return (
     <View>
+      <Section title='Scheme constants (packages/brand tokens.ts)'>
+        <Swatch name={`APP_SCHEME: ${APP_SCHEME}`} value={THEMES[APP_SCHEME].bg} />
+        <Swatch name={`SITE_SCHEME: ${SITE_SCHEME}`} value={THEMES[SITE_SCHEME].bg} />
+        <Swatch name={`WEB_SCHEME: ${WEB_SCHEME}`} value={THEMES[WEB_SCHEME].bg} />
+        <Swatch name={`HEADER_SCHEME: ${HEADER_SCHEME}`} value={THEMES[HEADER_SCHEME].bg} />
+      </Section>
       <Section title='Turf strength ramp (the brand palette, tuned to glow on night)'>
         {TIER_ORDER.map((t) => (
           <Swatch key={t} name={TIER_LABEL[t]} value={TIER_COLOR[t]} />
@@ -90,7 +100,7 @@ function Tokens() {
         <Swatch name='Run' value={TYPE_COLOR.run} />
         <Swatch name='Ride' value={TYPE_COLOR.cycle} />
       </Section>
-      <Section title={`Theme: ${SITE_SCHEME} (the app, every map, website, portal, Swagger, Storybook)`}>
+      <Section title={`Theme: ${SITE_SCHEME} (the app, every map, Swagger, Storybook)`}>
         {entries
           .filter(([name]) => BASE_KEYS.has(name))
           .map(([name, value]) => (
@@ -156,7 +166,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'One source for every surface: the app reads these in TS (dark), the website, portal, Swagger and Storybook get them as CSS variables from `cssVariables(SITE_SCHEME)` (dark too). Pink fills on the web carry `WEB_ON_ACCENT` (night); the app still draws `ON_ACCENT` (white). The light theme is the admin’s light mode, where text and lines use the `-Text` / `-Graphic` keys (`docs/decisions/brand-dark-site-2026-10-25.md`).',
+          'One source for every surface: the app reads these in TS (dark), Swagger and Storybook get them as CSS variables from `cssVariables(SITE_SCHEME)` (dark); the website and portal from `cssVariables(WEB_SCHEME)` (light), with turf pieces and the hero phones scoped to `APP_SCHEME` (dark). Pink fills on the web carry `WEB_ON_ACCENT` (night); the app still draws `ON_ACCENT` (white). On the light theme, text and lines use the `-Text` / `-Graphic` keys (`docs/decisions/brand-light-website-2026-10-29.md`).',
       },
     },
   },

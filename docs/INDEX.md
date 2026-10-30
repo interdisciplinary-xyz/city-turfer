@@ -211,11 +211,17 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   Superseded by brand-dark-site-2026-10-25.md (the site is dark again, like the app). The website,
   Swagger and Storybook switch to a light theme (SITE_SCHEME) while the app and every map stay dark;
   the AA light palette, its new tokens and ratios, night labels on pink buttons
+- 🚧 [`decisions/brand-light-website-2026-10-29.md`](decisions/brand-light-website-2026-10-29.md):
+  The website and portal go light (WEB_SCHEME = 'light', day wordmark, white header via
+  HEADER_SCHEME) so the app's dark screens stand out; the hero phones keep the app's dark scheme
+  (APP_SCHEME); Swagger, Storybook and the app stay on SITE_SCHEME (dark). Narrows
+  brand-dark-site-2026-10-25 to those surfaces.
 - ✅ [`decisions/brand-typography-2026-10-22.md`](decisions/brand-typography-2026-10-22.md): Brand
   type changes from Archivo to the "Street Plate" pairing: Big Shoulders Display Black in capitals
   for headings, Barlow Semi Condensed ExtraBold for numbers, Barlow for website body text; the
   wordmark is redrawn in Big Shoulders Display Black (CITY and TURFER told apart by colour), and the
-  tagline is Barlow Semi Condensed Black Italic (web only)
+  tagline is Barlow Semi Condensed Black Italic (web only); amended 2026-10-27: the wordmark alone
+  is now outlined Anton, then one solid colour (white on night, night on light)
 - 🚧 [`decisions/data-flow-2026-10-23.md`](decisions/data-flow-2026-10-23.md): Founder decisions
   2026-10-23 on how data flows between the phone, the API, the web portal and the admin portal —
   records are created on the phone, managed (deleted) on the web, adjusted (all but tracks) by

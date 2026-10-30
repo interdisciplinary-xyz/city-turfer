@@ -1,7 +1,8 @@
 /* The hero's app screens: coded prototypes on a 390 × 844 canvas (iPhone points). The screen is a
    size container; --u is one canvas point (1/390 of its width), and every size below is written as
    calc(N * var(--u)), so the prototype scales with the phone frame and stays sharp at any size.
-   Colours, fonts and radii come from the brand variables (cssVariables(SITE_SCHEME)); no hex. */
+   Colours, fonts and radii come from the brand variables, here cssVariables(APP_SCHEME) set on .phone (the app's
+   dark scheme on the light page); no hex. */
 
 .proto-screen {
   position: relative;

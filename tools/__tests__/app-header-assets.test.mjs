@@ -3,7 +3,6 @@ import path from 'node:path';
 import { test } from 'node:test';
 
 import { appHeaderAssets, appHeaderMarkup } from '../../apps/web/tools/app-header-assets.mjs';
-import { loadBrand } from '../../apps/web/tools/swagger-brand.mjs';
 
 const WEB = path.resolve(import.meta.dirname, '../../apps/web');
 
@@ -14,14 +13,11 @@ test('bundles the site header and its stylesheet for the dev pages', async () =>
   assert.match(js, /app-header-root/);
   // Logos are inlined, so the bundle needs no extra routes.
   assert.match(js, /data:image\/svg\+xml/);
-  // The site scheme's brand variables only on the header, then app-header.css itself. Which scheme
-  // that is, is pinned once, in packages/brand/src/__tests__/tokens.test.ts.
-  const { cssVariables, SITE_SCHEME } = await loadBrand(WEB);
-  assert.match(css, /^\.app-header \{\n {2}--bg: /);
-  assert.ok(css.includes(`--bg: ${cssVariables(SITE_SCHEME).bg ?? cssVariables(SITE_SCHEME)['--bg']};`));
-  assert.doesNotMatch(css, /^:root \{\n {2}--bg/m);
-  // An opaque bar over the host page.
-  assert.match(css, /#app-header-root \.app-header \{\n {2}background: var\(--bg\);/);
+  // No variable block: the header sets HEADER_SCHEME inline on itself (pinned in site-theme.test.mjs),
+  // so a :root or .app-header block here would be dead CSS.
+  assert.doesNotMatch(css, /^(\.app-header|:root) \{\n {2}--bg/m);
+  // An opaque white bar (the header's --card) over the host page.
+  assert.match(css, /#app-header-root \.app-header \{\n {2}background: var\(--card\);/);
   assert.match(css, /#app-header-root \{\n {2}display: contents;/);
 });
 

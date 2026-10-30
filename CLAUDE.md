@@ -47,9 +47,10 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
   no third-party scripts; the waitlist form posts emails straight to Brevo (double opt-in, personal
   data). Signed-in portal under `/[locale]/account`: one strictly necessary session cookie through
   the `/api/v1` route to the API (`docs/decisions/web-portal-2026-10-22.md`). Languages via
-  `next-intl` (`/en`, `/pl`; copy in `apps/web/messages/*.json`, no CMS). Dark theme like the app,
-  the brand's source of truth (`SITE_SCHEME` in `@cityturfer/brand`, also portal, Swagger and
-  Storybook; `docs/decisions/brand-dark-site-2026-10-25.md`)
+  `next-intl` (`/en`, `/pl`; copy in `apps/web/messages/*.json`, no CMS). Light website and portal
+  so the app's dark screens stand out (`WEB_SCHEME`, white header via `HEADER_SCHEME`, day wordmark;
+  turf pieces and hero phones stay dark through `APP_SCHEME`; Swagger and Storybook keep
+  `SITE_SCHEME`, dark; `docs/decisions/brand-light-website-2026-10-29.md`)
 - **Admin** (scaffold, not deployed): Payload CMS 3.91 on Next 16 in `apps/admin` (same next/react
   pins as apps/web). Payload holds only staff accounts, in its **own** Postgres database
   (`PAYLOAD_DATABASE_URL`, never the API's), schema via committed migrations (`push: false`);
