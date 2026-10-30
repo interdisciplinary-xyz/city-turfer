@@ -1,4 +1,5 @@
-import { TIER_ORDER } from '@cityturfer/brand';
+import { APP_SCHEME, cssVariables, TIER_ORDER } from '@cityturfer/brand';
+import type { CSSProperties } from 'react';
 
 /** The three activity types as the app names them (`cycle` is shown as "Ride"). */
 export type HomeActivityType = 'walk' | 'run' | 'cycle';
@@ -12,6 +13,13 @@ export const TYPE_CLASS: Record<HomeActivityType, string> = { walk: 'walk', run:
 export const HOME_TYPES: readonly HomeActivityType[] = ['walk', 'run', 'cycle'];
 
 export const HOME_TIERS = TIER_ORDER;
+
+/**
+ * The app's colours (APP_SCHEME, dark) for every piece that draws turf tiers (the legend, the gain
+ * card, the dashboard, the Record disc): the tiers glow on night, not on the light page (blazing is
+ * 1.04:1 on white). Set as inline style, so only that piece and its children get the dark variables.
+ */
+export const APP_VARIABLES = cssVariables(APP_SCHEME) as CSSProperties;
 
 /**
  * The example week on the Dashboard card: the same numbers as the Dashboard screenshot in the hero

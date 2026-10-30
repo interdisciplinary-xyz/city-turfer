@@ -4,7 +4,7 @@ import './hero-screens.css';
 import { useTranslations } from 'next-intl';
 
 import { DashboardScreen } from './dashboard-screen';
-import { HERO_SCREENS } from './hero-screens.constants';
+import { HERO_SCREENS, PHONE_VARIABLES } from './hero-screens.constants';
 import { TurfMapScreen } from './turf-map-screen';
 
 /**
@@ -18,7 +18,7 @@ export function HeroScreens() {
     <div className='screens' data-anim-group='screens'>
       {HERO_SCREENS.map((key) => (
         <figure key={key} className='screen' data-anim='phone'>
-          <div className='phone'>
+          <div className='phone' style={PHONE_VARIABLES}>
             <div className='proto-screen' role='img' aria-label={t(`${key}.alt`)}>
               <div aria-hidden='true'>{key === 'turfMap' ? <TurfMapScreen /> : <DashboardScreen />}</div>
             </div>

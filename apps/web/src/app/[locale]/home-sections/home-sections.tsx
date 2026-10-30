@@ -3,6 +3,7 @@ import './home-sections.css';
 import { useFormatter, useTranslations } from 'next-intl';
 
 import {
+  APP_VARIABLES,
   EXAMPLE_ACHIEVEMENTS,
   EXAMPLE_ACTIVITIES,
   EXAMPLE_GAIN,
@@ -16,7 +17,8 @@ import {
 /**
  * The homepage below the hero, drawn in the app's own pieces (the @cityturfer/ui specs as CSS):
  * Card, Stat, ActivityRow, the type chips, the Record button and the Turf legend. Same tokens as
- * the app, so the site reads as the app's front door (docs/decisions/brand-dark-site-2026-10-25.md).
+ * the app, so the site reads as the app's front door (docs/decisions/brand-light-website-2026-10-29.md). Pieces that draw turf tiers are night panels
+ * (APP_VARIABLES), the rest follows the light page.
  */
 
 /** The core loop in three app cards: record, turf gained, watch it glow. */
@@ -45,7 +47,7 @@ export function HowItWorks() {
                 </span>
               ))}
             </div>
-            <span className='app-record' aria-hidden='true'>
+            <span className='app-record' style={APP_VARIABLES} aria-hidden='true'>
               <span className='app-record-dot' />
             </span>
             <h3 className='app-card-title'>{t('record.title')}</h3>
@@ -55,7 +57,7 @@ export function HowItWorks() {
             <span className='home-step-n' aria-hidden='true'>
               2
             </span>
-            <div className='app-gain' aria-hidden='true'>
+            <div className='app-gain' style={APP_VARIABLES} aria-hidden='true'>
               <p className='app-label'>{t('gain.label')}</p>
               <p className='app-gain-area'>
                 {t('gain.area', { area: format.number(EXAMPLE_GAIN.areaKm2, { minimumFractionDigits: 2 }) })}
@@ -74,7 +76,7 @@ export function HowItWorks() {
             <span className='home-step-n' aria-hidden='true'>
               3
             </span>
-            <div className='app-legend' role='img' aria-label={t('glow.legendLabel')}>
+            <div className='app-legend' style={APP_VARIABLES} role='img' aria-label={t('glow.legendLabel')}>
               <p className='app-label'>{t('glow.legendTitle')}</p>
               <div className='app-legend-bar'>
                 {HOME_TIERS.map((tier) => (
@@ -112,7 +114,7 @@ export function YourWeek() {
           </h2>
           <p className='home-lede'>{t('body')}</p>
         </div>
-        <figure className='home-dashboard' aria-describedby='week-caption'>
+        <figure className='home-dashboard' style={APP_VARIABLES} aria-describedby='week-caption'>
           <div className='app-card'>
             <h3 className='app-card-title'>{t('thisWeek')}</h3>
             <div className='app-stats'>

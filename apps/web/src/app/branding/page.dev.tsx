@@ -347,8 +347,11 @@ export default async function BrandingPage() {
             </div>
             <h3>Themes</h3>
             <div className='brand-grid brand-grid-2'>
-              <ThemeCard name='Dark (the app, website, Swagger, Storybook: SITE_SCHEME)' theme={DARK} />
-              <ThemeCard name='Light (admin light mode)' theme={LIGHT} />
+              <ThemeCard
+                name='Dark (the app, Swagger, Storybook: SITE_SCHEME; website turf pieces: APP_SCHEME)'
+                theme={DARK}
+              />
+              <ThemeCard name='Light (the website and portal: WEB_SCHEME; the admin’s light mode)' theme={LIGHT} />
             </div>
           </Section>
 
@@ -451,7 +454,7 @@ export default async function BrandingPage() {
                 <tbody>
                   <tr>
                     <th colSpan={4} scope='rowgroup'>
-                      Night: the app, every map and the site (SITE_SCHEME)
+                      Night: the app, every map, Swagger and Storybook (SITE_SCHEME)
                     </th>
                   </tr>
                   <ContrastRow name='Text on night' fg={DARK.text} bg={DARK.bg} min={MIN_CONTRAST.text} />

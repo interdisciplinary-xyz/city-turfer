@@ -1,4 +1,4 @@
-import { cssVariables, SITE_SCHEME, TIER_ORDER } from '@cityturfer/brand';
+import { APP_SCHEME, cssVariables, TIER_ORDER } from '@cityturfer/brand';
 import type { CSSProperties } from 'react';
 
 import data from './turf-demo.data.json';
@@ -27,11 +27,8 @@ export type TurfDemoData = {
 
 export const TURF_DEMO = data as TurfDemoData;
 
-/**
- * The demo is always a dark night panel, whatever the page scheme. SITE_SCHEME is the app's dark
- * scheme today; it becomes APP_SCHEME once the light website (#198) lands.
- */
-export const DEMO_SCHEME_STYLE = cssVariables(SITE_SCHEME) as CSSProperties;
+/** The demo is a night panel in the app's dark scheme (APP_SCHEME) on the light page. */
+export const DEMO_SCHEME_STYLE = cssVariables(APP_SCHEME) as CSSProperties;
 
 /** The four tiers on one street (steps 0–3); step 4 is the whole city (turf-demo-player.constants). */
 export const DEMO_TIERS: readonly TurfTier[] = TIER_ORDER;
