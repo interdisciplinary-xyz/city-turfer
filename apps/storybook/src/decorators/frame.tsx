@@ -22,6 +22,7 @@ export function Frame({ locale, web, pageLoaded = true, children }: FrameProps) 
     for (const [name, value] of Object.entries(vars)) {
       root.style.setProperty(name, value);
     }
+    root.style.colorScheme = scheme; // native scrollbars and controls follow the story's scheme
     root.lang = locale;
     document.body.style.background = theme.bg;
   }, [locale, scheme, theme.bg]);

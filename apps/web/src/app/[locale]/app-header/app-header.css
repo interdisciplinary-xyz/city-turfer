@@ -2,7 +2,8 @@
    Storybook and Swagger pages. Self-contained, so it looks the same on pages without globals.css:
    it needs only the brand variables. The bar itself is light (HEADER_SCHEME in @cityturfer/brand):
    AppHeaderView sets that scheme's variables on the <header>, so var(--text) etc. inside it are the
-   light theme's, while the page below stays on SITE_SCHEME (dark). */
+   light theme's. The page below is WEB_SCHEME (light) on the site, SITE_SCHEME (dark) on the local
+   Swagger and Storybook pages. */
 
 :root {
   --header-h: 56px;

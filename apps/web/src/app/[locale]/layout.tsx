@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   };
 }
 
-export const viewport: Viewport = { themeColor: THEMES[WEB_SCHEME].bg, colorScheme: WEB_SCHEME };
+export const viewport: Viewport = { themeColor: THEMES[WEB_SCHEME].card, colorScheme: WEB_SCHEME };
 
 /** Design tokens from @cityturfer/brand as CSS variables, so globals.css never hard-codes a value.
  * The site is light (WEB_SCHEME); the app's screens on it stay dark (APP_SCHEME). */
