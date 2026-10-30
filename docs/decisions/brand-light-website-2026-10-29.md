@@ -9,7 +9,7 @@ scope:
     apps/web/src/app/globals.css,
     apps/storybook/src/decorators,
   ]
-summary:
+summary: >-
   The website and portal go light (WEB_SCHEME = 'light', day wordmark, white header via
   HEADER_SCHEME) so the app's dark screens stand out; the hero phones keep the app's dark scheme
   (APP_SCHEME), and so does every turf piece (legend, gain, dashboard, Record disc: night panels);

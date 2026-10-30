@@ -350,8 +350,8 @@ has no user data until the audited `/internal/admin` routes exist. **Host (decis
 #197):** in production the admin keeps its own origin (e.g. `admin.<domain>`, panel at `/admin`),
 never a path or rewrite under the public site's origin, because Payload's staff cookie is `Path=/`
 and one origin would share it with the site and the portal. `https://cityturfer.local/admin`
-(proxied by `web:dev`) is dev only; `apps/admin/.env.example` and `src/admin-path.ts` say the same.
-Support runs two scripts from a trusted machine against the production database
+(proxied by `web:dev`) is dev only; `apps/admin/.env.example` and `apps/admin/src/admin-path.ts` say
+the same. Support runs two scripts from a trusted machine against the production database
 (`DATABASE_URL_UNPOOLED` or `DATABASE_URL` in your shell; without one they use the local PGlite —
 stop the dev server first). They print ids, e-mails, counts, times and consents only: never
 coordinates, tracks, activity names or the Home City. Don't paste their output into tickets or chats
