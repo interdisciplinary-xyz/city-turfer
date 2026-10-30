@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { postgresAdapter } from '@payloadcms/db-postgres';
 import { buildConfig } from 'payload';
 
+import { devOriginWarning } from './admin-path';
 import { MARK_PATH } from './brand/mark-route.constants';
 import { Staff } from './collections/staff/staff';
 
@@ -22,6 +23,14 @@ const databaseUrl = process.env.PAYLOAD_DATABASE_URL || MISSING_DATABASE_URL;
 // The public origin, e.g. https://cityturfer.local in dev (the panel at /admin). It is the only origin allowed to
 // send the staff cookie (CSRF) and the only CORS origin.
 const adminUrl = process.env.ADMIN_URL || MISSING_ADMIN_URL;
+
+// Dev server only: a stale ADMIN_URL breaks sign-in without any error (the host only, no secrets).
+if (process.env.NODE_ENV === 'development') {
+  const warning = devOriginWarning(process.env.ADMIN_URL);
+  if (warning) {
+    console.warn(`[admin] ${warning}`);
+  }
+}
 
 /** It signs every staff session: `openssl rand -hex 32` (.env.example). */
 export const MIN_SECRET_LENGTH = 32;

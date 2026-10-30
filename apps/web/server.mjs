@@ -18,8 +18,8 @@ import path from 'node:path';
 
 import next from 'next';
 
-import { routeAdminUpgrades, withAdmin } from './tools/admin-route.mjs';
-import { withLocalOnly } from './tools/local-only-route.mjs';
+import { routeAdminUpgrades } from './tools/admin-route.mjs';
+import { composeDevRoutes } from './tools/dev-routes.mjs';
 import { withStorybook } from './tools/storybook-route.mjs';
 import { withSwagger } from './tools/swagger-route.mjs';
 
@@ -40,26 +40,23 @@ const locales = readdirSync(path.join(process.cwd(), 'messages'))
   .filter((file) => file.endsWith('.json'))
   .map((file) => file.slice(0, -'.json'.length));
 const handler = devNode
-  ? withLocalOnly(
-      withAdmin(
-        withSwagger(
-          withStorybook(siteHandler, storybookBuild, { isLocal: devNode.isLocalClient, webRoot: process.cwd() }),
-          {
-            // Resolved only in dev: swagger-ui-dist is a dev dependency.
-            distRoot: path.dirname(createRequire(import.meta.url).resolve('swagger-ui-dist/package.json')),
-            specFile: path.join(process.cwd(), '../api/openapi.json'),
-            apiUrl: process.env.API_URL,
-            webRoot: process.cwd(),
-            brandDir: path.join(process.cwd(), '../../packages/brand/svg'),
-            fontsDir: path.join(process.cwd(), '../../packages/brand/fonts'),
-            // Same rule as the site's toolbar: only requests from this machine.
-            isLocal: devNode.isLocalClient,
-          }
-        ),
-        { adminUrl: process.env.ADMIN_DEV_URL }
-      ),
-      { isLocal: devNode.isLocalClient, locales }
-    )
+  ? composeDevRoutes(siteHandler, {
+      isLocal: devNode.isLocalClient,
+      locales,
+      adminUrl: process.env.ADMIN_DEV_URL,
+      wrapSite: (site) =>
+        withSwagger(withStorybook(site, storybookBuild, { isLocal: devNode.isLocalClient, webRoot: process.cwd() }), {
+          // Resolved only in dev: swagger-ui-dist is a dev dependency.
+          distRoot: path.dirname(createRequire(import.meta.url).resolve('swagger-ui-dist/package.json')),
+          specFile: path.join(process.cwd(), '../api/openapi.json'),
+          apiUrl: process.env.API_URL,
+          webRoot: process.cwd(),
+          brandDir: path.join(process.cwd(), '../../packages/brand/svg'),
+          fontsDir: path.join(process.cwd(), '../../packages/brand/fonts'),
+          // Same rule as the site's toolbar: only requests from this machine.
+          isLocal: devNode.isLocalClient,
+        }),
+    })
   : siteHandler;
 
 await app.prepare();

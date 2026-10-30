@@ -61,6 +61,7 @@ describe('payload config', async () => {
 
   it('puts the panel at the root of the /admin basePath, the REST API at /admin/api', () => {
     expect(config.routes.admin).toBe('/');
+    // Payload's default, pinned because the proxy and the basePath rely on it: /admin + /api.
     expect(config.routes.api).toBe('/api');
   });
 

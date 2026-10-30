@@ -6,10 +6,19 @@
 // (/admin/api) and its Next files (/admin/_next, including the HMR WebSocket) all sit under this one
 // prefix and never clash with the site's own /api and /_next. Only this machine may open it
 // (local-only-route.mjs), like Swagger and Storybook.
+//
+// Dev only. In production the admin keeps its OWN origin (apps/admin/src/admin-path.ts), never a
+// rewrite under the public site's origin.
+//
+// ADMIN_DEV_URL (env, read by server.mjs) overrides where the admin dev server is; it must be a
+// plain `http://host:port` (the WebSocket path speaks raw TCP). The default port 3100 is also in
+// apps/admin/package.json (`dev` script: PORT and --port): change both together, or set
+// ADMIN_DEV_URL and run the admin with the same port.
 import { request as httpRequest } from 'node:http';
 import { connect } from 'node:net';
 
 export const ADMIN_PREFIX = '/admin';
+// Keep in step with apps/admin/package.json (`dev` script, port 3100); this .mjs can't import admin TS.
 export const DEFAULT_ADMIN_URL = 'http://127.0.0.1:3100';
 
 /** Whether `url` (path and query) belongs to the admin: /admin itself or anything below it. */
@@ -22,13 +31,20 @@ export function isAdminPath(url) {
  * Headers for the admin: the target's Host, plus where the request really came from, so Next's
  * Server Actions origin check and Payload's CSRF check (ADMIN_URL=https://cityturfer.local) see the
  * public origin rather than 127.0.0.1:3100.
+ *
+ * Derived here, not trusted: portless keeps any x-forwarded-host/-proto the client sent, so the
+ * forwarded host is the request's own Host (the x-forwarded-host portless sets from HTTP/2's
+ * :authority only when Host is missing), and the proto is `http` only when the incoming value is
+ * exactly `http`, otherwise `https` (portless serves the site over TLS).
  */
 export function forwardHeaders(req, target) {
+  const forwardedHost = req.headers['x-forwarded-host'];
+  const host = req.headers.host || (Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost) || '';
   return {
     ...req.headers,
     host: target.host,
-    'x-forwarded-host': req.headers['x-forwarded-host'] ?? req.headers.host ?? '',
-    'x-forwarded-proto': req.headers['x-forwarded-proto'] ?? 'https',
+    'x-forwarded-host': host,
+    'x-forwarded-proto': req.headers['x-forwarded-proto'] === 'http' ? 'http' : 'https',
   };
 }
 
@@ -51,6 +67,8 @@ function proxy(req, res, adminUrl) {
       res.end();
     }
   });
+  // A client that goes away (closed tab, aborted fetch) must not leave the upstream request open.
+  res.on('close', () => upstream.destroy());
   req.pipe(upstream);
 }
 
@@ -79,6 +97,11 @@ export function adminUpgrade(req, socket, head, { adminUrl = DEFAULT_ADMIN_URL, 
     return true;
   }
   const target = new URL(adminUrl);
+  if (target.protocol !== 'http:') {
+    // Raw TCP below: https:// (or anything else) would not work, so say so instead of hanging.
+    socket.end('HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n');
+    return true;
+  }
   const upstream = connect(Number(target.port || 80), target.hostname, () => {
     const headers = forwardHeaders(req, target);
     const lines = [`${req.method} ${req.url} HTTP/${req.httpVersion}`];
@@ -112,7 +135,8 @@ export function routeAdminUpgrades(server, options) {
     return emit(event, ...args);
   };
   // Node emits `upgrade` only when someone listens; Next may not have attached its listener yet.
-  // A socket that reaches this one and no other has nobody to answer it.
+  // A socket that reaches this one and no other has nobody to answer it. Best effort only: Node
+  // closes an unanswered upgrade socket itself, and the count can't tell Next's listener apart.
   server.on('upgrade', (_req, socket) => {
     if (server.listenerCount('upgrade') === 1) {
       socket.destroy();

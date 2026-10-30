@@ -32,3 +32,19 @@ export function securityHeaders(dev: boolean): { key: string; value: string }[] 
 }
 
 export const SECURITY_HEADER_SOURCE = '/:path*';
+
+/**
+ * Next prefixes a header `source` with the basePath (/admin), so SECURITY_HEADER_SOURCE alone covers
+ * only /admin and below. The second rule (`basePath: false`) puts the same headers on every other
+ * path of the admin's host, such as its 404s, so nothing there goes out without CSP or noindex.
+ */
+export function headerRules(dev: boolean) {
+  const headers = securityHeaders(dev);
+  return [
+    { source: SECURITY_HEADER_SOURCE, headers },
+    { source: SECURITY_HEADER_SOURCE, basePath: false as const, headers },
+  ];
+}
+
+/** The admin host's root has nothing: staff land on the panel instead of a bare 404. */
+export const ROOT_REDIRECTS = [{ source: '/', destination: '/admin', basePath: false as const, permanent: false }];
