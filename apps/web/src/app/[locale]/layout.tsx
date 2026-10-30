@@ -1,6 +1,6 @@
 import '../globals.css';
 
-import { cssVariables, NAME, SITE_SCHEME, THEMES } from '@cityturfer/brand';
+import { cssVariables, NAME, THEMES, WEB_SCHEME } from '@cityturfer/brand';
 import mark from '@cityturfer/brand/svg/mark.svg';
 import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
@@ -46,11 +46,11 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   };
 }
 
-export const viewport: Viewport = { themeColor: THEMES[SITE_SCHEME].bg, colorScheme: SITE_SCHEME };
+export const viewport: Viewport = { themeColor: THEMES[WEB_SCHEME].card, colorScheme: WEB_SCHEME };
 
 /** Design tokens from @cityturfer/brand as CSS variables, so globals.css never hard-codes a value.
- * The site is dark like the app (SITE_SCHEME). */
-const tokens = cssVariables(SITE_SCHEME) as CSSProperties;
+ * The site is light (WEB_SCHEME); the app's screens on it stay dark (APP_SCHEME). */
+const tokens = cssVariables(WEB_SCHEME) as CSSProperties;
 
 export default async function LocaleLayout({
   children,

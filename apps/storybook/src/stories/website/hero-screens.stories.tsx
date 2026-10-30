@@ -20,7 +20,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'The two phone screenshots (Turf Map and Dashboard) with their captions. Images come from apps/web/public/screens.',
+          'The two phones with captions: coded prototypes of the app (Turf Map and Dashboard) on a 390 × 844 canvas, scaled to the frame (hero-screens.css).',
       },
     },
   },

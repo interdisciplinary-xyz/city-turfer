@@ -60,6 +60,15 @@ reinstalled from that tag on 2026-10-26 (runbook #7), so it takes OTAs published
 from `scope/v0.13.0` while the fingerprint stays equal (equal at `1caf481`, measured 2026-10-26). No
 OTA is recorded for v0.11.0 or v0.12.0 in the session logs.
 
+v0.13.0 is JS only, released 2026-10-26: the release commit `9dd9692` bumps `app.json` to 0.13.0, so
+the tag `v0.13.0` has a new fingerprint. The founder's iPhone runs a Release build from 2026-10-26
+(`fc6fa57` per runbook #7, `668e740` per #187's body; both `app.json` 0.12.0, iOS `ff7765f0…`), so
+it takes **no** OTA published from `v0.13.0` or from `scope/v0.14.0`. v0.14.0 changes no native file
+so far (no `app.json`, plugin, module or app dependency change;
+`git diff --stat v0.13.0..origin/scope/v0.14.0`, checked 2026-10-30). Its fingerprint is not
+measured in a clean install yet: #191 and #192 reported different iOS values (`12e88723…` and
+`c9cca32d…`) from session checkouts, so neither counts. No OTA is recorded for v0.13.0.
+
 To check, compare the fingerprint of the checkout you'll publish from with the runtime of the latest
 update the phone already runs:
 

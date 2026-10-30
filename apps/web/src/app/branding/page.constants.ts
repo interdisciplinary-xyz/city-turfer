@@ -245,7 +245,7 @@ export const TIER_MEANING: Record<TierName, string> = {
   faint: 'Tier 1, gradient start',
   glowing: 'Tier 2 and the primary accent fill: buttons, selection. Pink text goes through accent-text',
   strong: 'Tier 3, highlights',
-  blazing: 'Tier 4, the end of the Ramp in “TURFER”, headlines on night',
+  blazing: 'Tier 4, the end of the Ramp, headlines on night',
 };
 
 export const ACTIVITY_LABEL: Record<BrandActivityType, string> = { walk: 'Walk', run: 'Run', cycle: 'Ride' };
@@ -331,7 +331,7 @@ export const CONTRAST_FIXES: readonly ContrastFix[] = [
   },
 ];
 export const CONTRAST_FIXES_NOTE =
-  'The website, Swagger and Storybook are dark like the app (docs/decisions/brand-dark-site-2026-10-25.md). The web labels pink fills in night ink (WEB_ON_ACCENT, 5.5:1); the app keeps these two known failures so it does not shift over the air.';
+  'The website and portal are light so the app’s dark screens stand out (docs/decisions/brand-light-website-2026-10-29.md); Swagger and Storybook stay dark like the app. The web labels pink fills in night ink (WEB_ON_ACCENT, 5.5:1); the app keeps these two known failures so it does not shift over the air.';
 
 export type BrandAsset = { name: string; where: string; note: string };
 export const ASSETS: readonly BrandAsset[] = [
@@ -354,7 +354,7 @@ export const ASSETS: readonly BrandAsset[] = [
   {
     name: 'Fonts (OFL)',
     where: 'packages/brand/fonts/',
-    note: 'Big Shoulders Display Black, Barlow Semi Condensed ExtraBold (TTF + WOFF2), Barlow 400–700 (WOFF2, web only)',
+    note: 'Big Shoulders Display Black, Barlow Semi Condensed ExtraBold (TTF + WOFF2), Barlow 400–700 (WOFF2, web only), Anton (TTF, wordmark outline source only)',
   },
 ];
 export const RENDER_COMMAND = 'node apps/mobile/tools/brand/render-assets.mjs';

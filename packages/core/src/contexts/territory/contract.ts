@@ -75,3 +75,34 @@ export interface ClaimView {
   newAreaKm2: number;
   cells: { id: string; isNew: boolean; ring: [number, number][] }[];
 }
+
+/** One district of the Home City with the turf the Turfer holds in it (Districts screen). */
+export interface DistrictCoverageView {
+  id: string;
+  /** Local name from the boundary data. */
+  name: string;
+  areaKm2: number;
+  /** Area of the Turfer's cells whose centre lies in the district (a first, simple measure). */
+  coveredKm2: number;
+  cellCount: number;
+  /** coveredKm2 / areaKm2, 0–1: map shading only. */
+  share: number;
+  /** [west, south, east, north] */
+  bounds: [number, number, number, number];
+  /** GeoJSON MultiPolygon coordinates: polygons of [outer, ...holes] rings of [lon, lat]. */
+  polygons: [number, number][][][];
+}
+
+/** The Districts screen: no Home City, a Home City without district data, or its districts. */
+export type DistrictsView =
+  | { status: 'no-city' }
+  | { status: 'no-data'; city: CityView }
+  | {
+      status: 'ready';
+      city: CityView;
+      /** Around every district: what the map fits. */
+      bounds: [number, number, number, number];
+      coveredKm2: number;
+      /** Sorted by turf held (most first), then by name. */
+      districts: DistrictCoverageView[];
+    };

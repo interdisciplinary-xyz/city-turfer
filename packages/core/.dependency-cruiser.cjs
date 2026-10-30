@@ -23,11 +23,19 @@ module.exports = {
       to: { path: '(^|/)node_modules/h3-js/' },
     },
     {
+      name: 'districts-data-only-via-entry',
+      severity: 'error',
+      comment:
+        'District boundaries are bundled data behind the DistrictCatalog port: only the @cityturfer/core/districts entry (src/districts) holds them, so the territory entry (API, portal) never loads them.',
+      from: { path: '^src/', pathNot: '^src/districts/' },
+      to: { path: '^src/districts/' },
+    },
+    {
       name: 'domain-is-pure',
       severity: 'error',
-      comment: 'Domain and shared kernel: no frameworks, no adapters (src/h3), no outer layers.',
+      comment: 'Domain and shared kernel: no frameworks, no adapters (src/h3, src/districts), no outer layers.',
       from: { path: '^src/(shared-kernel|contexts/[^/]+/domain)/', pathNot: notTests },
-      to: { path: '^src/(h3/|contexts/[^/]+/(application/|index\\.ts|ports\\.ts))' },
+      to: { path: '^src/(h3/|districts/|contexts/[^/]+/(application/|index\\.ts|ports\\.ts))' },
     },
     {
       name: 'application-no-infra-or-ui',

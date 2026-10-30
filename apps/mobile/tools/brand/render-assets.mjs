@@ -19,7 +19,7 @@ const ROOT = resolve(new URL('../..', import.meta.url).pathname);
 const BRAND = join(ROOT, '../../packages/brand/svg'); // @cityturfer/brand SVG sources
 const TEMPLATES = join(ROOT, '../../packages/brand/templates');
 const FONTS = join(ROOT, '../../packages/brand/fonts');
-const SCREENS = join(ROOT, '../web/public/screens'); // app screenshots the website already shows
+const SCREENS = join(ROOT, 'tools/brand/screens'); // app screenshots the OG and store templates frame (the site's hero now codes its screens)
 const WEB_PUBLIC = join(ROOT, '../web/public');
 // Staged here; copy into assets/ only together with a native reinstall
 // (icons are part of the runtime fingerprint, so OTA updates stop matching).
@@ -34,8 +34,8 @@ const TARGETS = [
   { solid: '#0B0D12', out: 'android-icon-background.png', size: 1024 },
   { src: 'mark-foreground.svg', out: 'splash-icon.png', size: 1024, transparent: true },
   { src: 'mark.svg', out: 'favicon.png', size: 64, transparent: false },
-  { src: 'wordmark.svg', out: 'wordmark.png', width: 894, height: 192, transparent: true },
-  { src: 'wordmark-light.svg', out: 'wordmark-light.png', width: 894, height: 192, transparent: true },
+  { src: 'wordmark.svg', out: 'wordmark.png', width: 898, height: 200, transparent: true },
+  { src: 'wordmark-light.svg', out: 'wordmark-light.png', width: 898, height: 200, transparent: true },
   {
     template: 'og-image.html',
     out: join(WEB_PUBLIC, 'og-image.png'),

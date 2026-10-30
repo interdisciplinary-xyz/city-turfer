@@ -3,16 +3,19 @@ import { join } from 'node:path';
 
 import { ACCENT, DARK, LIGHT, ON_ACCENT, ON_LIGHT, ON_TIER, RAMP, TIER_COLOR, TYPE_COLOR } from '../colors';
 import {
+  APP_SCHEME,
   BODY_FONT_FAMILY,
   cssVariables,
   FONT_FAMILY,
   FONT_SIZE,
+  HEADER_SCHEME,
   RADIUS,
   SITE_SCHEME,
   SPACE,
   TAGLINE_FONT_FAMILY,
   THEMES,
   TIER_ORDER,
+  WEB_SCHEME,
 } from '../tokens';
 
 /** The colours the app (always dark) reads at runtime: a change here reaches phones over OTA. */
@@ -20,7 +23,7 @@ const PINNED_DARK = {
   bg: '#0B0D12',
   card: '#151924',
   text: '#EEF1F7',
-  muted: '#9AA3B5',
+  muted: '#D6DAE3',
   border: '#242A38',
   danger: '#FF6369',
 };
@@ -30,7 +33,7 @@ const PINNED_DARK_CSS = {
   '--bg': '#0B0D12',
   '--card': '#151924',
   '--text': '#EEF1F7',
-  '--muted': '#9AA3B5',
+  '--muted': '#D6DAE3',
   '--border': '#242A38',
   '--danger': '#FF6369',
   '--accent': '#F72FA8',
@@ -63,7 +66,8 @@ describe('design tokens', () => {
     expect(DARK).toMatchObject({
       accentText: ACCENT,
       onAccent: ON_ACCENT,
-      borderControl: PINNED_DARK.muted,
+      // Control edges keep the old muted grey; text moved lighter on 2026-10-27.
+      borderControl: '#9AA3B5',
       strongText: TIER_COLOR.strong,
       walkText: TYPE_COLOR.walk,
       runText: TYPE_COLOR.run,
@@ -95,8 +99,14 @@ describe('design tokens', () => {
     });
   });
 
-  it("put the website, Swagger and Storybook on the app's dark scheme", () => {
+  it("put Swagger and Storybook on the app's dark scheme", () => {
     expect(SITE_SCHEME).toBe('dark');
+  });
+
+  it('put the website and portal on the light scheme, the header light, and the app dark', () => {
+    expect(WEB_SCHEME).toBe('light');
+    expect(HEADER_SCHEME).toBe('light');
+    expect(APP_SCHEME).toBe('dark');
   });
 
   it('order the tiers like the Ramp', () => {

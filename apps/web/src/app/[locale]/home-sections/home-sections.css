@@ -1,5 +1,7 @@
 /* The homepage below the hero, in the app's pieces. Each .app-* class is the CSS twin of an
-   @cityturfer/ui component (packages/ui/src): same tokens from cssVariables(SITE_SCHEME), no hex.
+   @cityturfer/ui component (packages/ui/src): same tokens from cssVariables(), no hex. The page is light (WEB_SCHEME); the pieces that draw turf
+   tiers (.app-record, .app-gain, .app-legend, .home-dashboard) are night panels: the component sets
+   cssVariables(APP_SCHEME) inline, so every var(--…) inside them is the app's dark value.
    Card: radius-card, padding lg, hairline border. ActivityRow: radius-control, padding md. Stat:
    numeric face, tabular figures, uppercase label with label tracking. TurfLegend: a stepped Ramp. */
 
@@ -107,9 +109,10 @@
   --chip: var(--ride-graphic);
 }
 
-/* The Record tab's button: a glow disc with a ring and a white
-   dot (--text on glow is 3.13:1: it passes the 3:1 graphic threshold, and matches the app). `--glow`
-   has no `-graphic` variant in cssVariables(), so graphics here use it raw. */
+/* The Record tab's button: a glow disc with a ring and a white dot, as in the app. It is a night
+   piece (APP_VARIABLES on the element), so --text is the app's near-white (3.13:1 on glow: passes
+   the 3:1 graphic threshold) and --card the app's card for the ring. `--glow` has no `-graphic`
+   variant in cssVariables(), so graphics here use it raw. */
 .app-record {
   display: grid;
   place-items: center;
@@ -138,6 +141,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
   background: var(--bg);
+  color: var(--text);
 }
 
 .app-gain-area {
@@ -156,6 +160,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-chip);
   background: var(--bg);
+  color: var(--text);
 }
 
 .app-legend-bar {
@@ -342,6 +347,13 @@
   align-self: stretch;
 }
 
+/* The step number sits in the card's corner: start the night panels below it, so it is never drawn
+   over the dark panel (muted ink on night). */
+.home-step .app-gain,
+.home-step .app-legend {
+  margin-top: 20px;
+}
+
 .home-chips {
   display: flex;
   flex-wrap: wrap;
@@ -378,6 +390,7 @@
   border: 1px solid var(--border);
   border-radius: 32px; /* the phone-screen corner; no radius token this large */
   background: var(--bg);
+  color: var(--text);
   box-shadow: 0 24px 64px color-mix(in srgb, var(--faint) 20%, transparent);
 }
 
@@ -459,8 +472,9 @@
 
 /* The app's Button (packages/ui) shape: glow fill, 56 px, control radius. The label is night ink
    (`--on-glow` = WEB_ON_ACCENT) on purpose: the app's Button draws white (DARK.onAccent), the web
-   differs for contrast on the pink. Hover mixes toward --text, not --on-glow (which would darken
-   the pink and drop the label to 4.27:1; this keeps about 6:1). */
+   differs for contrast on the pink. Hover mixes toward --blazing, not --text or --on-glow (those
+   darken the pink and drop the label under 4.5:1 on the light scheme; --blazing brightens it and
+   keeps about 6:1 in both schemes). */
 .app-button {
   display: inline-flex;
   align-items: center;
@@ -477,10 +491,190 @@
 
 .app-button:hover,
 .app-button:focus-visible {
-  background: color-mix(in srgb, var(--glow) 86%, var(--text));
+  background: color-mix(in srgb, var(--glow) 86%, var(--blazing));
 }
 
 .app-button:focus-visible {
   outline: 2px solid var(--text);
   outline-offset: 3px;
+}
+
+/* ---------- Grids shared by the newer sections ---------- */
+
+.home-grid {
+  display: grid;
+  gap: var(--space-lg);
+  margin: clamp(28px, 4vw, 44px) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 720px) {
+  .home-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .home-grid-highlights {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1040px) {
+  .home-grid-highlights {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  /* Two wide tiles on top (the "wow" ones), three below. */
+  .home-grid-highlights > :nth-child(-n + 2) {
+    grid-column: span 3;
+  }
+  .home-grid-highlights > :nth-child(n + 3) {
+    grid-column: span 2;
+  }
+}
+
+/* ---------- Who it's for ---------- */
+
+.home-type {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  border-top: 3px solid var(--badge-line, var(--border));
+}
+
+.home-type-walk {
+  --badge-line: var(--walk-graphic);
+}
+.home-type-run {
+  --badge-line: var(--run-graphic);
+}
+.home-type-ride {
+  --badge-line: var(--ride-graphic);
+}
+
+.home-type .home-step-body,
+.home-highlight .home-step-body {
+  margin: 0;
+}
+
+.home-not-for {
+  max-width: 44rem;
+}
+
+/* ---------- Highlights ---------- */
+
+.home-highlight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-md);
+}
+
+.home-highlight-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  color: var(--accent-text);
+  font-size: 22px;
+  background: color-mix(in srgb, var(--glow) 16%, transparent);
+}
+
+.home-tag {
+  margin-top: auto;
+  padding: 2px 10px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-full);
+  color: var(--muted);
+  font-size: var(--font-label);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+
+/* ---------- How it differs ---------- */
+
+.home-differs {
+  margin-bottom: 0;
+}
+
+.home-differ {
+  display: grid;
+  gap: var(--space-sm);
+  padding-left: var(--space-lg);
+  border-left: 2px solid var(--glow);
+}
+
+.home-differ dd {
+  margin: 0;
+}
+
+/* ---------- Where it stands ---------- */
+
+.home-status .home-points {
+  margin-top: var(--space-md);
+}
+
+.home-status-testing .home-points li::before {
+  background: var(--border-control);
+}
+
+.home-status-notYet .home-points li::before {
+  background: var(--border-control);
+}
+
+/* ---------- FAQ ---------- */
+
+.home-faq-wrap {
+  max-width: 820px;
+}
+
+.home-faq {
+  display: grid;
+  gap: var(--space-sm);
+  margin-top: clamp(28px, 4vw, 44px);
+}
+
+.home-faq-item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--card);
+}
+
+.home-faq-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  list-style: none;
+}
+
+.home-faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.home-faq-item summary::after {
+  content: '+';
+  color: var(--accent-text);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.home-faq-item[open] summary::after {
+  content: '−';
+}
+
+.home-faq-item summary:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+  border-radius: var(--radius-control);
+}
+
+.home-faq-item p {
+  margin: 0;
+  padding: 0 var(--space-lg) var(--space-lg);
+  color: var(--muted);
+  line-height: 1.5;
 }
