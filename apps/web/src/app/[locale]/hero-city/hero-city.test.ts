@@ -2,14 +2,17 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
+import { EARTH_RADIUS_M as CORE_EARTH_RADIUS_M } from '@cityturfer/core/constants';
+import { distanceM as coreDistanceM } from '@cityturfer/core/shared-kernel';
+import { catalogueCityView } from '@cityturfer/core/territory';
 import { describe, expect, test } from 'vitest';
 
 import en from '../../../../messages/en.json';
 import pl from '../../../../messages/pl.json';
 import { MAP_CITY_IDS } from '../../../../tools/gen-city-maps.mjs';
 import { heroCityOptions } from './city-options';
-import { CITY_BOOT_SCRIPT, DEFAULT_HERO_CITY, HERO_CITY_IDS } from './hero-city.constants';
-import { asHeroCityId, cityForTimeZone, nearestCity } from './pick-city';
+import { CITY_BOOT_SCRIPT, DEFAULT_HERO_CITY, EARTH_RADIUS_M, HERO_CITY_IDS } from './hero-city.constants';
+import { asHeroCityId, cityForTimeZone, distanceM, nearestCity } from './pick-city';
 
 const PUBLIC = fileURLToPath(new URL('../../../../public/', import.meta.url));
 const CSS = readFileSync(fileURLToPath(new URL('./hero-city.css', import.meta.url)), 'utf8');
@@ -54,6 +57,22 @@ describe('near me', () => {
   test('picks the nearest city within 50 km', () => {
     expect(nearestCity({ lat: 54.38, lon: 18.6 }, CITIES)).toBe('pl-gdansk'); // Wrzeszcz
     expect(nearestCity({ lat: 52.25, lon: 21.05 }, CITIES)).toBe('pl-warsaw');
+  });
+
+  test("the page repeats core's distance and city centres, it never imports them", () => {
+    expect(EARTH_RADIUS_M).toBe(CORE_EARTH_RADIUS_M);
+    const gdansk = { lat: 54.3485, lon: 18.6533 };
+    for (const p of [
+      { lat: 52.2297, lon: 21.0122 },
+      { lat: 54.38, lon: 18.6 },
+      { lat: 51.5074, lon: -0.1278 },
+    ]) {
+      expect(distanceM(gdansk, p)).toBeCloseTo(coreDistanceM(gdansk, p), 6);
+    }
+    expect(CITIES.map((c) => c.id)).toEqual([...HERO_CITY_IDS]);
+    for (const c of CITIES) {
+      expect(c.center).toEqual(catalogueCityView(c.id).center);
+    }
   });
 
   test('keeps the guess when nothing is close', () => {

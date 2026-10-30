@@ -4,8 +4,10 @@ import { describe, test } from 'node:test';
 import {
   assembleRings,
   CANVAS,
+  cityData,
   clipLine,
   clipRing,
+  MAP_CITY_IDS,
   pathData,
   projector,
   readCatalog,
@@ -23,6 +25,17 @@ describe('gen-city-maps', () => {
     const cities = readCatalog(src);
     assert.deepEqual(cities.get('gb-london'), { id: 'gb-london', name: 'London', lat: 51.5074, lon: -0.1278 });
     assert.equal(cities.size, 2);
+  });
+
+  test('cityData lists every map city with its [lon, lat] centre', () => {
+    const catalog = new Map(MAP_CITY_IDS.map((id, i) => [id, { id, name: id, lat: 50 + i, lon: 10 + i }]));
+    const data = cityData(catalog);
+    assert.deepEqual(
+      data.map((c) => c.id),
+      MAP_CITY_IDS
+    );
+    assert.deepEqual(data[1].center, [11, 51]);
+    assert.throws(() => cityData(new Map()), /not in the Home City catalogue/);
   });
 
   test('projects the centre to the middle and north up', () => {

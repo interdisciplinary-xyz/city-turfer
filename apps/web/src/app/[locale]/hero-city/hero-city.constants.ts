@@ -36,6 +36,9 @@ export const TIME_ZONE_CITY: Readonly<Record<string, HeroCityId>> = {
 /** "Near me" only switches to a city whose centre is this close; further away the guess stays. */
 export const NEAR_CITY_MAX_M = 50_000;
 
+/** Mean Earth radius in metres: the same value as EARTH_RADIUS_M in @cityturfer/core. */
+export const EARTH_RADIUS_M = 6_371_008.8;
+
 /** Attribute on the `.hero-city` element that holds the city id (CSS picks the masks from it). */
 export const CITY_ATTRIBUTE = 'data-city';
 

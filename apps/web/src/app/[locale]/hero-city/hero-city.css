@@ -23,16 +23,18 @@
   mask: var(--city-mask) center / cover no-repeat;
 }
 
+/* The hero text sits on the map, so each layer stays pale enough that --muted and --accent-text
+   keep 4.5:1 on it (light scheme: water 4.9 and 4.6, a street line 4.8 and 4.5). */
 .hero-map-water {
   --city-mask: var(--city-water);
   background: var(--border);
-  opacity: 0.5;
+  opacity: 0.25;
 }
 
 .hero-map-streets {
   --city-mask: var(--city-streets);
   background: var(--muted);
-  opacity: 0.17;
+  opacity: 0.12;
 }
 
 /* Fade to the page at the edges and the bottom, so the map never meets the next section. */
@@ -100,6 +102,13 @@
   line-height: 1.5;
 }
 
+.hero-map-credit > * {
+  /* Small text and the pink link: keep them on the page colour, never on a street or water. */
+  border-radius: 6px;
+  background: var(--bg);
+  padding-inline: 6px;
+}
+
 .hero-map-credit label {
   display: inline-flex;
   align-items: center;
@@ -123,9 +132,8 @@
 }
 
 .hero-map-credit button {
-  padding: 2px 0;
+  padding: 2px 6px;
   border: 0;
-  background: none;
   color: var(--accent-text);
   font: inherit;
   text-decoration: underline;
