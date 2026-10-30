@@ -5,7 +5,19 @@ import { AppHeader } from '@/app/[locale]/app-header';
 import { HeroCopy } from '@/app/[locale]/hero-copy';
 import { HeroMotion } from '@/app/[locale]/hero-motion';
 import { HeroScreens } from '@/app/[locale]/hero-screens';
-import { FinalCta, HowItWorks, LocalFirst, YourWeek } from '@/app/[locale]/home-sections';
+import {
+  Audience,
+  Differs,
+  Faq,
+  FinalCta,
+  Highlights,
+  HowItWorks,
+  LocalFirst,
+  WhereItStands,
+  YourWeek,
+} from '@/app/[locale]/home-sections';
+import { SiteFooter } from '@/app/[locale]/site-footer';
+import { TurfDemo } from '@/app/[locale]/turf-demo';
 import { WaitlistForm } from '@/app/[locale]/waitlist-form';
 import type { Locale } from '@/i18n/routing';
 
@@ -43,11 +55,18 @@ function Page({ waitlist }: PageProps) {
             </div>
           </section>
         ) : null}
+        <TurfDemo />
         <HowItWorks />
+        <Audience />
+        <Highlights />
         <YourWeek />
+        <Differs />
         <LocalFirst />
+        <WhereItStands />
+        <Faq />
         {waitlist ? <FinalCta /> : null}
       </main>
+      <SiteFooter contactEmail={waitlist ? 'privacy@example.invalid' : undefined} />
     </>
   );
 }
@@ -60,7 +79,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'The full landing page: hero (with its entrance animation), the waitlist section, how it works, your week, local-first and the closing call to action (shown only with the waitlist). `waitlist` mirrors the NEXT_PUBLIC_WAITLIST_* variables being set. The APK download buttons are hidden for now.',
+          'The full landing page: hero (with its entrance animation and the prototype badge), the waitlist section, the street-glow demo, how it works, who it is for, highlights, your week, how it differs, local-first, where it stands, the FAQ, the closing call to action (shown only with the waitlist) and the footer. `waitlist` mirrors the NEXT_PUBLIC_WAITLIST_* variables being set. The APK download buttons are hidden for now.',
       },
     },
   },

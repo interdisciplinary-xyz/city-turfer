@@ -165,6 +165,27 @@ img {
   text-align: center;
 }
 
+/* "Early prototype": a quiet pill, never the turf Ramp (docs/plans/homepage-sections-2026-10-28.md). */
+.hero-badge {
+  display: inline-block;
+  margin: 0 0 16px;
+  padding: 4px 12px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-full);
+  color: var(--muted);
+  font-size: var(--font-label);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+
+.hero-audience {
+  margin: 12px auto 0;
+  max-width: 34rem;
+  color: var(--text);
+  font-weight: var(--font-weight-semibold);
+}
+
 /* The hero headline keeps --text like every heading: on the light page --muted reads pale. */
 
 /* Phones: text, buttons, then the screenshots. Desktop: text + phones in one row, buttons under both. */
@@ -223,7 +244,8 @@ img {
     margin-bottom: 20px;
   }
   .hero-copy h1,
-  .hero-copy .lede {
+  .hero-copy .lede,
+  .hero-copy .hero-audience {
     margin-left: 0;
   }
   .hero-copy h1 {
@@ -580,4 +602,28 @@ h1 {
   .hero-brand .wordmark {
     margin-left: calc(var(--lockup) * -0.04);
   }
+}
+
+/* Footer: one quiet row, hairline on top. */
+.site-footer {
+  padding: var(--space-xl) 0;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: var(--font-caption);
+}
+
+.site-footer-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md) var(--space-xl);
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+.site-footer a {
+  color: var(--accent-text);
 }

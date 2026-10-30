@@ -109,7 +109,7 @@ Bounded contexts: <!-- probe:contexts -->7<!-- /probe -->
 - `cities-pl`, `cities-europe`: Home City catalogue entries in
   `packages/core/src/contexts/territory/domain/city-catalog.ts` with a `pl-` id, and all the others
   (<!-- probe:cities-pl -->23<!-- /probe -->, <!-- probe:cities-europe -->15<!-- /probe -->)
-- `docs`: markdown files under `docs/` (<!-- probe:docs -->65<!-- /probe -->)
+- `docs`: markdown files under `docs/` (<!-- probe:docs -->66<!-- /probe -->)
 - `api-operations`: HTTP operations in `apps/api/openapi.json`
   (<!-- probe:api-operations -->34<!-- /probe -->)
 

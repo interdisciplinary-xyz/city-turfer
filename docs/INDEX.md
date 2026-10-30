@@ -274,6 +274,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   screen, a modal opened from the Turf tab that shows the Home City split into its administrative
   districts (OpenStreetMap boundaries bundled with the app) on a map, with a list of districts and
   the turf area the Turfer holds in each
+- 🚧 [`plans/homepage-sections-2026-10-28.md`](plans/homepage-sections-2026-10-28.md): Plan for the
+  landing page's sections, top to bottom, presenting CityTurfer as an honest early prototype that
+  recruits testers; a street-glow demo built from the Gdańsk demo data, audience, highlights,
+  comparison, status, FAQ and a tester call, in six slices
 - ✅ [`plans/sync-chain-testing-2026-10-22.md`](plans/sync-chain-testing-2026-10-22.md): How to test
   that the four apps stay one system — every scenario starts on the phone (the source of truth) or
   reaches it, and is checked in the API, the web portal and the admin portal as each is built today;

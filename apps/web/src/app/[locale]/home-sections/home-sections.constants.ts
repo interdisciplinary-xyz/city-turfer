@@ -49,3 +49,28 @@ export const EXAMPLE_ACHIEVEMENTS = { unlocked: 9, total: 20 } as const;
 
 /** Turf gained on the example card (activity detail in the app). */
 export const EXAMPLE_GAIN = { areaKm2: 0.12, added: 56, reinforced: 340 } as const;
+
+/** Highlights tiles, in "wow" order; `iphone` marks a feature that only runs on iPhone today. */
+export type HighlightKey = 'gain' | 'record' | 'health' | 'achievements' | 'city';
+export const HIGHLIGHTS: readonly { key: HighlightKey; icon: string; iphone: boolean }[] = [
+  { key: 'gain', icon: '⬢', iphone: false },
+  { key: 'record', icon: '●', iphone: true },
+  { key: 'health', icon: '♥', iphone: true },
+  { key: 'achievements', icon: '★', iphone: false },
+  { key: 'city', icon: '◎', iphone: false },
+];
+
+export const DIFFERS = ['repeats', 'fades', 'private'] as const;
+
+/**
+ * Where it stands: one list to update per release (docs-engineer checks it on "update all docs").
+ * Keys under home.status.<column>.<item>.
+ */
+export const STATUS_COLUMNS = [
+  { key: 'works', items: ['record', 'turf', 'history', 'languages'] },
+  { key: 'testing', items: ['health', 'battery', 'backup'] },
+  { key: 'notYet', items: ['android', 'store', 'gpx', 'sharing'] },
+] as const;
+
+/** FAQ questions in page order; the FAQPage JSON-LD is built from the same keys. */
+export const FAQ_KEYS = ['when', 'free', 'battery', 'account', 'data', 'android', 'watch', 'cities'] as const;
