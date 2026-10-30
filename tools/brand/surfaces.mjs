@@ -5,13 +5,14 @@
  *
  * Fields:
  *   id, name   stable key and human name
- *   scheme     'dark' (always dark: the app, every map), 'site' (follows SITE_SCHEME, dark since
- *              v0.12.0: website, portal, Swagger, Storybook) or 'both' (maps both schemes because
+ *   scheme     'dark' (always dark: the app, every map), 'web' (follows WEB_SCHEME, light since
+ *              v0.14.0: website, portal), 'site' (follows SITE_SCHEME, dark: Swagger, Storybook,
+ *              /branding) or 'both' (maps both schemes because
  *              the host switches them: the admin follows Payload's own light/dark toggle)
  *   owner      the agent that changes this surface (.claude/agents/<owner>.md)
  *   status     'live' | 'dev' (local only) | 'paused' (not deployed, not unified yet)
  *   theme      files that turn brand tokens into this surface's colours, or [] when it has none; on a
- *              'site' or 'both' surface each one must draw from the brand in code (audit:brand)
+ *              'web', 'site' or 'both' surface each one must draw from the brand in code (audit:brand)
  *   fonts      files that load the brand typefaces here, or [] when it uses none
  *   logo       files that place the mark / wordmark / favicon / icon here
  *   copy       files with this surface's user-facing words (product name, taglines, titles)
@@ -41,7 +42,7 @@ export const SURFACES = [
   {
     id: 'web',
     name: 'Website (public pages)',
-    scheme: 'site',
+    scheme: 'web',
     owner: 'web-engineer',
     status: 'live',
     theme: [
@@ -57,7 +58,7 @@ export const SURFACES = [
   {
     id: 'portal',
     name: 'Web portal (signed in)',
-    scheme: 'site',
+    scheme: 'web',
     owner: 'portal-engineer',
     status: 'live',
     // Under [locale]/layout.tsx, so globals.css applies; account/layout.tsx adds portal.css.
