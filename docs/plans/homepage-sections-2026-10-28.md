@@ -19,10 +19,11 @@ summary:
 
 # Homepage sections (plan)
 
-Status: **proposed; slices 1–4 built** on `feat/web-homepage` (2026-10-28) with the recommended
-answer to every decision below (D1 yes, D3 yes, D6 no, D7 yes, D8 no). The copy is a draft until
-`brand-designer` and the founder sign it off (D4). Slice 5 (tester form) waits for D2, D5 and the
-Brevo fields; slice 6 waits for the scroll-motion plan. Differences from the text below:
+Status: **proposed; slices 1–4 built in #196** (`feat/web-homepage`, merged into `scope/v0.14.0` on
+2026-10-30, `f2854b8`) with the recommended answer to every decision below (D1 yes, D3 yes, D6 no,
+D7 yes, D8 no). The copy is a draft until `brand-designer` and the founder sign it off (D4). Slice 5
+(tester form) waits for D2, D5 and the Brevo fields; slice 6 waits for the scroll-motion plan.
+Differences from the text below:
 
 - the demo history spans four months, so beat 2 says "four months" rather than two;
 - city cells are drawn as round dots, which halves the page weight at that scale;

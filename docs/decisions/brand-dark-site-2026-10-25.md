@@ -13,11 +13,11 @@ summary:
 
 # Dark website, like the app (v0.12.0)
 
-> **Superseded in part (v0.14.0):** the website and the signed-in portal are light again
-> (`WEB_SCHEME`), with night panels for the app's pieces
-> (`docs/decisions/brand-light-website-2026-10-29.md`). The rest, the dark Swagger, Storybook,
-> `/branding` and the app, still holds, so this doc stays `canonical`. Read "website" and "portal"
-> below as history.
+> **Superseded in part (v0.14.0, #198 merged 2026-10-30):** the website and the signed-in portal are
+> light again (`WEB_SCHEME`), with night panels for the app's pieces
+> (`docs/decisions/brand-light-website-2026-10-29.md`, accepted). The rest, the dark Swagger,
+> Storybook, `/branding` and the app, still holds, so this doc stays `canonical`. Read "website" and
+> "portal" below as history.
 
 ## Decision
 
