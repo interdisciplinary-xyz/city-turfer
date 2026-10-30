@@ -236,6 +236,77 @@ test('git push: never to main, no force-push to integration branches', () => {
   assert.deepEqual(rules(bashFindings('pnpm test && git push origin main', CTX)), ['push-main']);
 });
 
+test('git push: a small change goes straight to the active scope, never forced', () => {
+  // The direct-to-scope path in docs/process/release-manager.md ("Small changes"). That the push
+  // is a fast-forward is the server's job (a non-forced push is rejected otherwise), not the hook's.
+  const small = { branch: 'scope/v0.8.0', activeScope: 'scope/v0.8.0' };
+  const detached = { branch: 'HEAD', activeScope: 'scope/v0.8.0' };
+  assert.deepEqual(bashFindings('git push origin HEAD:refs/heads/scope/v0.8.0', small), []);
+  assert.deepEqual(bashFindings('git push origin HEAD:refs/heads/scope/v0.8.0', CTX), []);
+  assert.deepEqual(bashFindings('git push origin HEAD:refs/heads/scope/v0.8.0', detached), []);
+  assert.deepEqual(bashFindings('git push origin HEAD:refs/heads/scope/v0.8.0', { branch: 'HEAD' }), []);
+  assert.deepEqual(bashFindings('git -C /tmp/wt push origin HEAD:refs/heads/scope/v0.8.0', CTX), []);
+  assert.deepEqual(
+    bashFindings('git switch --detach origin/scope/v0.8.0 && git push origin HEAD:refs/heads/scope/v0.8.0', CTX),
+    []
+  );
+  assert.deepEqual(rules(bashFindings('git push origin +HEAD:refs/heads/scope/v0.8.0', CTX)), ['force-push']);
+  assert.deepEqual(rules(bashFindings('git push -f origin HEAD:refs/heads/scope/v0.8.0', small)), ['force-push']);
+  assert.deepEqual(rules(bashFindings('git push --force-with-lease origin HEAD:refs/heads/scope/v0.8.0', detached)), [
+    'force-push',
+  ]);
+  assert.deepEqual(rules(bashFindings('git push origin :refs/heads/scope/v0.8.0', small)), ['delete-branch']);
+  assert.deepEqual(rules(bashFindings('git push origin --delete refs/heads/scope/v0.8.0', small)), ['delete-branch']);
+  assert.deepEqual(rules(bashFindings('git push origin HEAD:refs/heads/main', small)), ['push-main']);
+});
+
+test('git push: short heads/ destinations and @ count like refs/heads/ and HEAD', () => {
+  // git resolves a short destination against the remote's refs: heads/main is refs/heads/main.
+  const feat = { branch: 'feat/x', activeScope: 'scope/v0.14.0' };
+  assert.deepEqual(rules(bashFindings('git push origin HEAD:heads/main', feat)), ['push-main']);
+  assert.deepEqual(rules(bashFindings('git push origin @:heads/main', feat)), ['push-main']);
+  assert.deepEqual(rules(bashFindings('git push origin @', { branch: 'main' })), ['push-main']);
+  assert.deepEqual(rules(bashFindings('git push origin +HEAD:heads/scope/v0.14.0', feat)), ['force-push']);
+  assert.deepEqual(rules(bashFindings('git push origin +HEAD:heads/release/v0.14.0', feat)), ['force-push']);
+  assert.deepEqual(rules(bashFindings('git push origin :heads/scope/v0.14.0', feat)), ['delete-branch']);
+  assert.deepEqual(bashFindings('git push origin HEAD:heads/scope/v0.14.0', feat), []);
+  // false positive: a branch whose name only starts with "heads"
+  assert.deepEqual(bashFindings('git push origin HEAD:heads-up/x', feat), []);
+});
+
+test('git push: asks before pushing another branch onto release/* or onto an old scope', () => {
+  const feat = { branch: 'feat/x', activeScope: 'scope/v0.14.0' };
+  const decisions = (cmd, ctx) => bashFindings(cmd, ctx).map((f) => `${f.decision}:${f.rule}`);
+  assert.deepEqual(decisions('git push origin HEAD:refs/heads/release/v0.14.0', feat), ['ask:push-release']);
+  assert.deepEqual(decisions('git push origin HEAD:heads/release/v0.14.0', feat), ['ask:push-release']);
+  assert.deepEqual(decisions('git push origin scope/v0.14.0:release/v0.14.0', feat), ['ask:push-release']);
+  assert.deepEqual(decisions('git push origin HEAD:refs/heads/scope/v0.13.0', feat), ['ask:push-old-scope']);
+  assert.deepEqual(decisions('git push origin scope/v0.13.0', feat), ['ask:push-old-scope']);
+  // the normal flows stay quiet: cutting or updating release/* from its own checkout, the active
+  // scope, a scope cut (newer than the active one), any scope when the active one is unknown
+  const release = { branch: 'release/v0.14.0', activeScope: 'scope/v0.14.0' };
+  assert.deepEqual(bashFindings('git push -u origin HEAD', release), []);
+  assert.deepEqual(bashFindings('git push origin release/v0.14.0', release), []);
+  assert.deepEqual(bashFindings('git push origin HEAD:refs/heads/release/v0.14.0', release), []);
+  assert.deepEqual(bashFindings('git switch -c release/v0.14.0 origin/main && git push -u origin HEAD', feat), []);
+  // the cuts as run so far: main, the previous release or a commit onto the new release name
+  for (const cut of [
+    'git push origin origin/main:refs/heads/release/v0.14.0',
+    'git push -q origin origin/release/v0.11.0:refs/heads/release/v0.12.0',
+    'git push -q origin 41359cd:refs/heads/release/v0.8.0',
+    'git push origin main:release/v0.14.0',
+  ]) {
+    assert.deepEqual(bashFindings(cut, feat), [], cut);
+  }
+  assert.deepEqual(bashFindings('git push origin HEAD:refs/heads/release/v0.14.0', { branch: 'main' }), []);
+  assert.deepEqual(bashFindings('git push origin HEAD:refs/heads/scope/v0.14.0', feat), []);
+  assert.deepEqual(
+    bashFindings('git switch -c scope/v0.15.0 origin/release/v0.14.0 && git push -u origin HEAD', feat),
+    []
+  );
+  assert.deepEqual(bashFindings('git push origin scope/v0.13.0', { branch: 'feat/x' }), []);
+});
+
 test('a bare push after git switch/checkout in the same line targets the new branch', () => {
   const feat = { branch: 'feat/harness', activeScope: 'scope/v0.9.0' };
   for (const cmd of [

@@ -284,6 +284,21 @@ export function remindersFor(relPath) {
 
 const PROTECTED = /^(main|release\/v\d+\.\d+\.\d+|scope\/v\d+\.\d+\.\d+)$/;
 
+/** True when `branch` is a scope/vX.Y.Z older than `active` (a newer one is a scope cut). */
+function olderScope(branch, active) {
+  const v = (b) =>
+    b
+      .match(/^scope\/v(\d+)\.(\d+)\.(\d+)$/)
+      ?.slice(1)
+      .map(Number);
+  const [a, b] = [v(branch), v(active)];
+  if (!a || !b) {
+    return false;
+  }
+  const k = a.findIndex((x, i) => x !== b[i]);
+  return k >= 0 && a[k] < b[k];
+}
+
 /**
  * Split a shell line into simple commands, each a list of words with quotes removed. Understands
  * '…', "…", backslash escapes, $(…) with heredocs inside (a multi-line PR body stays one word),
@@ -1000,24 +1015,36 @@ export function bashFindings(line, ctx = {}) {
         hasFlag(flags, '--force', 'f') ||
         hasFlag(flags, '--force-with-lease') ||
         refspecs.some((r) => r.startsWith('+'));
-      const toBranch = (r) => {
-        const name = r === 'HEAD' && here ? here : r.replace(/^refs\/heads\//, '');
-        return name;
-      };
+      // git resolves a short destination against the remote's refs, so `heads/main` is
+      // `refs/heads/main`; `@` is HEAD.
+      const toBranch = (r) => ((r === 'HEAD' || r === '@') && here ? here : r.replace(/^(refs\/)?heads\//, ''));
       const deleted = [];
       const targets = [];
+      // `src:release/…` from a feature or scope branch (or a detached HEAD): release only moves
+      // through PRs (rule 7). Cutting it stays quiet: the cut pushes main, the previous release or
+      // a commit onto the new name (`origin/main:refs/heads/release/vX.Y.Z`).
+      const intoRelease = [];
+      const cutSource = (src, dst) => {
+        const b = toBranch(src)
+          .replace(/^(refs\/)?remotes\//, '')
+          .replace(/^origin\//, '');
+        return b === dst || b === 'main' || /^release\//.test(b) || /^[0-9a-f]{7,40}$/.test(b);
+      };
       for (const r of refspecs.map((x) => x.replace(/^\+/, ''))) {
         const dst = toBranch(r.includes(':') ? r.split(':').pop() : r);
         if (deleting || r.startsWith(':')) {
           deleted.push(dst);
         } else {
           targets.push(dst);
+          if (r.includes(':') && /^release\//.test(dst) && !cutSource(r.split(':')[0], dst)) {
+            intoRelease.push(dst);
+          }
         }
       }
       if (!refspecs.length && here && !deleting) {
         targets.push(here);
       }
-      const unknownHead = here === null && (!refspecs.length || refspecs.some((r) => /^\+?HEAD$/.test(r)));
+      const unknownHead = here === null && (!refspecs.length || refspecs.some((r) => /^\+?(HEAD|@)$/.test(r)));
       if (unknownHead && !deleting) {
         deny(
           'push-main',
@@ -1027,7 +1054,7 @@ export function bashFindings(line, ctx = {}) {
       if (hasFlag(flags, '--no-verify')) {
         deny(
           'no-verify',
-          'git push --no-verify skips the pre-push gate (types, dependency rules, unit tests). Run it, or ask the user to push docs-only changes themselves.'
+          'git push --no-verify skips the pre-push gate (types, dependency rules, unit tests). Run it and fix what fails.'
         );
       }
       if (deleted.some((t) => PROTECTED.test(t))) {
@@ -1058,6 +1085,20 @@ export function bashFindings(line, ctx = {}) {
           'force-push',
           `Force-push to ${targets.join(', ')} rewrites a shared integration branch. Only feature branches may be force-pushed.`
         );
+      } else {
+        if (intoRelease.length) {
+          ask(
+            'push-release',
+            `This pushes another branch straight onto ${intoRelease.join(', ')}. release/* moves only through PRs (fix/<slug> after promotion, docs/process/release-manager.md rule 7); confirm this is intended.`
+          );
+        }
+        const stale = ctx.activeScope ? targets.filter((t) => olderScope(t, ctx.activeScope)) : [];
+        if (stale.length) {
+          ask(
+            'push-old-scope',
+            `${stale.join(', ')} is not the active integration branch (${ctx.activeScope}). Small changes go straight to the active scope only; confirm the version.`
+          );
+        }
       }
     }
 

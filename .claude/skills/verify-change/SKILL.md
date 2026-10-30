@@ -76,12 +76,18 @@ Across workspaces at once: `pnpm exec turbo run typecheck arch test:unit --affec
 ## 3. The full gate
 
 Before pushing: `pnpm run ci:quality` (Prettier, ESLint, tsc, dependency rules, Jest, tool tests,
-log audit, e2e audit) — the same job CI runs. For scope → release: `pnpm run test:e2e` too.
+log audit, e2e audit) — the same job CI runs. A small change pushed straight to scope gets CI only
+after it has landed, so it needs `pnpm run check:secret-files -- --tracked` and
+`TURBO_FORCE=true pnpm run ci:quality` (no cached results) to pass first, plus the checks of section
+2 for the area it touches (for example the web-motion visual check, `brand:snapshot` for a token):
+`ship-branch` skill, step 1a. For scope → release: `pnpm run test:e2e` too.
 
 ## 4. Review
 
 Run the `mobile-reviewer` agent on the diff, for app and website changes alike (it has a website
-section for `web-engineer` work). Fix **blocking** findings and re-run the affected checks.
+section for `web-engineer` work). A small change going straight to scope gets it on the staged diff
+before the push, unless it is only copy, messages or docs. Fix **blocking** findings and re-run the
+affected checks.
 
 ## 5. Report
 

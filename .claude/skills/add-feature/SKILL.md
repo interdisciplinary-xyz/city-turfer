@@ -81,4 +81,5 @@ Run the `mobile-reviewer` agent on the diff. Fix the blocking findings and re-ru
 
 Tick the item in `NOTEBOOK.md`. Report what was verified (tests, simulator, device) and what wasn't.
 When the user wants it shipped, follow the `ship-branch` skill (commit, push, PR into the active
-scope).
+scope; a small change by the policy in `docs/process/release-manager.md` may go straight to scope,
+in doubt a PR).
