@@ -84,7 +84,11 @@ right _before_ it is written:
    (`gh pr list --base <branch> --state all`). Note which PRs are merged, open or draft. A
    first-parent commit on scope that is not a merge is a **direct commit** (small changes may go
    straight to scope, `docs/process/release-manager.md`): it has no PR number, so list it by short
-   SHA.
+   SHA. The scope cut's `chore(release): pin version …` commit is not one (it is rule 6, name it as
+   the cut). A first-parent merge whose subject is not `Merge pull request #…` (a release merged
+   back down, a `git pull` without `--rebase`) has no PR either: list it by SHA and say what it
+   brought in. A direct commit that is not only copy, messages or docs and has no `Reviewed-by:`
+   line in its body was not reviewed before the push: flag it.
 2. **Branch.** You run in your own worktree (`isolation: worktree`), which Claude Code cuts from the
    default branch, not from the session's branch. For each target branch you change docs on, cut a
    branch named docs/update-vX.Y.Z from it (`git switch -c` with that name and
@@ -121,7 +125,8 @@ right _before_ it is written:
    structure: Summary, What ships (every PR, merged or open, and every direct commit by SHA), Test
    plan (only what ran, with the head it ran on), Runtime fingerprint, Out of scope / candidates,
    Risk & rollback, founder steps, Open decisions, the delivery checklist, Quality gate, the
-   attribution line. Name your docs PR in "What ships" as open.
+   attribution line. Each unreviewed direct commit (step 1) is a **blocking** item in the scope →
+   release body until someone reviews it by SHA. Name your docs PR in "What ships" as open.
 
 ## Non-negotiables
 

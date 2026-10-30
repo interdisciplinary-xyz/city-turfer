@@ -29,29 +29,27 @@ git branch -r --list 'origin/scope/*' --sort=-v:refname | head -1
 
 ## 1a. Small change: commit straight to the active scope
 
-Policy: "Small changes straight to scope" in `docs/process/release-manager.md`. Small means **all**
-of:
-
-- one logical change in a handful of files, reviewable from the commit diff alone (a copy tweak, a
-  colour or token value, a CSS spacing fix, a doc correction, a one-function bug fix);
-- no native or runtime-fingerprint change (`apps/mobile/app.json`, `apps/mobile/plugins/`,
-  `apps/mobile/modules/`, native or `packages/ui` dependencies), no SQLite or Postgres migration, no
-  new dependency or lockfile change, no API contract or `apps/api/openapi.json` change, no auth,
-  privacy or security-sensitive code, no hook, guard or permission change;
-- the founder asked for it, or it is clearly trivial. **In doubt, use a branch and a PR.**
+What counts as small, with the **denylist of paths**, is defined once: "Small changes straight to
+scope" in `docs/process/release-manager.md`. Read it there before taking this path; a change that
+touches a denylisted path takes a branch and a PR. **In doubt, use a branch and a PR.**
 
 ```bash
 git fetch origin
 git switch scope/vX.Y.Z && git pull --ff-only       # or: git switch --detach origin/scope/vX.Y.Z
-TURBO_FORCE=true pnpm run ci:quality                # the full gate: no CI runs on a direct push
+pnpm run check:secret-files -- --tracked            # the full gate = these two (CI's quality job,
+TURBO_FORCE=true pnpm run ci:quality                #   less the admin's Postgres tests)
 git add <explicit paths> && git diff --staged --stat
-git commit -m "fix(web): …" -m "Co-Authored-By: …"  # Conventional Commit, as in step 2
-git push origin HEAD:refs/heads/scope/vX.Y.Z        # fast-forward only, never --force
+# not copy/messages or docs? run the mobile-reviewer agent on `git diff --staged` first
+git commit -m "fix(web): …" -m "Reviewed-by: mobile-reviewer" -m "Co-Authored-By: …"
+git push origin HEAD:refs/heads/scope/vX.Y.Z        # never --force (fast-forward only)
+gh run list --branch scope/vX.Y.Z --limit 1         # CI runs after the push lands
 ```
 
-Rejected push: `git pull --rebase origin scope/vX.Y.Z`, rerun the gate, push again. Report the short
-SHA (there is no PR); `docs-engineer` lists direct commits by SHA in the session log and the scope →
-release PR body. Never directly on `release/*` or `main`.
+Also run the `verify-change` checks for the touched area. Rejected push:
+`git pull --rebase origin scope/vX.Y.Z`, rerun the gate, push again. Report the short SHA (there is
+no PR); `docs-engineer` lists direct commits by SHA in the session log and the scope → release PR
+body. Never directly on `release/*` or `main` (the guard asks before a push onto `release/*` or an
+old scope).
 
 ## 1. Cut a branch (from the active scope, never from main)
 
@@ -79,8 +77,7 @@ git commit -m "feat(territory): show turf overlay on the record screen" -m "Why,
 End the message with the attribution line from the system reminder when one is given.
 
 If a hook fails, fix the cause. Never `--no-verify` a commit (it skips the secret-file guard) or a
-push (it skips the pre-push gate); `.husky/pre-push` allows that for docs-only pushes by a person,
-not by Claude.
+push (it skips the pre-push gate).
 
 ## 3. Push and open the PR (every branch gets one)
 
