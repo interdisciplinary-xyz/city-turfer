@@ -143,8 +143,15 @@ export function interiorPoint(polygon: DistrictPolygon): LonLat | null {
 /** Grid buckets per side of a DistrictIndex: about 100–200 m at city scale. */
 const INDEX_SIDE = 256;
 
-/** A ring's edges by grid row: [x1, y1, x2, y2, ...] of every edge whose latitude span meets the row. */
-type RowEdges = Float64Array[];
+/**
+ * A ring's edges sorted by grid row, flat: `xy` holds [x1, y1, x2, y2] per edge, and the edges of
+ * row `y0 + r` are `xy[4 * off[r] .. 4 * off[r + 1])`. Only the rows the ring spans are stored.
+ */
+interface RowEdges {
+  y0: number;
+  off: Int32Array;
+  xy: Float64Array;
+}
 
 /**
  * Finds the district holding a point with little work, with the same answer as testing every
@@ -153,11 +160,14 @@ type RowEdges = Float64Array[];
  *   its points (worked out once, on first use);
  * - in a bucket a border crosses, only districts whose box reaches it are tested, and the ray cast
  *   reads only the edges in the point's grid row (an edge outside the row can't cross the ray).
+ * Everything sits in a few typed arrays (offset tables, not arrays of arrays): about 1 MB a city.
  */
 export class DistrictIndex {
   private readonly boxes: BoundingBox[];
   private readonly bounds: BoundingBox;
-  private readonly candidates: number[][];
+  /** Districts whose box reaches bucket b: `candidates[candidateOff[b] .. candidateOff[b + 1])`. */
+  private readonly candidateOff: Int32Array;
+  private readonly candidates: Int32Array;
   private readonly crossed: Uint8Array;
   /** -2: not worked out yet. */
   private readonly answer: Int32Array;
@@ -166,22 +176,33 @@ export class DistrictIndex {
   private readonly dx: number;
   private readonly dy: number;
 
-  constructor(private readonly districts: readonly District[]) {
+  constructor(districts: readonly District[]) {
     this.boxes = districts.map(districtBounds);
     this.bounds = boundsOf(districts.flatMap((d) => d.polygons.map((p) => p[0])));
     const [w, s, e, n] = this.bounds;
     this.dx = (e - w) / INDEX_SIDE || 1;
     this.dy = (n - s) / INDEX_SIDE || 1;
     const size = INDEX_SIDE * INDEX_SIDE;
-    this.candidates = Array.from({ length: size }, () => []);
     this.crossed = new Uint8Array(size);
     this.answer = new Int32Array(size).fill(-2);
-    this.boxes.forEach(([bw, bs, be, bn], i) => {
-      const [x0, y0] = this.bucket(bw, bs);
-      const [x1, y1] = this.bucket(be, bn);
-      for (let x = x0; x <= x1; x++) {
-        for (let y = y0; y <= y1; y++) {
-          this.candidates[y * INDEX_SIDE + x].push(i);
+    const spans = this.boxes.map(([bw, bs, be, bn]) => [...this.bucket(bw, bs), ...this.bucket(be, bn)]);
+    this.candidateOff = new Int32Array(size + 1);
+    for (const [x0, y0, x1, y1] of spans) {
+      for (let y = y0; y <= y1; y++) {
+        for (let x = x0; x <= x1; x++) {
+          this.candidateOff[y * INDEX_SIDE + x + 1]++;
+        }
+      }
+    }
+    for (let b = 0; b < size; b++) {
+      this.candidateOff[b + 1] += this.candidateOff[b];
+    }
+    this.candidates = new Int32Array(this.candidateOff[size]);
+    const fill = this.candidateOff.slice(0, size);
+    spans.forEach(([x0, y0, x1, y1], i) => {
+      for (let y = y0; y <= y1; y++) {
+        for (let x = x0; x <= x1; x++) {
+          this.candidates[fill[y * INDEX_SIDE + x]++] = i;
         }
       }
     });
@@ -195,30 +216,62 @@ export class DistrictIndex {
 
   /** Sorts a ring's edges into rows, and marks every bucket an edge's box touches as crossed. */
   private rowEdges(ring: Ring): RowEdges {
-    const rows: number[][] = Array.from({ length: INDEX_SIDE }, () => []);
+    const edges: number[] = [];
+    let y0 = INDEX_SIDE;
+    let y1 = -1;
     for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-      const [xi, yi] = ring[i];
-      const [xj, yj] = ring[j];
-      const [ax, ay] = this.bucket(xi, yi);
-      const [bx, by] = this.bucket(xj, yj);
-      for (let y = Math.min(ay, by); y <= Math.max(ay, by); y++) {
-        rows[y].push(xi, yi, xj, yj);
+      const [ax, ay] = this.bucket(ring[i][0], ring[i][1]);
+      const [bx, by] = this.bucket(ring[j][0], ring[j][1]);
+      const lo = Math.min(ay, by);
+      const hi = Math.max(ay, by);
+      y0 = Math.min(y0, lo);
+      y1 = Math.max(y1, hi);
+      edges.push(i, j, lo, hi);
+      for (let y = lo; y <= hi; y++) {
         for (let x = Math.min(ax, bx); x <= Math.max(ax, bx); x++) {
           this.crossed[y * INDEX_SIDE + x] = 1;
         }
       }
     }
-    return rows.map((r) => Float64Array.from(r));
+    const rows = Math.max(0, y1 - y0 + 1);
+    const off = new Int32Array(rows + 1);
+    for (let k = 0; k < edges.length; k += 4) {
+      for (let y = edges[k + 2]; y <= edges[k + 3]; y++) {
+        off[y - y0 + 1]++;
+      }
+    }
+    for (let r = 0; r < rows; r++) {
+      off[r + 1] += off[r];
+    }
+    const xy = new Float64Array(4 * off[rows]);
+    const at = off.slice(0, rows);
+    for (let k = 0; k < edges.length; k += 4) {
+      const [xi, yi] = ring[edges[k]];
+      const [xj, yj] = ring[edges[k + 1]];
+      for (let y = edges[k + 2]; y <= edges[k + 3]; y++) {
+        const o = 4 * at[y - y0]++;
+        xy[o] = xi;
+        xy[o + 1] = yi;
+        xy[o + 2] = xj;
+        xy[o + 3] = yj;
+      }
+    }
+    return { y0, off, xy };
   }
 
   /** Ray casting over one row's edges: the same test as `inRing`, edge for edge. */
-  private static inRow(lon: number, lat: number, edges: Float64Array): boolean {
+  private static inRow(lon: number, lat: number, ring: RowEdges, row: number): boolean {
+    const r = row - ring.y0;
+    if (r < 0 || r >= ring.off.length - 1) {
+      return false;
+    }
+    const { xy } = ring;
     let inside = false;
-    for (let k = 0; k < edges.length; k += 4) {
-      const xi = edges[k];
-      const yi = edges[k + 1];
-      const xj = edges[k + 2];
-      const yj = edges[k + 3];
+    for (let k = 4 * ring.off[r], end = 4 * ring.off[r + 1]; k < end; k += 4) {
+      const xi = xy[k];
+      const yi = xy[k + 1];
+      const xj = xy[k + 2];
+      const yj = xy[k + 3];
       if (yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) {
         inside = !inside;
       }
@@ -229,13 +282,14 @@ export class DistrictIndex {
   private contains(i: number, lon: number, lat: number, row: number): boolean {
     return this.rings[i].some(
       ([outer, ...holes]) =>
-        DistrictIndex.inRow(lon, lat, outer[row]) && !holes.some((h) => DistrictIndex.inRow(lon, lat, h[row]))
+        DistrictIndex.inRow(lon, lat, outer, row) && !holes.some((h) => DistrictIndex.inRow(lon, lat, h, row))
     );
   }
 
   private scan(b: number, lon: number, lat: number): number {
     const row = this.bucket(lon, lat)[1];
-    for (const i of this.candidates[b]) {
+    for (let k = this.candidateOff[b], end = this.candidateOff[b + 1]; k < end; k++) {
+      const i = this.candidates[k];
       const [w, s, e, n] = this.boxes[i];
       if (lon >= w && lon <= e && lat >= s && lat <= n && this.contains(i, lon, lat, row)) {
         return i;

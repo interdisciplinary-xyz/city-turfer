@@ -28,31 +28,60 @@ interface Prepared {
   bounds: [number, number, number, number];
   areaKm2: number[];
 }
-const prepared = new WeakMap<readonly District[], Prepared>();
+/** Only the last city's: a change of Home City lets the old index go. */
+let last: { districts: readonly District[]; prepared: Prepared } | null = null;
 
 function prepare(districts: readonly District[]): Prepared {
-  let p = prepared.get(districts);
-  if (!p) {
-    p = {
-      index: new DistrictIndex(districts),
-      bounds: [...boundsOf(districts.flatMap((x) => x.polygons.map((q) => q[0])))] as [number, number, number, number],
-      areaKm2: districts.map((x) => districtAreaM2(x) / 1e6),
+  if (last?.districts !== districts) {
+    last = {
+      districts,
+      prepared: {
+        index: new DistrictIndex(districts),
+        bounds: [...boundsOf(districts.flatMap((x) => x.polygons.map((q) => q[0])))] as [
+          number,
+          number,
+          number,
+          number,
+        ],
+        areaKm2: districts.map((x) => districtAreaM2(x) / 1e6),
+      },
     };
-    prepared.set(districts, p);
   }
-  return p;
+  return last.prepared;
+}
+
+/** Tells a read it is no longer wanted (an AbortSignal fits). */
+export interface ReadSignal {
+  readonly aborted: boolean;
+}
+
+/** Thrown by a read whose signal was aborted: a newer read replaced it. */
+export class DistrictsReadSuperseded extends Error {
+  constructor() {
+    super('Districts read superseded');
+    this.name = 'DistrictsReadSuperseded';
+  }
+}
+
+function stopIfAborted(signal: ReadSignal | undefined): void {
+  if (signal?.aborted) {
+    throw new DistrictsReadSuperseded();
+  }
 }
 
 /**
  * The Home City split into districts, with the turf held in each: the area of the Turfer's cells
  * whose centre lies in the district. Each cell counts in one district at most. The districts' index
  * and areas are built once per city; the cells are handled in chunks of DISTRICT_CHUNK with a yield
- * between them, so a history of tens of thousands of cells never blocks the UI in one go.
+ * between them, so a history of tens of thousands of cells never blocks the UI in one go. A read
+ * whose `signal` is aborted stops at the next step (after the cell query, at each yield) and throws
+ * DistrictsReadSuperseded, so a burst of saves never leaves several full scans running.
  */
 export class GetDistrictCoverage {
   constructor(private readonly d: DistrictsDeps) {}
-  async execute(): Promise<DistrictsView> {
+  async execute(signal?: ReadSignal): Promise<DistrictsView> {
     const id = await this.d.homeCities.homeCityId();
+    stopIfAborted(signal);
     const city = id ? cityById(id) : null;
     if (!city) {
       return { status: 'no-city' };
@@ -64,12 +93,14 @@ export class GetDistrictCoverage {
     }
     const { index, bounds: all, areaKm2 } = prepare(districts);
     const cells = await this.d.repo.cellsIn(all, ACTIVITY_TYPES);
+    stopIfAborted(signal);
     const covered = new Array<number>(districts.length).fill(0);
     const counts = new Array<number>(districts.length).fill(0);
     const pause = this.d.yieldToUi ?? nextTick;
     for (let k = 0; k < cells.length; k++) {
       if (k > 0 && k % DISTRICT_CHUNK === 0) {
         await pause();
+        stopIfAborted(signal);
       }
       const i = index.locate(cells[k].lon, cells[k].lat);
       if (i >= 0) {

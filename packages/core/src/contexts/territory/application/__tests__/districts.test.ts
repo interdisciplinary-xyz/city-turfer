@@ -4,7 +4,7 @@ import type { District, Ring } from '../../domain/district';
 import type { DistrictCatalog } from '../../domain/district-catalog';
 import type { HomeCityRepository } from '../../domain/home-city-repository';
 import type { CellRow, TerritoryRepository } from '../../domain/territory-repository';
-import { DISTRICT_CHUNK, GetDistrictCoverage } from '../districts';
+import { DISTRICT_CHUNK, DistrictsReadSuperseded, GetDistrictCoverage, type ReadSignal } from '../districts';
 
 const square = (lon: number, lat: number, size: number): Ring => [
   [lon, lat],
@@ -34,7 +34,8 @@ function coverage(
   homeCityId: string | null,
   rows: CellRow[],
   catalog: Record<string, District[]> = { 'pl-gdansk': DISTRICTS },
-  yieldToUi?: () => Promise<void>
+  yieldToUi?: () => Promise<void>,
+  signal?: ReadSignal
 ) {
   const asked: unknown[] = [];
   const repo = {
@@ -46,7 +47,7 @@ function coverage(
   const homeCities = { homeCityId: async () => homeCityId } as unknown as HomeCityRepository;
   const districts: DistrictCatalog = { districtsOf: (id) => catalog[id] ?? [] };
   const grid = { areaM2: () => CELL_M2 } as unknown as CellGrid;
-  return { result: new GetDistrictCoverage({ repo, grid, homeCities, districts, yieldToUi }).execute(), asked };
+  return { result: new GetDistrictCoverage({ repo, grid, homeCities, districts, yieldToUi }).execute(signal), asked };
 }
 
 describe('GetDistrictCoverage', () => {
@@ -131,5 +132,51 @@ describe('GetDistrictCoverage', () => {
       districts: failing,
     });
     await expect(uc.execute()).rejects.toThrow('bundle missing');
+  });
+
+  it('a read aborted before the cell query stops there and rejects as superseded', async () => {
+    const signal = { aborted: true };
+    const c = coverage('pl-gdansk', [row('a', 18.61, 54.31)], undefined, undefined, signal);
+    await expect(c.result).rejects.toBeInstanceOf(DistrictsReadSuperseded);
+    expect(c.asked).toEqual([]);
+  });
+
+  it('a read aborted while it works through the cells stops at the next yield', async () => {
+    const rows = Array.from({ length: DISTRICT_CHUNK * 3 }, (_, k) => row(`c${k}`, 18.61, 54.31));
+    const signal = { aborted: false };
+    let yields = 0;
+    const c = coverage(
+      'pl-gdansk',
+      rows,
+      undefined,
+      async () => {
+        yields++;
+        signal.aborted = true;
+      },
+      signal
+    );
+    await expect(c.result).rejects.toBeInstanceOf(DistrictsReadSuperseded);
+    expect(yields).toBe(1);
+  });
+
+  it('a read that is not aborted answers as before', async () => {
+    const r = await coverage('pl-gdansk', [row('a', 18.61, 54.31)], undefined, undefined, { aborted: false }).result;
+    expect(r.status === 'ready' && r.districts[0].cellCount).toBe(1);
+  });
+
+  it('keeps only the current city prepared: switching back and forth gives the same answers', async () => {
+    const other: District[] = DISTRICTS.map((d) => ({ ...d, cityId: 'pl-gdynia', id: `${d.id}-g` }));
+    const catalog = { 'pl-gdansk': DISTRICTS, 'pl-gdynia': other };
+    const rows = [row('a', 18.61, 54.31), row('b', 18.66, 54.31), row('c', 18.67, 54.32)];
+    const counts = async (id: string) => {
+      const r = await coverage(id, rows, catalog).result;
+      return r.status === 'ready' ? r.districts.map((d) => [d.id, d.cellCount]) : r.status;
+    };
+    const first = await counts('pl-gdansk');
+    expect(await counts('pl-gdynia')).toEqual([
+      ['d-east-g', 2],
+      ['d-west-g', 1],
+    ]);
+    expect(await counts('pl-gdansk')).toEqual(first);
   });
 });
