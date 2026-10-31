@@ -3,7 +3,8 @@ name: brand-system
 description: >-
   Use for "is this on-brand?", user-facing copy, a colour or font, restyling a screen, app icon,
   splash, store listing, screenshots or social image. CityTurfer name, voice, colour tokens (turf
-  ramp), typefaces (Big Shoulders Display, Barlow), logo, WCAG contrast, render-assets.mjs.
+  ramp), typefaces (Big Shoulders Display, Barlow; Anton wordmark), logo, WCAG contrast,
+  render-assets.mjs.
 ---
 
 # CityTurfer brand system
@@ -12,8 +13,9 @@ description: >-
 cover; the turf glows brighter the more often you come back, and it's yours for good.
 
 Why the brand is shaped this way (positioning, personality, typeface choice, contrast fixes):
-`docs/decisions/brand-foundations-2026-10-20.md`; the dark website, like the app:
-`docs/decisions/brand-dark-site-2026-10-25.md`.
+`docs/decisions/brand-foundations-2026-10-20.md`; the light website with dark app screens:
+`docs/decisions/brand-light-website-2026-10-29.md` (Swagger, Storybook and the app stay dark:
+`docs/decisions/brand-dark-site-2026-10-25.md`).
 
 ## Positioning
 
@@ -68,7 +70,7 @@ names what the website uses.
 | `faint`        | `TIER_COLOR.faint`                    | `--faint`                  | `#7B2FF7`                     | Turf tier 1, gradient start                          |
 | `glow`         | `TIER_COLOR.glowing`, `ACCENT`        | `--glow`, `--accent`       | `#F72FA8`                     | Tier 2; accent fill: buttons, selection              |
 | `strong`       | `TIER_COLOR.strong`                   | `--strong`                 | `#FFB02E`                     | Turf tier 3, highlights                              |
-| `blazing`      | `TIER_COLOR.blazing`                  | `--blazing`                | `#FFF3C4`                     | Turf tier 4, the end of the Ramp in "TURFER"         |
+| `blazing`      | `TIER_COLOR.blazing`                  | `--blazing`                | `#FFF3C4`                     | Turf tier 4, the end of the Ramp                     |
 | Ramp           | `RAMP`                                | `--ramp-stops`             | the four tiers                | Gradient, in tier order                              |
 | walk/run/ride  | `TYPE_COLOR.walk` / `.run` / `.cycle` | `--walk`/`--run`/`--ride`  | `#2BD48B`/`#FF8A3D`/`#3DB8FF` | Activity type fills only                             |
 | on-accent      | `ON_ACCENT` (app), `WEB_ON_ACCENT`    | `--on-accent`, `--on-glow` | white (app) / `#0B0D12` (web) | Label on `glow` fills                                |
@@ -87,7 +89,7 @@ brand fill where `LIGHT` needs its own AA variant:
 | `bg`                                          | `--bg`                                                | `#F6F7FB`                         | `#0B0D12` | Page background                     |
 | `card`                                        | `--card`                                              | `#FFFFFF`                         | `#151924` | Cards, panels                       |
 | `text`                                        | `--text`                                              | `#0E1116`                         | `#EEF1F7` | Body text                           |
-| `muted`                                       | `--muted`                                             | `#5A6375`                         | `#9AA3B5` | Secondary text                      |
+| `muted`                                       | `--muted`                                             | `#5A6375`                         | `#D6DAE3` | Secondary text                      |
 | `border`                                      | `--border`                                            | `#E3E6EE`                         | `#242A38` | Hairlines and dividers              |
 | `danger`                                      | `--danger`                                            | `#C92A33`                         | `#FF6369` | Errors                              |
 | `accentText`                                  | `--accent-text`                                       | `#C2127F`                         | `#F72FA8` | Pink as text and links              |
@@ -97,17 +99,29 @@ brand fill where `LIGHT` needs its own AA variant:
 | `walkText` / `runText` / `cycleText`          | `--walk-text` / `--run-text` / `--ride-text`          | `#0F7A4F` / `#B84E0A` / `#0B6FA8` | the fills | Activity colours as text            |
 | `walkGraphic` / `runGraphic` / `cycleGraphic` | `--walk-graphic` / `--run-graphic` / `--ride-graphic` | `#169E63` / `#E0661A` / `#1C8FD6` | the fills | Activity lines, icons, dots         |
 
-**The app is the source of truth, one scheme everywhere, no theme switch.** The app is dark
+**The app is the source of truth for its own screens; the website is light.** The app is dark
 (`userInterfaceStyle: "dark"` in `apps/mobile/app.json`, so `usePalette()` returns `DARK`), and so
-is every map. The website, portal, Swagger and Storybook are **dark too**, in the app's palette:
-`SITE_SCHEME` (`packages/brand/src/tokens.ts`, `'dark'`) is the one place that says so, and they
-call `cssVariables(SITE_SCHEME)`; never name a scheme there. Pink fills on the web carry a night
-label (`WEB_ON_ACCENT`, 5.5:1) where the app still draws white (3.5:1). (Swagger: the dev page does;
-the API's own `/swagger` is still stock, see the `brand-surfaces` skill for every surface and its
+is every map. The website and portal are **light** so the app's dark screens stand out
+(`docs/decisions/brand-light-website-2026-10-29.md`). No theme switch: each surface names its scheme
+through one of four constants in `packages/brand/src/tokens.ts` (never `'light'` / `'dark'` by
+name):
+
+| Constant        | Value   | Who uses it                                                                                     |
+| --------------- | ------- | ----------------------------------------------------------------------------------------------- |
+| `WEB_SCHEME`    | `light` | The website and portal (`cssVariables(WEB_SCHEME)`, `themeColor` = its `card`), website stories |
+| `HEADER_SCHEME` | `light` | The sticky header: a white bar scoped on the `<header>`, also on the dark dev pages             |
+| `APP_SCHEME`    | `dark`  | Anything that looks like the app on the website: hero phones, turf pieces (night panels)        |
+| `SITE_SCHEME`   | `dark`  | Swagger, Storybook's UI and app stories, `/branding` (the name predates `WEB_SCHEME`)           |
+
+Every piece on the light page that draws turf tiers (TurfLegend, gain and dashboard cards, the
+Record disc, the hero phones) is a **night panel**: it sets `cssVariables(APP_SCHEME)` inline,
+because strong is 1.8:1 and blazing 1.1:1 on white. Pink fills on the web carry a night label
+(`WEB_ON_ACCENT`, 5.5:1) where the app still draws white (3.5:1). (Swagger: the dev page does; the
+API's own `/swagger` is still stock, see the `brand-surfaces` skill for every surface and its
 state.) Draw text through the `-text` variants and lines through the `-graphic` variants (on dark
-they equal the brand colours; on a light surface they are the AA variants). Why:
-`docs/decisions/brand-dark-site-2026-10-25.md`, which replaces the light site of
-`docs/decisions/brand-light-theme-2026-10-22.md`.
+they equal the brand colours; on a light surface they are the AA variants). The dark website of
+`docs/decisions/brand-dark-site-2026-10-25.md` (which replaced the light site of
+`docs/decisions/brand-light-theme-2026-10-22.md`) holds for Swagger, Storybook and the app only.
 
 Gradient **Ramp** = `faint → glow → strong → blazing`, always running from bottom-left to top-right
 (movement "up" into white-hot). Never use the ramp for errors; errors use `danger`. Tokens live in
@@ -119,7 +133,7 @@ hard-code hex in components or native config written from TS (e.g. the Android t
 notification's `notificationColor` takes `ACCENT`). Spacing (`SPACE`), radii (`RADIUS`), type
 (`FONT_SIZE`, `FONT_WEIGHT`, `LABEL_TRACKING`) and the tier order (`TIER_ORDER`) live in
 `packages/brand/src/tokens.ts`; tier names users see (`TIER_LABEL`: Faint, Glowing, Strong, Blazing)
-in `copy.ts`. The website gets every token as a CSS variable from `cssVariables(SITE_SCHEME)`
+in `copy.ts`. The website gets every token as a CSS variable from `cssVariables(WEB_SCHEME)`
 (`--bg`, `--card`, `--accent-text`, `--walk-graphic`, `--space-lg`, `--radius-panel`, `--font-hero`,
 `--font-weight-black`, `--label-tracking`…). Components and Storybook: the `design-system` skill.
 
@@ -143,6 +157,8 @@ by `packages/brand/scripts/make-fonts.py`), names in `FONT_FAMILY` and `BODY_FON
   `--font-family-tagline`), sentence case, for "Surf your city. Own your streets." in the hero, on
   /branding and in the social image. Its slant sets it apart from the upright capitals of the
   wordmark and headings.
+- Wordmark: Anton (OFL, `packages/brand/fonts/Anton-Regular.ttf`), only as outlines in the logo SVGs
+  (Logo, below). Never set text in Anton, never bundle it in the app or load it on the web.
 - The weight is part of each font: never add `fontWeight` (Android falls back to the system font)
   and on the web use `font-weight: normal` + `font-synthesis: none`.
 - Labels: 12–13 pt system font, weight 600–700, uppercase, letter-spacing `LABEL_TRACKING` (0.8).
@@ -154,14 +170,16 @@ by `packages/brand/scripts/make-fonts.py`), names in `FONT_FAMILY` and `BODY_FON
 - **Mark** (`packages/brand/svg/mark.svg`): a claimed turf cell (hexagon, `glow` outline) with a
   street riding through it like a wave, coloured with the Ramp and ending in a white-hot "you are
   here" point at the crest. Faint city grid inside the cell.
-- **Wordmark**: outlined Big Shoulders Display in capitals, "CITY" + "TURFER", both Black (the
-  colour change keeps the two words apart; in running text the name is still spelled CityTurfer).
-  Its proportions are 894 × 192 (about 4.7 : 1). `packages/brand/svg/wordmark.svg` on night
-  surfaces: the app, splash, maps, the website, portal, Swagger and Storybook ("CITY" white,
-  "TURFER" in the Ramp); `packages/brand/svg/wordmark-light.svg` only on light surfaces (the admin's
-  light mode, print: "CITY" `night`, "TURFER" faint → glow, the part of the Ramp that holds on
-  white). Both are generated by `packages/brand/scripts/outline-wordmark.py`: never edit them by
-  hand.
+- **Wordmark**: outlined Anton in capitals (the wordmark's own face, founder decision 2026-10-27;
+  headlines stay Big Shoulders Display), CITYTURFER in **one solid colour**, tracking 0.03 em (no
+  Ramp on "TURFER" since the founder decision of 2026-10-27: the colour lives in the mark; in
+  running text the name is still spelled CityTurfer). Its proportions are 815 × 182 (about 4.49 : 1;
+  `wordmark.png` 898 × 200), so a 20 px high wordmark is 90 px wide.
+  `packages/brand/svg/wordmark.svg` on night surfaces: the app, splash, maps, Swagger and Storybook
+  (white, 19.4 : 1 on `night`); `packages/brand/svg/wordmark-light.svg` on light surfaces: the
+  website, portal and their header (`night`, about 18 : 1 on white), the admin's light mode, print.
+  Never fill the wordmark with the Ramp or a tier colour. Both are generated by
+  `packages/brand/scripts/outline-wordmark.py`: never edit them by hand.
 - Clear space ≥ ½ hexagon side around the mark. Don't recolour the hexagon, rotate the mark, put it
   on busy photos, or add drop shadows.
 - Android themed icon: `packages/brand/svg/mark-monochrome.svg` (single colour, no glow). Adaptive
@@ -185,9 +203,11 @@ WCAG 2.2 AA: 4.5:1 body text, 3:1 large text (≥ 24 px or ≥ 18.5 px bold), ic
 Check a pair with `contrastRatio(fg, bg)` from `@cityturfer/brand`
 (`packages/brand/src/contrast.ts`). `packages/brand/src/__tests__/contrast.test.ts` covers every
 pairing the apps draw: each light `-text` / `-graphic` variant on `LIGHT.bg` and `LIGHT.card`, and
-the site's own pairs read from `cssVariables(SITE_SCHEME)` (night label on glow 5.49, the primary
-button hover `color-mix(in srgb, var(--glow) 86%, var(--text))` 6.06, accent text and the glow disc
-on card 4.95, glow on border 4.05, the faint legend step on bg 3.32). Its `KNOWN_FAILURES` are what
+the website's own pairs read from `cssVariables(WEB_SCHEME)` (night label on glow 5.49, accent text
+on card 5.7), the night panels' from `cssVariables(APP_SCHEME)` (the glow disc on card 4.95, glow on
+border 4.05, the faint legend step on bg 3.32), and Swagger's and Storybook's from `SITE_SCHEME`.
+The primary button hover is `color-mix(in srgb, var(--glow) 86%, var(--blazing))` (about 6.1 in
+every scheme; mixing toward `--text` fell to 4.29 on the light one). Its `KNOWN_FAILURES` are what
 remains:
 
 - **Live in the app (dark):** white on glow (`ON_ACCENT`, 3.5:1) and the same pair on the glow tier
@@ -215,8 +235,8 @@ node apps/mobile/tools/brand/render-assets.mjs store og     # only outputs whose
   `packages/brand/templates/og-image.html`.
 - Store screenshots, App Store 6.9" (1290×2796) and Play (1080×2340) →
   `apps/mobile/assets/brand/out/store/`, from `packages/brand/templates/store-screenshot.html`. They
-  frame the screens in `apps/web/public/screens/`; recapture those from a current build at full
-  resolution before submitting.
+  frame the screens in `apps/mobile/tools/brand/screens/` (the site's hero codes its screens since
+  v0.14.0); recapture those from a current build at full resolution before submitting.
 - Templates and SVGs can't import tokens; `packages/brand/src/__tests__/asset-colors.test.ts` fails
   on any hex that isn't a token or a listed art-only shade. Fast loop after a token, SVG or template
   edit: `pnpm --filter @cityturfer/brand test:unit` (asset colours, contrast, tokens).
@@ -244,8 +264,9 @@ reinstall, then publish OTA updates for the new runtime.
 1. Name spelled CityTurfer; internal terms not leaking into copy.
 2. Colours from tokens; accent = `glow`; Ramp direction correct.
 3. Numbers tabular and concrete; no guilt or casino language.
-4. Right scheme for the surface: the website, portal, Swagger and Storybook follow `SITE_SCHEME`
-   (dark, `cssVariables(SITE_SCHEME)`, never a named scheme); the app and every map are dark (`DARK`
+4. Right scheme for the surface: the website and portal follow `WEB_SCHEME` (light), the header
+   `HEADER_SCHEME`, app-like pieces and phones `APP_SCHEME`, Swagger and Storybook `SITE_SCHEME`
+   (always `cssVariables(<constant>)`, never a named scheme); the app and every map are dark (`DARK`
    via `usePalette()`). Text goes through `accentText`, `strongText`, `<type>Text`; on a light
    surface the Ramp, `blazing` and the raw fills are never text.
 5. Type: brand faces only through `FONT_FAMILY` / the `--font-family-*` variables, never with

@@ -41,9 +41,10 @@ logo) stay in the `brand-system` skill; this skill is about the code that carrie
 5. **The app imports through `@/ui-kit/components` and `@/ui-kit/theme`** (re-exports), so screens
    don't change when a component moves. Domain, shared kernel and application layers may not import
    `@cityturfer/ui` (dependency-cruiser).
-6. **Website CSS uses variables** from `cssVariables(SITE_SCHEME)` (`--bg`, `--card`,
+6. **Website CSS uses variables** from `cssVariables(WEB_SCHEME)` (`--bg`, `--card`,
    `--accent-text`, `--walk-graphic`, `--space-lg`, `--radius-panel`, `--font-hero`…). The site is
-   dark like the app: `SITE_SCHEME` is the only place the site's scheme is named. Add a token in
+   light: the scheme constants (`WEB_SCHEME`, `HEADER_SCHEME`, `APP_SCHEME` for night panels,
+   `SITE_SCHEME` for Swagger and Storybook) are the only places a scheme is named. Add a token in
    `tokens.ts` and it appears on the site and in Storybook; never hand-copy values into
    `globals.css`.
 7. Repo lint rules apply: props types and SCREAMING constants in `<name>.constants.ts`, one import
@@ -56,8 +57,8 @@ logo) stay in the `brand-system` skill; this skill is about the code that carrie
 2. Test it in `packages/ui/src/__tests__/` (react-test-renderer; find native views by `testID` with
    the `host()` helper, presses with `pressable()`).
 3. A story in `apps/storybook/src/stories/app/<name>.stories.tsx`: default and each state. Stories
-   render in `SITE_SCHEME` (dark, like the app); the app itself is still checked on a device or
-   simulator (`mobile-testing` skill), not through Storybook.
+   render in `SITE_SCHEME` (dark, like the app; website stories in `WEB_SCHEME`); the app itself is
+   still checked on a device or simulator (`mobile-testing` skill), not through Storybook.
 4. If the app should use it: re-export from `apps/mobile/src/ui-kit/components.tsx`, switch the
    screen, and prove "no visible change" (same sizes, colours, text, testIDs, accessibility labels).
 5. Check the fingerprint (below).
@@ -73,9 +74,10 @@ pnpm --filter @cityturfer/storybook build    # apps/storybook/storybook-static (
 # branch to the hostname; `npx portless alias cityturfer <port>` maps the plain name.
 ```
 
-- Every story renders with `SITE_SCHEME` (dark), like the website and the app; there is no theme
-  toolbar. Toolbar: **Language** (en/pl; website copy from `apps/web/messages`). A map inside a
-  story sits on night, the same ground as the rest of the site.
+- App stories render with `SITE_SCHEME` (dark, like the app), `Website/` stories with `WEB_SCHEME`
+  (light, like the site); the Frame sets the variables and `color-scheme` per scheme. There is no
+  theme toolbar. Toolbar: **Language** (en/pl; website copy from `apps/web/messages`). A map or turf
+  piece inside a website story sits on a night panel (`APP_SCHEME`).
 - Website components come from `apps/web/src` through the `@/` alias. `next/image` and next-intl's
   `Link` are shimmed (`apps/storybook/src/shims/`); async server components can't render, so keep
   website pieces synchronous (`useTranslations`, not `await getTranslations`).

@@ -1,0 +1,164 @@
+/* One street, four visits: the turf Ramp from the brand (same variables as the legend). The player
+   sets data-step 0–3 (the street at each tier) or 4 (the whole city); the server renders 4. */
+
+.turf-demo-figure {
+  display: grid;
+  gap: var(--space-md);
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.turf-demo-panel {
+  /* The night panel: the dark app scheme (inline variables) holds the map and its controls; the
+     caption below stays on the light page with the page's own variables. */
+  padding: var(--space-md);
+  border-radius: var(--radius-card);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.turf-demo-player {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.turf-demo-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--bg);
+}
+
+.td-street,
+.td-city {
+  transition: opacity 700ms ease-out;
+}
+
+.turf-demo-player:not([data-step='4']) .td-city,
+.turf-demo-player[data-step='4'] .td-street {
+  opacity: 0;
+}
+
+.td-line {
+  fill: none;
+  stroke: var(--border-control);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.td-context {
+  fill: var(--card);
+  stroke: var(--border);
+  stroke-width: 1.5;
+}
+
+.td-cell {
+  stroke: var(--bg);
+  stroke-width: 3;
+  fill: var(--faint);
+  transition: fill 700ms ease-out;
+}
+
+.turf-demo-player[data-step='1'] .td-cell {
+  fill: var(--glow);
+}
+.turf-demo-player[data-step='2'] .td-cell {
+  fill: var(--strong);
+}
+.turf-demo-player[data-step='3'] .td-cell,
+.turf-demo-player[data-step='4'] .td-cell {
+  fill: var(--blazing);
+}
+
+.td-city path {
+  fill: none;
+  stroke-linecap: round;
+}
+.td-city-faint {
+  stroke: var(--faint);
+}
+.td-city-glowing {
+  stroke: var(--glow);
+}
+.td-city-strong {
+  stroke: var(--strong);
+}
+.td-city-blazing {
+  stroke: var(--blazing);
+}
+
+/* Step buttons: chips with the tier's colour as a swatch; the city step has none. */
+.turf-demo-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.turf-demo-step,
+.turf-demo-replay {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-full);
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+}
+
+.turf-demo-step[data-tier]::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--swatch, transparent);
+}
+.turf-demo-step[data-tier='0'] {
+  --swatch: var(--faint);
+}
+.turf-demo-step[data-tier='1'] {
+  --swatch: var(--glow);
+}
+.turf-demo-step[data-tier='2'] {
+  --swatch: var(--strong);
+}
+.turf-demo-step[data-tier='3'] {
+  --swatch: var(--blazing);
+}
+.turf-demo-step[data-tier='4']::before {
+  display: none;
+}
+
+.turf-demo-step[aria-pressed='true'] {
+  border-color: var(--text);
+  background: color-mix(in srgb, var(--text) 12%, var(--card));
+}
+
+.turf-demo-replay {
+  background: transparent;
+  color: var(--accent-text);
+}
+
+.turf-demo-step:focus-visible,
+.turf-demo-replay:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .td-street,
+  .td-city,
+  .td-cell {
+    transition: none;
+  }
+}

@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-23
+verified: 2026-10-31
 owner: founder
 scope: [apps/mobile/e2e, apps/mobile/tools/e2e]
 summary: Maestro critical paths, flow inventory, known gaps and how to add a flow
@@ -59,7 +59,8 @@ none; the audit enforces this. Gaps are listed honestly in section 3.
 | `15-account-settings`     | account               | Live API: rename, change email, set/breached/use/remove account password                          |
 | `16-language`             | me                    | Language setting: Polish on Info/Dashboard/Stats/Record, restart keeps it, System returns English |
 | `17-local-profile-backup` | account               | Live API: admin@ links its backup with an e-mailed code, password sign-in leaves no credentials   |
-| `08-sign-out`             | auth                  | Sign out returns to sign-in. Runs last because it ends the session                                |
+| `18-districts`            | turf                  | Warsaw districts with demo turf (seeds it if none): summary, covered row, row and map selection   |
+| `08-sign-out`             | auth                  | Sign out returns to sign-in (signs in to admin first if needed). Runs last: it ends the session   |
 
 Allowed tags are fixed in `apps/mobile/tools/e2e/audit.mjs`
 (`auth recording background history turf me dashboard health account`). Subflows in
@@ -101,8 +102,12 @@ step-up code and spends about 2 minutes asleep on purpose.
   `apps/mobile/src/__tests__/apple-health.test.ts` and was verified once on the Simulator (the
   `hs_links` export row, and the next import skipping our own workout). Apple Watch workouts can
   only be tested on a device.
-- **CP-12 fails on iOS 26.1.** `15-account-settings` stops at `hideKeyboard` on the numeric keypad
-  of the iOS 26.1 simulator (seen in #158, unrelated to language). Not fixed yet.
+- **CP-12 fails on iOS 26.1, later than before.** The number-pad code fields no longer use
+  `hideKeyboard` (which failed on the iOS 26.1 simulator, #158): the flows submit them with
+  `pressKey: Enter`, and code sign-in and the e-mail change now pass (2026-10-31). The flow then
+  stops at the new account password: only the first character of `password1234` reaches the field
+  (`textContentType='newPassword'`; likely iOS's Strong Password autofill). Not fixed yet.
+  `08-sign-out` no longer depends on it: signed out, it signs in to admin first.
 - Android has no Maestro run today.
 
 ## 4. Adding a flow

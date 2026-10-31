@@ -22,7 +22,7 @@ glows brighter each time you come back.
 **Not for:** competing for territory with other people, training plans or heart-rate analysis.
 CityTurfer is single-player and local-first: the phone is the source of truth.
 
-> [!NOTE] Status: **v0.12.0 released** (proof of concept: iOS dev builds, Android APK), **v0.13.0 in
+> [!NOTE] Status: **v0.13.0 released** (proof of concept: iOS dev builds, Android APK), **v0.14.0 in
 > progress**. Local profiles `admin@cityturfer.com` / `admin1234` and `demo@cityturfer.com` /
 > `demo1234` (Gdańsk demo data); any other e-mail signs in with an e-mailed code against the API.
 > Data stays on the phone unless you turn on **Cloud backup** (opt-in, one way, signed-in account).
@@ -165,7 +165,8 @@ components and hooks.
 | Route                      | Screen                                                                                 |
 | -------------------------- | -------------------------------------------------------------------------------------- |
 | `(tabs)/index`             | Dashboard (start tab): greeting, onboarding checklist, this week, recent, achievements |
-| `(tabs)/turf`              | Turf Map: tracks, glowing turf, walk/run/ride filter, Home City chip                   |
+| `(tabs)/turf`              | Turf Map: tracks, glowing turf, walk/run/ride filter, Home City and Districts chips    |
+| `districts`                | Districts (modal from Turf): Home City districts on a map, km² of turf in each         |
 | `(tabs)/record`            | Record (raised centre tab): type picker, live map and stats, turf toggle, city chip    |
 | `(tabs)/stats`             | This week, 8-week chart, turf totals, all-time per type                                |
 | `(tabs)/me`                | Opens the Me drawer: Profile, Account, City, Info                                      |

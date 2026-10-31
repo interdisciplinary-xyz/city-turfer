@@ -4,10 +4,23 @@ import type { Locale } from '@/i18n/routing';
 
 import { WAITLIST } from '../waitlist-config';
 import { AppHeader } from './app-header';
+import { HeroCity, HeroCityLine } from './hero-city';
 import { HeroCopy } from './hero-copy';
 import { HeroMotion } from './hero-motion';
 import { HeroScreens } from './hero-screens';
-import { FinalCta, HowItWorks, LocalFirst, YourWeek } from './home-sections';
+import {
+  Audience,
+  Differs,
+  Faq,
+  FinalCta,
+  Highlights,
+  HowItWorks,
+  LocalFirst,
+  WhereItStands,
+  YourWeek,
+} from './home-sections';
+import { SiteFooter } from './site-footer';
+import { TurfDemo } from './turf-demo';
 import { WaitlistForm } from './waitlist-form';
 
 export default async function Home({ params }: { params: Promise<{ locale: Locale }> }) {
@@ -22,13 +35,15 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
       </a>
       <AppHeader locale={locale} waitlist={Boolean(WAITLIST)} />
       <main id='main'>
-        <div className='hero'>
-          <HeroMotion className='wrap hero-grid'>
+        <HeroMotion className='hero'>
+          <HeroCity />
+          <div className='wrap hero-grid'>
             <HeroCopy />
             <HeroScreens />
             {/* No download buttons for now: the waitlist comes first (StoreButtons stays for later). */}
-          </HeroMotion>
-        </div>
+          </div>
+          <HeroCityLine />
+        </HeroMotion>
         {WAITLIST ? (
           <section id='waitlist' className='waitlist-section' aria-label={t('waitlist.title')}>
             <div className='wrap'>
@@ -41,11 +56,18 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
             </div>
           </section>
         ) : null}
+        <TurfDemo />
         <HowItWorks />
+        <Audience />
+        <Highlights />
         <YourWeek />
+        <Differs />
         <LocalFirst />
+        <WhereItStands />
+        <Faq />
         {WAITLIST ? <FinalCta /> : null}
       </main>
+      <SiteFooter contactEmail={WAITLIST?.contactEmail} />
     </>
   );
 }

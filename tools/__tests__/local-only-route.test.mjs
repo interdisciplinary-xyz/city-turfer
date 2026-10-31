@@ -15,6 +15,8 @@ test('matches the dev pages and everything below them', () => {
     '/storybook/iframe.html',
     '/branding',
     '/api/v1/health',
+    '/admin',
+    '/admin/api/staff/me',
   ]) {
     assert.equal(isLocalOnlyPath(p, undefined, LOCALES), true, p);
   }
@@ -34,6 +36,7 @@ test('leaves the site alone', () => {
     '/pl',
     '/swaggerish',
     '/brandingx',
+    '/administrator',
     '/en/storybookish',
     '/xx/branding',
     '/_next/static/a.js',
@@ -79,7 +82,7 @@ test('this machine gets the dev pages', async () => {
 
 test('another device on the LAN gets 404 for them, but still sees the site', async () => {
   forwardedFor = '192.168.0.42';
-  for (const p of ['/swagger/', '/storybook/', '/branding', '/en/branding', '/api/v1/health']) {
+  for (const p of ['/swagger/', '/storybook/', '/branding', '/en/branding', '/api/v1/health', '/admin/login']) {
     assert.equal((await fetch(`${base}${p}`)).status, 404, p);
   }
   assert.equal((await fetch(`${base}/en`)).status, 200);

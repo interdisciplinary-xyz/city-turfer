@@ -1,6 +1,6 @@
 /* The signed-in portal (imported by the portal root's layout only, so the landing page never loads
    it). Colours, spacing, radii and type sizes are the brand CSS variables from
-   cssVariables(SITE_SCHEME) (--space-*, --radius-*, --font-*); no hex. Raw values left are strokes
+   cssVariables(WEB_SCHEME), light (--space-*, --radius-*, --font-*); no hex. Raw values left are strokes
    (1-4px), tap targets (36/44/48px), the logo's size and squircle, layout measures (rem) and the
    display sizes of titles and the code field, which have no token.
    No animation: the portal is a calm reading surface (no GSAP, nothing moves). */
@@ -15,7 +15,7 @@
 
 .portal-header {
   border-bottom: 1px solid var(--border);
-  background: var(--bg);
+  background: var(--card); /* white, like the landing header */
 }
 
 .portal-header-inner {
@@ -471,7 +471,7 @@
 
 /* ---------- Activity history ---------- */
 
-/* The brand's per-type colours: text on the dark site (labels) and graphics (route strokes, 3:1). */
+/* The brand's per-type colours: text on the light site (labels) and graphics (route strokes, 3:1). */
 .portal-type-walk {
   --type-text: var(--walk-text);
   --type-graphic: var(--walk-graphic);

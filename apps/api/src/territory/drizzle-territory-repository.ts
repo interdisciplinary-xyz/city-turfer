@@ -32,8 +32,13 @@ const rowsOf = <T>(result: unknown): T[] => (result as { rows: T[] }).rows;
  * with the earliest `(claimed_at, activity_id)`, ids in **JS string order** — `COLLATE "C"` is
  * load-bearing: Neon's default collation is linguistic, so without it the tie-break would differ
  * from the phone's.
+ *
+ * No `k.cells && only` pre-filter on the claims: `turf_claims.cells` has no GIN index, so the
+ * overlap test compares every element pair (7 claims × 7k cells released 7k: ~10 s vs ~40 ms on
+ * PGlite), and `c.cell IN (…)` already implies it, so the rows are the same (pinned in
+ * turf.test.ts).
  */
-const recomputedRows = (userId: string, only: string | null) => sql`
+export const recomputedRows = (userId: string, only: string | null) => sql`
   SELECT ${userId}::text AS user_id, c.cell,
     count(*) FILTER (WHERE k.type = 'walk')::int AS walk,
     count(*) FILTER (WHERE k.type = 'run')::int AS run,
@@ -42,7 +47,7 @@ const recomputedRows = (userId: string, only: string | null) => sql`
     (array_agg(k.activity_id ORDER BY k.claimed_at, k.activity_id COLLATE "C"))[1] AS first_activity_id
   FROM turf_claims k CROSS JOIN LATERAL unnest(k.cells) AS c(cell)
   WHERE k.user_id = ${userId}
-    ${only === null ? sql`` : sql`AND k.cells && ${only}::text[] AND c.cell IN (SELECT unnest(${only}::text[]))`}
+    ${only === null ? sql`` : sql`AND c.cell IN (SELECT unnest(${only}::text[]))`}
   GROUP BY c.cell`;
 
 const recomputed = (userId: string, only: string | null) => sql`

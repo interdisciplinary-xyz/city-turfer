@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-23
+verified: 2026-10-27
 owner: founder
 scope: [packages/brand, apps/mobile/tools/brand, apps/web/src/app, .claude/skills/brand-system]
 summary:
@@ -51,8 +51,9 @@ visibly), **Yours alone** (local-first, no tracking).
 ## Typography: Archivo
 
 > **Superseded (2026-10-22):** the brand type is now Big Shoulders Display + Barlow ("Street
-> Plate"), `docs/decisions/brand-typography-2026-10-22.md`. The wordmark is redrawn in Big Shoulders
-> Display too.
+> Plate"), `docs/decisions/brand-typography-2026-10-22.md`. The wordmark was redrawn in Big
+> Shoulders Display too, and since 2026-10-27 is outlined Anton (same decision record, third
+> amendment).
 
 Decision: **Archivo** (Omnibus-Type, SIL Open Font License) for display and numbers; system fonts
 (SF Pro, Roboto) for body text and labels.
@@ -80,10 +81,12 @@ loads them with `next/font/local` (self-hosted, display face preloaded). The wor
 
 - **Map is the hero.** Product imagery is the real Turf Map: dark basemap, turf glowing on it. The
   basemap stays desaturated so the turf is the only colour on screen. On the light website, maps and
-  map imagery still sit on night panels (`docs/decisions/brand-light-theme-2026-10-22.md`). Since
-  v0.12.0 the website is dark like the app, so maps sit on the page's own night
-  (`docs/decisions/brand-dark-site-2026-10-25.md`). Tier colours mean turf only; activity colours
-  mean tracks only.
+  map imagery still sit on night panels (`docs/decisions/brand-light-theme-2026-10-22.md`). From
+  v0.12.0 to v0.13.0 the website was dark like the app
+  (`docs/decisions/brand-dark-site-2026-10-25.md`); since v0.14.0 it is light again, so maps and
+  every piece that draws turf tiers sit on night panels
+  (`docs/decisions/brand-light-website-2026-10-29.md`). Tier colours mean turf only; activity
+  colours mean tracks only.
 - **Motif.** The hexagon cell and the street-wave from the mark are the building blocks for
   illustration, empty states and patterns. No mascot, no characters.
 - **Photography** (marketing only, optional): city streets at dusk or night, human scale, people
@@ -128,15 +131,20 @@ All rendered by `apps/mobile/tools/brand/render-assets.mjs` with headless Chrome
   night, "TURFER" in faint → glow, the part of the Ramp that holds on white; both redrawn in Big
   Shoulders Display, `docs/decisions/brand-typography-2026-10-22.md`). Since the light website,
   `wordmark-light.svg` is the site's wordmark and `wordmark.svg` is for night panels
-  (`docs/decisions/brand-light-theme-2026-10-22.md`). Since the dark website (v0.12.0) the site
-  draws `wordmark.svg` again, with a white "CITY", and `wordmark-light.svg` is for light surfaces
-  only, such as the admin's light mode and print (`docs/decisions/brand-dark-site-2026-10-25.md`).
+  (`docs/decisions/brand-light-theme-2026-10-22.md`). From the dark website (v0.12.0) the site drew
+  `wordmark.svg` again, with a white "CITY"; since the light website (v0.14.0) the site, portal and
+  header draw `wordmark-light.svg` once more, and `wordmark.svg` is for night surfaces (the app,
+  Swagger, Storybook, maps; `docs/decisions/brand-light-website-2026-10-29.md`). **Amended
+  2026-10-27 (founder decision):** the wordmark is outlined Anton in one solid colour, white in
+  `wordmark.svg` and night in `wordmark-light.svg`; "TURFER" no longer carries the Ramp, which stays
+  in the mark, icon and splash (`docs/decisions/brand-typography-2026-10-22.md`, fourth amendment).
 - `apps/web/public/og-image.png`: 1200×630 social image from
   `packages/brand/templates/og-image.html`.
 - `apps/mobile/assets/brand/out/store/`: App Store 6.9" (1290×2796) and Google Play (1080×2340)
-  screenshots from `packages/brand/templates/store-screenshot.html`. They frame the screenshots in
-  `apps/web/public/screens/`, which are 720 px wide and predate the brand fonts: recapture them at
-  full resolution from a build with the new fonts before submitting.
+  screenshots from `packages/brand/templates/store-screenshot.html`. They (and the social image)
+  frame the screenshots in `apps/mobile/tools/brand/screens/` (moved out of the website's public
+  folder when its hero switched to coded screens), which are 720 px wide and predate the brand
+  fonts: recapture them at full resolution from a build with the new fonts before submitting.
 
 `packages/brand/src/__tests__/asset-colors.test.ts` keeps the hex values in SVGs and templates in
 sync with the tokens.

@@ -1,13 +1,14 @@
 ---
 status: canonical
-verified: 2026-10-23
+verified: 2026-10-31
 owner: founder
 scope: [packages/brand/src, packages/brand/fonts, packages/brand/scripts]
 summary: >-
   Brand type changes from Archivo to the "Street Plate" pairing: Big Shoulders Display Black in
-  capitals for headings, Barlow Semi Condensed ExtraBold for numbers, Barlow for website body text;
-  the wordmark is redrawn in Big Shoulders Display Black (CITY and TURFER told apart by colour), and
-  the tagline is Barlow Semi Condensed Black Italic (web only)
+  capitals for headings, Barlow Semi Condensed ExtraBold for numbers, Barlow for website body text,
+  Barlow Semi Condensed Black Italic for the tagline (web only). The wordmark is outlined Anton in
+  one solid colour (white on night, night on light; since 2026-10-27, after a Big Shoulders Display
+  Black two-colour version); Anton is an outline source only, never bundled
 ---
 
 # Brand typography: Street Plate (v0.10.0)
@@ -45,6 +46,31 @@ image) is set in Barlow Semi Condensed Black Italic, sentence case (`TAGLINE_FON
 `--font-family-tagline`, web only): the slant reads as motion, and it no longer repeats the
 wordmark's condensed capitals right below it. Other headings stay Big Shoulders Display.
 
+**Third amendment (2026-10-27, founder decision):** the wordmark alone moves to **Anton** (Google
+Fonts, SIL OFL, one weight, 400). Headlines stay Big Shoulders Display Black and body text Barlow;
+the mark, app icon and splash are unchanged. Anton is a heavier, wider grotesque, so the name reads
+as a logo rather than as one more headline in the display face. The colours, both variants and the
+outlining are the same: "CITY" solid (white on night, `night` on light), "TURFER" in the Ramp, told
+apart by colour. Anton is set tight, so the script tracks it at 0.03 of the font size (between
+letters and between the two words). The proportions go from 801 × 172 (4.66 : 1) to 815 × 182
+(viewBox 815.2 × 181.5, about 4.49 : 1); every fixed logo size was redone (site header 90 × 20, hero
+320 × 71, portal header, /branding, the app's sign-in screen with `wordmark.png` at 898 × 200, the
+social image, now `og-image.png?v=3`). The hero lockup keeps its rule (wordmark height 0.66 of the
+tile; the glyphs fill 0.57 of it, as before). The font is only an outline source: it lives in
+`packages/brand/fonts/Anton-Regular.ttf` with `OFL-Anton.txt`, is never bundled in the app (not in
+the `expo-font` plugin) and is not loaded by the website. The sign-in PNG is a JS asset, so the app
+gets the new wordmark over the air; the runtime fingerprint does not change.
+
+**Fourth amendment (2026-10-27, founder decision):** the wordmark is **one solid colour**. "TURFER"
+loses the Ramp gradient: the whole word CITYTURFER is white (`#FFFFFF`, 19.4 : 1 on `night`) in
+`wordmark.svg` and `night` (`#0B0D12`, 18.2 : 1 on the light theme's background) in
+`wordmark-light.svg`, the same rule on both. The Ramp stays in the mark, app icon and splash, which
+are unchanged, so the logo lockup still glows while the name reads calm. Anton, tracking 0.03 and
+the 815 × 182 proportions are unchanged; with no colour change the two words read as one, which is
+how the name is written. `outline-wordmark.py` now writes a single path with one fill (no gradient
+defs). Re-rendered: `wordmark.png` (sign-in screen, over the air; fingerprint unchanged) and the
+social image (`og-image.png?v=4`).
+
 This supersedes "Typography: Archivo" in `docs/decisions/brand-foundations-2026-10-20.md`.
 
 ## Why
@@ -68,7 +94,9 @@ Bricolage Grotesque + DM Sans (quirky, likely to date).
   variable Big Shoulders Display at weight 900, static Barlow files), subset to Latin + Latin
   Extended-A, PostScript name = file name. App fonts get `.ttf` + `.woff2`; the Barlow body weights
   are `.woff2` only.
-- Licences: `packages/brand/fonts/OFL-BigShoulders.txt`, `OFL-Barlow.txt` (SIL OFL 1.1).
+- Licences: `packages/brand/fonts/OFL-BigShoulders.txt`, `OFL-Barlow.txt`, `OFL-Anton.txt` (SIL OFL
+  1.1). `Anton-Regular.ttf` is the unmodified Google Fonts file, used only by
+  `packages/brand/scripts/outline-wordmark.py`.
 - Tokens in `packages/brand/src/tokens.ts`: `FONT_FAMILY`, `DISPLAY_CASE`, `DISPLAY_TRACKING`,
   `BODY_FONT_FAMILY`, and the `--font-family-*`, `--display-case`, `--display-tracking` CSS
   variables. `packages/brand/src/__tests__/tokens.test.ts` checks every font file exists.

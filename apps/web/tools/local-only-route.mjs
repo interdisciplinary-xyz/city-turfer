@@ -5,8 +5,11 @@
 // "From this machine" comes from the dev toolbar's own check (`isLocalClient` in
 // @interdisciplinary/dev-toolbar/node), so the toolbar and these pages can never disagree.
 
-/** Path prefixes only this machine may open. `/api` is Swagger's "Try it out" proxy. */
-export const LOCAL_ONLY_PREFIXES = ['/swagger', '/storybook', '/branding', '/api'];
+/**
+ * Path prefixes only this machine may open. `/api` is Swagger's "Try it out" proxy, `/admin` the
+ * staff admin's proxy (admin-route.mjs).
+ */
+export const LOCAL_ONLY_PREFIXES = ['/swagger', '/storybook', '/branding', '/api', '/admin'];
 
 /**
  * Whether `urlPath` is one of `prefixes` or below it — also behind a locale segment

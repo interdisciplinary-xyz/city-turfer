@@ -1,5 +1,6 @@
 {
   "header": "# Changelog\n\nAll notable changes to this project will be documented in this file.\n",
+  "issuePrefixes": ["#(?=\\d+\\b)"],
   "packageFiles": [
     {
       "filename": "package.json",

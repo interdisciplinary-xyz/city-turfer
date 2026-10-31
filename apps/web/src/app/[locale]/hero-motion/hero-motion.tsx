@@ -7,14 +7,16 @@ import { useRef } from 'react';
 // Deep import on purpose: the folder's index also exports PageLoader, which would pull next/image
 // into this client component.
 import { PAGE_LOADED_CLASS, PAGE_LOADED_EVENT } from '../page-loader/page-loader.constants';
-import { EASE, type HeroMotionProps } from './hero-motion.constants';
+import { EASE, type HeroMotionProps, MAP_DRIFT_PX } from './hero-motion.constants';
 
 gsap.registerPlugin(useGSAP);
 
 /**
  * Entrance and ambient motion for the hero (`web-motion` skill):
  * - entrance: mark → wordmark → headline lines → lede → calls to action, phones rise alongside;
- * - on desktop with a mouse, the phones tilt a little towards the pointer.
+ * - the city map behind the hero fades in after the headline;
+ * - on desktop with a mouse, the phones tilt a little towards the pointer and the map drifts away
+ *   from it.
  * Only transform/opacity are animated (no layout shift). Reduced motion: everything is shown,
  * nothing moves. Elements opt in with `data-anim`.
  */
@@ -67,7 +69,9 @@ export function HeroMotion({ className, children }: HeroMotionProps) {
               { autoAlpha: 0, y: 70, rotate: (i: number) => (i ? 4 : -4) },
               { autoAlpha: 1, y: 0, rotate: 0, duration: 1.2, stagger: 0.15 },
               0.25
-            );
+            )
+            // The city's streets glow in behind everything, slowly, once the headline is up.
+            .fromTo('[data-anim="map"]', { autoAlpha: 0, scale: 1.04 }, { autoAlpha: 1, scale: 1, duration: 1.2 }, 0.6);
           html.classList.add('motion-ready');
 
           const stopWaiting = () => window.removeEventListener(PAGE_LOADED_EVENT, play);
@@ -81,15 +85,23 @@ export function HeroMotion({ className, children }: HeroMotionProps) {
           gsap.set(screens, { transformPerspective: 1200 });
           const toY = gsap.quickTo(screens, 'rotationY', { duration: 0.8, ease: 'power3.out' });
           const toX = gsap.quickTo(screens, 'rotationX', { duration: 0.8, ease: 'power3.out' });
+          // The map drifts a few pixels the other way, slower: depth behind the phones.
+          const map = root.current.querySelector<HTMLElement>('[data-anim="map"]');
+          const mapX = map ? gsap.quickTo(map, 'x', { duration: 1.6, ease: 'power3.out' }) : null;
+          const mapY = map ? gsap.quickTo(map, 'y', { duration: 1.6, ease: 'power3.out' }) : null;
           const onMove = contextSafe!((e: PointerEvent) => {
             const nx = e.clientX / window.innerWidth - 0.5;
             const ny = e.clientY / window.innerHeight - 0.5;
             toY(nx * 8);
             toX(-ny * 6);
+            mapX?.(-nx * MAP_DRIFT_PX);
+            mapY?.(-ny * MAP_DRIFT_PX);
           });
           const onLeave = contextSafe!(() => {
             toY(0);
             toX(0);
+            mapX?.(0);
+            mapY?.(0);
           });
           window.addEventListener('pointermove', onMove);
           document.addEventListener('pointerleave', onLeave);

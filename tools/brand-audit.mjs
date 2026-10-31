@@ -6,13 +6,14 @@
  *
  * Errors (exit 1):
  *   manifest      a surface names a file that does not exist, an owner agent that does not exist, or
- *                 a site surface with a theme file whose code (comments ignored) neither reads the
- *                 brand (SITE_SCHEME, cssVariables(), THEMES, a brand CSS variable) nor imports a
+ *                 a web, site or both surface with a theme file whose code (comments ignored) neither reads the
+ *                 brand (WEB_SCHEME, SITE_SCHEME, cssVariables(), THEMES, a brand CSS variable) nor imports a
  *                 theme file of the same surface
  *   brand-hex     a brand colour written as hex outside packages/brand (allowlist: ALLOWED_HEX)
  *   brand-rgb     a brand colour written as rgb()/rgba() channels outside packages/brand
  *   named-scheme  a scheme picked by name (cssVariables('light'), THEMES.dark…) outside packages/brand,
- *                 where SITE_SCHEME (site surfaces) or usePalette() (the app) must decide; in site
+ *                 where a scheme constant (WEB_SCHEME for the website and portal, HEADER_SCHEME, APP_SCHEME, SITE_SCHEME
+ *                 for Swagger and Storybook) or usePalette() (the app) must decide; in site
  *                 code also the DARK / LIGHT palettes imported directly (allowlist: NAMED_SCHEME_ALLOWED)
  *   font-face     an @font-face or font file reference that is not a brand family or not a file in
  *                 packages/brand/fonts
@@ -62,15 +63,15 @@ export const ALLOWED_HEX = {
 
 /**
  * Site files that may import the DARK / LIGHT palettes by name, with the reason. Everything else on
- * a site surface takes its palette through SITE_SCHEME.
+ * a site surface takes its palette through a scheme constant (WEB_SCHEME, HEADER_SCHEME, APP_SCHEME, SITE_SCHEME).
  */
 export const NAMED_SCHEME_ALLOWED = {
   'apps/web/src/app/branding/page.dev.tsx': 'the brand book shows both palettes and their contrast side by side',
   'apps/storybook/src/decorators/frame.tsx':
-    'NightPanel frames map pieces, and maps are always dark (never SITE_SCHEME)',
+    'NightPanel frames map pieces, and maps are always dark (never a site scheme)',
 };
 
-/** Site code, where the scheme is SITE_SCHEME's choice. The app (apps/mobile, packages/ui) is always dark. */
+/** Site code, where the scheme is a scheme constant's choice (WEB_SCHEME, HEADER_SCHEME, APP_SCHEME, SITE_SCHEME). The app (apps/mobile, packages/ui) is always dark. */
 const SITE_CODE = /^apps\/(web|storybook|api|admin)\//;
 
 /** User-facing copy: catalogues and the words other surfaces show. */
@@ -216,7 +217,7 @@ export function literalFindings(file, text, brand) {
       'named-scheme',
       'error',
       m.index,
-      `${m[0]}: pick the scheme through SITE_SCHEME (site surfaces) or usePalette() (the app)`
+      `${m[0]}: pick the scheme through WEB_SCHEME (website, portal), HEADER_SCHEME, APP_SCHEME, SITE_SCHEME (Swagger, Storybook) or usePalette() (the app)`
     );
   }
   if (SITE_CODE.test(file) && !NAMED_SCHEME_ALLOWED[file]) {
@@ -234,7 +235,7 @@ export function literalFindings(file, text, brand) {
           'named-scheme',
           'error',
           m.index,
-          `${name} imported from @cityturfer/brand: site code reads THEMES[SITE_SCHEME] or cssVariables(SITE_SCHEME)`
+          `${name} imported from @cityturfer/brand: site code reads THEMES[<scheme constant>] or cssVariables(<scheme constant>): WEB_SCHEME (website, portal), HEADER_SCHEME, APP_SCHEME, SITE_SCHEME (Swagger, Storybook)`
         );
       }
     }
@@ -332,17 +333,20 @@ function relativeImports(file, code) {
   return out;
 }
 
+/** Surface schemes: 'dark' (always), 'web' (WEB_SCHEME), 'site' (SITE_SCHEME), 'both' (the host switches). */
+const SCHEMES = ['dark', 'web', 'site', 'both'];
+
 /** What counts as drawing from the brand in a theme file's code. */
 function brandEvidence(brandVars) {
   const vars = [...brandVars].map((v) => v.replace(/^--/, '')).join('|') || 'bg|card|text';
   return new RegExp(
-    `\\bSITE_SCHEME\\b|\\bcssVariables\\s*\\(|\\bTHEMES\\b|['"]@cityturfer\\/brand['"]|var\\(--(${vars})\\s*[,)]`
+    `\\b(?:WEB|HEADER|APP|SITE)_SCHEME\\b|\\bcssVariables\\s*\\(|\\bTHEMES\\b|['"]@cityturfer\\/brand['"]|var\\(--(${vars})\\s*[,)]`
   );
 }
 
 /**
  * Manifest findings: missing files, unknown owners, and site surfaces with a theme file that does not
- * draw from the brand. Every listed theme file of a 'site' or 'both' surface must, in its code (not a
+ * draw from the brand. Every listed theme file of a 'web', 'site' or 'both' surface must, in its code (not a
  * comment), read the brand itself or import another theme file of the same surface.
  */
 export function manifestFindings(surfaces, { exists, agents, read, brandVars = new Set() }) {
@@ -355,8 +359,8 @@ export function manifestFindings(surfaces, { exists, agents, read, brandVars = n
       findings.push({ rule: 'manifest', level: 'error', file, message: `duplicate surface id ${s.id}` });
     }
     ids.add(s.id);
-    if (!['dark', 'site', 'both'].includes(s.scheme)) {
-      findings.push({ rule: 'manifest', level: 'error', file, message: `scheme ${s.scheme}: dark, site or both` });
+    if (!SCHEMES.includes(s.scheme)) {
+      findings.push({ rule: 'manifest', level: 'error', file, message: `scheme ${s.scheme}: ${SCHEMES.join(', ')}` });
     }
     if (!agents.has(s.owner)) {
       findings.push({
@@ -381,7 +385,7 @@ export function manifestFindings(surfaces, { exists, agents, read, brandVars = n
         findings.push({ rule: 'unthemed', level: 'warning', file, message: `${s.name} loads no brand fonts` });
       }
     }
-    if (s.scheme === 'site' || s.scheme === 'both') {
+    if (s.scheme !== 'dark') {
       const listed = new Set(s.theme);
       for (const p of s.theme.filter(exists)) {
         const code = stripComments(read(p));
@@ -390,7 +394,7 @@ export function manifestFindings(surfaces, { exists, agents, read, brandVars = n
             rule: 'manifest',
             level: 'error',
             file,
-            message: `theme file ${p} of ${s.id} draws nothing from the brand in its code (SITE_SCHEME, cssVariables(), THEMES, a brand variable, or another theme file of the surface); comments do not count`,
+            message: `theme file ${p} of ${s.id} draws nothing from the brand in its code (a scheme constant, cssVariables(), THEMES, a brand variable, or another theme file of the surface); comments do not count`,
           });
         }
       }

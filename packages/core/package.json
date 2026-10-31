@@ -1,6 +1,6 @@
 {
   "name": "@cityturfer/core",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "private": true,
   "type": "module",
   "description": "CityTurfer core: the shared kernel, core constants and the domain + application layers of Territory, Activity Log, Achievements and Identity, so the phone and the server run the same rules. Plain TS source, no React, Expo or native code; H3 only behind the separate @cityturfer/core/h3 entry.",
@@ -15,6 +15,7 @@
     "./identity": "./src/contexts/identity/index.ts",
     "./identity/ports": "./src/contexts/identity/ports.ts",
     "./h3": "./src/h3/index.ts",
+    "./districts": "./src/districts/index.ts",
     "./demo": "./src/demo/index.ts",
     "./package.json": "./package.json"
   },

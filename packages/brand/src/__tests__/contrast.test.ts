@@ -10,7 +10,7 @@ import {
   WEB_ON_ACCENT,
 } from '../colors';
 import { contrastRatio, MIN_CONTRAST } from '../contrast';
-import { cssVariables, SITE_SCHEME, TIER_ORDER } from '../tokens';
+import { APP_SCHEME, cssVariables, SITE_SCHEME, TIER_ORDER, WEB_SCHEME } from '../tokens';
 
 type Pair = { name: string; fg: string; bg: string; min: number };
 
@@ -22,8 +22,12 @@ const surfaces = [
 ] as const;
 const darkSurfaces = surfaces.filter(([name]) => name.startsWith('dark'));
 
-/** What the website, portal, Swagger and Storybook draw with: `cssVariables(SITE_SCHEME)` (dark). */
-const WEB = cssVariables(SITE_SCHEME);
+/** What the website and portal draw with: `cssVariables(WEB_SCHEME)` (light). */
+const WEB = cssVariables(WEB_SCHEME);
+/** What the turf pieces on the website (night panels, hero phones) draw with: `cssVariables(APP_SCHEME)`. */
+const APP = cssVariables(APP_SCHEME);
+/** What Swagger and Storybook draw with: `cssVariables(SITE_SCHEME)` (dark). */
+const SITE = cssVariables(SITE_SCHEME);
 
 /** CSS `color-mix(in srgb, a weight, b)`: a straight mix of the gamma-encoded channels, as #RRGGBB. */
 function mixSrgb(a: string, b: string, weight: number): string {
@@ -47,7 +51,7 @@ const PAIRS: Pair[] = [
       { name: `${scheme} danger on ${surface}`, fg: theme.danger, bg: theme[surface], min: MIN_CONTRAST.text },
     ]);
   }),
-  // Light-theme variants of the brand colours (the admin's light mode; the web is dark, SITE_SCHEME).
+  // Light-theme variants of the brand colours (the website and the admin's light mode).
   ...(['bg', 'card'] as const).flatMap((surface) => [
     { name: `light accent-text on ${surface}`, fg: LIGHT.accentText, bg: LIGHT[surface], min: MIN_CONTRAST.text },
     { name: `light strong-text on ${surface}`, fg: LIGHT.strongText, bg: LIGHT[surface], min: MIN_CONTRAST.text },
@@ -71,20 +75,44 @@ const PAIRS: Pair[] = [
   { name: 'light on-accent text on accent', fg: LIGHT.onAccent, bg: ACCENT, min: MIN_CONTRAST.text },
   { name: 'web on-accent text on accent', fg: WEB_ON_ACCENT, bg: ACCENT, min: MIN_CONTRAST.text },
   { name: 'web on-glow text on glowing', fg: WEB_ON_ACCENT, bg: TIER_COLOR.glowing, min: MIN_CONTRAST.text },
-  // The site's own pairs, read from the CSS variables it ships (dark, like the app).
+  // The website's own pairs, read from the CSS variables it ships (light, WEB_SCHEME).
   { name: 'web --on-accent on --accent', fg: WEB['--on-accent'], bg: WEB['--accent'], min: MIN_CONTRAST.text },
   { name: 'web --on-glow on --glow', fg: WEB['--on-glow'], bg: WEB['--glow'], min: MIN_CONTRAST.text },
-  { name: 'web --accent-text on --card', fg: WEB['--accent-text'], bg: WEB['--card'], min: MIN_CONTRAST.text }, // 4.95
-  { name: 'web glow disc on --card', fg: WEB['--glow'], bg: WEB['--card'], min: MIN_CONTRAST.ui }, // 4.95
-  { name: 'web faint legend step on --bg', fg: WEB['--faint'], bg: WEB['--bg'], min: MIN_CONTRAST.ui }, // 3.32
-  { name: 'web glow fill on --border', fg: WEB['--glow'], bg: WEB['--border'], min: MIN_CONTRAST.ui }, // 4.05
-  // Primary button hover: color-mix(in srgb, var(--glow) 86%, var(--text)) under the night label (≈ 6.06).
+  { name: 'web --accent-text on --card', fg: WEB['--accent-text'], bg: WEB['--card'], min: MIN_CONTRAST.text },
+  { name: 'web --accent-text on --bg', fg: WEB['--accent-text'], bg: WEB['--bg'], min: MIN_CONTRAST.text },
+  { name: 'web --muted on --bg', fg: WEB['--muted'], bg: WEB['--bg'], min: MIN_CONTRAST.text },
+  { name: 'web --text on --bg', fg: WEB['--text'], bg: WEB['--bg'], min: MIN_CONTRAST.text },
+  // Turf pieces on the website are night panels (APP_SCHEME), read from the variables they get.
+  { name: 'app glow disc on --card', fg: APP['--glow'], bg: APP['--card'], min: MIN_CONTRAST.ui }, // 4.95
+  { name: 'app faint legend step on --bg', fg: APP['--faint'], bg: APP['--bg'], min: MIN_CONTRAST.ui }, // 3.32
+  { name: 'app glow fill on --border', fg: APP['--glow'], bg: APP['--border'], min: MIN_CONTRAST.ui }, // 4.05
+  { name: 'app white record dot on glow', fg: APP['--text'], bg: APP['--glow'], min: MIN_CONTRAST.ui }, // 3.13
+  // The street demo's night panel: step pill edge and the Replay label sit on the panel's --bg.
   {
-    name: 'web --on-accent on the button hover mix',
-    fg: WEB['--on-accent'],
-    bg: mixSrgb(WEB['--glow'], WEB['--text'], 0.86),
-    min: MIN_CONTRAST.text,
+    name: 'app pill edge --border-control on --bg',
+    fg: APP['--border-control'],
+    bg: APP['--bg'],
+    min: MIN_CONTRAST.ui,
   },
+  { name: 'app focus outline --text on --bg', fg: APP['--text'], bg: APP['--bg'], min: MIN_CONTRAST.ui },
+  { name: 'app Replay --accent-text on --bg', fg: APP['--accent-text'], bg: APP['--bg'], min: MIN_CONTRAST.text },
+  // Swagger and Storybook (SITE_SCHEME, dark).
+  { name: 'site --on-accent on --accent', fg: SITE['--on-accent'], bg: SITE['--accent'], min: MIN_CONTRAST.text },
+  { name: 'site --accent-text on --card', fg: SITE['--accent-text'], bg: SITE['--card'], min: MIN_CONTRAST.text },
+  // Primary button hover: color-mix(in srgb, var(--glow) 86%, var(--blazing)) under the night label.
+  // Mixing toward --text would darken the pink on the light scheme (4.29); --blazing holds in both.
+  ...(
+    [
+      ['web', WEB],
+      ['app', APP],
+      ['site', SITE],
+    ] as const
+  ).map(([name, vars]) => ({
+    name: `${name} --on-accent on the button hover mix`,
+    fg: vars['--on-accent'],
+    bg: mixSrgb(vars['--glow'], vars['--blazing'], 0.86),
+    min: MIN_CONTRAST.text, // ≈ 6.1
+  })),
   // Destructive buttons (Hold to finish): the accent label on the theme's danger fill.
   ...(['light', 'dark'] as const).map((scheme) => ({
     name: `on-accent text on ${scheme} danger`,
@@ -159,11 +187,20 @@ describe('colour contrast (WCAG 2.2)', () => {
 
   it('pins the web pairs at their measured ratios', () => {
     const ratio = (fg: string, bg: string) => Math.round(contrastRatio(fg, bg) * 100) / 100;
-    expect(ratio(WEB['--accent-text'], WEB['--card'])).toBe(4.95);
-    expect(ratio(WEB['--glow'], WEB['--card'])).toBe(4.95);
-    expect(ratio(WEB['--faint'], WEB['--bg'])).toBe(3.32);
-    expect(ratio(WEB['--glow'], WEB['--border'])).toBe(4.05);
-    expect(ratio(WEB['--on-accent'], mixSrgb(WEB['--glow'], WEB['--text'], 0.86))).toBeCloseTo(6.06, 1);
+    const hover = (vars: Record<string, string>) =>
+      ratio(vars['--on-accent'], mixSrgb(vars['--glow'], vars['--blazing'], 0.86));
+    // The website (light) and its night panels (dark): the same hover mix holds in both, and in Swagger.
+    expect(hover(WEB)).toBeCloseTo(6.1, 1);
+    expect(hover(APP)).toBeCloseTo(6.1, 1);
+    expect(hover(SITE)).toBeCloseTo(6.1, 1);
+    // The old hover (toward --text) fell to 4.29:1 on the light scheme.
+    expect(ratio(WEB['--on-accent'], mixSrgb(WEB['--glow'], WEB['--text'], 0.86))).toBeLessThan(MIN_CONTRAST.text);
+    expect(ratio(WEB['--accent-text'], WEB['--card'])).toBe(5.7);
+    expect(ratio(APP['--accent-text'], APP['--card'])).toBe(4.95);
+    expect(ratio(APP['--glow'], APP['--card'])).toBe(4.95);
+    expect(ratio(APP['--faint'], APP['--bg'])).toBe(3.32);
+    expect(ratio(APP['--glow'], APP['--border'])).toBe(4.05);
+    expect(ratio(APP['--text'], APP['--glow'])).toBeCloseTo(3.13, 1);
   });
 
   it('rejects colours that are not #RRGGBB', () => {
