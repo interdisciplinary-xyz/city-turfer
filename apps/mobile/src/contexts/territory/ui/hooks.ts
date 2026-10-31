@@ -185,6 +185,9 @@ export function useDistricts(): DistrictsView | null | undefined {
       homeCityListeners.delete(l);
     };
   }, []);
-  useEffect(() => readDistricts(() => c.territory.districts.execute(), set), [c, dataVersion, chosen]);
+  useEffect(
+    () => readDistricts((isCurrent) => c.territory.districts.execute({ isCurrent }), set),
+    [c, dataVersion, chosen]
+  );
   return v;
 }
