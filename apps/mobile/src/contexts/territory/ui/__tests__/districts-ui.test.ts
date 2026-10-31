@@ -129,4 +129,16 @@ describe('readDistricts (useDistricts)', () => {
     await flush();
     expect(s.get()).toBeUndefined();
   });
+  it('the cancel aborts the signal the use case was given, so its scan stops early', async () => {
+    const s = state(undefined);
+    let given: { readonly aborted: boolean } | undefined;
+    const cancel = readDistricts((signal) => {
+      given = signal;
+      return Promise.resolve(ready);
+    }, s.set);
+    await flush();
+    expect(given?.aborted).toBe(false);
+    cancel();
+    expect(given?.aborted).toBe(true);
+  });
 });
