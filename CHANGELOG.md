@@ -2,6 +2,93 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.14.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.13.0...v0.14.0) (2026-10-31)
+
+
+### Features
+
+* **admin:** serve the staff admin under /admin ([a7d2e10](https://github.com/interdisciplinary-xyz/city-turfer/commit/a7d2e1029c26a52aeaf71804ec6a8402432a4fef))
+* **brand:** lighter secondary text on dark ([e25da7f](https://github.com/interdisciplinary-xyz/city-turfer/commit/e25da7f8ee380c1d9fd27723eeb28fe85ae9de2e))
+* **brand:** one solid colour for the wordmark ([b53f39c](https://github.com/interdisciplinary-xyz/city-turfer/commit/b53f39ced97c0fcf3055345c9e2a25f373f4857e))
+* **brand:** secondary text a step closer to white ([d58b641](https://github.com/interdisciplinary-xyz/city-turfer/commit/d58b641197da185434a3066d74baa9c0eaa327fd))
+* **brand:** secondary text closer to white ([2900ff8](https://github.com/interdisciplinary-xyz/city-turfer/commit/2900ff8cebe71a9ee5b5690767f342e862e5e445))
+* **brand:** set the wordmark in anton ([54350fa](https://github.com/interdisciplinary-xyz/city-turfer/commit/54350faa65708843954e5410563eee7e0608130e))
+* **territory:** districts modal with turf per district ([09ea8de](https://github.com/interdisciplinary-xyz/city-turfer/commit/09ea8de980424d26d823904ffcedd3d714026a2b))
+* **territory:** stop a district read whose caller has moved on ([556dccc](https://github.com/interdisciplinary-xyz/city-turfer/commit/556dcccefea8699c87e354d2071dca3e77eb4e5b))
+* **web:** drop sign in and create account from the site header ([a99a1de](https://github.com/interdisciplinary-xyz/city-turfer/commit/a99a1de6c42b307db57d7d1d8f3571af4a55f3d5))
+* **web:** hero phones show coded app screens on a 390x844 canvas ([f24e7aa](https://github.com/interdisciplinary-xyz/city-turfer/commit/f24e7aa7833e5a8c862ccee30a9b6f71741fbe7b))
+* **web:** homepage sections with a street-glow turf demo ([3749e7b](https://github.com/interdisciplinary-xyz/city-turfer/commit/3749e7b69ad0b80306bfb95a42b133544b0825ed))
+* **web:** light website so the app's dark screens stand out ([b6c9c91](https://github.com/interdisciplinary-xyz/city-turfer/commit/b6c9c91117acffe9ea96eb4228f7ff07e9411996))
+* **web:** street map of the visitor's city behind the hero ([fac286c](https://github.com/interdisciplinary-xyz/city-turfer/commit/fac286c3114c6623af032fac415c330fe2ee2bbe))
+
+
+### Bug Fixes
+
+* **admin:** address review of the /admin basePath and dev proxy ([7d7cab2](https://github.com/interdisciplinary-xyz/city-turfer/commit/7d7cab25881dd6f44c875e331826f75e55409f53))
+* **app:** cancel superseded district reads from the Districts screen ([fa0c9d0](https://github.com/interdisciplinary-xyz/city-turfer/commit/fa0c9d0a9892d6ca11c15bcd39ebfb0646542263))
+* **app:** no-turf copy in Polish in the brand voice ([558976a](https://github.com/interdisciplinary-xyz/city-turfer/commit/558976ab315e544cb7916c89ed58244133ecf431))
+* **brand:** contrast guard reads the light web scheme, pin the scheme constants ([2c32119](https://github.com/interdisciplinary-xyz/city-turfer/commit/2c32119ce2d37cd60368cef018bbae534ff8af2a))
+* **claude:** push guard reads heads/ and @, asks before release/* and old scopes ([8bd4b9b](https://github.com/interdisciplinary-xyz/city-turfer/commit/8bd4b9bde43e4a767512cf5cde880d212c8b79ed)), closes [#194](https://github.com/interdisciplinary-xyz/city-turfer/issues/194)
+* **territory:** complete district data with shared borders and fair areas ([1f43c55](https://github.com/interdisciplinary-xyz/city-turfer/commit/1f43c55366892129c09943cb3229d1e656ee5f9a))
+* **territory:** district index in typed arrays, superseded reads stop ([c0efe1c](https://github.com/interdisciplinary-xyz/city-turfer/commit/c0efe1c649d06e0c1ee2182961e5cc7004841f3e))
+* **territory:** districts screen review fixes ([c8d6778](https://github.com/interdisciplinary-xyz/city-turfer/commit/c8d67784b4343d0882873199685a50081969f4ac))
+* **territory:** polish no-turf hint says districts light up ([f21f7c5](https://github.com/interdisciplinary-xyz/city-turfer/commit/f21f7c5ea80128e4676a1418e2eee5983abae750))
+* **tooling:** app tests rerun when packages/core or brand change ([f77fa33](https://github.com/interdisciplinary-xyz/city-turfer/commit/f77fa336ffcb13dde4dd465d659e40289d1989a5))
+* **tooling:** only digits after a hash make an issue ref in the changelog ([6fc6fae](https://github.com/interdisciplinary-xyz/city-turfer/commit/6fc6faeb7bf94b8d4c089981339fdf4c32c2a37d))
+* **web:** address homepage review findings ([cc63698](https://github.com/interdisciplinary-xyz/city-turfer/commit/cc63698c99731799b9d9ccc6c52ebd7bd162f5d4))
+* **web:** copy fixes for the highlights, the Polish FAQ and audience lines; hero city cased by CSS ([28b7d74](https://github.com/interdisciplinary-xyz/city-turfer/commit/28b7d747b6154cc702b6fbc61aa6049484e8186d))
+* **web:** dependency rules keep @cityturfer/core/districts out of apps/web ([c57abcf](https://github.com/interdisciplinary-xyz/city-turfer/commit/c57abcf0a5faa94e7ce724481da0861b9dc1ed3a))
+* **web:** dev admin proxy forwards only payload-* cookies and no Authorization ([7447eb9](https://github.com/interdisciplinary-xyz/city-turfer/commit/7447eb9e0862a9e5c84693f2f431902574c51e3c))
+* **web:** drop the unused binding in the admin header filter ([2133453](https://github.com/interdisciplinary-xyz/city-turfer/commit/2133453b1a654a9d93b6ea73848fe560066f6c62))
+* **web:** hero logo and wordmark twice as big ([f1639fe](https://github.com/interdisciplinary-xyz/city-turfer/commit/f1639fe3dc8cb1d8a33039e493cd19582557c5d2))
+* **web:** hero map keeps core off the public page and text at AA ([ea05f24](https://github.com/interdisciplinary-xyz/city-turfer/commit/ea05f24ba074cea73a6420ba0a023cf5cfdca6a4))
+* **web:** keep at least 120px above the hero phones on desktop ([6cf19ba](https://github.com/interdisciplinary-xyz/city-turfer/commit/6cf19ba150fb50f6b58a3fcf316c7a6fb790b693))
+* **web:** night panels for turf pieces, white portal header, hover contrast, stale copy ([2a63e2d](https://github.com/interdisciplinary-xyz/city-turfer/commit/2a63e2d8a47bf4272c1b19e9af7699b0abe6da2f))
+* **web:** street demo is a night panel; caption and Replay stay on the light page ([9f83aab](https://github.com/interdisciplinary-xyz/city-turfer/commit/9f83aabdca0088f5d6de6823df454b07d652ec83))
+
+
+### Performance
+
+* **api:** drop the un-indexed overlap filter from the turf release ([5fb72a1](https://github.com/interdisciplinary-xyz/city-turfer/commit/5fb72a19ebb3d920972f0f48cf46a1e439ec4e65))
+* **core:** keep the district index in flat typed arrays, one city cached ([29df172](https://github.com/interdisciplinary-xyz/city-turfer/commit/29df1723c3e050343af91d55004c09d3395b8bf1))
+
+
+### Refactoring
+
+* **app:** move the Districts screen's selection into a tested reducer ([aa2971d](https://github.com/interdisciplinary-xyz/city-turfer/commit/aa2971d4f805975553a47843a07858766bdf1584))
+
+
+### Documentation
+
+* **claude:** allow small changes straight to the scope branch ([a390d05](https://github.com/interdisciplinary-xyz/city-turfer/commit/a390d05a6b8fc46cea088de1c1dd73881f5b98ae))
+* **claude:** one denylist for small changes, full gate and review before the push ([329bf3d](https://github.com/interdisciplinary-xyz/city-turfer/commit/329bf3d7980d66b92d373ab2333e20b1bec5eaf4))
+* **claude:** point the branch-policy line to the full gate and review ([5b4955d](https://github.com/interdisciplinary-xyz/city-turfer/commit/5b4955dced503d319be195b91e874e5acbc9a55f))
+* **claude:** skills describe Districts and the app-only districts entry ([c0dbf1b](https://github.com/interdisciplinary-xyz/city-turfer/commit/c0dbf1bfe6a3035593bd91dfddd0fbe768ef794a))
+* **claude:** website is light, four scheme constants in the rulebook ([70c390d](https://github.com/interdisciplinary-xyz/city-turfer/commit/70c390da12ed26150a1e7ae3d8946a70f2bc7ba1))
+* design-system and typography records match the current brand ([c9c925d](https://github.com/interdisciplinary-xyz/city-turfer/commit/c9c925d9169621dde86d9a3fa33cc2598547a1cd))
+* **docs:** update all docs for v0.14.0 after the release review fixes ([0b0b572](https://github.com/interdisciplinary-xyz/city-turfer/commit/0b0b572e5f9c3bf2311c680baabab88d4bbd84ac)), closes [#199](https://github.com/interdisciplinary-xyz/city-turfer/issues/199) [-#205](https://github.com/interdisciplinary-xyz/-/issues/205) [#200](https://github.com/interdisciplinary-xyz/city-turfer/issues/200)
+* light website decision lists what merging accepts, dark-site superseded in part ([e61ae5d](https://github.com/interdisciplinary-xyz/city-turfer/commit/e61ae5d0d564bc62d972c17e829facb3304ec72e))
+* **territory:** districts plan matches the fixed data ([7c661a6](https://github.com/interdisciplinary-xyz/city-turfer/commit/7c661a6f1727b45e23ed66875eb8e854a7ce1d68))
+* **territory:** districts plan, feature list and probe counts ([b929044](https://github.com/interdisciplinary-xyz/city-turfer/commit/b929044fb85059960458a37dde983d2edd17c579))
+* update all docs for v0.14.0 ([70deac1](https://github.com/interdisciplinary-xyz/city-turfer/commit/70deac1bda8f22919e7edf77d80ccd02de9b6ef8)), closes [#198](https://github.com/interdisciplinary-xyz/city-turfer/issues/198)
+* valid frontmatter for the light website decision, full admin-path path ([e2fb075](https://github.com/interdisciplinary-xyz/city-turfer/commit/e2fb075459a0bc9a075dc855b66d8ef3655ad7bc))
+* **web:** homepage sections plan and index ([8de2144](https://github.com/interdisciplinary-xyz/city-turfer/commit/8de2144ac76774eef5f7581f799cb67c2e0d3af7))
+
+
+### Tests
+
+* **api:** pin turf claim and release on the median of three runs ([491bd80](https://github.com/interdisciplinary-xyz/city-turfer/commit/491bd80379a625d35fbbee27e2f361cb6f36e4ce))
+* **e2e:** districts flow checks turf in Warsaw and the map tap ([a1457fb](https://github.com/interdisciplinary-xyz/city-turfer/commit/a1457fb9ec33543bbe4b4d305139425b52b63a9e))
+* **e2e:** flow 18 asserts districts that hold turf ([55e027d](https://github.com/interdisciplinary-xyz/city-turfer/commit/55e027d30fa27b657cc852c4a9b2856d0a232131))
+* **e2e:** submit number-pad codes with Enter, flow 08 signs in itself ([4e0fa5d](https://github.com/interdisciplinary-xyz/city-turfer/commit/4e0fa5d40c01a65fe3674adf4da4a898fc41d357))
+* **territory:** useDistricts re-reads on new turf and aborts stale reads ([2971e22](https://github.com/interdisciplinary-xyz/city-turfer/commit/2971e22010ce6aa1a42cf78c6b8377363c5d6c62))
+* **web:** hold the demo's final frame for 1.5 s, scan .screens with axe, drop networkidle on Back ([1e1536b](https://github.com/interdisciplinary-xyz/city-turfer/commit/1e1536b1ef82c027471778533da771534ce8c738))
+
+
+### CI/CD
+
+* run CI on pushes to scope/** ([c670c2b](https://github.com/interdisciplinary-xyz/city-turfer/commit/c670c2bbf3910cb96f3e109e592de51a55820b66))
+
 ## [0.13.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.12.0...v0.13.0) (2026-10-26)
 
 
