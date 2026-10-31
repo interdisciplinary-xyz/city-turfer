@@ -30,7 +30,10 @@ Differences from the text below:
 - the tiers come at 1, 2, 4 and 7 visits, from the formula;
 - the generator runs under `tsx` and writes JSON, which `pnpm test:unit` checks with `--check`;
 - the hero's call to action is unchanged, so there's no "Become a tester" button until slice 5;
-- "How it works" is unchanged.
+- "How it works" is unchanged;
+- since #202 (`97e2271`) the street demo's figure sits on its own night panel (`.turf-demo-panel`,
+  dark scheme), while the caption and Replay stay on the light page, so both pass axe colour
+  contrast on `/en` and `/pl`.
 
 It came out of a brainstorm with `product-manager`, `brand-designer`, `web-engineer` and
 `mobile-ui-engineer` (2026-10-28). Rules: the `web-motion` skill (static export, no cookies, en/pl,

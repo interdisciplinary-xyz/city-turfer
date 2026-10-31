@@ -132,8 +132,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   0.12.0 build takes no later OTA
 - ✅ [`sessions/v0.14.0.md`](sessions/v0.14.0.md): Session log v0.14.0 (in progress, scope PR 188) —
   Districts screen from the Turf tab, light website and portal, homepage sections with a street-glow
-  demo, staff admin under /admin, small changes straight to scope, hero and wordmark work; JS only
-  by inspection, fingerprint not measured
+  demo, a street map of the visitor's city behind the hero, staff admin under /admin, small changes
+  straight to scope, the release review's fixes (API turf release, district memory, changelog refs);
+  JS only by inspection
 - 🕰️ [`sessions/v0.2.0.md`](sessions/v0.2.0.md): Session log v0.2.0 through the Me menu and
   achievements; predates the Dashboard, Me drawer and login rename (PRs 23–25) and still says
   app.json is unpinned (pinned in f04bcf3)
@@ -278,10 +279,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   screen, a modal opened from the Turf tab that shows the Home City split into its administrative
   districts (OpenStreetMap boundaries bundled with the app) on a map, with a list of districts and
   the turf area the Turfer holds in each; built in PR 195 (v0.14.0), its "Later" section is not
-- 🚧 [`plans/hero-city-map-2026-10-28.md`](plans/hero-city-map-2026-10-28.md): Plan for a street map
+- ✅ [`plans/hero-city-map-2026-10-28.md`](plans/hero-city-map-2026-10-28.md): Plan for a street map
   of the visitor's city behind the landing-page hero, drawn at build time from OpenStreetMap and
   chosen in the browser from the time zone (opt-in precise pick later), with no cookies, no API
-  calls and no third-party requests
+  calls and no third-party requests; built in PR 200 (v0.14.0)
 - 🚧 [`plans/homepage-sections-2026-10-28.md`](plans/homepage-sections-2026-10-28.md): Plan for the
   landing page's sections, top to bottom, presenting CityTurfer as an honest early prototype that
   recruits testers; a street-glow demo built from the Gdańsk demo data, audience, highlights,

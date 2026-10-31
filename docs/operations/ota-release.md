@@ -64,10 +64,13 @@ v0.13.0 is JS only, released 2026-10-26: the release commit `9dd9692` bumps `app
 the tag `v0.13.0` has a new fingerprint. The founder's iPhone runs a Release build from 2026-10-26
 (`fc6fa57` per runbook #7, `668e740` per #187's body; both `app.json` 0.12.0, iOS `ff7765f0…`), so
 it takes **no** OTA published from `v0.13.0` or from `scope/v0.14.0`. v0.14.0 changes no native file
-so far (no `app.json`, plugin, module or app dependency change;
-`git diff --stat v0.13.0..origin/scope/v0.14.0`, checked 2026-10-30). Its fingerprint is not
-measured in a clean install yet: #191 and #192 reported different iOS values (`12e88723…` and
-`c9cca32d…`) from session checkouts, so neither counts. No OTA is recorded for v0.13.0.
+so far (no `app.json`, plugin or module change; the app's only new dependencies are the dev
+dependencies `react-test-renderer` and its types, #204; `git diff --stat v0.13.0..1607339`, checked
+2026-10-31). Its fingerprint is not measured in a clean install yet: #191 and #192 reported
+different iOS values (`12e88723…` and `c9cca32d…`) from session checkouts, and #205 reported
+`c9cca32d…` again before #204; none was measured on the scope head. Whether to keep the `app.json`
+bump for v0.14.0 or let v0.13 installs take an OTA is an open founder decision. No OTA is recorded
+for v0.13.0.
 
 To check, compare the fingerprint of the checkout you'll publish from with the runtime of the latest
 update the phone already runs:
