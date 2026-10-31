@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-23
+verified: 2026-10-31
 owner: founder
 scope: [packages/brand, packages/ui, apps/storybook, apps/mobile/src/ui-kit, apps/web/src/app]
 summary:
@@ -19,10 +19,10 @@ Decided 2026-10-19 in the v0.5.0 session (`docs/sessions/v0.5.0.md`). How to wor
   `SPACE`, `RADIUS`, `FONT_SIZE`, `FONT_WEIGHT`, `LABEL_TRACKING`, `TIER_ORDER`, `THEMES`. Values
   are the ones the v0.4.0 screens already used, so adopting a token changes no pixel.
 - **Web gets CSS variables from a function**, `cssVariables(scheme)`, which `[locale]/layout.tsx`
-  sets on `<html>` (`'dark'` until v0.10.0, now `SITE_SCHEME`, light: see
-  `docs/decisions/brand-light-theme-2026-10-22.md`). Brand colours keep their brand names (`--glow`,
-  `--strong`, `--walk`…), theme colours are semantic (`--bg`, `--card`, `--text`…), scales are
-  `--space-*`, `--radius-*`, `--font-*`.
+  sets on `<html>` (`'dark'` until v0.10.0, then `SITE_SCHEME`; since v0.14.0 `WEB_SCHEME`, light,
+  one of four scheme constants: see `docs/decisions/brand-light-website-2026-10-29.md`). Brand
+  colours keep their brand names (`--glow`, `--strong`, `--walk`…), theme colours are semantic
+  (`--bg`, `--card`, `--text`…), scales are `--space-*`, `--radius-*`, `--font-*`.
 - **Components** live in `@cityturfer/ui` (`packages/ui`): React Native only, TS source, peer
   dependencies only. First set: `Button`, `Card`, `Stat`, `Badge` (+ `tint()`), `ActivityRow`,
   `TurfLegend`, plus `ThemeProvider` / `usePalette` / `useScheme`. Components are presentational:
@@ -32,8 +32,8 @@ Decided 2026-10-19 in the v0.5.0 session (`docs/sessions/v0.5.0.md`). How to wor
 - **One Storybook** in `apps/storybook` (Storybook 10, `@storybook/react-native-web-vite`). It
   renders `@cityturfer/ui` through react-native-web and the website's components straight from
   `apps/web/src`, with toolbar toggles for light/dark and en/pl. Port 6006. (Since v0.10.0 the theme
-  toggle is gone and every story renders in `SITE_SCHEME`: see
-  `docs/decisions/brand-light-theme-2026-10-22.md`.)
+  toggle is gone. Since v0.14.0 website stories render in `WEB_SCHEME`, light, and every other story
+  in `SITE_SCHEME`, dark: see `docs/decisions/brand-light-website-2026-10-29.md`.)
 - **Native modules get placeholders** in Storybook (MapLibre Turf Map, GPS recording, HealthKit):
   they never run in a browser.
 - **Deploy:** Storybook's static build on Vercel as a separate project (created only when the
@@ -51,8 +51,13 @@ Decided 2026-10-19 in the v0.5.0 session (`docs/sessions/v0.5.0.md`). How to wor
   but that field is part of the fingerprint (bumping it moved iOS to `9e3ebf89…`). `package.json`
   files carry 0.5.0; `app.json` follows with the next native reinstall, as in v0.4.0.
 - **The website stays dark.** Storybook's light/dark toggle changes the app components only.
-  _Superseded in v0.10.0:_ the website, Swagger and Storybook are light (`SITE_SCHEME`), the app and
-  maps stay dark: `docs/decisions/brand-light-theme-2026-10-22.md`.
+  _Superseded:_ v0.10.0 made the website, Swagger and Storybook light
+  (`docs/decisions/brand-light-theme-2026-10-22.md`), v0.12.0 dark again
+  (`docs/decisions/brand-dark-site-2026-10-25.md`). Since v0.14.0 four constants in
+  `packages/brand/src/tokens.ts` decide: `WEB_SCHEME` light (website and portal), `HEADER_SCHEME`
+  light (the sticky header), `APP_SCHEME` dark (hero phones and turf pieces on the site) and
+  `SITE_SCHEME` dark (Swagger, Storybook, app component stories, `/branding`); the app and maps stay
+  dark: `docs/decisions/brand-light-website-2026-10-29.md`.
 - **Storybook in `apps/`, not `packages/`:** it is deployed, like the web app.
 
 Rejected: Storybook React Native on device (needs the simulator and a native build; we want a web
