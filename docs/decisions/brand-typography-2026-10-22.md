@@ -1,14 +1,14 @@
 ---
 status: canonical
-verified: 2026-10-27
+verified: 2026-10-31
 owner: founder
 scope: [packages/brand/src, packages/brand/fonts, packages/brand/scripts]
 summary: >-
   Brand type changes from Archivo to the "Street Plate" pairing: Big Shoulders Display Black in
-  capitals for headings, Barlow Semi Condensed ExtraBold for numbers, Barlow for website body text;
-  the wordmark is redrawn in Big Shoulders Display Black (CITY and TURFER told apart by colour), and
-  the tagline is Barlow Semi Condensed Black Italic (web only); amended 2026-10-27: the wordmark
-  alone is now outlined Anton, then one solid colour (white on night, night on light)
+  capitals for headings, Barlow Semi Condensed ExtraBold for numbers, Barlow for website body text,
+  Barlow Semi Condensed Black Italic for the tagline (web only). The wordmark is outlined Anton in
+  one solid colour (white on night, night on light; since 2026-10-27, after a Big Shoulders Display
+  Black two-colour version); Anton is an outline source only, never bundled
 ---
 
 # Brand typography: Street Plate (v0.10.0)

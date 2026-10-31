@@ -40,6 +40,14 @@ module.exports = {
       to: { path: '(^|/)packages/core/src/h3/|(^|/)node_modules/h3-js/' },
     },
     {
+      name: 'no-core-districts',
+      severity: 'error',
+      comment:
+        '@cityturfer/core/districts (OSM boundaries, ODbL) is an app-only entry: nothing in apps/web loads it, build tools included.',
+      from: { pathNot: '(^|/)packages/core/src/districts/' },
+      to: { path: '(^|/)packages/core/src/districts/|^@cityturfer/core/districts' },
+    },
+    {
       name: 'marketing-not-core',
       severity: 'error',
       comment:

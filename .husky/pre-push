@@ -1,4 +1,6 @@
-# Fast local gate (~15s). CI runs the full quality job (lint, format, types, architecture rules,
-# unit tests, audits) on every non-draft pull request and on every push to main or scope/**.
+# Fast local gate (~40s uncached, under a second when nothing changed). test:unit waits on its
+# dependencies' typecheck (turbo.json), so a packages/core or brand change reruns the app tests.
+# CI runs the full quality job (lint, format, types, architecture rules, unit tests, audits) on
+# every non-draft pull request and on every push to main or scope/**.
 # Never skip it with --no-verify: fix the failing check instead.
 pnpm exec turbo run typecheck arch test:unit

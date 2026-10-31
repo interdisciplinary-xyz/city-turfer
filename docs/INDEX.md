@@ -225,10 +225,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   those surfaces. Accepted: PR 198 merged into scope/v0.14.0 on 2026-10-30.
 - ✅ [`decisions/brand-typography-2026-10-22.md`](decisions/brand-typography-2026-10-22.md): Brand
   type changes from Archivo to the "Street Plate" pairing: Big Shoulders Display Black in capitals
-  for headings, Barlow Semi Condensed ExtraBold for numbers, Barlow for website body text; the
-  wordmark is redrawn in Big Shoulders Display Black (CITY and TURFER told apart by colour), and the
-  tagline is Barlow Semi Condensed Black Italic (web only); amended 2026-10-27: the wordmark alone
-  is now outlined Anton, then one solid colour (white on night, night on light)
+  for headings, Barlow Semi Condensed ExtraBold for numbers, Barlow for website body text, Barlow
+  Semi Condensed Black Italic for the tagline (web only). The wordmark is outlined Anton in one
+  solid colour (white on night, night on light; since 2026-10-27, after a Big Shoulders Display
+  Black two-colour version); Anton is an outline source only, never bundled
 - 🚧 [`decisions/data-flow-2026-10-23.md`](decisions/data-flow-2026-10-23.md): Founder decisions
   2026-10-23 on how data flows between the phone, the API, the web portal and the admin portal —
   records are created on the phone, managed (deleted) on the web, adjusted (all but tracks) by
