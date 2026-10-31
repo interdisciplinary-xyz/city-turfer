@@ -278,6 +278,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   screen, a modal opened from the Turf tab that shows the Home City split into its administrative
   districts (OpenStreetMap boundaries bundled with the app) on a map, with a list of districts and
   the turf area the Turfer holds in each; built in PR 195 (v0.14.0), its "Later" section is not
+- 🚧 [`plans/hero-city-map-2026-10-28.md`](plans/hero-city-map-2026-10-28.md): Plan for a street map
+  of the visitor's city behind the landing-page hero, drawn at build time from OpenStreetMap and
+  chosen in the browser from the time zone (opt-in precise pick later), with no cookies, no API
+  calls and no third-party requests
 - 🚧 [`plans/homepage-sections-2026-10-28.md`](plans/homepage-sections-2026-10-28.md): Plan for the
   landing page's sections, top to bottom, presenting CityTurfer as an honest early prototype that
   recruits testers; a street-glow demo built from the Gdańsk demo data, audience, highlights,
