@@ -14,6 +14,29 @@ export default [
   ...base({ layers: [eslintConfigPrettier] }),
   { languageOptions: { globals: { ...globals.node } } },
   {
+    // The district boundaries (OSM, ODbL) are an app-only entry of core: the server ships none.
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                '@cityturfer/core/districts',
+                '@cityturfer/core/districts/**',
+                '@cityturfer/core/src/districts',
+                '@cityturfer/core/src/districts/**',
+                '**/packages/core/src/districts',
+                '**/packages/core/src/districts/**',
+              ],
+              message: '@cityturfer/core/districts is app-only (OSM district boundaries); the API does not use it.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     // CLI scripts print to stdout.
     files: ['scripts/**'],
     rules: { 'no-console': 'off' },
