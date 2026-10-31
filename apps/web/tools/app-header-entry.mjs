@@ -3,7 +3,7 @@
 // website) into #app-header-root. The pages are English, so: EN marked, PL links to the Polish home
 // page.
 import mark from '@cityturfer/brand/svg/mark.svg';
-import wordmark from '@cityturfer/brand/svg/wordmark.svg';
+import wordmark from '@cityturfer/brand/svg/wordmark-light.svg';
 import { createElement as h, Fragment } from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
@@ -39,15 +39,11 @@ if (host) {
           Fragment,
           null,
           h('img', { className: 'app-header-mark', src: mark, alt: '', width: 32, height: 32 }),
-          h('img', { className: 'app-header-wordmark', src: wordmark, alt: '', width: 93, height: 20 })
+          h('img', { className: 'app-header-wordmark', src: wordmark, alt: '', width: 90, height: 20 })
         ),
         waitlist: WAITLIST
           ? { href: `/${LOCALE}#waitlist`, label: en.header.waitlist, shortLabel: en.header.waitlistShort }
           : null,
-        account: {
-          signIn: { href: `/${LOCALE}/account/sign-in`, label: en.header.signIn },
-          register: { href: `/${LOCALE}/account/register`, label: en.header.register },
-        },
         languages,
       })
     );

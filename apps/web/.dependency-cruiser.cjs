@@ -40,11 +40,21 @@ module.exports = {
       to: { path: '(^|/)packages/core/src/h3/|(^|/)node_modules/h3-js/' },
     },
     {
+      name: 'no-core-districts',
+      severity: 'error',
+      comment:
+        '@cityturfer/core/districts (OSM boundaries, ODbL) is an app-only entry: nothing in apps/web loads it, build tools included.',
+      from: { pathNot: '(^|/)packages/core/src/districts/' },
+      to: { path: '(^|/)packages/core/src/districts/|^@cityturfer/core/districts' },
+    },
+    {
       name: 'marketing-not-core',
       severity: 'error',
       comment:
         'Public pages never load @cityturfer/core: its formatters are for the portal (docs/plans/web-portal-history-2026-10-23.md, H4).',
-      from: { path: site, pathNot: notPortal },
+      // tools/gen-turf-demo.mjs runs at build time only and writes plain numbers (turf-demo.data.json):
+      // core and h3-js never reach the browser, so it is the one named exception.
+      from: { path: site, pathNot: [notPortal, '^tools/gen-turf-demo\\.mjs$'] },
       to: { path: '(^|/)packages/core/', pathNot: '(^|/)packages/core/src/h3/' },
     },
     {

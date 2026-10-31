@@ -1,4 +1,5 @@
 // Public API of the Territory context.
+import { GetDistrictCoverage } from './application/districts';
 import {
   ChooseHomeCity,
   GetHomeCity,
@@ -16,6 +17,7 @@ import {
   ReleaseTurfOfActivity,
   type TerritoryDeps,
 } from './application/use-cases';
+import type { DistrictCatalog } from './domain/district-catalog';
 
 /**
  * The turf use cases alone (claims, the projection's reads), without the Home City: what a server
@@ -33,7 +35,7 @@ export function createTurfApi(deps: TerritoryDeps) {
 }
 export type TurfApi = ReturnType<typeof createTurfApi>;
 
-export function createTerritoryApi(deps: TerritoryDeps & HomeCityDeps) {
+export function createTerritoryApi(deps: TerritoryDeps & HomeCityDeps & { districts: DistrictCatalog }) {
   return {
     ...createTurfApi(deps),
     viewport: new GetTurfInViewport(deps),
@@ -41,9 +43,11 @@ export function createTerritoryApi(deps: TerritoryDeps & HomeCityDeps) {
     homeCityChoice: new HomeCityChoiceQuery(deps),
     chooseHomeCity: new ChooseHomeCity(deps),
     searchCities: new SearchCities(),
+    districts: new GetDistrictCoverage(deps),
   };
 }
 export type TerritoryApi = ReturnType<typeof createTerritoryApi>;
+export { type DistrictCoverageOptions, ReadSuperseded } from './application/districts';
 export { catalogueCityView, type HomeCityDeps } from './application/home-city';
 export type { ActivityTrackSource, TerritoryDeps } from './application/use-cases';
 export type * from './contract';

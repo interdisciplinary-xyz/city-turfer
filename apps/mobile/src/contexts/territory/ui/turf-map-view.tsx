@@ -12,9 +12,9 @@ import { type ActivityType, type BoundingBox } from '@/shared-kernel';
 import { fixed, formatArea } from '@/ui-kit/format';
 import { ActivitySymbol, AppSymbol } from '@/ui-kit/symbol';
 
-import { useTurfSummary, useTurfViewport } from './hooks';
+import { useHasDistricts, useTurfSummary, useTurfViewport } from './hooks';
 import { TurfLayers } from './layers';
-import { FIT_PADDING, type TrackLine, type TurfMapViewProps } from './turf-map-view.constants';
+import { CHIP_HIT_SLOP, FIT_PADDING, type TrackLine, type TurfMapViewProps } from './turf-map-view.constants';
 import { useCityName } from './use-city-names';
 
 export type { TrackLine };
@@ -26,7 +26,7 @@ export type { TrackLine };
  * The screen mounts this only once the Home City has loaded: on iOS MapLibre applies a Camera's
  * initial view and follow mode only if the Camera exists at the map's first layout.
  */
-export function TurfMapView({ tracks, homeCity, focused, onPickCity }: TurfMapViewProps) {
+export function TurfMapView({ tracks, homeCity, focused, onPickCity, onOpenDistricts }: TurfMapViewProps) {
   const t = useT('turf');
   const tc = useT('common');
   const cityName = useCityName();
@@ -36,6 +36,7 @@ export function TurfMapView({ tracks, homeCity, focused, onPickCity }: TurfMapVi
   const [types, setTypes] = useState<ActivityType[]>([...ACTIVITY_TYPES]);
   const cells = useTurfViewport(view, types);
   const summary = useTurfSummary();
+  const districtsShown = useHasDistricts(homeCity?.id) && onOpenDistricts !== undefined;
   const fitted = useRef(false);
 
   const lines = useMemo<GeoJSON.FeatureCollection>(
@@ -177,6 +178,7 @@ export function TurfMapView({ tracks, homeCity, focused, onPickCity }: TurfMapVi
               <Pressable
                 key={kind}
                 testID={`turf-filter-${kind}`}
+                hitSlop={CHIP_HIT_SLOP}
                 accessibilityRole='checkbox'
                 accessibilityLabel={t('filterLabel', { type: kind })}
                 accessibilityState={{ checked: on }}
@@ -197,6 +199,7 @@ export function TurfMapView({ tracks, homeCity, focused, onPickCity }: TurfMapVi
           {homeCity ? (
             <Pressable
               testID='turf-city'
+              hitSlop={CHIP_HIT_SLOP}
               onPress={fitCity}
               onLongPress={onPickCity}
               accessibilityRole='button'
@@ -212,6 +215,7 @@ export function TurfMapView({ tracks, homeCity, focused, onPickCity }: TurfMapVi
           ) : onPickCity ? (
             <Pressable
               testID='turf-pick-city'
+              hitSlop={CHIP_HIT_SLOP}
               onPress={onPickCity}
               accessibilityRole='button'
               accessibilityLabel={t('chooseCity')}
@@ -221,9 +225,23 @@ export function TurfMapView({ tracks, homeCity, focused, onPickCity }: TurfMapVi
               <Text style={s.chipText}>{t('yourCity')}</Text>
             </Pressable>
           ) : null}
+          {homeCity && districtsShown && (
+            <Pressable
+              testID='turf-districts'
+              onPress={onOpenDistricts}
+              hitSlop={CHIP_HIT_SLOP}
+              accessibilityRole='button'
+              accessibilityLabel={t('districts.openLabel', { city: cityName(homeCity) })}
+              style={[s.chip, { borderColor: DARK.border }]}
+            >
+              <AppSymbol name='square.grid.3x3' fallback='▦' size={FONT_SIZE.caption} color={DARK.text} />
+              <Text style={s.chipText}>{t('districts.open')}</Text>
+            </Pressable>
+          )}
           {allBounds && (
             <Pressable
               testID='turf-filter-all'
+              hitSlop={CHIP_HIT_SLOP}
               onPress={fitAll}
               accessibilityRole='button'
               accessibilityLabel={t('showAllLabel')}
@@ -266,7 +284,8 @@ const s = StyleSheet.create({
   },
   area: { color: TIER_COLOR.blazing, fontSize: 30, fontFamily: FONT_FAMILY.numeric, fontVariant: ['tabular-nums'] },
   sub: { color: DARK.muted, fontSize: FONT_SIZE.caption },
-  chips: { flexDirection: 'row', gap: 8, marginTop: 8, flexWrap: 'wrap' },
+  // Rows 16 apart when they wrap, so the chips' 8 pt touch margins (CHIP_HIT_SLOP) never overlap.
+  chips: { flexDirection: 'row', columnGap: 8, rowGap: 16, marginTop: 8, flexWrap: 'wrap' },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',

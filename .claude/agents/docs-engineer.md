@@ -81,18 +81,26 @@ right _before_ it is written:
 1. **Map the state.** `git fetch origin --prune`. Find the open scope and release branches and PRs,
    the newest tag, and what is on each branch but not its base:
    `git log --oneline --first-parent origin/<base>..origin/<head>` and the PRs merged into it
-   (`gh pr list --base <branch> --state all`). Note which PRs are merged, open or draft.
+   (`gh pr list --base <branch> --state all`). Note which PRs are merged, open or draft. A
+   first-parent commit on scope that is not a merge is a **direct commit** (small changes may go
+   straight to scope, `docs/process/release-manager.md`): it has no PR number, so list it by short
+   SHA. The scope cut's `chore(release): pin version …` commit is not one (it is rule 6, name it as
+   the cut). A first-parent merge whose subject is not `Merge pull request #…` (a release merged
+   back down, a `git pull` without `--rebase`) has no PR either: list it by SHA and say what it
+   brought in. A direct commit that is not only copy, messages or docs and has no `Reviewed-by:`
+   line in its body was not reviewed before the push: flag it.
 2. **Branch.** You run in your own worktree (`isolation: worktree`), which Claude Code cuts from the
    default branch, not from the session's branch. For each target branch you change docs on, cut a
    branch named docs/update-vX.Y.Z from it (`git switch -c` with that name and
    `origin/scope/vX.Y.Z`; for a release branch, docs/update-release-vX.Y.Z from
    `origin/release/vX.Y.Z`). Never commit on scope, release or main directly.
 3. **Session log.** Bring the newest log up to date: the branch table (PR, branch, state, merge
-   commit, what), one short section per user-visible change, the environment (fingerprint, devices,
-   the last test runs with dates and results), open founder decisions, carried-over items, gates.
-   Keep history: fix only facts and paths in older logs.
-4. **Other docs.** For each merged PR, read its diff stat and ask which docs describe that area. The
-   usual suspects each version:
+   commit, what; direct commits as rows with their SHA in place of a PR), one short section per
+   user-visible change, the environment (fingerprint, devices, the last test runs with dates and
+   results), open founder decisions, carried-over items, gates. Keep history: fix only facts and
+   paths in older logs.
+4. **Other docs.** For each merged PR and direct commit, read its diff stat and ask which docs
+   describe that area. The usual suspects each version:
    - `docs/engineering/features.md` and `README.md` (feature status);
    - `docs/operations/ota-release.md` (fingerprint per release, which installs take which OTA);
    - `docs/operations/api-deploy.md` (contract version, migrations, env vars, pending steps);
@@ -114,10 +122,11 @@ right _before_ it is written:
    into the repo.
 7. **PR descriptions last**, once your docs PR exists: rewrite the scope and release PR bodies with
    `gh pr edit <n> --body-file <file>`, following the template and the previous release PR's
-   structure: Summary, What ships (every PR, merged or open), Test plan (only what ran, with the
-   head it ran on), Runtime fingerprint, Out of scope / candidates, Risk & rollback, founder steps,
-   Open decisions, the delivery checklist, Quality gate, the attribution line. Name your docs PR in
-   "What ships" as open.
+   structure: Summary, What ships (every PR, merged or open, and every direct commit by SHA), Test
+   plan (only what ran, with the head it ran on), Runtime fingerprint, Out of scope / candidates,
+   Risk & rollback, founder steps, Open decisions, the delivery checklist, Quality gate, the
+   attribution line. Each unreviewed direct commit (step 1) is a **blocking** item in the scope →
+   release body until someone reviews it by SHA. Name your docs PR in "What ships" as open.
 
 ## Non-negotiables
 

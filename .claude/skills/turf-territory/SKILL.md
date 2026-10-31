@@ -2,8 +2,8 @@
 name: turf-territory
 description: >-
   Use for turf: Claims, H3 Turf Cells, Strength, the Territory projection (phone and server),
-  viewport, Turf Map layers, Home City, "turf gained", parity golden, tuning. Code:
-  packages/core/src/contexts/territory/, packages/core/src/h3/, apps/mobile/src/contexts/territory/,
+  viewport, Turf Map layers, Home City, Districts, "turf gained", parity golden, tuning. Code:
+  packages/core/src/{contexts/territory,h3,districts}/, apps/mobile/src/contexts/territory/,
   apps/api/src/territory/.
 ---
 
@@ -108,6 +108,31 @@ export interface CellGrid {
 - The domain never imports h3-js (core's `h3-only-in-h3` dependency rule). Tests use the real
   `H3CellGrid` (`packages/core/src/contexts/territory/domain/__tests__/territory.test.ts`); a
   pure-TS square grid like the one in `turf-preview.mjs` is an option if H3 ever gets in the way.
+
+## Districts (`GetDistrictCoverage`, app-only data)
+
+Plan: `docs/plans/districts-2026-10-29.md`. Territory's `DistrictCatalog` port
+(`packages/core/src/contexts/territory/domain/district-catalog.ts`, `districtsOf(cityId)`, empty for
+a city without boundaries) feeds `GetDistrictCoverage`
+(`packages/core/src/contexts/territory/application/districts.ts`, `districts` in
+`createTerritoryApi`), which scores the user's turf per district of the Home City in chunks that
+yield to the UI.
+
+- The bundled adapter is the separate entry `@cityturfer/core/districts`
+  (`packages/core/src/districts/`: `bundledDistricts`, `DISTRICT_CITY_IDS`), wired only in
+  `apps/mobile/src/wiring.ts`;
+  `apps/mobile/src/contexts/territory/infrastructure/district-cities.ts` reads just the city list to
+  offer the screen (`apps/mobile/src/app/districts.tsx`).
+- **App-only.** The API and the portal use `@cityturfer/core/territory`, which never loads the
+  boundaries: core's `districts-data-only-via-entry` rule keeps the data behind the entry, and
+  apps/web's `no-core-districts` rule keeps the entry out of the website.
+- The data (`packages/core/src/districts/data/<city-id>.json` + generated `index.ts`) comes from
+  `node apps/mobile/tools/gen-districts.mjs [city-id] [--cache dir] [--probe city-id]`, which asks
+  OpenStreetMap's Overpass API at development time and commits the output; the app and build never
+  call OSM. A city is written only when its districts cover enough of its area; add one by adding it
+  to `DISTRICT_CITIES` in the generator after a `--probe`.
+- **ODbL:** boundaries are © OpenStreetMap contributors; the Districts screen shows the credit. Keep
+  it whenever the data is shown.
 
 ## Viewport query (`GetTurfInViewport`, core application + app repository)
 

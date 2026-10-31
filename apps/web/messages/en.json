@@ -7,15 +7,35 @@
   "header": {
     "home": "CityTurfer, home",
     "waitlist": "Join the waitlist",
-    "waitlistShort": "Waitlist",
-    "signIn": "Sign in",
-    "register": "Create account"
+    "waitlistShort": "Waitlist"
   },
   "hero": {
     "skip": "Skip to content",
     "taglineLead": "Surf your city.",
     "taglineRamp": "Own your streets.",
-    "lede": "Walk, run or ride — every street you cover becomes your turf. Come back and watch it glow."
+    "lede": "Walk, run or ride — every street you cover becomes your turf. Come back and watch it glow.",
+    "map": {
+      "streetsOf": "Streets of",
+      "chooseCity": "City on the map",
+      "nearMe": "Near me",
+      "locating": "Finding your city…",
+      "tooFar": "No map near you yet, so this one stays. More cities are coming.",
+      "unavailable": "Location isn’t available. Pick a city from the list.",
+      "credit": "© OpenStreetMap contributors",
+      "cities": {
+        "pl-gdansk": "Gdańsk",
+        "pl-warsaw": "Warsaw",
+        "pl-krakow": "Kraków",
+        "pl-wroclaw": "Wrocław",
+        "pl-poznan": "Poznań",
+        "de-berlin": "Berlin",
+        "gb-london": "London",
+        "cz-prague": "Prague",
+        "lt-vilnius": "Vilnius"
+      }
+    },
+    "badge": "Early prototype",
+    "audience": "For anyone who walks, runs or rides their city, and keeps coming back."
   },
   "screens": {
     "turfMap": {
@@ -27,6 +47,27 @@
       "title": "Your week at a glance",
       "body": "Distance, time, recent activities and the next achievement within reach.",
       "alt": "The Dashboard: this week's distance, time and activities, recent activities and the next achievement."
+    },
+    "proto": {
+      "time": "09:41",
+      "tabs": {
+        "dashboard": "Dashboard",
+        "turf": "Turf",
+        "record": "Record",
+        "stats": "Stats",
+        "me": "Me"
+      },
+      "turf": {
+        "title": "Your turf",
+        "area": "{area} km²",
+        "summary": "{cellCount, plural, one {{cells} cell} other {{cells} cells}} · {strongCount, plural, one {{strong} strong} other {{strong} strong}} · +{week} km² this week",
+        "all": "All",
+        "city": "Warsaw"
+      },
+      "dashboard": {
+        "greeting": "Hello, {name}",
+        "subtitle": "{area} km² of turf · +{week} km² this week"
+      }
     }
   },
   "home": {
@@ -99,13 +140,142 @@
       "title": "Your phone keeps the original",
       "phone": "Your activities are stored on your phone, in the app.",
       "backup": "Cloud backup stays off until you turn it on. Turn it off and the copy on our server is deleted.",
-      "portal": "Signed in on the web, you see only what you backed up."
+      "portal": "Signed in on the web, you see only what you backed up.",
+      "leaves": "What does leave the phone: map tiles for the area you’re viewing, update checks, and, unless you turn gap filling off, the two ends of a GPS gap. Signing in sends your email address to our server.",
+      "account": "For now, you sign in to the app with an account.",
+      "site": "Our public pages set no cookies and load no trackers."
     },
     "cta": {
       "title": "Your turf starts at your door",
       "body": "Leave your email and we’ll tell you when the app is ready to download.",
       "join": "Join the waitlist"
+    },
+    "demo": {
+      "eyebrow": "Turf strength",
+      "title": "Come back. It glows.",
+      "body": "One street in Gdańsk’s Main Town, visit by visit. Then the whole city after four months of walks, runs and rides.",
+      "step": "{visits, plural, one {# visit} other {# visits}} · {tier}",
+      "cityStep": "Four months",
+      "stepsLabel": "Show a step",
+      "replay": "Replay",
+      "alt": "A street in Gdańsk drawn as turf cells. It is Faint after {faint, plural, one {# visit} other {# visits}}, Glowing after {glowing}, Strong after {strong} and Blazing after {blazing}. Then the whole city after four months, brightest along the routes repeated most.",
+      "caption": "Example data from our demo account: {activities} walks, runs and rides in Gdańsk · {area} km² · {cells, plural, one {# cell} other {# cells}}."
+    },
+    "audience": {
+      "eyebrow": "Who it’s for",
+      "title": "Walk it. Run it. Ride it.",
+      "walk": "The commute, the dog, the long way home.",
+      "run": "The loop you know, and the turn you haven’t taken yet.",
+      "cycle": "Sunday rides that slowly fill in the map.",
+      "notFor": "Not for you if you want leaderboards, crews or training zones. CityTurfer is just you and your streets."
+    },
+    "highlights": {
+      "eyebrow": "In the app",
+      "title": "What the prototype does today",
+      "iphone": "iPhone only",
+      "gain": {
+        "title": "New turf after every outing",
+        "body": "When you finish, the app shows the turf you added and the streets you made brighter."
+      },
+      "record": {
+        "title": "Records with the screen off",
+        "body": "Live map and stats, auto-pause, hold to finish. Lock the phone and keep going."
+      },
+      "health": {
+        "title": "Your Apple Health history counts",
+        "body": "Import past walks, runs and rides with their routes from Apple Health, and they become turf on day one."
+      },
+      "achievements": {
+        "title": "Achievements, no streaks",
+        "body": "{count, plural, one {# achievement} other {# achievements}} to unlock along the way. There’s no streak to keep."
+      },
+      "city": {
+        "title": "Starts in your city",
+        "body": "Pick your home city from the list and the map opens there."
+      }
+    },
+    "differs": {
+      "eyebrow": "How it’s different",
+      "title": "Made for the streets you repeat",
+      "repeats": {
+        "title": "Repeats count",
+        "body": "Most maps mark a street once. Here every return makes it brighter."
+      },
+      "fades": {
+        "title": "Nothing fades",
+        "body": "Your turf never decays, however long you’re away."
+      },
+      "private": {
+        "title": "Private by default",
+        "body": "No feed, no followers, no public profile."
+      }
+    },
+    "status": {
+      "eyebrow": "Where it stands",
+      "title": "An early prototype, honestly",
+      "body": "What works, what we’re testing and what isn’t there yet.",
+      "works": {
+        "title": "Works today",
+        "record": "Recording with the screen off (iPhone)",
+        "turf": "The Turf Map and turf strength",
+        "history": "History, stats and achievements",
+        "languages": "English and Polish"
+      },
+      "testing": {
+        "title": "Being tested",
+        "health": "Apple Health import and export (iPhone Simulator only so far)",
+        "battery": "Battery use on long outings",
+        "backup": "Opt-in cloud backup"
+      },
+      "notYet": {
+        "title": "Not yet",
+        "android": "The Android app on real phones",
+        "store": "App Store release",
+        "gpx": "GPX export",
+        "sharing": "Sharing"
+      }
+    },
+    "faq": {
+      "eyebrow": "Questions",
+      "title": "Good questions",
+      "when": {
+        "q": "When can I get it?",
+        "a": "Join the waitlist and we’ll email you when it’s ready to download."
+      },
+      "free": {
+        "q": "Is it free?",
+        "a": "Yes, while it’s being tested."
+      },
+      "battery": {
+        "q": "Does it drain my battery?",
+        "a": "It tracks your location in the background only while you record. We’re still measuring battery use on long outings."
+      },
+      "account": {
+        "q": "Do I need an account?",
+        "a": "For now, yes: you sign in with your email. Your activities still live on your phone."
+      },
+      "data": {
+        "q": "Can I delete my data?",
+        "a": "Your activities are on your phone, so deleting one there deletes it. Cloud backup is off until you turn it on, and turning it off deletes our copy."
+      },
+      "android": {
+        "q": "Is there an Android app?",
+        "a": "There’s an Android build, but so far it has only run on an emulator, never on a real phone. iPhone comes first."
+      },
+      "watch": {
+        "q": "Do I need an Apple Watch?",
+        "a": "No. The app records on your phone. Importing from Apple Health is an extra on iPhone."
+      },
+      "cities": {
+        "q": "Which cities does it work in?",
+        "a": "Recording works anywhere. Pick your home city from our list of Polish and European cities, and the map opens there."
+      }
     }
+  },
+  "footer": {
+    "label": "Site footer",
+    "contact": "Contact:",
+    "rights": "© {year} CityTurfer"
   },
   "language": {
     "label": "Language",
@@ -114,7 +284,7 @@
   },
   "download": {
     "cta": "Download for Android",
-    "note": "APK for Android phones",
+    "note": "APK for Android phones (not yet tested on real phones)",
     "help": "First install? Your browser asks you to allow installing apps from it — that's how apps from outside Google Play install.",
     "appStore": "App Store",
     "soon": "Coming soon"

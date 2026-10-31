@@ -20,11 +20,13 @@ First, which package. **`packages/core` (`@cityturfer/core`)** holds what the ph
 both run: the shared kernel, the core constants (activity types, tracking thresholds, Earth radius,
 `DETAIL_ZOOM`) and the `domain/` + `application/` + `contract.ts` + public `index.ts` of
 **Territory, Activity Log, Achievements and Identity**, plus the H3 adapter
-(`packages/core/src/h3/`, entry `@cityturfer/core/h3`). **`apps/mobile`** keeps everything
-device-bound: Recording, Health Sync and Cloud Backup (all layers), every adapter (SQLite
-repositories, Expo, OSM router, secure store), `platform/` (SQLite, migrations, outbox), UI and
-wiring. Core is TS source with no React, Expo, native module, UI package or `@/` import; its
-contexts use relative imports.
+(`packages/core/src/h3/`, entry `@cityturfer/core/h3`) and the bundled District boundaries
+(`packages/core/src/districts/`, entry `@cityturfer/core/districts`, the adapter of Territory's
+`DistrictCatalog` port; OSM data, ODbL; app-only: the API and the website never load it, see the
+`turf-territory` skill). **`apps/mobile`** keeps everything device-bound: Recording, Health Sync and
+Cloud Backup (all layers), every adapter (SQLite repositories, Expo, OSM router, secure store),
+`platform/` (SQLite, migrations, outbox), UI and wiring. Core is TS source with no React, Expo,
+native module, UI package or `@/` import; its contexts use relative imports.
 
 - **is a business rule or invariant ("can't resume a finished session", "drop fixes faster than 8
   m/s for a run")**: the context's `domain/`, **inside the aggregate** or a domain policy

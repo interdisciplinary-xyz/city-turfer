@@ -20,7 +20,7 @@ export default [
       '.next/**',
       'next-env.d.ts',
       'src/payload-types.ts',
-      'src/app/(payload)/admin/importMap.js',
+      'src/app/(payload)/importMap.js',
       'src/migrations/**',
     ],
   },

@@ -103,7 +103,7 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`process/docs-conventions.md`](process/docs-conventions.md): How docs/ declares its own
   freshness — frontmatter, folders, filenames, probes and the audit
 - ✅ [`process/release-manager.md`](process/release-manager.md): Branch flow feat → scope → release
-  → main, PR titles, Conventional Commits, changelog, OTA vs native
+  → main, small changes straight to scope, PR titles, Conventional Commits, changelog, OTA vs native
 - ✅ [`process/session-migration.md`](process/session-migration.md): How to hand a session off and
   pick it up again without losing context — the version session log is the source of truth
 
@@ -126,10 +126,15 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   v0.12.0) — dark website like the app, homepage in the app's pieces, hero and wordmark fixes,
   language switch reload, docs-engineer agent, audit:brand, review fixes; JS only; iPhone
   reinstalled from the tag (fingerprint ff7765f0…)
-- ✅ [`sessions/v0.13.0.md`](sessions/v0.13.0.md): Session log v0.13.0 (in progress, scope PR 182
-  draft) — cut from main after the v0.12.0 release; turf "this week" counts from local Monday like
-  the This week card (#183); JS only, same iOS fingerprint as the v0.12.0 install on the founder's
-  iPhone
+- 🕰️ [`sessions/v0.13.0.md`](sessions/v0.13.0.md): Session log v0.13.0 (released 2026-10-26, tag
+  v0.13.0) — turf "this week" counts from local Monday like the This week card (#183), hero headline
+  in the muted grey (#185); JS only; the release commit bumps app.json to 0.13.0, so the iPhone's
+  0.12.0 build takes no later OTA
+- ✅ [`sessions/v0.14.0.md`](sessions/v0.14.0.md): Session log v0.14.0 (in progress, scope PR 188) —
+  Districts screen from the Turf tab, light website and portal, homepage sections with a street-glow
+  demo, a street map of the visitor's city behind the hero, staff admin under /admin, small changes
+  straight to scope, the release review's fixes (API turf release, district memory, changelog refs);
+  JS only by inspection
 - 🕰️ [`sessions/v0.2.0.md`](sessions/v0.2.0.md): Session log v0.2.0 through the Me menu and
   achievements; predates the Dashboard, Me drawer and login rename (PRs 23–25) and still says
   app.json is unpinned (pinned in f04bcf3)
@@ -201,7 +206,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`decisions/brand-dark-site-2026-10-25.md`](decisions/brand-dark-site-2026-10-25.md): The app
   is the brand's source of truth, so the website, portal, Swagger and Storybook go dark (SITE_SCHEME
   = 'dark', the app's DARK palette, night wordmark, full Ramp); pink buttons keep a night label
-  (WEB_ON_ACCENT) for AA. Replaces brand-light-theme-2026-10-22.
+  (WEB_ON_ACCENT) for AA. Replaces brand-light-theme-2026-10-22. Its website and portal part is
+  superseded by brand-light-website-2026-10-29 (v0.14.0); it still holds for Swagger, Storybook,
+  /branding and the app.
 - ✅ [`decisions/brand-foundations-2026-10-20.md`](decisions/brand-foundations-2026-10-20.md): Brand
   foundations (positioning for three audiences, personality, pillars), Archivo as the brand typeface
   (superseded by brand-typography-2026-10-22), visual language beyond colour, WCAG contrast rules
@@ -211,11 +218,18 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   Superseded by brand-dark-site-2026-10-25.md (the site is dark again, like the app). The website,
   Swagger and Storybook switch to a light theme (SITE_SCHEME) while the app and every map stay dark;
   the AA light palette, its new tokens and ratios, night labels on pink buttons
+- ✅ [`decisions/brand-light-website-2026-10-29.md`](decisions/brand-light-website-2026-10-29.md):
+  The website and portal go light (WEB_SCHEME = 'light', day wordmark, white header via
+  HEADER_SCHEME) so the app's dark screens stand out; the hero phones keep the app's dark scheme
+  (APP_SCHEME), and so does every turf piece (legend, gain, dashboard, Record disc: night panels);
+  Swagger, Storybook and the app stay on SITE_SCHEME (dark). Narrows brand-dark-site-2026-10-25 to
+  those surfaces. Accepted: PR 198 merged into scope/v0.14.0 on 2026-10-30.
 - ✅ [`decisions/brand-typography-2026-10-22.md`](decisions/brand-typography-2026-10-22.md): Brand
   type changes from Archivo to the "Street Plate" pairing: Big Shoulders Display Black in capitals
-  for headings, Barlow Semi Condensed ExtraBold for numbers, Barlow for website body text; the
-  wordmark is redrawn in Big Shoulders Display Black (CITY and TURFER told apart by colour), and the
-  tagline is Barlow Semi Condensed Black Italic (web only)
+  for headings, Barlow Semi Condensed ExtraBold for numbers, Barlow for website body text, Barlow
+  Semi Condensed Black Italic for the tagline (web only). The wordmark is outlined Anton in one
+  solid colour (white on night, night on light; since 2026-10-27, after a Big Shoulders Display
+  Black two-colour version); Anton is an outline source only, never bundled
 - 🚧 [`decisions/data-flow-2026-10-23.md`](decisions/data-flow-2026-10-23.md): Founder decisions
   2026-10-23 on how data flows between the phone, the API, the web portal and the admin portal —
   records are created on the phone, managed (deleted) on the web, adjusted (all but tracks) by
@@ -261,6 +275,18 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   back-end release (opt-in backup, real accounts, restore to a new phone, delete account, export) —
   founder decisions of 2026-10-22, what feat/backend-sync built (shipped in v0.9.0), what changed
   since, and what is left before testers can use it
+- ✅ [`plans/districts-2026-10-29.md`](plans/districts-2026-10-29.md): Plan for the Districts
+  screen, a modal opened from the Turf tab that shows the Home City split into its administrative
+  districts (OpenStreetMap boundaries bundled with the app) on a map, with a list of districts and
+  the turf area the Turfer holds in each; built in PR 195 (v0.14.0), its "Later" section is not
+- ✅ [`plans/hero-city-map-2026-10-28.md`](plans/hero-city-map-2026-10-28.md): Plan for a street map
+  of the visitor's city behind the landing-page hero, drawn at build time from OpenStreetMap and
+  chosen in the browser from the time zone (opt-in precise pick later), with no cookies, no API
+  calls and no third-party requests; built in PR 200 (v0.14.0)
+- 🚧 [`plans/homepage-sections-2026-10-28.md`](plans/homepage-sections-2026-10-28.md): Plan for the
+  landing page's sections, top to bottom, presenting CityTurfer as an honest early prototype that
+  recruits testers; a street-glow demo built from the Gdańsk demo data, audience, highlights,
+  comparison, status, FAQ and a tester call, in six slices
 - ✅ [`plans/sync-chain-testing-2026-10-22.md`](plans/sync-chain-testing-2026-10-22.md): How to test
   that the four apps stay one system — every scenario starts on the phone (the source of truth) or
   reaches it, and is checked in the API, the web portal and the admin portal as each is built today;

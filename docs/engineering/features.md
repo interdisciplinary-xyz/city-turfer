@@ -18,10 +18,11 @@ summary:
 # Features
 
 Every feature in the app, derived on `scope/v0.11.0` (the v0.10.0 release) and kept up to date
-since; v0.12.0 changed the app only in its sign-in wordmark, v0.13.0 so far the turf week (under
-Dashboard). Grouped by where a person meets it: the five tabs, the Me drawer, and the screens pushed
-from them; then what the server and the web portal add. Format adapted from empatalk's
-`FEATURES.md`.
+since; v0.12.0 changed the app only in its sign-in wordmark, v0.13.0 the turf week (under
+Dashboard), v0.14.0 so far the Districts screen (under Turf), the sign-in wordmark (Anton, one
+colour) and a lighter secondary text colour. Grouped by where a person meets it: the five tabs, the
+Me drawer, and the screens pushed from them; then what the server and the web portal add. Format
+adapted from empatalk's `FEATURES.md`.
 
 > **Derived from code on 2026-10-23.** Where this doc and the code disagree, the code wins. Don't
 > hand-edit counts; re-derive them:
@@ -39,7 +40,7 @@ from them; then what the server and the web portal add. Format adapted from empa
 > | SQLite schema         | `apps/mobile/src/platform/migrations.ts`                                 |
 
 Today: <!-- probe:achievements -->20<!-- /probe --> achievements,
-<!-- probe:e2e-flows -->17<!-- /probe --> Maestro flows,
+<!-- probe:e2e-flows -->18<!-- /probe --> Maestro flows,
 <!-- probe:migrations -->13<!-- /probe --> migrations.
 
 ## 1. Tabs
@@ -71,6 +72,14 @@ opens on Dashboard after sign-in.
   `turf-city` chip (⌂ city name) recentres on it, a long press opens the picker. Without a Home City
   it fits all tracks once, or follows the Turfer when there are none, and the `turf-pick-city` chip
   ("⌂ Your city") opens the picker. "⤢ All" (`turf-filter-all`) fits all tracks.
+- **Districts** (v0.14.0, #195; `turf-districts` chip, only when the Home City has district data:
+  `territory/infrastructure/district-cities.ts`; modal `apps/mobile/src/app/districts.tsx` →
+  `territory/ui/districts-view.tsx`): the Home City split into its OpenStreetMap districts on a dark
+  map with the turf, and a list with the km² of turf in each (cells whose centre lies in the
+  district: a first measure). Tap a row or a district on the map to fit the map to it and scroll to
+  its row. The OSM (ODbL) credit sits under the map. Boundaries are bundled
+  (`packages/core/src/districts/data`, from `apps/mobile/tools/gen-districts.mjs`); the screen still
+  says "not available yet" for a city without them. Plan: `docs/plans/districts-2026-10-29.md`.
 
 ### Record (`apps/mobile/src/app/(tabs)/record.tsx` → `recording/ui/record-view.tsx`)
 
@@ -195,9 +204,11 @@ The Me tab doesn't open a screen: it slides in a drawer from the right with **Pr
   (`/v1/turf/cells`, `/v1/turf/summary`, `/v1/activity-totals`). A parity golden keeps phone and
   server turf equal. Only for activities in the backup; nothing on the phone reads it yet.
 - **Web portal Slice 0** (`apps/web/src/app/[locale]/account/`): sign in on the website by e-mailed
-  code, or create an account from the site header (`/[locale]/account/register`); one page shows
-  what the server holds, the backup state, export, delete account and signed-in devices. One
-  `__Host-` session cookie through `/api/v1`; public pages stay cookie-free. Design:
+  code, or create an account at `/[locale]/account/register` (reached by URL: since v0.14.0, #191,
+  the site header no longer links sign-in or register); the portal is light like the website since
+  #198 (`docs/decisions/brand-light-website-2026-10-29.md`); one page shows what the server holds,
+  the backup state, export, delete account and signed-in devices. One `__Host-` session cookie
+  through `/api/v1`; public pages stay cookie-free. Design:
   `docs/decisions/web-portal-2026-10-22.md`.
 - **Web portal activity history** (v0.11.0, `apps/web/src/app/[locale]/account/(signed-in)/`): all
   backed-up activities with all-time totals, a type filter and a list by month; one activity's
