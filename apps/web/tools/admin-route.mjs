@@ -40,7 +40,8 @@ export function isAdminPath(url) {
 export function forwardHeaders(req, target) {
   // The admin gets Payload's own cookies (payload-token, payload-csrf, …) and nothing else: never
   // the portal's __Host-ct_session or any other site cookie, and never an Authorization header.
-  const { authorization: _authorization, cookie, ...rest } = req.headers;
+  const { cookie, ...rest } = req.headers;
+  delete rest.authorization;
   const payloadCookies = (cookie ?? '')
     .split(';')
     .map((part) => part.trim())
