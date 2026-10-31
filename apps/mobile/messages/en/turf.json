@@ -21,7 +21,7 @@
     "openLabel": "Show {city} by district",
     "summary": "{area} of turf in {withTurf} of {total} districts",
     "rowArea": "of {area}",
-    "rowLabel": "{name}, {coveredUnit, select, m2 {{coveredCount, plural, one {{covered} square metre} other {{covered} square metres}}} other {{coveredCount, plural, one {{covered} square kilometre} other {{covered} square kilometres}}}} of turf, district area {areaUnit, select, m2 {{areaCount, plural, one {{area} square metre} other {{area} square metres}}} other {{areaCount, plural, one {{area} square kilometre} other {{area} square kilometres}}}}",
+    "rowLabel": "{name}, {coveredUnit, select, m2 {{coveredCount, plural, one {{covered} square metre} other {{covered} square metres}}} other {{coveredCount, plural, one {{covered} square kilometre} other {{covered} square kilometres}}}} of turf, district area {areaUnit, select, m2 {{areaCount, plural, one {{area} square metre} other {{area} square metres}}} other {{areaCount, plural, one {{area} square kilometre} other {{area} square kilometres}}}}, {share} of the district",
     "selectHint": "Shows the district on the map. Tap again to see the whole city.",
     "noCity": "Choose your city to see its districts.",
     "noData": "Districts for {city} aren’t available yet.",

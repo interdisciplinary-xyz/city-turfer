@@ -1,6 +1,7 @@
 import { translator } from '@/i18n/translator';
 import { fixed } from '@/ui-kit/format';
 
+import { shareText } from '../district-share';
 import { spokenArea } from '../spoken-area';
 
 const summary = (locale: 'en' | 'pl', cells: number, strong: number) =>
@@ -45,19 +46,26 @@ describe('turf copy', () => {
         areaUnit: area.unit,
         areaCount: area.count,
         area: area.text,
+        share: shareText(coveredKm2 / areaKm2, locale),
       });
     };
-    expect(row('en', 0.42, 5.8)).toBe('Oliwa, 0.42 square kilometres of turf, district area 5.8 square kilometres');
-    expect(row('en', 1, 1)).toBe('Oliwa, 1 square kilometre of turf, district area 1 square kilometre');
-    expect(row('en', 0.0042, 3)).toBe('Oliwa, 4200 square metres of turf, district area 3 square kilometres');
+    expect(row('en', 0.42, 5.8)).toBe(
+      'Oliwa, 0.42 square kilometres of turf, district area 5.8 square kilometres, 7% of the district'
+    );
+    expect(row('en', 1, 1)).toBe(
+      'Oliwa, 1 square kilometre of turf, district area 1 square kilometre, 100% of the district'
+    );
+    expect(row('en', 0.0042, 3)).toBe(
+      'Oliwa, 4200 square metres of turf, district area 3 square kilometres, <1% of the district'
+    );
     expect(row('pl', 1, 2)).toBe(
-      'Oliwa, 1 kilometr kwadratowy terytorium, powierzchnia dzielnicy 2 kilometry kwadratowe'
+      'Oliwa, 1 kilometr kwadratowy terytorium, powierzchnia dzielnicy 2 kilometry kwadratowe, 50% dzielnicy'
     );
     expect(row('pl', 0, 5)).toBe(
-      'Oliwa, 0 metrów kwadratowych terytorium, powierzchnia dzielnicy 5 kilometrów kwadratowych'
+      'Oliwa, 0 metrów kwadratowych terytorium, powierzchnia dzielnicy 5 kilometrów kwadratowych, 0% dzielnicy'
     );
     expect(row('pl', 0.42, 12.5)).toBe(
-      'Oliwa, 0,42 kilometra kwadratowego terytorium, powierzchnia dzielnicy 12,5 kilometra kwadratowego'
+      'Oliwa, 0,42 kilometra kwadratowego terytorium, powierzchnia dzielnicy 12,5 kilometra kwadratowego, 3% dzielnicy'
     );
   });
 });
