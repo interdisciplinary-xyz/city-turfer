@@ -561,22 +561,31 @@ describe('performance', () => {
     await service.upload('admin', 'big', input(points), undefined);
     const uploadMs = performance.now() - t;
 
-    // The turf part alone: release + claim of the same activity in one locked transaction.
-    const timings = await h.store.write('admin', async (tx) => {
-      await tx.lock();
-      const turf = new TurfProjection({
-        repo: tx.turf,
-        grid: h.grid,
-        clock: h.clock,
-        storedTrack: (id) => tx.track(id),
-      });
-      let s = performance.now();
-      await turf.release('big');
-      const releaseMs = performance.now() - s;
-      s = performance.now();
-      await turf.claim({ id: 'big', type: 'walk', startedAt: points[0][2] }, points);
-      return { releaseMs, claimMs: performance.now() - s };
-    });
+    // The turf part alone: release + claim of the same activity in one locked transaction, three
+    // times; the median is pinned so one slow run on a busy CI runner does not fail the build.
+    const runs: { releaseMs: number; claimMs: number }[] = [];
+    for (let i = 0; i < 3; i++) {
+      runs.push(
+        await h.store.write('admin', async (tx) => {
+          await tx.lock();
+          const turf = new TurfProjection({
+            repo: tx.turf,
+            grid: h.grid,
+            clock: h.clock,
+            storedTrack: (id) => tx.track(id),
+          });
+          let s = performance.now();
+          await turf.release('big');
+          const releaseMs = performance.now() - s;
+          s = performance.now();
+          await turf.claim({ id: 'big', type: 'walk', startedAt: points[0][2] }, points);
+          return { releaseMs, claimMs: performance.now() - s };
+        })
+      );
+    }
+    const median = (xs: number[]) => [...xs].sort((x, y) => x - y)[Math.floor(xs.length / 2)];
+    const releaseMs = median(runs.map((r) => r.releaseMs));
+    const claimMs = median(runs.map((r) => r.claimMs));
     t = performance.now();
     const summary = await h.store.read('admin').turf.allCells();
     const allCellsMs = performance.now() - t;
@@ -587,15 +596,20 @@ describe('performance', () => {
         cells: cellCount,
         seedUploadMs: seeds,
         uploadMs: Math.round(uploadMs),
-        claimMs: Math.round(timings.claimMs),
-        releaseMs: Math.round(timings.releaseMs),
+        // Target from the plan: ~500 ms each on PGlite. Logged, not asserted.
+        targetMs: 500,
+        claimMs: Math.round(claimMs),
+        releaseMs: Math.round(releaseMs),
+        claimRunsMs: runs.map((r) => Math.round(r.claimMs)),
+        releaseRunsMs: runs.map((r) => Math.round(r.releaseMs)),
         allCellsMs: Math.round(allCellsMs),
         allCells: summary.length,
       })
     );
-    // Budget from the plan (~500 ms on PGlite); a generous ceiling keeps a busy CI runner green.
-    expect(timings.claimMs).toBeLessThan(1_500);
-    // The un-indexed `cells && …` overlap made the release take 6–39 s; without it, tens of ms.
-    expect(timings.releaseMs).toBeLessThan(3_000);
+    await expectConsistent();
+    // Ceilings, not targets: well above a busy CI runner's median, far below a regression (the
+    // un-indexed `cells && …` overlap in the release took 6–39 s here).
+    expect(claimMs).toBeLessThan(4_000);
+    expect(releaseMs).toBeLessThan(3_000);
   });
 });
