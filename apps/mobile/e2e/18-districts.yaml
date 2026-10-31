@@ -1,7 +1,10 @@
-# Districts: choose Gdańsk as the Home City, open Turf → Districts (modal), see the city's districts
-# with their turf, select the first row (map follows, row marked selected), close the modal. Rows are
-# found by testID, never by a district name or the sort order. The Home City is cleared again even
-# when an assertion fails (onFlowComplete), so later flows start without one.
+# Districts with turf: choose Warsaw as the Home City (run.sh puts the simulator there, so the demo
+# history lies in it), seed the demo history if this run has none yet (a full run seeds it in flow
+# 06), open Turf → Districts (modal) and check the covered state: a summary with districts holding
+# turf, a row with turf. Select the first row and clear it again, then tap the middle of the map and
+# check the district under it gets selected (the point-in-polygon tap). Rows are found by testID,
+# never by a district name or the sort order. The Home City is cleared again even when an assertion
+# fails (onFlowComplete), so later flows start without one.
 appId: com.turftrack.poc
 tags: [turf]
 onFlowComplete:
@@ -11,18 +14,48 @@ onFlowComplete:
 - tapOn: { id: 'tab-me' }
 - tapOn: { id: 'me-menu-city' }
 - tapOn: { id: 'city-search' }
-- inputText: 'gdansk'
-- tapOn: { id: 'city-pl-gdansk' }
+- inputText: 'warsaw'
+- tapOn: { id: 'city-pl-warsaw' }
 - extendedWaitUntil: { notVisible: { id: 'city-search' }, timeout: 5000 }
 - tapOn: { id: 'tab-turf' }
 - waitForAnimationToEnd
 - tapOn: { id: 'turf-districts' }
 - extendedWaitUntil: { visible: { id: 'districts-list' }, timeout: 10000 }
+# No turf in Warsaw yet (flow run on its own): seed the demo history, then open the modal again.
+- runFlow:
+    when: { visible: { id: 'districts-summary', text: '.* in 0 of .*' } }
+    commands:
+      - tapOn: { id: 'districts-close' }
+      - extendedWaitUntil: { notVisible: { id: 'districts-list' }, timeout: 5000 }
+      - tapOn: { id: 'tab-me' }
+      - tapOn: { id: 'me-menu-info' }
+      - scrollUntilVisible: { element: { id: 'seed-demo' } }
+      - tapOn: { id: 'seed-demo' }
+      - extendedWaitUntil: { visible: 'Demo history added', timeout: 240000 }
+      - tapOn: 'OK'
+      - runFlow: subflows/back.yaml
+      - tapOn: { id: 'tab-turf' }
+      - waitForAnimationToEnd
+      - tapOn: { id: 'turf-districts' }
+      - extendedWaitUntil: { visible: { id: 'districts-list' }, timeout: 10000 }
 - assertVisible: { id: 'districts-map' }
 - assertVisible: { id: 'districts-credit' }
-- assertVisible: { id: 'districts-summary' }
-# The first district row (row ids are `district-osm-r<relation>`; `-covered` ids don't match).
+# The covered state: some districts hold turf, and a row (sorted by turf) shows a non-zero area.
+- extendedWaitUntil:
+    visible: { id: 'districts-summary', text: '.* of turf in [1-9][0-9]* of [0-9]+ districts' }
+    timeout: 30000
+- assertVisible: { id: 'district-osm-r[0-9]+-covered', text: '[0-9.,]*[1-9][0-9.,]* k?m²' }
+- takeScreenshot: 18-districts-covered
+# Select the first row (row ids are `district-osm-r<relation>`; `-covered` ids don't match), then
+# tap it again to go back to the whole city.
 - tapOn: { id: 'district-osm-r[0-9]+', index: 0 }
+- waitForAnimationToEnd
+- assertVisible: { id: 'district-osm-r[0-9]+', selected: true }
+- tapOn: { id: 'district-osm-r[0-9]+', selected: true }
+- waitForAnimationToEnd
+- assertNotVisible: { id: 'district-osm-r[0-9]+', selected: true }
+# A tap on the map selects the district under it (the middle of the city lies in one).
+- tapOn: { id: 'districts-map' }
 - waitForAnimationToEnd
 - assertVisible: { id: 'district-osm-r[0-9]+', selected: true }
 - takeScreenshot: 18-districts
