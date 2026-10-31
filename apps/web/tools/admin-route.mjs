@@ -38,10 +38,19 @@ export function isAdminPath(url) {
  * exactly `http`, otherwise `https` (portless serves the site over TLS).
  */
 export function forwardHeaders(req, target) {
+  // The admin gets Payload's own cookies (payload-token, payload-csrf, …) and nothing else: never
+  // the portal's __Host-ct_session or any other site cookie, and never an Authorization header.
+  const { authorization: _authorization, cookie, ...rest } = req.headers;
+  const payloadCookies = (cookie ?? '')
+    .split(';')
+    .map((part) => part.trim())
+    .filter((part) => part.startsWith('payload-'))
+    .join('; ');
   const forwardedHost = req.headers['x-forwarded-host'];
   const host = req.headers.host || (Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost) || '';
   return {
-    ...req.headers,
+    ...rest,
+    ...(payloadCookies ? { cookie: payloadCookies } : {}),
     host: target.host,
     'x-forwarded-host': host,
     'x-forwarded-proto': req.headers['x-forwarded-proto'] === 'http' ? 'http' : 'https',

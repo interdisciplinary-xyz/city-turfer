@@ -127,6 +127,26 @@ test('x-forwarded-proto defaults to https and only accepts http or https; the ho
   assert.equal(headers({ 'x-forwarded-host': 'cityturfer.local' })['x-forwarded-host'], 'cityturfer.local');
 });
 
+test('forwards only payload-* cookies and never Authorization to the admin', () => {
+  const target = new URL('http://127.0.0.1:3100');
+  const h = forwardHeaders(
+    {
+      headers: {
+        host: 'cityturfer.local',
+        authorization: 'Bearer secret',
+        cookie: '__Host-ct_session=abc; payload-token=t1; other=x; payload-csrf=c1',
+        accept: 'text/html',
+      },
+    },
+    target
+  );
+  assert.equal(h.cookie, 'payload-token=t1; payload-csrf=c1');
+  assert.equal('authorization' in h, false);
+  assert.equal(h.accept, 'text/html');
+  const none = forwardHeaders({ headers: { host: 'cityturfer.local', cookie: '__Host-ct_session=abc' } }, target);
+  assert.equal('cookie' in none, false);
+});
+
 test('the dev server composition keeps /admin local-only, in front of the proxy', async () => {
   let reachedAdmin = false;
   const upstream = createServer((_req, res) => {
