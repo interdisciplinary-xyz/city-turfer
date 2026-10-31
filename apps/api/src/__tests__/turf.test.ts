@@ -15,6 +15,7 @@ import type { BackupStore, UserWriter } from '../backup/ports';
 import { toTrackPoints } from '../backup/summary';
 import { BackupService, type UploadInput } from '../backup/use-cases';
 import type { ApiLog } from '../deps';
+import { recomputedRows, textArray } from '../territory/drizzle-territory-repository';
 import { TurfProjection } from '../territory/projection';
 import { backupApp, closeSharedDb, TOKENS } from './support';
 
@@ -331,6 +332,46 @@ describe('turf on delete', () => {
     expect(await cellsOf()).toEqual([]);
   });
 
+  it('partial overlaps: recomputing only the released cells equals the old `&&`-filtered query', async () => {
+    await grant();
+    // A and B share half their cells; C is ~1 km away and shares none.
+    const a = line({ n: 40 });
+    const b = line({ n: 40, lon: 21.0122 + 20 * 1e-4, start: T0 + 3_600_000 });
+    const c = line({ n: 40, lat: 52.2397, start: T0 - 3_600_000 });
+    await putOk('a', body(a));
+    await putOk('b', body(b, { type: 'run' }));
+    await putOk('c', body(c, { type: 'cycle' }));
+    const aCells = (await claimOf('a'))!.cells;
+    const bCells = new Set((await claimOf('b'))!.cells);
+    expect(aCells.some((x) => bCells.has(x)) && aCells.some((x) => !bCells.has(x))).toBe(true);
+
+    // The query as it was before the `k.cells && only` pre-filter was dropped: the same rows.
+    type Row = { cell: string; walk: number; run: number; cycle: number; first_at: unknown; first_activity_id: string };
+    const only = textArray(aCells);
+    const legacy = await rows<Row>(sql`
+      SELECT c.cell,
+        count(*) FILTER (WHERE k.type = 'walk')::int AS walk,
+        count(*) FILTER (WHERE k.type = 'run')::int AS run,
+        count(*) FILTER (WHERE k.type = 'cycle')::int AS cycle,
+        min(k.claimed_at) AS first_at,
+        (array_agg(k.activity_id ORDER BY k.claimed_at, k.activity_id COLLATE "C"))[1] AS first_activity_id
+      FROM turf_claims k CROSS JOIN LATERAL unnest(k.cells) AS c(cell)
+      WHERE k.user_id = 'admin' AND k.cells && ${only}::text[] AND c.cell IN (SELECT unnest(${only}::text[]))
+      GROUP BY c.cell ORDER BY c.cell COLLATE "C"`);
+    const current = await rows<Row>(sql`
+      SELECT r.cell, r.walk, r.run, r.cycle, r.first_at, r.first_activity_id
+      FROM (${recomputedRows('admin', only)}) r ORDER BY r.cell COLLATE "C"`);
+    expect(legacy.length).toBe(aCells.length);
+    expect(current).toEqual(legacy);
+
+    const untouched = (await cellsOf()).filter((x) => !aCells.includes(x[0]));
+    expect((await h.call('DELETE', '/v1/activities/a')).status).toBe(204);
+    const after = await expectConsistent();
+    // Cells only A had are gone; B's and C's other cells are exactly as they were.
+    expect(after.filter((x) => !aCells.includes(x[0]))).toEqual(untouched);
+    expect(after.filter((x) => aCells.includes(x[0])).every((x) => x[5] === 'b' && x[2] === 1)).toBe(true);
+  });
+
   it('a delete of an unknown or already deleted id changes no turf', async () => {
     await grant();
     await putOk('a1', body(line({})));
@@ -554,5 +595,7 @@ describe('performance', () => {
     );
     // Budget from the plan (~500 ms on PGlite); a generous ceiling keeps a busy CI runner green.
     expect(timings.claimMs).toBeLessThan(1_500);
+    // The un-indexed `cells && …` overlap made the release take 6–39 s; without it, tens of ms.
+    expect(timings.releaseMs).toBeLessThan(3_000);
   });
 });
