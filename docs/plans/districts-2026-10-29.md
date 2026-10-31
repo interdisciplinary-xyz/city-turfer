@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-29
+verified: 2026-10-31
 owner: founder
 scope:
   [
@@ -20,7 +20,16 @@ summary:
 # Districts screen (plan)
 
 Status: **built in #195** (`feat/territory-districts`, merged into `scope/v0.14.0` on 2026-10-30,
-`ccaa8ea`), slices 1–4. Section 9 ("Later") is not built.
+`ccaa8ea`), slices 1–4. Section 9 ("Later") is not built. The release review then changed, in #205
+(`ed620b7`) and #204 (`1607339`):
+
+- `DistrictIndex` keeps its candidates and ring edges in flat typed arrays, and the index and the
+  bundled catalogue cache only the last city: about 11 MB → about 1 MB of heap per city (#205's
+  measurement);
+- `GetDistrictCoverage.execute({ isCurrent })` stops a read whose caller has moved on and rejects it
+  with `ReadSuperseded`; the screen's selection state is `districtSelectionReducer`
+  (`districts-selection.ts`); `use-districts.test.tsx` renders the hook (#204);
+- flow 18 now uses Warsaw (below).
 
 ## 1. What we are building
 
@@ -179,8 +188,10 @@ the turf rules and the phone, API and portal can all use it later.
 - **Use case** (`districts.test.ts`, in-memory repo and catalogue): no city, no data, cells assigned
   and summed, sorting, cells outside every district ignored.
 - **App**: `pnpm run typecheck`, lint, `arch`, Jest; `audit:i18n`.
-- **E2E**: Maestro flow `18-districts.yaml`: sign in as the demo account, Home City Gdańsk, Turf tab
-  → Districts → the list shows "Śródmieście" with turf > 0 → tap it → close.
+- **E2E**: Maestro flow `18-districts.yaml`: Home City Warsaw (Info › Seed demo history lays its
+  turf around the simulator's location, which is Warsaw), seeding the history when the districts
+  hold none; a non-zero summary and a covered top row, select and deselect a row, a tap on the map
+  centre selects a district, close (since #205; the first version used Gdańsk).
 - **Device check** (verify-change): iOS Simulator with the demo account (Gdańsk demo history):
   screenshots in English and Polish, VoiceOver labels, reduce motion (camera jumps, no flight).
 

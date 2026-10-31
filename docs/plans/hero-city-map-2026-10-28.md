@@ -1,21 +1,31 @@
 ---
-status: proposed
-verified: 2026-10-28
+status: canonical
+verified: 2026-10-31
 owner: founder
 scope: ['apps/web/src/app/[locale]', apps/web/src/app/globals.css, apps/web/tools, apps/web/public]
 summary:
   Plan for a street map of the visitor's city behind the landing-page hero, drawn at build time from
   OpenStreetMap and chosen in the browser from the time zone (opt-in precise pick later), with no
-  cookies, no API calls and no third-party requests
+  cookies, no API calls and no third-party requests; built in PR 200 (v0.14.0)
 ---
 
 # City map behind the hero (plan)
 
-Status: **built, not shipped** (2026-10-28, uncommitted on `scope/v0.14.0`), waiting for the
-founder's and the brand-designer's look; open questions were answered with the defaults under
-"Decisions taken". Rules: the `web-motion` skill (static export, privacy, en/pl, stories),
-`brand-system` and `brand-surfaces`. Owners: `web-engineer` (build), `brand-designer` (look and
-contrast sign-off).
+Status: **built in #200** (`feat/web-hero-city`, merged into `scope/v0.14.0` on 2026-10-31,
+`e261554`), v1 and the v2 "Near me" line, with the defaults under "Decisions taken". Still waiting
+for the brand-designer's look ("Still to do"). Two changes from the text below, made in #200 before
+the merge:
+
+- the city centres come from `hero-city/hero-cities.data.json`, written by
+  `gen-city-maps.mjs --data-only` from the catalogue, because public pages must not load
+  `@cityturfer/core` (dependency rule `marketing-not-core`); "Near me" has its own `distanceM` in
+  `pick-city.ts`, which `hero-city.test.ts` pins to core's;
+- the water and street layers are paler and the city line sits on the page colour, so grey and pink
+  text keep 4.5:1 over either layer, dipping to about 4.3:1 only where a street crosses water (per
+  the PR).
+
+Rules: the `web-motion` skill (static export, privacy, en/pl, stories), `brand-system` and
+`brand-surfaces`. Owners: `web-engineer` (build), `brand-designer` (look and contrast sign-off).
 
 ## Goal
 
@@ -112,21 +122,21 @@ the end of the city line under the hero. Keys under `hero.map` in `apps/web/mess
 
 ## Files
 
-| File                                                                           | What                                 |
-| ------------------------------------------------------------------------------ | ------------------------------------ |
-| `apps/web/tools/gen-city-maps.mjs` (+ `__tests__/gen-city-maps.test.mjs`)      | generator, geometry tests            |
-| `apps/web/public/city-maps/`                                                   | committed masks, two per city        |
-| `apps/web/src/app/[locale]/hero-city/hero-city.constants.ts`                   | city ids, time zones, boot script    |
-| `apps/web/src/app/[locale]/hero-city/pick-city.ts`                             | time zone → city, nearest city       |
-| `apps/web/src/app/[locale]/hero-city/city-options.ts`                          | centres from the catalogue (server)  |
-| `apps/web/src/app/[locale]/hero-city/hero-city.tsx`, `.css`                    | map layer and the city line          |
-| `apps/web/src/app/[locale]/hero-city/hero-map-picker.tsx`                      | client: select, Near me, credit      |
-| `apps/web/src/app/[locale]/hero-city/hero-city.test.ts`                        | rules, files, budget, copy           |
-| `apps/web/src/app/[locale]/page.tsx`                                           | `HeroMotion` is the `.hero` now      |
-| `apps/web/src/app/[locale]/hero-motion/hero-motion.tsx`                        | map fade-in and pointer drift        |
-| `apps/web/messages/en.json`, `pl.json`                                         | `hero.map.*`                         |
-| `apps/web/e2e/landing.spec.ts`                                                 | time zones, one city loaded, Near me |
-| `apps/storybook/src/stories/website/hero-city.stories.tsx`, `hero.stories.tsx` | stories                              |
+| File                                                                           | What                                   |
+| ------------------------------------------------------------------------------ | -------------------------------------- |
+| `apps/web/tools/gen-city-maps.mjs` (+ `__tests__/gen-city-maps.test.mjs`)      | generator, geometry tests              |
+| `apps/web/public/city-maps/`                                                   | committed masks, two per city          |
+| `apps/web/src/app/[locale]/hero-city/hero-city.constants.ts`                   | city ids, time zones, boot script      |
+| `apps/web/src/app/[locale]/hero-city/pick-city.ts`                             | time zone → city, nearest city         |
+| `apps/web/src/app/[locale]/hero-city/city-options.ts`, `hero-cities.data.json` | centres (generated from the catalogue) |
+| `apps/web/src/app/[locale]/hero-city/hero-city.tsx`, `.css`                    | map layer and the city line            |
+| `apps/web/src/app/[locale]/hero-city/hero-map-picker.tsx`                      | client: select, Near me, credit        |
+| `apps/web/src/app/[locale]/hero-city/hero-city.test.ts`                        | rules, files, budget, copy             |
+| `apps/web/src/app/[locale]/page.tsx`                                           | `HeroMotion` is the `.hero` now        |
+| `apps/web/src/app/[locale]/hero-motion/hero-motion.tsx`                        | map fade-in and pointer drift          |
+| `apps/web/messages/en.json`, `pl.json`                                         | `hero.map.*`                           |
+| `apps/web/e2e/landing.spec.ts`                                                 | time zones, one city loaded, Near me   |
+| `apps/storybook/src/stories/website/hero-city.stories.tsx`, `hero.stories.tsx` | stories                                |
 
 ## Acceptance criteria
 
@@ -155,3 +165,4 @@ the end of the city line under the hero. Keys under `hero.map` in `apps/web/mess
 - Brand-designer look and contrast check (acceptance 5) and a real-browser look at the motion.
 - Lighthouse comparison for LCP/CLS (acceptance 4).
 - The phones' Turf Map prototype still shows Warsaw district names over a Gdańsk background.
+- Move this plan to the archive once v0.14.0 is on `main`.
