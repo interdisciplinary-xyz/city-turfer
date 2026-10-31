@@ -25,7 +25,7 @@
     "selectHint": "Pokazuje dzielnicę na mapie. Stuknij ponownie, aby zobaczyć całe miasto.",
     "noCity": "Wybierz swoje miasto, aby zobaczyć jego dzielnice.",
     "noData": "Dzielnice miasta {city} nie są jeszcze dostępne.",
-    "noTurf": "Nagraj spacer, bieg albo przejażdżkę w mieście {city}, a jego dzielnice rozbłysną Twoim terytorium.",
+    "noTurf": "Nagraj spacer, bieg albo przejażdżkę w mieście {city}, a jego dzielnice rozświetlą się Twoim terytorium.",
     "credit": "Granice dzielnic © autorzy OpenStreetMap (ODbL)",
     "creditHint": "Otwiera stronę OpenStreetMap o prawach autorskich i licencji",
     "mapLabel": "Mapa miasta {city} z podziałem na dzielnice",

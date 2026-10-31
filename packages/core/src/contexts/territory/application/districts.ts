@@ -24,34 +24,61 @@ const nextTick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 /** What never changes for a city's districts, built once per catalogue answer. */
 interface Prepared {
+  districts: readonly District[];
   index: DistrictIndex;
   bounds: [number, number, number, number];
   areaKm2: number[];
 }
-const prepared = new WeakMap<readonly District[], Prepared>();
+/**
+ * Only the last city's (an LRU of one): the screen reads the Home City again and again, and a city
+ * left behind frees its index (about 1 MB) instead of holding it for the life of the app.
+ */
+let prepared: Prepared | null = null;
 
 function prepare(districts: readonly District[]): Prepared {
-  let p = prepared.get(districts);
-  if (!p) {
-    p = {
+  if (prepared?.districts !== districts) {
+    prepared = {
+      districts,
       index: new DistrictIndex(districts),
       bounds: [...boundsOf(districts.flatMap((x) => x.polygons.map((q) => q[0])))] as [number, number, number, number],
       areaKm2: districts.map((x) => districtAreaM2(x) / 1e6),
     };
-    prepared.set(districts, p);
   }
-  return p;
+  return prepared;
+}
+
+export interface DistrictCoverageOptions {
+  /**
+   * Whether the caller still wants this answer (false once a newer read has started or the screen
+   * has gone). Asked after the cells are loaded and at every yield; on false the read stops and
+   * rejects with ReadSuperseded, so a burst of re-reads never holds more than one scan's cells.
+   */
+  isCurrent?: () => boolean;
+}
+
+/** A read stopped because its caller no longer wanted the answer (not a failure to show). */
+export class ReadSuperseded extends Error {
+  constructor() {
+    super('district read superseded');
+    this.name = 'ReadSuperseded';
+  }
 }
 
 /**
  * The Home City split into districts, with the turf held in each: the area of the Turfer's cells
  * whose centre lies in the district. Each cell counts in one district at most. The districts' index
  * and areas are built once per city; the cells are handled in chunks of DISTRICT_CHUNK with a yield
- * between them, so a history of tens of thousands of cells never blocks the UI in one go.
+ * between them, so a history of tens of thousands of cells never blocks the UI in one go. A read
+ * whose caller has moved on (`isCurrent`) stops early, so superseded reads don't pile up.
  */
 export class GetDistrictCoverage {
   constructor(private readonly d: DistrictsDeps) {}
-  async execute(): Promise<DistrictsView> {
+  async execute(opts: DistrictCoverageOptions = {}): Promise<DistrictsView> {
+    const stillWanted = () => {
+      if (opts.isCurrent && !opts.isCurrent()) {
+        throw new ReadSuperseded();
+      }
+    };
     const id = await this.d.homeCities.homeCityId();
     const city = id ? cityById(id) : null;
     if (!city) {
@@ -63,13 +90,16 @@ export class GetDistrictCoverage {
       return { status: 'no-data', city: cityView };
     }
     const { index, bounds: all, areaKm2 } = prepare(districts);
+    stillWanted();
     const cells = await this.d.repo.cellsIn(all, ACTIVITY_TYPES);
+    stillWanted();
     const covered = new Array<number>(districts.length).fill(0);
     const counts = new Array<number>(districts.length).fill(0);
     const pause = this.d.yieldToUi ?? nextTick;
     for (let k = 0; k < cells.length; k++) {
       if (k > 0 && k % DISTRICT_CHUNK === 0) {
         await pause();
+        stillWanted();
       }
       const i = index.locate(cells[k].lon, cells[k].lat);
       if (i >= 0) {

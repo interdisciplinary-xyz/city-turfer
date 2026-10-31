@@ -11,6 +11,7 @@ import {
   districtAreaM2,
   districtBounds,
   districtContains,
+  DistrictIndex,
   type Ring,
   signedRingAreaM2,
 } from '../../contexts/territory/domain/district';
@@ -252,6 +253,29 @@ describe('bundled districts', () => {
       expect(faults.overlaps).toBe(0);
       expect(faults.gaps / faults.edges).toBeLessThanOrEqual(MAX_GAP_RATE);
       expect(crossingEdges(districts.flatMap((d) => d.polygons.flat()))).toBe(0);
+    });
+
+    it('the index answers exactly what testing every district in order answers', () => {
+      const index = new DistrictIndex(districts);
+      const [w, s, e, n] = districtBounds({ ...districts[0], polygons: districts.flatMap((d) => d.polygons) });
+      // Random points over the city's box, and points a few metres off every 7th border vertex.
+      const points: [number, number][] = [];
+      let seed = 11;
+      const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+      for (let k = 0; k < 3000; k++) {
+        points.push([w + rand() * (e - w), s + rand() * (n - s)]);
+      }
+      for (const d of districts) {
+        for (const ring of d.polygons.flat()) {
+          for (let v = 0; v < ring.length; v += 7) {
+            points.push([ring[v][0] + (rand() - 0.5) * 1e-4, ring[v][1] + (rand() - 0.5) * 1e-4]);
+          }
+        }
+      }
+      const mismatches = points.filter(
+        ([lon, lat]) => index.locate(lon, lat) !== districts.findIndex((d) => districtContains(d, lon, lat))
+      );
+      expect(mismatches).toEqual([]);
     });
   });
 

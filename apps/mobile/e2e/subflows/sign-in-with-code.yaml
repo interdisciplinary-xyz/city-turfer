@@ -10,9 +10,9 @@ appId: com.turftrack.poc
 - extendedWaitUntil: { visible: { id: 'sign-in-code' }, timeout: 15000 }
 - tapOn: { id: 'sign-in-code' }
 - inputText: ${AUTH_FIXED_CODE}
-# The number pad has no Go key: hide it and tap Sign in.
-- hideKeyboard
-- tapOn: { id: 'sign-in-verify' }
+# Submit with Enter (the field's onSubmitEditing, as Sign in does): the number pad has no Go key, and
+# `hideKeyboard` fails on it on the iOS 26 simulator (docs/quality/e2e.md, CP-12).
+- pressKey: Enter
 # A phone with history asks whether the account may use it; keep it apart. A fresh phone goes straight in.
 - extendedWaitUntil: { visible: 'Keep apart|Hello, .*', timeout: 20000 }
 - runFlow:

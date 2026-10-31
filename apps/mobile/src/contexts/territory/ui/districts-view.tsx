@@ -1,6 +1,6 @@
 import { DISPLAY_CASE, DISPLAY_TRACKING, FONT_SIZE, FONT_WEIGHT, RADIUS, SPACE } from '@cityturfer/brand';
 import { Camera, type CameraRef, GeoJSONSource, Layer, Map, type PressEvent } from '@maplibre/maplibre-react-native';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   ActivityIndicator,
@@ -27,6 +27,8 @@ import { usePalette } from '@/ui-kit/theme';
 
 import type { DistrictCoverageView } from '../contract';
 import { districtAt } from './district-at';
+import { districtItemLayout, districtRowHeight, districtSelectionReducer } from './districts-selection';
+import { NO_DISTRICT_SELECTED } from './districts-selection.constants';
 import {
   CREDIT_HIT_SLOP,
   DISTRICT_FILL,
@@ -66,38 +68,28 @@ export function DistrictsView({ onPickCity }: DistrictsViewProps) {
   const view = useDistricts();
   const insets = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
-  const [selected, setSelected] = useState<string | null>(null);
-  const selectedRef = useRef<string | null>(null);
-  selectedRef.current = selected;
+  const [{ selected, scrollTo }, dispatch] = useReducer(districtSelectionReducer, NO_DISTRICT_SELECTED);
   const list = useRef<FlatList<DistrictCoverageView>>(null);
   const [headerHeight, setHeaderHeight] = useState(0);
 
   const districts = view?.status === 'ready' ? view.districts : NO_DISTRICTS;
   // Fixed rows (two lines of the name at the current text size), so `scrollToIndex` reaches any row.
-  const rowHeight = Math.ceil(
-    2 * (DISTRICT_ROW.border + DISTRICT_ROW.paddingVertical) + 2 * DISTRICT_ROW.nameLine * Math.max(1, fontScale)
-  );
-  const slot = rowHeight + DISTRICT_ROW.gap;
+  const rowHeight = districtRowHeight(fontScale);
   const getItemLayout = useCallback(
-    (_: unknown, index: number) => ({ length: slot, offset: SPACE.md + headerHeight + slot * index, index }),
-    [slot, headerHeight]
+    (_: unknown, index: number) => districtItemLayout(index, rowHeight, headerHeight),
+    [rowHeight, headerHeight]
   );
 
-  const toggle = useCallback((id: string) => setSelected((cur) => (cur === id ? null : id)), []);
+  const toggle = useCallback((id: string) => dispatch({ type: 'toggle-row', id }), []);
   // A district tapped on the map: select it and bring its row into view.
-  const selectFromMap = useCallback(
-    (id: string) => {
-      const next = selectedRef.current === id ? null : id;
-      setSelected(next);
-      const index = next ? districts.findIndex((d) => d.id === next) : -1;
-      if (index >= 0) {
-        void AccessibilityInfo.isReduceMotionEnabled().then((reduce) =>
-          list.current?.scrollToIndex({ index, viewPosition: 0.5, animated: !reduce })
-        );
-      }
-    },
-    [districts]
-  );
+  const selectFromMap = useCallback((id: string) => dispatch({ type: 'tap-map', id, districts }), [districts]);
+  useEffect(() => {
+    if (scrollTo) {
+      void AccessibilityInfo.isReduceMotionEnabled().then((reduce) =>
+        list.current?.scrollToIndex({ index: scrollTo.index, viewPosition: 0.5, animated: !reduce })
+      );
+    }
+  }, [scrollTo]);
   const renderItem = useCallback<ListRenderItem<DistrictCoverageView>>(
     ({ item }) => <DistrictRow district={item} selected={item.id === selected} onToggle={toggle} height={rowHeight} />,
     [selected, toggle, rowHeight]

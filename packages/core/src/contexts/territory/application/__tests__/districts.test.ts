@@ -4,7 +4,7 @@ import type { District, Ring } from '../../domain/district';
 import type { DistrictCatalog } from '../../domain/district-catalog';
 import type { HomeCityRepository } from '../../domain/home-city-repository';
 import type { CellRow, TerritoryRepository } from '../../domain/territory-repository';
-import { DISTRICT_CHUNK, GetDistrictCoverage } from '../districts';
+import { DISTRICT_CHUNK, GetDistrictCoverage, ReadSuperseded } from '../districts';
 
 const square = (lon: number, lat: number, size: number): Ring => [
   [lon, lat],
@@ -115,6 +115,77 @@ describe('GetDistrictCoverage', () => {
       ['Zachód', DISTRICT_CHUNK + 3],
       ['Wschód', DISTRICT_CHUNK + 2],
     ]);
+  });
+
+  describe('a superseded read (isCurrent)', () => {
+    const rows = Array.from({ length: DISTRICT_CHUNK * 3 }, (_, k) => row(`c${k}`, 18.61, 54.31));
+    const deps = (onCellsIn: () => void, onYield: () => void) => ({
+      repo: {
+        cellsIn: async () => {
+          onCellsIn();
+          return rows;
+        },
+      } as unknown as TerritoryRepository,
+      grid: { areaM2: () => CELL_M2 } as unknown as CellGrid,
+      homeCities: { homeCityId: async () => 'pl-gdansk' } as unknown as HomeCityRepository,
+      districts: { districtsOf: () => DISTRICTS } as DistrictCatalog,
+      yieldToUi: async () => onYield(),
+    });
+
+    it('stops before loading the cells when it is already stale', async () => {
+      let loads = 0;
+      const uc = new GetDistrictCoverage(
+        deps(
+          () => loads++,
+          () => undefined
+        )
+      );
+      await expect(uc.execute({ isCurrent: () => false })).rejects.toBeInstanceOf(ReadSuperseded);
+      expect(loads).toBe(0);
+    });
+
+    it('stops right after loading the cells when superseded meanwhile, before any chunk', async () => {
+      let current = true;
+      let yields = 0;
+      const uc = new GetDistrictCoverage(
+        deps(
+          () => (current = false),
+          () => yields++
+        )
+      );
+      await expect(uc.execute({ isCurrent: () => current })).rejects.toBeInstanceOf(ReadSuperseded);
+      expect(yields).toBe(0);
+    });
+
+    it('stops at the next yield when superseded mid-scan, and runs no further chunk', async () => {
+      let current = true;
+      let yields = 0;
+      const uc = new GetDistrictCoverage(
+        deps(
+          () => undefined,
+          () => {
+            yields++;
+            current = false;
+          }
+        )
+      );
+      await expect(uc.execute({ isCurrent: () => current })).rejects.toThrow('district read superseded');
+      expect(yields).toBe(1);
+    });
+
+    it('a read still wanted answers as without the option', async () => {
+      const uc = new GetDistrictCoverage(
+        deps(
+          () => undefined,
+          () => undefined
+        )
+      );
+      const r = await uc.execute({ isCurrent: () => true });
+      expect(r.status === 'ready' && r.districts.map((d) => [d.name, d.cellCount])).toEqual([
+        ['Zachód', DISTRICT_CHUNK * 3],
+        ['Wschód', 0],
+      ]);
+    });
   });
 
   it('rejects when the district catalogue fails, so the screen can show its failed state', async () => {

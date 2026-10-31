@@ -20,8 +20,11 @@ export function districtsFromFile(file: DistrictFile): District[] {
   }));
 }
 
-/** Loaded and converted once per city, on first use. */
-const cache = new Map<string, readonly District[]>();
+/**
+ * The last city read, converted once: the screen reads one city (the Home City) again and again, and
+ * an earlier city's districts (and the index built on them) can be freed once another is read.
+ */
+let last: { cityId: string; districts: readonly District[] } | null = null;
 
 export const bundledDistricts: DistrictCatalog = {
   districtsOf(cityId) {
@@ -29,11 +32,9 @@ export const bundledDistricts: DistrictCatalog = {
     if (!load) {
       return [];
     }
-    let districts = cache.get(cityId);
-    if (!districts) {
-      districts = districtsFromFile(load());
-      cache.set(cityId, districts);
+    if (last?.cityId !== cityId) {
+      last = { cityId, districts: districtsFromFile(load()) };
     }
-    return districts;
+    return last.districts;
   },
 };
