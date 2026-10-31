@@ -4,8 +4,9 @@
     "typecheck": { "dependsOn": ["^typecheck"], "outputs": [] },
     "lint": { "outputs": [] },
     "arch": { "outputs": [] },
-    "test:unit": { "outputs": [], "env": ["PAYLOAD_TEST_DATABASE_URL"] },
+    "test:unit": { "dependsOn": ["^typecheck"], "outputs": [], "env": ["PAYLOAD_TEST_DATABASE_URL"] },
     "@cityturfer/web#test:unit": {
+      "dependsOn": ["^typecheck"],
       "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/apps/api/openapi.json", "$TURBO_ROOT$/packages/core/src/**"],
       "outputs": []
     },
