@@ -122,23 +122,37 @@ describe('readDistricts (useDistricts)', () => {
     expect(s.get()).toBe(next);
   });
 
+  it('tells the use case the read is current until the effect cleanup cancels it', async () => {
+    const s = state(undefined);
+    let isCurrent: () => boolean = () => true;
+    const cancel = readDistricts((current) => {
+      isCurrent = current;
+      return new Promise<DistrictsView>(() => undefined);
+    }, s.set);
+    await flush();
+    expect(isCurrent()).toBe(true);
+    cancel();
+    expect(isCurrent()).toBe(false);
+  });
+
+  it('a read the use case stops as superseded changes nothing', async () => {
+    const s = state(ready);
+    const cancel = readDistricts(
+      (current) =>
+        new Promise<DistrictsView>((_, reject) => setTimeout(() => !current() && reject(new Error('superseded')), 0)),
+      s.set
+    );
+    cancel();
+    await flush();
+    await flush();
+    expect(s.get()).toBe(ready);
+  });
+
   it('a read cancelled by the effect cleanup changes nothing', async () => {
     const s = state(undefined);
     const cancel = readDistricts(() => Promise.resolve(ready), s.set);
     cancel();
     await flush();
     expect(s.get()).toBeUndefined();
-  });
-  it('the cancel aborts the signal the use case was given, so its scan stops early', async () => {
-    const s = state(undefined);
-    let given: { readonly aborted: boolean } | undefined;
-    const cancel = readDistricts((signal) => {
-      given = signal;
-      return Promise.resolve(ready);
-    }, s.set);
-    await flush();
-    expect(given?.aborted).toBe(false);
-    cancel();
-    expect(given?.aborted).toBe(true);
   });
 });

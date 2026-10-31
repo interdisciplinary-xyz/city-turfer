@@ -14,6 +14,26 @@
     "taglineLead": "Surfuj po mieście.",
     "taglineRamp": "Ulice są Twoje.",
     "lede": "Spacery, bieganie albo jazda na rowerze, solo lub z psem — każda ulica, którą pokonasz, staje się Twoim terytorium. Wracaj i patrz, jak świeci coraz jaśniej.",
+    "map": {
+      "streetsOf": "Ulice:",
+      "chooseCity": "Miasto na mapie",
+      "nearMe": "W pobliżu",
+      "locating": "Szukamy Twojego miasta…",
+      "tooFar": "Nie mamy jeszcze mapy w Twojej okolicy, więc zostaje ta. Kolejne miasta w drodze.",
+      "unavailable": "Lokalizacja jest niedostępna. Wybierz miasto z listy.",
+      "credit": "© współtwórcy OpenStreetMap",
+      "cities": {
+        "pl-gdansk": "Gdańsk",
+        "pl-warsaw": "Warszawa",
+        "pl-krakow": "Kraków",
+        "pl-wroclaw": "Wrocław",
+        "pl-poznan": "Poznań",
+        "de-berlin": "Berlin",
+        "gb-london": "Londyn",
+        "cz-prague": "Praga",
+        "lt-vilnius": "Wilno"
+      }
+    },
     "badge": "Wczesny prototyp",
     "audience": "Dla każdego, kto chodzi, biega albo jeździ po swoim mieście i wciąż do niego wraca."
   },
@@ -42,7 +62,7 @@
         "area": "{area} km²",
         "summary": "{cellCount, plural, one {{cells} komórka} few {{cells} komórki} many {{cells} komórek} other {{cells} komórki}} · {strongCount, plural, one {{strong} mocna} few {{strong} mocne} many {{strong} mocnych} other {{strong} mocnej}} · +{week} km² w tym tygodniu",
         "all": "Wszystko",
-        "city": "WARSZAWA"
+        "city": "Warszawa"
       },
       "dashboard": {
         "greeting": "Cześć, {name}",
@@ -145,7 +165,7 @@
       "eyebrow": "Dla kogo",
       "title": "Spaceruj. Biegaj. Jeźdź.",
       "walk": "Do pracy, z psem, dłuższą drogą do domu.",
-      "run": "Znana pętla i zakręt, w który jeszcze nie skręcasz.",
+      "run": "Znana pętla i ulica, w którą jeszcze nie skręcasz.",
       "cycle": "Niedzielne przejażdżki, które powoli wypełniają mapę.",
       "notFor": "Nie dla Ciebie, jeśli szukasz rankingów, drużyn albo stref treningowych. CityTurfer to Ty i Twoje ulice."
     },
@@ -162,7 +182,7 @@
         "body": "Mapa i statystyki na żywo, autopauza, przytrzymaj, by zakończyć. Zablokuj telefon i ruszaj dalej."
       },
       "health": {
-        "title": "Spacery z Apple Health też się liczą",
+        "title": "Twoja historia z Apple Health też się liczy",
         "body": "Zaimportuj dawne spacery, biegi i przejażdżki z trasami z Apple Health, a od pierwszego dnia staną się terytorium."
       },
       "achievements": {
@@ -171,7 +191,7 @@
       },
       "city": {
         "title": "Zaczyna się w Twoim mieście",
-        "body": "Wybierz swoje miasto z listy, a mapa otworzy się właśnie tam. Po polsku i po angielsku."
+        "body": "Wybierz swoje miasto z listy, a mapa otworzy się właśnie tam."
       }
     },
     "differs": {
@@ -236,7 +256,7 @@
       },
       "data": {
         "q": "Czy mogę usunąć swoje dane?",
-        "a": "Aktywności są na Twoim telefonie, więc usunięcie ich tam je kasuje. Kopia w chmurze jest wyłączona, dopóki jej nie włączysz, a jej wyłączenie usuwa naszą kopię."
+        "a": "Aktywności są na Twoim telefonie: usuń je tam, a znikną. Kopia w chmurze jest wyłączona, dopóki jej nie włączysz, a gdy ją wyłączysz, usuniemy naszą kopię."
       },
       "android": {
         "q": "Czy jest wersja na Androida?",

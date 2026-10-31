@@ -14,6 +14,26 @@
     "taglineLead": "Surf your city.",
     "taglineRamp": "Own your streets.",
     "lede": "Walk, run or ride — every street you cover becomes your turf. Come back and watch it glow.",
+    "map": {
+      "streetsOf": "Streets of",
+      "chooseCity": "City on the map",
+      "nearMe": "Near me",
+      "locating": "Finding your city…",
+      "tooFar": "No map near you yet, so this one stays. More cities are coming.",
+      "unavailable": "Location isn’t available. Pick a city from the list.",
+      "credit": "© OpenStreetMap contributors",
+      "cities": {
+        "pl-gdansk": "Gdańsk",
+        "pl-warsaw": "Warsaw",
+        "pl-krakow": "Kraków",
+        "pl-wroclaw": "Wrocław",
+        "pl-poznan": "Poznań",
+        "de-berlin": "Berlin",
+        "gb-london": "London",
+        "cz-prague": "Prague",
+        "lt-vilnius": "Vilnius"
+      }
+    },
     "badge": "Early prototype",
     "audience": "For anyone who walks, runs or rides their city, and keeps coming back."
   },
@@ -42,7 +62,7 @@
         "area": "{area} km²",
         "summary": "{cellCount, plural, one {{cells} cell} other {{cells} cells}} · {strongCount, plural, one {{strong} strong} other {{strong} strong}} · +{week} km² this week",
         "all": "All",
-        "city": "WARSAW"
+        "city": "Warsaw"
       },
       "dashboard": {
         "greeting": "Hello, {name}",
@@ -162,7 +182,7 @@
         "body": "Live map and stats, auto-pause, hold to finish. Lock the phone and keep going."
       },
       "health": {
-        "title": "Your Apple Health walks count",
+        "title": "Your Apple Health history counts",
         "body": "Import past walks, runs and rides with their routes from Apple Health, and they become turf on day one."
       },
       "achievements": {
@@ -171,7 +191,7 @@
       },
       "city": {
         "title": "Starts in your city",
-        "body": "Pick your home city from the list and the map opens there. In English and Polish."
+        "body": "Pick your home city from the list and the map opens there."
       }
     },
     "differs": {

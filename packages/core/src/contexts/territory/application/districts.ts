@@ -24,48 +24,43 @@ const nextTick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 /** What never changes for a city's districts, built once per catalogue answer. */
 interface Prepared {
+  districts: readonly District[];
   index: DistrictIndex;
   bounds: [number, number, number, number];
   areaKm2: number[];
 }
-/** Only the last city's: a change of Home City lets the old index go. */
-let last: { districts: readonly District[]; prepared: Prepared } | null = null;
+/**
+ * Only the last city's (an LRU of one): the screen reads the Home City again and again, and a city
+ * left behind frees its index (about 1 MB) instead of holding it for the life of the app.
+ */
+let prepared: Prepared | null = null;
 
 function prepare(districts: readonly District[]): Prepared {
-  if (last?.districts !== districts) {
-    last = {
+  if (prepared?.districts !== districts) {
+    prepared = {
       districts,
-      prepared: {
-        index: new DistrictIndex(districts),
-        bounds: [...boundsOf(districts.flatMap((x) => x.polygons.map((q) => q[0])))] as [
-          number,
-          number,
-          number,
-          number,
-        ],
-        areaKm2: districts.map((x) => districtAreaM2(x) / 1e6),
-      },
+      index: new DistrictIndex(districts),
+      bounds: [...boundsOf(districts.flatMap((x) => x.polygons.map((q) => q[0])))] as [number, number, number, number],
+      areaKm2: districts.map((x) => districtAreaM2(x) / 1e6),
     };
   }
-  return last.prepared;
+  return prepared;
 }
 
-/** Tells a read it is no longer wanted (an AbortSignal fits). */
-export interface ReadSignal {
-  readonly aborted: boolean;
+export interface DistrictCoverageOptions {
+  /**
+   * Whether the caller still wants this answer (false once a newer read has started or the screen
+   * has gone). Asked after the cells are loaded and at every yield; on false the read stops and
+   * rejects with ReadSuperseded, so a burst of re-reads never holds more than one scan's cells.
+   */
+  isCurrent?: () => boolean;
 }
 
-/** Thrown by a read whose signal was aborted: a newer read replaced it. */
-export class DistrictsReadSuperseded extends Error {
+/** A read stopped because its caller no longer wanted the answer (not a failure to show). */
+export class ReadSuperseded extends Error {
   constructor() {
-    super('Districts read superseded');
-    this.name = 'DistrictsReadSuperseded';
-  }
-}
-
-function stopIfAborted(signal: ReadSignal | undefined): void {
-  if (signal?.aborted) {
-    throw new DistrictsReadSuperseded();
+    super('district read superseded');
+    this.name = 'ReadSuperseded';
   }
 }
 
@@ -74,14 +69,17 @@ function stopIfAborted(signal: ReadSignal | undefined): void {
  * whose centre lies in the district. Each cell counts in one district at most. The districts' index
  * and areas are built once per city; the cells are handled in chunks of DISTRICT_CHUNK with a yield
  * between them, so a history of tens of thousands of cells never blocks the UI in one go. A read
- * whose `signal` is aborted stops at the next step (after the cell query, at each yield) and throws
- * DistrictsReadSuperseded, so a burst of saves never leaves several full scans running.
+ * whose caller has moved on (`isCurrent`) stops early, so superseded reads don't pile up.
  */
 export class GetDistrictCoverage {
   constructor(private readonly d: DistrictsDeps) {}
-  async execute(signal?: ReadSignal): Promise<DistrictsView> {
+  async execute(opts: DistrictCoverageOptions = {}): Promise<DistrictsView> {
+    const stillWanted = () => {
+      if (opts.isCurrent && !opts.isCurrent()) {
+        throw new ReadSuperseded();
+      }
+    };
     const id = await this.d.homeCities.homeCityId();
-    stopIfAborted(signal);
     const city = id ? cityById(id) : null;
     if (!city) {
       return { status: 'no-city' };
@@ -92,15 +90,16 @@ export class GetDistrictCoverage {
       return { status: 'no-data', city: cityView };
     }
     const { index, bounds: all, areaKm2 } = prepare(districts);
+    stillWanted();
     const cells = await this.d.repo.cellsIn(all, ACTIVITY_TYPES);
-    stopIfAborted(signal);
+    stillWanted();
     const covered = new Array<number>(districts.length).fill(0);
     const counts = new Array<number>(districts.length).fill(0);
     const pause = this.d.yieldToUi ?? nextTick;
     for (let k = 0; k < cells.length; k++) {
       if (k > 0 && k % DISTRICT_CHUNK === 0) {
         await pause();
-        stopIfAborted(signal);
+        stillWanted();
       }
       const i = index.locate(cells[k].lon, cells[k].lat);
       if (i >= 0) {

@@ -1,9 +1,14 @@
-# Sign out returns to the sign-in screen.
+# Sign out returns to the sign-in screen. Runs last, and on its own too: signed out already (run
+# alone, or after a flow that ended signed out), it signs in to the admin profile first.
 appId: com.turftrack.poc
 tags: [auth]
 ---
 - runFlow: subflows/launch.yaml
-- tapOn: { id: 'tab-me' }
-- tapOn: { id: 'me-menu-account' }
+- runFlow:
+    when: { visible: { id: 'sign-in-email' } }
+    commands:
+      - runFlow: { file: subflows/sign-in.yaml, env: { EMAIL: 'admin@cityturfer.com', PASSWORD: 'admin1234' } }
+      - extendedWaitUntil: { visible: { id: 'dashboard-greeting' }, timeout: 20000 }
+- runFlow: subflows/open-account.yaml
 - tapOn: { id: 'sign-out' }
 - extendedWaitUntil: { visible: { id: 'sign-in-email' }, timeout: 10000 }

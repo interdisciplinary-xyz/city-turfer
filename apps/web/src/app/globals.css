@@ -251,7 +251,7 @@ img {
   .hero-copy h1 {
     font-size: clamp(3rem, 5vw, 4.2rem);
   }
-  /* Side by side, the lockup is about 4.27 tiles wide (tile + gap + wordmark at 4.64 × 0.66), so the
+  /* Side by side, the lockup is about 4.21 tiles wide (tile + gap + wordmark at 4.49 × 0.66), so the
      144px tile shrinks only when the text column is narrower than that. */
   .hero-copy .hero-brand {
     --lockup: min(144px, calc(100cqw / 4.3));
@@ -271,7 +271,7 @@ img {
    this size), in one row left-aligned next to the phones on desktop.
    One size variable (--lockup = the tile) drives every part, so the proportions never drift:
    wordmark height 0.66 of the tile, gap 0.25 (clear space >= 0.16). Breakpoints change only --lockup.
-   On phones the wordmark (3.06 tiles wide) caps the tile at the column width. */
+   On phones the wordmark (about 2.96 tiles wide, at 4.49 × 0.66) caps the tile at the column width. */
 .hero-brand {
   --lockup: min(clamp(112px, 32vw, 168px), calc(100cqw / 3.1));
   display: flex;

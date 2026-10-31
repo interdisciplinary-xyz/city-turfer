@@ -4,6 +4,7 @@ import type { Locale } from '@/i18n/routing';
 
 import { WAITLIST } from '../waitlist-config';
 import { AppHeader } from './app-header';
+import { HeroCity, HeroCityLine } from './hero-city';
 import { HeroCopy } from './hero-copy';
 import { HeroMotion } from './hero-motion';
 import { HeroScreens } from './hero-screens';
@@ -34,13 +35,15 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
       </a>
       <AppHeader locale={locale} waitlist={Boolean(WAITLIST)} />
       <main id='main'>
-        <div className='hero'>
-          <HeroMotion className='wrap hero-grid'>
+        <HeroMotion className='hero'>
+          <HeroCity />
+          <div className='wrap hero-grid'>
             <HeroCopy />
             <HeroScreens />
             {/* No download buttons for now: the waitlist comes first (StoreButtons stays for later). */}
-          </HeroMotion>
-        </div>
+          </div>
+          <HeroCityLine />
+        </HeroMotion>
         {WAITLIST ? (
           <section id='waitlist' className='waitlist-section' aria-label={t('waitlist.title')}>
             <div className='wrap'>

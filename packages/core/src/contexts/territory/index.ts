@@ -47,7 +47,7 @@ export function createTerritoryApi(deps: TerritoryDeps & HomeCityDeps & { distri
   };
 }
 export type TerritoryApi = ReturnType<typeof createTerritoryApi>;
-export { DistrictsReadSuperseded, type ReadSignal } from './application/districts';
+export { type DistrictCoverageOptions, ReadSuperseded } from './application/districts';
 export { catalogueCityView, type HomeCityDeps } from './application/home-city';
 export type { ActivityTrackSource, TerritoryDeps } from './application/use-cases';
 export type * from './contract';

@@ -7,7 +7,7 @@ import { useChooseHomeCity, useDistricts } from '../hooks';
 
 // The hook's world: the app context (data version, container) and the use cases it calls.
 const app = { dataVersion: 0 };
-const execute = jest.fn<Promise<DistrictsView>, [{ readonly aborted: boolean }]>();
+const execute = jest.fn<Promise<DistrictsView>, [{ isCurrent: () => boolean }]>();
 const chooseHomeCity = jest.fn(async (_: string | null) => undefined);
 const container = { territory: { districts: { execute }, chooseHomeCity: { execute: chooseHomeCity } } };
 
@@ -80,15 +80,15 @@ describe('useDistricts', () => {
     tree.unmount();
   });
 
-  it('a newer read aborts the one still running, whose late answer is dropped', async () => {
+  it('a newer read stops the one still running, whose late answer is dropped', async () => {
     const slow = deferred();
     execute.mockReturnValueOnce(slow.promise).mockResolvedValueOnce(answer('newer'));
     const tree = await mount();
-    const firstSignal = execute.mock.calls[0][0];
+    const first = execute.mock.calls[0][0];
     app.dataVersion = 1;
     await rerender(tree);
-    expect(firstSignal.aborted).toBe(true);
-    expect(execute.mock.calls[1][0].aborted).toBe(false);
+    expect(first.isCurrent()).toBe(false);
+    expect(execute.mock.calls[1][0].isCurrent()).toBe(true);
     await act(async () => {
       slow.resolve(answer('stale'));
     });
@@ -108,13 +108,13 @@ describe('useDistricts', () => {
     tree.unmount();
   });
 
-  it('leaving the screen aborts the read in flight', async () => {
+  it('leaving the screen stops the read in flight', async () => {
     const slow = deferred();
     execute.mockReturnValueOnce(slow.promise);
     const tree = await mount();
     act(() => {
       tree.unmount();
     });
-    expect(execute.mock.calls[0][0].aborted).toBe(true);
+    expect(execute.mock.calls[0][0].isCurrent()).toBe(false);
   });
 });
