@@ -62,7 +62,7 @@
         "area": "{area} km²",
         "summary": "{cellCount, plural, one {{cells} cell} other {{cells} cells}} · {strongCount, plural, one {{strong} strong} other {{strong} strong}} · +{week} km² this week",
         "all": "All",
-        "city": "WARSAW"
+        "city": "Warsaw"
       },
       "dashboard": {
         "greeting": "Hello, {name}",
@@ -182,7 +182,7 @@
         "body": "Live map and stats, auto-pause, hold to finish. Lock the phone and keep going."
       },
       "health": {
-        "title": "Your Apple Health walks count",
+        "title": "Your Apple Health history counts",
         "body": "Import past walks, runs and rides with their routes from Apple Health, and they become turf on day one."
       },
       "achievements": {
@@ -191,7 +191,7 @@
       },
       "city": {
         "title": "Starts in your city",
-        "body": "Pick your home city from the list and the map opens there. In English and Polish."
+        "body": "Pick your home city from the list and the map opens there."
       }
     },
     "differs": {

@@ -120,10 +120,12 @@ test('sign-out clears the cookie, and Back shows no data', async ({ page, contex
 
   // The portal pages replaced themselves, so Back leaves the portal; nothing personal anywhere.
   await page.goBack();
-  await page.waitForLoadState('networkidle');
+  await expect(page).toHaveURL(/\/en\/?$/);
+  await page.waitForLoadState('load');
   await expect(page.getByText(email)).toHaveCount(0);
   await page.goForward();
-  await page.waitForLoadState('networkidle');
+  await expect(page).toHaveURL(/\/en\/account\/sign-in/);
+  await page.waitForLoadState('load');
   await expect(page.getByText(email)).toHaveCount(0);
 
   await page.goto('/en/account');

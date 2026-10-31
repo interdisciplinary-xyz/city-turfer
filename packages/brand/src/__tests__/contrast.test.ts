@@ -87,6 +87,15 @@ const PAIRS: Pair[] = [
   { name: 'app faint legend step on --bg', fg: APP['--faint'], bg: APP['--bg'], min: MIN_CONTRAST.ui }, // 3.32
   { name: 'app glow fill on --border', fg: APP['--glow'], bg: APP['--border'], min: MIN_CONTRAST.ui }, // 4.05
   { name: 'app white record dot on glow', fg: APP['--text'], bg: APP['--glow'], min: MIN_CONTRAST.ui }, // 3.13
+  // The street demo's night panel: step pill edge and the Replay label sit on the panel's --bg.
+  {
+    name: 'app pill edge --border-control on --bg',
+    fg: APP['--border-control'],
+    bg: APP['--bg'],
+    min: MIN_CONTRAST.ui,
+  },
+  { name: 'app focus outline --text on --bg', fg: APP['--text'], bg: APP['--bg'], min: MIN_CONTRAST.ui },
+  { name: 'app Replay --accent-text on --bg', fg: APP['--accent-text'], bg: APP['--bg'], min: MIN_CONTRAST.text },
   // Swagger and Storybook (SITE_SCHEME, dark).
   { name: 'site --on-accent on --accent', fg: SITE['--on-accent'], bg: SITE['--accent'], min: MIN_CONTRAST.text },
   { name: 'site --accent-text on --card', fg: SITE['--accent-text'], bg: SITE['--card'], min: MIN_CONTRAST.text },

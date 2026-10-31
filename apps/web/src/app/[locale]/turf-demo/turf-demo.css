@@ -9,6 +9,15 @@
   margin: 0 auto;
 }
 
+.turf-demo-panel {
+  /* The night panel: the dark app scheme (inline variables) holds the map and its controls; the
+     caption below stays on the light page with the page's own variables. */
+  padding: var(--space-md);
+  border-radius: var(--radius-card);
+  background: var(--bg);
+  color: var(--text);
+}
+
 .turf-demo-player {
   display: grid;
   gap: var(--space-md);
