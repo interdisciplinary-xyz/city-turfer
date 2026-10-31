@@ -64,8 +64,8 @@ env:
 - assertNotVisible: { id: 'account-email-error' }
 - tapOn: { id: 'account-email-current-code' }
 - inputText: ${AUTH_FIXED_CODE}
-- hideKeyboard
-- tapOn: { id: 'account-email-current-continue' }
+# Enter submits the code field (as Continue does); hiding the number pad fails on iOS 26 (CP-12).
+- pressKey: Enter
 - extendedWaitUntil: { visible: { id: 'account-email-new' }, timeout: 10000 }
 - tapOn: { id: 'account-email-new' }
 - inputText: ${output.emailB}
@@ -75,8 +75,8 @@ env:
 - assertNotVisible: { id: 'account-email-error' }
 - tapOn: { id: 'account-email-new-code' }
 - inputText: ${AUTH_FIXED_CODE}
-- hideKeyboard
-- tapOn: { id: 'account-email-confirm' }
+# Enter submits the code field, as Confirm does.
+- pressKey: Enter
 - extendedWaitUntil: { visible: { id: 'account-email-done' }, timeout: 15000 }
 - takeScreenshot: 15-email-changed
 - tapOn: { id: 'account-email-done' }
@@ -132,8 +132,8 @@ env:
 - assertNotVisible: { id: 'account-password-error' }
 - tapOn: { id: 'account-password-code' }
 - inputText: ${AUTH_FIXED_CODE}
-- hideKeyboard
-- tapOn: { id: 'account-password-remove' }
+# Enter submits the code field when removing, as Remove password does.
+- pressKey: Enter
 - extendedWaitUntil: { visible: { id: 'account-password-done' }, timeout: 15000 }
 - takeScreenshot: 15-password-removed
 - tapOn: { id: 'account-password-done' }
