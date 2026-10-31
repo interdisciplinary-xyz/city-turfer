@@ -45,14 +45,10 @@ for (const path of ['/en', '/pl']) {
     await page.goto(path);
     await page.waitForLoadState('networkidle');
     await expectNoHorizontalScroll(page);
+    // The whole page is scanned, hero phone mock-ups (.screens) included: axe finds no violation there now.
     // Scan after the hero entrance: mid-fade text reads as low contrast.
     await expect(page.locator('[data-anim="line"]').last()).toHaveCSS('opacity', '1');
-    // The hero's phone mock-ups (.screens) are left out: their tab bar and "See all" link fail
-    // colour contrast already on main; tracked separately from the homepage sections.
-    const results = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-      .exclude('.screens')
-      .analyze();
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
     const serious = results.violations
       .filter((violation) => violation.impact === 'serious' || violation.impact === 'critical')
       .map((violation) => `${violation.id}: ${violation.nodes.map((node) => node.target.join(' ')).join(', ')}`);
@@ -131,8 +127,20 @@ test('street demo: with reduced motion it stays on the final frame', async ({ pa
   await page.goto('/en');
   const player = page.locator('.turf-demo-player');
   await player.scrollIntoViewIfNeeded();
-  await page.waitForTimeout(1500);
+  // Step 4 at once, and it holds: autoplay (which would restart at step 0) never starts.
   await expect(player).toHaveAttribute('data-step', '4');
+  const seen = await player.evaluate(
+    (node) =>
+      new Promise<string[]>((resolve) => {
+        const steps = new Set<string>([node.getAttribute('data-step') ?? '']);
+        const timer = setInterval(() => steps.add(node.getAttribute('data-step') ?? ''), 50);
+        setTimeout(() => {
+          clearInterval(timer);
+          resolve([...steps]);
+        }, 1500);
+      })
+  );
+  expect(seen).toEqual(['4']);
 });
 
 test('FAQ: the structured data asks exactly the questions the page shows', async ({ page }) => {
