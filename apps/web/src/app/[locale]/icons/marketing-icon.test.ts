@@ -73,7 +73,7 @@ describe('marketing icon set', () => {
     const labelled = render({ name: 'lock', title: 'Private' });
     expect(labelled).toContain('role="img"');
     expect(labelled).toContain('aria-label="Private"');
-    expect(labelled).toContain('<title>Private</title>');
+    expect(labelled).not.toContain('<title');
     expect(labelled).not.toContain('aria-hidden');
     expect(render({ name: 'pin', size: 32 })).toContain('width="32"');
   });

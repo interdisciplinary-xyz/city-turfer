@@ -4,7 +4,8 @@ import { ICON_GRID, ICON_PATHS, ICON_STROKE, type IconProps } from './marketing-
 
 /**
  * One outline icon from the marketing set, inline SVG in `currentColor`. Decorative by default
- * (`aria-hidden`); give it a `title` when it carries meaning on its own. Colour comes from the
+ * (`aria-hidden`); give it a `title` when it carries meaning on its own (`role='img'` + `aria-label`,
+ * no `<title>` element, so screen readers announce it once). Colour comes from the
  * caller: `.icon-disc` (+ `-walk` / `-run` / `-ride`) or any `color` set through a token.
  */
 export function Icon({ name, size = 24, title, className }: IconProps) {
@@ -23,7 +24,6 @@ export function Icon({ name, size = 24, title, className }: IconProps) {
       focusable='false'
       {...label}
     >
-      {title ? <title>{title}</title> : null}
       {ICON_PATHS[name].map((shape) => (
         <path
           key={shape.d}
