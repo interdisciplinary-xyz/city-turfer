@@ -4,7 +4,7 @@ import type { CSSProperties } from 'react';
 
 import { Icon, ICON_FOR_TYPE, ICON_NAMES } from '@/app/[locale]/icons';
 
-const SIZES = [20, 24, 32] as const;
+const SIZES = [20, 24, 32, 48] as const;
 
 /** A night panel as the site draws one: the app's variables inline, so the tokens resolve to dark. */
 const NIGHT: CSSProperties = {
@@ -17,7 +17,7 @@ const NIGHT: CSSProperties = {
 
 const grid: CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(176px, 1fr))',
   gap: 'var(--space-md)',
 };
 const cell: CSSProperties = {
@@ -38,7 +38,7 @@ const heading: CSSProperties = {
   textTransform: 'uppercase',
 };
 
-/** Every icon at 20, 24 and 32 px in the surface's text colour, then on accent and activity discs. */
+/** Every icon at 20, 24, 32 and 48 px in the surface's text colour, then on accent and activity discs. */
 function IconSheet({ title }: { title: string }) {
   return (
     <div>
