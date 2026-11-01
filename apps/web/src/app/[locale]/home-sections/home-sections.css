@@ -49,6 +49,7 @@
 /* ---------- App pieces ---------- */
 
 .app-card {
+  min-width: 0;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
@@ -74,12 +75,16 @@
 }
 
 .app-link {
+  min-width: 0;
+  overflow-wrap: anywhere;
   color: var(--accent-text);
   font-size: var(--font-caption);
   font-weight: var(--font-weight-bold);
 }
 
 .app-list-head {
+  min-width: 0;
+  flex-wrap: wrap;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -376,6 +381,8 @@
 
 .home-split {
   display: grid;
+  /* One column below 860 px; without a template the track grows to the min-content of the figure. */
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(28px, 5vw, 64px);
   align-items: center;
 }

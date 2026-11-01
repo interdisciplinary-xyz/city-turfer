@@ -56,6 +56,17 @@ for (const path of ['/en', '/pl']) {
   });
 }
 
+for (const path of ['/en', '/pl']) {
+  // 320 px is the smallest phone we support: nothing may push the page wider than the screen
+  // (`body{overflow-x:hidden}` hides it from the eye, but scrollWidth still shows it).
+  test(`landing ${path}: no sideways scroll at 320 px`, async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.goto(path);
+    await page.waitForLoadState('networkidle');
+    await expectNoHorizontalScroll(page);
+  });
+}
+
 // The hero's street map (docs/plans/hero-city-map-2026-10-28.md): the city follows the time zone,
 // only that city's maps load, and "Near me" uses the location only after a click.
 const mapRequests = (urls: string[]) =>
