@@ -64,11 +64,14 @@ export const ICON_PATHS: Record<IconName, readonly IconShape[]> = {
     { d: 'M18.5 16.5 15.6 8.5h2.4' },
     { d: 'M7.5 8.5h3' },
   ],
-  /** The mark in one line: a turf cell with the street-wave and its "you are here" point. */
+  /**
+   * The mark in one line, its own geometry × 24/1024 (packages/brand/svg/mark.svg): the turf cell,
+   * the street-wave from the lower-left edge to the upper-right one, and the "you are here" point on its crest.
+   */
   cell: [
-    { d: 'M12 3l7.8 4.5v9L12 21l-7.8-4.5v-9Z' },
-    { d: 'M6.6 15.4C9.2 15.9 9.4 12 12 12S14.9 8.5 16.2 8.9' },
-    { d: circle(16.2, 8.9, 1.7), filled: true },
+    { d: 'M12 4.3l6.7 3.85v7.7L12 19.7l-6.7-3.85v-7.7Z' },
+    { d: 'M5.9 17C8.9 17 9.2 13.1 12 12S15 7.3 18.2 7' },
+    { d: circle(18.2, 7, 1.4), filled: true },
   ],
   /** The app's Record button: a ring around a solid dot. */
   record: [{ d: circle(12, 12, 8.5) }, { d: circle(12, 12, 3.75), filled: true }],
