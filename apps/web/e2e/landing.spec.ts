@@ -40,31 +40,27 @@ for (const path of ['/en', '/pl']) {
     await expect(page.locator('footer.site-footer')).toBeVisible();
   });
 
-  test(`landing ${path}: accessible and no sideways scroll on a phone`, async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(path);
-    await page.waitForLoadState('networkidle');
-    await expectNoHorizontalScroll(page);
-    // The whole page is scanned, hero phone mock-ups (.screens) included: axe finds no violation there now.
-    // Scan after the hero entrance: mid-fade text reads as low contrast.
-    await expect(page.locator('[data-anim="line"]').last()).toHaveCSS('opacity', '1');
-    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
-    const serious = results.violations
-      .filter((violation) => violation.impact === 'serious' || violation.impact === 'critical')
-      .map((violation) => `${violation.id}: ${violation.nodes.map((node) => node.target.join(' ')).join(', ')}`);
-    expect(serious).toEqual([]);
-  });
-}
-
-for (const path of ['/en', '/pl']) {
-  // 320 px is the smallest phone we support: nothing may push the page wider than the screen
-  // (`body{overflow-x:hidden}` hides it from the eye, but scrollWidth still shows it).
-  test(`landing ${path}: no sideways scroll at 320 px`, async ({ page }) => {
-    await page.setViewportSize({ width: 320, height: 640 });
-    await page.goto(path);
-    await page.waitForLoadState('networkidle');
-    await expectNoHorizontalScroll(page);
-  });
+  for (const width of [320, 390]) {
+    test(`landing ${path}: accessible and no sideways scroll at ${width} px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto(path);
+      await page.waitForLoadState('networkidle');
+      await expectNoHorizontalScroll(page);
+      // The whole page is scanned, hero phone mock-ups (.screens) included: axe finds no violation there now.
+      // Scan after the hero entrance: mid-fade text reads as low contrast.
+      await expect(page.locator('[data-anim="line"]').last()).toHaveCSS('opacity', '1');
+      // `label-content-name-mismatch` is an experimental axe rule (off by default): the header link's
+      // accessible name must contain its visible text ("Zapisz się", not "Dołącz do listy").
+      const results = await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'experimental'])
+        .options({ rules: { 'label-content-name-mismatch': { enabled: true } } })
+        .analyze();
+      const serious = results.violations
+        .filter((violation) => violation.impact === 'serious' || violation.impact === 'critical')
+        .map((violation) => `${violation.id}: ${violation.nodes.map((node) => node.target.join(' ')).join(', ')}`);
+      expect(serious).toEqual([]);
+    });
+  }
 }
 
 // The hero's street map (docs/plans/hero-city-map-2026-10-28.md): the city follows the time zone,

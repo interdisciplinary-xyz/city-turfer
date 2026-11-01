@@ -14,11 +14,11 @@ export function AppHeaderView({ homeHref, homeLabel, logo, waitlist, languages }
         </a>
         <div className='app-header-actions'>
           {waitlist ? (
-            <a className='app-header-link' href={waitlist.href} aria-label={waitlist.label}>
+            // No aria-label: the accessible name is the visible text. Each span is display:none at the other
+            // width (app-header.css), so a screen reader hears only the label that is shown.
+            <a className='app-header-link' href={waitlist.href}>
               <span className='app-header-link-long'>{waitlist.label}</span>
-              <span className='app-header-link-short' aria-hidden='true'>
-                {waitlist.shortLabel}
-              </span>
+              <span className='app-header-link-short'>{waitlist.shortLabel}</span>
             </a>
           ) : null}
           {languages}

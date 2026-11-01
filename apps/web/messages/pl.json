@@ -6,8 +6,8 @@
   },
   "header": {
     "home": "CityTurfer, strona główna",
-    "waitlist": "Dołącz do listy",
-    "waitlistShort": "Lista"
+    "waitlist": "Zapisz się na listę",
+    "waitlistShort": "Zapisz się"
   },
   "hero": {
     "skip": "Przejdź do treści",
@@ -148,7 +148,7 @@
     "cta": {
       "title": "Twoje terytorium zaczyna się za progiem",
       "body": "Zostaw e-mail, a damy znać, gdy aplikacja będzie gotowa do pobrania.",
-      "join": "Dołącz do listy"
+      "join": "Zapisz się na listę"
     },
     "demo": {
       "eyebrow": "Siła terytorium",
@@ -240,7 +240,7 @@
       "title": "Dobre pytania",
       "when": {
         "q": "Kiedy mogę ją pobrać?",
-        "a": "Dołącz do listy, a napiszemy, gdy aplikacja będzie gotowa do pobrania."
+        "a": "Zapisz się na listę, a napiszemy, gdy aplikacja będzie gotowa do pobrania."
       },
       "free": {
         "q": "Czy jest darmowa?",
@@ -290,7 +290,7 @@
     "soon": "Wkrótce"
   },
   "waitlist": {
-    "title": "Zapisz się na listę oczekujących",
+    "title": "Zapisz się na listę",
     "emailLabel": "Adres e-mail",
     "emailPlaceholder": "ty@przyklad.pl",
     "submit": "Zapisz mnie",
