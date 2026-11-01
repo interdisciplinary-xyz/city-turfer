@@ -12,7 +12,7 @@ function Hero({ apkUrl }: { apkUrl: string | null }) {
     <HeroMotion className='hero'>
       <HeroCity />
       <div className='wrap hero-grid'>
-        <HeroCopy />
+        <HeroCopy waitlist />
         <HeroScreens />
         <StoreButtons apkUrl={apkUrl} />
       </div>

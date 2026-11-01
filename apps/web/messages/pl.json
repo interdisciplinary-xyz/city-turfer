@@ -6,8 +6,15 @@
   },
   "header": {
     "home": "CityTurfer, strona główna",
-    "waitlist": "Dołącz do listy",
-    "waitlistShort": "Lista"
+    "waitlist": "Zapisz się na listę",
+    "waitlistShort": "Zapisz się",
+    "nav": {
+      "label": "Sekcje strony",
+      "how": "Jak to działa",
+      "app": "Aplikacja",
+      "privacy": "Prywatność",
+      "faq": "Pytania"
+    }
   },
   "hero": {
     "skip": "Przejdź do treści",
@@ -35,17 +42,16 @@
       }
     },
     "badge": "Wczesny prototyp",
-    "audience": "Dla każdego, kto chodzi, biega albo jeździ po swoim mieście i wciąż do niego wraca."
+    "join": "Zapisz się na listę",
+    "seeGlow": "Zobacz, jak świeci"
   },
   "screens": {
     "turfMap": {
       "title": "Mapa terytorium",
-      "body": "Wszystkie spacery, biegi i przejażdżki na jednej ciemnej mapie — świecą najmocniej tam, gdzie bywasz najczęściej.",
       "alt": "Mapa terytorium: świecące trasy w Warszawie, 3,02 km² terytorium, 1530 komórek i filtry spacer, bieg, rower."
     },
     "dashboard": {
       "title": "Twój tydzień w skrócie",
-      "body": "Dystans, czas, ostatnie aktywności i najbliższe osiągnięcie w zasięgu ręki.",
       "alt": "Pulpit: dystans, czas i liczba aktywności w tym tygodniu, ostatnie aktywności i najbliższe osiągnięcie."
     },
     "proto": {
@@ -66,7 +72,33 @@
       },
       "dashboard": {
         "greeting": "Cześć, {name}",
-        "subtitle": "{area} km² terytorium · +{week} km² w tym tygodniu"
+        "subtitle": "{area} km² terytorium · +{week} km² w tym tygodniu",
+        "thisWeek": "W tym tygodniu",
+        "distance": "Dystans",
+        "time": "Czas",
+        "count": "Aktywności",
+        "unitKm": "km",
+        "rowDistance": "{distance} km",
+        "rowPace": "{time} · {pace}/km",
+        "rowSpeed": "{time} · {speed} km/h",
+        "recent": "Ostatnie aktywności",
+        "seeAll": "Wszystkie ›",
+        "achievements": "Osiągnięcia",
+        "nextUp": "Następne: <b>Półmaraton</b> · Przejdź lub przebiegnij 21,1 km za jednym razem.",
+        "activities": {
+          "walk": {
+            "title": "Poranny spacer",
+            "when": "pt., 16 paź, 06:00"
+          },
+          "run": {
+            "title": "Popołudniowy bieg",
+            "when": "śr., 14 paź, 13:00"
+          },
+          "ride": {
+            "title": "Poranna przejażdżka",
+            "when": "wt., 13 paź, 09:00"
+          }
+        }
       }
     }
   },
@@ -88,8 +120,8 @@
       "glow": {
         "legendTitle": "Siła terytorium",
         "legendLabel": "Siła terytorium: Blade, Świecące, Mocne, Płonące, od najsłabszej do najmocniejszej",
-        "title": "Wracaj i patrz, jak świeci",
-        "body": "Z każdym powrotem ulica świeci jaśniej: od „Blade” po „Płonące”. Nic nie blednie: ulica zostaje Twoja, nawet jeśli długo Cię tam nie było."
+        "title": "Każdy powrót się liczy",
+        "body": "Wróć, a zaświeci: z każdym powrotem ulica jest jaśniejsza, od „Blade” po „Płonące”."
       }
     },
     "types": {
@@ -103,56 +135,32 @@
       "strong": "Mocne",
       "blazing": "Płonące"
     },
-    "week": {
-      "eyebrow": "Pulpit",
-      "title": "Tak wyglądał Twój tydzień",
-      "body": "Dystans, czas i liczba aktywności w tym tygodniu, ostatnie spacery, biegi i przejażdżki oraz najbliższe osiągnięcie.",
-      "thisWeek": "W tym tygodniu",
-      "distance": "Dystans",
-      "time": "Czas",
-      "count": "Aktywności",
-      "unitKm": "km",
-      "rowDistance": "{distance} km",
-      "rowPace": "{time} · {pace}/km",
-      "rowSpeed": "{time} · {speed} km/h",
-      "recent": "Ostatnie aktywności",
-      "seeAll": "Wszystkie ›",
-      "achievements": "Osiągnięcia",
-      "nextUp": "Następne: <b>Półmaraton</b> · Przejdź lub przebiegnij 21,1 km za jednym razem.",
-      "caption": "Przykładowy tydzień, tak jak pokazuje go aplikacja.",
-      "activities": {
-        "walk": {
-          "title": "Poranny spacer",
-          "when": "pt., 16 paź, 06:00"
-        },
-        "run": {
-          "title": "Popołudniowy bieg",
-          "when": "śr., 14 paź, 13:00"
-        },
-        "ride": {
-          "title": "Poranna przejażdżka",
-          "when": "wt., 13 paź, 09:00"
-        }
-      }
-    },
     "local": {
-      "eyebrow": "Tylko Twoje",
-      "title": "Oryginał zostaje na Twoim telefonie",
-      "phone": "Twoje aktywności są zapisane na telefonie, w aplikacji.",
+      "eyebrow": "Prywatność",
+      "title": "Oryginał zostaje w telefonie",
+      "phone": "Twoje aktywności są zapisane w telefonie, w aplikacji.",
       "backup": "Kopia w chmurze jest wyłączona, dopóki jej nie włączysz. Gdy ją wyłączysz, kopia na naszym serwerze zostanie usunięta.",
       "portal": "Po zalogowaniu w przeglądarce widzisz tylko to, co trafiło do kopii.",
       "leaves": "Co opuszcza telefon: kafelki mapy dla oglądanego obszaru, sprawdzanie aktualizacji oraz, jeśli nie wyłączysz uzupełniania luk, dwa końce luki GPS. Logowanie wysyła Twój adres e-mail na nasz serwer.",
       "account": "Na razie do aplikacji logujesz się kontem.",
-      "site": "Publiczne strony nie zapisują ciasteczek i nie ładują skryptów śledzących."
+      "site": "Publiczne strony nie zapisują ciasteczek i nie ładują skryptów śledzących.",
+      "private": "Bez tablicy aktywności, obserwujących i publicznego profilu."
     },
     "cta": {
-      "title": "Twoje terytorium zaczyna się za progiem",
+      "title": "Twoje terytorium zaczyna się za progiem",
       "body": "Zostaw e-mail, a damy znać, gdy aplikacja będzie gotowa do pobrania.",
-      "join": "Dołącz do listy"
+      "join": "Zapisz się na listę",
+      "eyebrow": "Lista oczekujących",
+      "trust": {
+        "label": "Na czym możesz polegać",
+        "cookies": "Ta strona nie używa ciasteczek",
+        "eu": "E-maile z listy trzymamy w UE (Brevo)",
+        "phone": "Twoje aktywności zostają w telefonie",
+        "backup": "Kopia tylko, jeśli ją włączysz"
+      }
     },
     "demo": {
-      "eyebrow": "Siła terytorium",
-      "title": "Wracaj. Świeci jaśniej.",
+      "title": "Jedna ulica, potem całe miasto",
       "body": "Jedna ulica na Głównym Mieście w Gdańsku, wizyta po wizycie. A potem całe miasto po czterech miesiącach spacerów, biegów i przejażdżek.",
       "step": "{visits, plural, one {# raz} few {# razy} many {# razy} other {# razy}} · {tier}",
       "cityStep": "Cztery miesiące",
@@ -170,8 +178,8 @@
       "notFor": "Nie dla Ciebie, jeśli szukasz rankingów, drużyn albo stref treningowych. CityTurfer to Ty i Twoje ulice."
     },
     "highlights": {
-      "eyebrow": "W aplikacji",
-      "title": "Co prototyp potrafi już dziś",
+      "eyebrow": "Aplikacja",
+      "title": "Co potrafi już dziś",
       "iphone": "Tylko iPhone",
       "gain": {
         "title": "Nowe terytorium po każdym wyjściu",
@@ -192,38 +200,25 @@
       "city": {
         "title": "Zaczyna się w Twoim mieście",
         "body": "Wybierz swoje miasto z listy, a mapa otworzy się właśnie tam."
-      }
+      },
+      "lede": "Do tego historia i statystyki, po polsku i angielsku."
     },
     "differs": {
-      "eyebrow": "Czym się różni",
-      "title": "Dla ulic, do których wracasz",
       "repeats": {
         "title": "Powroty się liczą",
-        "body": "Większość map zaznacza ulicę raz. Tu każdy powrót sprawia, że świeci jaśniej."
+        "body": "Większość map zaznacza ulicę raz. Tu najjaśniej świecą ulice, do których wracasz."
       },
       "fades": {
         "title": "Nic nie blednie",
         "body": "Twoje terytorium nie słabnie, nawet jeśli długo Cię nie było."
       },
-      "private": {
-        "title": "Prywatne od początku",
-        "body": "Bez tablicy aktywności, obserwujących i publicznego profilu."
-      }
+      "label": "Czym się różni"
     },
     "status": {
-      "eyebrow": "Na jakim etapie",
-      "title": "Uczciwie: to wczesny prototyp",
-      "body": "Co działa, co testujemy i czego jeszcze nie ma.",
-      "works": {
-        "title": "Działa już dziś",
-        "record": "Nagrywanie przy wygaszonym ekranie (iPhone)",
-        "turf": "Mapa terytorium i jego siła",
-        "history": "Historia, statystyki i osiągnięcia",
-        "languages": "Polski i angielski"
-      },
+      "title": "Uczciwie: to wczesny prototyp",
       "testing": {
         "title": "W testach",
-        "health": "Import i eksport z Apple Health (iPhone, na razie tylko w Symulatorze)",
+        "health": "Zapisywanie aktywności w Apple Health",
         "battery": "Zużycie baterii na długich wyjściach",
         "backup": "Kopia w chmurze (po włączeniu)"
       },
@@ -237,10 +232,10 @@
     },
     "faq": {
       "eyebrow": "Pytania",
-      "title": "Dobre pytania",
+      "title": "Zanim zapytasz",
       "when": {
         "q": "Kiedy mogę ją pobrać?",
-        "a": "Dołącz do listy, a napiszemy, gdy aplikacja będzie gotowa do pobrania."
+        "a": "Zapisz się na listę, a napiszemy, gdy aplikacja będzie gotowa do pobrania."
       },
       "free": {
         "q": "Czy jest darmowa?",
@@ -275,7 +270,9 @@
   "footer": {
     "label": "Stopka strony",
     "contact": "Kontakt:",
-    "rights": "© {year} CityTurfer"
+    "rights": "© {year} CityTurfer",
+    "navLabel": "Linki w stopce",
+    "noCookies": "Ta strona nie zapisuje plików cookie i nie ładuje trackerów."
   },
   "language": {
     "label": "Język",
@@ -290,7 +287,8 @@
     "soon": "Wkrótce"
   },
   "waitlist": {
-    "title": "Zapisz się na listę oczekujących",
+    "eyebrow": "Lista oczekujących",
+    "title": "Damy znać, gdy będzie gotowa",
     "emailLabel": "Adres e-mail",
     "emailPlaceholder": "ty@przyklad.pl",
     "submit": "Zapisz mnie",

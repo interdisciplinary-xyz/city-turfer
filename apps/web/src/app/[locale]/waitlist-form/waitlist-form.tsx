@@ -10,7 +10,7 @@ import { BREVO_FIELDS, type WaitlistFormProps, type WaitlistState } from './wait
  * Brevo receives it whatever its CORS settings, and the response is opaque, so the form reports
  * "check your inbox": Brevo's double opt-in email is the real confirmation.
  */
-export function WaitlistForm({ action, controller, contactEmail, locale }: WaitlistFormProps) {
+export function WaitlistForm({ action, controller, contactEmail, locale, headingId }: WaitlistFormProps) {
   const t = useTranslations('waitlist');
   const id = useId();
   const [state, setState] = useState<WaitlistState>('idle');
@@ -41,8 +41,7 @@ export function WaitlistForm({ action, controller, contactEmail, locale }: Waitl
   }
 
   return (
-    <form className='waitlist' onSubmit={onSubmit} aria-describedby={`${id}-privacy`}>
-      <p className='waitlist-title'>{t('title')}</p>
+    <form className='waitlist' onSubmit={onSubmit} aria-labelledby={headingId} aria-describedby={`${id}-privacy`}>
       <div className='waitlist-row'>
         <label className='visually-hidden' htmlFor={`${id}-email`}>
           {t('emailLabel')}
@@ -57,7 +56,7 @@ export function WaitlistForm({ action, controller, contactEmail, locale }: Waitl
           inputMode='email'
           placeholder={t('emailPlaceholder')}
         />
-        <button className='waitlist-submit' type='submit' disabled={state === 'sending'}>
+        <button className='btn btn-primary' type='submit' disabled={state === 'sending'}>
           {state === 'sending' ? t('sending') : t('submit')}
         </button>
       </div>

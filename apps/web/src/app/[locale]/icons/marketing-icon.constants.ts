@@ -23,8 +23,6 @@ export const ICON_NAMES = [
   'phone',
   'lock',
   'repeat',
-  'infinity',
-  'check',
 ] as const;
 
 export type IconName = (typeof ICON_NAMES)[number];
@@ -111,14 +109,6 @@ export const ICON_PATHS: Record<IconName, readonly IconShape[]> = {
     { d: 'M7.22 18.04 15.42 15.53A6.2 6.2 0 1 0 7.53 8.34L6.33 14.1' },
     { d: 'M8.46 12.13 6.33 14.1 5.16 11.44' },
   ],
-  /** Infinity: nothing fades. */
-  infinity: [
-    {
-      d: 'M12 12c-1.9-2.4-3.5-3.6-5.2-3.6a3.6 3.6 0 0 0 0 7.2c1.7 0 3.3-1.2 5.2-3.6Zm0 0c1.9 2.4 3.5 3.6 5.2 3.6a3.6 3.6 0 0 0 0-7.2c-1.7 0-3.3 1.2-5.2 3.6Z',
-    },
-  ],
-  /** A tick: works today. */
-  check: [{ d: 'M4.5 12.5l4.75 4.75L19.5 7' }],
 };
 
 /** Every emoji or glyph the marketing pages draw today, and the icon that replaces it. */
@@ -145,12 +135,6 @@ export const ICON_FOR_HIGHLIGHT = {
   achievements: 'badge',
   city: 'pin',
 } as const satisfies Record<string, IconName>;
-
-/** How it differs (home.differs.<key>) → icon; the section has none today. */
-export const ICON_FOR_DIFFER = { repeats: 'repeat', fades: 'infinity', private: 'lock' } as const satisfies Record<
-  string,
-  IconName
->;
 
 /** Disc tints: the caller's colour token, mixed this much into the surface behind it. */
 export const ICON_DISC_TINT = 0.12;

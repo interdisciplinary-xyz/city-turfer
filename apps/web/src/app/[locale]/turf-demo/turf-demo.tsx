@@ -28,7 +28,9 @@ const dots = (flat: number[]) => {
 /**
  * "One street, four visits": a real stretch of the Gdańsk demo history lights up tier by tier, then
  * the whole city after four months. Geometry and tiers come from the app's own rules at build time
- * (apps/web/tools/gen-turf-demo.mjs); this page only draws numbers.
+ * (apps/web/tools/gen-turf-demo.mjs); this page only draws numbers. It sits inside the "How it works"
+ * section: the copy, the step buttons and the caption in the left column, the night panel (the map only)
+ * on the right.
  */
 export function TurfDemo() {
   const t = useTranslations('home.demo');
@@ -40,62 +42,53 @@ export function TurfDemo() {
     t('cityStep'),
   ];
   return (
-    <section className='home-section' aria-labelledby='demo-title'>
-      <div className='wrap home-split turf-demo'>
-        <div className='home-split-copy'>
-          <p className='home-eyebrow'>{t('eyebrow')}</p>
-          <h2 id='demo-title' className='home-title'>
-            {t('title')}
-          </h2>
-          <p className='home-lede'>{t('body')}</p>
-        </div>
-        <figure className='turf-demo-figure' aria-describedby='demo-caption'>
-          <div className='turf-demo-panel' style={DEMO_SCHEME_STYLE}>
-            <TurfDemoPlayer labels={{ steps, stepsLabel: t('stepsLabel'), replay: t('replay') }}>
-              <svg
-                className='turf-demo-svg'
-                viewBox={`0 0 ${view.width} ${view.height}`}
-                role='img'
-                aria-label={t('alt', {
-                  faint: visitsPerTier.faint,
-                  glowing: visitsPerTier.glowing,
-                  strong: visitsPerTier.strong,
-                  blazing: visitsPerTier.blazing,
-                })}
-              >
-                <g className='td-street'>
-                  {street.context.map((cell, i) => (
-                    <polygon key={i} className='td-context' points={points(cell)} />
-                  ))}
-                  {street.lines.map((line, i) => (
-                    <polyline key={i} className='td-line' points={points(line)} />
-                  ))}
-                  {street.cells.map((cell, i) => (
-                    <polygon
-                      key={i}
-                      className='td-cell'
-                      points={points(cell)}
-                      style={{ transitionDelay: `${i * 45}ms` }}
-                    />
-                  ))}
-                </g>
-                <g className='td-city'>
-                  {DEMO_TIERS.map((tier) => (
-                    <path key={tier} className={`td-city-${tier}`} d={dots(city[tier])} strokeWidth={city.radius * 2} />
-                  ))}
-                </g>
-              </svg>
-            </TurfDemoPlayer>
-          </div>
-          <figcaption id='demo-caption' className='home-caption'>
-            {t('caption', {
-              activities: totals.activities,
-              area: format.number(totals.areaKm2, { minimumFractionDigits: 2 }),
-              cells: totals.cells,
-            })}
-          </figcaption>
-        </figure>
-      </div>
-    </section>
+    <TurfDemoPlayer
+      labels={{ steps, stepsLabel: t('stepsLabel'), replay: t('replay') }}
+      schemeStyle={DEMO_SCHEME_STYLE}
+      head={
+        <>
+          <h3 className='demo-title'>{t('title')}</h3>
+          <p className='section-lede'>{t('body')}</p>
+        </>
+      }
+      caption={
+        <p id='demo-caption' className='home-caption'>
+          {t('caption', {
+            activities: totals.activities,
+            area: format.number(totals.areaKm2, { minimumFractionDigits: 2 }),
+            cells: totals.cells,
+          })}
+        </p>
+      }
+    >
+      <svg
+        className='turf-demo-svg'
+        viewBox={`0 0 ${view.width} ${view.height}`}
+        role='img'
+        aria-label={t('alt', {
+          faint: visitsPerTier.faint,
+          glowing: visitsPerTier.glowing,
+          strong: visitsPerTier.strong,
+          blazing: visitsPerTier.blazing,
+        })}
+      >
+        <g className='td-street'>
+          {street.context.map((cell, i) => (
+            <polygon key={i} className='td-context' points={points(cell)} />
+          ))}
+          {street.lines.map((line, i) => (
+            <polyline key={i} className='td-line' points={points(line)} />
+          ))}
+          {street.cells.map((cell, i) => (
+            <polygon key={i} className='td-cell' points={points(cell)} style={{ transitionDelay: `${i * 45}ms` }} />
+          ))}
+        </g>
+        <g className='td-city'>
+          {DEMO_TIERS.map((tier) => (
+            <path key={tier} className={`td-city-${tier}`} d={dots(city[tier])} strokeWidth={city.radius * 2} />
+          ))}
+        </g>
+      </svg>
+    </TurfDemoPlayer>
   );
 }

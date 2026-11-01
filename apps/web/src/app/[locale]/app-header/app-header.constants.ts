@@ -9,7 +9,12 @@ export type AppHeaderProps = {
   waitlist: boolean;
   /** Where "Join the waitlist" goes: the section on the home page, `/<locale>#waitlist` elsewhere. */
   waitlistHref?: string;
+  /** Section links between the logo and the actions (the landing page only). */
+  nav?: boolean;
 };
+
+/** The header's section links (the landing page): a labelled list of in-page anchors. */
+export type AppHeaderNav = { label: string; items: { href: string; label: string }[] };
 
 /** The header's markup without Next, shared by AppHeader and the dev pages outside Next. */
 export type AppHeaderViewProps = {
@@ -18,6 +23,8 @@ export type AppHeaderViewProps = {
   /** The mark and wordmark images (next/image on the site, plain <img> on the dev pages). */
   logo: ReactNode;
   waitlist: { href: string; label: string; shortLabel: string } | null;
+  /** Section links, shown from 1024 px. Omit (or null) for none, as on the dev pages. */
+  nav?: AppHeaderNav | null;
   /** The language switcher. */
   languages: ReactNode;
 };

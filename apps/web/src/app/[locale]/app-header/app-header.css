@@ -11,6 +11,10 @@
      runs the full page width with this side padding. Defined here because every page with the
      header loads this file. */
   --gutter: var(--space-lg);
+  /* The widest the content gets (the .wrap column and the header's bar): ledes and the FAQ read at
+     --measure inside it. */
+  --content-max: 1200px;
+  --measure: 40rem;
 }
 
 @media (min-width: 600px) {
@@ -51,8 +55,9 @@
   justify-content: space-between;
   gap: var(--space-md);
   width: 100%;
+  max-width: calc(var(--content-max) + 2 * var(--gutter));
   height: var(--header-h);
-  margin: 0;
+  margin: 0 auto;
   padding: 0 var(--gutter);
 }
 
@@ -89,20 +94,72 @@
   margin-left: auto;
 }
 
+/* The call to action: the site's compact primary button (.btn-primary .btn-compact in globals.css, copied here so it also works on pages without it). */
 .app-header .app-header-link {
-  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
+  background: var(--glow);
+  color: var(--on-glow);
   font-size: var(--font-caption);
   font-weight: var(--font-weight-bold);
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .app-header .app-header-link:hover,
 .app-header .app-header-link:focus-visible {
+  background: color-mix(in srgb, var(--glow) 86%, var(--blazing));
+  color: var(--on-glow);
+}
+
+/* Section links (the landing page): from 1024 px only, between the logo and the actions. */
+.app-header-nav {
+  display: none;
+}
+
+.app-header-nav ul {
+  display: flex;
+  gap: var(--space-xxl);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.app-header .app-header-nav a {
+  display: inline-block;
+  padding: 6px 0 4px;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-size: var(--font-unit);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.app-header .app-header-nav a:hover,
+.app-header .app-header-nav a:focus-visible,
+.app-header .app-header-nav a[aria-current] {
   color: var(--text);
 }
 
-.app-header .app-header-link {
-  white-space: nowrap;
+.app-header .app-header-nav a[aria-current] {
+  border-bottom-color: var(--accent-text);
+}
+
+.app-header-nav a:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (min-width: 1024px) {
+  .app-header-nav {
+    display: block;
+    margin-left: var(--space-xxxl);
+  }
 }
 
 /* Phones get the short label ("Waitlist"); from 600px the full one. */
@@ -161,8 +218,11 @@
   color: var(--text);
 }
 
+/* The current language: an outline and the text colour, not a fill: the call to action is the only
+   pink pill in the bar. */
 .lang [aria-current],
 .app-header .lang [aria-current] {
-  background: var(--glow);
-  color: var(--on-glow);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--border-control);
+  color: var(--text);
 }

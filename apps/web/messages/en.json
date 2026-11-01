@@ -7,7 +7,14 @@
   "header": {
     "home": "CityTurfer, home",
     "waitlist": "Join the waitlist",
-    "waitlistShort": "Waitlist"
+    "waitlistShort": "Join",
+    "nav": {
+      "label": "Page sections",
+      "how": "How it works",
+      "app": "The app",
+      "privacy": "Privacy",
+      "faq": "FAQ"
+    }
   },
   "hero": {
     "skip": "Skip to content",
@@ -35,17 +42,16 @@
       }
     },
     "badge": "Early prototype",
-    "audience": "For anyone who walks, runs or rides their city, and keeps coming back."
+    "join": "Join the waitlist",
+    "seeGlow": "See it glow"
   },
   "screens": {
     "turfMap": {
       "title": "The Turf Map",
-      "body": "Every walk, run and ride on one dark map, glowing where you go most.",
       "alt": "The Turf Map: glowing routes across Warsaw, with 3.02 km² of turf, 1530 cells and filters for walk, run and ride."
     },
     "dashboard": {
       "title": "Your week at a glance",
-      "body": "Distance, time, recent activities and the next achievement within reach.",
       "alt": "The Dashboard: this week's distance, time and activities, recent activities and the next achievement."
     },
     "proto": {
@@ -66,7 +72,33 @@
       },
       "dashboard": {
         "greeting": "Hello, {name}",
-        "subtitle": "{area} km² of turf · +{week} km² this week"
+        "subtitle": "{area} km² of turf · +{week} km² this week",
+        "thisWeek": "This week",
+        "distance": "Distance",
+        "time": "Time",
+        "count": "Activities",
+        "unitKm": "km",
+        "rowDistance": "{distance} km",
+        "rowPace": "{time} · {pace}/km",
+        "rowSpeed": "{time} · {speed} km/h",
+        "recent": "Recent activities",
+        "seeAll": "See all ›",
+        "achievements": "Achievements",
+        "nextUp": "Next up: <b>Half marathon</b> · Walk or run 21.1 km in one go.",
+        "activities": {
+          "walk": {
+            "title": "Morning walk",
+            "when": "Fri, 16 Oct at 06:00"
+          },
+          "run": {
+            "title": "Afternoon run",
+            "when": "Wed, 14 Oct at 13:00"
+          },
+          "ride": {
+            "title": "Morning ride",
+            "when": "Tue, 13 Oct at 09:00"
+          }
+        }
       }
     }
   },
@@ -88,8 +120,8 @@
       "glow": {
         "legendTitle": "Turf strength",
         "legendLabel": "Turf strength: Faint, Glowing, Strong, Blazing, from weakest to strongest",
-        "title": "Come back and watch it glow",
-        "body": "Every return makes a street brighter, from Faint to Blazing. Nothing fades: a street you’ve claimed stays yours, however long you’re away."
+        "title": "Every return counts",
+        "body": "Come back and it glows: a street gets brighter from Faint to Blazing with every return."
       }
     },
     "types": {
@@ -103,56 +135,32 @@
       "strong": "Strong",
       "blazing": "Blazing"
     },
-    "week": {
-      "eyebrow": "Dashboard",
-      "title": "What your week added up to",
-      "body": "This week’s distance, time and activities, your latest walks, runs and rides, and the next achievement within reach.",
-      "thisWeek": "This week",
-      "distance": "Distance",
-      "time": "Time",
-      "count": "Activities",
-      "unitKm": "km",
-      "rowDistance": "{distance} km",
-      "rowPace": "{time} · {pace}/km",
-      "rowSpeed": "{time} · {speed} km/h",
-      "recent": "Recent activities",
-      "seeAll": "See all ›",
-      "achievements": "Achievements",
-      "nextUp": "Next up: <b>Half marathon</b> · Walk or run 21.1 km in one go.",
-      "caption": "An example week, as the app shows it.",
-      "activities": {
-        "walk": {
-          "title": "Morning walk",
-          "when": "Fri, 16 Oct at 06:00"
-        },
-        "run": {
-          "title": "Afternoon run",
-          "when": "Wed, 14 Oct at 13:00"
-        },
-        "ride": {
-          "title": "Morning ride",
-          "when": "Tue, 13 Oct at 09:00"
-        }
-      }
-    },
     "local": {
-      "eyebrow": "Yours alone",
+      "eyebrow": "Privacy",
       "title": "Your phone keeps the original",
       "phone": "Your activities are stored on your phone, in the app.",
       "backup": "Cloud backup stays off until you turn it on. Turn it off and the copy on our server is deleted.",
       "portal": "Signed in on the web, you see only what you backed up.",
       "leaves": "What does leave the phone: map tiles for the area you’re viewing, update checks, and, unless you turn gap filling off, the two ends of a GPS gap. Signing in sends your email address to our server.",
       "account": "For now, you sign in to the app with an account.",
-      "site": "Our public pages set no cookies and load no trackers."
+      "site": "Our public pages set no cookies and load no trackers.",
+      "private": "No feed, no followers, no public profile."
     },
     "cta": {
       "title": "Your turf starts at your door",
       "body": "Leave your email and we’ll tell you when the app is ready to download.",
-      "join": "Join the waitlist"
+      "join": "Join the waitlist",
+      "eyebrow": "Waitlist",
+      "trust": {
+        "label": "What you can rely on",
+        "cookies": "No cookies on this site",
+        "eu": "Waitlist emails stored in the EU (Brevo)",
+        "phone": "Your activities stay on your phone",
+        "backup": "Backup only if you turn it on"
+      }
     },
     "demo": {
-      "eyebrow": "Turf strength",
-      "title": "Come back. It glows.",
+      "title": "One street, then the whole city",
       "body": "One street in Gdańsk’s Main Town, visit by visit. Then the whole city after four months of walks, runs and rides.",
       "step": "{visits, plural, one {# visit} other {# visits}} · {tier}",
       "cityStep": "Four months",
@@ -170,8 +178,8 @@
       "notFor": "Not for you if you want leaderboards, crews or training zones. CityTurfer is just you and your streets."
     },
     "highlights": {
-      "eyebrow": "In the app",
-      "title": "What the prototype does today",
+      "eyebrow": "The app",
+      "title": "What it does today",
       "iphone": "iPhone only",
       "gain": {
         "title": "New turf after every outing",
@@ -192,38 +200,25 @@
       "city": {
         "title": "Starts in your city",
         "body": "Pick your home city from the list and the map opens there."
-      }
+      },
+      "lede": "Plus your history and stats, in English and Polish."
     },
     "differs": {
-      "eyebrow": "How it’s different",
-      "title": "Made for the streets you repeat",
       "repeats": {
         "title": "Repeats count",
-        "body": "Most maps mark a street once. Here every return makes it brighter."
+        "body": "Most maps mark a street once. Here the streets you come back to shine brightest."
       },
       "fades": {
         "title": "Nothing fades",
         "body": "Your turf never decays, however long you’re away."
       },
-      "private": {
-        "title": "Private by default",
-        "body": "No feed, no followers, no public profile."
-      }
+      "label": "What’s different"
     },
     "status": {
-      "eyebrow": "Where it stands",
       "title": "An early prototype, honestly",
-      "body": "What works, what we’re testing and what isn’t there yet.",
-      "works": {
-        "title": "Works today",
-        "record": "Recording with the screen off (iPhone)",
-        "turf": "The Turf Map and turf strength",
-        "history": "History, stats and achievements",
-        "languages": "English and Polish"
-      },
       "testing": {
         "title": "Being tested",
-        "health": "Apple Health import and export (iPhone Simulator only so far)",
+        "health": "Saving your activities to Apple Health",
         "battery": "Battery use on long outings",
         "backup": "Opt-in cloud backup"
       },
@@ -236,8 +231,8 @@
       }
     },
     "faq": {
-      "eyebrow": "Questions",
-      "title": "Good questions",
+      "eyebrow": "FAQ",
+      "title": "Before you ask",
       "when": {
         "q": "When can I get it?",
         "a": "Join the waitlist and we’ll email you when it’s ready to download."
@@ -275,7 +270,9 @@
   "footer": {
     "label": "Site footer",
     "contact": "Contact:",
-    "rights": "© {year} CityTurfer"
+    "rights": "© {year} CityTurfer",
+    "navLabel": "Footer links",
+    "noCookies": "This site sets no cookies and loads no trackers."
   },
   "language": {
     "label": "Language",
@@ -290,7 +287,8 @@
     "soon": "Coming soon"
   },
   "waitlist": {
-    "title": "Join the waitlist",
+    "eyebrow": "Waitlist",
+    "title": "We’ll tell you when it’s ready",
     "emailLabel": "Email address",
     "emailPlaceholder": "you@example.com",
     "submit": "Join",

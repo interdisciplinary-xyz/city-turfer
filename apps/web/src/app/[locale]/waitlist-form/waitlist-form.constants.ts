@@ -6,6 +6,8 @@ export type WaitlistFormProps = {
   contactEmail: string;
   /** Sent to Brevo so the confirmation email is in the visitor's language. */
   locale: string;
+  /** The id of the heading above the form (its accessible name); the form is unnamed without it. */
+  headingId?: string;
 };
 
 export type WaitlistState = 'idle' | 'sending' | 'sent' | 'failed';

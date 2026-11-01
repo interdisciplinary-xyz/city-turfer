@@ -21,11 +21,15 @@ export const numericFont = localFont({
   fallback: ['-apple-system', 'BlinkMacSystemFont', 'Roboto', 'Arial', 'sans-serif'],
 });
 
-/** Body text on the web (the app uses the system font). Four static weights, no synthesis. */
+/**
+ * Body text on the web (the app uses the system font). Three static weights, no synthesis: the site's CSS
+ * uses 400, 600 and 700 (and 800 for card titles, which maps to 700); nothing asks for 500, so Medium is
+ * not shipped or preloaded (-27 KB). Next preloads every file of a font with `preload: true`; all three are
+ * on the first screen (body, nav and chips, buttons).
+ */
 export const bodyFont = localFont({
   src: [
     { path: '../../../../packages/brand/fonts/Barlow-Regular.woff2', weight: '400', style: 'normal' },
-    { path: '../../../../packages/brand/fonts/Barlow-Medium.woff2', weight: '500', style: 'normal' },
     { path: '../../../../packages/brand/fonts/Barlow-SemiBold.woff2', weight: '600', style: 'normal' },
     { path: '../../../../packages/brand/fonts/Barlow-Bold.woff2', weight: '700', style: 'normal' },
   ],

@@ -2,22 +2,21 @@ import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { useLocale, useTranslations } from 'next-intl';
 
 import { AppHeader } from '@/app/[locale]/app-header';
+import { HeroCity, HeroCityLine } from '@/app/[locale]/hero-city';
 import { HeroCopy } from '@/app/[locale]/hero-copy';
 import { HeroMotion } from '@/app/[locale]/hero-motion';
 import { HeroScreens } from '@/app/[locale]/hero-screens';
 import {
   Audience,
-  Differs,
   Faq,
   FinalCta,
   Highlights,
   HowItWorks,
   LocalFirst,
-  WhereItStands,
-  YourWeek,
+  Section,
+  SectionHead,
 } from '@/app/[locale]/home-sections';
 import { SiteFooter } from '@/app/[locale]/site-footer';
-import { TurfDemo } from '@/app/[locale]/turf-demo';
 import { WaitlistForm } from '@/app/[locale]/waitlist-form';
 import type { Locale } from '@/i18n/routing';
 
@@ -35,34 +34,34 @@ function Page({ waitlist }: PageProps) {
       <a className='skip' href='#main'>
         {t('hero.skip')}
       </a>
-      <AppHeader locale={locale} waitlist={waitlist} />
-      <main id='main'>
-        <div className='hero'>
-          <HeroMotion className='wrap hero-grid'>
-            <HeroCopy />
-            <HeroScreens />
-          </HeroMotion>
-        </div>
-        {waitlist ? (
-          <section id='waitlist' className='waitlist-section' aria-label={t('waitlist.title')}>
-            <div className='wrap'>
-              <WaitlistForm
-                action='https://example.invalid/brevo'
-                controller='CityTurfer (example)'
-                contactEmail='privacy@example.invalid'
-                locale={locale}
-              />
+      <AppHeader locale={locale} waitlist={waitlist} nav />
+      <main id='main' tabIndex={-1}>
+        <section id='top' aria-labelledby='hero-title'>
+          <HeroMotion className='hero'>
+            <HeroCity />
+            <div className='wrap hero-grid'>
+              <HeroCopy waitlist={waitlist} />
+              <HeroScreens />
             </div>
-          </section>
+            <HeroCityLine />
+          </HeroMotion>
+        </section>
+        {waitlist ? (
+          <Section name='waitlist' band className='waitlist-section'>
+            <SectionHead name='waitlist' eyebrow={t('waitlist.eyebrow')} title={t('waitlist.title')} align='center' />
+            <WaitlistForm
+              action='https://example.invalid/brevo'
+              controller='CityTurfer (example)'
+              contactEmail='privacy@example.invalid'
+              locale={locale}
+              headingId='waitlist-title'
+            />
+          </Section>
         ) : null}
-        <TurfDemo />
         <HowItWorks />
         <Audience />
         <Highlights />
-        <YourWeek />
-        <Differs />
         <LocalFirst />
-        <WhereItStands />
         <Faq />
         {waitlist ? <FinalCta /> : null}
       </main>

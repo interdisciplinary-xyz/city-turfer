@@ -15,8 +15,7 @@ import { SettingsButton, StatusBar, TabBar } from './phone-chrome';
  * activities and the achievements bar. Same example week as the Dashboard card under the hero.
  */
 export function DashboardScreen() {
-  const t = useTranslations('home.week');
-  const tp = useTranslations('screens.proto.dashboard');
+  const t = useTranslations('screens.proto.dashboard');
   const format = useFormatter();
   const km = (value: number) => format.number(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const progress = Math.round((EXAMPLE_ACHIEVEMENTS.unlocked / EXAMPLE_ACHIEVEMENTS.total) * 100);
@@ -26,9 +25,9 @@ export function DashboardScreen() {
       <div className='proto-body'>
         <div className='proto-hello'>
           <div>
-            <p className='proto-greeting'>{tp('greeting', { name: EXAMPLE_NAME })}</p>
+            <p className='proto-greeting'>{t('greeting', { name: EXAMPLE_NAME })}</p>
             <p className='proto-muted'>
-              {tp('subtitle', { area: km(EXAMPLE_TURF.areaKm2), week: km(EXAMPLE_TURF.weekKm2) })}
+              {t('subtitle', { area: km(EXAMPLE_TURF.areaKm2), week: km(EXAMPLE_TURF.weekKm2) })}
             </p>
           </div>
           <SettingsButton />
