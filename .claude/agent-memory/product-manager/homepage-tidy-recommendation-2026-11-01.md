@@ -9,9 +9,9 @@ metadata:
 
 Read-only proposal round on scope/v0.14.0 (founder ideas: section titles, nav in header).
 
-My top 5: (1) merge 11 h2 sections into 6 (glow+how, audience+differs, highlights+status, privacy,
+My top 5: (1) merge 11 sections into 6 (glow+how, audience+differs, highlights+status, privacy,
 FAQ, join; cut "Your week"); (2) hero: drop the second icon+wordmark, tagline as h1, waitlist button
-in the first screen on 390 px; (3) founder idea 1 is mostly built already: every section has an
+in the first screen on 390 px; (3) founder idea 1 is mostly built already: almost every section has an
 eyebrow + slogan h2, so make the eyebrow the plain label and reuse it as the nav label; (4) nav: 4
 links, desktop only (How it works, The app, Privacy, FAQ / Jak to działa, Aplikacja, Prywatność,
 Pytania); (5) fix Apple Health contradiction (Highlights tile = works today; Status = Simulator
