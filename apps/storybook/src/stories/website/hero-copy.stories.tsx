@@ -7,7 +7,7 @@ function HeroCopyInHero() {
   return (
     <div className='hero'>
       <div className='wrap hero-grid'>
-        <HeroCopy />
+        <HeroCopy waitlist />
       </div>
     </div>
   );
@@ -20,7 +20,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Mark, wordmark, tagline and pitch at the top of the landing page. Copy comes from apps/web/messages (switch the language in the toolbar).',
+          'The Early prototype badge, the tagline, the pitch and the two buttons at the top of the landing page (the brand sits in the header). Copy comes from apps/web/messages (switch the language in the toolbar).',
       },
     },
   },

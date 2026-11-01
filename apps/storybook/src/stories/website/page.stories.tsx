@@ -37,7 +37,7 @@ function Page({ waitlist }: PageProps) {
       <main id='main'>
         <div className='hero'>
           <HeroMotion className='wrap hero-grid'>
-            <HeroCopy />
+            <HeroCopy waitlist />
             <HeroScreens />
           </HeroMotion>
         </div>

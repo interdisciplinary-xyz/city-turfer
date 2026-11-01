@@ -42,17 +42,16 @@
       }
     },
     "badge": "Early prototype",
-    "audience": "For anyone who walks, runs or rides their city, and keeps coming back."
+    "join": "Join the waitlist",
+    "seeGlow": "See it glow"
   },
   "screens": {
     "turfMap": {
       "title": "The Turf Map",
-      "body": "Every walk, run and ride on one dark map, glowing where you go most.",
       "alt": "The Turf Map: glowing routes across Warsaw, with 3.02 km² of turf, 1530 cells and filters for walk, run and ride."
     },
     "dashboard": {
       "title": "Your week at a glance",
-      "body": "Distance, time, recent activities and the next achievement within reach.",
       "alt": "The Dashboard: this week's distance, time and activities, recent activities and the next achievement."
     },
     "proto": {

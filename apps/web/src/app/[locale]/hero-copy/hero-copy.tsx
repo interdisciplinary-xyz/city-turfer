@@ -1,18 +1,16 @@
-import { NAME } from '@cityturfer/brand';
-import mark from '@cityturfer/brand/svg/mark.svg';
-import wordmark from '@cityturfer/brand/svg/wordmark-light.svg';
-import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 
-/** Mark and wordmark in one row, the prototype badge, then tagline, lede and who it's for; the `data-anim` hooks are driven by HeroMotion. */
-export function HeroCopy() {
+import { SECTION_ANCHORS } from '../home-sections/home-sections.constants';
+
+/**
+ * The hero's text: the "Early prototype" badge, the tagline (the dominant line), the lede and the two
+ * buttons. The brand sits in the header, so no icon or wordmark here. The `data-anim` hooks are
+ * driven by HeroMotion: `line` for the tagline, `copy` for the rest.
+ */
+export function HeroCopy({ waitlist }: { waitlist: boolean }) {
   const t = useTranslations('hero');
   return (
     <div className='hero-copy'>
-      <div className='hero-brand'>
-        <Image className='mark' data-anim='mark' src={mark} alt='' priority width={132} height={132} />
-        <Image className='wordmark' data-anim='wordmark' src={wordmark} alt={NAME} priority width={320} height={71} />
-      </div>
       <p className='hero-badge' data-anim='copy'>
         {t('badge')}
       </p>
@@ -27,9 +25,16 @@ export function HeroCopy() {
       <p className='lede' data-anim='copy'>
         {t('lede')}
       </p>
-      <p className='hero-audience' data-anim='copy'>
-        {t('audience')}
-      </p>
+      <div className='hero-actions' data-anim='copy'>
+        {waitlist ? (
+          <a className='btn btn-primary' href={`#${SECTION_ANCHORS.waitlist}`}>
+            {t('join')}
+          </a>
+        ) : null}
+        <a className='btn btn-secondary' href={`#${SECTION_ANCHORS.how}`}>
+          {t('seeGlow')}
+        </a>
+      </div>
     </div>
   );
 }

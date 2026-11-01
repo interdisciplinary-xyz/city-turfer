@@ -27,12 +27,8 @@ test('the hero phones keep the dark app scheme on the light page', async () => {
   assert.match(await read('[locale]/hero-screens/hero-screens.tsx'), /className='phone' style=\{PHONE_VARIABLES\}/);
 });
 
-test('the light site and its white header use the day wordmark; the branding page uses the site scheme', async () => {
-  const files = [
-    '[locale]/hero-copy/hero-copy.tsx',
-    '[locale]/app-header/app-header.tsx',
-    '[locale]/account/_portal/portal-header/portal-header.tsx',
-  ];
+test("the light site's white header uses the day wordmark; the branding page uses the site scheme", async () => {
+  const files = ['[locale]/app-header/app-header.tsx', '[locale]/account/_portal/portal-header/portal-header.tsx'];
   for (const file of files) {
     const source = await read(file);
     assert.match(source, /svg\/wordmark-light\.svg/, file);
@@ -60,9 +56,18 @@ test('the pieces that draw turf tiers are night panels from APP_SCHEME', async (
   const constants = await read('[locale]/home-sections/home-sections.constants.ts');
   assert.match(constants, /cssVariables\(APP_SCHEME\)/);
   const tsx = await read('[locale]/home-sections/home-sections.tsx');
-  for (const piece of ['app-record', 'app-gain', 'app-legend', 'home-dashboard']) {
+  for (const piece of ['app-record', 'app-gain', 'app-legend']) {
     assert.match(tsx, new RegExp(`className='${piece}' style=\\{APP_VARIABLES\\}`), piece);
   }
+  // The glow demo's map panel is a night panel too (its scheme is passed to the client player).
+  assert.match(
+    await read('[locale]/turf-demo/turf-demo.constants.ts'),
+    /DEMO_SCHEME_STYLE = cssVariables\(APP_SCHEME\)/
+  );
+  assert.match(
+    await read('[locale]/turf-demo/turf-demo-player.tsx'),
+    /className='turf-demo-panel' style=\{schemeStyle\}/
+  );
 });
 
 test('pink and amber text go through the -text variables, never the raw fill', async () => {

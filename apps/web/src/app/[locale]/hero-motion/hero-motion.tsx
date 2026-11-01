@@ -13,7 +13,7 @@ gsap.registerPlugin(useGSAP);
 
 /**
  * Entrance and ambient motion for the hero (`web-motion` skill):
- * - entrance: mark → wordmark → headline lines → lede → calls to action, phones rise alongside;
+ * - entrance: badge and headline lines → lede → buttons, phones rise alongside;
  * - the city map behind the hero fades in after the headline;
  * - on desktop with a mouse, the phones tilt a little towards the pointer and the map drifts away
  *   from it.
@@ -50,14 +50,11 @@ export function HeroMotion({ className, children }: HeroMotionProps) {
           } else {
             window.addEventListener(PAGE_LOADED_EVENT, play, { once: true });
           }
-          tl.fromTo('[data-anim="mark"]', { autoAlpha: 0, scale: 0.7 }, { autoAlpha: 1, scale: 1, duration: 1 })
-            .fromTo('[data-anim="wordmark"]', { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.7 }, '-=0.7')
-            .fromTo(
-              '[data-anim="line"]',
-              { autoAlpha: 0, y: '0.45em' },
-              { autoAlpha: 1, y: 0, duration: 0.8, stagger: 0.12 },
-              '-=0.5'
-            )
+          tl.fromTo(
+            '[data-anim="line"]',
+            { autoAlpha: 0, y: '0.45em' },
+            { autoAlpha: 1, y: 0, duration: 0.8, stagger: 0.12 }
+          )
             .fromTo(
               '[data-anim="copy"]',
               { autoAlpha: 0, y: 16 },

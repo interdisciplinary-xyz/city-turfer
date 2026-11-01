@@ -29,7 +29,7 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
           <HeroMotion className='hero'>
             <HeroCity />
             <div className='wrap hero-grid'>
-              <HeroCopy />
+              <HeroCopy waitlist={Boolean(WAITLIST)} />
               <HeroScreens />
               {/* No download buttons for now: the waitlist comes first (StoreButtons stays for later). */}
             </div>

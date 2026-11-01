@@ -42,17 +42,16 @@
       }
     },
     "badge": "Wczesny prototyp",
-    "audience": "Dla każdego, kto chodzi, biega albo jeździ po swoim mieście i wciąż do niego wraca."
+    "join": "Zapisz się na listę",
+    "seeGlow": "Zobacz, jak świeci"
   },
   "screens": {
     "turfMap": {
       "title": "Mapa terytorium",
-      "body": "Wszystkie spacery, biegi i przejażdżki na jednej ciemnej mapie — świecą najmocniej tam, gdzie bywasz najczęściej.",
       "alt": "Mapa terytorium: świecące trasy w Warszawie, 3,02 km² terytorium, 1530 komórek i filtry spacer, bieg, rower."
     },
     "dashboard": {
       "title": "Twój tydzień w skrócie",
-      "body": "Dystans, czas, ostatnie aktywności i najbliższe osiągnięcie w zasięgu ręki.",
       "alt": "Pulpit: dystans, czas i liczba aktywności w tym tygodniu, ostatnie aktywności i najbliższe osiągnięcie."
     },
     "proto": {

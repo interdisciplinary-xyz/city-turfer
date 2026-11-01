@@ -16,7 +16,7 @@
      weight is baked into each font, so never bold them (font-synthesis: none). */
   --display: var(--face-display), var(--font-family-display);
   --numeric: var(--face-numeric), var(--font-family-numeric);
-  /* The hero tagline: an italic in sentence case, so it reads apart from the capitals wordmark. */
+  /* The hero tagline: an italic in sentence case, so it reads apart from the capitals section titles. */
   --tagline: var(--face-tagline, 'BarlowSemiCondensed-BlackItalic'), var(--font-family-tagline);
   --body: var(--face-body, 'Barlow'), var(--font-family-body);
 }
@@ -184,13 +184,6 @@ img {
   text-transform: uppercase;
 }
 
-.hero-audience {
-  margin: 12px auto 0;
-  max-width: 34rem;
-  color: var(--text);
-  font-weight: var(--font-weight-semibold);
-}
-
 /* The hero headline keeps --text like every heading: on the light page --muted reads pale. */
 
 /* Phones: text, buttons, then the screenshots. Desktop: text + phones in one row, buttons under both. */
@@ -244,72 +237,21 @@ img {
     order: 4;
     grid-column: 1 / -1;
   }
-  .hero-copy .hero-brand {
-    justify-content: flex-start;
-    margin-bottom: 20px;
-  }
   .hero-copy h1,
-  .hero-copy .lede,
-  .hero-copy .hero-audience {
+  .hero-copy .lede {
     margin-left: 0;
   }
   .hero-copy h1 {
-    font-size: clamp(3rem, 5vw, 4.2rem);
+    font-size: clamp(3.25rem, 5.6vw, 5rem);
   }
-  /* Side by side, the lockup is about 4.21 tiles wide (tile + gap + wordmark at 4.49 × 0.66), so the
-     144px tile shrinks only when the text column is narrower than that. */
-  .hero-copy .hero-brand {
-    --lockup: min(144px, calc(100cqw / 4.3));
-    flex-direction: row;
+  .hero-actions {
+    justify-content: flex-start;
   }
-  .hero-copy .hero-brand .wordmark {
-    margin-left: calc(var(--lockup) * -0.04);
-  }
-}
-
-/* The hero text column is a size container, so the lockup can size itself to the column. */
-.hero-copy {
-  container-type: inline-size;
-}
-
-/* The app icon and the wordmark: stacked and centred on phones (side by side they would not fit at
-   this size), in one row left-aligned next to the phones on desktop.
-   One size variable (--lockup = the tile) drives every part, so the proportions never drift:
-   wordmark height 0.66 of the tile, gap 0.25 (clear space >= 0.16). Breakpoints change only --lockup.
-   On phones the wordmark (about 2.96 tiles wide, at 4.49 × 0.66) caps the tile at the column width. */
-.hero-brand {
-  --lockup: min(clamp(112px, 32vw, 168px), calc(100cqw / 3.1));
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: calc(var(--lockup) * 0.25);
-  margin-bottom: 28px;
-}
-
-.mark {
-  width: var(--lockup);
-  margin: 0;
-  border-radius: 23%;
-  /* a centred glow, not a drop shadow (the brand allows none on the mark) */
-  box-shadow: 0 0 40px color-mix(in srgb, var(--faint) 24%, transparent);
-}
-
-.wordmark {
-  /* height drives the size; the .wordmark class outranks the global img { height: auto } */
-  height: calc(var(--lockup) * 0.66);
-  width: auto;
-  /* wordmark.svg has ~0.04 of the tile of padding before the first glyph: side by side (desktop),
-     that is pulled in so the visible gap is 0.25; stacked, it stays centred */
-  margin-left: 0;
-  max-width: none;
-  margin-top: 0;
-  margin-bottom: 0;
-  margin-right: 0;
 }
 
 h1 {
-  font-size: clamp(2.4rem, 10vw, 4.1rem);
+  /* The tagline is the dominant line of the page. */
+  font-size: clamp(2.6rem, 11.5vw, 4.5rem);
   font-family: var(--tagline);
   font-weight: normal;
   font-style: normal;
@@ -323,6 +265,14 @@ h1 {
 
 .line {
   display: block;
+}
+
+/* The hero's two buttons: wrap rather than shrink on a 320 px phone. */
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-md);
 }
 
 /* Entrance animation (hero-motion): hidden until GSAP reveals them; the class is only set when
@@ -625,21 +575,11 @@ h1 {
   display: block;
 }
 
-/* Short landscape screens (a phone on its side): smaller logo and tighter spacing, so the
-   headline is visible without scrolling. */
+/* Short landscape screens (a phone on its side): tighter spacing, so the headline is visible without
+   scrolling. */
 @media (max-height: 520px) and (orientation: landscape) {
   .hero {
     padding-top: 0;
-  }
-  .hero-brand {
-    margin-bottom: 16px;
-  }
-  .hero-brand {
-    --lockup: 48px;
-    flex-direction: row;
-  }
-  .hero-brand .wordmark {
-    margin-left: calc(var(--lockup) * -0.04);
   }
 }
 
