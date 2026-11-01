@@ -105,12 +105,11 @@ export const ICON_PATHS: Record<IconName, readonly IconShape[]> = {
     { d: 'M8 10.5V7.5a4 4 0 0 1 8 0v3' },
     { d: 'M12 14.6v2.3' },
   ],
-  /** Two arrows chasing each other round: repeats count. */
+  /** Coming back: one loop that leaves a point and returns to it, arrow first (not the two-arrow sync glyph). */
   repeat: [
-    { d: 'M4.5 12a7.5 7.5 0 0 1 14-3.75' },
-    { d: 'M18.5 4v4.25h-4.25' },
-    { d: 'M19.5 12a7.5 7.5 0 0 1-14 3.75' },
-    { d: 'M5.5 20v-4.25h4.25' },
+    { d: circle(5.4, 18.6, 1.4), filled: true },
+    { d: 'M7.22 18.04 15.42 15.53A6.2 6.2 0 1 0 7.53 8.34L6.33 14.1' },
+    { d: 'M8.46 12.13 6.33 14.1 5.16 11.44' },
   ],
   /** Infinity: nothing fades. */
   infinity: [
