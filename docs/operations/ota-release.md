@@ -61,16 +61,23 @@ from `scope/v0.13.0` while the fingerprint stays equal (equal at `1caf481`, meas
 OTA is recorded for v0.11.0 or v0.12.0 in the session logs.
 
 v0.13.0 is JS only, released 2026-10-26: the release commit `9dd9692` bumps `app.json` to 0.13.0, so
-the tag `v0.13.0` has a new fingerprint. The founder's iPhone runs a Release build from 2026-10-26
-(`fc6fa57` per runbook #7, `668e740` per #187's body; both `app.json` 0.12.0, iOS `ff7765f0…`), so
-it takes **no** OTA published from `v0.13.0` or from `scope/v0.14.0`. v0.14.0 changes no native file
-so far (no `app.json`, plugin or module change; the app's only new dependencies are the dev
-dependencies `react-test-renderer` and its types, #204; `git diff --stat v0.13.0..1607339`, checked
-2026-10-31). Its fingerprint is not measured in a clean install yet: #191 and #192 reported
-different iOS values (`12e88723…` and `c9cca32d…`) from session checkouts, and #205 reported
-`c9cca32d…` again before #204; none was measured on the scope head. Whether to keep the `app.json`
-bump for v0.14.0 or let v0.13 installs take an OTA is an open founder decision. No OTA is recorded
-for v0.13.0.
+the tag `v0.13.0` has a new fingerprint. The founder's iPhone kept its 0.12.0 build (iOS
+`ff7765f0…`) until 2026-10-31, so it took no OTA from `v0.13.0` or `scope/v0.14.0`. No OTA is
+recorded for v0.13.0.
+
+v0.14.0 is JS only, released 2026-10-31: no `app.json`, plugin or module change before the release
+commit; the app's only new dependencies are the dev dependencies `react-test-renderer` and its types
+(#204). Measured in a clean checkout of `scope/v0.14.0` at `1607339` (`app.json` 0.13.0): iOS
+`c9cca32dee0d0429f32a6584d9ef628d12dbc5e0`. The release commit `c6ee7fe` (tag `v0.14.0`) bumps
+`app.json` to 0.14.0; after it, `scope/v0.15.0` at `bdd3ac0` and at `e232d90` measures iOS
+`0d465570442d6d6d81addfae7e4c38632b1df37f` (Android not measured). The release kept the bump, so
+v0.13 installs take no OTA from it. No OTA was published for v0.14.0 (the newest update on
+`production` is about two weeks old, from the 0.2.0 build).
+
+**Current install** (runbook #7): the founder's iPhone runs a Release build of `scope/v0.15.0` at
+`e232d90` (reports 0.14.0, iOS `0d465570…`), installed 2026-11-01. It takes OTAs published from
+`scope/v0.15.0` while that branch's fingerprint stays `0d465570…`; the v0.15.0 release commit's
+`app.json` bump will move it again.
 
 To check, compare the fingerprint of the checkout you'll publish from with the runtime of the latest
 update the phone already runs:

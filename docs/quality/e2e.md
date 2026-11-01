@@ -59,7 +59,7 @@ none; the audit enforces this. Gaps are listed honestly in section 3.
 | `15-account-settings`     | account               | Live API: rename, change email, set/breached/use/remove account password                          |
 | `16-language`             | me                    | Language setting: Polish on Info/Dashboard/Stats/Record, restart keeps it, System returns English |
 | `17-local-profile-backup` | account               | Live API: admin@ links its backup with an e-mailed code, password sign-in leaves no credentials   |
-| `18-districts`            | turf                  | Warsaw districts with demo turf (seeds it if none): summary, covered row, row and map selection   |
+| `18-districts`            | turf                  | Warsaw districts (seeds turf if none): summary, row share, row and map selection, Current city    |
 | `08-sign-out`             | auth                  | Sign out returns to sign-in (signs in to admin first if needed). Runs last: it ends the session   |
 
 Allowed tags are fixed in `apps/mobile/tools/e2e/audit.mjs`
