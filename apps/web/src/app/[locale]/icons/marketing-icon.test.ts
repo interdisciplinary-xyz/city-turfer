@@ -6,7 +6,7 @@ import * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
-import { Icon } from '../marketing-icon';
+import { Icon } from './marketing-icon';
 import {
   ICON_DISC_TINT,
   ICON_FOR_DIFFER,
@@ -15,13 +15,22 @@ import {
   ICON_FOR_TYPE,
   ICON_NAMES,
   ICON_PATHS,
-} from '../marketing-icon.constants';
+} from './marketing-icon.constants';
 
 // vitest compiles the app's .tsx with the classic JSX runtime (tsconfig keeps `jsx: preserve` for
 // Next), so the component looks for a global React at render time.
 Object.assign(globalThis, { React });
 
 const HEX = /#[0-9a-f]{3,8}\b/i;
+const CSS = readFileSync(path.resolve(import.meta.dirname, 'marketing-icon.css'), 'utf8');
+/** Every token a disc draws its icon in (`--icon-color: var(--…)`), read from the stylesheet. */
+const DISC_TOKENS = [...CSS.matchAll(/--icon-color:\s*var\((--[\w-]+)\)/g)].map((m) => m[1]);
+/** Every token a bare icon is coloured with (`color: var(--…)` outside a disc), read from the stylesheet. */
+const BARE_TOKENS = [...CSS.matchAll(/(?<!-)color:\s*var\((--[\w-]+)\)/g)]
+  .map((m) => m[1])
+  .filter((token) => token !== '--icon-color');
+/** The surfaces an icon sits on, on the light page and in night panels. */
+const SURFACES = ['--bg', '--card'];
 const render = (props: Parameters<typeof Icon>[0]) => renderToStaticMarkup(React.createElement(Icon, props));
 
 /** `color-mix(in srgb, fg p%, transparent)` over `bg`, as the browser composites it. */
@@ -54,10 +63,9 @@ describe('marketing icon set', () => {
       expect(svg, name).not.toMatch(HEX);
       expect(svg, name).toContain('stroke="currentColor"');
     }
-    const css = readFileSync(path.resolve(import.meta.dirname, '../marketing-icon.css'), 'utf8');
-    expect(css).not.toMatch(HEX);
-    expect(css).not.toMatch(/--(faint|glow|strong|blazing)\b/);
-    expect(css).toContain(`var(--icon-color) ${ICON_DISC_TINT * 100}%, transparent`);
+    expect(CSS).not.toMatch(HEX);
+    expect(CSS).not.toMatch(/--(faint|glow|strong|blazing)\b/);
+    expect(CSS).toContain(`var(--icon-color) ${ICON_DISC_TINT * 100}%, transparent`);
   });
 
   it('is decorative by default and labelled when given a title', () => {
@@ -78,17 +86,30 @@ describe('marketing icon set', () => {
     }
   });
 
-  it('keeps disc icons at 3:1 or more on their own tint, on the light page and in night panels', () => {
+  it('reads its colour tokens from marketing-icon.css: -text on discs, -graphic bare', () => {
+    expect(DISC_TOKENS.length).toBeGreaterThanOrEqual(4);
+    expect(BARE_TOKENS.length).toBeGreaterThanOrEqual(3);
+    for (const token of DISC_TOKENS) {
+      expect(token, 'disc icons are drawn in a -text token').toMatch(/-text$/);
+    }
+    for (const token of BARE_TOKENS) {
+      expect(token, 'bare icons are drawn in a -graphic token').toMatch(/-graphic$/);
+    }
+  });
+
+  it('keeps disc icons at 4:1 or more on their own tint, bare icons at 3:1, on the light page and in night panels', () => {
     for (const scheme of [WEB_SCHEME, APP_SCHEME]) {
       const vars = cssVariables(scheme) as Record<string, string>;
-      for (const token of ['--accent-text', '--walk-text', '--run-text', '--ride-text']) {
-        for (const surface of ['--bg', '--card']) {
+      for (const token of DISC_TOKENS) {
+        for (const surface of SURFACES) {
+          expect(vars[token], `${scheme} ${token}`).toMatch(/^#[0-9a-f]{6}$/i);
           const disc = tint(vars[token], vars[surface], ICON_DISC_TINT);
-          expect(contrastRatio(vars[token], disc), `${scheme} ${token} on ${surface}`).toBeGreaterThanOrEqual(3);
+          expect(contrastRatio(vars[token], disc), `${scheme} ${token} on ${surface}`).toBeGreaterThanOrEqual(4);
         }
       }
-      for (const token of ['--walk-graphic', '--run-graphic', '--ride-graphic']) {
-        for (const surface of ['--bg', '--card']) {
+      for (const token of BARE_TOKENS) {
+        for (const surface of SURFACES) {
+          expect(vars[token], `${scheme} ${token}`).toMatch(/^#[0-9a-f]{6}$/i);
           expect(contrastRatio(vars[token], vars[surface]), `${scheme} ${token} on ${surface}`).toBeGreaterThanOrEqual(
             3
           );

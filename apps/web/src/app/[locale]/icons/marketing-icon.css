@@ -1,7 +1,8 @@
 /* The marketing icon set (marketing-icon.tsx). Colours only through tokens; never a turf tier on the light page.
    A plain icon takes the text colour around it. On a disc, the icon is drawn in a `-text` token and
    the disc is that colour mixed 12% into transparency: on the light page the `-graphic` tokens fall
-   to about 2.9:1 on their own tint, the `-text` ones stay at 4.0:1 or more (marketing-icon.test.ts). */
+   to about 2.9:1 on their own tint, the `-text` ones stay at 4.0:1 or more. marketing-icon.test.ts reads every
+   `--icon-color` and `-graphic` token below and holds them to those ratios. */
 
 .icon {
   display: inline-block;
@@ -34,15 +35,17 @@
   --icon-color: var(--ride-text);
 }
 
-/* Bare activity icons (no disc) draw as lines: the -graphic tokens, ≥ 3:1 on the page and cards. */
-.icon-walk {
+/* Bare activity icons (no disc) draw as lines: the -graphic tokens, ≥ 3:1 on the page and cards.
+   Never inside a disc: there the icon must keep the disc's -text colour, so the rules skip any icon
+   within .icon-disc (a -graphic colour on its own tint would fall below 3:1). */
+.icon-walk:not(.icon-disc *) {
   color: var(--walk-graphic);
 }
 
-.icon-run {
+.icon-run:not(.icon-disc *) {
   color: var(--run-graphic);
 }
 
-.icon-ride {
+.icon-ride:not(.icon-disc *) {
   color: var(--ride-graphic);
 }
