@@ -81,11 +81,14 @@ export const ICON_PATHS: Record<IconName, readonly IconShape[]> = {
       d: 'M12 19.8C6.6 16.4 3.6 13.2 3.6 9.6A4.3 4.3 0 0 1 8 5.2c1.7 0 3.1.9 4 2.4.9-1.5 2.3-2.4 4-2.4a4.3 4.3 0 0 1 4.4 4.4c0 3.6-3 6.8-8.4 10.2Z',
     },
   ],
-  /** An achievement: a medal on a ribbon, a star at its heart. */
+  /** An achievement: a medal on a ribbon, a big star filling it (not record's dot, even at 20 px). */
   badge: [
-    { d: circle(12, 9, 5.75) },
-    { d: 'M8.4 13.5 7.5 21l4.5-2.4 4.5 2.4-.9-7.5' },
-    { d: 'M12 6.3l.9 1.8 2 .3-1.5 1.4.4 2-1.8-1-1.8 1 .4-2-1.5-1.4 2-.3Z', filled: true },
+    { d: circle(12, 8.5, 5) },
+    { d: 'M8.8 12.3 7.6 21l4.4-2.4 4.4 2.4-1.2-8.7' },
+    {
+      d: 'M12 5.3l.85 2.23 2.38.12-1.85 1.5.62 2.3-2-1.3-2 1.3.62-2.3-1.85-1.5 2.38-.12Z',
+      filled: true,
+    },
   ],
   /** A map pin: your home city. */
   pin: [{ d: 'M12 21.2s-6.8-6.1-6.8-11.4a6.8 6.8 0 0 1 13.6 0c0 5.3-6.8 11.4-6.8 11.4Z' }, { d: circle(12, 9.8, 2.4) }],
