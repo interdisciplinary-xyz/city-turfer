@@ -21,7 +21,7 @@
     "openLabel": "Pokaż miasto {city} w podziale na dzielnice",
     "summary": "{area} terytorium w {withTurf} z {total} dzielnic",
     "rowArea": "z {area}",
-    "rowLabel": "{name}, {coveredUnit, select, m2 {{coveredCount, plural, one {{covered} metr kwadratowy} few {{covered} metry kwadratowe} many {{covered} metrów kwadratowych} other {{covered} metra kwadratowego}}} other {{coveredCount, plural, one {{covered} kilometr kwadratowy} few {{covered} kilometry kwadratowe} many {{covered} kilometrów kwadratowych} other {{covered} kilometra kwadratowego}}}} terytorium, powierzchnia dzielnicy {areaUnit, select, m2 {{areaCount, plural, one {{area} metr kwadratowy} few {{area} metry kwadratowe} many {{area} metrów kwadratowych} other {{area} metra kwadratowego}}} other {{areaCount, plural, one {{area} kilometr kwadratowy} few {{area} kilometry kwadratowe} many {{area} kilometrów kwadratowych} other {{area} kilometra kwadratowego}}}}",
+    "rowLabel": "{name}, {coveredUnit, select, m2 {{coveredCount, plural, one {{covered} metr kwadratowy} few {{covered} metry kwadratowe} many {{covered} metrów kwadratowych} other {{covered} metra kwadratowego}}} other {{coveredCount, plural, one {{covered} kilometr kwadratowy} few {{covered} kilometry kwadratowe} many {{covered} kilometrów kwadratowych} other {{covered} kilometra kwadratowego}}}} terytorium, powierzchnia dzielnicy {areaUnit, select, m2 {{areaCount, plural, one {{area} metr kwadratowy} few {{area} metry kwadratowe} many {{area} metrów kwadratowych} other {{area} metra kwadratowego}}} other {{areaCount, plural, one {{area} kilometr kwadratowy} few {{area} kilometry kwadratowe} many {{area} kilometrów kwadratowych} other {{area} kilometra kwadratowego}}}}, {share} dzielnicy",
     "selectHint": "Pokazuje dzielnicę na mapie. Stuknij ponownie, aby zobaczyć całe miasto.",
     "noCity": "Wybierz swoje miasto, aby zobaczyć jego dzielnice.",
     "noData": "Dzielnice miasta {city} nie są jeszcze dostępne.",
@@ -30,5 +30,15 @@
     "creditHint": "Otwiera stronę OpenStreetMap o prawach autorskich i licencji",
     "mapLabel": "Mapa miasta {city} z podziałem na dzielnice",
     "loadFailed": "Nie udało się wczytać dzielnic. Zamknij i spróbuj ponownie."
+  },
+  "cityCard": {
+    "title": "Bieżące miasto",
+    "districts": "{withTurf} z {total} dzielnic",
+    "summary": "{area} terytorium · najwięcej: {district}",
+    "summaryNone": "Nie masz tu jeszcze terytorium. Nagraj spacer, bieg albo przejażdżkę, a dzielnice się rozświetlą.",
+    "label": "Bieżące miasto, {city}: {area} terytorium w {withTurf} z {total} dzielnic",
+    "hint": "Otwiera dzielnice",
+    "noCity": "Wybierz swoje miasto, aby zobaczyć, ile z niego jest Twoje.",
+    "noData": "Dzielnice miasta {city} nie są jeszcze dostępne."
   }
 }

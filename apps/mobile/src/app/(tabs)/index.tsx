@@ -15,6 +15,7 @@ import { RestoreCard } from '@/contexts/cloud-backup/ui/restore-card';
 import { useBackupLinkTarget } from '@/contexts/identity/ui/hooks';
 import { LiveSessionBanner } from '@/contexts/recording/ui/live-session-banner';
 import { useLiveSession } from '@/contexts/recording/ui/use-live-session';
+import { CurrentCityCard } from '@/contexts/territory/ui/current-city-card';
 import { useTurfSummary } from '@/contexts/territory/ui/hooks';
 import { useT } from '@/i18n';
 import { useApp } from '@/ui-kit/app-context';
@@ -30,7 +31,7 @@ const ONBOARDING_ROUTE: Record<OnboardingStepId, '/record' | '/turf' | '/achieve
   'unlock-three': '/achievements',
 };
 
-/** Start tab: composes Identity, Activity Log, Territory, Achievements and Recording. */
+/** Start tab: composes Identity, Activity Log, Territory (turf, Current city), Achievements and Recording. */
 export default function DashboardScreen() {
   const p = usePalette();
   const insets = useSafeAreaInsets();
@@ -116,6 +117,7 @@ export default function DashboardScreen() {
           <Stat label={ts('activities')} value={String(week.count)} />
         </View>
       </Card>
+      <CurrentCityCard onOpenDistricts={() => router.push('/districts')} onPickCity={() => router.push('/city')} />
       {!empty && (
         <RecentActivities
           items={activities ?? []}
