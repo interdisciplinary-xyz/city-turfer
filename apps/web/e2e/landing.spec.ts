@@ -80,7 +80,7 @@ for (const path of ['/en', '/pl']) {
       const names =
         path === '/pl'
           ? { short: 'Zapisz się', long: 'Zapisz się na listę' }
-          : { short: 'Waitlist', long: 'Join the waitlist' };
+          : { short: 'Join', long: 'Join the waitlist' };
       await expect(link).toHaveAccessibleName(width >= 600 ? names.long : names.short);
       // The whole page is scanned, hero phone mock-ups (.screens) included: axe finds no violation there now.
       // Scan after the hero entrance: mid-fade text reads as low contrast.
@@ -102,8 +102,8 @@ for (const path of ['/en', '/pl']) {
 // "What it does today" sells Apple Health import, so the "being tested" strip under it may only name
 // saving to Apple Health (not checked on a device yet).
 for (const [path, imports, testing] of [
-  ['/en', 'Import past walks', 'Saving to Apple Health'],
-  ['/pl', 'Zaimportuj dawne spacery', 'Zapisywanie w Apple Health'],
+  ['/en', 'Import past walks', 'Saving your activities to Apple Health'],
+  ['/pl', 'Zaimportuj dawne spacery', 'Zapisywanie aktywności w Apple Health'],
 ] as const) {
   test(`landing ${path}: Apple Health is the same story in the tile and the status strip`, async ({ page }) => {
     await page.goto(path);
@@ -193,7 +193,7 @@ test('phones get no section links, only the logo, the call to action and the lan
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/en');
   await expect(page.getByRole('navigation', { name: 'Page sections' })).toBeHidden();
-  await expect(page.getByRole('link', { name: 'Waitlist', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Join', exact: true })).toBeVisible();
 });
 
 // A calm hero: on a 390 x 844 phone the badge, the tagline, the lede and the main button all sit on the first screen.

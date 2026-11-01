@@ -7,7 +7,7 @@
   "header": {
     "home": "CityTurfer, home",
     "waitlist": "Join the waitlist",
-    "waitlistShort": "Waitlist",
+    "waitlistShort": "Join",
     "nav": {
       "label": "Page sections",
       "how": "How it works",
@@ -199,7 +199,7 @@
     "differs": {
       "repeats": {
         "title": "Repeats count",
-        "body": "Most maps mark a street once. Here the streets you repeat shine brightest."
+        "body": "Most maps mark a street once. Here the streets you come back to shine brightest."
       },
       "fades": {
         "title": "Nothing fades",
@@ -211,7 +211,7 @@
       "title": "An early prototype, honestly",
       "testing": {
         "title": "Being tested",
-        "health": "Saving to Apple Health",
+        "health": "Saving your activities to Apple Health",
         "battery": "Battery use on long outings",
         "backup": "Opt-in cloud backup"
       },
@@ -225,7 +225,7 @@
     },
     "faq": {
       "eyebrow": "FAQ",
-      "title": "Questions",
+      "title": "Before you ask",
       "when": {
         "q": "When can I get it?",
         "a": "Join the waitlist and we’ll email you when it’s ready to download."
@@ -279,7 +279,7 @@
   },
   "waitlist": {
     "eyebrow": "Waitlist",
-    "title": "Join the waitlist",
+    "title": "We’ll tell you when it’s ready",
     "emailLabel": "Email address",
     "emailPlaceholder": "you@example.com",
     "submit": "Join",

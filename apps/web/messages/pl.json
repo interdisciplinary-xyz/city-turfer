@@ -137,8 +137,8 @@
     },
     "local": {
       "eyebrow": "Prywatność",
-      "title": "Oryginał zostaje w telefonie",
-      "phone": "Twoje aktywności są zapisane na telefonie, w aplikacji.",
+      "title": "Oryginał zostaje w telefonie",
+      "phone": "Twoje aktywności są zapisane w telefonie, w aplikacji.",
       "backup": "Kopia w chmurze jest wyłączona, dopóki jej nie włączysz. Gdy ją wyłączysz, kopia na naszym serwerze zostanie usunięta.",
       "portal": "Po zalogowaniu w przeglądarce widzisz tylko to, co trafiło do kopii.",
       "leaves": "Co opuszcza telefon: kafelki mapy dla oglądanego obszaru, sprawdzanie aktualizacji oraz, jeśli nie wyłączysz uzupełniania luk, dwa końce luki GPS. Logowanie wysyła Twój adres e-mail na nasz serwer.",
@@ -147,7 +147,7 @@
       "private": "Bez tablicy aktywności, obserwujących i publicznego profilu."
     },
     "cta": {
-      "title": "Twoje terytorium zaczyna się za progiem",
+      "title": "Twoje terytorium zaczyna się za progiem",
       "body": "Zostaw e-mail, a damy znać, gdy aplikacja będzie gotowa do pobrania.",
       "join": "Zapisz się na listę",
       "eyebrow": "Lista oczekujących"
@@ -172,7 +172,7 @@
     },
     "highlights": {
       "eyebrow": "Aplikacja",
-      "title": "Co potrafi już dziś",
+      "title": "Co potrafi już dziś",
       "iphone": "Tylko iPhone",
       "gain": {
         "title": "Nowe terytorium po każdym wyjściu",
@@ -208,10 +208,10 @@
       "label": "Czym się różni"
     },
     "status": {
-      "title": "Uczciwie: to wczesny prototyp",
+      "title": "Uczciwie: to wczesny prototyp",
       "testing": {
         "title": "W testach",
-        "health": "Zapisywanie w Apple Health",
+        "health": "Zapisywanie aktywności w Apple Health",
         "battery": "Zużycie baterii na długich wyjściach",
         "backup": "Kopia w chmurze (po włączeniu)"
       },
@@ -225,7 +225,7 @@
     },
     "faq": {
       "eyebrow": "Pytania",
-      "title": "Pytania",
+      "title": "Zanim zapytasz",
       "when": {
         "q": "Kiedy mogę ją pobrać?",
         "a": "Zapisz się na listę, a napiszemy, gdy aplikacja będzie gotowa do pobrania."
@@ -279,7 +279,7 @@
   },
   "waitlist": {
     "eyebrow": "Lista oczekujących",
-    "title": "Zapisz się na listę",
+    "title": "Damy znać, gdy będzie gotowa",
     "emailLabel": "Adres e-mail",
     "emailPlaceholder": "ty@przyklad.pl",
     "submit": "Zapisz mnie",
