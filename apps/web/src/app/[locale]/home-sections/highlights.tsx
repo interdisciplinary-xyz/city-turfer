@@ -1,5 +1,6 @@
 import { useTranslations } from 'next-intl';
 
+import { Icon } from '../icons';
 import { TURF_DEMO } from '../turf-demo/turf-demo.constants';
 import { HIGHLIGHTS } from './home-sections.constants';
 import { Section, SectionHead } from './section';
@@ -14,8 +15,8 @@ export function Highlights() {
       <ul className='home-grid home-grid-highlights'>
         {HIGHLIGHTS.map(({ key, icon, iphone }) => (
           <li key={key} className={`app-card home-highlight home-highlight-${key}`} data-reveal=''>
-            <span className='home-highlight-icon' aria-hidden='true'>
-              {icon}
+            <span className='icon-disc'>
+              <Icon name={icon} size={24} />
             </span>
             <h3 className='app-card-title'>{t(`${key}.title`)}</h3>
             <p className='home-step-body'>{t(`${key}.body`, { count: TURF_DEMO.achievements })}</p>

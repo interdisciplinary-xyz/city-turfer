@@ -1,10 +1,15 @@
 import { APP_SCHEME, cssVariables, TIER_ORDER } from '@cityturfer/brand';
 import type { CSSProperties, ReactNode } from 'react';
 
+import { ICON_FOR_HIGHLIGHT, type IconName } from '../icons';
+
 /** The three activity types as the app names them (`cycle` is shown as "Ride"). */
 export type HomeActivityType = 'walk' | 'run' | 'cycle';
 
-/** The glyphs the app puts in its activity badges (apps/mobile/src/constants/activity.ts). */
+/**
+ * The glyphs the app puts in its activity badges (apps/mobile/src/constants/activity.ts). Only the phone
+ * mock-ups (hero-screens) still draw these: they show the app as it is. The page's own cards use `Icon`.
+ */
 export const TYPE_GLYPH: Record<HomeActivityType, string> = { walk: '🚶', run: '🏃', cycle: '🚴' };
 
 /** CSS class suffix per type: the site's variables call the ride colour `--ride`. */
@@ -52,12 +57,12 @@ export const EXAMPLE_GAIN = { areaKm2: 0.12, added: 56, reinforced: 340 } as con
 
 /** Highlights tiles, in "wow" order; `iphone` marks a feature that only runs on iPhone today. */
 export type HighlightKey = 'gain' | 'record' | 'health' | 'achievements' | 'city';
-export const HIGHLIGHTS: readonly { key: HighlightKey; icon: string; iphone: boolean }[] = [
-  { key: 'gain', icon: '⬢', iphone: false },
-  { key: 'record', icon: '●', iphone: true },
-  { key: 'health', icon: '♥', iphone: true },
-  { key: 'achievements', icon: '★', iphone: false },
-  { key: 'city', icon: '◎', iphone: false },
+export const HIGHLIGHTS: readonly { key: HighlightKey; icon: IconName; iphone: boolean }[] = [
+  { key: 'gain', icon: ICON_FOR_HIGHLIGHT.gain, iphone: false },
+  { key: 'record', icon: ICON_FOR_HIGHLIGHT.record, iphone: true },
+  { key: 'health', icon: ICON_FOR_HIGHLIGHT.health, iphone: true },
+  { key: 'achievements', icon: ICON_FOR_HIGHLIGHT.achievements, iphone: false },
+  { key: 'city', icon: ICON_FOR_HIGHLIGHT.city, iphone: false },
 ];
 
 /** The two "what's different" lines under the audience cards (the third, privacy, lives in Privacy). */

@@ -1,6 +1,7 @@
 import { useTranslations } from 'next-intl';
 
-import { DIFFERS, HOME_TYPES, TYPE_CLASS, TYPE_GLYPH } from './home-sections.constants';
+import { Icon, ICON_FOR_TYPE } from '../icons';
+import { DIFFERS, HOME_TYPES, TYPE_CLASS } from './home-sections.constants';
 import { Section, SectionHead } from './section';
 
 /**
@@ -17,8 +18,8 @@ export function Audience() {
       <ul className='home-grid home-grid-3'>
         {HOME_TYPES.map((type) => (
           <li key={type} className={`app-card home-type home-type-${TYPE_CLASS[type]}`} data-reveal=''>
-            <span className={`app-badge app-badge-${TYPE_CLASS[type]}`} aria-hidden='true'>
-              {TYPE_GLYPH[type]}
+            <span className={`icon-disc icon-disc-${TYPE_CLASS[type]}`}>
+              <Icon name={ICON_FOR_TYPE[type]} size={24} />
             </span>
             <h3 className='app-card-title'>{tt(type)}</h3>
             <p className='home-step-body'>{t(type)}</p>

@@ -2,6 +2,7 @@ import './home-sections.css';
 
 import { useFormatter, useTranslations } from 'next-intl';
 
+import { Icon, ICON_FOR_TYPE } from '../icons';
 import { TurfDemo } from '../turf-demo';
 import {
   APP_VARIABLES,
@@ -12,7 +13,6 @@ import {
   SECTION_ANCHORS,
   TRUST_POINTS,
   TYPE_CLASS,
-  TYPE_GLYPH,
 } from './home-sections.constants';
 import { Section, SectionHead } from './section';
 
@@ -40,7 +40,7 @@ export function HowItWorks() {
           <div className='home-chips' aria-hidden='true'>
             {HOME_TYPES.map((type) => (
               <span key={type} className={`app-chip app-chip-${TYPE_CLASS[type]}`}>
-                <span>{TYPE_GLYPH[type]}</span>
+                <Icon name={ICON_FOR_TYPE[type]} size={16} className={`icon-${TYPE_CLASS[type]}`} />
                 {tt(type)}
               </span>
             ))}

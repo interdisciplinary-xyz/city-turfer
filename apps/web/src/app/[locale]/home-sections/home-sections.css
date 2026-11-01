@@ -261,14 +261,6 @@
   font-weight: var(--font-weight-semibold);
 }
 
-.app-badge {
-  display: grid;
-  place-items: center;
-  flex: none;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--badge) 20%, transparent);
-}
-
 .app-badge-walk {
   --badge: var(--walk-graphic);
 }
@@ -486,21 +478,10 @@
 
 /* ---------- Highlights ---------- */
 
-/* The icon slot: one size for the audience badges and the highlight icons. */
-.app-badge,
-.home-highlight-icon {
-  width: 44px;
-  height: 44px;
-  font-size: 20px;
-}
-
-.home-highlight-icon {
-  display: grid;
-  place-items: center;
-  flex: none;
-  border-radius: 50%;
-  color: var(--accent-text);
-  background: color-mix(in srgb, var(--glow) 16%, transparent);
+/* The icon slot: the same disc (marketing-icon.css, .icon-disc) in the audience and highlight cards. */
+.home-type .icon-disc,
+.home-highlight .icon-disc {
+  --icon-disc-size: 44px;
 }
 
 .home-tag {
