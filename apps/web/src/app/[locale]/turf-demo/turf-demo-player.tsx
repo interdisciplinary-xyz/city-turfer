@@ -1,15 +1,15 @@
 'use client';
 
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-import { CITY_STEP, STEP_MS, type TurfDemoLabels } from './turf-demo-player.constants';
+import { CITY_STEP, STEP_MS, type TurfDemoPlayerProps } from './turf-demo-player.constants';
 
 /**
  * Steps the street-glow figure: plays once when it scrolls into view (unless the visitor prefers
  * reduced motion), and the step buttons pick a step by hand. The server renders the last step (the
  * whole city), so without JavaScript or with reduced motion the final frame shows.
  */
-export function TurfDemoPlayer({ labels, children }: { labels: TurfDemoLabels; children: ReactNode }) {
+export function TurfDemoPlayer({ labels, schemeStyle, head, caption, children }: TurfDemoPlayerProps) {
   const [step, setStep] = useState<number>(CITY_STEP);
   const root = useRef<HTMLDivElement>(null);
   const timer = useRef<number | undefined>(undefined);
@@ -60,36 +60,45 @@ export function TurfDemoPlayer({ labels, children }: { labels: TurfDemoLabels; c
   }, []);
 
   return (
-    <div ref={root} className='turf-demo-player' data-step={step}>
-      {children}
-      <div className='turf-demo-steps' role='group' aria-label={labels.stepsLabel}>
-        {labels.steps.map((label, index) => (
+    <div ref={root} className='turf-demo turf-demo-player home-split' data-step={step}>
+      <div className='home-split-copy'>
+        {head}
+        <div className='turf-demo-steps' role='group' aria-label={labels.stepsLabel}>
+          {labels.steps.map((label, index) => (
+            <button
+              key={label}
+              type='button'
+              className='turf-demo-step'
+              data-tier={index}
+              aria-pressed={step === index}
+              onClick={() => {
+                picked.current = true;
+                stop();
+                setStep(index);
+              }}
+            >
+              <span className='turf-demo-swatch' style={schemeStyle} aria-hidden='true' />
+              {label}
+            </button>
+          ))}
           <button
-            key={label}
             type='button'
-            className='turf-demo-step'
-            data-tier={index}
-            aria-pressed={step === index}
+            className='btn btn-secondary btn-compact turf-demo-replay'
             onClick={() => {
               picked.current = true;
-              stop();
-              setStep(index);
+              play();
             }}
           >
-            {label}
+            {labels.replay}
           </button>
-        ))}
-        <button
-          type='button'
-          className='turf-demo-replay'
-          onClick={() => {
-            picked.current = true;
-            play();
-          }}
-        >
-          {labels.replay}
-        </button>
+        </div>
+        {caption}
       </div>
+      <figure className='turf-demo-figure' aria-describedby='demo-caption'>
+        <div className='turf-demo-panel' style={schemeStyle}>
+          {children}
+        </div>
+      </figure>
     </div>
   );
 }

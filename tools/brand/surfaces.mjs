@@ -49,6 +49,7 @@ export const SURFACES = [
       'apps/web/src/app/[locale]/layout.tsx',
       'apps/web/src/app/globals.css',
       'apps/web/src/app/[locale]/home-sections/home-sections.css',
+      'apps/web/src/app/[locale]/icons/marketing-icon.css',
     ],
     fonts: ['apps/web/src/app/fonts.ts'],
     logo: ['apps/web/src/app/[locale]/layout.tsx', 'apps/web/public/og-image.png'],

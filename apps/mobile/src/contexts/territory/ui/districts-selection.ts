@@ -13,10 +13,16 @@ export function districtSelectionReducer(state: DistrictSelection, action: Distr
   return { selected, scrollTo: index >= 0 ? { index } : null };
 }
 
-/** A row's fixed height: border, padding and two lines of the name at the text size (`fontScale`). */
+/**
+ * A row's fixed height: border, padding, two lines of the name and the progress line under them,
+ * at the text size (`fontScale`).
+ */
 export function districtRowHeight(fontScale: number): number {
+  const scale = Math.max(1, fontScale);
   return Math.ceil(
-    2 * (DISTRICT_ROW.border + DISTRICT_ROW.paddingVertical) + 2 * DISTRICT_ROW.nameLine * Math.max(1, fontScale)
+    2 * (DISTRICT_ROW.border + DISTRICT_ROW.paddingVertical) +
+      (2 * DISTRICT_ROW.nameLine + DISTRICT_ROW.progressLine) * scale +
+      DISTRICT_ROW.progressGap
   );
 }
 

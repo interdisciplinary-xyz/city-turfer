@@ -8,19 +8,9 @@ import { HeroCity, HeroCityLine } from './hero-city';
 import { HeroCopy } from './hero-copy';
 import { HeroMotion } from './hero-motion';
 import { HeroScreens } from './hero-screens';
-import {
-  Audience,
-  Differs,
-  Faq,
-  FinalCta,
-  Highlights,
-  HowItWorks,
-  LocalFirst,
-  WhereItStands,
-  YourWeek,
-} from './home-sections';
+import { Audience, Faq, FinalCta, Highlights, HowItWorks, LocalFirst, Section, SectionHead } from './home-sections';
+import { RevealMotion } from './reveal-motion';
 import { SiteFooter } from './site-footer';
-import { TurfDemo } from './turf-demo';
 import { WaitlistForm } from './waitlist-form';
 
 export default async function Home({ params }: { params: Promise<{ locale: Locale }> }) {
@@ -33,40 +23,40 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
       <a className='skip' href='#main'>
         {t('hero.skip')}
       </a>
-      <AppHeader locale={locale} waitlist={Boolean(WAITLIST)} />
-      <main id='main'>
-        <HeroMotion className='hero'>
-          <HeroCity />
-          <div className='wrap hero-grid'>
-            <HeroCopy />
-            <HeroScreens />
-            {/* No download buttons for now: the waitlist comes first (StoreButtons stays for later). */}
-          </div>
-          <HeroCityLine />
-        </HeroMotion>
-        {WAITLIST ? (
-          <section id='waitlist' className='waitlist-section' aria-label={t('waitlist.title')}>
-            <div className='wrap'>
-              <WaitlistForm
-                action={WAITLIST.url}
-                controller={WAITLIST.controller}
-                contactEmail={WAITLIST.contactEmail}
-                locale={locale}
-              />
+      <AppHeader locale={locale} waitlist={Boolean(WAITLIST)} nav />
+      {/* tabIndex -1: the skip link moves focus to <main> (the header's links scroll to their sections). */}
+      <main id='main' tabIndex={-1}>
+        <section id='top' aria-labelledby='hero-title'>
+          <HeroMotion className='hero'>
+            <HeroCity />
+            <div className='wrap hero-grid'>
+              <HeroCopy waitlist={Boolean(WAITLIST)} />
+              <HeroScreens />
+              {/* No download buttons for now: the waitlist comes first (StoreButtons stays for later). */}
             </div>
-          </section>
+            <HeroCityLine />
+          </HeroMotion>
+        </section>
+        {WAITLIST ? (
+          <Section name='waitlist' band className='waitlist-section'>
+            <SectionHead name='waitlist' eyebrow={t('waitlist.eyebrow')} title={t('waitlist.title')} align='center' />
+            <WaitlistForm
+              action={WAITLIST.url}
+              controller={WAITLIST.controller}
+              contactEmail={WAITLIST.contactEmail}
+              locale={locale}
+              headingId='waitlist-title'
+            />
+          </Section>
         ) : null}
-        <TurfDemo />
         <HowItWorks />
         <Audience />
         <Highlights />
-        <YourWeek />
-        <Differs />
         <LocalFirst />
-        <WhereItStands />
         <Faq />
         {WAITLIST ? <FinalCta /> : null}
       </main>
+      <RevealMotion />
       <SiteFooter contactEmail={WAITLIST?.contactEmail} />
     </>
   );

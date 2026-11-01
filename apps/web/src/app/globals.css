@@ -16,7 +16,7 @@
      weight is baked into each font, so never bold them (font-synthesis: none). */
   --display: var(--face-display), var(--font-family-display);
   --numeric: var(--face-numeric), var(--font-family-numeric);
-  /* The hero tagline: an italic in sentence case, so it reads apart from the capitals wordmark. */
+  /* The hero tagline: an italic in sentence case, so it reads apart from the capitals section titles. */
   --tagline: var(--face-tagline, 'BarlowSemiCondensed-BlackItalic'), var(--font-family-tagline);
   --body: var(--face-body, 'Barlow'), var(--font-family-body);
 }
@@ -24,6 +24,11 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-padding-top: var(--header-h);
+}
+
+/* The skip link and the header's section links focus <main>: no ring around the whole page. */
+main:focus {
+  outline: none;
 }
 
 /* In-page links (header "Join the waitlist" → #waitlist) glide instead of jumping; off for reduced motion. */
@@ -119,8 +124,12 @@ img {
 }
 
 /* Full page width with the page gutter (--gutter, app-header.css), like the header. */
+/* The content column: --content-max of content plus the gutters either side, centred. The header's bar
+   follows the same width (app-header.css); the hero's full-bleed map does not use .wrap. */
 .wrap {
   width: 100%;
+  max-width: calc(var(--content-max) + 2 * var(--gutter));
+  margin-inline: auto;
   padding: 0 var(--gutter);
 }
 
@@ -179,13 +188,6 @@ img {
   text-transform: uppercase;
 }
 
-.hero-audience {
-  margin: 12px auto 0;
-  max-width: 34rem;
-  color: var(--text);
-  font-weight: var(--font-weight-semibold);
-}
-
 /* The hero headline keeps --text like every heading: on the light page --muted reads pale. */
 
 /* Phones: text, buttons, then the screenshots. Desktop: text + phones in one row, buttons under both. */
@@ -219,7 +221,6 @@ img {
     flex: none;
   }
   .hero-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
     gap: 40px 48px;
   }
   /* Phones follow the height left under the bar (header, hero padding, captions and the second
@@ -232,79 +233,18 @@ img {
     max-width: clamp(220px, calc((100svh - 250px) * 0.45), 280px);
     margin-inline: auto;
   }
-  .hero-copy {
-    text-align: left;
-  }
   .hero-grid > .download {
     order: 4;
     grid-column: 1 / -1;
   }
-  .hero-copy .hero-brand {
-    justify-content: flex-start;
-    margin-bottom: 20px;
-  }
-  .hero-copy h1,
-  .hero-copy .lede,
-  .hero-copy .hero-audience {
-    margin-left: 0;
-  }
   .hero-copy h1 {
-    font-size: clamp(3rem, 5vw, 4.2rem);
+    font-size: clamp(3rem, 4.4vw, 4.75rem);
   }
-  /* Side by side, the lockup is about 4.21 tiles wide (tile + gap + wordmark at 4.49 × 0.66), so the
-     144px tile shrinks only when the text column is narrower than that. */
-  .hero-copy .hero-brand {
-    --lockup: min(144px, calc(100cqw / 4.3));
-    flex-direction: row;
-  }
-  .hero-copy .hero-brand .wordmark {
-    margin-left: calc(var(--lockup) * -0.04);
-  }
-}
-
-/* The hero text column is a size container, so the lockup can size itself to the column. */
-.hero-copy {
-  container-type: inline-size;
-}
-
-/* The app icon and the wordmark: stacked and centred on phones (side by side they would not fit at
-   this size), in one row left-aligned next to the phones on desktop.
-   One size variable (--lockup = the tile) drives every part, so the proportions never drift:
-   wordmark height 0.66 of the tile, gap 0.25 (clear space >= 0.16). Breakpoints change only --lockup.
-   On phones the wordmark (about 2.96 tiles wide, at 4.49 × 0.66) caps the tile at the column width. */
-.hero-brand {
-  --lockup: min(clamp(112px, 32vw, 168px), calc(100cqw / 3.1));
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: calc(var(--lockup) * 0.25);
-  margin-bottom: 28px;
-}
-
-.mark {
-  width: var(--lockup);
-  margin: 0;
-  border-radius: 23%;
-  /* a centred glow, not a drop shadow (the brand allows none on the mark) */
-  box-shadow: 0 0 40px color-mix(in srgb, var(--faint) 24%, transparent);
-}
-
-.wordmark {
-  /* height drives the size; the .wordmark class outranks the global img { height: auto } */
-  height: calc(var(--lockup) * 0.66);
-  width: auto;
-  /* wordmark.svg has ~0.04 of the tile of padding before the first glyph: side by side (desktop),
-     that is pulled in so the visible gap is 0.25; stacked, it stays centred */
-  margin-left: 0;
-  max-width: none;
-  margin-top: 0;
-  margin-bottom: 0;
-  margin-right: 0;
 }
 
 h1 {
-  font-size: clamp(2.4rem, 10vw, 4.1rem);
+  /* The tagline is the dominant line of the page. */
+  font-size: clamp(2.6rem, 11.5vw, 4.5rem);
   font-family: var(--tagline);
   font-weight: normal;
   font-style: normal;
@@ -320,6 +260,48 @@ h1 {
   display: block;
 }
 
+/* The hero's two buttons: wrap rather than shrink on a 320 px phone. */
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-md);
+}
+
+/* Tablets (720 px up): the copy and the two phones side by side, a compact hero, not a tall stack. The
+   phones shrink with their column; from 960 px they also follow the window's height. */
+@media (min-width: 720px) {
+  .hero-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: 32px;
+  }
+  .hero-copy {
+    text-align: left;
+  }
+  .hero-copy h1,
+  .hero-copy .lede {
+    margin-left: 0;
+  }
+  .hero-actions {
+    justify-content: flex-start;
+  }
+  .screen + .screen {
+    margin-top: 32px;
+  }
+}
+
+@media (min-width: 720px) and (max-width: 959px) {
+  .hero-copy h1 {
+    font-size: clamp(2.25rem, 5.4vw, 3.25rem);
+  }
+}
+
+@media (min-width: 960px) {
+  .hero-grid {
+    gap: 40px 48px;
+  }
+}
+
 /* Entrance animation (hero-motion): hidden until GSAP reveals them; the class is only set when
    motion is allowed, and removed after 2.5 s if the script never runs. */
 .motion [data-anim] {
@@ -331,6 +313,65 @@ h1 {
   color: var(--muted);
   max-width: 34rem;
   margin: 0 auto 28px;
+}
+
+/* ---------- Buttons: one system ----------
+   Primary: the --glow fill with the --on-glow label (night ink on the pink; the hover mixes toward
+   --blazing, which keeps the label above 4.5:1). Secondary: the same shape as an outline in
+   --border-control (3:1 on the page). 48 px tall pills; .btn-compact (40 px) is for tight rows. Every
+   call to action and form button uses these (the header's link has its own copy in app-header.css,
+   which must work on pages without this file). */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 10px var(--space-xxl);
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  font: inherit;
+  font-size: var(--font-body);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-compact {
+  min-height: 40px;
+  padding: 6px var(--space-lg);
+  font-size: var(--font-caption);
+}
+
+.btn-primary {
+  background: var(--glow);
+  color: var(--on-glow);
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible {
+  background: color-mix(in srgb, var(--glow) 86%, var(--blazing));
+  color: var(--on-glow);
+}
+
+.btn-secondary {
+  border-color: var(--border-control);
+  background: transparent;
+  color: var(--text);
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus-visible {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  color: var(--text);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
 }
 
 /* ---------- Download (parked) ----------
@@ -424,27 +465,12 @@ h1 {
   border: 0;
 }
 
-/* The waitlist is its own section under the full-screen hero, centred on every width. */
-.waitlist-section {
-  padding: clamp(56px, 10vw, 112px) 0;
-  border-top: 1px solid var(--border);
-}
+/* The waitlist is its own banded section under the hero, centred on every width. */
 
 .waitlist {
-  margin: 0 auto;
+  margin: var(--head-gap) auto 0;
   max-width: 34rem;
   text-align: center;
-}
-
-.waitlist-title {
-  margin: 0 0 18px;
-  font-family: var(--display);
-  font-size: clamp(1.7rem, 4.6vw, 2.3rem);
-  font-weight: normal;
-  font-synthesis: none;
-  text-transform: var(--display-case);
-  letter-spacing: var(--display-tracking);
-  line-height: 0.95;
 }
 
 .waitlist-row {
@@ -469,25 +495,12 @@ h1 {
 }
 
 .waitlist-email:focus-visible,
-.waitlist-submit:focus-visible,
 .waitlist-consent input:focus-visible {
   outline: 2px solid var(--accent-text);
   outline-offset: 2px;
 }
 
-.waitlist-submit {
-  min-height: 48px;
-  padding: 0 22px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--text);
-  color: var(--bg);
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.waitlist-submit:disabled {
+.btn:disabled {
   opacity: 0.6;
   cursor: progress;
 }
@@ -586,44 +599,76 @@ h1 {
   display: block;
 }
 
-/* Short landscape screens (a phone on its side): smaller logo and tighter spacing, so the
-   headline is visible without scrolling. */
+/* Short landscape screens (a phone on its side): tighter spacing, so the headline is visible without
+   scrolling. */
 @media (max-height: 520px) and (orientation: landscape) {
   .hero {
     padding-top: 0;
   }
-  .hero-brand {
-    margin-bottom: 16px;
-  }
-  .hero-brand {
-    --lockup: 48px;
-    flex-direction: row;
-  }
-  .hero-brand .wordmark {
-    margin-left: calc(var(--lockup) * -0.04);
-  }
 }
 
-/* Footer: one quiet row, hairline on top. */
+/* Footer: wordmark and tagline, the section links, contact; the © row under a hairline. */
 .site-footer {
-  padding: var(--space-xl) 0;
+  padding: var(--space-xxxl) 0 var(--space-xl);
   border-top: 1px solid var(--border);
   color: var(--muted);
   font-size: var(--font-caption);
 }
 
-.site-footer-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-md) var(--space-xl);
+.site-footer-grid {
+  display: grid;
+  gap: var(--space-xxl);
+}
+
+@media (min-width: 720px) {
+  .site-footer-grid {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: var(--space-xxxl);
+  }
 }
 
 .site-footer p {
   margin: 0;
 }
 
+.site-footer-brand {
+  display: grid;
+  gap: var(--space-sm);
+  justify-items: start;
+}
+
+.site-footer-wordmark {
+  display: block;
+  height: 20px;
+  width: auto;
+}
+
+.site-footer-links {
+  display: grid;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-footer-contact {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.site-footer .site-footer-legal {
+  margin-top: var(--space-xxl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border);
+}
+
 .site-footer a {
   color: var(--accent-text);
+}
+
+/* Scroll-in (reveal-motion): hidden only while the boot script's `motion` class is on <html> (no reduced
+   motion, scripts expected); it drops after 2.5 s if the hero's script never ran, and GSAP reveals each
+   element as it arrives. */
+.motion [data-reveal] {
+  visibility: hidden;
 }

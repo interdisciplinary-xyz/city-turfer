@@ -19,10 +19,11 @@ summary:
 
 Every feature in the app, derived on `scope/v0.11.0` (the v0.10.0 release) and kept up to date
 since; v0.12.0 changed the app only in its sign-in wordmark, v0.13.0 the turf week (under
-Dashboard), v0.14.0 so far the Districts screen (under Turf), the sign-in wordmark (Anton, one
-colour) and a lighter secondary text colour. Grouped by where a person meets it: the five tabs, the
-Me drawer, and the screens pushed from them; then what the server and the web portal add. Format
-adapted from empatalk's `FEATURES.md`.
+Dashboard), v0.14.0 the Districts screen (under Turf), the sign-in wordmark (Anton, one colour) and
+a lighter secondary text colour, v0.15.0 so far the Current city card (under Dashboard) and a share
+bar on each Districts row. Grouped by where a person meets it: the five tabs, the Me drawer, and the
+screens pushed from them; then what the server and the web portal add. Format adapted from
+empatalk's `FEATURES.md`.
 
 > **Derived from code on 2026-10-23.** Where this doc and the code disagree, the code wins. Don't
 > hand-edit counts; re-derive them:
@@ -58,6 +59,11 @@ opens on Dashboard after sign-in.
 - Live-session banner when a recording is running (taps through to Record).
 - "Start recording" button when there are no activities yet.
 - This week: distance, moving time, activity count.
+- **Current city** (v0.15.0, #209; `territory/ui/current-city-card.tsx`, `dashboard-city`): the Home
+  City's name, "N of M districts" holding turf with a bar, the turf in the city and the district
+  with the most, and the three districts with the most turf, each with a bar and its share. A tap
+  opens Districts. Without a Home City a "Choose your city" button opens the picker; a city without
+  district data says so; while loading or after a failed read the card is not shown.
 - Recent activities with "See all" → History.
 - Achievements card (unlocked count, next one within reach) → Achievements.
 
@@ -76,10 +82,13 @@ opens on Dashboard after sign-in.
   `territory/infrastructure/district-cities.ts`; modal `apps/mobile/src/app/districts.tsx` →
   `territory/ui/districts-view.tsx`): the Home City split into its OpenStreetMap districts on a dark
   map with the turf, and a list with the km² of turf in each (cells whose centre lies in the
-  district: a first measure). Tap a row or a district on the map to fit the map to it and scroll to
-  its row. The OSM (ODbL) credit sits under the map. Boundaries are bundled
-  (`packages/core/src/districts/data`, from `apps/mobile/tools/gen-districts.mjs`); the screen still
-  says "not available yet" for a city without them. Plan: `docs/plans/districts-2026-10-29.md`.
+  district: a first measure). Since v0.15.0 (#209) each row also has a bar in the turf colour and
+  the district's turf share as a whole percent ("<1%" for a sliver, never "0%" with turf;
+  `territory/ui/district-share.ts`), read by VoiceOver in the row label. Tap a row or a district on
+  the map to fit the map to it and scroll to its row. The OSM (ODbL) credit sits under the map.
+  Boundaries are bundled (`packages/core/src/districts/data`, from
+  `apps/mobile/tools/gen-districts.mjs`); the screen still says "not available yet" for a city
+  without them. Plan: `docs/plans/districts-2026-10-29.md`.
 
 ### Record (`apps/mobile/src/app/(tabs)/record.tsx` → `recording/ui/record-view.tsx`)
 

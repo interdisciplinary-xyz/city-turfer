@@ -1,7 +1,12 @@
 // Portal E2E (Playwright, Chromium): the built static export served over HTTPS like Vercel serves
 // it, with the `/api/v1/*` route to the API on an in-memory PGlite (e2e/support/*.mjs). Not part of
 // `test:unit` or CI by default: it needs a browser (`pnpm exec playwright install chromium`) and a
-// fresh `pnpm --filter @cityturfer/web build`. Run: `pnpm --filter @cityturfer/web run test:e2e`.
+// build made WITH the waitlist variables: the landing tests look for the header's join link, the
+// waitlist strip (#waitlist) and the closing call to action, which exist only when
+// NEXT_PUBLIC_WAITLIST_FORM_URL, NEXT_PUBLIC_WAITLIST_CONTROLLER and NEXT_PUBLIC_CONTACT_EMAIL are
+// set at build time. `pnpm --filter @cityturfer/web run test:e2e` builds with dummy example.invalid
+// values (test:e2e:build, the form is never submitted) and runs the suite; `test:e2e:run` only runs it
+// against the existing out/. Not part of CI (ci:quality) yet.
 import { defineConfig, devices } from '@playwright/test';
 
 import { E2E_CLIENT_IP, E2E_CODE } from './e2e/support/constants';

@@ -130,11 +130,15 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   v0.13.0) — turf "this week" counts from local Monday like the This week card (#183), hero headline
   in the muted grey (#185); JS only; the release commit bumps app.json to 0.13.0, so the iPhone's
   0.12.0 build takes no later OTA
-- ✅ [`sessions/v0.14.0.md`](sessions/v0.14.0.md): Session log v0.14.0 (in progress, scope PR 188) —
-  Districts screen from the Turf tab, light website and portal, homepage sections with a street-glow
-  demo, a street map of the visitor's city behind the hero, staff admin under /admin, small changes
-  straight to scope, the release review's fixes (API turf release, district memory, changelog refs);
-  JS only by inspection
+- 🕰️ [`sessions/v0.14.0.md`](sessions/v0.14.0.md): Session log v0.14.0 (released 2026-10-31, tag
+  v0.14.0) — Districts screen from the Turf tab, light website and portal, homepage sections with a
+  street-glow demo, a street map of the visitor's city behind the hero, staff admin under /admin,
+  small changes straight to scope, the release review's fixes; JS only (iOS c9cca32d before the
+  release commit's app.json bump), no OTA published
+- ✅ [`sessions/v0.15.0.md`](sessions/v0.15.0.md): Session log v0.15.0 (in progress, scope PR 208) —
+  a Current city card on the Dashboard and a turf share bar on each Districts row (#209); JS only so
+  far, iOS fingerprint 0d465570 on the scope; the founder's iPhone runs a Release build of the scope
+  head
 - 🕰️ [`sessions/v0.2.0.md`](sessions/v0.2.0.md): Session log v0.2.0 through the Me menu and
   achievements; predates the Dashboard, Me drawer and login rename (PRs 23–25) and still says
   app.json is unpinned (pinned in f04bcf3)
@@ -287,6 +291,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   landing page's sections, top to bottom, presenting CityTurfer as an honest early prototype that
   recruits testers; a street-glow demo built from the Gdańsk demo data, audience, highlights,
   comparison, status, FAQ and a tester call, in six slices
+- 🚧 [`plans/homepage-tidy-2026-11-01.md`](plans/homepage-tidy-2026-11-01.md): Three-phase tidy-up
+  of the landing page (bugs and one heading system, then fewer sections and one button/card grammar,
+  then polish), approved by the founder on 2026-11-01
 - ✅ [`plans/sync-chain-testing-2026-10-22.md`](plans/sync-chain-testing-2026-10-22.md): How to test
   that the four apps stay one system — every scenario starts on the phone (the source of truth) or
   reaches it, and is checked in the API, the web portal and the admin portal as each is built today;

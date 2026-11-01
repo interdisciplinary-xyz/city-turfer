@@ -256,9 +256,12 @@ ls -t apps/mobile/e2e-results | head -1              # newest run: junit report 
 ## #7 — The app won't open: free Apple ID signing expired
 
 **Symptom:** The app on the iPhone closes immediately or iOS says it can't be verified. Builds
-signed with a free Apple ID expire after 7 days. The current install is a Release build of `fc6fa57`
-(tag `v0.12.0`, iOS fingerprint `ff7765f0f2943b53eaa6b537d7821d9599e485dd`), installed 2026-10-26
-over the earlier build: it expires around **2026-11-02**.
+signed with a free Apple ID expire after 7 days. The current install is a Release build of
+`scope/v0.15.0` at `e232d90` (reports 0.14.0, iOS fingerprint
+`0d465570442d6d6d81addfae7e4c38632b1df37f`), installed 2026-11-01 over the earlier build after
+`expo prebuild --platform ios --clean`: it expires around **2026-11-08**. (Before it: `1607339`,
+`scope/v0.14.0` with `app.json` 0.13.0, iOS `c9cca32d…`, installed 2026-10-31 with
+`xcrun devicectl device install app` because the phone was locked.)
 
 **Triage**
 
@@ -295,6 +298,7 @@ xcrun devicectl device install app --device <device-udid> <path/to/the.app>
 
 A reinstall is also the moment for anything that changes the runtime fingerprint (pending native
 changes, the `app.json` version pin). After it, OTAs must be published from a checkout with the same
-fingerprint (incident #3). The `fc6fa57` install includes the v0.12.0 release commit's `app.json`
-bump; `scope/v0.13.0` at `1caf481` has the same iOS fingerprint (measured 2026-10-26), so updates
-published from it reach the phone. The v0.13.0 release commit's bump will move it again.
+fingerprint (incident #3). The `e232d90` install includes the v0.14.0 release commit's `app.json`
+bump (`c6ee7fe`); `scope/v0.15.0` at `bdd3ac0` and `e232d90` has the same iOS fingerprint (measured
+2026-11-01), so updates published from it reach the phone while that stays so. The v0.15.0 release
+commit's bump will move it again.

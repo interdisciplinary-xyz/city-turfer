@@ -51,7 +51,12 @@ cleanup, SSR). This skill adds what is specific to CityTurfer.
 ## Stack
 
 - `gsap` + `@gsap/react` in `apps/web`. Register `useGSAP` once per module:
-  `gsap.registerPlugin(useGSAP)`. No ScrollTrigger yet (the page is one screen).
+  `gsap.registerPlugin(useGSAP)`. ScrollTrigger is used in one place only: `reveal-motion/`
+  (scroll-in of `[data-reveal]` section heads and cards, `ScrollTrigger.batch`, `once`, a rise of
+  0.4em, `expo.out`, inside `gsap.matchMedia` for no-preference and reverted in cleanup). CSS hides
+  `[data-reveal]` only under the boot script's `motion` class, so reduced motion, no script and the
+  2.5 s fallback all show everything; no pinning or scrub, and nothing above the fold waits for a
+  scroll.
 - Motion lives in client components under `apps/web/src/app/[locale]/` (e.g. `hero-motion/`). Pages
   stay server components; they mark elements with `data-anim` and wrap them in the motion component,
   which passes its root ref as `scope`.

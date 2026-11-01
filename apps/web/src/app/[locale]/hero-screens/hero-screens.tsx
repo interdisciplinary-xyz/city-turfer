@@ -25,7 +25,6 @@ export function HeroScreens() {
           </div>
           <figcaption>
             <strong>{t(`${key}.title`)}</strong>
-            {t(`${key}.body`)}
           </figcaption>
         </figure>
       ))}
