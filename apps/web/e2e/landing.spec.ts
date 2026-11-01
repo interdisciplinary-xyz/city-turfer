@@ -43,17 +43,50 @@ for (const path of ['/en', '/pl']) {
     await expect(page.locator('footer.site-footer')).toBeVisible();
   });
 
-  for (const width of [320, 390]) {
-    test(`landing ${path}: accessible and no sideways scroll at ${width} px`, async ({ page }) => {
+  for (const width of [320, 390, 768]) {
+    test(`landing ${path}: accessible, no sideways scroll, a tidy header at ${width} px`, async ({ page }) => {
       await page.setViewportSize({ width, height: 844 });
       await page.goto(path);
       await page.waitForLoadState('networkidle');
       await expectNoHorizontalScroll(page);
+      // `overflow-x: hidden` on the body hides a wide element from scrollWidth tests in some layouts:
+      // name any element whose right edge passes the viewport (the hero map is clipped by design).
+      const wide = await page.evaluate(() =>
+        [...document.body.querySelectorAll('*')]
+          .filter((node) => !node.closest('.hero-city, .visually-hidden, [aria-hidden="true"], svg'))
+          .filter((node) => node.getBoundingClientRect().right > window.innerWidth + 0.5)
+          .map((node) => `${node.tagName.toLowerCase()}.${String(node.className).split(' ')[0]}`)
+      );
+      expect(wide).toEqual([]);
+      // The header's boxes sit side by side, never over each other, and share one row.
+      const boxes = await page
+        .locator('.app-header-home, .app-header-nav, .app-header-link, .lang')
+        .evaluateAll((nodes) =>
+          nodes
+            .map((node) => node.getBoundingClientRect())
+            .filter((box) => box.width > 0)
+            .map(({ left, right, top, bottom }) => ({ left, right, centre: (top + bottom) / 2 }))
+            .sort((a, b) => a.left - b.left)
+        );
+      for (let i = 1; i < boxes.length; i++) {
+        expect(boxes[i].left, 'header boxes overlap').toBeGreaterThanOrEqual(boxes[i - 1].right - 0.5);
+      }
+      for (const box of boxes) {
+        expect(Math.abs(box.centre - boxes[0].centre), 'one header row').toBeLessThanOrEqual(4);
+      }
+      // The join link's name is its visible text (no aria-label): "Zapisz się" on phones, the long label from 600 px.
+      const link = page.locator('.app-header-link');
+      await expect(link).not.toHaveAttribute('aria-label', /.*/);
+      const names =
+        path === '/pl'
+          ? { short: 'Zapisz się', long: 'Zapisz się na listę' }
+          : { short: 'Waitlist', long: 'Join the waitlist' };
+      await expect(link).toHaveAccessibleName(width >= 600 ? names.long : names.short);
       // The whole page is scanned, hero phone mock-ups (.screens) included: axe finds no violation there now.
       // Scan after the hero entrance: mid-fade text reads as low contrast.
       await expect(page.locator('[data-anim="line"]').last()).toHaveCSS('opacity', '1');
       // `label-content-name-mismatch` is an experimental axe rule (off by default): the header link's
-      // accessible name must contain its visible text ("Zapisz się", not "Dołącz do listy").
+      // accessible name must contain its visible text.
       const results = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'experimental'])
         .options({ rules: { 'label-content-name-mismatch': { enabled: true } } })
@@ -99,11 +132,14 @@ test.describe('header section links', () => {
     await nav.getByRole('link', { name: 'The app' }).click();
     await expect(page).toHaveURL(/#app$/);
     const header = await page.locator('header.app-header').boundingBox();
+    const bottom = (header?.y ?? 0) + (header?.height ?? 0);
+    // The heading lands in a band under the bar: 16 to 48 px clear of it. Without the section's
+    // scroll-margin it would sit against the bar (or, with the section padding, far below it).
     await expect(async () => {
       const heading = await page.locator('h2#app-title').boundingBox();
-      expect(heading?.y).toBeGreaterThanOrEqual((header?.y ?? 0) + (header?.height ?? 0));
-      expect(heading?.y).toBeLessThan(200);
-    }).toPass();
+      expect(heading?.y).toBeGreaterThanOrEqual(bottom + 16);
+      expect(heading?.y).toBeLessThanOrEqual(bottom + 48);
+    }).toPass({ timeout: 5000 });
   });
 
   test('the current link follows the scroll; the hero clears it, the page bottom marks the last', async ({ page }) => {
@@ -111,7 +147,11 @@ test.describe('header section links', () => {
     await page.goto('/en');
     const nav = page.getByRole('navigation', { name: 'Page sections' });
     const current = nav.locator('a[aria-current="location"]');
-    await expect(current).toHaveCount(0); // the hero
+    await readAt(page, 'h2#how-title');
+    await expect(current).toHaveText('How it works');
+    // The hero clears the link: proved after a settled scroll down and back, not before the observer's first callback.
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await expect(current).toHaveCount(0);
     await readAt(page, 'h2#how-title');
     await expect(current).toHaveText('How it works');
     await readAt(page, 'h2#privacy-title');
@@ -136,11 +176,16 @@ test.describe('header section links', () => {
     await expectNoHorizontalScroll(page);
     const inner = await page.locator('.app-header-inner').evaluate((node) => node.scrollWidth - node.clientWidth);
     expect(inner).toBeLessThanOrEqual(0);
-    // Nothing wraps: the bar stays one row.
-    const rows = await page
-      .locator('.app-header-nav a, .app-header-link, .lang')
-      .evaluateAll((nodes) => new Set(nodes.map((node) => Math.round(node.getBoundingClientRect().top / 4))).size);
-    expect(rows).toBeLessThanOrEqual(2);
+    // Nothing wraps: the logo, the links, the button and the switch share one row (centres within 4 px).
+    const centres = await page
+      .locator('.app-header-home, .app-header-nav a, .app-header-link, .lang')
+      .evaluateAll((nodes) =>
+        nodes.map((node) => {
+          const box = node.getBoundingClientRect();
+          return (box.top + box.bottom) / 2;
+        })
+      );
+    expect(Math.max(...centres) - Math.min(...centres)).toBeLessThanOrEqual(4);
   });
 });
 
