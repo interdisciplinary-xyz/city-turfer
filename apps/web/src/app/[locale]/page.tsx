@@ -9,6 +9,7 @@ import { HeroCopy } from './hero-copy';
 import { HeroMotion } from './hero-motion';
 import { HeroScreens } from './hero-screens';
 import { Audience, Faq, FinalCta, Highlights, HowItWorks, LocalFirst, Section, SectionHead } from './home-sections';
+import { RevealMotion } from './reveal-motion';
 import { SiteFooter } from './site-footer';
 import { WaitlistForm } from './waitlist-form';
 
@@ -55,6 +56,7 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
         <Faq />
         {WAITLIST ? <FinalCta /> : null}
       </main>
+      <RevealMotion />
       <SiteFooter contactEmail={WAITLIST?.contactEmail} />
     </>
   );

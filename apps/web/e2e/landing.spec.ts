@@ -235,6 +235,46 @@ for (const width of [768, 1440]) {
   });
 }
 
+// Scroll-in (reveal-motion): nothing may stay hidden. With reduced motion everything shows at once; with the
+// scripts blocked, the boot script's fallback shows everything after 2.5 s; with motion on, scrolling
+// through the page reveals every element.
+const allRevealed = (page: Page) =>
+  page.locator('[data-reveal]').evaluateAll(
+    (nodes) =>
+      nodes.filter((node) => {
+        const style = getComputedStyle(node);
+        return style.visibility === 'hidden' || Number(style.opacity) < 0.99;
+      }).length
+  );
+
+for (const path of ['/en', '/pl']) {
+  test(`landing ${path}: every reveal element is visible with reduced motion`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(path);
+    expect(await page.locator('[data-reveal]').count()).toBeGreaterThan(10);
+    expect(await allRevealed(page)).toBe(0);
+  });
+
+  test(`landing ${path}: every reveal element is visible when the scripts never run`, async ({ page }) => {
+    await page.route('**/_next/static/**/*.js', (route) => route.abort());
+    await page.goto(path, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(3000);
+    expect(await page.locator('[data-reveal]').count()).toBeGreaterThan(10);
+    expect(await allRevealed(page)).toBe(0);
+  });
+
+  test(`landing ${path}: scrolling through the page reveals every element`, async ({ page }) => {
+    await page.goto(path);
+    await page.waitForLoadState('networkidle');
+    const height = await page.evaluate(() => document.documentElement.scrollHeight);
+    for (let y = 0; y <= height; y += 400) {
+      await page.evaluate((top) => window.scrollTo(0, top), y);
+      await page.waitForTimeout(60);
+    }
+    await expect.poll(() => allRevealed(page), { timeout: 5000 }).toBe(0);
+  });
+}
+
 // The hero's street map (docs/plans/hero-city-map-2026-10-28.md): the city follows the time zone,
 // only that city's maps load, and "Near me" uses the location only after a click.
 const mapRequests = (urls: string[]) =>

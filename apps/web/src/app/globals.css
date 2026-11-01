@@ -645,3 +645,10 @@ h1 {
 .site-footer a {
   color: var(--accent-text);
 }
+
+/* Scroll-in (reveal-motion): hidden only while the boot script's `motion` class is on <html> (no reduced
+   motion, scripts expected); it drops after 2.5 s if the hero's script never ran, and GSAP reveals each
+   element as it arrives. */
+.motion [data-reveal] {
+  visibility: hidden;
+}

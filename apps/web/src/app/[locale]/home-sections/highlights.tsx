@@ -13,7 +13,7 @@ export function Highlights() {
       <SectionHead name='app' eyebrow={t('eyebrow')} title={t('title')} lede={t('lede')} />
       <ul className='home-grid home-grid-highlights'>
         {HIGHLIGHTS.map(({ key, icon, iphone }) => (
-          <li key={key} className={`app-card home-highlight home-highlight-${key}`}>
+          <li key={key} className={`app-card home-highlight home-highlight-${key}`} data-reveal=''>
             <span className='home-highlight-icon' aria-hidden='true'>
               {icon}
             </span>

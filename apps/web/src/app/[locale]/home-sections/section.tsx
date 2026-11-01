@@ -18,7 +18,7 @@ export function Section({ name, className, band, wrapClassName, children }: Sect
 /** The same heading in every section: the plain name (eyebrow), the claim (h2) and an optional lede. */
 export function SectionHead({ name, eyebrow, title, lede, align = 'start' }: SectionHeadProps) {
   return (
-    <div className={align === 'center' ? 'section-head section-head-center' : 'section-head'}>
+    <div className={align === 'center' ? 'section-head section-head-center' : 'section-head'} data-reveal=''>
       <p className='section-eyebrow'>{eyebrow}</p>
       <h2 id={`${name}-title`} className='section-title'>
         {title}

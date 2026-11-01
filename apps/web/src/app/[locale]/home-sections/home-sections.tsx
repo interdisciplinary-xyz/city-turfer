@@ -33,7 +33,7 @@ export function HowItWorks() {
     <Section name='how'>
       <SectionHead name='how' eyebrow={t('eyebrow')} title={t('title')} />
       <ol className='home-steps'>
-        <li className='app-card home-step'>
+        <li className='app-card home-step' data-reveal=''>
           <span className='home-step-n' aria-hidden='true'>
             1
           </span>
@@ -51,7 +51,7 @@ export function HowItWorks() {
           <h3 className='app-card-title'>{t('record.title')}</h3>
           <p className='home-step-body'>{t('record.body')}</p>
         </li>
-        <li className='app-card home-step'>
+        <li className='app-card home-step' data-reveal=''>
           <span className='home-step-n' aria-hidden='true'>
             2
           </span>
@@ -70,7 +70,7 @@ export function HowItWorks() {
           <h3 className='app-card-title'>{t('gain.title')}</h3>
           <p className='home-step-body'>{t('gain.body')}</p>
         </li>
-        <li className='app-card home-step'>
+        <li className='app-card home-step' data-reveal=''>
           <span className='home-step-n' aria-hidden='true'>
             3
           </span>
