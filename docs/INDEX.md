@@ -287,6 +287,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   landing page's sections, top to bottom, presenting CityTurfer as an honest early prototype that
   recruits testers; a street-glow demo built from the Gdańsk demo data, audience, highlights,
   comparison, status, FAQ and a tester call, in six slices
+- 🚧 [`plans/homepage-tidy-2026-11-01.md`](plans/homepage-tidy-2026-11-01.md): Three-phase tidy-up
+  of the landing page (bugs and one heading system, then fewer sections and one button/card grammar,
+  then polish), approved by the founder on 2026-11-01
 - ✅ [`plans/sync-chain-testing-2026-10-22.md`](plans/sync-chain-testing-2026-10-22.md): How to test
   that the four apps stay one system — every scenario starts on the phone (the source of truth) or
   reaches it, and is checked in the API, the web portal and the admin portal as each is built today;
