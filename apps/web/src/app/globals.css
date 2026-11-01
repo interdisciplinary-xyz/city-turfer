@@ -221,7 +221,6 @@ img {
     flex: none;
   }
   .hero-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
     gap: 40px 48px;
   }
   /* Phones follow the height left under the bar (header, hero padding, captions and the second
@@ -234,16 +233,9 @@ img {
     max-width: clamp(220px, calc((100svh - 250px) * 0.45), 280px);
     margin-inline: auto;
   }
-  .hero-copy {
-    text-align: left;
-  }
   .hero-grid > .download {
     order: 4;
     grid-column: 1 / -1;
-  }
-  .hero-copy h1,
-  .hero-copy .lede {
-    margin-left: 0;
   }
   .hero-copy h1 {
     font-size: clamp(3.25rem, 5.6vw, 5rem);
@@ -276,9 +268,37 @@ h1 {
   gap: var(--space-md);
 }
 
-@media (min-width: 960px) {
+/* Tablets (720 px up): the copy and the two phones side by side, a compact hero, not a tall stack. The
+   phones shrink with their column; from 960 px they also follow the window's height. */
+@media (min-width: 720px) {
+  .hero-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: 32px;
+  }
+  .hero-copy {
+    text-align: left;
+  }
+  .hero-copy h1,
+  .hero-copy .lede {
+    margin-left: 0;
+  }
   .hero-actions {
     justify-content: flex-start;
+  }
+  .screen + .screen {
+    margin-top: 32px;
+  }
+}
+
+@media (min-width: 720px) and (max-width: 959px) {
+  .hero-copy h1 {
+    font-size: clamp(2.25rem, 5.4vw, 3.25rem);
+  }
+}
+
+@media (min-width: 960px) {
+  .hero-grid {
+    gap: 40px 48px;
   }
 }
 
