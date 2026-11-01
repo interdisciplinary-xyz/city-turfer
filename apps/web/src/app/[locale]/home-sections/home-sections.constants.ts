@@ -64,10 +64,11 @@ export const DIFFERS = ['repeats', 'fades', 'private'] as const;
 
 /**
  * Where it stands: one list to update per release (docs-engineer checks it on "update all docs").
- * Keys under home.status.<column>.<item>.
+ * Keys under home.status.<column>.<item>. Apple Health: import ran on an iPhone (works), saving to it has not
+ * been checked on a device (testing), see docs/product/product-brief.md.
  */
 export const STATUS_COLUMNS = [
-  { key: 'works', items: ['record', 'turf', 'history', 'languages'] },
+  { key: 'works', items: ['record', 'turf', 'history', 'health', 'languages'] },
   { key: 'testing', items: ['health', 'battery', 'backup'] },
   { key: 'notYet', items: ['android', 'store', 'gpx', 'sharing'] },
 ] as const;

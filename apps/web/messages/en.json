@@ -218,12 +218,13 @@
         "title": "Works today",
         "record": "Recording with the screen off (iPhone)",
         "turf": "The Turf Map and turf strength",
+        "health": "Apple Health import (iPhone)",
         "history": "History, stats and achievements",
         "languages": "English and Polish"
       },
       "testing": {
         "title": "Being tested",
-        "health": "Apple Health import and export (iPhone Simulator only so far)",
+        "health": "Saving to Apple Health",
         "battery": "Battery use on long outings",
         "backup": "Opt-in cloud backup"
       },

@@ -218,12 +218,13 @@
         "title": "Działa już dziś",
         "record": "Nagrywanie przy wygaszonym ekranie (iPhone)",
         "turf": "Mapa terytorium i jego siła",
+        "health": "Import z Apple Health (iPhone)",
         "history": "Historia, statystyki i osiągnięcia",
         "languages": "Polski i angielski"
       },
       "testing": {
         "title": "W testach",
-        "health": "Import i eksport z Apple Health (iPhone, na razie tylko w Symulatorze)",
+        "health": "Zapisywanie w Apple Health",
         "battery": "Zużycie baterii na długich wyjściach",
         "backup": "Kopia w chmurze (po włączeniu)"
       },

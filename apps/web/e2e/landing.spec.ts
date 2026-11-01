@@ -63,6 +63,20 @@ for (const path of ['/en', '/pl']) {
   }
 }
 
+// "What it does today" sells Apple Health import, so "Where it stands" must list it as working, and only
+// saving to Apple Health (not checked on a device yet) as being tested.
+for (const [path, works, testing] of [
+  ['/en', 'Apple Health import (iPhone)', 'Saving to Apple Health'],
+  ['/pl', 'Import z Apple Health (iPhone)', 'Zapisywanie w Apple Health'],
+] as const) {
+  test(`landing ${path}: Apple Health is the same story in both sections`, async ({ page }) => {
+    await page.goto(path);
+    await expect(page.locator('.home-status-works')).toContainText(works);
+    await expect(page.locator('.home-status-testing')).toContainText(testing);
+    await expect(page.locator('.home-status-works')).not.toContainText(testing);
+  });
+}
+
 // The hero's street map (docs/plans/hero-city-map-2026-10-28.md): the city follows the time zone,
 // only that city's maps load, and "Near me" uses the location only after a click.
 const mapRequests = (urls: string[]) =>
