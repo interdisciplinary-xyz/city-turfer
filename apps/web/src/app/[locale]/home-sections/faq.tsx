@@ -19,7 +19,7 @@ export function Faq() {
     })),
   };
   return (
-    <Section name='faq' wrapClassName='home-faq-wrap'>
+    <Section name='faq'>
       <SectionHead name='faq' eyebrow={t('eyebrow')} title={t('title')} />
       <div className='home-faq'>
         {FAQ_KEYS.map((key) => (

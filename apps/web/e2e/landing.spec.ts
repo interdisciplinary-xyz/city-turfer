@@ -169,6 +169,27 @@ for (const path of ['/en', '/pl']) {
   });
 }
 
+// One card grammar, no orphan grids: the five highlight tiles are 3 + 2 from 720 px, and the step cards
+// are three across from 1024 px (the turf legend's labels need the width) and stack below.
+for (const width of [768, 1440]) {
+  test(`landing: highlights are 3 + 2 and the step cards fit at ${width} px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/en');
+    const rows = async (selector: string) =>
+      page.locator(selector).evaluateAll((nodes) => {
+        const counts = new Map<number, number>();
+        for (const node of nodes) {
+          const top = Math.round(node.getBoundingClientRect().top);
+          counts.set(top, (counts.get(top) ?? 0) + 1);
+        }
+        return [...counts.values()];
+      });
+    expect(await rows('.home-grid-highlights > li')).toEqual([3, 2]);
+    expect(await rows('.home-steps > li')).toEqual(width < 1024 ? [1, 1, 1] : [3]);
+    expect(await rows('.home-grid-3 > li')).toEqual([3]);
+  });
+}
+
 // The hero's street map (docs/plans/hero-city-map-2026-10-28.md): the city follows the time zone,
 // only that city's maps load, and "Near me" uses the location only after a click.
 const mapRequests = (urls: string[]) =>
