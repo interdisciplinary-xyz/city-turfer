@@ -8,6 +8,8 @@ import {
   Highlights,
   HowItWorks,
   LocalFirst,
+  Section,
+  SectionHead,
   WhereItStands,
   YourWeek,
 } from '@/app/[locale]/home-sections';
@@ -63,3 +65,25 @@ export const DiffersOnly: StoryObj<typeof meta> = { render: () => <Differs /> };
 export const WhereItStandsOnly: StoryObj<typeof meta> = { render: () => <WhereItStands /> };
 
 export const FaqOnly: StoryObj<typeof meta> = { render: () => <Faq /> };
+
+/** The shared heading: eyebrow (plain name), claim and an optional lede; centred for the closing sections. */
+export const SectionHeading: StoryObj<typeof meta> = {
+  render: () => (
+    <Section name='how'>
+      <SectionHead
+        name='how'
+        eyebrow='How it works'
+        title='One loop. Every street.'
+        lede='Record an outing, see the turf you gained, watch it glow when you come back.'
+      />
+    </Section>
+  ),
+};
+
+export const SectionHeadingCentred: StoryObj<typeof meta> = {
+  render: () => (
+    <Section name='cta'>
+      <SectionHead name='cta' eyebrow='Waitlist' title='Your turf starts at your door' align='center' />
+    </Section>
+  ),
+};

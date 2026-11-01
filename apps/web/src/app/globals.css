@@ -26,6 +26,11 @@ html {
   scroll-padding-top: var(--header-h);
 }
 
+/* The skip link and the header's section links focus <main>: no ring around the whole page. */
+main:focus {
+  outline: none;
+}
+
 /* In-page links (header "Join the waitlist" → #waitlist) glide instead of jumping; off for reduced motion. */
 @media (prefers-reduced-motion: no-preference) {
   html {
@@ -426,25 +431,13 @@ h1 {
 
 /* The waitlist is its own section under the full-screen hero, centred on every width. */
 .waitlist-section {
-  padding: clamp(56px, 10vw, 112px) 0;
   border-top: 1px solid var(--border);
 }
 
 .waitlist {
-  margin: 0 auto;
+  margin: clamp(24px, 4vw, 32px) auto 0;
   max-width: 34rem;
   text-align: center;
-}
-
-.waitlist-title {
-  margin: 0 0 18px;
-  font-family: var(--display);
-  font-size: clamp(1.7rem, 4.6vw, 2.3rem);
-  font-weight: normal;
-  font-synthesis: none;
-  text-transform: var(--display-case);
-  letter-spacing: var(--display-tracking);
-  line-height: 0.95;
 }
 
 .waitlist-row {

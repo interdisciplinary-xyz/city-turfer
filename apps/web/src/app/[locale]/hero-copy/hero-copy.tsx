@@ -16,7 +16,7 @@ export function HeroCopy() {
       <p className='hero-badge' data-anim='copy'>
         {t('badge')}
       </p>
-      <h1>
+      <h1 id='hero-title'>
         <span className='line' data-anim='line'>
           {t('taglineLead')}
         </span>{' '}

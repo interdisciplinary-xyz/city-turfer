@@ -7,13 +7,14 @@
 
 .home-section {
   padding: clamp(56px, 9vw, 112px) 0;
+  /* On top of the html scroll-padding (the sticky header): a heading reached by a link sits clear of it. */
+  scroll-margin-top: var(--space-lg);
 }
 
 .home-section + .home-section {
   padding-top: 0;
 }
 
-.home-eyebrow,
 .app-label {
   margin: 0;
   color: var(--muted);
@@ -23,19 +24,65 @@
   text-transform: uppercase;
 }
 
-/* Section titles: the display face in capitals, like the app's screen titles. */
-.home-title {
-  margin: 8px 0 0;
-  font-family: var(--display);
-  font-weight: normal;
-  font-size: clamp(2rem, 5vw, 3.25rem);
-  line-height: 1;
-  letter-spacing: var(--display-tracking);
-  text-transform: var(--display-case);
+/* ---------- Section heading (section.tsx): eyebrow, claim, lede ---------- */
+
+.section-head {
+  min-width: 0;
 }
 
-.home-title-small {
-  font-size: clamp(1.6rem, 3.6vw, 2.25rem);
+/* The eyebrow is the section's plain name, in the accent ink, after a small hexagon. */
+.section-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--accent-text);
+  font-size: var(--font-caption);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+}
+
+.section-eyebrow::before {
+  content: '';
+  flex: none;
+  width: 11px;
+  height: 12px;
+  background: currentColor;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+}
+
+/* The claim: the display face in capitals, like the app's screen titles. */
+.section-title {
+  margin: 10px 0 0;
+  font-family: var(--display);
+  font-weight: normal;
+  font-size: clamp(2.25rem, 5vw, 3.25rem);
+  line-height: 0.95;
+  letter-spacing: var(--display-tracking);
+  text-transform: var(--display-case);
+  text-wrap: balance;
+}
+
+.section-lede {
+  margin: 16px 0 0;
+  max-width: 34rem;
+  color: var(--muted);
+  font-size: var(--font-lead);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.section-head-center {
+  text-align: center;
+}
+
+.section-head-center .section-eyebrow {
+  justify-content: center;
+}
+
+.section-head-center .section-lede {
+  margin-inline: auto;
 }
 
 .home-lede {
@@ -473,7 +520,8 @@
   text-align: center;
 }
 
-.home-cta .home-lede {
+.home-cta .home-lede,
+.home-cta .section-lede {
   margin: 16px auto 28px;
 }
 

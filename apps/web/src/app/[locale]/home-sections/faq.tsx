@@ -1,6 +1,7 @@
 import { useTranslations } from 'next-intl';
 
 import { FAQ_KEYS } from './home-sections.constants';
+import { Section, SectionHead } from './section';
 
 /**
  * Questions as native disclosure widgets (no script), plus FAQPage structured data built from the
@@ -18,26 +19,21 @@ export function Faq() {
     })),
   };
   return (
-    <section className='home-section' aria-labelledby='faq-title'>
-      <div className='wrap home-faq-wrap'>
-        <p className='home-eyebrow'>{t('eyebrow')}</p>
-        <h2 id='faq-title' className='home-title'>
-          {t('title')}
-        </h2>
-        <div className='home-faq'>
-          {FAQ_KEYS.map((key) => (
-            <details key={key} className='home-faq-item'>
-              <summary>{t(`${key}.q`)}</summary>
-              <p>{t(`${key}.a`)}</p>
-            </details>
-          ))}
-        </div>
-        <script
-          type='application/ld+json'
-          // JSON.stringify output with "<" escaped, so no message can close the script element.
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
-        />
+    <Section name='faq' wrapClassName='home-faq-wrap'>
+      <SectionHead name='faq' eyebrow={t('eyebrow')} title={t('title')} />
+      <div className='home-faq'>
+        {FAQ_KEYS.map((key) => (
+          <details key={key} className='home-faq-item'>
+            <summary>{t(`${key}.q`)}</summary>
+            <p>{t(`${key}.a`)}</p>
+          </details>
+        ))}
       </div>
-    </section>
+      <script
+        type='application/ld+json'
+        // JSON.stringify output with "<" escaped, so no message can close the script element.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
+      />
+    </Section>
   );
 }

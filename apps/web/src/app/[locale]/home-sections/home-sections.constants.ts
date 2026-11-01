@@ -1,5 +1,5 @@
 import { APP_SCHEME, cssVariables, TIER_ORDER } from '@cityturfer/brand';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 /** The three activity types as the app names them (`cycle` is shown as "Ride"). */
 export type HomeActivityType = 'walk' | 'run' | 'cycle';
@@ -75,3 +75,47 @@ export const STATUS_COLUMNS = [
 
 /** FAQ questions in page order; the FAQPage JSON-LD is built from the same keys. */
 export const FAQ_KEYS = ['when', 'free', 'battery', 'account', 'data', 'android', 'watch', 'cities'] as const;
+
+/**
+ * Anchor ids of the homepage sections, one per `Section` (`#how` etc.). Each section's heading id is
+ * `<anchor>-title`, and the header's section links point at these. Keep them stable: they are
+ * shared links.
+ */
+export const SECTION_ANCHORS = {
+  how: 'how',
+  glow: 'glow',
+  who: 'who',
+  app: 'app',
+  week: 'week',
+  different: 'different',
+  privacy: 'privacy',
+  status: 'status',
+  faq: 'faq',
+  waitlist: 'waitlist',
+} as const;
+
+export type SectionAnchor = (typeof SECTION_ANCHORS)[keyof typeof SECTION_ANCHORS];
+
+/** The closing call to action has a heading id but is not a link target. */
+export type SectionName = SectionAnchor | 'cta';
+
+export type SectionProps = {
+  name: SectionName;
+  /** Extra classes on the <section> (after `home-section`). */
+  className?: string;
+  /** Classes on the inner `.wrap`. */
+  wrapClassName?: string;
+  children: ReactNode;
+};
+
+export type SectionHeadProps = {
+  /** The section's name: the h2 gets the id `<name>-title`. */
+  name: SectionName;
+  /** The section's plain name, shown above the claim. */
+  eyebrow: string;
+  /** The claim (the h2). */
+  title: string;
+  /** One sentence under the claim. */
+  lede?: ReactNode;
+  align?: 'start' | 'center';
+};

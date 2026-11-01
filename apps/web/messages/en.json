@@ -104,8 +104,8 @@
       "blazing": "Blazing"
     },
     "week": {
-      "eyebrow": "Dashboard",
-      "title": "What your week added up to",
+      "eyebrow": "Your week",
+      "title": "Your week, added up",
       "body": "This week’s distance, time and activities, your latest walks, runs and rides, and the next achievement within reach.",
       "thisWeek": "This week",
       "distance": "Distance",
@@ -136,7 +136,7 @@
       }
     },
     "local": {
-      "eyebrow": "Yours alone",
+      "eyebrow": "Privacy",
       "title": "Your phone keeps the original",
       "phone": "Your activities are stored on your phone, in the app.",
       "backup": "Cloud backup stays off until you turn it on. Turn it off and the copy on our server is deleted.",
@@ -148,10 +148,11 @@
     "cta": {
       "title": "Your turf starts at your door",
       "body": "Leave your email and we’ll tell you when the app is ready to download.",
-      "join": "Join the waitlist"
+      "join": "Join the waitlist",
+      "eyebrow": "Waitlist"
     },
     "demo": {
-      "eyebrow": "Turf strength",
+      "eyebrow": "The glow",
       "title": "Come back. It glows.",
       "body": "One street in Gdańsk’s Main Town, visit by visit. Then the whole city after four months of walks, runs and rides.",
       "step": "{visits, plural, one {# visit} other {# visits}} · {tier}",
@@ -170,8 +171,8 @@
       "notFor": "Not for you if you want leaderboards, crews or training zones. CityTurfer is just you and your streets."
     },
     "highlights": {
-      "eyebrow": "In the app",
-      "title": "What the prototype does today",
+      "eyebrow": "The app",
+      "title": "What it does today",
       "iphone": "iPhone only",
       "gain": {
         "title": "New turf after every outing",
@@ -195,8 +196,8 @@
       }
     },
     "differs": {
-      "eyebrow": "How it’s different",
-      "title": "Made for the streets you repeat",
+      "eyebrow": "What’s different",
+      "title": "For the streets you repeat",
       "repeats": {
         "title": "Repeats count",
         "body": "Most maps mark a street once. Here every return makes it brighter."
@@ -211,7 +212,7 @@
       }
     },
     "status": {
-      "eyebrow": "Where it stands",
+      "eyebrow": "Status",
       "title": "An early prototype, honestly",
       "body": "What works, what we’re testing and what isn’t there yet.",
       "works": {
@@ -237,8 +238,8 @@
       }
     },
     "faq": {
-      "eyebrow": "Questions",
-      "title": "Good questions",
+      "eyebrow": "FAQ",
+      "title": "Questions",
       "when": {
         "q": "When can I get it?",
         "a": "Join the waitlist and we’ll email you when it’s ready to download."
@@ -291,6 +292,7 @@
     "soon": "Coming soon"
   },
   "waitlist": {
+    "eyebrow": "Waitlist",
     "title": "Join the waitlist",
     "emailLabel": "Email address",
     "emailPlaceholder": "you@example.com",

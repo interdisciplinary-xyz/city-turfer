@@ -104,8 +104,8 @@
       "blazing": "Płonące"
     },
     "week": {
-      "eyebrow": "Pulpit",
-      "title": "Tak wyglądał Twój tydzień",
+      "eyebrow": "Twój tydzień",
+      "title": "Twój tydzień w liczbach",
       "body": "Dystans, czas i liczba aktywności w tym tygodniu, ostatnie spacery, biegi i przejażdżki oraz najbliższe osiągnięcie.",
       "thisWeek": "W tym tygodniu",
       "distance": "Dystans",
@@ -136,8 +136,8 @@
       }
     },
     "local": {
-      "eyebrow": "Tylko Twoje",
-      "title": "Oryginał zostaje na Twoim telefonie",
+      "eyebrow": "Prywatność",
+      "title": "Oryginał zostaje w telefonie",
       "phone": "Twoje aktywności są zapisane na telefonie, w aplikacji.",
       "backup": "Kopia w chmurze jest wyłączona, dopóki jej nie włączysz. Gdy ją wyłączysz, kopia na naszym serwerze zostanie usunięta.",
       "portal": "Po zalogowaniu w przeglądarce widzisz tylko to, co trafiło do kopii.",
@@ -148,10 +148,11 @@
     "cta": {
       "title": "Twoje terytorium zaczyna się za progiem",
       "body": "Zostaw e-mail, a damy znać, gdy aplikacja będzie gotowa do pobrania.",
-      "join": "Zapisz się na listę"
+      "join": "Zapisz się na listę",
+      "eyebrow": "Lista oczekujących"
     },
     "demo": {
-      "eyebrow": "Siła terytorium",
+      "eyebrow": "Blask",
       "title": "Wracaj. Świeci jaśniej.",
       "body": "Jedna ulica na Głównym Mieście w Gdańsku, wizyta po wizycie. A potem całe miasto po czterech miesiącach spacerów, biegów i przejażdżek.",
       "step": "{visits, plural, one {# raz} few {# razy} many {# razy} other {# razy}} · {tier}",
@@ -170,8 +171,8 @@
       "notFor": "Nie dla Ciebie, jeśli szukasz rankingów, drużyn albo stref treningowych. CityTurfer to Ty i Twoje ulice."
     },
     "highlights": {
-      "eyebrow": "W aplikacji",
-      "title": "Co prototyp potrafi już dziś",
+      "eyebrow": "Aplikacja",
+      "title": "Co potrafi już dziś",
       "iphone": "Tylko iPhone",
       "gain": {
         "title": "Nowe terytorium po każdym wyjściu",
@@ -211,7 +212,7 @@
       }
     },
     "status": {
-      "eyebrow": "Na jakim etapie",
+      "eyebrow": "Status",
       "title": "Uczciwie: to wczesny prototyp",
       "body": "Co działa, co testujemy i czego jeszcze nie ma.",
       "works": {
@@ -238,7 +239,7 @@
     },
     "faq": {
       "eyebrow": "Pytania",
-      "title": "Dobre pytania",
+      "title": "Pytania",
       "when": {
         "q": "Kiedy mogę ją pobrać?",
         "a": "Zapisz się na listę, a napiszemy, gdy aplikacja będzie gotowa do pobrania."
@@ -291,6 +292,7 @@
     "soon": "Wkrótce"
   },
   "waitlist": {
+    "eyebrow": "Lista oczekujących",
     "title": "Zapisz się na listę",
     "emailLabel": "Adres e-mail",
     "emailPlaceholder": "ty@przyklad.pl",

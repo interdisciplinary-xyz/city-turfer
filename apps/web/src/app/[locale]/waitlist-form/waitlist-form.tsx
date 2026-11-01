@@ -41,8 +41,7 @@ export function WaitlistForm({ action, controller, contactEmail, locale }: Waitl
   }
 
   return (
-    <form className='waitlist' onSubmit={onSubmit} aria-describedby={`${id}-privacy`}>
-      <p className='waitlist-title'>{t('title')}</p>
+    <form className='waitlist' onSubmit={onSubmit} aria-labelledby='waitlist-title' aria-describedby={`${id}-privacy`}>
       <div className='waitlist-row'>
         <label className='visually-hidden' htmlFor={`${id}-email`}>
           {t('emailLabel')}

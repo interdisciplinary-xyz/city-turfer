@@ -16,6 +16,8 @@ import {
   Highlights,
   HowItWorks,
   LocalFirst,
+  Section,
+  SectionHead,
   WhereItStands,
   YourWeek,
 } from './home-sections';
@@ -34,27 +36,29 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
         {t('hero.skip')}
       </a>
       <AppHeader locale={locale} waitlist={Boolean(WAITLIST)} />
-      <main id='main'>
-        <HeroMotion className='hero'>
-          <HeroCity />
-          <div className='wrap hero-grid'>
-            <HeroCopy />
-            <HeroScreens />
-            {/* No download buttons for now: the waitlist comes first (StoreButtons stays for later). */}
-          </div>
-          <HeroCityLine />
-        </HeroMotion>
-        {WAITLIST ? (
-          <section id='waitlist' className='waitlist-section' aria-label={t('waitlist.title')}>
-            <div className='wrap'>
-              <WaitlistForm
-                action={WAITLIST.url}
-                controller={WAITLIST.controller}
-                contactEmail={WAITLIST.contactEmail}
-                locale={locale}
-              />
+      {/* tabIndex -1: the skip link and the header's links can land focus here. */}
+      <main id='main' tabIndex={-1}>
+        <section id='top' aria-labelledby='hero-title'>
+          <HeroMotion className='hero'>
+            <HeroCity />
+            <div className='wrap hero-grid'>
+              <HeroCopy />
+              <HeroScreens />
+              {/* No download buttons for now: the waitlist comes first (StoreButtons stays for later). */}
             </div>
-          </section>
+            <HeroCityLine />
+          </HeroMotion>
+        </section>
+        {WAITLIST ? (
+          <Section name='waitlist' className='waitlist-section'>
+            <SectionHead name='waitlist' eyebrow={t('waitlist.eyebrow')} title={t('waitlist.title')} align='center' />
+            <WaitlistForm
+              action={WAITLIST.url}
+              controller={WAITLIST.controller}
+              contactEmail={WAITLIST.contactEmail}
+              locale={locale}
+            />
+          </Section>
         ) : null}
         <TurfDemo />
         <HowItWorks />

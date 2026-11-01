@@ -6,18 +6,12 @@ import AxeBuilder from '@axe-core/playwright';
 
 import { expect, expectNoHorizontalScroll, test } from './support/fixtures';
 
-/** Section headings by id, in page order (the closing call to action needs the waitlist env). */
-const SECTIONS = [
-  'demo-title',
-  'how-title',
-  'audience-title',
-  'highlights-title',
-  'week-title',
-  'differs-title',
-  'local-title',
-  'status-title',
-  'faq-title',
-];
+/**
+ * The homepage sections by anchor, in page order (home-sections.constants.ts, SECTION_ANCHORS): each is a
+ * `<section id=anchor>` labelled by its `h2#<anchor>-title`. The waitlist strip and the closing call to
+ * action need the three NEXT_PUBLIC_WAITLIST_* / NEXT_PUBLIC_CONTACT_EMAIL variables at build time (dummy values are fine: the form is never submitted here).
+ */
+const ANCHORS = ['waitlist', 'glow', 'how', 'who', 'app', 'week', 'different', 'privacy', 'status', 'faq'];
 
 for (const path of ['/en', '/pl']) {
   test(`landing ${path}: no cookie, no /api request, self only`, async ({ page, context, network }) => {
@@ -33,9 +27,15 @@ for (const path of ['/en', '/pl']) {
   test(`landing ${path}: every section, the prototype badge and a footer`, async ({ page }) => {
     await page.goto(path);
     await expect(page.locator('.hero-badge')).toBeVisible();
-    for (const id of SECTIONS) {
-      await expect(page.locator(`h2#${id}`)).toHaveCount(1);
+    for (const anchor of ANCHORS) {
+      await expect(page.locator(`section#${anchor}[aria-labelledby="${anchor}-title"] h2#${anchor}-title`)).toHaveCount(
+        1
+      );
+      await expect(page.locator(`section#${anchor} .section-eyebrow`)).toHaveCount(1);
     }
+    await expect(page.locator('section#top[aria-labelledby="hero-title"] h1#hero-title')).toHaveCount(1);
+    await expect(page.locator('main#main')).toHaveAttribute('tabindex', '-1');
+    await expect(page.locator('h2#cta-title')).toHaveCount(1);
     await expect(page.locator('h1')).toHaveCount(1);
     await expect(page.locator('footer.site-footer')).toBeVisible();
   });
