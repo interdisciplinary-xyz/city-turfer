@@ -10,7 +10,7 @@ import { expect, expectNoHorizontalScroll, test } from './support/fixtures';
 /**
  * The homepage sections by anchor, in page order (home-sections.constants.ts, SECTION_ANCHORS): each is a
  * `<section id=anchor>` labelled by its `h2#<anchor>-title`. The waitlist strip and the closing call to
- * action need the three NEXT_PUBLIC_WAITLIST_* / NEXT_PUBLIC_CONTACT_EMAIL variables at build time (dummy values are fine: the form is never submitted here).
+ * action need NEXT_PUBLIC_WAITLIST_FORM_URL, NEXT_PUBLIC_WAITLIST_CONTROLLER and NEXT_PUBLIC_CONTACT_EMAIL at build time (pnpm run test:e2e:build sets dummy values; the form is never submitted here).
  */
 const ANCHORS = ['waitlist', 'how', 'who', 'app', 'privacy', 'faq'];
 

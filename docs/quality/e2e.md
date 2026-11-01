@@ -118,3 +118,15 @@ step-up code and spends about 2 minutes asleep on purpose.
 2. Add it to `flowsOrder` in `apps/mobile/e2e/config.yaml` (keep `08-sign-out` last).
 3. Map it to a critical path in section 1 (or add a CP row), then run `pnpm run e2e:audit`.
 4. No commented-out steps: delete them or fix the flow.
+
+## 5. The website's Playwright suite (apps/web/e2e)
+
+Separate from the Maestro flows: it drives the built static export of `apps/web` in Chromium (the
+landing page, the signed-in portal against an in-memory API).
+`pnpm --filter @cityturfer/web run test:e2e` builds first with `test:e2e:build`, which sets dummy
+`example.invalid` values for `NEXT_PUBLIC_WAITLIST_FORM_URL`, `NEXT_PUBLIC_WAITLIST_CONTROLLER` and
+`NEXT_PUBLIC_CONTACT_EMAIL`: the landing tests need the waitlist strip, the header's join link and
+the closing call to action, which a build without those variables leaves out (`site-server.mjs`
+refuses such an export). The form is never submitted. `test:e2e:run` runs the suite against the
+`out/` that exists. Playwright needs free ports (`E2E_SITE_PORT`, `E2E_API_PORT`) when the defaults
+are taken. CI (`ci:quality`) does not run this suite.
