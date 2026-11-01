@@ -12,7 +12,7 @@ import { expect, expectNoHorizontalScroll, test } from './support/fixtures';
  * `<section id=anchor>` labelled by its `h2#<anchor>-title`. The waitlist strip and the closing call to
  * action need the three NEXT_PUBLIC_WAITLIST_* / NEXT_PUBLIC_CONTACT_EMAIL variables at build time (dummy values are fine: the form is never submitted here).
  */
-const ANCHORS = ['waitlist', 'glow', 'how', 'who', 'app', 'week', 'different', 'privacy', 'status', 'faq'];
+const ANCHORS = ['waitlist', 'how', 'who', 'app', 'privacy', 'faq'];
 
 for (const path of ['/en', '/pl']) {
   test(`landing ${path}: no cookie, no /api request, self only`, async ({ page, context, network }) => {
@@ -37,6 +37,8 @@ for (const path of ['/en', '/pl']) {
     await expect(page.locator('section#top[aria-labelledby="hero-title"] h1#hero-title')).toHaveCount(1);
     await expect(page.locator('main#main')).toHaveAttribute('tabindex', '-1');
     await expect(page.locator('h2#cta-title')).toHaveCount(1);
+    // No more blocks: the hero, the waitlist strip, five content sections and the closing call.
+    await expect(page.locator('main > section')).toHaveCount(8);
     await expect(page.locator('h1')).toHaveCount(1);
     await expect(page.locator('footer.site-footer')).toBeVisible();
   });
@@ -64,17 +66,17 @@ for (const path of ['/en', '/pl']) {
   }
 }
 
-// "What it does today" sells Apple Health import, so "Where it stands" must list it as working, and only
-// saving to Apple Health (not checked on a device yet) as being tested.
-for (const [path, works, testing] of [
-  ['/en', 'Apple Health import (iPhone)', 'Saving to Apple Health'],
-  ['/pl', 'Import z Apple Health (iPhone)', 'Zapisywanie w Apple Health'],
+// "What it does today" sells Apple Health import, so the "being tested" strip under it may only name
+// saving to Apple Health (not checked on a device yet).
+for (const [path, imports, testing] of [
+  ['/en', 'Import past walks', 'Saving to Apple Health'],
+  ['/pl', 'Zaimportuj dawne spacery', 'Zapisywanie w Apple Health'],
 ] as const) {
-  test(`landing ${path}: Apple Health is the same story in both sections`, async ({ page }) => {
+  test(`landing ${path}: Apple Health is the same story in the tile and the status strip`, async ({ page }) => {
     await page.goto(path);
-    await expect(page.locator('.home-status-works')).toContainText(works);
+    await expect(page.locator('.home-highlight-health')).toContainText(imports);
     await expect(page.locator('.home-status-testing')).toContainText(testing);
-    await expect(page.locator('.home-status-works')).not.toContainText(testing);
+    await expect(page.locator('.home-status-notYet')).not.toContainText('Apple Health');
   });
 }
 

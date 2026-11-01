@@ -60,15 +60,21 @@ export const HIGHLIGHTS: readonly { key: HighlightKey; icon: string; iphone: boo
   { key: 'city', icon: '◎', iphone: false },
 ];
 
-export const DIFFERS = ['repeats', 'fades', 'private'] as const;
+/** The two "what's different" lines under the audience cards (the third, privacy, lives in Privacy). */
+/** The Privacy points, in order (keys under home.local). */
+export const LOCAL_POINTS = ['phone', 'backup', 'portal', 'leaves', 'account', 'private', 'site'] as const;
+
+/** The two "what's different" lines under the audience cards (the third, privacy, lives in Privacy). */
+export const DIFFERS = ['repeats', 'fades'] as const;
 
 /**
- * Where it stands: one list to update per release (docs-engineer checks it on "update all docs").
- * Keys under home.status.<column>.<item>. Apple Health: import ran on an iPhone (works), saving to it has not
- * been checked on a device (testing), see docs/product/product-brief.md.
+ * Where it stands, as a strip under the highlights: what is being tested and what is not there yet
+ * (what works is the highlights above). One list to update per release (docs-engineer checks it on
+ * "update all docs"). Keys under home.status.<column>.<item>. Apple Health: import ran on an iPhone
+ * (the health tile says so), saving to it has not been checked on a device (testing), see
+ * docs/product/product-brief.md.
  */
 export const STATUS_COLUMNS = [
-  { key: 'works', items: ['record', 'turf', 'history', 'health', 'languages'] },
   { key: 'testing', items: ['health', 'battery', 'backup'] },
   { key: 'notYet', items: ['android', 'store', 'gpx', 'sharing'] },
 ] as const;
@@ -82,16 +88,12 @@ export const FAQ_KEYS = ['when', 'free', 'battery', 'account', 'data', 'android'
  * shared links.
  */
 export const SECTION_ANCHORS = {
+  waitlist: 'waitlist',
   how: 'how',
-  glow: 'glow',
   who: 'who',
   app: 'app',
-  week: 'week',
-  different: 'different',
   privacy: 'privacy',
-  status: 'status',
   faq: 'faq',
-  waitlist: 'waitlist',
 } as const;
 
 export type SectionAnchor = (typeof SECTION_ANCHORS)[keyof typeof SECTION_ANCHORS];

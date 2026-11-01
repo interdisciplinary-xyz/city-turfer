@@ -73,7 +73,33 @@
       },
       "dashboard": {
         "greeting": "Cześć, {name}",
-        "subtitle": "{area} km² terytorium · +{week} km² w tym tygodniu"
+        "subtitle": "{area} km² terytorium · +{week} km² w tym tygodniu",
+        "thisWeek": "W tym tygodniu",
+        "distance": "Dystans",
+        "time": "Czas",
+        "count": "Aktywności",
+        "unitKm": "km",
+        "rowDistance": "{distance} km",
+        "rowPace": "{time} · {pace}/km",
+        "rowSpeed": "{time} · {speed} km/h",
+        "recent": "Ostatnie aktywności",
+        "seeAll": "Wszystkie ›",
+        "achievements": "Osiągnięcia",
+        "nextUp": "Następne: <b>Półmaraton</b> · Przejdź lub przebiegnij 21,1 km za jednym razem.",
+        "activities": {
+          "walk": {
+            "title": "Poranny spacer",
+            "when": "pt., 16 paź, 06:00"
+          },
+          "run": {
+            "title": "Popołudniowy bieg",
+            "when": "śr., 14 paź, 13:00"
+          },
+          "ride": {
+            "title": "Poranna przejażdżka",
+            "when": "wt., 13 paź, 09:00"
+          }
+        }
       }
     }
   },
@@ -95,8 +121,8 @@
       "glow": {
         "legendTitle": "Siła terytorium",
         "legendLabel": "Siła terytorium: Blade, Świecące, Mocne, Płonące, od najsłabszej do najmocniejszej",
-        "title": "Wracaj i patrz, jak świeci",
-        "body": "Z każdym powrotem ulica świeci jaśniej: od „Blade” po „Płonące”. Nic nie blednie: ulica zostaje Twoja, nawet jeśli długo Cię tam nie było."
+        "title": "Każdy powrót się liczy",
+        "body": "Wróć, a zaświeci: z każdym powrotem ulica jest jaśniejsza, od „Blade” po „Płonące”."
       }
     },
     "types": {
@@ -110,38 +136,6 @@
       "strong": "Mocne",
       "blazing": "Płonące"
     },
-    "week": {
-      "eyebrow": "Twój tydzień",
-      "title": "Twój tydzień w liczbach",
-      "body": "Dystans, czas i liczba aktywności w tym tygodniu, ostatnie spacery, biegi i przejażdżki oraz najbliższe osiągnięcie.",
-      "thisWeek": "W tym tygodniu",
-      "distance": "Dystans",
-      "time": "Czas",
-      "count": "Aktywności",
-      "unitKm": "km",
-      "rowDistance": "{distance} km",
-      "rowPace": "{time} · {pace}/km",
-      "rowSpeed": "{time} · {speed} km/h",
-      "recent": "Ostatnie aktywności",
-      "seeAll": "Wszystkie ›",
-      "achievements": "Osiągnięcia",
-      "nextUp": "Następne: <b>Półmaraton</b> · Przejdź lub przebiegnij 21,1 km za jednym razem.",
-      "caption": "Przykładowy tydzień, tak jak pokazuje go aplikacja.",
-      "activities": {
-        "walk": {
-          "title": "Poranny spacer",
-          "when": "pt., 16 paź, 06:00"
-        },
-        "run": {
-          "title": "Popołudniowy bieg",
-          "when": "śr., 14 paź, 13:00"
-        },
-        "ride": {
-          "title": "Poranna przejażdżka",
-          "when": "wt., 13 paź, 09:00"
-        }
-      }
-    },
     "local": {
       "eyebrow": "Prywatność",
       "title": "Oryginał zostaje w telefonie",
@@ -150,7 +144,8 @@
       "portal": "Po zalogowaniu w przeglądarce widzisz tylko to, co trafiło do kopii.",
       "leaves": "Co opuszcza telefon: kafelki mapy dla oglądanego obszaru, sprawdzanie aktualizacji oraz, jeśli nie wyłączysz uzupełniania luk, dwa końce luki GPS. Logowanie wysyła Twój adres e-mail na nasz serwer.",
       "account": "Na razie do aplikacji logujesz się kontem.",
-      "site": "Publiczne strony nie zapisują ciasteczek i nie ładują skryptów śledzących."
+      "site": "Publiczne strony nie zapisują ciasteczek i nie ładują skryptów śledzących.",
+      "private": "Bez tablicy aktywności, obserwujących i publicznego profilu."
     },
     "cta": {
       "title": "Twoje terytorium zaczyna się za progiem",
@@ -159,8 +154,7 @@
       "eyebrow": "Lista oczekujących"
     },
     "demo": {
-      "eyebrow": "Blask",
-      "title": "Wracaj. Świeci jaśniej.",
+      "title": "Jedna ulica, potem całe miasto",
       "body": "Jedna ulica na Głównym Mieście w Gdańsku, wizyta po wizycie. A potem całe miasto po czterech miesiącach spacerów, biegów i przejażdżek.",
       "step": "{visits, plural, one {# raz} few {# razy} many {# razy} other {# razy}} · {tier}",
       "cityStep": "Cztery miesiące",
@@ -200,36 +194,22 @@
       "city": {
         "title": "Zaczyna się w Twoim mieście",
         "body": "Wybierz swoje miasto z listy, a mapa otworzy się właśnie tam."
-      }
+      },
+      "lede": "Do tego historia i statystyki, po polsku i angielsku."
     },
     "differs": {
-      "eyebrow": "Czym się różni",
-      "title": "Dla ulic, do których wracasz",
       "repeats": {
         "title": "Powroty się liczą",
-        "body": "Większość map zaznacza ulicę raz. Tu każdy powrót sprawia, że świeci jaśniej."
+        "body": "Większość map zaznacza ulicę raz. Tu najjaśniej świecą ulice, do których wracasz."
       },
       "fades": {
         "title": "Nic nie blednie",
         "body": "Twoje terytorium nie słabnie, nawet jeśli długo Cię nie było."
       },
-      "private": {
-        "title": "Prywatne od początku",
-        "body": "Bez tablicy aktywności, obserwujących i publicznego profilu."
-      }
+      "label": "Czym się różni"
     },
     "status": {
-      "eyebrow": "Status",
       "title": "Uczciwie: to wczesny prototyp",
-      "body": "Co działa, co testujemy i czego jeszcze nie ma.",
-      "works": {
-        "title": "Działa już dziś",
-        "record": "Nagrywanie przy wygaszonym ekranie (iPhone)",
-        "turf": "Mapa terytorium i jego siła",
-        "health": "Import z Apple Health (iPhone)",
-        "history": "Historia, statystyki i osiągnięcia",
-        "languages": "Polski i angielski"
-      },
       "testing": {
         "title": "W testach",
         "health": "Zapisywanie w Apple Health",

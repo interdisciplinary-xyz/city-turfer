@@ -1,12 +1,26 @@
 /* One street, four visits: the turf Ramp from the brand (same variables as the legend). The player
    sets data-step 0–3 (the street at each tier) or 4 (the whole city); the server renders 4. */
 
+.turf-demo {
+  margin-top: clamp(40px, 6vw, 72px);
+}
+
 .turf-demo-figure {
-  display: grid;
-  gap: var(--space-md);
   width: 100%;
   max-width: 480px;
   margin: 0 auto;
+}
+
+/* The sub-claim of the demo: smaller than a section claim, same display face. */
+.demo-title {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: normal;
+  font-size: clamp(1.75rem, 3.6vw, 2.25rem);
+  line-height: 0.95;
+  letter-spacing: var(--display-tracking);
+  text-transform: var(--display-case);
+  text-wrap: balance;
 }
 
 .turf-demo-panel {
@@ -16,11 +30,6 @@
   border-radius: var(--radius-card);
   background: var(--bg);
   color: var(--text);
-}
-
-.turf-demo-player {
-  display: grid;
-  gap: var(--space-md);
 }
 
 .turf-demo-svg {
@@ -97,6 +106,12 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-sm);
+  margin-top: var(--space-xxl);
+}
+
+.turf-demo-steps + .home-caption {
+  margin: var(--space-lg) 0 0;
+  text-align: left;
 }
 
 .turf-demo-step,
@@ -116,26 +131,24 @@
   cursor: pointer;
 }
 
-.turf-demo-step[data-tier]::before {
-  content: '';
+.turf-demo-swatch {
   width: 10px;
   height: 10px;
   border-radius: 2px;
-  background: var(--swatch, transparent);
 }
-.turf-demo-step[data-tier='0'] {
-  --swatch: var(--faint);
+.turf-demo-step[data-tier='0'] .turf-demo-swatch {
+  background: var(--faint);
 }
-.turf-demo-step[data-tier='1'] {
-  --swatch: var(--glow);
+.turf-demo-step[data-tier='1'] .turf-demo-swatch {
+  background: var(--glow);
 }
-.turf-demo-step[data-tier='2'] {
-  --swatch: var(--strong);
+.turf-demo-step[data-tier='2'] .turf-demo-swatch {
+  background: var(--strong);
 }
-.turf-demo-step[data-tier='3'] {
-  --swatch: var(--blazing);
+.turf-demo-step[data-tier='3'] .turf-demo-swatch {
+  background: var(--blazing);
 }
-.turf-demo-step[data-tier='4']::before {
+.turf-demo-step[data-tier='4'] .turf-demo-swatch {
   display: none;
 }
 

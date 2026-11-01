@@ -3,13 +3,14 @@ import { useTranslations } from 'next-intl';
 import { TURF_DEMO } from '../turf-demo/turf-demo.constants';
 import { HIGHLIGHTS } from './home-sections.constants';
 import { Section, SectionHead } from './section';
+import { WhereItStands } from './where-it-stands';
 
 /** What the prototype does today, one tile per feature; iPhone-only features say so. */
 export function Highlights() {
   const t = useTranslations('home.highlights');
   return (
     <Section name='app'>
-      <SectionHead name='app' eyebrow={t('eyebrow')} title={t('title')} />
+      <SectionHead name='app' eyebrow={t('eyebrow')} title={t('title')} lede={t('lede')} />
       <ul className='home-grid home-grid-highlights'>
         {HIGHLIGHTS.map(({ key, icon, iphone }) => (
           <li key={key} className={`app-card home-highlight home-highlight-${key}`}>
@@ -22,6 +23,7 @@ export function Highlights() {
           </li>
         ))}
       </ul>
+      <WhereItStands />
     </Section>
   );
 }

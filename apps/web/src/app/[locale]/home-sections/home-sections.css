@@ -1,6 +1,6 @@
 /* The homepage below the hero, in the app's pieces. Each .app-* class is the CSS twin of an
    @cityturfer/ui component (packages/ui/src): same tokens from cssVariables(), no hex. The page is light (WEB_SCHEME); the pieces that draw turf
-   tiers (.app-record, .app-gain, .app-legend, .home-dashboard) are night panels: the component sets
+   tiers (.app-record, .app-gain, .app-legend, the glow demo) are night panels: the component sets
    cssVariables(APP_SCHEME) inline, so every var(--…) inside them is the app's dark value.
    Card: radius-card, padding lg, hairline border. ActivityRow: radius-control, padding md. Stat:
    numeric face, tabular figures, uppercase label with label tracking. TurfLegend: a stepped Ramp. */
@@ -110,8 +110,7 @@
   font-weight: var(--font-weight-heavy);
 }
 
-.app-muted,
-.app-row-small {
+.app-muted {
   margin: 0;
   color: var(--muted);
   font-size: var(--font-caption);
@@ -119,23 +118,6 @@
 
 .app-strong {
   color: var(--text);
-}
-
-.app-link {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  color: var(--accent-text);
-  font-size: var(--font-caption);
-  font-weight: var(--font-weight-bold);
-}
-
-.app-list-head {
-  min-width: 0;
-  flex-wrap: wrap;
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-md);
 }
 
 /* Filter chips on the Turf Map: outlined in the type colour. */
@@ -251,57 +233,6 @@
   font-weight: var(--font-weight-semibold);
 }
 
-/* Stat: value + unit on one baseline, the label underneath. */
-.app-stats {
-  display: flex;
-  margin-top: var(--space-md);
-}
-
-.app-stat {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-xxs);
-}
-
-.app-stat-figure {
-  display: inline-flex;
-  align-items: baseline;
-  gap: var(--space-xs);
-}
-
-.app-stat-value {
-  font-family: var(--numeric);
-  font-size: var(--font-stat);
-  font-variant-numeric: tabular-nums;
-}
-
-.app-stat-unit {
-  color: var(--muted);
-  font-size: var(--font-unit);
-  font-weight: var(--font-weight-semibold);
-}
-
-/* ActivityRow: badge, name and date, distance and detail. */
-.app-rows {
-  display: grid;
-  gap: var(--space-sm);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.app-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-md);
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-control);
-}
-
 .app-badge {
   display: grid;
   place-items: center;
@@ -321,50 +252,6 @@
 }
 .app-badge-ride {
   --badge: var(--ride-graphic);
-}
-
-.app-row-main,
-.app-row-end {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.app-row-main {
-  flex: 1;
-}
-
-.app-row-end {
-  align-items: flex-end;
-  text-align: right;
-}
-
-.app-row-title {
-  font-weight: var(--font-weight-bold);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.app-row-value {
-  font-family: var(--numeric);
-  font-variant-numeric: tabular-nums;
-}
-
-/* The achievements progress bar: 6 px, pink fill. */
-.app-track {
-  height: 6px;
-  margin-top: var(--space-md);
-  border-radius: 3px;
-  overflow: hidden;
-  background: var(--border);
-}
-
-.app-fill {
-  display: block;
-  height: 100%;
-  border-radius: 3px;
-  background: var(--glow);
 }
 
 /* ---------- How it works ---------- */
@@ -424,31 +311,18 @@
   }
 }
 
-/* ---------- Your week ---------- */
+/* ---------- Two columns (the glow demo) ---------- */
 
 .home-split {
   display: grid;
   /* One column below 860 px; without a template the track grows to the min-content of the figure. */
   grid-template-columns: minmax(0, 1fr);
   gap: clamp(28px, 5vw, 64px);
-  align-items: center;
-}
-
-.home-dashboard {
-  display: grid;
-  gap: 14px; /* no spacing token is 14px (--space-md is 12); kept as designed */
-  width: 100%;
-  max-width: 420px;
-  margin: 0 auto;
-  padding: var(--space-lg);
-  border: 1px solid var(--border);
-  border-radius: 32px; /* the phone-screen corner; no radius token this large */
-  background: var(--bg);
-  color: var(--text);
-  box-shadow: 0 24px 64px color-mix(in srgb, var(--faint) 20%, transparent);
+  align-items: start;
 }
 
 .home-caption {
+  margin: 0;
   color: var(--muted);
   font-size: var(--font-label);
   text-align: center;
@@ -456,29 +330,11 @@
 
 @media (min-width: 860px) {
   .home-split {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 480px);
   }
 }
 
-/* ---------- Local-first ---------- */
-
-.home-local {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
-  padding: clamp(20px, 4vw, 36px);
-}
-
-.home-local-icon {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  font-size: 26px;
-  background: color-mix(in srgb, var(--faint) 22%, transparent);
-}
+/* ---------- Privacy: the standard heading, then the points, no box ---------- */
 
 .home-points {
   display: grid;
@@ -507,11 +363,9 @@
   transform: rotate(45deg);
 }
 
-@media (min-width: 720px) {
-  .home-local {
-    flex-direction: row;
-    align-items: flex-start;
-  }
+.home-privacy {
+  margin-top: clamp(28px, 4vw, 44px);
+  max-width: 40rem;
 }
 
 /* ---------- Closing call to action ---------- */
@@ -646,35 +500,44 @@
   text-transform: uppercase;
 }
 
-/* ---------- How it differs ---------- */
+/* ---------- What's different: two lines under the audience cards ---------- */
 
 .home-differs {
-  margin-bottom: 0;
+  margin-top: clamp(24px, 3vw, 32px);
+  max-width: 40rem;
 }
 
-.home-differ {
+/* ---------- Where it stands: a strip under the highlights ---------- */
+
+.home-status-strip {
+  margin-top: clamp(28px, 4vw, 44px);
+  padding-top: var(--space-xxl);
+  border-top: 1px solid var(--border);
+}
+
+.home-status-columns {
   display: grid;
-  gap: var(--space-sm);
-  padding-left: var(--space-lg);
-  border-left: 2px solid var(--glow);
-}
-
-.home-differ dd {
-  margin: 0;
-}
-
-/* ---------- Where it stands ---------- */
-
-.home-status .home-points {
+  gap: var(--space-xl);
   margin-top: var(--space-md);
 }
 
-.home-status-testing .home-points li::before {
+.home-status .home-points {
+  margin-top: var(--space-sm);
+}
+
+.home-status .app-label {
+  margin: 0;
+}
+
+.home-status-testing .home-points li::before,
+.home-status-notYet .home-points li::before {
   background: var(--border-control);
 }
 
-.home-status-notYet .home-points li::before {
-  background: var(--border-control);
+@media (min-width: 720px) {
+  .home-status-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* ---------- FAQ ---------- */

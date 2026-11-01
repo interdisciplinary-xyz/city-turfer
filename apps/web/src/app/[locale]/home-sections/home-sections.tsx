@@ -2,14 +2,13 @@ import './home-sections.css';
 
 import { useFormatter, useTranslations } from 'next-intl';
 
+import { TurfDemo } from '../turf-demo';
 import {
   APP_VARIABLES,
-  EXAMPLE_ACHIEVEMENTS,
-  EXAMPLE_ACTIVITIES,
   EXAMPLE_GAIN,
-  EXAMPLE_WEEK,
   HOME_TIERS,
   HOME_TYPES,
+  LOCAL_POINTS,
   SECTION_ANCHORS,
   TYPE_CLASS,
   TYPE_GLYPH,
@@ -23,7 +22,7 @@ import { Section, SectionHead } from './section';
  * (APP_VARIABLES), the rest follows the light page.
  */
 
-/** The core loop in three app cards: record, turf gained, watch it glow. */
+/** The core loop in three app cards (record, turf gained, every return counts), then the glow demo as the payoff. */
 export function HowItWorks() {
   const t = useTranslations('home.how');
   const tt = useTranslations('home.types');
@@ -91,101 +90,7 @@ export function HowItWorks() {
           <p className='home-step-body'>{t('glow.body')}</p>
         </li>
       </ol>
-    </Section>
-  );
-}
-
-/** The Dashboard, as a web card: this week, recent activities, the next achievement. */
-export function YourWeek() {
-  const t = useTranslations('home.week');
-  const format = useFormatter();
-  const km = (value: number) => format.number(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const progress = Math.round((EXAMPLE_ACHIEVEMENTS.unlocked / EXAMPLE_ACHIEVEMENTS.total) * 100);
-  return (
-    <Section name='week' className='home-week' wrapClassName='home-split'>
-      <div className='home-split-copy'>
-        <SectionHead name='week' eyebrow={t('eyebrow')} title={t('title')} lede={t('body')} />
-      </div>
-      <figure className='home-dashboard' style={APP_VARIABLES} aria-describedby='week-caption'>
-        <div className='app-card'>
-          <h3 className='app-card-title'>{t('thisWeek')}</h3>
-          <div className='app-stats'>
-            <div className='app-stat'>
-              <span className='app-stat-figure'>
-                <span className='app-stat-value'>{km(EXAMPLE_WEEK.distanceKm)}</span>
-                <span className='app-stat-unit'>{t('unitKm')}</span>
-              </span>
-              <span className='app-label'>{t('distance')}</span>
-            </div>
-            <div className='app-stat'>
-              <span className='app-stat-figure'>
-                <span className='app-stat-value'>{EXAMPLE_WEEK.time}</span>
-              </span>
-              <span className='app-label'>{t('time')}</span>
-            </div>
-            <div className='app-stat'>
-              <span className='app-stat-figure'>
-                <span className='app-stat-value'>{EXAMPLE_WEEK.count}</span>
-              </span>
-              <span className='app-label'>{t('count')}</span>
-            </div>
-          </div>
-        </div>
-        <div className='app-list-head'>
-          <h3 className='app-card-title'>{t('recent')}</h3>
-          <span className='app-link' aria-hidden='true'>
-            {t('seeAll')}
-          </span>
-        </div>
-        <ul className='app-rows'>
-          {EXAMPLE_ACTIVITIES.map((a) => (
-            <li key={a.key} className='app-row'>
-              <span className={`app-badge app-badge-${TYPE_CLASS[a.type]}`} aria-hidden='true'>
-                {TYPE_GLYPH[a.type]}
-              </span>
-              <span className='app-row-main'>
-                <span className='app-row-title'>{t(`activities.${a.key}.title`)}</span>
-                <span className='app-row-small'>{t(`activities.${a.key}.when`)}</span>
-              </span>
-              <span className='app-row-end'>
-                <span className='app-row-value'>{t('rowDistance', { distance: km(a.distanceKm) })}</span>
-                <span className='app-row-small'>
-                  {a.speedKmh === undefined
-                    ? t('rowPace', { time: a.time, pace: a.pace ?? '' })
-                    : t('rowSpeed', {
-                        time: a.time,
-                        speed: format.number(a.speedKmh, { maximumFractionDigits: 1 }),
-                      })}
-                </span>
-              </span>
-            </li>
-          ))}
-        </ul>
-        <div className='app-card'>
-          <div className='app-list-head'>
-            <h3 className='app-card-title'>{t('achievements')}</h3>
-            <span className='app-link'>
-              {EXAMPLE_ACHIEVEMENTS.unlocked} / {EXAMPLE_ACHIEVEMENTS.total}
-            </span>
-          </div>
-          <p className='app-row-small'>
-            {t.rich('nextUp', { b: (chunks) => <strong className='app-strong'>{chunks}</strong> })}
-          </p>
-          <div
-            className='app-track'
-            role='progressbar'
-            aria-label={t('achievements')}
-            aria-valuemin={0}
-            aria-valuemax={EXAMPLE_ACHIEVEMENTS.total}
-            aria-valuenow={EXAMPLE_ACHIEVEMENTS.unlocked}
-          >
-            <span className='app-fill' style={{ width: `${progress}%` }} />
-          </div>
-        </div>
-        <figcaption id='week-caption' className='home-caption'>
-          {t('caption')}
-        </figcaption>
-      </figure>
+      <TurfDemo />
     </Section>
   );
 }
@@ -198,22 +103,12 @@ export function LocalFirst() {
   const t = useTranslations('home.local');
   return (
     <Section name='privacy'>
-      <div className='app-card home-local'>
-        <span className='home-local-icon' aria-hidden='true'>
-          📱
-        </span>
-        <div>
-          <SectionHead name='privacy' eyebrow={t('eyebrow')} title={t('title')} />
-          <ul className='home-points'>
-            <li>{t('phone')}</li>
-            <li>{t('backup')}</li>
-            <li>{t('portal')}</li>
-            <li>{t('leaves')}</li>
-            <li>{t('account')}</li>
-            <li>{t('site')}</li>
-          </ul>
-        </div>
-      </div>
+      <SectionHead name='privacy' eyebrow={t('eyebrow')} title={t('title')} />
+      <ul className='home-points home-privacy'>
+        {LOCAL_POINTS.map((key) => (
+          <li key={key}>{t(key)}</li>
+        ))}
+      </ul>
     </Section>
   );
 }

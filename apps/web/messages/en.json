@@ -73,7 +73,33 @@
       },
       "dashboard": {
         "greeting": "Hello, {name}",
-        "subtitle": "{area} km² of turf · +{week} km² this week"
+        "subtitle": "{area} km² of turf · +{week} km² this week",
+        "thisWeek": "This week",
+        "distance": "Distance",
+        "time": "Time",
+        "count": "Activities",
+        "unitKm": "km",
+        "rowDistance": "{distance} km",
+        "rowPace": "{time} · {pace}/km",
+        "rowSpeed": "{time} · {speed} km/h",
+        "recent": "Recent activities",
+        "seeAll": "See all ›",
+        "achievements": "Achievements",
+        "nextUp": "Next up: <b>Half marathon</b> · Walk or run 21.1 km in one go.",
+        "activities": {
+          "walk": {
+            "title": "Morning walk",
+            "when": "Fri, 16 Oct at 06:00"
+          },
+          "run": {
+            "title": "Afternoon run",
+            "when": "Wed, 14 Oct at 13:00"
+          },
+          "ride": {
+            "title": "Morning ride",
+            "when": "Tue, 13 Oct at 09:00"
+          }
+        }
       }
     }
   },
@@ -95,8 +121,8 @@
       "glow": {
         "legendTitle": "Turf strength",
         "legendLabel": "Turf strength: Faint, Glowing, Strong, Blazing, from weakest to strongest",
-        "title": "Come back and watch it glow",
-        "body": "Every return makes a street brighter, from Faint to Blazing. Nothing fades: a street you’ve claimed stays yours, however long you’re away."
+        "title": "Every return counts",
+        "body": "Come back and it glows: a street gets brighter from Faint to Blazing with every return."
       }
     },
     "types": {
@@ -110,38 +136,6 @@
       "strong": "Strong",
       "blazing": "Blazing"
     },
-    "week": {
-      "eyebrow": "Your week",
-      "title": "Your week, added up",
-      "body": "This week’s distance, time and activities, your latest walks, runs and rides, and the next achievement within reach.",
-      "thisWeek": "This week",
-      "distance": "Distance",
-      "time": "Time",
-      "count": "Activities",
-      "unitKm": "km",
-      "rowDistance": "{distance} km",
-      "rowPace": "{time} · {pace}/km",
-      "rowSpeed": "{time} · {speed} km/h",
-      "recent": "Recent activities",
-      "seeAll": "See all ›",
-      "achievements": "Achievements",
-      "nextUp": "Next up: <b>Half marathon</b> · Walk or run 21.1 km in one go.",
-      "caption": "An example week, as the app shows it.",
-      "activities": {
-        "walk": {
-          "title": "Morning walk",
-          "when": "Fri, 16 Oct at 06:00"
-        },
-        "run": {
-          "title": "Afternoon run",
-          "when": "Wed, 14 Oct at 13:00"
-        },
-        "ride": {
-          "title": "Morning ride",
-          "when": "Tue, 13 Oct at 09:00"
-        }
-      }
-    },
     "local": {
       "eyebrow": "Privacy",
       "title": "Your phone keeps the original",
@@ -150,7 +144,8 @@
       "portal": "Signed in on the web, you see only what you backed up.",
       "leaves": "What does leave the phone: map tiles for the area you’re viewing, update checks, and, unless you turn gap filling off, the two ends of a GPS gap. Signing in sends your email address to our server.",
       "account": "For now, you sign in to the app with an account.",
-      "site": "Our public pages set no cookies and load no trackers."
+      "site": "Our public pages set no cookies and load no trackers.",
+      "private": "No feed, no followers, no public profile."
     },
     "cta": {
       "title": "Your turf starts at your door",
@@ -159,8 +154,7 @@
       "eyebrow": "Waitlist"
     },
     "demo": {
-      "eyebrow": "The glow",
-      "title": "Come back. It glows.",
+      "title": "One street, then the whole city",
       "body": "One street in Gdańsk’s Main Town, visit by visit. Then the whole city after four months of walks, runs and rides.",
       "step": "{visits, plural, one {# visit} other {# visits}} · {tier}",
       "cityStep": "Four months",
@@ -200,36 +194,22 @@
       "city": {
         "title": "Starts in your city",
         "body": "Pick your home city from the list and the map opens there."
-      }
+      },
+      "lede": "Plus your history and stats, in English and Polish."
     },
     "differs": {
-      "eyebrow": "What’s different",
-      "title": "For the streets you repeat",
       "repeats": {
         "title": "Repeats count",
-        "body": "Most maps mark a street once. Here every return makes it brighter."
+        "body": "Most maps mark a street once. Here the streets you repeat shine brightest."
       },
       "fades": {
         "title": "Nothing fades",
         "body": "Your turf never decays, however long you’re away."
       },
-      "private": {
-        "title": "Private by default",
-        "body": "No feed, no followers, no public profile."
-      }
+      "label": "What’s different"
     },
     "status": {
-      "eyebrow": "Status",
       "title": "An early prototype, honestly",
-      "body": "What works, what we’re testing and what isn’t there yet.",
-      "works": {
-        "title": "Works today",
-        "record": "Recording with the screen off (iPhone)",
-        "turf": "The Turf Map and turf strength",
-        "health": "Apple Health import (iPhone)",
-        "history": "History, stats and achievements",
-        "languages": "English and Polish"
-      },
       "testing": {
         "title": "Being tested",
         "health": "Saving to Apple Health",

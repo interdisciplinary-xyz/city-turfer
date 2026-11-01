@@ -7,17 +7,15 @@ import { HeroMotion } from '@/app/[locale]/hero-motion';
 import { HeroScreens } from '@/app/[locale]/hero-screens';
 import {
   Audience,
-  Differs,
   Faq,
   FinalCta,
   Highlights,
   HowItWorks,
   LocalFirst,
-  WhereItStands,
-  YourWeek,
+  Section,
+  SectionHead,
 } from '@/app/[locale]/home-sections';
 import { SiteFooter } from '@/app/[locale]/site-footer';
-import { TurfDemo } from '@/app/[locale]/turf-demo';
 import { WaitlistForm } from '@/app/[locale]/waitlist-form';
 import type { Locale } from '@/i18n/routing';
 
@@ -35,7 +33,7 @@ function Page({ waitlist }: PageProps) {
       <a className='skip' href='#main'>
         {t('hero.skip')}
       </a>
-      <AppHeader locale={locale} waitlist={waitlist} />
+      <AppHeader locale={locale} waitlist={waitlist} nav />
       <main id='main'>
         <div className='hero'>
           <HeroMotion className='wrap hero-grid'>
@@ -44,25 +42,20 @@ function Page({ waitlist }: PageProps) {
           </HeroMotion>
         </div>
         {waitlist ? (
-          <section id='waitlist' className='waitlist-section' aria-label={t('waitlist.title')}>
-            <div className='wrap'>
-              <WaitlistForm
-                action='https://example.invalid/brevo'
-                controller='CityTurfer (example)'
-                contactEmail='privacy@example.invalid'
-                locale={locale}
-              />
-            </div>
-          </section>
+          <Section name='waitlist' className='waitlist-section'>
+            <SectionHead name='waitlist' eyebrow={t('waitlist.eyebrow')} title={t('waitlist.title')} align='center' />
+            <WaitlistForm
+              action='https://example.invalid/brevo'
+              controller='CityTurfer (example)'
+              contactEmail='privacy@example.invalid'
+              locale={locale}
+            />
+          </Section>
         ) : null}
-        <TurfDemo />
         <HowItWorks />
         <Audience />
         <Highlights />
-        <YourWeek />
-        <Differs />
         <LocalFirst />
-        <WhereItStands />
         <Faq />
         {waitlist ? <FinalCta /> : null}
       </main>
