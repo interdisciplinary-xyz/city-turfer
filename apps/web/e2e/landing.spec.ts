@@ -3,6 +3,7 @@
 // `network` fixture after each test. The homepage sections follow
 // docs/plans/homepage-sections-2026-10-28.md.
 import AxeBuilder from '@axe-core/playwright';
+import type { Page } from '@playwright/test';
 
 import { expect, expectNoHorizontalScroll, test } from './support/fixtures';
 
@@ -76,6 +77,77 @@ for (const [path, works, testing] of [
     await expect(page.locator('.home-status-works')).not.toContainText(testing);
   });
 }
+
+// The header's section links (from 1024 px): they scroll the section's heading clear of the sticky
+// header, and the link of the section being read is marked (aria-current="location").
+/** Scrolls so the element sits 120 px from the top, as when a visitor reads down to it. */
+const readAt = (page: Page, selector: string) =>
+  page
+    .locator(selector)
+    .evaluate((node) => window.scrollTo(0, node.getBoundingClientRect().top + window.scrollY - 120));
+
+test.describe('header section links', () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
+  test('a link scrolls its heading below the sticky header', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' }); // an instant jump, nothing to wait for
+    await page.goto('/en');
+    const nav = page.getByRole('navigation', { name: 'Page sections' });
+    await expect(nav.getByRole('link')).toHaveText(['How it works', 'The app', 'Privacy', 'FAQ']);
+    await nav.getByRole('link', { name: 'The app' }).click();
+    await expect(page).toHaveURL(/#app$/);
+    const header = await page.locator('header.app-header').boundingBox();
+    await expect(async () => {
+      const heading = await page.locator('h2#app-title').boundingBox();
+      expect(heading?.y).toBeGreaterThanOrEqual((header?.y ?? 0) + (header?.height ?? 0));
+      expect(heading?.y).toBeLessThan(200);
+    }).toPass();
+  });
+
+  test('the current link follows the scroll; the hero clears it, the page bottom marks the last', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/en');
+    const nav = page.getByRole('navigation', { name: 'Page sections' });
+    const current = nav.locator('a[aria-current="location"]');
+    await expect(current).toHaveCount(0); // the hero
+    await readAt(page, 'h2#how-title');
+    await expect(current).toHaveText('How it works');
+    await readAt(page, 'h2#privacy-title');
+    await expect(current).toHaveText('Privacy');
+    await readAt(page, 'h2#app-title');
+    await expect(current).toHaveText('The app');
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await expect(current).toHaveText('FAQ');
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await expect(current).toHaveCount(0);
+  });
+
+  test('the Polish labels fit next to the button and the language switch at 1024 px', async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 800 });
+    await page.goto('/pl');
+    await expect(page.getByRole('navigation', { name: 'Sekcje strony' }).getByRole('link')).toHaveText([
+      'Jak to działa',
+      'Aplikacja',
+      'Prywatność',
+      'Pytania',
+    ]);
+    await expectNoHorizontalScroll(page);
+    const inner = await page.locator('.app-header-inner').evaluate((node) => node.scrollWidth - node.clientWidth);
+    expect(inner).toBeLessThanOrEqual(0);
+    // Nothing wraps: the bar stays one row.
+    const rows = await page
+      .locator('.app-header-nav a, .app-header-link, .lang')
+      .evaluateAll((nodes) => new Set(nodes.map((node) => Math.round(node.getBoundingClientRect().top / 4))).size);
+    expect(rows).toBeLessThanOrEqual(2);
+  });
+});
+
+test('phones get no section links, only the logo, the call to action and the language', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/en');
+  await expect(page.getByRole('navigation', { name: 'Page sections' })).toBeHidden();
+  await expect(page.getByRole('link', { name: 'Waitlist', exact: true })).toBeVisible();
+});
 
 // The hero's street map (docs/plans/hero-city-map-2026-10-28.md): the city follows the time zone,
 // only that city's maps load, and "Near me" uses the location only after a click.

@@ -7,7 +7,14 @@
   "header": {
     "home": "CityTurfer, strona główna",
     "waitlist": "Zapisz się na listę",
-    "waitlistShort": "Zapisz się"
+    "waitlistShort": "Zapisz się",
+    "nav": {
+      "label": "Sekcje strony",
+      "how": "Jak to działa",
+      "app": "Aplikacja",
+      "privacy": "Prywatność",
+      "faq": "Pytania"
+    }
   },
   "hero": {
     "skip": "Przejdź do treści",

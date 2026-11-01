@@ -89,20 +89,72 @@
   margin-left: auto;
 }
 
+/* The call to action: a small primary button, pill-shaped (glow fill, night label like .app-button). */
 .app-header .app-header-link {
-  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
+  background: var(--glow);
+  color: var(--on-glow);
   font-size: var(--font-caption);
   font-weight: var(--font-weight-bold);
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .app-header .app-header-link:hover,
 .app-header .app-header-link:focus-visible {
+  background: color-mix(in srgb, var(--glow) 86%, var(--blazing));
+  color: var(--on-glow);
+}
+
+/* Section links (the landing page): from 1024 px only, between the logo and the actions. */
+.app-header-nav {
+  display: none;
+}
+
+.app-header-nav ul {
+  display: flex;
+  gap: var(--space-xxl);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.app-header .app-header-nav a {
+  display: inline-block;
+  padding: 6px 0 4px;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.app-header .app-header-nav a:hover,
+.app-header .app-header-nav a:focus-visible,
+.app-header .app-header-nav a[aria-current] {
   color: var(--text);
 }
 
-.app-header .app-header-link {
-  white-space: nowrap;
+.app-header .app-header-nav a[aria-current] {
+  border-bottom-color: var(--accent-text);
+}
+
+.app-header-nav a:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (min-width: 1024px) {
+  .app-header-nav {
+    display: block;
+    margin-left: var(--space-xxxl);
+  }
 }
 
 /* Phones get the short label ("Waitlist"); from 600px the full one. */

@@ -7,7 +7,14 @@
   "header": {
     "home": "CityTurfer, home",
     "waitlist": "Join the waitlist",
-    "waitlistShort": "Waitlist"
+    "waitlistShort": "Waitlist",
+    "nav": {
+      "label": "Page sections",
+      "how": "How it works",
+      "app": "The app",
+      "privacy": "Privacy",
+      "faq": "FAQ"
+    }
   },
   "hero": {
     "skip": "Skip to content",

@@ -35,7 +35,7 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
       <a className='skip' href='#main'>
         {t('hero.skip')}
       </a>
-      <AppHeader locale={locale} waitlist={Boolean(WAITLIST)} />
+      <AppHeader locale={locale} waitlist={Boolean(WAITLIST)} nav />
       {/* tabIndex -1: the skip link and the header's links can land focus here. */}
       <main id='main' tabIndex={-1}>
         <section id='top' aria-labelledby='hero-title'>
