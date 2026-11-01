@@ -12,7 +12,7 @@ export function Audience() {
   const tt = useTranslations('home.types');
   const td = useTranslations('home.differs');
   return (
-    <Section name='who'>
+    <Section name='who' band>
       <SectionHead name='who' eyebrow={t('eyebrow')} title={t('title')} />
       <ul className='home-grid home-grid-3'>
         {HOME_TYPES.map((type) => (

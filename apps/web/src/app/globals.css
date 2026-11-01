@@ -445,13 +445,10 @@ h1 {
   border: 0;
 }
 
-/* The waitlist is its own section under the full-screen hero, centred on every width. */
-.waitlist-section {
-  border-top: 1px solid var(--border);
-}
+/* The waitlist is its own banded section under the hero, centred on every width. */
 
 .waitlist {
-  margin: clamp(24px, 4vw, 32px) auto 0;
+  margin: var(--head-gap) auto 0;
   max-width: 34rem;
   text-align: center;
 }
@@ -590,24 +587,59 @@ h1 {
   }
 }
 
-/* Footer: one quiet row, hairline on top. */
+/* Footer: wordmark and tagline, the section links, contact; the © row under a hairline. */
 .site-footer {
-  padding: var(--space-xl) 0;
+  padding: var(--space-xxxl) 0 var(--space-xl);
   border-top: 1px solid var(--border);
   color: var(--muted);
   font-size: var(--font-caption);
 }
 
-.site-footer-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-md) var(--space-xl);
+.site-footer-grid {
+  display: grid;
+  gap: var(--space-xxl);
+}
+
+@media (min-width: 720px) {
+  .site-footer-grid {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: var(--space-xxxl);
+  }
 }
 
 .site-footer p {
   margin: 0;
+}
+
+.site-footer-brand {
+  display: grid;
+  gap: var(--space-sm);
+  justify-items: start;
+}
+
+.site-footer-wordmark {
+  display: block;
+  height: 20px;
+  width: auto;
+}
+
+.site-footer-links {
+  display: grid;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-footer-contact {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.site-footer .site-footer-legal {
+  margin-top: var(--space-xxl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border);
 }
 
 .site-footer a {

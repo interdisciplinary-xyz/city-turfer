@@ -150,7 +150,14 @@
       "title": "Twoje terytorium zaczyna się za progiem",
       "body": "Zostaw e-mail, a damy znać, gdy aplikacja będzie gotowa do pobrania.",
       "join": "Zapisz się na listę",
-      "eyebrow": "Lista oczekujących"
+      "eyebrow": "Lista oczekujących",
+      "trust": {
+        "label": "Na czym możesz polegać",
+        "cookies": "Ta strona nie używa ciasteczek",
+        "eu": "E-maile z listy trzymamy w UE (Brevo)",
+        "phone": "Twoje aktywności zostają w telefonie",
+        "backup": "Kopia tylko, jeśli ją włączysz"
+      }
     },
     "demo": {
       "title": "Jedna ulica, potem całe miasto",
@@ -263,7 +270,9 @@
   "footer": {
     "label": "Stopka strony",
     "contact": "Kontakt:",
-    "rights": "© {year} CityTurfer"
+    "rights": "© {year} CityTurfer",
+    "navLabel": "Linki w stopce",
+    "noCookies": "Ta strona nie zapisuje plików cookie i nie ładuje trackerów."
   },
   "language": {
     "label": "Język",

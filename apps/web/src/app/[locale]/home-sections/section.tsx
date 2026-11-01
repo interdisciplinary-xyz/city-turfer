@@ -3,12 +3,12 @@ import './home-sections.css';
 import type { SectionHeadProps, SectionProps } from './home-sections.constants';
 
 /** One homepage section: `<section id=name aria-labelledby=name-title>`, with its `.wrap` inside. */
-export function Section({ name, className, wrapClassName, children }: SectionProps) {
+export function Section({ name, className, band, wrapClassName, children }: SectionProps) {
   return (
     <section
       id={name === 'cta' ? undefined : name}
       aria-labelledby={`${name}-title`}
-      className={className ? `home-section ${className}` : 'home-section'}
+      className={['home-section', band ? 'home-section-band' : '', className ?? ''].filter(Boolean).join(' ')}
     >
       <div className={wrapClassName ? `wrap ${wrapClassName}` : 'wrap'}>{children}</div>
     </section>

@@ -5,14 +5,30 @@
    Card: radius-card, padding lg, hairline border. ActivityRow: radius-control, padding md. Stat:
    numeric face, tabular figures, uppercase label with label tracking. TurfLegend: a stepped Ramp. */
 
-.home-section {
-  padding: clamp(56px, 9vw, 112px) 0;
-  /* On top of the html scroll-padding (the sticky header): a heading reached by a link sits clear of it. */
-  scroll-margin-top: var(--space-lg);
+/* The page's rhythm, one scale: sections sit 72 px apart on phones and 128 px on desktop (each pads half
+   of that), the heading block is 40 px from its content, the eyebrow 8 px from its title. Every other
+   section is a faint band (--band: a touch deeper than the page, the white cards stand out on it). */
+:root {
+  --section-pad: 36px;
+  --head-gap: 40px;
+  --band: color-mix(in srgb, var(--border) 25%, var(--bg));
 }
 
-.home-section + .home-section {
-  padding-top: 0;
+@media (min-width: 720px) {
+  :root {
+    --section-pad: 64px;
+  }
+}
+
+.home-section {
+  padding: var(--section-pad) 0;
+  /* The html scroll-padding is the sticky header; this lands the heading 24 px below it, whatever the
+     section's own padding (a negative margin: the heading, not the band's edge, is the target). */
+  scroll-margin-top: calc(var(--space-xxl) - var(--section-pad));
+}
+
+.home-section-band {
+  background: var(--band);
 }
 
 .app-label {
@@ -54,7 +70,7 @@
 
 /* The claim: the display face in capitals, like the app's screen titles. */
 .section-title {
-  margin: 10px 0 0;
+  margin: 8px 0 0;
   font-family: var(--display);
   font-weight: normal;
   font-size: clamp(2.25rem, 5vw, 3.25rem);
@@ -268,7 +284,7 @@
 .home-steps {
   display: grid;
   gap: var(--space-lg);
-  margin: clamp(28px, 4vw, 44px) 0 0;
+  margin: var(--head-gap) 0 0;
   padding: 0;
   list-style: none;
 }
@@ -371,7 +387,7 @@
 }
 
 .home-privacy {
-  margin-top: clamp(28px, 4vw, 44px);
+  margin-top: var(--head-gap);
   max-width: var(--measure);
 }
 
@@ -379,6 +395,37 @@
 
 .home-cta {
   text-align: center;
+}
+
+.trust-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-xs) var(--space-xl);
+  margin: var(--space-xxl) auto 0;
+  padding: 0;
+  max-width: 56rem;
+  list-style: none;
+  color: var(--muted);
+  font-size: var(--font-caption);
+}
+
+/* A dot between the points on wide screens. */
+.trust-row li + li::before {
+  content: '·';
+  margin-right: var(--space-xl);
+  color: var(--border-control);
+}
+
+@media (max-width: 719px) {
+  .trust-row {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+  .trust-row li + li::before {
+    display: none;
+  }
 }
 
 .home-cta .home-lede,
@@ -391,7 +438,7 @@
 .home-grid {
   display: grid;
   gap: var(--space-lg);
-  margin: clamp(28px, 4vw, 44px) 0 0;
+  margin: var(--head-gap) 0 0;
   padding: 0;
   list-style: none;
 }
@@ -471,14 +518,14 @@
 /* ---------- What's different: two lines under the audience cards ---------- */
 
 .home-differs {
-  margin-top: clamp(24px, 3vw, 32px);
+  margin-top: var(--space-xxl);
   max-width: var(--measure);
 }
 
 /* ---------- Where it stands: a strip under the highlights ---------- */
 
 .home-status-strip {
-  margin-top: clamp(28px, 4vw, 44px);
+  margin-top: var(--head-gap);
   padding-top: var(--space-xxl);
   border-top: 1px solid var(--border);
 }
@@ -514,7 +561,7 @@
   display: grid;
   align-items: start;
   gap: var(--space-md);
-  margin-top: clamp(28px, 4vw, 44px);
+  margin-top: var(--head-gap);
 }
 
 .home-faq-item {

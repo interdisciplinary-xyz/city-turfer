@@ -2,7 +2,7 @@
    sets data-step 0–3 (the street at each tier) or 4 (the whole city); the server renders 4. */
 
 .turf-demo {
-  margin-top: clamp(40px, 6vw, 72px);
+  margin-top: calc(var(--head-gap) + var(--space-xxl));
 }
 
 .turf-demo-figure {

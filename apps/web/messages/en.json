@@ -150,7 +150,14 @@
       "title": "Your turf starts at your door",
       "body": "Leave your email and we’ll tell you when the app is ready to download.",
       "join": "Join the waitlist",
-      "eyebrow": "Waitlist"
+      "eyebrow": "Waitlist",
+      "trust": {
+        "label": "What you can rely on",
+        "cookies": "No cookies on this site",
+        "eu": "Waitlist emails stored in the EU (Brevo)",
+        "phone": "Your activities stay on your phone",
+        "backup": "Backup only if you turn it on"
+      }
     },
     "demo": {
       "title": "One street, then the whole city",
@@ -263,7 +270,9 @@
   "footer": {
     "label": "Site footer",
     "contact": "Contact:",
-    "rights": "© {year} CityTurfer"
+    "rights": "© {year} CityTurfer",
+    "navLabel": "Footer links",
+    "noCookies": "This site sets no cookies and loads no trackers."
   },
   "language": {
     "label": "Language",

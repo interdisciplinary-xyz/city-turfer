@@ -96,6 +96,31 @@ const PAIRS: Pair[] = [
     min: MIN_CONTRAST.ui,
   },
   { name: 'web --text on --card', fg: WEB['--text'], bg: WEB['--card'], min: MIN_CONTRAST.text },
+  // Every other homepage section sits on a faint band: color-mix(in srgb, --border 25%, --bg).
+  {
+    name: 'web --text on the band',
+    fg: WEB['--text'],
+    bg: mixSrgb(WEB['--border'], WEB['--bg'], 0.25),
+    min: MIN_CONTRAST.text,
+  },
+  {
+    name: 'web --muted on the band',
+    fg: WEB['--muted'],
+    bg: mixSrgb(WEB['--border'], WEB['--bg'], 0.25),
+    min: MIN_CONTRAST.text,
+  },
+  {
+    name: 'web --accent-text on the band',
+    fg: WEB['--accent-text'],
+    bg: mixSrgb(WEB['--border'], WEB['--bg'], 0.25),
+    min: MIN_CONTRAST.text,
+  },
+  {
+    name: 'web --border-control on the band',
+    fg: WEB['--border-control'],
+    bg: mixSrgb(WEB['--border'], WEB['--bg'], 0.25),
+    min: MIN_CONTRAST.ui,
+  },
   // Turf pieces on the website are night panels (APP_SCHEME), read from the variables they get.
   { name: 'app glow disc on --card', fg: APP['--glow'], bg: APP['--card'], min: MIN_CONTRAST.ui }, // 4.95
   { name: 'app faint legend step on --bg', fg: APP['--faint'], bg: APP['--bg'], min: MIN_CONTRAST.ui }, // 3.32

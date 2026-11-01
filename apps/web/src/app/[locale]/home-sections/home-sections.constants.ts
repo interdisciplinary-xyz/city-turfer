@@ -105,6 +105,8 @@ export type SectionProps = {
   name: SectionName;
   /** Extra classes on the <section> (after `home-section`). */
   className?: string;
+  /** A faint band behind the section (every other section). */
+  band?: boolean;
   /** Classes on the inner `.wrap`. */
   wrapClassName?: string;
   children: ReactNode;
@@ -121,3 +123,6 @@ export type SectionHeadProps = {
   lede?: ReactNode;
   align?: 'start' | 'center';
 };
+
+/** The closing call to action's trust row, in order (keys under home.cta.trust): all true today. */
+export const TRUST_POINTS = ['cookies', 'eu', 'phone', 'backup'] as const;

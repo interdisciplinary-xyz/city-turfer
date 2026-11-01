@@ -10,6 +10,7 @@ import {
   HOME_TYPES,
   LOCAL_POINTS,
   SECTION_ANCHORS,
+  TRUST_POINTS,
   TYPE_CLASS,
   TYPE_GLYPH,
 } from './home-sections.constants';
@@ -102,7 +103,7 @@ export function HowItWorks() {
 export function LocalFirst() {
   const t = useTranslations('home.local');
   return (
-    <Section name='privacy'>
+    <Section name='privacy' band>
       <SectionHead name='privacy' eyebrow={t('eyebrow')} title={t('title')} />
       <ul className='home-points home-privacy'>
         {LOCAL_POINTS.map((key) => (
@@ -117,11 +118,17 @@ export function LocalFirst() {
 export function FinalCta() {
   const t = useTranslations('home.cta');
   return (
-    <Section name='cta' className='home-cta'>
+    <Section name='cta' band className='home-cta'>
       <SectionHead name='cta' eyebrow={t('eyebrow')} title={t('title')} lede={t('body')} align='center' />
       <a className='btn btn-primary' href={`#${SECTION_ANCHORS.waitlist}`}>
         {t('join')}
       </a>
+      {/* One quiet line of things that are true today: no counts, ratings or testimonials. */}
+      <ul className='trust-row' aria-label={t('trust.label')}>
+        {TRUST_POINTS.map((key) => (
+          <li key={key}>{t(`trust.${key}`)}</li>
+        ))}
+      </ul>
     </Section>
   );
 }

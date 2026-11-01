@@ -9,7 +9,7 @@ function Waitlist() {
   const locale = useLocale();
   const t = useTranslations('waitlist');
   return (
-    <Section name='waitlist' className='waitlist-section'>
+    <Section name='waitlist' band className='waitlist-section'>
       <SectionHead name='waitlist' eyebrow={t('eyebrow')} title={t('title')} align='center' />
       <WaitlistForm
         action='https://example.invalid/brevo'

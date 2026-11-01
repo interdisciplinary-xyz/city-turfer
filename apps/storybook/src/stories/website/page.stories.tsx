@@ -47,7 +47,7 @@ function Page({ waitlist }: PageProps) {
           </HeroMotion>
         </section>
         {waitlist ? (
-          <Section name='waitlist' className='waitlist-section'>
+          <Section name='waitlist' band className='waitlist-section'>
             <SectionHead name='waitlist' eyebrow={t('waitlist.eyebrow')} title={t('waitlist.title')} align='center' />
             <WaitlistForm
               action='https://example.invalid/brevo'

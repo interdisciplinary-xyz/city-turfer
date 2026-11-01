@@ -133,10 +133,10 @@ test.describe('header section links', () => {
     await expect(page).toHaveURL(/#app$/);
     const header = await page.locator('header.app-header').boundingBox();
     const bottom = (header?.y ?? 0) + (header?.height ?? 0);
-    // The heading lands in a band under the bar: 16 to 48 px clear of it. Without the section's
+    // The heading block (its eyebrow) lands in a band under the bar: 16 to 48 px clear of it. Without the section's
     // scroll-margin it would sit against the bar (or, with the section padding, far below it).
     await expect(async () => {
-      const heading = await page.locator('h2#app-title').boundingBox();
+      const heading = await page.locator('section#app .section-eyebrow').boundingBox();
       expect(heading?.y).toBeGreaterThanOrEqual(bottom + 16);
       expect(heading?.y).toBeLessThanOrEqual(bottom + 48);
     }).toPass({ timeout: 5000 });
