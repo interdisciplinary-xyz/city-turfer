@@ -151,6 +151,24 @@ test('phones get no section links, only the logo, the call to action and the lan
   await expect(page.getByRole('link', { name: 'Waitlist', exact: true })).toBeVisible();
 });
 
+// A calm hero: on a 390 x 844 phone the badge, the tagline, the lede and the main button all sit on the first screen.
+for (const path of ['/en', '/pl']) {
+  test(`landing ${path}: badge, tagline, lede and the waitlist button fit the first screen at 390 x 844`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(path);
+    for (const selector of ['.hero-badge', 'h1', '.hero-copy .lede', '.hero-actions .btn-primary']) {
+      const box = await page.locator(selector).boundingBox();
+      expect(box?.y, selector).toBeGreaterThan(0);
+      expect((box?.y ?? 0) + (box?.height ?? 0), selector).toBeLessThanOrEqual(844);
+    }
+    // The brand is in the header: no second icon or wordmark in the hero.
+    await expect(page.locator('.hero img.mark, .hero img.wordmark')).toHaveCount(0);
+  });
+}
+
 // The hero's street map (docs/plans/hero-city-map-2026-10-28.md): the city follows the time zone,
 // only that city's maps load, and "Near me" uses the location only after a click.
 const mapRequests = (urls: string[]) =>

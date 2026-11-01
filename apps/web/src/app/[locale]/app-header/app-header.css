@@ -11,6 +11,10 @@
      runs the full page width with this side padding. Defined here because every page with the
      header loads this file. */
   --gutter: var(--space-lg);
+  /* The widest the content gets (the .wrap column and the header's bar): ledes and the FAQ read at
+     --measure inside it. */
+  --content-max: 1200px;
+  --measure: 40rem;
 }
 
 @media (min-width: 600px) {
@@ -51,8 +55,9 @@
   justify-content: space-between;
   gap: var(--space-md);
   width: 100%;
+  max-width: calc(var(--content-max) + 2 * var(--gutter));
   height: var(--header-h);
-  margin: 0;
+  margin: 0 auto;
   padding: 0 var(--gutter);
 }
 

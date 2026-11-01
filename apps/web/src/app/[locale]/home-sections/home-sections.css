@@ -66,7 +66,7 @@
 
 .section-lede {
   margin: 16px 0 0;
-  max-width: 34rem;
+  max-width: var(--measure);
   color: var(--muted);
   font-size: var(--font-lead);
   line-height: 1.5;
@@ -87,7 +87,7 @@
 
 .home-lede {
   margin: 16px 0 0;
-  max-width: 34rem;
+  max-width: var(--measure);
   color: var(--muted);
   font-size: var(--font-lead);
   line-height: 1.5;
@@ -365,7 +365,7 @@
 
 .home-privacy {
   margin-top: clamp(28px, 4vw, 44px);
-  max-width: 40rem;
+  max-width: var(--measure);
 }
 
 /* ---------- Closing call to action ---------- */
@@ -436,7 +436,7 @@
 }
 
 .home-not-for {
-  max-width: 44rem;
+  max-width: var(--measure);
 }
 
 /* ---------- Highlights ---------- */
@@ -475,7 +475,7 @@
 
 .home-differs {
   margin-top: clamp(24px, 3vw, 32px);
-  max-width: 40rem;
+  max-width: var(--measure);
 }
 
 /* ---------- Where it stands: a strip under the highlights ---------- */

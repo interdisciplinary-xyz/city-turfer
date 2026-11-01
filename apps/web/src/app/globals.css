@@ -124,8 +124,12 @@ img {
 }
 
 /* Full page width with the page gutter (--gutter, app-header.css), like the header. */
+/* The content column: --content-max of content plus the gutters either side, centred. The header's bar
+   follows the same width (app-header.css); the hero's full-bleed map does not use .wrap. */
 .wrap {
   width: 100%;
+  max-width: calc(var(--content-max) + 2 * var(--gutter));
+  margin-inline: auto;
   padding: 0 var(--gutter);
 }
 
@@ -244,9 +248,6 @@ img {
   .hero-copy h1 {
     font-size: clamp(3.25rem, 5.6vw, 5rem);
   }
-  .hero-actions {
-    justify-content: flex-start;
-  }
 }
 
 h1 {
@@ -273,6 +274,12 @@ h1 {
   flex-wrap: wrap;
   justify-content: center;
   gap: var(--space-md);
+}
+
+@media (min-width: 960px) {
+  .hero-actions {
+    justify-content: flex-start;
+  }
 }
 
 /* Entrance animation (hero-motion): hidden until GSAP reveals them; the class is only set when
