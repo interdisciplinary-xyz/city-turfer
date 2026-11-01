@@ -119,7 +119,7 @@ export function FinalCta() {
   return (
     <Section name='cta' className='home-cta'>
       <SectionHead name='cta' eyebrow={t('eyebrow')} title={t('title')} lede={t('body')} align='center' />
-      <a className='app-button' href={`#${SECTION_ANCHORS.waitlist}`}>
+      <a className='btn btn-primary' href={`#${SECTION_ANCHORS.waitlist}`}>
         {t('join')}
       </a>
     </Section>

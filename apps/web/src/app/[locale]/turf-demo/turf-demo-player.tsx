@@ -83,7 +83,7 @@ export function TurfDemoPlayer({ labels, schemeStyle, head, caption, children }:
           ))}
           <button
             type='button'
-            className='turf-demo-replay'
+            className='btn btn-secondary btn-compact turf-demo-replay'
             onClick={() => {
               picked.current = true;
               play();

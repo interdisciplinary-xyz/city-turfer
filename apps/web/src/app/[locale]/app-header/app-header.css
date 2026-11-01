@@ -89,11 +89,11 @@
   margin-left: auto;
 }
 
-/* The call to action: a small primary button, pill-shaped (glow fill, night label like .app-button). */
+/* The call to action: the site's compact primary button (.btn-primary .btn-compact in globals.css, copied here so it also works on pages without it). */
 .app-header .app-header-link {
   display: inline-flex;
   align-items: center;
-  min-height: 36px;
+  min-height: 40px;
   padding: 6px 16px;
   border-radius: var(--radius-full);
   background: var(--glow);

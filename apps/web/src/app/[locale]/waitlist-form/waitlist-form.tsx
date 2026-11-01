@@ -56,7 +56,7 @@ export function WaitlistForm({ action, controller, contactEmail, locale }: Waitl
           inputMode='email'
           placeholder={t('emailPlaceholder')}
         />
-        <button className='waitlist-submit' type='submit' disabled={state === 'sending'}>
+        <button className='btn btn-primary' type='submit' disabled={state === 'sending'}>
           {state === 'sending' ? t('sending') : t('submit')}
         </button>
       </div>

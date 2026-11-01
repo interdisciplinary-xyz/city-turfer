@@ -379,35 +379,6 @@
   margin: 16px auto 28px;
 }
 
-/* The app's Button (packages/ui) shape: glow fill, 56 px, control radius. The label is night ink
-   (`--on-glow` = WEB_ON_ACCENT) on purpose: the app's Button draws white (DARK.onAccent), the web
-   differs for contrast on the pink. Hover mixes toward --blazing, not --text or --on-glow (those
-   darken the pink and drop the label under 4.5:1 on the light scheme; --blazing brightens it and
-   keeps about 6:1 in both schemes). */
-.app-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 56px;
-  padding: 14px var(--space-xxl);
-  border-radius: var(--radius-control);
-  background: var(--glow);
-  color: var(--on-glow);
-  font-size: var(--font-lead);
-  font-weight: var(--font-weight-bold);
-  text-decoration: none;
-}
-
-.app-button:hover,
-.app-button:focus-visible {
-  background: color-mix(in srgb, var(--glow) 86%, var(--blazing));
-}
-
-.app-button:focus-visible {
-  outline: 2px solid var(--text);
-  outline-offset: 3px;
-}
-
 /* ---------- Grids shared by the newer sections ---------- */
 
 .home-grid {

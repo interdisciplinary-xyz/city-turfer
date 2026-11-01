@@ -338,6 +338,65 @@ h1 {
   margin: 0 auto 28px;
 }
 
+/* ---------- Buttons: one system ----------
+   Primary: the --glow fill with the --on-glow label (night ink on the pink; the hover mixes toward
+   --blazing, which keeps the label above 4.5:1). Secondary: the same shape as an outline in
+   --border-control (3:1 on the page). 48 px tall pills; .btn-compact (40 px) is for tight rows. Every
+   call to action and form button uses these (the header's link has its own copy in app-header.css,
+   which must work on pages without this file). */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 10px var(--space-xxl);
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  font: inherit;
+  font-size: var(--font-body);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-compact {
+  min-height: 40px;
+  padding: 6px var(--space-lg);
+  font-size: var(--font-caption);
+}
+
+.btn-primary {
+  background: var(--glow);
+  color: var(--on-glow);
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible {
+  background: color-mix(in srgb, var(--glow) 86%, var(--blazing));
+  color: var(--on-glow);
+}
+
+.btn-secondary {
+  border-color: var(--border-control);
+  background: transparent;
+  color: var(--text);
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus-visible {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  color: var(--text);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
+}
+
 /* ---------- Download (parked) ----------
    StoreButtons is hidden on the page pending the open APK decision; the component and its story
    are kept, so this block (.download, .store-*, .download-note) stays until that is settled. */
@@ -462,25 +521,12 @@ h1 {
 }
 
 .waitlist-email:focus-visible,
-.waitlist-submit:focus-visible,
 .waitlist-consent input:focus-visible {
   outline: 2px solid var(--accent-text);
   outline-offset: 2px;
 }
 
-.waitlist-submit {
-  min-height: 48px;
-  padding: 0 22px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--text);
-  color: var(--bg);
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.waitlist-submit:disabled {
+.btn:disabled {
   opacity: 0.6;
   cursor: progress;
 }

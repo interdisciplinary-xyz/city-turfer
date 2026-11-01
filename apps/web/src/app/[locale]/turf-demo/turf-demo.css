@@ -114,8 +114,7 @@
   text-align: left;
 }
 
-.turf-demo-step,
-.turf-demo-replay {
+.turf-demo-step {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -157,13 +156,7 @@
   background: color-mix(in srgb, var(--text) 12%, var(--card));
 }
 
-.turf-demo-replay {
-  background: transparent;
-  color: var(--accent-text);
-}
-
-.turf-demo-step:focus-visible,
-.turf-demo-replay:focus-visible {
+.turf-demo-step:focus-visible {
   outline: 2px solid var(--text);
   outline-offset: 2px;
 }

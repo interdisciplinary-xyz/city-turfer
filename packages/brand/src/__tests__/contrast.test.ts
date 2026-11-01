@@ -82,6 +82,20 @@ const PAIRS: Pair[] = [
   { name: 'web --accent-text on --bg', fg: WEB['--accent-text'], bg: WEB['--bg'], min: MIN_CONTRAST.text },
   { name: 'web --muted on --bg', fg: WEB['--muted'], bg: WEB['--bg'], min: MIN_CONTRAST.text },
   { name: 'web --text on --bg', fg: WEB['--text'], bg: WEB['--bg'], min: MIN_CONTRAST.text },
+  // The website's secondary button (.btn-secondary): an outline in --border-control, a --text label, on the page or a card.
+  {
+    name: 'web secondary button edge --border-control on --bg',
+    fg: WEB['--border-control'],
+    bg: WEB['--bg'],
+    min: MIN_CONTRAST.ui,
+  },
+  {
+    name: 'web secondary button edge --border-control on --card',
+    fg: WEB['--border-control'],
+    bg: WEB['--card'],
+    min: MIN_CONTRAST.ui,
+  },
+  { name: 'web --text on --card', fg: WEB['--text'], bg: WEB['--card'], min: MIN_CONTRAST.text },
   // Turf pieces on the website are night panels (APP_SCHEME), read from the variables they get.
   { name: 'app glow disc on --card', fg: APP['--glow'], bg: APP['--card'], min: MIN_CONTRAST.ui }, // 4.95
   { name: 'app faint legend step on --bg', fg: APP['--faint'], bg: APP['--bg'], min: MIN_CONTRAST.ui }, // 3.32
