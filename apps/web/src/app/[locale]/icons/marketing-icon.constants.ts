@@ -37,32 +37,32 @@ const circle = (cx: number, cy: number, r: number) =>
   `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0Z`;
 
 export const ICON_PATHS: Record<IconName, readonly IconShape[]> = {
-  /** A walker in profile, upright, short stride. */
+  /** A walker in profile, upright, short stride; drawn 2–22 tall so it weighs as much as ride. */
   walk: [
-    { d: circle(13, 4.5, 1.75) },
-    { d: 'M12.6 8.5 11.2 14' },
-    { d: 'M11.2 14l2 3.3.4 3.7' },
-    { d: 'M11.2 14l-1.6 3.5L7.8 21' },
-    { d: 'M12.4 9.5 9.8 11.4 9.3 14' },
-    { d: 'M12.4 9.5l2.3 1.9 2 .9' },
+    { d: circle(12.8, 3.9, 1.95) },
+    { d: 'M12.4 8.3 10.8 14.3' },
+    { d: 'M10.8 14.3 13 18l.5 4' },
+    { d: 'M10.8 14.3 9.1 18.2 7.1 22' },
+    { d: 'M12.2 9.4 9.7 11.3 9.1 12.8' },
+    { d: 'M12.2 9.4l2.5 2.1 2.2 1' },
   ],
-  /** A runner leaning forward, long stride. */
+  /** A runner leaning forward, long stride; same optical size as walk. */
   run: [
-    { d: circle(15.5, 4.25, 1.75) },
-    { d: 'M14 8 11 13.5' },
-    { d: 'M11 13.5l3.6 1.8-.9 5.2' },
-    { d: 'M11 13.5l-2 3.7-4 .3' },
-    { d: 'M13.7 8.7l2.6 2.3 2.7-.8' },
-    { d: 'M13.7 8.7 10.4 9.8 8.6 12.3' },
+    { d: circle(15.9, 3.9, 1.95) },
+    { d: 'M14.2 8.1 10.9 14.2' },
+    { d: 'M10.9 14.2l4 2-1 5.8' },
+    { d: 'M10.9 14.2l-2.3 4.2-4.4.3' },
+    { d: 'M13.9 8.9l2.9 2.5 3-.9' },
+    { d: 'M13.9 8.9 10.2 10.1 8.2 12.9' },
   ],
-  /** A bicycle: two wheels, frame, saddle and bars. */
+  /** A bicycle: two wheels, frame, saddle on its seat tube, bars; inside 3–21. */
   ride: [
-    { d: circle(5.5, 16.5, 3.5) },
-    { d: circle(18.5, 16.5, 3.5) },
-    { d: 'M5.5 16.5 9 10.5l2.5 6H5.5' },
-    { d: 'M9 10.5h7l-4.5 6' },
-    { d: 'M18.5 16.5 15.6 8.5h2.4' },
-    { d: 'M7.5 8.5h3' },
+    { d: circle(6.15, 14, 3.15) },
+    { d: circle(17.85, 14, 3.15) },
+    { d: 'M6.15 14h5.4L8.6 6.8' },
+    { d: 'M6.15 14 9.3 8.6h6.3L11.55 14' },
+    { d: 'M17.85 14 15.25 6.8h2.15' },
+    { d: 'M7.4 6.8h2.5' },
   ],
   /**
    * The mark in one line, its own geometry × 24/1024 (packages/brand/svg/mark.svg): the turf cell,
