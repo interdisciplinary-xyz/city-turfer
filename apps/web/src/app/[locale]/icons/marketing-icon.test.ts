@@ -9,7 +9,6 @@ import { describe, expect, it } from 'vitest';
 import { Icon } from './marketing-icon';
 import {
   ICON_DISC_TINT,
-  ICON_FOR_DIFFER,
   ICON_FOR_GLYPH,
   ICON_FOR_HIGHLIGHT,
   ICON_FOR_TYPE,
@@ -79,7 +78,7 @@ describe('marketing icon set', () => {
   });
 
   it('maps every glyph and section key to a real icon', () => {
-    for (const map of [ICON_FOR_GLYPH, ICON_FOR_TYPE, ICON_FOR_HIGHLIGHT, ICON_FOR_DIFFER]) {
+    for (const map of [ICON_FOR_GLYPH, ICON_FOR_TYPE, ICON_FOR_HIGHLIGHT]) {
       for (const icon of Object.values(map)) {
         expect(ICON_NAMES).toContain(icon);
       }
