@@ -133,7 +133,7 @@
   padding: 6px 0 4px;
   border-bottom: 2px solid transparent;
   color: var(--muted);
-  font-size: 15px;
+  font-size: var(--font-unit);
   font-weight: var(--font-weight-semibold);
   text-decoration: none;
   white-space: nowrap;
@@ -218,8 +218,11 @@
   color: var(--text);
 }
 
+/* The current language: an outline and the text colour, not a fill: the call to action is the only
+   pink pill in the bar. */
 .lang [aria-current],
 .app-header .lang [aria-current] {
-  background: var(--glow);
-  color: var(--on-glow);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--border-control);
+  color: var(--text);
 }

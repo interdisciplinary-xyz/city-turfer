@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { useLocale, useTranslations } from 'next-intl';
 
 import { AppHeader } from '@/app/[locale]/app-header';
+import { HeroCity, HeroCityLine } from '@/app/[locale]/hero-city';
 import { HeroCopy } from '@/app/[locale]/hero-copy';
 import { HeroMotion } from '@/app/[locale]/hero-motion';
 import { HeroScreens } from '@/app/[locale]/hero-screens';
@@ -34,13 +35,17 @@ function Page({ waitlist }: PageProps) {
         {t('hero.skip')}
       </a>
       <AppHeader locale={locale} waitlist={waitlist} nav />
-      <main id='main'>
-        <div className='hero'>
-          <HeroMotion className='wrap hero-grid'>
-            <HeroCopy waitlist />
-            <HeroScreens />
+      <main id='main' tabIndex={-1}>
+        <section id='top' aria-labelledby='hero-title'>
+          <HeroMotion className='hero'>
+            <HeroCity />
+            <div className='wrap hero-grid'>
+              <HeroCopy waitlist={waitlist} />
+              <HeroScreens />
+            </div>
+            <HeroCityLine />
           </HeroMotion>
-        </div>
+        </section>
         {waitlist ? (
           <Section name='waitlist' className='waitlist-section'>
             <SectionHead name='waitlist' eyebrow={t('waitlist.eyebrow')} title={t('waitlist.title')} align='center' />
@@ -49,6 +54,7 @@ function Page({ waitlist }: PageProps) {
               controller='CityTurfer (example)'
               contactEmail='privacy@example.invalid'
               locale={locale}
+              headingId='waitlist-title'
             />
           </Section>
         ) : null}

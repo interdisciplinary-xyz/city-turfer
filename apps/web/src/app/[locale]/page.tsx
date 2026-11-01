@@ -23,7 +23,7 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
         {t('hero.skip')}
       </a>
       <AppHeader locale={locale} waitlist={Boolean(WAITLIST)} nav />
-      {/* tabIndex -1: the skip link and the header's links can land focus here. */}
+      {/* tabIndex -1: the skip link moves focus to <main> (the header's links scroll to their sections). */}
       <main id='main' tabIndex={-1}>
         <section id='top' aria-labelledby='hero-title'>
           <HeroMotion className='hero'>
@@ -44,6 +44,7 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
               controller={WAITLIST.controller}
               contactEmail={WAITLIST.contactEmail}
               locale={locale}
+              headingId='waitlist-title'
             />
           </Section>
         ) : null}

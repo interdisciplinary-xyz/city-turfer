@@ -46,7 +46,7 @@
 .section-eyebrow::before {
   content: '';
   flex: none;
-  width: 11px;
+  width: 10.4px; /* a regular pointy-top hexagon 12 high */
   height: 12px;
   background: currentColor;
   clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
@@ -61,6 +61,7 @@
   line-height: 0.95;
   letter-spacing: var(--display-tracking);
   text-transform: var(--display-case);
+  font-synthesis: none;
   text-wrap: balance;
 }
 

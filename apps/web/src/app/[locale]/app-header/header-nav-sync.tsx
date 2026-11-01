@@ -6,7 +6,8 @@ import {
   CURRENT_VALUE,
   FOOTER_SELECTOR,
   NAV_LINK_SELECTOR,
-  READING_BAND,
+  READING_BAND_AIR_PX,
+  READING_BAND_BOTTOM,
   SECTION_SELECTOR,
 } from './header-nav-sync.constants';
 
@@ -32,6 +33,8 @@ export function HeaderNavSync() {
         linkOf.set(section, link);
       }
     }
+    const headerHeight =
+      Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 64;
     const inBand = new Set<Element>();
     let atBottom = false;
 
@@ -68,7 +71,7 @@ export function HeaderNavSync() {
         }
         update();
       },
-      { rootMargin: READING_BAND }
+      { rootMargin: `-${headerHeight + READING_BAND_AIR_PX}px 0px ${READING_BAND_BOTTOM} 0px` }
     );
     for (const section of sections) {
       sectionObserver.observe(section);
@@ -86,6 +89,9 @@ export function HeaderNavSync() {
     return () => {
       sectionObserver.disconnect();
       footerObserver.disconnect();
+      for (const link of links) {
+        link.removeAttribute('aria-current');
+      }
     };
   }, []);
 

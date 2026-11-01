@@ -1,3 +1,5 @@
+import './home-sections.css';
+
 import type { SectionHeadProps, SectionProps } from './home-sections.constants';
 
 /** One homepage section: `<section id=name aria-labelledby=name-title>`, with its `.wrap` inside. */

@@ -16,6 +16,7 @@ function Waitlist() {
         controller='CityTurfer (example)'
         contactEmail='privacy@example.invalid'
         locale={locale}
+        headingId='waitlist-title'
       />
     </Section>
   );

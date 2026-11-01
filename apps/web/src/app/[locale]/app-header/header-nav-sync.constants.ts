@@ -8,10 +8,16 @@ export const SECTION_SELECTOR = 'main > section';
 export const FOOTER_SELECTOR = 'footer.site-footer';
 
 /**
- * The band of the viewport that counts as "reading here": from just under the sticky header (64 px
- * from 960 px, plus a little air) down to 40% of the viewport height.
+ * The band of the viewport that counts as "reading here": from just under the sticky bar (its height is
+ * read from the `--header-h` variable, plus this much air) down to 40% of the viewport height.
  */
-export const READING_BAND = '-80px 0px -60% 0px';
+export const READING_BAND_AIR_PX = 16;
+export const READING_BAND_BOTTOM = '-60%';
+
+/**
+ * The closing call to action has no link, so while it is the section in the band the walk-back keeps
+ * the FAQ link lit (the last linked section above it): intended, not a leftover.
+ */
 
 /** The state of the current link for assistive tech and for `.app-header-nav a[aria-current]` styles. */
 export const CURRENT_VALUE = 'location';
