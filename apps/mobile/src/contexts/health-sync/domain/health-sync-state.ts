@@ -8,6 +8,11 @@ export interface ImportReport {
   readonly withoutRoute: number;
   /** Already in CityTurfer: the same outing recorded here or imported from another app. */
   readonly duplicates: number;
+  /**
+   * Ended before Apple Health was connected: left in Apple Health. Absent in reports saved before
+   * v0.15.0.
+   */
+  readonly beforeStart?: number;
   /** Not importable: written by CityTurfer, already imported, or failed. */
   readonly skipped: number;
 }

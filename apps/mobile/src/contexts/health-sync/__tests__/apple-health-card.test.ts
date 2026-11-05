@@ -3,11 +3,12 @@ import { DomainError } from '@/shared-kernel';
 
 import { describeImport, healthErrorKey } from '../ui/apple-health-card.constants';
 
-const report = (imported: number, duplicates = 0, withoutRoute = 0) => ({
+const report = (imported: number, duplicates = 0, withoutRoute = 0, beforeStart?: number) => ({
   at: 0,
   imported,
   duplicates,
   withoutRoute,
+  beforeStart,
   skipped: 0,
 });
 
@@ -17,6 +18,10 @@ describe('Apple Health card copy', () => {
     expect(describeImport(report(1), t)).toBe('1 workout added');
     expect(describeImport(report(3), t)).toBe('3 workouts added');
     expect(describeImport(report(0, 2, 3), t)).toBe('0 workouts added · 2 already in CityTurfer · 3 without a route');
+    expect(describeImport(report(1, 0, 0, 40), t)).toBe(
+      '1 workout added · 40 from before you connected, left in Apple Health'
+    );
+    expect(describeImport(report(0, 0, 0, 0), t)).toBe('0 workouts added');
     expect(t('lastImport', { summary: describeImport(report(3), t) })).toBe('Last import: 3 workouts added');
     expect(t('importing', { count: 4 })).toBe('Importing… 4 added so far');
   });
@@ -32,6 +37,11 @@ describe('Apple Health card copy', () => {
     ]);
     expect(describeImport(report(0, 1, 2), t)).toBe('dodano 0 treningów · 1 był już w CityTurfer · 2 bez trasy');
     expect(describeImport(report(3, 5), t)).toBe('dodano 3 treningi · 5 było już w CityTurfer');
+    expect([1, 3, 12].map((n) => describeImport(report(0, 0, 0, n), t))).toEqual([
+      'dodano 0 treningów · 1 sprzed połączenia został w Apple Health',
+      'dodano 0 treningów · 3 sprzed połączenia zostały w Apple Health',
+      'dodano 0 treningów · 12 sprzed połączenia zostało w Apple Health',
+    ]);
     expect(t('lastImport', { summary: describeImport(report(1), t) })).toBe('Ostatni import: dodano 1 trening');
     expect(t('importing', { count: 5 })).toBe('Importowanie… dodano już 5 treningów');
   });

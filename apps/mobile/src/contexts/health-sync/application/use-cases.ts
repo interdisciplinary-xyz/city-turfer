@@ -69,7 +69,8 @@ type ImportOutcome = 'imported' | 'known' | 'duplicate' | 'no-route' | 'failed';
 
 /**
  * Imports walks, hikes, runs and rides from Apple Health as Activities (which then claim turf).
- * Skips workouts CityTurfer wrote, workouts already imported (or imported and later deleted), and
+ * Only workouts that end after Apple Health was connected: older ones stay in Apple Health, so a new
+ * Turfer's map starts with what they do from then on. Skips workouts CityTurfer wrote, workouts already imported (or imported and later deleted), and
  * outings already in CityTurfer from another source. Workouts whose route isn't readable yet are
  * retried on later syncs for a few days. One run at a time: a second caller joins the running one.
  */
@@ -83,7 +84,7 @@ export class ImportHealthWorkouts {
     return this.running != null;
   }
 
-  /** `full`: scan Apple Health from the beginning (Import now), not just what is new since last time. */
+  /** `full`: scan all of Apple Health again (Import now), not just what is new since last time. */
   execute(opts: { full?: boolean; onProgress?: (imported: number) => void } = {}): Promise<ImportReport | null> {
     const listener = opts.onProgress;
     if (listener) {
@@ -107,7 +108,9 @@ export class ImportHealthWorkouts {
     if (!(await this.active())) {
       return null;
     }
-    const n = { imported: 0, withoutRoute: 0, duplicates: 0, skipped: 0 };
+    // active() checked the connection; workouts that ended before it stay in Apple Health.
+    const from = (await this.d.repo.state()).connectedAt ?? Infinity;
+    const n = { imported: 0, withoutRoute: 0, duplicates: 0, beforeStart: 0, skipped: 0 };
     const count = (o: ImportOutcome) => {
       if (o === 'imported') {
         n.imported++;
@@ -124,7 +127,7 @@ export class ImportHealthWorkouts {
     // 1. Workouts that had no route (or failed) last time.
     const now = this.d.clock.now();
     for (const p of await this.d.repo.pendingImports()) {
-      if (now - p.endedAt > IMPORT_RETRY_WINDOW_MS) {
+      if (now - p.endedAt > IMPORT_RETRY_WINDOW_MS || p.endedAt < from) {
         await this.d.repo.removePendingImport(p.healthUuid);
         continue;
       }
@@ -148,6 +151,10 @@ export class ImportHealthWorkouts {
         const type = activityTypeFor(w.kind);
         if (!type || w.fromCityTurfer) {
           n.skipped++;
+          continue;
+        }
+        if (w.endedAt < from) {
+          n.beforeStart++;
           continue;
         }
         const outcome = await this.importOne(w.uuid, type, w.startedAt, w.endedAt);
