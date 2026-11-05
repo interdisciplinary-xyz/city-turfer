@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-23
+verified: 2026-11-05
 owner: founder
 scope: [apps/mobile/src/contexts/health-sync, apps/mobile/e2e/11-apple-health.yaml]
 summary: Install the Apple Health build on the iPhone and check import and export with real data
@@ -22,11 +22,11 @@ The Simulator proves the code path; only the iPhone has your Apple Watch workout
 ## Connect and import
 
 1. Me → Info → **Apple Health** → **Connect Apple Health**.
-2. Apple's sheet: **Select All** (or "Turn On All"), **Allow**. On iOS 26 choose **All Recorded Data
-   and Future Data**, otherwise only the last 30 days import.
+2. Apple's sheet: **Select All** (or "Turn On All"), **Allow**. On iOS 26 any history choice works:
+   since v0.15.0 only workouts that end after connecting are imported.
 3. The import starts right away. The card shows "Importing… N added so far", then "Last import: N
-   workouts added · M without a route". Years of workouts can take a few minutes; leaving the app is
-   fine, it continues from where it stopped next time.
+   workouts added · M without a route · K from before you connected, left in Apple Health". Older
+   workouts are only counted, not imported.
 4. Check: History shows the workouts with "From Apple Health" on their detail screen, the Turf Map
    has their streets.
 
@@ -47,8 +47,9 @@ The Simulator proves the code path; only the iPhone has your Apple Watch workout
 
 ## If something is off
 
-- **0 workouts:** Health app → Profile → Apps → CityTurfer: Workouts and Workout Routes allowed,
-  data access "All Recorded Data".
+- **0 workouts:** right after connecting this is normal (older workouts stay in Health). If a new
+  workout doesn't come in: Health app → Profile → Apps → CityTurfer: Workouts and Workout Routes
+  allowed.
 - **Workouts without a route:** treadmill and indoor workouts have none, as do workouts from apps
   that don't share routes. They are skipped on purpose.
 - **Stop syncing:** the card's Disconnect, or the two switches (Import workouts, Save recordings to

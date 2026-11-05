@@ -206,7 +206,8 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   14/30-day and 8-hour lifetimes, signed-in devices, and the no-store caching default
 - ✅ [`decisions/apple-health-2026-10-18.md`](decisions/apple-health-2026-10-18.md): v0.4.0
   integrates Apple Health — a Health Sync context imports walks, hikes, runs and rides with routes
-  (full history) as Activities that claim turf, and saves recordings to Health with routes
+  (since connecting; full history until v0.15.0) as Activities that claim turf, and saves recordings
+  to Health with routes
 - ✅ [`decisions/brand-dark-site-2026-10-25.md`](decisions/brand-dark-site-2026-10-25.md): The app
   is the brand's source of truth, so the website, portal, Swagger and Storybook go dark (SITE_SCHEME
   = 'dark', the app's DARK palette, night wordmark, full Ramp); pink buttons keep a night label

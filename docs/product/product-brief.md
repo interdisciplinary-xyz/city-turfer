@@ -101,8 +101,8 @@ inventory: [features.md](../engineering/features.md).
 - **Review**: Dashboard (this week, recent, next achievement, checklist), Stats (8-week chart, turf
   area/cells/strong, all-time per type), History, Activity detail (splits, elevation ≈, turf gained,
   rename, delete).
-- **Apple Health (iOS)**: import walks, hikes, runs and rides with routes (whole history, Apple
-  Watch included) so they claim turf; save new recordings to Health.
+- **Apple Health (iOS)**: import walks, hikes, runs and rides with routes (from the day you connect,
+  Apple Watch included) so they claim turf; save new recordings to Health.
 - **Your city**: pick a Home City so maps open there.
 - **Account** (v0.9.0, v0.10.0): sign in with an e-mailed code, or an optional account password;
   change name, e-mail and password; export your data; delete the account.
