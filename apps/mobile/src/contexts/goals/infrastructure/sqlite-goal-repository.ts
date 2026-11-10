@@ -26,12 +26,13 @@ export class SqliteGoalRepository implements GoalRepository {
     const events = goal.pullEvents();
     const now = events[events.length - 1]?.at ?? Date.now();
     await this.db.transaction(async (tx) => {
-      // A handful of rows (one per day the goal changed): write them all, the newest wins per day.
+      // A handful of rows (one per day the goal changed): write them all. The aggregate is the only
+      // writer and already replaced a same-day change, so its row wins, whatever set_at says (no
+      // set_at guard: a device clock stepped back would lose the change while its event is saved).
       for (const c of s.history) {
         await tx.run(
           `INSERT INTO goal_daily_targets (effective_from, minutes, set_at) VALUES (?, ?, ?)
-           ON CONFLICT(effective_from) DO UPDATE SET minutes = excluded.minutes, set_at = excluded.set_at
-           WHERE excluded.set_at >= goal_daily_targets.set_at`,
+           ON CONFLICT(effective_from) DO UPDATE SET minutes = excluded.minutes, set_at = excluded.set_at`,
           [c.effectiveFrom, c.minutes, c.setAt]
         );
       }

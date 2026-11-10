@@ -126,6 +126,15 @@ export function goalStreak(view: DailyGoalView): number {
 }
 
 /**
+ * Whether the streak can run past the week shown: every day of the week before today was met
+ * (today may still be unmet). Only then does `metBeforeWeek` count, so only then must a reader
+ * look at Activities older than the week.
+ */
+export function streakReachesPastWeek(week: readonly GoalDay[]): boolean {
+  return week.slice(0, -1).every((d) => d.met);
+}
+
+/**
  * Adds a live recording's moving time (shown on screen, never stored) to the day the recording
  * started, as a stored Activity counts: a walk started at 23:40 and still running after midnight
  * adds to yesterday, not today. A start before the week shown changes nothing.
@@ -158,12 +167,12 @@ export class DailyGoal {
     return goalOn(day, this.state.history);
   }
 
-  /** The offer stays hidden once hidden, and once a goal was ever set (also when turned off later). */
   /** The first day a goal was ever in force (null: never set): how far back a streak can reach. */
   get firstDay(): LocalDay | null {
     return this.state.history[0]?.effectiveFrom ?? null;
   }
 
+  /** The offer stays hidden once hidden, and once a goal was ever set (also when turned off later). */
   get offerHidden(): boolean {
     return this.state.offerHiddenFlag || this.state.history.length > 0;
   }

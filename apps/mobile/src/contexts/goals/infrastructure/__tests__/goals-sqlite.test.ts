@@ -187,16 +187,25 @@ describe('Goals on SQLite', () => {
     expect(changes).toBe(2);
   });
 
-  it('keeps the newest row when an older save arrives late', async () => {
+  it('saves a same-day change made after the device clock went back (row and event agree)', async () => {
     const t = setup();
-    await t.container();
-    const repo = new SqliteGoalRepository(t.db);
-    const stale = await repo.get();
-    const fresh = await repo.get();
-    fresh.set(60, '2026-11-11', 2);
-    await repo.save(fresh);
-    stale.set(30, '2026-11-11', 1);
-    await repo.save(stale);
-    expect((await repo.get()).goalOn('2026-11-11')).toBe(60);
+    const c = await t.container();
+    t.setNow(local(11, 9));
+    await c.goals.set.execute(60);
+    t.setNow(local(11, 8)); // the clock stepped back an hour, still the 11th
+    await c.goals.set.execute(30);
+    expect(await t.db.all('SELECT effective_from, minutes, set_at FROM goal_daily_targets')).toEqual([
+      { effective_from: '2026-11-11', minutes: 30, set_at: local(11, 8) },
+    ]);
+    const events = await t.db.all<{ payload: string }>("SELECT payload FROM sys_outbox WHERE type = 'DailyGoalSet'");
+    expect(events.map((e) => JSON.parse(e.payload)).at(-1)).toEqual({
+      type: 'DailyGoalSet',
+      v: 1,
+      at: local(11, 8),
+      effectiveFrom: '2026-11-11',
+      minutes: 30,
+    });
+    expect((await new SqliteGoalRepository(t.db).get()).goalOn('2026-11-11')).toBe(30);
+    expect((await c.goals.view.execute()).goalMinutes).toBe(30);
   });
 });

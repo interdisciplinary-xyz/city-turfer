@@ -21,7 +21,10 @@ export interface DailyGoalView {
   offerHidden: boolean;
   today: GoalDay;
   week: GoalDay[]; // 7 days, oldest first, last = today
-  /** Goal met on each of this many days in a row, ending the day before `week` starts. */
+  /**
+   * Goal met on each of this many days in a row, ending the day before `week` starts. 0 when a day
+   * of the week before today was missed: the streak can't reach past it, so it isn't read.
+   */
   metBeforeWeek: number;
 }
 

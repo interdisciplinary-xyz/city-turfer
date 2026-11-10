@@ -29,6 +29,8 @@ function inZone(tz: string, input: { instants: number[]; days: string[]; steps: 
     for (const [d, n] of input.steps) out.addDays[d + '|' + n] = c.addDays(d, n);
     process.stdout.write(JSON.stringify(out));
   `;
+  // The child runs TypeScript with node --experimental-strip-types: fine on the pinned Node 22.15.1
+  // (engines >=22.13); it would need a newer flag set or a transpile step on older Node.
   const stdout = execFileSync(
     process.execPath,
     ['--experimental-strip-types', '--no-warnings', '--input-type=module', '-e', script],

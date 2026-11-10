@@ -213,3 +213,31 @@ describe('migration v15 (Daily goal)', () => {
     ).rejects.toThrow();
   });
 });
+
+describe('migration v14 (Health Sync show_history)', () => {
+  // Pins v14 as fix/health-sync (#214) has it: `ALTER TABLE hs_state ADD COLUMN show_history INTEGER
+  // NOT NULL DEFAULT 0;`. The two branches each carry v14 until #214 merges, so it must stay
+  // byte-identical to fix/health-sync's v14; a device that ran one build's v14 never runs the other's.
+  it('adds hs_state.show_history INTEGER NOT NULL DEFAULT 0', async () => {
+    const db = openNodeDatabase();
+    await migrate(db, 13);
+    expect((await db.all<{ name: string }>('PRAGMA table_info(hs_state)')).map((c) => c.name)).not.toContain(
+      'show_history'
+    );
+    await migrate(db, 14);
+    expect(await version(db)).toBe(14);
+    const column = (
+      await db.all<{ name: string; type: string; notnull: number; dflt_value: string | null; pk: number }>(
+        'PRAGMA table_info(hs_state)'
+      )
+    ).find((c) => c.name === 'show_history');
+    expect(column).toEqual({
+      cid: expect.any(Number),
+      name: 'show_history',
+      type: 'INTEGER',
+      notnull: 1,
+      dflt_value: '0',
+      pk: 0,
+    });
+  });
+});
