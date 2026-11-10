@@ -27,8 +27,12 @@ The Simulator proves the code path; only the iPhone has your Apple Watch workout
 3. The import starts right away. The card shows "Importing… N added so far", then "Last import: N
    workouts added · M without a route · K from before you connected, left in Apple Health". Older
    workouts are only counted, not imported.
-4. Check: History shows the workouts with "From Apple Health" on their detail screen, the Turf Map
-   has their streets.
+4. Right after connecting, "0 workouts added" is expected: nothing older is imported, the count of
+   workouts from before you connected is the only result.
+5. Check: after connecting, record an outdoor walk on the Apple Watch, let it sync to the iPhone
+   (Fitness shows the route), then open the card and tap **Import now**. That walk imports: History
+   shows it with "From Apple Health" on its detail screen and the Turf Map has its streets. Older
+   workouts only show in the "from before you connected" count.
 
 ## Export
 

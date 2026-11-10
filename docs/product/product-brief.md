@@ -49,8 +49,8 @@ No persona research exists yet. What the product implies today:
 
 - **City walkers, dog-walkers, commuters on foot or bike** who repeat the same streets and would
   enjoy seeing them glow — the founder's own Warsaw walks and rides are the reference use.
-- **Runners and cyclists with an Apple Watch history**: Apple Health import fills the map on day one
-  instead of starting from empty.
+- **Runners and cyclists with an Apple Watch**: Apple Health import turns their Watch workouts into
+  turf from the moment they connect (older ones stay in Apple Health: founder decision 2026-11-05).
 - **Poland first, then European cities**: Polish company, EN/PL website, the Home City catalogue is
   Polish cities first, then major European ones
   (`packages/core/src/contexts/territory/domain/city-catalog.ts`).
