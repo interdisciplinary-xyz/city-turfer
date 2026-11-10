@@ -21,7 +21,8 @@ tags: [health]
                 commands:
                   - tapOn: 'Select All.*|Turn On All' # "Select All N Topics" on iOS 26, "Turn On All" before
                   - tapOn: '^Allow$'
-                  # iOS 26 asks how much history to share: all of it, so the whole history imports.
+                  # iOS 26 asks how much history to share. The import only takes workouts that end after
+                  # connecting, so any answer works; all of it keeps the sheet the same on every run.
                   - runFlow:
                       when: { visible: 'All Recorded Data and Future Data' }
                       commands:
@@ -35,8 +36,8 @@ tags: [health]
       - tapOn: 'OK'
       - scrollUntilVisible: { element: { id: 'health-import-now' }, direction: UP }
       - tapOn: { id: 'health-import-now' }
-      # A fresh Simulator imports all 3; on reruns the new samples overlap earlier ones (same times)
-      # and are recognised as already in CityTurfer. Exact counts are unit-tested.
+      # The samples end just now, after connecting, so each run imports its 3 (samples from earlier
+      # runs were imported then and are skipped). Exact counts are unit-tested.
       - extendedWaitUntil:
           visible: 'Last import: (3 workouts added.*|.*already in CityTurfer.*)'
           timeout: 120000

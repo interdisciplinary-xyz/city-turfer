@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
-import { DevicesPanel } from '@/app/[locale]/account/_portal/devices-panel';
+import { DevicesPanel } from '@/domains/account';
 
 import { ERRORS, SESSIONS } from './fixtures';
 

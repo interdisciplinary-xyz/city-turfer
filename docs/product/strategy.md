@@ -31,8 +31,10 @@ account or an upload; never let anyone take your turf away; reward return as muc
 
 ## 3. Coherent actions (proposal — three, reinforcing)
 
-1. **Day-one wow**: Apple Health back-import + a first-run that shows years of glowing turf in
-   minutes (no login wall).
+1. **Day-one wow** (_note 2026-11-10: since v0.15.0, #214, the Apple Health import takes only
+   workouts that end after connecting, by founder decision of 2026-11-05; the back-import below is
+   no longer built; open for `product-manager` and the founder_): Apple Health back-import + a
+   first-run that shows years of glowing turf in minutes (no login wall).
 2. **Reasons to come back that pass the regret test**: visible strength changes, "new streets this
    week", city coverage once "100 %" is defined.
 3. **A private sharing loop**: a share image of _your_ turf (no coordinates of home; start/end

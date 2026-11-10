@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
-import { LanguageSwitcher } from '@/app/[locale]/language-switcher';
+import { LanguageSwitcher } from '@/domains/ui';
 
 const meta = {
   title: 'Website/LanguageSwitcher',

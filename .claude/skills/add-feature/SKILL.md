@@ -36,7 +36,7 @@ Activity Log, Achievements and Identity (domain + application) lives in
 | `contexts/recording/{domain,application,infrastructure}`, `apps/mobile/modules/background-session/`                                                                                         | `location-engineer`    | ddd-architecture, gps-tracking   |
 | `contexts/activity-log/{domain,application,infrastructure}`, `platform/`, `wiring.ts`, `composition-root.ts`                                                                                | `location-engineer`    | ddd-architecture, route-storage  |
 | `contexts/territory/{domain,application,infrastructure}`, `apps/mobile/tools/lib/`, `turf-preview.mjs`                                                                                      | `location-engineer`    | ddd-architecture, turf-territory |
-| `contexts/{achievements,identity}/` (non-ui), `apps/mobile/src/constants/` (not `colors.ts`), `apps/mobile/src/dev/`                                                                        | `location-engineer`    | ddd-architecture                 |
+| `contexts/{achievements,goals,identity}/` (non-ui), `apps/mobile/src/constants/` (not `colors.ts`), `apps/mobile/src/dev/`                                                                  | `location-engineer`    | ddd-architecture                 |
 | `apps/mobile/app.json` and `apps/mobile/plugins/`, except the entries named below                                                                                                           | `location-engineer`    | gps-tracking                     |
 | `contexts/health-sync/` (all layers, incl. its card), the HealthKit plugin entry, `react-native.config.js`                                                                                  | `health-engineer`      | apple-health                     |
 | `contexts/cloud-backup/{domain,application,infrastructure}`                                                                                                                                 | `api-engineer`         | api-design, ddd-architecture     |
@@ -46,7 +46,7 @@ Activity Log, Achievements and Identity (domain + application) lives in
 | `packages/ui/`, `apps/storybook/` config, app and ui stories                                                                                                                                | `mobile-ui-engineer`   | design-system                    |
 | `packages/brand/`, `constants/colors.ts`, icons and splash in `app.json`, `apps/mobile/tools/brand/`, copy, the surface map and known drift (`tools/brand/surfaces.mjs`, `known-drift.mjs`) | `brand-designer`       | brand-system, brand-surfaces     |
 | `apps/web/` (landing, shared layout, `vercel.json`, `next.config.ts`) except the portal, `packages/dev-toolbar/`, website stories                                                           | `web-engineer`         | web-motion                       |
-| the portal paths in the `web-portal` skill (account subtree, `apps/web/src/api/`, portal stories and E2E, `portal.*` keys)                                                                  | `portal-engineer`      | web-portal                       |
+| the portal paths in the `web-portal` skill (account subtree, `apps/web/src/lib/api/`, portal stories and E2E, `portal.*` keys)                                                              | `portal-engineer`      | web-portal                       |
 | `apps/mobile/e2e/`, `apps/mobile/src/test-support/`, `apps/mobile/tools/` fixtures and replay scripts, `docs/quality/e2e.md`                                                                | `mobile-test-engineer` | mobile-testing                   |
 | `docs/quality/quality-assurance.md`, `docs/quality/smoke-test.md`, the release QA report in the scope → release PR                                                                          | `qa-engineer`          | verify-change, mobile-testing    |
 | `.claude/`, `tools/` (audits incl. `brand-audit.mjs`, `tools/brand/snapshot.mjs`, harness, release), `packages/config/`, `packages/eslint-config/`, CI, `.husky/`                           | `harness-engineer`     | ai-harness                       |
@@ -75,7 +75,8 @@ actually look at.
 
 ## 4. Review
 
-Run the `mobile-reviewer` agent on the diff. Fix the blocking findings and re-run the checks.
+Run the `mobile-reviewer` agent on the diff (findings per the `verify-change` skill's "What a review
+reports"). Fix the blockers and re-run the checks.
 
 ## 5. Close out
 

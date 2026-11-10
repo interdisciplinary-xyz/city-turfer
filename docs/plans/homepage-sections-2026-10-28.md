@@ -21,9 +21,10 @@ summary:
 
 Status: **proposed; slices 1–4 built in #196** (`feat/web-homepage`, merged into `scope/v0.14.0` on
 2026-10-30, `f2854b8`) with the recommended answer to every decision below (D1 yes, D3 yes, D6 no,
-D7 yes, D8 no). The copy is a draft until `brand-designer` and the founder sign it off (D4). Slice 5
-(tester form) waits for D2, D5 and the Brevo fields; slice 6 waits for the scroll-motion plan.
-Differences from the text below:
+D7 yes, D8 no). Since v0.15.0 the tidy-up (#213, #215, `docs/plans/homepage-tidy-2026-11-01.md`)
+reshaped these sections into eight blocks and removed the "Early prototype" badge (D1). The copy is
+a draft until `brand-designer` and the founder sign it off (D4). Slice 5 (tester form) waits for D2,
+D5 and the Brevo fields; slice 6 waits for the scroll-motion plan. Differences from the text below:
 
 - the demo history spans four months, so beat 2 says "four months" rather than two;
 - city cells are drawn as round dots, which halves the page weight at that scale;
@@ -177,9 +178,9 @@ It stays right under the hero, as today. It gets the waitlist question from slic
   - The visit counts per tier come out of the formula, not a hand-picked 1/3/6/12.
   - It picks the street as the most-repeated stretch in the demo, about 600 m, and pins it by route
     id so the output is stable.
-  - The output is `apps/web/src/app/[locale]/turf-demo/turf-demo.data.json`: hex polygons projected
-    to an 800 × 1000 viewBox (4:5), rounded to 1 decimal, with the tier per step. Budget: ≤ 30 KB
-    gzipped, checked by the test. h3-js never reaches the browser.
+  - The output is `apps/web/src/domains/homepage/components/turf-demo/turf-demo.data.json`: hex
+    polygons projected to an 800 × 1000 viewBox (4:5), rounded to 1 decimal, with the tier per step.
+    Budget: ≤ 30 KB gzipped, checked by the test. h3-js never reaches the browser.
   - Spike question: can a `.mjs` tool import core's TS source directly, or does it need the runner
     the API's dev scripts use? Settle this in the slice-2 spike.
 - **Drawing:**
@@ -244,9 +245,12 @@ It stays right under the hero, as today. It gets the waitlist question from slic
      `territory/ui/turf-gained-card.tsx`).
   2. **Records in your pocket:** live stats, auto-pause, "hold to finish", and "keeps recording with
      the screen off (iPhone)".
-  3. **Apple Health import:** "Your past Apple Watch walks become turf on day one." Tagged
-     **iPhone**, under decision D7.
-  4. **Achievements:** a few badges and "There's no streak to keep."
+  3. **Apple Health import:** "Your past Apple Watch walks become turf on day one." (_Note
+     2026-11-10: no longer true since v0.15.0, #214: the import takes only workouts that end after
+     connecting. The live copy still says it; open founder decision._) Tagged **iPhone**, under
+     decision D7.
+  4. **Achievements:** a few badges and "There's no streak to keep." (_Note 2026-11-10: the Daily
+     goal has a streak since v0.15.0, #217; the live copy still says this; open founder decision._)
   5. **Your city:** the Home City picker; the map opens on your city.
 - **Platform tags:** each tile carries "iPhone" / "iPhone & Android" where it differs, taken from
   the promise table.

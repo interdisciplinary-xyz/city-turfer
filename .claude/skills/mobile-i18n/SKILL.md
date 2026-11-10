@@ -16,7 +16,8 @@ catalogue in step 2, so most copy is still inline English.
 
 - `apps/mobile/messages/<locale>/<namespace>.json`, locales `en` (source and fallback) and `pl`. One
   namespace per area: `common`, `record`, `turf`, `history`, `stats`, `achievements`, `account`,
-  `backup`, `health`, `info`, `signIn`, `errors`. A new area gets a new file in **every** locale.
+  `backup`, `health`, `info`, `signIn`, `errors`, `goals`. A new area gets a new file in **every**
+  locale.
 - Keys are camelCase, named for meaning, not wording (`startButton`, `discardTitle`), nested at most
   one level for a group (`gpsState.lost`). No `.` inside a key. Add a key in `en` and `pl` in the
   same change; never leave a locale for later (audit:i18n fails).

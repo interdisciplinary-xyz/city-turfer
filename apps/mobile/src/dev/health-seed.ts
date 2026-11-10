@@ -1,6 +1,7 @@
 /**
  * Dev only: writes sample workouts with routes into Apple Health (iOS Simulator has no Apple Watch),
- * as if another app had recorded them, so "Import from Apple Health" has something to bring in.
+ * as if another app had recorded them, so "Import from Apple Health" has something to bring in. They
+ * end just now: the import leaves out workouts that ended before Apple Health was connected.
  */
 import { Platform } from 'react-native';
 
@@ -10,10 +11,10 @@ import { generateTrack } from './demo-history';
 
 /** HKWorkoutActivityType raw values. */
 const WORKOUT_TYPE: Record<ActivityType, number> = { walk: 52, run: 37, cycle: 13 };
-const SAMPLES: { type: ActivityType; km: number; daysAgo: number; hour: number }[] = [
-  { type: 'walk', km: 3.2, daysAgo: 2, hour: 7 },
-  { type: 'run', km: 6.5, daysAgo: 5, hour: 18 },
-  { type: 'cycle', km: 14, daysAgo: 9, hour: 10 },
+const SAMPLES: { type: ActivityType; km: number }[] = [
+  { type: 'walk', km: 3.2 },
+  { type: 'run', km: 6.5 },
+  { type: 'cycle', km: 14 },
 ];
 
 export async function seedHealthWorkouts(home: GeoPoint): Promise<number> {
@@ -28,10 +29,11 @@ export async function seedHealthWorkouts(home: GeoPoint): Promise<number> {
   });
   let n = 0;
   for (const [i, s] of SAMPLES.entries()) {
-    const day = new Date();
-    day.setDate(day.getDate() - s.daysAgo);
-    day.setHours(s.hour, 0, 0, 0);
-    const track = generateTrack(s.type, s.km, home, 9000 + i, 9100 + i, day.getTime());
+    // Generated from time 0, then moved so it ends a second ago (each type on its own, so they may
+    // overlap in time; the import's duplicate check compares workouts of one type only).
+    const raw = generateTrack(s.type, s.km, home, 9000 + i, 9100 + i, 0);
+    const shift = Date.now() - 1000 - raw[raw.length - 1].t;
+    const track = raw.map((p) => ({ ...p, t: p.t + shift }));
     const start = new Date(track[0].t);
     const end = new Date(track[track.length - 1].t);
     const workout = await hk.saveWorkoutSample(

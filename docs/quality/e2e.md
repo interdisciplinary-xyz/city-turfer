@@ -41,26 +41,27 @@ none; the audit enforces this. Gaps are listed honestly in section 3.
 
 ## 2. Flow inventory
 
-| Flow                      | Tag(s)                | Purpose                                                                                           |
-| ------------------------- | --------------------- | ------------------------------------------------------------------------------------------------- |
-| `01-auth`                 | auth                  | Wrong password rejected, admin account accepted, session persists                                 |
-| `02-record-run`           | recording             | Live distance grows, pause/resume, finish, turf gained                                            |
-| `03-background-recording` | recording, background | Home button, simulated 220 m walk, distance grew after foregrounding                              |
-| `04-too-short`            | recording             | Fewer than 2 points: finish refused, Discard offered                                              |
-| `05-history-detail`       | history               | Recent activities, See all, detail stats and turf gained                                          |
-| `06-turf-map`             | turf                  | Demo history seeds turf; summary and type filters                                                 |
-| `07-delete-activity`      | history               | Delete confirmation, row disappears from History                                                  |
-| `09-me-menu`              | me                    | Drawer items, tap outside closes, Profile and Achievements                                        |
-| `10-dashboard`            | dashboard             | Greeting, week distance, recent item, achievements, Stats to History                              |
-| `11-apple-health`         | health                | iOS: connect Health, seed sample workouts, import 3 with routes                                   |
-| `12-home-city`            | turf                  | Pick, change and clear the Home City from Me and the Record tab                                   |
-| `13-record-turf`          | recording, turf       | Record tab turf toggle: default on, remembered, works while recording                             |
-| `14-rename-activity`      | history               | Rename from the detail screen: empty name refused, new name in History                            |
-| `15-account-settings`     | account               | Live API: rename, change email, set/breached/use/remove account password                          |
-| `16-language`             | me                    | Language setting: Polish on Info/Dashboard/Stats/Record, restart keeps it, System returns English |
-| `17-local-profile-backup` | account               | Live API: admin@ links its backup with an e-mailed code, password sign-in leaves no credentials   |
-| `18-districts`            | turf                  | Warsaw districts with demo turf (seeds it if none): summary, covered row, row and map selection   |
-| `08-sign-out`             | auth                  | Sign out returns to sign-in (signs in to admin first if needed). Runs last: it ends the session   |
+| Flow                      | Tag(s)                | Purpose                                                                                               |
+| ------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------- |
+| `01-auth`                 | auth                  | Wrong password rejected, admin account accepted, session persists                                     |
+| `02-record-run`           | recording             | Live distance grows, pause/resume, finish, turf gained                                                |
+| `03-background-recording` | recording, background | Home button, simulated 220 m walk, distance grew after foregrounding                                  |
+| `04-too-short`            | recording             | Fewer than 2 points: finish refused, Discard offered                                                  |
+| `05-history-detail`       | history               | Recent activities, See all, detail stats and turf gained                                              |
+| `06-turf-map`             | turf                  | Demo history seeds turf; summary and type filters                                                     |
+| `07-delete-activity`      | history               | Delete confirmation, row disappears from History                                                      |
+| `09-me-menu`              | me                    | Drawer items, tap outside closes, Profile and Achievements                                            |
+| `10-dashboard`            | dashboard             | Greeting, week distance, recent item, achievements, Stats to History                                  |
+| `11-apple-health`         | health                | iOS: connect Health, seed sample workouts, import 3 with routes                                       |
+| `12-home-city`            | turf                  | Pick, change and clear the Home City from Me and the Record tab                                       |
+| `13-record-turf`          | recording, turf       | Record tab turf toggle: default on, remembered, works while recording                                 |
+| `14-rename-activity`      | history               | Rename from the detail screen: empty name refused, new name in History                                |
+| `15-account-settings`     | account               | Live API: rename, change email, set/breached/use/remove account password                              |
+| `16-language`             | me                    | Language setting: Polish on Info/Dashboard/Stats/Record, restart keeps it, System returns English     |
+| `17-local-profile-backup` | account               | Live API: admin@ links its backup with an e-mailed code, password sign-in leaves no credentials       |
+| `18-districts`            | turf                  | Warsaw districts (seeds turf if none): summary, row share, row and map selection, Current city        |
+| `19-daily-goal`           | me                    | Daily goal: open the editor, step and save a value, Dashboard card reads "of N min", change, turn off |
+| `08-sign-out`             | auth                  | Sign out returns to sign-in (signs in to admin first if needed). Runs last: it ends the session       |
 
 Allowed tags are fixed in `apps/mobile/tools/e2e/audit.mjs`
 (`auth recording background history turf me dashboard health account`). Subflows in
@@ -118,3 +119,15 @@ step-up code and spends about 2 minutes asleep on purpose.
 2. Add it to `flowsOrder` in `apps/mobile/e2e/config.yaml` (keep `08-sign-out` last).
 3. Map it to a critical path in section 1 (or add a CP row), then run `pnpm run e2e:audit`.
 4. No commented-out steps: delete them or fix the flow.
+
+## 5. The website's Playwright suite (apps/web/e2e)
+
+Separate from the Maestro flows: it drives the built static export of `apps/web` in Chromium (the
+landing page, the signed-in portal against an in-memory API).
+`pnpm --filter @cityturfer/web run test:e2e` builds first with `test:e2e:build`, which sets dummy
+`example.invalid` values for `NEXT_PUBLIC_WAITLIST_FORM_URL`, `NEXT_PUBLIC_WAITLIST_CONTROLLER` and
+`NEXT_PUBLIC_CONTACT_EMAIL`: the landing tests need the waitlist strip, the header's join link and
+the closing call to action, which a build without those variables leaves out (`site-server.mjs`
+refuses such an export). The form is never submitted. `test:e2e:run` runs the suite against the
+`out/` that exists. Playwright needs free ports (`E2E_SITE_PORT`, `E2E_API_PORT`) when the defaults
+are taken. CI (`ci:quality`) does not run this suite.

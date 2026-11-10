@@ -27,7 +27,7 @@ language is `docs/poc-plan.md` §2. Where this doc and the code disagree, the co
 
 ## 1. Context map
 
-There are <!-- probe:contexts -->7<!-- /probe --> bounded contexts, one directory each in
+There are <!-- probe:contexts -->8<!-- /probe --> bounded contexts, one directory each in
 `apps/mobile/src/contexts/`:
 
 - **identity** (generic): `AuthGateway` port with two adapters, `MockAuthGateway` (the local `admin`
@@ -59,6 +59,11 @@ There are <!-- probe:contexts -->7<!-- /probe --> bounded contexts, one director
 - **achievements** (supporting): pure `evaluateAchievements` / `summarizeAchievements` and the
   getting-started steps over facts the UI passes in. Domain in core; the app holds `ui/` and
   `infrastructure/` (only the onboarding card's dismissal flag).
+- **goals** (supporting): the opt-in Daily goal in minutes of moving time a day. `DailyGoal`
+  aggregate (history of changes per local day, offer flag) in `goal_daily_targets` / `goal_state`,
+  `LocalCalendar` port (device calendar). Reads Activity Log's `startsBetween` query; publishes
+  `DailyGoalSet`, `DailyGoalOfferHidden` (no handlers yet). Plan:
+  `docs/plans/daily-goal-2026-11-10.md`.
 
 ```
             SessionFinished                ActivityRecorded · ActivityDeleted
@@ -71,6 +76,7 @@ Activity Log, Territory ── ActivityRecorded · Deleted · Renamed · TrackCo
 Cloud Backup ── restore import ──▶ Activity Log ── ActivityRecorded (origin restore) ──▶ Health Sync (remembers restored imports)
 Identity: selects the user's database at sign-in; other contexts see only a user id.
 Achievements: no events; screens pass it Activity Log and Territory facts.
+Goals ── startsBetween ──▶ Activity Log (Goals pulls each day's moving time).
 ```
 
 **No context imports another context.** The edges above are wired in one place,

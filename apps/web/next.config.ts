@@ -19,7 +19,7 @@ const config: NextConfig = {
   // @cityturfer/core ships TypeScript source; the portal uses its shared kernel (formatters, simplify).
   transpilePackages: ['@cityturfer/brand', '@cityturfer/core', '@interdisciplinary/dev-toolbar'],
   reactStrictMode: true,
-  // The portal's API client sends `CityTurfer-Client: web/<version>` (src/api/client.ts).
+  // The portal's API client sends `CityTurfer-Client: web/<version>` (src/lib/api/client.ts).
   env: { CITYTURFER_WEB_VERSION: pkg.version },
   poweredByHeader: false,
   // Dev only: the portless URL (`pnpm run web:dev` -> https://cityturfer.local), incl. worktree subdomains.

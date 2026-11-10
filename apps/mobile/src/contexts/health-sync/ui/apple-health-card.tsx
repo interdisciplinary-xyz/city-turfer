@@ -42,7 +42,7 @@ export function AppleHealthCard() {
       {!status.connected ? (
         <>
           <Text style={{ color: p.muted }}>{t('pitch')}</Text>
-          <Text style={{ color: p.muted, fontSize: 13 }}>{t('historyTip')}</Text>
+          <Text style={{ color: p.muted, fontSize: 13 }}>{t('startTip')}</Text>
           <Button
             testID='health-connect'
             label={t('connect')}
@@ -80,7 +80,7 @@ export function AppleHealthCard() {
                 ? t('lastImport', { summary: describeImport(last, t) })
                 : t('notImported')}
           </Text>
-          {!importing && last && last.imported === 0 && last.duplicates === 0 && (
+          {!importing && last && last.imported === 0 && last.duplicates === 0 && !last.beforeStart && (
             <Text style={{ color: p.muted, fontSize: 13 }}>{t('noWorkoutsHint')}</Text>
           )}
           {status.importEnabled && (

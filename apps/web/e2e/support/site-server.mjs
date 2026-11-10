@@ -28,6 +28,14 @@ if (!existsSync(path.join(outDir, 'en.html'))) {
   throw new Error('No static export in apps/web/out: run `pnpm --filter @cityturfer/web build` first');
 }
 
+// The landing tests need the waitlist strip and the join link, which a build without the
+// NEXT_PUBLIC_WAITLIST_* variables leaves out: refuse such an export rather than fail three tests.
+if (!readFileSync(path.join(outDir, 'en.html'), 'utf8').includes('id="waitlist"')) {
+  throw new Error(
+    'apps/web/out was built without the waitlist variables (no #waitlist): run `pnpm --filter @cityturfer/web run test:e2e:build`'
+  );
+}
+
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',

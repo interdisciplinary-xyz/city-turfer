@@ -277,10 +277,18 @@
   cursor: not-allowed;
 }
 
+/* Primary: the homepage's .btn-primary look (globals.css) at the portal's size: --text fill, --card
+   label, hover lifts the fill toward the label; a disabled button does not react. */
 .portal-button-primary {
   min-height: 48px;
   background: var(--text);
-  color: var(--bg);
+  color: var(--card);
+}
+
+.portal-button-primary:not(:disabled):hover,
+.portal-button-primary:focus-visible {
+  background: color-mix(in srgb, var(--text) 82%, var(--card));
+  color: var(--card);
 }
 
 .portal-button-secondary {
@@ -322,6 +330,12 @@
 .portal-check input:focus-visible {
   outline: 2px solid var(--accent-text);
   outline-offset: 2px;
+}
+
+/* The primary keeps the homepage pill's ring (.btn:focus-visible). */
+.portal-button.portal-button-primary:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
 }
 
 /* ---------- Messages ---------- */

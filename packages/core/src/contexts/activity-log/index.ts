@@ -2,6 +2,7 @@
 import {
   ActivityArchiveQuery,
   type ActivityLogDeps,
+  ActivityStartsQuery,
   ActivityTrackQuery,
   AssignMissingTimeZones,
   CapEstimatedMovingTime,
@@ -25,6 +26,8 @@ export function createActivityLogApi(deps: ActivityLogDeps) {
     importActivity: new ImportActivity(deps),
     restoreActivity: new RestoreActivity(deps),
     list: new ListActivities(deps),
+    /** Activities started in [from, to) with their moving time (recorded + estimated). */
+    startsBetween: new ActivityStartsQuery(deps),
     detail: new GetActivityDetail(deps),
     rename: new RenameActivity(deps),
     remove: new DeleteActivity(deps),

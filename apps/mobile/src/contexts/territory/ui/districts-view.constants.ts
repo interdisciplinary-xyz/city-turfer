@@ -58,17 +58,29 @@ export const DISTRICT_LAYER = {
 export const DISTRICT_SWATCH = { size: 12, radius: 3, floor: 0.6, perShare: 4 };
 
 /**
- * A row's fixed height: padding and border plus two lines of the name, which grow with the text
- * size. The border keeps its width when selected (only its colour changes), so nothing shifts.
+ * A row's fixed height: padding and border, two lines of the name and the progress line under
+ * them, which grow with the text size. The border keeps its width when selected (only its colour
+ * changes), so nothing shifts.
  */
 export const DISTRICT_ROW = {
   border: 2,
   paddingVertical: SPACE.sm,
   /** Line height of the name at text scale 1; the row holds two lines. */
   nameLine: 20,
+  /** Line height of the progress line (bar and percent) at text scale 1. */
+  progressLine: 16,
+  /** Space between the name line and the progress line. */
+  progressGap: SPACE.xs,
   /** Space under each row (part of its slot in `getItemLayout`). */
   gap: SPACE.sm,
 };
+
+/**
+ * The row's progress bar: the share of the district that is turf, in the turf colour on a track.
+ * Any turf shows at least `minPct` of the bar, so a sliver never looks like none; the percent next
+ * to it gives the number.
+ */
+export const DISTRICT_BAR = { height: 4, radius: 2, minPct: 2, percentWidth: 40 };
 
 /** Spacing between the header's lines (city name, summary). */
 export const DISTRICT_HEADER_GAP = SPACE.xxs;

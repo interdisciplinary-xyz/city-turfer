@@ -1,24 +1,22 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { useLocale, useTranslations } from 'next-intl';
 
-import { AppHeader } from '@/app/[locale]/app-header';
-import { HeroCopy } from '@/app/[locale]/hero-copy';
-import { HeroMotion } from '@/app/[locale]/hero-motion';
-import { HeroScreens } from '@/app/[locale]/hero-screens';
 import {
   Audience,
-  Differs,
   Faq,
   FinalCta,
+  HeroCity,
+  HeroCopy,
+  HeroMotion,
+  HeroScreens,
   Highlights,
   HowItWorks,
   LocalFirst,
-  WhereItStands,
-  YourWeek,
-} from '@/app/[locale]/home-sections';
-import { SiteFooter } from '@/app/[locale]/site-footer';
-import { TurfDemo } from '@/app/[locale]/turf-demo';
-import { WaitlistForm } from '@/app/[locale]/waitlist-form';
+  Section,
+  SectionHead,
+} from '@/domains/homepage';
+import { AppHeader, SiteFooter } from '@/domains/layout';
+import { WaitlistForm } from '@/domains/waitlist';
 import type { Locale } from '@/i18n/routing';
 
 type PageProps = { waitlist: boolean };
@@ -35,34 +33,33 @@ function Page({ waitlist }: PageProps) {
       <a className='skip' href='#main'>
         {t('hero.skip')}
       </a>
-      <AppHeader locale={locale} waitlist={waitlist} />
-      <main id='main'>
-        <div className='hero'>
-          <HeroMotion className='wrap hero-grid'>
-            <HeroCopy />
-            <HeroScreens />
-          </HeroMotion>
-        </div>
-        {waitlist ? (
-          <section id='waitlist' className='waitlist-section' aria-label={t('waitlist.title')}>
-            <div className='wrap'>
-              <WaitlistForm
-                action='https://example.invalid/brevo'
-                controller='CityTurfer (example)'
-                contactEmail='privacy@example.invalid'
-                locale={locale}
-              />
+      <AppHeader locale={locale} waitlist={waitlist} nav />
+      <main id='main' tabIndex={-1}>
+        <section id='top' aria-labelledby='hero-title'>
+          <HeroMotion className='hero'>
+            <HeroCity />
+            <div className='wrap hero-grid'>
+              <HeroCopy waitlist={waitlist} />
+              <HeroScreens />
             </div>
-          </section>
+          </HeroMotion>
+        </section>
+        {waitlist ? (
+          <Section name='waitlist' band className='waitlist-section'>
+            <SectionHead name='waitlist' eyebrow={t('waitlist.eyebrow')} title={t('waitlist.title')} />
+            <WaitlistForm
+              action='https://example.invalid/brevo'
+              controller='CityTurfer (example)'
+              contactEmail='privacy@example.invalid'
+              locale={locale}
+              headingId='waitlist-title'
+            />
+          </Section>
         ) : null}
-        <TurfDemo />
         <HowItWorks />
         <Audience />
         <Highlights />
-        <YourWeek />
-        <Differs />
         <LocalFirst />
-        <WhereItStands />
         <Faq />
         {waitlist ? <FinalCta /> : null}
       </main>
@@ -79,7 +76,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'The full landing page: hero (with its entrance animation and the prototype badge), the waitlist section, the street-glow demo, how it works, who it is for, highlights, your week, how it differs, local-first, where it stands, the FAQ, the closing call to action (shown only with the waitlist) and the footer. `waitlist` mirrors the NEXT_PUBLIC_WAITLIST_* variables being set. The APK download buttons are hidden for now.',
+          'The full landing page: hero (with its entrance animation), the waitlist section, the street-glow demo, how it works, who it is for, highlights, your week, how it differs, local-first, where it stands, the FAQ, the closing call to action (shown only with the waitlist) and the footer. `waitlist` mirrors the NEXT_PUBLIC_WAITLIST_* variables being set. The APK download buttons are hidden for now.',
       },
     },
   },

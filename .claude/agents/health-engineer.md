@@ -64,6 +64,13 @@ version in `apps/mobile/package.json`, then its source in
 Never report Apple Watch imports, late-arriving routes or the permission sheet's history step as
 working from the Simulator: they need the real iPhone with Watch data.
 
+## When you review
+
+Asked to review a diff rather than build, report only what the `verify-change` skill's "What a
+review reports" allows: blockers and should-fix findings, each with `file:line`, the scenario (input
+or state → wrong result) and the fix. No nits; at most one **Optional** line, never an inline
+comment.
+
 ## Report
 
 - **Changed:** files.

@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-23
+verified: 2026-11-10
 owner: founder
 scope:
   [
@@ -19,8 +19,10 @@ summary:
 
 Every feature in the app, derived on `scope/v0.11.0` (the v0.10.0 release) and kept up to date
 since; v0.12.0 changed the app only in its sign-in wordmark, v0.13.0 the turf week (under
-Dashboard), v0.14.0 so far the Districts screen (under Turf), the sign-in wordmark (Anton, one
-colour) and a lighter secondary text colour. Grouped by where a person meets it: the five tabs, the
+Dashboard), v0.14.0 the Districts screen (under Turf), the sign-in wordmark (Anton, one colour) and
+a lighter secondary text colour, v0.15.0 so far the Current city card and the Daily goal (under
+Dashboard; the goal editor under pushed screens), a share bar on each Districts row and the Apple
+Health import from the moment of connecting. Grouped by where a person meets it: the five tabs, the
 Me drawer, and the screens pushed from them; then what the server and the web portal add. Format
 adapted from empatalk's `FEATURES.md`.
 
@@ -40,8 +42,8 @@ adapted from empatalk's `FEATURES.md`.
 > | SQLite schema         | `apps/mobile/src/platform/migrations.ts`                                 |
 
 Today: <!-- probe:achievements -->20<!-- /probe --> achievements,
-<!-- probe:e2e-flows -->18<!-- /probe --> Maestro flows,
-<!-- probe:migrations -->13<!-- /probe --> migrations.
+<!-- probe:e2e-flows -->19<!-- /probe --> Maestro flows,
+<!-- probe:migrations -->15<!-- /probe --> migrations.
 
 ## 1. Tabs
 
@@ -57,7 +59,17 @@ opens on Dashboard after sign-in.
   (`packages/core/src/contexts/achievements/domain/onboarding.ts`).
 - Live-session banner when a recording is running (taps through to Record).
 - "Start recording" button when there are no activities yet.
+- **Daily goal** (`goals/ui`; plan `docs/plans/daily-goal-2026-11-10.md`): opt-in; until set, a
+  hideable "Set a daily goal" offer. Once set: today's moving time against the goal (10–180 min,
+  step 5) with a bar, counting walks, runs and rides, Apple Health imports included, each in full on
+  the day it started; a live recording counts as it goes. A strip of the last 7 days with ✓ on days
+  the goal was met, and a flame with the streak of consecutive met days. Change opens the editor.
 - This week: distance, moving time, activity count.
+- **Current city** (v0.15.0, #209; `territory/ui/current-city-card.tsx`, `dashboard-city`): the Home
+  City's name, "N of M districts" holding turf with a bar, the turf in the city and the district
+  with the most, and the three districts with the most turf, each with a bar and its share. A tap
+  opens Districts. Without a Home City a "Choose your city" button opens the picker; a city without
+  district data says so; while loading or after a failed read the card is not shown.
 - Recent activities with "See all" → History.
 - Achievements card (unlocked count, next one within reach) → Achievements.
 
@@ -76,10 +88,13 @@ opens on Dashboard after sign-in.
   `territory/infrastructure/district-cities.ts`; modal `apps/mobile/src/app/districts.tsx` →
   `territory/ui/districts-view.tsx`): the Home City split into its OpenStreetMap districts on a dark
   map with the turf, and a list with the km² of turf in each (cells whose centre lies in the
-  district: a first measure). Tap a row or a district on the map to fit the map to it and scroll to
-  its row. The OSM (ODbL) credit sits under the map. Boundaries are bundled
-  (`packages/core/src/districts/data`, from `apps/mobile/tools/gen-districts.mjs`); the screen still
-  says "not available yet" for a city without them. Plan: `docs/plans/districts-2026-10-29.md`.
+  district: a first measure). Since v0.15.0 (#209) each row also has a bar in the turf colour and
+  the district's turf share as a whole percent ("<1%" for a sliver, never "0%" with turf;
+  `territory/ui/district-share.ts`), read by VoiceOver in the row label. Tap a row or a district on
+  the map to fit the map to it and scroll to its row. The OSM (ODbL) credit sits under the map.
+  Boundaries are bundled (`packages/core/src/districts/data`, from
+  `apps/mobile/tools/gen-districts.mjs`); the screen still says "not available yet" for a city
+  without them. Plan: `docs/plans/districts-2026-10-29.md`.
 
 ### Record (`apps/mobile/src/app/(tabs)/record.tsx` → `recording/ui/record-view.tsx`)
 
@@ -107,7 +122,8 @@ opens on Dashboard after sign-in.
 ### Me (`apps/mobile/src/ui-kit/me-menu.tsx`)
 
 The Me tab doesn't open a screen: it slides in a drawer from the right with **Profile**,
-**Account**, **City** and **Info**. (The `(tabs)/me` route only backs the tab and renders Profile.)
+**Account**, **City**, **Daily goal** and **Info**. (The `(tabs)/me` route only backs the tab and
+renders Profile.)
 
 ## 2. Screens pushed from the tabs
 
@@ -120,6 +136,9 @@ The Me tab doesn't open a screen: it slides in a drawer from the right with **Pr
   empty name is refused; `activity-log/ui/rename-activity-dialog.tsx`), delete with confirmation
   (releases its turf). Shows "Saving your activity…" until the outbox has delivered
   `SessionFinished`. Imported workouts say "From Apple Health".
+- **Daily goal** (`apps/mobile/src/app/goal.tsx`, modal): the goal editor, from the Dashboard card
+  or Me › Daily goal. A stepper of 10–180 min in 5-minute steps (30 suggested), Save, and Turn off.
+  A change applies from today; past days keep the goal in force then.
 - **Profile** (`apps/mobile/src/app/profile.tsx`): avatar, name, email, totals (activities,
   distance, turf), unlocked achievements → Achievements.
 - **Achievements** (`apps/mobile/src/app/achievements.tsx`): every achievement with progress and an
@@ -179,8 +198,9 @@ The Me tab doesn't open a screen: it slides in a drawer from the right with **Pr
   Polish); new activities get their default name in the language active when they are created; city
   search finds Polish and English names. Design: `docs/decisions/mobile-i18n-2026-10-23.md`.
 - **Apple Health sync** (iOS): imports new walks, hikes, runs and rides with routes whenever the app
-  comes to the foreground (full history the first time) and saves each new recording to Health with
-  its route. No duplicates: `hs_links` remembers every workout in both directions.
+  comes to the foreground (only workouts that end after Apple Health was connected, since v0.15.0;
+  older ones stay in Health) and saves each new recording to Health with its route. No duplicates:
+  `hs_links` remembers every workout in both directions.
 - **Accounts**: any email gets a 6-digit code from the API
   (`identity/infrastructure/api-auth-gateway.ts`), which creates the account on first use; the two
   local profiles (`mock-auth-gateway.ts`) keep working in every build. The first account sign-in can
@@ -209,11 +229,19 @@ The Me tab doesn't open a screen: it slides in a drawer from the right with **Pr
   #198 (`docs/decisions/brand-light-website-2026-10-29.md`); one page shows what the server holds,
   the backup state, export, delete account and signed-in devices. One `__Host-` session cookie
   through `/api/v1`; public pages stay cookie-free. Design:
-  `docs/decisions/web-portal-2026-10-22.md`.
+  `docs/decisions/web-portal-2026-10-22.md`. Since v0.15.0 (#216) the routes stay under
+  `apps/web/src/app/[locale]/account/` and the components live in
+  `apps/web/src/domains/{portal,auth,account,activities}`
+  (`docs/decisions/web-domains-2026-11-10.md`).
 - **Web portal activity history** (v0.11.0, `apps/web/src/app/[locale]/account/(signed-in)/`): all
   backed-up activities with all-time totals, a type filter and a list by month; one activity's
   stats, splits and route as an inline SVG (gap estimates dashed), no basemap or tile requests.
   Read-only. Plan: `docs/plans/web-portal-history-2026-10-23.md`.
+- **Website** (`apps/web`, static export, en and pl): since v0.15.0 (#213, #215) the homepage has
+  eight blocks (hero, waitlist strip, How it works with the street-glow demo, Who it's for, The app,
+  Privacy, FAQ, final call), section links in the header from 1024 px, scroll-in for section heads
+  and cards (none with reduced motion), black primary buttons and the OpenStreetMap credit on the
+  hero map and in the footer. Components in `apps/web/src/domains/{ui,waitlist,homepage,layout}`.
 - **Not built yet:** the Turf Map on the web (cells, tiles), the phone pulling changes from the
   server, a web delete removing the activity everywhere, the staff admin portal's data views
   (`apps/admin` is a scaffold with staff sign-in only; no `/internal/admin` routes). Planned in
@@ -237,7 +265,8 @@ The Me tab doesn't open a screen: it slides in a drawer from the right with **Pr
 - **System prompts stay English.** iOS permission prompts (location, Health) and the app's language
   in iOS Settings need native strings: a later binary release (decision L10 in
   `docs/decisions/mobile-i18n-2026-10-23.md`). Store listings are English only.
-- **No city coverage.** There is no "% of your city" gauge; what 100 % means is undecided.
+- **No city coverage.** There is no "% of your city" gauge; what 100 % means is undecided. The
+  Current city card counts the districts with turf and shows each district's share, not the city's.
 - **The PoC report (M6) isn't written** and the Q4 performance budget (a year of history on a
   mid-range Android) is unmeasured.
 - **Achievements have no unlock dates or celebration.**

@@ -98,7 +98,9 @@ skills and agents link here instead of restating it. Small means all of:
   outbox, `EventDispatcher`).
 - Code that runs on the server or both sides, and auth, privacy or security code:
   `packages/core/**`, `apps/api/**` (routes, `openapi.json`, `drizzle/` migrations), `apps/admin/**`
-  (its staff access tests need Postgres and are skipped locally), `apps/web/src/api/**`,
+  (its staff access tests need Postgres and are skipped locally), `apps/web/src/lib/api/**`, the
+  portal's domains and routes (`apps/web/src/domains/{portal,auth,account,activities}/**`,
+  `apps/web/src/app/[locale]/account/**`: sign-in, sessions, deletion, export),
   `apps/web/server.mjs`.
 - Native and runtime-fingerprint files: `apps/mobile/app.json`, `apps/mobile/plugins/**`,
   `apps/mobile/modules/**`, `apps/mobile/react-native.config.js`,
@@ -127,8 +129,9 @@ How:
    `--no-verify`).
 4. **Review before the push**, unless the change is only copy or messages (`apps/*/messages/**`) or
    docs: run the `mobile-reviewer` agent on the staged diff (`git diff --staged`) and fix its
-   blocking findings. Name the review in the commit body (`Reviewed-by: mobile-reviewer`) so it can
-   be told from an unreviewed commit later.
+   blocker and should-fix findings (it reports nothing else: "What a review reports" in the
+   `verify-change` skill). Name the review in the commit body (`Reviewed-by: mobile-reviewer`) so it
+   can be told from an unreviewed commit later.
 5. Push: `git push origin HEAD:refs/heads/scope/vX.Y.Z`. Never force: the server rejects a push that
    is not a fast-forward; then `git pull --rebase origin scope/vX.Y.Z` on the local commit, rerun
    the gate, push again.
@@ -139,8 +142,8 @@ The commit lands in the CHANGELOG like any other (`release.yml` builds it from t
 Commits on merge to `main`). It has no PR number: the session log and the scope → release PR body
 list it by short SHA (`docs-engineer` reads them from `git log --first-parent`) and flag any direct
 commit without a review (other than copy, messages or docs) as a blocking item. CI runs on every
-push to `scope/**` (quality and commit naming), but only after the commit has landed, and not at all
-for a push that changes only Markdown or `docs/` (`paths-ignore`): hence the local gate first.
+push to `scope/**` (quality and commit naming), but only after the commit has landed; quality not at
+all for a push that changes only Markdown or `docs/` (`paths-ignore`): hence the local gate first.
 
 Guards: the `pre-bash` hook denies force-pushes, deletes and pushes to `main` in any refspec
 spelling, and asks before a push of another branch onto `release/*` or onto a scope older than the
@@ -191,7 +194,8 @@ hidden). Don't edit it by hand.
   tsc, dependency rules, unit tests, builds, the admin's generated-files check, Node tool tests,
   log, harness, i18n and E2E audits). A throwaway Postgres service backs `apps/admin`'s Payload
   tests.
-- `commitlint` lints every commit in the PR range, not only the last one, and the commits of a push
+- `commitlint` (`commit-naming.yml`, its own workflow without `paths-ignore`, so docs-only PRs are
+  checked too) lints every commit in the PR range, not only the last one, and the commits of a push
   to `scope/**`.
 
 Cost control is kept by: skipping draft PRs, skipping docs-only changes (`paths-ignore`), cancelling

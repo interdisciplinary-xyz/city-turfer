@@ -1,15 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { useLocale } from 'next-intl';
 
-import { AccountSummary } from '@/app/[locale]/account/_portal/account-summary';
-import { BackupStatus } from '@/app/[locale]/account/_portal/backup-status';
-import { DeleteAccount } from '@/app/[locale]/account/_portal/delete-account';
-import { DevicesPanel } from '@/app/[locale]/account/_portal/devices-panel';
-import { ExportPanel } from '@/app/[locale]/account/_portal/export-panel';
-import { PortalFrame } from '@/app/[locale]/account/_portal/portal-frame';
-import { SignInForm } from '@/app/[locale]/account/_portal/sign-in-form';
-import { SignOutButton } from '@/app/[locale]/account/_portal/sign-out-button';
-import { WhatWeStore } from '@/app/[locale]/account/_portal/what-we-store';
+import { AccountSummary, BackupStatus, DeleteAccount, DevicesPanel, ExportPanel, WhatWeStore } from '@/domains/account';
+import { SignInForm } from '@/domains/auth';
+import { PortalFrame, SignOutButton } from '@/domains/portal';
 import type { Locale } from '@/i18n/routing';
 
 import { after, CONSENTS, ERRORS, SESSIONS, USER } from './fixtures';

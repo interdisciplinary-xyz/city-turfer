@@ -1,0 +1,29 @@
+# Open the Daily goal editor: from the Start tab's offer (Set a goal) or card (Change); when the
+# Start tab shows neither (offer hidden, or the goal turned off), from Me > Daily goal.
+# After each tap that opens the editor we wait for the modal (goal-save, optional) so the next
+# `when: notVisible goal-save` does not fall through to the Me menu behind the modal.
+appId: com.turftrack.poc
+---
+- tapOn: { id: 'tab-dashboard' }
+- waitForAnimationToEnd
+- scrollUntilVisible: { element: { id: 'goal-card' }, timeout: 4000, optional: true }
+- runFlow:
+    when: { visible: { id: 'goal-offer-set' } }
+    commands:
+      - tapOn: { id: 'goal-offer-set' }
+      - waitForAnimationToEnd
+      - extendedWaitUntil: { visible: { id: 'goal-save' }, timeout: 2000, optional: true }
+- runFlow:
+    when:
+      notVisible: { id: 'goal-save' }
+      visible: { id: 'goal-edit' }
+    commands:
+      - tapOn: { id: 'goal-edit' }
+      - waitForAnimationToEnd
+      - extendedWaitUntil: { visible: { id: 'goal-save' }, timeout: 2000, optional: true }
+- runFlow:
+    when: { notVisible: { id: 'goal-save' } }
+    commands:
+      - tapOn: { id: 'tab-me' }
+      - tapOn: { id: 'me-menu-goal' }
+- extendedWaitUntil: { visible: { id: 'goal-save' }, timeout: 10000 }

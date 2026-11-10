@@ -1,4 +1,4 @@
-import '../globals.css';
+import '@/app/globals.css';
 
 import { cssVariables, NAME, THEMES, WEB_SCHEME } from '@cityturfer/brand';
 import mark from '@cityturfer/brand/svg/mark.svg';
@@ -8,15 +8,14 @@ import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import type { CSSProperties, ReactNode } from 'react';
 
+import { bodyFont, displayFont, numericFont, taglineFont } from '@/app/fonts';
+// From `ui`, the light base domain (boot scripts, loader, language switch): this layout is shared
+// with the portal, so it never imports the homepage domain (GSAP, icons and their CSS).
+import { LOADER_BOOT_SCRIPT, MOTION_BOOT_SCRIPT, PageLoader } from '@/domains/ui';
 import { routing } from '@/i18n/routing';
+import { SITE_URL } from '@/lib/site-url';
 
-import { bodyFont, displayFont, numericFont, taglineFont } from '../fonts';
-import { SITE_URL } from '../site-url';
-// Deep import on purpose: the folder's index also exports HeroMotion (GSAP), whose client chunk
-// would then load on every page under this layout, the portal's too.
-import { MOTION_BOOT_SCRIPT } from './hero-motion/hero-motion.constants';
 import { OG_IMAGE_HEIGHT, OG_IMAGE_PATH, OG_IMAGE_WIDTH, PORTAL_NAMESPACE } from './layout.constants';
-import { LOADER_BOOT_SCRIPT, PageLoader } from './page-loader';
 
 /** Every language is prerendered by the static export. */
 export const generateStaticParams = () => routing.locales.map((locale) => ({ locale }));
@@ -77,7 +76,7 @@ export default async function LocaleLayout({
   if (process.env.NODE_ENV === 'development') {
     const { shouldRenderDevToolbar } = await import('@interdisciplinary/dev-toolbar/next');
     if (await shouldRenderDevToolbar()) {
-      const { DevToolbarWithApp } = await import('../dev-toolbar-with-app');
+      const { DevToolbarWithApp } = await import('@/app/dev-toolbar-with-app');
       devToolbar = <DevToolbarWithApp locale={locale} />;
     }
   }

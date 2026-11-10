@@ -1,6 +1,7 @@
 # Districts: choose Warsaw as the Home City, open Turf → Districts (modal), see the city's districts
 # holding turf, select the first row and tap it again (back to the city), tap the map's centre (a
-# district is selected, its row brought into view and marked), close the modal. The turf comes from
+# district is selected, its row brought into view and marked), close the modal, then check the
+# Dashboard's Current city card and open Districts from it. The turf comes from
 # Info › Seed demo history, which lays it around the simulator's location (Warsaw, set by run.sh):
 # 06-turf-map has seeded it in a full run; run alone, the flow seeds it itself when the districts
 # read no turf. Rows are found by testID, never by a district name or the sort order. The Home City
@@ -44,6 +45,8 @@ onFlowComplete:
 - extendedWaitUntil:
     { visible: { id: 'districts-summary', text: '.* of turf in [1-9][0-9]* of [0-9]+ districts' }, timeout: 15000 }
 - assertVisible: { id: 'district-osm-r[0-9]+-covered', index: 0, text: '(?!0 m²$).*[1-9].*' }
+# Its progress line reads a share of the district (a sliver of turf reads <1%, never 0%).
+- assertVisible: { id: 'district-osm-r[0-9]+-share', index: 0, text: '(<1|[1-9][0-9]*)%' }
 # The first district row (row ids are `district-osm-r<relation>`; `-covered` ids don't match): a tap
 # selects it, a second goes back to the whole city. Before the map tap, which scrolls the list.
 - tapOn: { id: 'district-osm-r[0-9]+', index: 0 }
@@ -60,3 +63,13 @@ onFlowComplete:
 - tapOn: { id: 'districts-close' }
 - extendedWaitUntil: { notVisible: { id: 'districts-list' }, timeout: 5000 }
 - assertVisible: { id: 'turf-city' }
+# The Dashboard's Current city card: Warsaw, the districts holding turf; a tap opens Districts.
+- tapOn: { id: 'tab-dashboard' }
+- scrollUntilVisible: { element: { id: 'dashboard-city-name' }, timeout: 15000 }
+- assertVisible: { id: 'dashboard-city-name', text: 'Warsaw|Warszawa' }
+- assertVisible: { id: 'dashboard-city-districts', text: '[1-9][0-9]* (of|z) [0-9]+ (districts|dzielnic)' }
+- takeScreenshot: 18-dashboard-city
+- tapOn: { id: 'dashboard-city' }
+- extendedWaitUntil: { visible: { id: 'districts-list' }, timeout: 10000 }
+- tapOn: { id: 'districts-close' }
+- extendedWaitUntil: { notVisible: { id: 'districts-list' }, timeout: 5000 }

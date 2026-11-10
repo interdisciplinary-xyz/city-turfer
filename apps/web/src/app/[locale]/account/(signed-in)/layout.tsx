@@ -3,9 +3,8 @@ import { hasLocale } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 
+import { SessionGate } from '@/domains/portal';
 import { routing } from '@/i18n/routing';
-
-import { SessionGate } from '../_portal/session-gate';
 
 /** Every signed-in page sits behind the client session gate (`GET /v1/me`, 401 → sign-in). */
 export default async function SignedInLayout({

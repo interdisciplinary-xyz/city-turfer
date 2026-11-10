@@ -130,11 +130,15 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   v0.13.0) — turf "this week" counts from local Monday like the This week card (#183), hero headline
   in the muted grey (#185); JS only; the release commit bumps app.json to 0.13.0, so the iPhone's
   0.12.0 build takes no later OTA
-- ✅ [`sessions/v0.14.0.md`](sessions/v0.14.0.md): Session log v0.14.0 (in progress, scope PR 188) —
-  Districts screen from the Turf tab, light website and portal, homepage sections with a street-glow
-  demo, a street map of the visitor's city behind the hero, staff admin under /admin, small changes
-  straight to scope, the release review's fixes (API turf release, district memory, changelog refs);
-  JS only by inspection
+- 🕰️ [`sessions/v0.14.0.md`](sessions/v0.14.0.md): Session log v0.14.0 (released 2026-10-31, tag
+  v0.14.0) — Districts screen from the Turf tab, light website and portal, homepage sections with a
+  street-glow demo, a street map of the visitor's city behind the hero, staff admin under /admin,
+  small changes straight to scope, the release review's fixes; JS only (iOS c9cca32d before the
+  release commit's app.json bump), no OTA published
+- ✅ [`sessions/v0.15.0.md`](sessions/v0.15.0.md): Session log v0.15.0 (in progress, scope PR 208) —
+  Current city card and district share bars, a Daily goal with a streak, Apple Health import only
+  from the moment of connecting, the homepage tidy-up and founder follow-ups, apps/web split into
+  domains, reviews without nits; app JS only by diff (fingerprint not re-measured on the head)
 - 🕰️ [`sessions/v0.2.0.md`](sessions/v0.2.0.md): Session log v0.2.0 through the Me menu and
   achievements; predates the Dashboard, Me drawer and login rename (PRs 23–25) and still says
   app.json is unpinned (pinned in f04bcf3)
@@ -202,7 +206,8 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   14/30-day and 8-hour lifetimes, signed-in devices, and the no-store caching default
 - ✅ [`decisions/apple-health-2026-10-18.md`](decisions/apple-health-2026-10-18.md): v0.4.0
   integrates Apple Health — a Health Sync context imports walks, hikes, runs and rides with routes
-  (full history) as Activities that claim turf, and saves recordings to Health with routes
+  (since connecting; full history until v0.15.0) as Activities that claim turf, and saves recordings
+  to Health with routes
 - ✅ [`decisions/brand-dark-site-2026-10-25.md`](decisions/brand-dark-site-2026-10-25.md): The app
   is the brand's source of truth, so the website, portal, Swagger and Storybook go dark (SITE_SCHEME
   = 'dark', the app's DARK palette, night wordmark, full Ramp); pink buttons keep a night label
@@ -258,6 +263,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`decisions/monorepo-turborepo-2026-10-18.md`](decisions/monorepo-turborepo-2026-10-18.md):
   v0.3.0 moves the repo to a pnpm + Turborepo monorepo — apps/mobile (Expo), apps/web (Next.js
   landing page), packages/brand and packages/config — in three PRs
+- ✅ [`decisions/web-domains-2026-11-10.md`](decisions/web-domains-2026-11-10.md): apps/web/src is
+  split into domains like respect.click and empatalk.app — src/app holds routes only, components
+  live in src/domains/<domain>, src/lib is infrastructure; depcruise checks which domain may import
+  which, ESLint keeps imports between domains on the barrels
 - ✅ [`decisions/web-portal-2026-10-22.md`](decisions/web-portal-2026-10-22.md): Web portal Slice 0
   (trust page) — signed-in pages inside apps/web under /[locale]/account, static export kept,
   browser sessions by cookie (14 days sliding, 30 days absolute, 8 h on a shared computer),
@@ -275,6 +284,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   back-end release (opt-in backup, real accounts, restore to a new phone, delete account, export) —
   founder decisions of 2026-10-22, what feat/backend-sync built (shipped in v0.9.0), what changed
   since, and what is left before testers can use it
+- ✅ [`plans/daily-goal-2026-11-10.md`](plans/daily-goal-2026-11-10.md): The founder's Goals request
+  as one opt-in Daily goal in minutes of moving time a day, shown on the Dashboard tab with the last
+  7 days; team plan from product, architecture and brand.
 - ✅ [`plans/districts-2026-10-29.md`](plans/districts-2026-10-29.md): Plan for the Districts
   screen, a modal opened from the Turf tab that shows the Home City split into its administrative
   districts (OpenStreetMap boundaries bundled with the app) on a map, with a list of districts and
@@ -287,6 +299,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   landing page's sections, top to bottom, presenting CityTurfer as an honest early prototype that
   recruits testers; a street-glow demo built from the Gdańsk demo data, audience, highlights,
   comparison, status, FAQ and a tester call, in six slices
+- 🕰️ [`plans/homepage-tidy-2026-11-01.md`](plans/homepage-tidy-2026-11-01.md): Three-phase tidy-up
+  of the landing page (bugs and one heading system, then fewer sections and one button/card grammar,
+  then polish), approved by the founder on 2026-11-01; built in PR 213, the founder follow-ups in PR
+  215 (v0.15.0)
 - ✅ [`plans/sync-chain-testing-2026-10-22.md`](plans/sync-chain-testing-2026-10-22.md): How to test
   that the four apps stay one system — every scenario starts on the phone (the source of truth) or
   reaches it, and is checked in the API, the web portal and the admin portal as each is built today;
@@ -295,9 +311,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   the web portal's activity history (v0.11.0) — a list of the backed-up walks, runs and rides with
   totals and a type filter, and a detail page with stats, splits and the route shape; read-only, no
   map tiles, numbers from core's formatters shared with the app
-- 🚧 [`plans/web-scroll-motion-2026-10-25.md`](plans/web-scroll-motion-2026-10-25.md): Plan for GSAP
-  ScrollTrigger reveals on the landing page below the hero (waitlist, how it works, your week,
-  local-first, closing call to action) in the brand's glow-in language, with nothing hidden by CSS,
-  a reduced-motion path, no layout shift and one small client bundle
+- ⚠️ [`plans/web-scroll-motion-2026-10-25.md`](plans/web-scroll-motion-2026-10-25.md): Superseded by
+  docs/plans/homepage-tidy-2026-11-01.md phase 3 (scroll-in for heads and cards, PR 213). Was the
+  plan for GSAP ScrollTrigger reveals on the landing page below the hero (waitlist, how it works,
+  your week, local-first, closing call to action) in the brand's glow-in language, with nothing
+  hidden by CSS, a reduced-motion path, no layout shift and one small client bundle
 
 <!-- docs-index:end -->
