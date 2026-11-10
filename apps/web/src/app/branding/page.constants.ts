@@ -243,7 +243,8 @@ export const NAME_RULES: readonly string[] = [
 
 export const TIER_MEANING: Record<TierName, string> = {
   faint: 'Tier 1, gradient start',
-  glowing: 'Tier 2 and the primary accent fill: buttons, selection. Pink text goes through accent-text',
+  glowing:
+    'Tier 2; the accent fill (buttons, selection) in the app and on the dark surfaces (Swagger, Storybook). The website’s primary buttons, the APK button included, are black. Pink text goes through accent-text',
   strong: 'Tier 3, highlights',
   blazing: 'Tier 4, the end of the Ramp, headlines on night',
 };

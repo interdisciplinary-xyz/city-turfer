@@ -466,7 +466,7 @@ export default async function BrandingPage() {
                     min={MIN_CONTRAST.text}
                   />
                   <ContrastRow
-                    name='Night label on glow button (web)'
+                    name='Night label on glow button (Swagger, Storybook)'
                     fg={WEB_ON_ACCENT}
                     bg={ACCENT}
                     min={MIN_CONTRAST.text}
@@ -490,10 +490,16 @@ export default async function BrandingPage() {
                 <tbody>
                   <tr>
                     <th colSpan={4} scope='rowgroup'>
-                      Light: the admin’s light mode only
+                      Light: the website and portal (WEB_SCHEME), the admin’s light mode
                     </th>
                   </tr>
                   <ContrastRow name='Text on light' fg={LIGHT.text} bg={LIGHT.bg} min={MIN_CONTRAST.text} />
+                  <ContrastRow
+                    name='White label on black button (web)'
+                    fg={LIGHT.card}
+                    bg={LIGHT.text}
+                    min={MIN_CONTRAST.text}
+                  />
                   <ContrastRow name='Muted on light card' fg={LIGHT.muted} bg={LIGHT.card} min={MIN_CONTRAST.text} />
                   <ContrastRow
                     name='Link / pink text on light'
