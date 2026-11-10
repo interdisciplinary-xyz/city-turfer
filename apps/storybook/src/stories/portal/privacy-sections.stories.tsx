@@ -1,9 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { useLocale } from 'next-intl';
 
-import { AccountSummary } from '@/app/[locale]/account/_portal/account-summary';
-import { BackupStatus } from '@/app/[locale]/account/_portal/backup-status';
-import { WhatWeStore } from '@/app/[locale]/account/_portal/what-we-store';
+import { AccountSummary, BackupStatus, WhatWeStore } from '@/domains/account';
 
 import { CONSENTS, USER } from './fixtures';
 

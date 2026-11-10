@@ -1,10 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { useEffect } from 'react';
 
-import { HeroCity, HeroCityLine } from '@/app/[locale]/hero-city';
-import { HERO_CITY_IDS, type HeroCityId } from '@/app/[locale]/hero-city/hero-city.constants';
+import { HERO_CITY_IDS, HeroCity, type HeroCityId } from '@/domains/homepage';
 
-/** The hero's map layer and city line on their own, in a hero-sized box, for one city. */
+/** The hero's map layer on its own, in a hero-sized box, for one city. */
 function HeroCityPreview({ city }: { city: HeroCityId }) {
   useEffect(() => {
     document.querySelector('.hero-city')?.setAttribute('data-city', city);
@@ -13,7 +12,6 @@ function HeroCityPreview({ city }: { city: HeroCityId }) {
     <div className='hero' style={{ minHeight: 640 }}>
       <HeroCity />
       <div style={{ flex: 1 }} />
-      <HeroCityLine />
     </div>
   );
 }
@@ -27,7 +25,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'The faint street map behind the hero (docs/plans/hero-city-map-2026-10-28.md). Maps are colourless SVG masks in apps/web/public/city-maps, drawn once from OpenStreetMap by apps/web/tools/gen-city-maps.mjs and coloured by brand variables. On the site the city comes from the time zone before the first paint; "Near me" asks for the location only on click and keeps only the nearest city.',
+          'The faint street map behind the hero (docs/plans/hero-city-map-2026-10-28.md). Maps are colourless SVG masks in apps/web/public/city-maps, drawn once from OpenStreetMap by apps/web/tools/gen-city-maps.mjs and coloured by brand variables. On the site the city comes from the time zone before the first paint (no picker).',
       },
     },
   },

@@ -84,10 +84,10 @@ pnpm --filter @cityturfer/storybook build    # apps/storybook/storybook-static (
 - Static files from `apps/web/public` are served at the same paths.
 - Native-only UI (Turf Map, live recording, Apple Health) gets a `NativePlaceholder` story.
 - **Coverage: every exported component has a story.** That means each `@cityturfer/ui` export, and
-  each website piece in `apps/web/src/app/[locale]/` (plus `Website/Page`, which composes
-  `page.tsx`, a server component that can't render here). Mobile screen components that read the
-  container (`contexts/*/ui/`) are not in Storybook. They join when their presentational part moves
-  to `packages/ui`.
+  each website piece in `apps/web/src/domains/` (plus `Website/Page`, which composes `page.tsx`, a
+  server component that can't render here). Mobile screen components that read the container
+  (`contexts/*/ui/`) are not in Storybook. They join when their presentational part moves to
+  `packages/ui`.
 - **Branded Storybook UI:** `.storybook/theme.ts` (`create()` from `storybook/theming`, colours from
   `@cityturfer/brand`: the `SITE_SCHEME` theme and `ACCENT`, never hex). It's used by `manager.ts`
   for the sidebar and toolbar, and by `parameters.docs.theme` for the docs pages. The sidebar logo

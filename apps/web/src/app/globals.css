@@ -174,20 +174,6 @@ img {
   text-align: center;
 }
 
-/* "Early prototype": a quiet pill, never the turf Ramp (docs/plans/homepage-sections-2026-10-28.md). */
-.hero-badge {
-  display: inline-block;
-  margin: 0 0 16px;
-  padding: 4px 12px;
-  border: 1px solid var(--border-control);
-  border-radius: var(--radius-full);
-  color: var(--muted);
-  font-size: var(--font-label);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: var(--label-tracking);
-  text-transform: uppercase;
-}
-
 /* The hero headline keeps --text like every heading: on the light page --muted reads pale. */
 
 /* Phones: text, buttons, then the screenshots. Desktop: text + phones in one row, buttons under both. */
@@ -316,8 +302,8 @@ h1 {
 }
 
 /* ---------- Buttons: one system ----------
-   Primary: the --glow fill with the --on-glow label (night ink on the pink; the hover mixes toward
-   --blazing, which keeps the label above 4.5:1). Secondary: the same shape as an outline in
+   Primary: a black pill with a white label (--text on --card; the hover lifts the black toward the
+   label colour). The pink stays for the turf itself. Secondary: the same shape as an outline in
    --border-control (3:1 on the page). 48 px tall pills; .btn-compact (40 px) is for tight rows. Every
    call to action and form button uses these (the header's link has its own copy in app-header.css,
    which must work on pages without this file). */
@@ -346,15 +332,17 @@ h1 {
   font-size: var(--font-caption);
 }
 
+/* Primary: black pill with a white label (--text and --card of the light scheme); the pink stays
+   for the turf itself. Hover lifts the black slightly toward the label colour. */
 .btn-primary {
-  background: var(--glow);
-  color: var(--on-glow);
+  background: var(--text);
+  color: var(--card);
 }
 
 .btn-primary:hover,
 .btn-primary:focus-visible {
-  background: color-mix(in srgb, var(--glow) 86%, var(--blazing));
-  color: var(--on-glow);
+  background: color-mix(in srgb, var(--text) 82%, var(--card));
+  color: var(--card);
 }
 
 .btn-secondary {
@@ -465,7 +453,7 @@ h1 {
   border: 0;
 }
 
-/* The waitlist is its own banded section under the hero, centred on every width. */
+/* The waitlist is its own banded section under the hero, centred under its head like every section. */
 
 .waitlist {
   margin: var(--head-gap) auto 0;
@@ -475,7 +463,23 @@ h1 {
 
 .waitlist-row {
   display: flex;
-  gap: 8px;
+}
+
+/* Field and button form one pill: square inner corners where they meet, no gap. */
+.waitlist-row .waitlist-email {
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+}
+
+.waitlist-row .btn {
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+}
+
+/* Keep the focus ring above the neighbour it touches. */
+.waitlist-row > :focus-visible {
+  position: relative;
+  z-index: 1;
 }
 
 .waitlist-email {
@@ -494,10 +498,15 @@ h1 {
   color: var(--muted);
 }
 
-.waitlist-email:focus-visible,
 .waitlist-consent input:focus-visible {
   outline: 2px solid var(--accent-text);
   outline-offset: 2px;
+}
+
+/* Inset, so the ring shows on all four sides where the field meets the button. */
+.waitlist-email:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: -4px;
 }
 
 .btn:disabled {
@@ -511,7 +520,7 @@ h1 {
   text-align: left;
   gap: 10px;
   align-items: flex-start;
-  margin-top: 12px;
+  margin-top: var(--space-xxl);
   color: var(--muted);
   font-size: 0.88rem;
   line-height: 1.45;
@@ -528,7 +537,7 @@ h1 {
 
 .waitlist-privacy,
 .waitlist-error {
-  margin: 10px 0 0;
+  margin: var(--space-lg) 0 0;
   font-size: 0.78rem;
   line-height: 1.45;
   color: var(--muted);
@@ -546,9 +555,15 @@ h1 {
   background: var(--card);
 }
 
+/* Very narrow phones stack them again, each a full pill. */
 @media (max-width: 380px) {
   .waitlist-row {
     flex-direction: column;
+    gap: 8px;
+  }
+  .waitlist-row .waitlist-email,
+  .waitlist-row .btn {
+    border-radius: 999px;
   }
 }
 

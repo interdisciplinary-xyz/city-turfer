@@ -24,8 +24,8 @@ the author's fix gets a second pair of eyes.
   `gps-tracking`, `route-metrics`, `route-storage` (recording, stats, SQLite), `turf-territory`
   (turf, maps, Home City), `apple-health`, `design-system` and `brand-system` (`packages/ui`,
   tokens, copy), `mobile-testing` (tests, Maestro), `api-design` (`apps/api`), `web-motion` (its
-  "Site ground rules" for `apps/web`), `web-portal` (signed-in pages, `apps/web/src/api/`, portal
-  E2E), `ai-harness` (`.claude/`, `tools/`).
+  "Site ground rules" for `apps/web`), `web-portal` (signed-in pages, `apps/web/src/lib/api/`,
+  portal E2E), `ai-harness` (`.claude/`, `tools/`).
 - The `verify-change` skill, to name the check that proves each fix.
 
 ## How you work

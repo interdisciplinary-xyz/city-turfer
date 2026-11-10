@@ -1,8 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { useLayoutEffect } from 'react';
 
-import { PageLoader } from '@/app/[locale]/page-loader';
-import { LOADER_ACTIVE_CLASS, PAGE_LOADED_CLASS } from '@/app/[locale]/page-loader/page-loader.constants';
+import { LOADER_ACTIVE_CLASS, PAGE_LOADED_CLASS, PageLoader } from '@/domains/ui';
 
 /** The overlay, with `loader-active` (slow page) and `loaded` on <html> set as the site's boot script does. */
 function PageLoaderDemo({ loaded }: { loaded: boolean }) {

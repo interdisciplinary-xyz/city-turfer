@@ -1,7 +1,7 @@
 /**
  * The `local-rules` ESLint plugin: the shared, app-agnostic hand-written rules
  * (`enforce-types-in-constants`, `no-duplicate-imports`,
- * `enforce-tailwind-arbitrary`, `no-raw-text`).
+ * `enforce-tailwind-arbitrary`, `no-raw-text`, `no-deep-domain-import`).
  *
  * Register it under the `local-rules` key — every rule id (config +
  * `eslint-disable` comments) is `local-rules/<name>`:
@@ -11,8 +11,9 @@
  * The `base` preset registers it for you. A consumer with rules of its own
  * (an app's layout-specific rules) passes them as `base({ localRules })`;
  * they are merged into the same `local-rules` namespace, so their ids stay
- * `local-rules/<name>`. `enforce-tailwind-arbitrary` and `no-raw-text` ship
- * but no preset enables them: a consumer opts in.
+ * `local-rules/<name>`. `enforce-tailwind-arbitrary`, `no-raw-text` and
+ * `no-deep-domain-import` ship but no preset enables them: a consumer opts in
+ * (CityTurfer's apps/web enables `no-deep-domain-import` with its `logic` entry).
  */
 
 import rules from './rules/index.js';

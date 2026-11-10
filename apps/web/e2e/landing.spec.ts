@@ -25,15 +25,16 @@ for (const path of ['/en', '/pl']) {
     expect(await page.evaluate(() => document.cookie)).toBe('');
   });
 
-  test(`landing ${path}: every section, the prototype badge and a footer`, async ({ page }) => {
+  test(`landing ${path}: every section and a footer`, async ({ page }) => {
     await page.goto(path);
-    await expect(page.locator('.hero-badge')).toBeVisible();
     for (const anchor of ANCHORS) {
       await expect(page.locator(`section#${anchor}[aria-labelledby="${anchor}-title"] h2#${anchor}-title`)).toHaveCount(
         1
       );
-      await expect(page.locator(`section#${anchor} .section-eyebrow`)).toHaveCount(1);
+      await expect(page.locator(`section#${anchor} > .wrap > .section-head .section-eyebrow`)).toHaveCount(1);
     }
+    // The street demo inside How it works uses the same heading, as an h3.
+    await expect(page.locator('section#how .turf-demo .section-head h3#demo-title.section-title')).toHaveCount(1);
     await expect(page.locator('section#top[aria-labelledby="hero-title"] h1#hero-title')).toHaveCount(1);
     await expect(page.locator('main#main')).toHaveAttribute('tabindex', '-1');
     await expect(page.locator('h2#cta-title')).toHaveCount(1);
@@ -41,6 +42,8 @@ for (const path of ['/en', '/pl']) {
     await expect(page.locator('main > section')).toHaveCount(8);
     await expect(page.locator('h1')).toHaveCount(1);
     await expect(page.locator('footer.site-footer')).toBeVisible();
+    // The hero's street map is OpenStreetMap data: the credit lives in the footer.
+    await expect(page.locator('footer.site-footer a[href="https://www.openstreetmap.org/copyright"]')).toHaveCount(1);
   });
 
   for (const width of [320, 390, 768]) {
@@ -196,15 +199,13 @@ test('phones get no section links, only the logo, the call to action and the lan
   await expect(page.getByRole('link', { name: 'Join', exact: true })).toBeVisible();
 });
 
-// A calm hero: on a 390 x 844 phone the badge, the tagline, the lede and the main button all sit on the first screen.
+// A calm hero: on a 390 x 844 phone the tagline, the lede and the main button all sit on the first screen.
 for (const path of ['/en', '/pl']) {
-  test(`landing ${path}: badge, tagline, lede and the waitlist button fit the first screen at 390 x 844`, async ({
-    page,
-  }) => {
+  test(`landing ${path}: tagline, lede and the waitlist button fit the first screen at 390 x 844`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(path);
-    for (const selector of ['.hero-badge', 'h1', '.hero-copy .lede', '.hero-actions .btn-primary']) {
+    for (const selector of ['h1', '.hero-copy .lede', '.hero-actions .btn-primary']) {
       const box = await page.locator(selector).boundingBox();
       expect(box?.y, selector).toBeGreaterThan(0);
       expect((box?.y ?? 0) + (box?.height ?? 0), selector).toBeLessThanOrEqual(844);
@@ -276,7 +277,7 @@ for (const path of ['/en', '/pl']) {
 }
 
 // The hero's street map (docs/plans/hero-city-map-2026-10-28.md): the city follows the time zone,
-// only that city's maps load, and "Near me" uses the location only after a click.
+// only that city's maps load (no picker, no location request).
 const mapRequests = (urls: string[]) =>
   urls.filter((url) => new URL(url).pathname.startsWith('/city-maps/')).map((url) => new URL(url).pathname);
 
@@ -291,7 +292,6 @@ for (const [timezoneId, city] of [
       await page.goto('/en');
       await page.waitForLoadState('networkidle');
       await expect(page.locator('.hero-city')).toHaveAttribute('data-city', city);
-      await expect(page.getByLabel('City on the map')).toHaveValue(city);
       expect(mapRequests(network.urls).sort()).toEqual([
         `/city-maps/${city}-streets.svg`,
         `/city-maps/${city}-water.svg`,
@@ -299,31 +299,6 @@ for (const [timezoneId, city] of [
     });
   });
 }
-
-test('hero map: picking a city swaps the map', async ({ page }) => {
-  await page.goto('/pl');
-  await page.getByLabel('Miasto na mapie').selectOption('pl-krakow');
-  await expect(page.locator('.hero-city')).toHaveAttribute('data-city', 'pl-krakow');
-});
-
-test.describe('hero map: Near me', () => {
-  test.use({ timezoneId: 'Europe/Warsaw', permissions: ['geolocation'] });
-
-  test('switches to the nearest city', async ({ page, context }) => {
-    await context.setGeolocation({ latitude: 52.25, longitude: 21.05 });
-    await page.goto('/en');
-    await page.getByRole('button', { name: 'Near me' }).click();
-    await expect(page.locator('.hero-city')).toHaveAttribute('data-city', 'pl-warsaw');
-  });
-
-  test('keeps the guess when no city is close', async ({ page, context }) => {
-    await context.setGeolocation({ latitude: 53.43, longitude: 14.55 });
-    await page.goto('/en');
-    await page.getByRole('button', { name: 'Near me' }).click();
-    await expect(page.getByRole('status')).toContainText('No map near you yet');
-    await expect(page.locator('.hero-city')).toHaveAttribute('data-city', 'pl-gdansk');
-  });
-});
 
 test('street demo: the step buttons pick a tier, Four months shows the city', async ({ page }) => {
   await page.goto('/en');

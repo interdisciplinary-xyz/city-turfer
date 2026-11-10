@@ -2,9 +2,8 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Suspense } from 'react';
 
+import { ActivityPage } from '@/domains/activities';
 import type { Locale } from '@/i18n/routing';
-
-import { ActivityPage } from '../../_portal/activity-page';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;

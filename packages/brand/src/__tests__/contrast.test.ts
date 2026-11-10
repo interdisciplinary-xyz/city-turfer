@@ -82,6 +82,16 @@ const PAIRS: Pair[] = [
   { name: 'web --accent-text on --bg', fg: WEB['--accent-text'], bg: WEB['--bg'], min: MIN_CONTRAST.text },
   { name: 'web --muted on --bg', fg: WEB['--muted'], bg: WEB['--bg'], min: MIN_CONTRAST.text },
   { name: 'web --text on --bg', fg: WEB['--text'], bg: WEB['--bg'], min: MIN_CONTRAST.text },
+  // The website's primary button (.btn-primary, header CTA): a --card label on a --text fill, and on
+  // its hover mix (--text 82% toward --card); the fill must also stand out from the page.
+  { name: 'web primary button --card on --text', fg: WEB['--card'], bg: WEB['--text'], min: MIN_CONTRAST.text },
+  {
+    name: 'web primary button --card on its hover mix',
+    fg: WEB['--card'],
+    bg: mixSrgb(WEB['--text'], WEB['--card'], 0.82),
+    min: MIN_CONTRAST.text,
+  },
+  { name: 'web primary button fill --text on --bg', fg: WEB['--text'], bg: WEB['--bg'], min: MIN_CONTRAST.ui },
   // The website's secondary button (.btn-secondary): an outline in --border-control, a --text label, on the page or a card.
   {
     name: 'web secondary button edge --border-control on --bg',

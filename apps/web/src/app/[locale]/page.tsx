@@ -1,17 +1,23 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
+import {
+  Audience,
+  Faq,
+  FinalCta,
+  HeroCity,
+  HeroCopy,
+  HeroMotion,
+  HeroScreens,
+  Highlights,
+  HowItWorks,
+  LocalFirst,
+  RevealMotion,
+  Section,
+  SectionHead,
+} from '@/domains/homepage';
+import { AppHeader, SiteFooter } from '@/domains/layout';
+import { WAITLIST, WaitlistForm } from '@/domains/waitlist';
 import type { Locale } from '@/i18n/routing';
-
-import { WAITLIST } from '../waitlist-config';
-import { AppHeader } from './app-header';
-import { HeroCity, HeroCityLine } from './hero-city';
-import { HeroCopy } from './hero-copy';
-import { HeroMotion } from './hero-motion';
-import { HeroScreens } from './hero-screens';
-import { Audience, Faq, FinalCta, Highlights, HowItWorks, LocalFirst, Section, SectionHead } from './home-sections';
-import { RevealMotion } from './reveal-motion';
-import { SiteFooter } from './site-footer';
-import { WaitlistForm } from './waitlist-form';
 
 export default async function Home({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;
@@ -34,12 +40,11 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
               <HeroScreens />
               {/* No download buttons for now: the waitlist comes first (StoreButtons stays for later). */}
             </div>
-            <HeroCityLine />
           </HeroMotion>
         </section>
         {WAITLIST ? (
           <Section name='waitlist' band className='waitlist-section'>
-            <SectionHead name='waitlist' eyebrow={t('waitlist.eyebrow')} title={t('waitlist.title')} align='center' />
+            <SectionHead name='waitlist' eyebrow={t('waitlist.eyebrow')} title={t('waitlist.title')} />
             <WaitlistForm
               action={WAITLIST.url}
               controller={WAITLIST.controller}

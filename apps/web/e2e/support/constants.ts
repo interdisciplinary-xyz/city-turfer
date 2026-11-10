@@ -17,7 +17,7 @@ export const E2E_EMAIL_DOMAIN = 'e2e.cityturfer.test';
  */
 export const E2E_CLIENT_IP = '203.0.113.10';
 
-/** The site's version header on unsafe API calls (src/api/client.ts). */
+/** The site's version header on unsafe API calls (src/lib/api/client.ts). */
 export const CLIENT_HEADER = 'CityTurfer-Client';
 
 const spec = JSON.parse(readFileSync(path.join(__dirname, '../../../api/openapi.json'), 'utf8')) as {

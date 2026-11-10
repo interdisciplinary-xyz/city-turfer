@@ -67,3 +67,20 @@ active scope.
   `docs/decisions/brand-light-website-2026-10-29.md` is unchanged.
 - One Polish call to action: "Zapisz się na listę", short "Zapisz się".
 - No portal sign-in link in the footer. This stays an open founder decision.
+
+## Founder follow-ups (2026-11-05)
+
+Asked for on the running page after the three phases merged:
+
+- primary buttons (hero, header, waitlist, closing call to action) are black with white text
+  (`--text` on `--card`), not pink;
+- the "Early prototype" badge is gone from the hero (reverses D1 of
+  `docs/plans/homepage-sections-2026-10-28.md`; the "An early prototype, honestly" card stays);
+- the city line under the hero is gone (see `docs/plans/hero-city-map-2026-10-28.md`); the
+  OpenStreetMap credit is in the footer;
+- the waitlist field and button form one pill (no gap, square inner corners), with more space before
+  the consent box and the privacy note;
+- the How it works step cards open with their title;
+- one section heading everywhere below the hero (`SectionHead`, always centred, no variants); the
+  waitlist form, the closing call to action and the demo's step buttons are centred under it; the
+  street demo uses it too, as an h3 with the eyebrow "See it glow".
