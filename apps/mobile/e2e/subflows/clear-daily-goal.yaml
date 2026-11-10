@@ -1,0 +1,21 @@
+# Turn the daily goal off from wherever the app is (editor open, Start tab, or the Me drawer), so
+# later flows start without one. Safe when none is set: the editor then has no "off" button.
+appId: com.turftrack.poc
+---
+- runFlow:
+    when: { visible: { id: 'goal-off' } }
+    commands:
+      - tapOn: { id: 'goal-off' }
+      - extendedWaitUntil: { notVisible: { id: 'goal-save' }, timeout: 5000 }
+- runFlow:
+    when: { visible: { id: 'goal-save' } }
+    commands:
+      - tapOn: { id: 'goal-close' }
+      - waitForAnimationToEnd
+- runFlow:
+    when: { visible: { id: 'goal-edit' } }
+    commands:
+      - tapOn: { id: 'goal-edit' }
+      - extendedWaitUntil: { visible: { id: 'goal-off' }, timeout: 5000 }
+      - tapOn: { id: 'goal-off' }
+      - extendedWaitUntil: { notVisible: { id: 'goal-save' }, timeout: 5000 }

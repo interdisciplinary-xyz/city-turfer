@@ -1,0 +1,23 @@
+# Open the Daily goal editor: from the Start tab's offer (Set a goal) or card (Change); when the
+# Start tab shows neither (offer hidden, or the goal turned off), from Me > Daily goal.
+appId: com.turftrack.poc
+---
+- tapOn: { id: 'tab-dashboard' }
+- waitForAnimationToEnd
+- scrollUntilVisible: { element: { id: 'goal-card' }, timeout: 4000, optional: true }
+- runFlow:
+    when: { visible: { id: 'goal-offer-set' } }
+    commands:
+      - tapOn: { id: 'goal-offer-set' }
+- runFlow:
+    when:
+      notVisible: { id: 'goal-save' }
+      visible: { id: 'goal-edit' }
+    commands:
+      - tapOn: { id: 'goal-edit' }
+- runFlow:
+    when: { notVisible: { id: 'goal-save' } }
+    commands:
+      - tapOn: { id: 'tab-me' }
+      - tapOn: { id: 'me-menu-goal' }
+- extendedWaitUntil: { visible: { id: 'goal-save' }, timeout: 10000 }
