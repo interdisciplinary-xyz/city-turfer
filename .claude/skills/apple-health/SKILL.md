@@ -32,8 +32,18 @@ description: >-
   opened.
 - **When**: `c.syncHealth()` (flush exports, then import) on foreground launch and whenever the app
   becomes active, reading from the saved anchor. The Apple Health card on the **Info screen** has
-  "Import now", which scans the whole history (`full: true`). Never headless: HealthKit data is
-  locked while the phone is.
+  "Import now", which scans Apple Health again from the start (`full: true`). Never headless:
+  HealthKit data is locked while the phone is.
+- **Start date** (since v0.15.0): only workouts that end at or after `hs_state.connected_at` are
+  imported (`endsAfterConnect`); a workout still going on at connect is imported. Older ones are
+  counted as `beforeStart` ("N from before you connected, left in Apple Health") and stay in Health,
+  even on Import now; one already linked in `hs_links` (imported, perhaps deleted since) counts as
+  `skipped`, not `beforeStart`. Pending imports that ended before the start are dropped. Disconnect
+  → Connect moves the start to the new connect time: workouts done while disconnected stay in Apple
+  Health.
+- **Last import report**: a sync since the anchor that found nothing to tell keeps the previous
+  `lastImport` (`lastImportAfter`), so Import now's `beforeStart` count stays on the card; a full
+  scan always replaces it.
 
 ## Rules that keep it correct
 
@@ -66,9 +76,11 @@ description: >-
 ## HealthKit facts that shape the UX
 
 - **Read permission is invisible**: HealthKit never says whether reading was allowed. "0 workouts"
-  can mean "denied". The card shows a hint pointing to Health › Sharing › Apps › CityTurfer.
-- **iOS 26 asks how much history** to share ("Past 30 Days" vs "All Recorded Data"). The card tells
-  people to pick All Recorded Data; the Maestro flow does.
+  can mean "denied". When the last report found nothing at all (no imports, duplicates or
+  `beforeStart`), the card shows a hint pointing to Health › Profile › Apps › CityTurfer.
+- **iOS 26 asks how much history** to share ("Past 30 Days" vs "All Recorded Data"). Any choice
+  works: only workouts from connect onwards are imported. The card says so ("Workouts are brought in
+  from the moment you connect").
 - The sheet appears once. Later changes happen only in the Health app.
 - Permission types: read Workouts + Workout Routes; write those plus Walking + Running Distance and
   Cycling Distance.

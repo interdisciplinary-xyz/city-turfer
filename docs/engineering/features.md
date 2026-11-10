@@ -188,8 +188,9 @@ The Me tab doesn't open a screen: it slides in a drawer from the right with **Pr
   Polish); new activities get their default name in the language active when they are created; city
   search finds Polish and English names. Design: `docs/decisions/mobile-i18n-2026-10-23.md`.
 - **Apple Health sync** (iOS): imports new walks, hikes, runs and rides with routes whenever the app
-  comes to the foreground (full history the first time) and saves each new recording to Health with
-  its route. No duplicates: `hs_links` remembers every workout in both directions.
+  comes to the foreground (only workouts that end after Apple Health was connected, since v0.15.0;
+  older ones stay in Health) and saves each new recording to Health with its route. No duplicates:
+  `hs_links` remembers every workout in both directions.
 - **Accounts**: any email gets a 6-digit code from the API
   (`identity/infrastructure/api-auth-gateway.ts`), which creates the account on first use; the two
   local profiles (`mock-auth-gateway.ts`) keep working in every build. The first account sign-in can
