@@ -1,17 +1,25 @@
-# Turn the daily goal off from wherever the app is (editor open, Start tab, or the Me drawer), so
-# later flows start without one. Safe when none is set: the editor then has no "off" button.
+# Turn the daily goal off from wherever the app is (editor open, any tab, or the Me drawer), so
+# later flows start without one: an open editor is closed first, then the Start tab is opened (its
+# tab bar is covered by an open Me drawer, which the optional tap dismisses). Safe when none is
+# set: the editor then has no "off" button.
 appId: com.turftrack.poc
 ---
 - runFlow:
-    when: { visible: { id: 'goal-off' } }
+    when: { visible: { id: 'goal-save' } }
     commands:
-      - tapOn: { id: 'goal-off' }
-      - extendedWaitUntil: { notVisible: { id: 'goal-save' }, timeout: 5000 }
+      - runFlow:
+          when: { visible: { id: 'goal-off' } }
+          commands:
+            - tapOn: { id: 'goal-off' }
+            - extendedWaitUntil: { notVisible: { id: 'goal-save' }, timeout: 5000 }
 - runFlow:
     when: { visible: { id: 'goal-save' } }
     commands:
       - tapOn: { id: 'goal-close' }
       - waitForAnimationToEnd
+- tapOn: { id: 'tab-dashboard', optional: true }
+- waitForAnimationToEnd
+- scrollUntilVisible: { element: { id: 'goal-edit' }, timeout: 4000, optional: true }
 - runFlow:
     when: { visible: { id: 'goal-edit' } }
     commands:

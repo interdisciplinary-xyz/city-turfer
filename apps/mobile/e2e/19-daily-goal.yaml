@@ -17,7 +17,7 @@ onFlowComplete:
       - tapOn: { id: 'goal-off' }
       - extendedWaitUntil: { notVisible: { id: 'goal-save' }, timeout: 5000 }
       - runFlow: subflows/open-goal-editor.yaml
-- assertVisible: { id: 'goal-value' }
+- extendedWaitUntil: { visible: { id: 'goal-value' }, timeout: 5000 }
 - tapOn: { id: 'goal-plus' }
 - tapOn: { id: 'goal-plus' }
 - assertVisible: { id: 'goal-value' }
@@ -25,13 +25,17 @@ onFlowComplete:
 - tapOn: { id: 'goal-save' }
 - extendedWaitUntil: { notVisible: { id: 'goal-save' }, timeout: 5000 }
 - tapOn: { id: 'tab-dashboard' }
+- scrollUntilVisible: { element: { id: 'goal-streak' }, timeout: 15000 }
+- assertVisible: { id: 'goal-streak' }
 - scrollUntilVisible: { element: { id: 'goal-today' }, timeout: 15000 }
 - assertVisible: { id: 'goal-today', text: '.*of 40 min.*' }
+- scrollUntilVisible: { element: { id: 'goal-strip' }, timeout: 15000 }
 - assertVisible: { id: 'goal-strip' }
+- scrollUntilVisible: { element: { id: 'goal-week-summary' }, timeout: 15000 }
 - assertVisible: { id: 'goal-week-summary' }
-- assertVisible: { id: 'goal-streak' }
 - takeScreenshot: 19-goal-card
 # Change it from the card: one step down.
+- scrollUntilVisible: { element: { id: 'goal-edit' }, timeout: 15000 }
 - tapOn: { id: 'goal-edit' }
 - extendedWaitUntil: { visible: { id: 'goal-save' }, timeout: 10000 }
 - assertVisible: { id: 'goal-value' }
