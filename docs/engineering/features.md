@@ -41,8 +41,8 @@ empatalk's `FEATURES.md`.
 > | SQLite schema         | `apps/mobile/src/platform/migrations.ts`                                 |
 
 Today: <!-- probe:achievements -->20<!-- /probe --> achievements,
-<!-- probe:e2e-flows -->18<!-- /probe --> Maestro flows,
-<!-- probe:migrations -->13<!-- /probe --> migrations.
+<!-- probe:e2e-flows -->19<!-- /probe --> Maestro flows,
+<!-- probe:migrations -->15<!-- /probe --> migrations.
 
 ## 1. Tabs
 

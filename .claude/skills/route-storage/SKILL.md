@@ -51,6 +51,12 @@ Tables are prefixed by owning context; a context never reads another context's t
 - **8** Cloud Backup: `cb_state` (settings and sync cursor; the device token is in secure store, not
   here) and `cb_activities` (per-Activity backup status and queued op, no FK so a delete can still
   be sent).
+- **9–13** Activity Log `time_zone`, `renamed_at`; Cloud Backup account key, rename queue and
+  restore tables; Territory index `idx_ter_claim_cells_cell`.
+- **14** Health Sync `hs_state.show_history` (the older-workouts switch).
+- **15** Goals: `goal_daily_targets` (the Daily goal's history, one row per local day
+  `effective_from`, `minutes` 0 = off; no coordinates, not backed up) and `goal_state` (one row,
+  `offer_hidden`).
 
 Rules:
 
