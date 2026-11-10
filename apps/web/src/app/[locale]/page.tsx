@@ -4,7 +4,7 @@ import type { Locale } from '@/i18n/routing';
 
 import { WAITLIST } from '../waitlist-config';
 import { AppHeader } from './app-header';
-import { HeroCity, HeroCityLine } from './hero-city';
+import { HeroCity } from './hero-city';
 import { HeroCopy } from './hero-copy';
 import { HeroMotion } from './hero-motion';
 import { HeroScreens } from './hero-screens';
@@ -34,12 +34,11 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
               <HeroScreens />
               {/* No download buttons for now: the waitlist comes first (StoreButtons stays for later). */}
             </div>
-            <HeroCityLine />
           </HeroMotion>
         </section>
         {WAITLIST ? (
           <Section name='waitlist' band className='waitlist-section'>
-            <SectionHead name='waitlist' eyebrow={t('waitlist.eyebrow')} title={t('waitlist.title')} align='center' />
+            <SectionHead name='waitlist' eyebrow={t('waitlist.eyebrow')} title={t('waitlist.title')} />
             <WaitlistForm
               action={WAITLIST.url}
               controller={WAITLIST.controller}

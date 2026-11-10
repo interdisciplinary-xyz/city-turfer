@@ -21,27 +21,6 @@
     "taglineLead": "Surfuj po mieście.",
     "taglineRamp": "Ulice są Twoje.",
     "lede": "Spacery, bieganie albo jazda na rowerze, solo lub z psem — każda ulica, którą pokonasz, staje się Twoim terytorium. Wracaj i patrz, jak świeci coraz jaśniej.",
-    "map": {
-      "streetsOf": "Ulice:",
-      "chooseCity": "Miasto na mapie",
-      "nearMe": "W pobliżu",
-      "locating": "Szukamy Twojego miasta…",
-      "tooFar": "Nie mamy jeszcze mapy w Twojej okolicy, więc zostaje ta. Kolejne miasta w drodze.",
-      "unavailable": "Lokalizacja jest niedostępna. Wybierz miasto z listy.",
-      "credit": "© współtwórcy OpenStreetMap",
-      "cities": {
-        "pl-gdansk": "Gdańsk",
-        "pl-warsaw": "Warszawa",
-        "pl-krakow": "Kraków",
-        "pl-wroclaw": "Wrocław",
-        "pl-poznan": "Poznań",
-        "de-berlin": "Berlin",
-        "gb-london": "Londyn",
-        "cz-prague": "Praga",
-        "lt-vilnius": "Wilno"
-      }
-    },
-    "badge": "Wczesny prototyp",
     "join": "Zapisz się na listę",
     "seeGlow": "Zobacz, jak świeci"
   },
@@ -160,6 +139,7 @@
       }
     },
     "demo": {
+      "eyebrow": "Zobacz, jak świeci",
       "title": "Jedna ulica, potem całe miasto",
       "body": "Jedna ulica na Głównym Mieście w Gdańsku, wizyta po wizycie. A potem całe miasto po czterech miesiącach spacerów, biegów i przejażdżek.",
       "step": "{visits, plural, one {# raz} few {# razy} many {# razy} other {# razy}} · {tier}",
@@ -272,7 +252,8 @@
     "contact": "Kontakt:",
     "rights": "© {year} CityTurfer",
     "navLabel": "Linki w stopce",
-    "noCookies": "Ta strona nie zapisuje plików cookie i nie ładuje trackerów."
+    "noCookies": "Ta strona nie zapisuje plików cookie i nie ładuje trackerów.",
+    "mapCredit": "© współtwórcy OpenStreetMap"
   },
   "language": {
     "label": "Język",

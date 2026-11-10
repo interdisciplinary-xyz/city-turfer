@@ -1,8 +1,6 @@
 import './hero-city.css';
 
-import { heroCityOptions } from './city-options';
 import { CITY_BOOT_SCRIPT, DEFAULT_HERO_CITY } from './hero-city.constants';
-import { HeroMapPicker } from './hero-map-picker';
 
 /**
  * The faint street map behind the hero. Renders Gdańsk; the inline script switches to the
@@ -20,9 +18,4 @@ export function HeroCity() {
       <script dangerouslySetInnerHTML={{ __html: CITY_BOOT_SCRIPT }} />
     </div>
   );
-}
-
-/** The line under the hero: which city, "Near me" and the OpenStreetMap credit. */
-export function HeroCityLine() {
-  return <HeroMapPicker cities={heroCityOptions()} />;
 }

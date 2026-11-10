@@ -101,8 +101,8 @@
   min-height: 40px;
   padding: 6px 16px;
   border-radius: var(--radius-full);
-  background: var(--glow);
-  color: var(--on-glow);
+  background: var(--text);
+  color: var(--card);
   font-size: var(--font-caption);
   font-weight: var(--font-weight-bold);
   text-decoration: none;
@@ -111,8 +111,8 @@
 
 .app-header .app-header-link:hover,
 .app-header .app-header-link:focus-visible {
-  background: color-mix(in srgb, var(--glow) 86%, var(--blazing));
-  color: var(--on-glow);
+  background: color-mix(in srgb, var(--text) 82%, var(--card));
+  color: var(--card);
 }
 
 /* Section links (the landing page): from 1024 px only, between the logo and the actions. */
@@ -219,7 +219,7 @@
 }
 
 /* The current language: an outline and the text colour, not a fill: the call to action is the only
-   pink pill in the bar. */
+   filled pill in the bar. */
 .lang [aria-current],
 .app-header .lang [aria-current] {
   background: transparent;

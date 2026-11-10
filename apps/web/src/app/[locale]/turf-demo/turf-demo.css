@@ -11,18 +11,6 @@
   margin: 0 auto;
 }
 
-/* The sub-claim of the demo: smaller than a section claim, same display face. */
-.demo-title {
-  margin: 0;
-  font-family: var(--display);
-  font-weight: normal;
-  font-size: clamp(1.75rem, 3.6vw, 2.25rem);
-  line-height: 0.95;
-  letter-spacing: var(--display-tracking);
-  text-transform: var(--display-case);
-  text-wrap: balance;
-}
-
 .turf-demo-panel {
   /* The night panel: the dark app scheme (inline variables) holds the map and its controls; the
      caption below stays on the light page with the page's own variables. */
@@ -102,16 +90,17 @@
 }
 
 /* Step buttons: chips with the tier's colour as a swatch; the city step has none. */
+/* Centred under the demo's heading, like the heading itself. */
 .turf-demo-steps {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: var(--space-sm);
   margin-top: var(--space-xxl);
 }
 
 .turf-demo-steps + .home-caption {
   margin: var(--space-lg) 0 0;
-  text-align: left;
 }
 
 .turf-demo-step {

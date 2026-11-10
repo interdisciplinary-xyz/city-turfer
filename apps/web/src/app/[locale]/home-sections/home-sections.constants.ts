@@ -126,7 +126,10 @@ export type SectionHeadProps = {
   title: string;
   /** One sentence under the claim. */
   lede?: ReactNode;
-  align?: 'start' | 'center';
+  /** 2 for a section (default); 3 for a block inside one, such as the street demo. */
+  level?: 2 | 3;
+  /** The heading's id when it is not `<name>-title` (a block inside a section). */
+  titleId?: string;
 };
 
 /** The closing call to action's trust row, in order (keys under home.cta.trust): all true today. */

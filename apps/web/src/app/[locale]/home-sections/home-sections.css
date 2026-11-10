@@ -5,10 +5,12 @@
    Card: radius-card, padding lg, hairline border. ActivityRow: radius-control, padding md. Stat:
    numeric face, tabular figures, uppercase label with label tracking. TurfLegend: a stepped Ramp. */
 
-/* The page's rhythm, one scale: sections sit 72 px apart on phones and 128 px on desktop (each pads half
-   of that), the heading block is 40 px from its content, the eyebrow 8 px from its title. Every other
-   section is a faint band (--band: a touch deeper than the page, the white cards stand out on it). */
+/* The page's rhythm, one scale: every section pads 120 px at the top and 36 px (phones) or 64 px
+   (desktop) at the bottom, the heading block is 120 px from its content, the eyebrow 20 px from its
+   title. Every other section is a faint band (--band: a touch deeper than the page, the white cards
+   stand out on it). */
 :root {
+  --section-pad-top: 120px;
   --section-pad: 36px;
   --head-gap: 40px;
   --band: color-mix(in srgb, var(--border) 25%, var(--bg));
@@ -21,10 +23,10 @@
 }
 
 .home-section {
-  padding: var(--section-pad) 0;
+  padding: var(--section-pad-top) 0 var(--section-pad);
   /* The html scroll-padding is the sticky header; this lands the heading 24 px below it, whatever the
      section's own padding (a negative margin: the heading, not the band's edge, is the target). */
-  scroll-margin-top: calc(var(--space-xxl) - var(--section-pad));
+  scroll-margin-top: calc(var(--space-xxl) - var(--section-pad-top));
 }
 
 .home-section-band {
@@ -42,16 +44,27 @@
 
 /* ---------- Section heading (section.tsx): eyebrow, claim, lede ---------- */
 
+/* Centred in every section (the hero has its own heading), with 120 px under it before the content. */
 .section-head {
   min-width: 0;
+  margin-bottom: 120px;
+  text-align: center;
+}
+
+/* The heading owns the gap: the block right after it starts with no top margin. (Some section
+   blocks still set a --head-gap top margin later in this file; inside the block-level .wrap it
+   collapses into the head's 120px, so the visible gap stays 120px.) */
+.section-head + * {
+  margin-top: 0;
 }
 
 /* The eyebrow is the section's plain name, in the accent ink, after a small hexagon. */
 .section-eyebrow {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  margin: 0;
+  margin: 0 0 20px;
   color: var(--accent-text);
   font-size: var(--font-caption);
   font-weight: var(--font-weight-bold);
@@ -70,7 +83,7 @@
 
 /* The claim: the display face in capitals, like the app's screen titles. */
 .section-title {
-  margin: 8px 0 0;
+  margin: 0;
   font-family: var(--display);
   font-weight: normal;
   font-size: clamp(2.25rem, 5vw, 3.25rem);
@@ -82,24 +95,12 @@
 }
 
 .section-lede {
-  margin: 16px 0 0;
+  margin: 16px auto 0;
   max-width: var(--measure);
   color: var(--muted);
   font-size: var(--font-lead);
   line-height: 1.5;
   text-wrap: pretty;
-}
-
-.section-head-center {
-  text-align: center;
-}
-
-.section-head-center .section-eyebrow {
-  justify-content: center;
-}
-
-.section-head-center .section-lede {
-  margin-inline: auto;
 }
 
 .home-lede {
@@ -120,8 +121,8 @@
   padding: var(--space-xxl);
 }
 
-/* One card grammar: an icon slot (or the piece the card shows), the title, then a muted body, spaced
-   alike in every card. */
+/* One card rhythm: the pieces spaced alike in every card. Audience and highlight cards go icon, title,
+   muted body; the How it works steps open with their title, then the piece they show, then the body. */
 .home-step,
 .home-type,
 .home-highlight {
@@ -299,11 +300,9 @@
   align-self: stretch;
 }
 
-/* The step number sits in the card's corner: start the night panels below it, so it is never drawn
-   over the dark panel (muted ink on night). */
-.home-step .app-gain,
-.home-step .app-legend {
-  margin-top: 20px;
+/* Each step opens with its title; it leaves room for the number in the card's corner. */
+.home-step .app-card-title {
+  padding-right: var(--space-xxl);
 }
 
 .home-chips {
@@ -385,6 +384,7 @@
 
 /* ---------- Closing call to action ---------- */
 
+/* The button and the trust line sit centred under the head. */
 .home-cta {
   text-align: center;
 }
@@ -418,11 +418,6 @@
   .trust-row li + li::before {
     display: none;
   }
-}
-
-.home-cta .home-lede,
-.home-cta .section-lede {
-  margin: 16px auto 28px;
 }
 
 /* ---------- Grids shared by the newer sections ---------- */

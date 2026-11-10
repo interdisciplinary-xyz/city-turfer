@@ -3,7 +3,7 @@ import { useTranslations } from 'next-intl';
 import { SECTION_ANCHORS } from '../home-sections/home-sections.constants';
 
 /**
- * The hero's text: the "Early prototype" badge, the tagline (the dominant line), the lede and the two
+ * The hero's text: the tagline (the dominant line), the lede and the two
  * buttons. The brand sits in the header, so no icon or wordmark here. The `data-anim` hooks are
  * driven by HeroMotion: `line` for the tagline, `copy` for the rest.
  */
@@ -11,9 +11,6 @@ export function HeroCopy({ waitlist }: { waitlist: boolean }) {
   const t = useTranslations('hero');
   return (
     <div className='hero-copy'>
-      <p className='hero-badge' data-anim='copy'>
-        {t('badge')}
-      </p>
       <h1 id='hero-title'>
         <span className='line' data-anim='line'>
           {t('taglineLead')}

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { useLocale, useTranslations } from 'next-intl';
 
 import { AppHeader } from '@/app/[locale]/app-header';
-import { HeroCity, HeroCityLine } from '@/app/[locale]/hero-city';
+import { HeroCity } from '@/app/[locale]/hero-city';
 import { HeroCopy } from '@/app/[locale]/hero-copy';
 import { HeroMotion } from '@/app/[locale]/hero-motion';
 import { HeroScreens } from '@/app/[locale]/hero-screens';
@@ -43,12 +43,11 @@ function Page({ waitlist }: PageProps) {
               <HeroCopy waitlist={waitlist} />
               <HeroScreens />
             </div>
-            <HeroCityLine />
           </HeroMotion>
         </section>
         {waitlist ? (
           <Section name='waitlist' band className='waitlist-section'>
-            <SectionHead name='waitlist' eyebrow={t('waitlist.eyebrow')} title={t('waitlist.title')} align='center' />
+            <SectionHead name='waitlist' eyebrow={t('waitlist.eyebrow')} title={t('waitlist.title')} />
             <WaitlistForm
               action='https://example.invalid/brevo'
               controller='CityTurfer (example)'
@@ -78,7 +77,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'The full landing page: hero (with its entrance animation and the prototype badge), the waitlist section, the street-glow demo, how it works, who it is for, highlights, your week, how it differs, local-first, where it stands, the FAQ, the closing call to action (shown only with the waitlist) and the footer. `waitlist` mirrors the NEXT_PUBLIC_WAITLIST_* variables being set. The APK download buttons are hidden for now.',
+          'The full landing page: hero (with its entrance animation), the waitlist section, the street-glow demo, how it works, who it is for, highlights, your week, how it differs, local-first, where it stands, the FAQ, the closing call to action (shown only with the waitlist) and the footer. `waitlist` mirrors the NEXT_PUBLIC_WAITLIST_* variables being set. The APK download buttons are hidden for now.',
       },
     },
   },

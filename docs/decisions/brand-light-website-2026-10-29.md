@@ -63,7 +63,9 @@ product when the page around them is light.
   `HEADER_SCHEME`, `APP_SCHEME`).
 - Contrast: `packages/brand/src/__tests__/contrast.test.ts` reads `WEB_SCHEME`, `APP_SCHEME` and
   `SITE_SCHEME` separately. The pink button hover mixes toward `--blazing` (about 6.1:1 in all
-  three; toward `--text` it was 4.29:1 on light).
+  three; toward `--text` it was 4.29:1 on light). **Update 2026-11-05:** the website's primary
+  button (and the header's call to action) is now black with a white label, a founder call
+  (`docs/plans/homepage-tidy-2026-11-01.md`, "Founder follow-ups"); pink stays for the turf.
 - `SITE_SCHEME` keeps its name although it no longer means "the site"; renaming it (for example
   `TOOLS_SCHEME`) is left to the founder. The brand-system skill documents the four constants.
 - The social image `apps/web/public/og-image.png` stays the dark artwork (founder's call).

@@ -1,1 +1,1 @@
-export { HeroCity, HeroCityLine } from './hero-city';
+export { HeroCity } from './hero-city';

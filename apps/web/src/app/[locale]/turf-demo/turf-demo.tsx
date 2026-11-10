@@ -2,6 +2,7 @@ import './turf-demo.css';
 
 import { useFormatter, useTranslations } from 'next-intl';
 
+import { SectionHead } from '../home-sections/section';
 import { DEMO_SCHEME_STYLE, DEMO_TIERS, TURF_DEMO } from './turf-demo.constants';
 import { TurfDemoPlayer } from './turf-demo-player';
 
@@ -46,10 +47,14 @@ export function TurfDemo() {
       labels={{ steps, stepsLabel: t('stepsLabel'), replay: t('replay') }}
       schemeStyle={DEMO_SCHEME_STYLE}
       head={
-        <>
-          <h3 className='demo-title'>{t('title')}</h3>
-          <p className='section-lede'>{t('body')}</p>
-        </>
+        <SectionHead
+          name='how'
+          level={3}
+          titleId='demo-title'
+          eyebrow={t('eyebrow')}
+          title={t('title')}
+          lede={t('body')}
+        />
       }
       caption={
         <p id='demo-caption' className='home-caption'>

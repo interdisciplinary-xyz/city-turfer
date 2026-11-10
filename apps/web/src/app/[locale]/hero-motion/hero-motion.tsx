@@ -13,7 +13,7 @@ gsap.registerPlugin(useGSAP);
 
 /**
  * Entrance and ambient motion for the hero (`web-motion` skill):
- * - entrance: badge and headline lines → lede → buttons, phones rise alongside;
+ * - entrance: headline lines → lede → buttons, phones rise alongside;
  * - the city map behind the hero fades in after the headline;
  * - on desktop with a mouse, the phones tilt a little towards the pointer and the map drifts away
  *   from it.

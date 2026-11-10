@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-31
+verified: 2026-11-05
 owner: founder
 scope: ['apps/web/src/app/[locale]', apps/web/src/app/globals.css, apps/web/tools, apps/web/public]
 summary:
@@ -23,6 +23,12 @@ the merge:
 - the water and street layers are paler and the city line sits on the page colour, so grey and pink
   text keep 4.5:1 over either layer, dipping to about 4.3:1 only where a street crosses water (per
   the PR).
+
+**Update 2026-11-05:** the founder removed the city line from the homepage. The select, "Near me"
+and their code (`hero-map-picker.tsx`, `city-options.ts`, `hero-cities.data.json`, `nearestCity`,
+`gen-city-maps.mjs --data-only`) are gone; the map still follows the time zone (`CITY_BOOT_SCRIPT`),
+and the "© OpenStreetMap contributors" credit moved to the site footer. The v2 parts of this plan
+below describe what was built then, not the page today.
 
 Rules: the `web-motion` skill (static export, privacy, en/pl, stories), `brand-system` and
 `brand-surfaces`. Owners: `web-engineer` (build), `brand-designer` (look and contrast sign-off).

@@ -20,7 +20,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'The Early prototype badge, the tagline, the pitch and the two buttons at the top of the landing page (the brand sits in the header). Copy comes from apps/web/messages (switch the language in the toolbar).',
+          'The tagline, the pitch and the two buttons at the top of the landing page (the brand sits in the header). Copy comes from apps/web/messages (switch the language in the toolbar).',
       },
     },
   },

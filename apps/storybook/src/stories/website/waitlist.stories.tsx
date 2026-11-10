@@ -10,7 +10,7 @@ function Waitlist() {
   const t = useTranslations('waitlist');
   return (
     <Section name='waitlist' band className='waitlist-section'>
-      <SectionHead name='waitlist' eyebrow={t('eyebrow')} title={t('title')} align='center' />
+      <SectionHead name='waitlist' eyebrow={t('eyebrow')} title={t('title')} />
       <WaitlistForm
         action='https://example.invalid/brevo'
         controller='CityTurfer (example)'

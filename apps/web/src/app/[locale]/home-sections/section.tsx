@@ -15,14 +15,19 @@ export function Section({ name, className, band, wrapClassName, children }: Sect
   );
 }
 
-/** The same heading in every section: the plain name (eyebrow), the claim (h2) and an optional lede. */
-export function SectionHead({ name, eyebrow, title, lede, align = 'start' }: SectionHeadProps) {
+/**
+ * The one heading of every homepage section below the hero: the plain name (eyebrow), the claim and an
+ * optional lede, always centred and alike everywhere. The hero has its own heading (HeroCopy).
+ * A block inside a section (the street demo) uses it as an h3 with its own id.
+ */
+export function SectionHead({ name, eyebrow, title, lede, level = 2, titleId }: SectionHeadProps) {
+  const Title = level === 3 ? 'h3' : 'h2';
   return (
-    <div className={align === 'center' ? 'section-head section-head-center' : 'section-head'} data-reveal=''>
+    <div className='section-head' data-reveal=''>
       <p className='section-eyebrow'>{eyebrow}</p>
-      <h2 id={`${name}-title`} className='section-title'>
+      <Title id={titleId ?? `${name}-title`} className='section-title'>
         {title}
-      </h2>
+      </Title>
       {lede ? <p className='section-lede'>{lede}</p> : null}
     </div>
   );

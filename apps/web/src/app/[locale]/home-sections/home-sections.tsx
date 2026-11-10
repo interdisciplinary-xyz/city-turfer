@@ -37,6 +37,7 @@ export function HowItWorks() {
           <span className='home-step-n' aria-hidden='true'>
             1
           </span>
+          <h3 className='app-card-title'>{t('record.title')}</h3>
           <div className='home-chips' aria-hidden='true'>
             {HOME_TYPES.map((type) => (
               <span key={type} className={`app-chip app-chip-${TYPE_CLASS[type]}`}>
@@ -48,13 +49,13 @@ export function HowItWorks() {
           <span className='app-record' style={APP_VARIABLES} aria-hidden='true'>
             <span className='app-record-dot' />
           </span>
-          <h3 className='app-card-title'>{t('record.title')}</h3>
           <p className='home-step-body'>{t('record.body')}</p>
         </li>
         <li className='app-card home-step' data-reveal=''>
           <span className='home-step-n' aria-hidden='true'>
             2
           </span>
+          <h3 className='app-card-title'>{t('gain.title')}</h3>
           <div className='app-gain' style={APP_VARIABLES} aria-hidden='true'>
             <p className='app-label'>{t('gain.label')}</p>
             <p className='app-gain-area'>
@@ -67,13 +68,13 @@ export function HowItWorks() {
               })}
             </p>
           </div>
-          <h3 className='app-card-title'>{t('gain.title')}</h3>
           <p className='home-step-body'>{t('gain.body')}</p>
         </li>
         <li className='app-card home-step' data-reveal=''>
           <span className='home-step-n' aria-hidden='true'>
             3
           </span>
+          <h3 className='app-card-title'>{t('glow.title')}</h3>
           <div className='app-legend' style={APP_VARIABLES} role='img' aria-label={t('glow.legendLabel')}>
             <p className='app-label'>{t('glow.legendTitle')}</p>
             <div className='app-legend-bar'>
@@ -87,7 +88,6 @@ export function HowItWorks() {
               ))}
             </div>
           </div>
-          <h3 className='app-card-title'>{t('glow.title')}</h3>
           <p className='home-step-body'>{t('glow.body')}</p>
         </li>
       </ol>
@@ -119,7 +119,7 @@ export function FinalCta() {
   const t = useTranslations('home.cta');
   return (
     <Section name='cta' band className='home-cta'>
-      <SectionHead name='cta' eyebrow={t('eyebrow')} title={t('title')} lede={t('body')} align='center' />
+      <SectionHead name='cta' eyebrow={t('eyebrow')} title={t('title')} lede={t('body')} />
       <a className='btn btn-primary' href={`#${SECTION_ANCHORS.waitlist}`}>
         {t('join')}
       </a>

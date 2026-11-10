@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
-import { HeroCity, HeroCityLine } from '@/app/[locale]/hero-city';
+import { HeroCity } from '@/app/[locale]/hero-city';
 import { HeroCopy } from '@/app/[locale]/hero-copy';
 import { HeroMotion } from '@/app/[locale]/hero-motion';
 import { HeroScreens } from '@/app/[locale]/hero-screens';
@@ -16,7 +16,6 @@ function Hero({ apkUrl }: { apkUrl: string | null }) {
         <HeroScreens />
         <StoreButtons apkUrl={apkUrl} />
       </div>
-      <HeroCityLine />
     </HeroMotion>
   );
 }

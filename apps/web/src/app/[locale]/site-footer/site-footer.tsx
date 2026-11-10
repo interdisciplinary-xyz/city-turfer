@@ -7,9 +7,9 @@ import { FOOTER_LINKS } from './site-footer.constants';
 
 /**
  * The page's footer. Left: the wordmark and the tagline. Middle: the section links (the header's
- * four). Right: contact (when the waitlist is set up, it names the address) and what the site does not
- * do. Bottom: ©. No portal link. The language switch stays in the header only, so the page has one
- * "Language" landmark.
+ * four). Right: contact (when the waitlist is set up, it names the address), what the site does not
+ * do and the OpenStreetMap credit for the hero's street map. Bottom: ©. No portal link. The language
+ * switch stays in the header only, so the page has one "Language" landmark.
  */
 export function SiteFooter({ contactEmail }: { contactEmail?: string }) {
   const t = useTranslations('footer');
@@ -41,6 +41,11 @@ export function SiteFooter({ contactEmail }: { contactEmail?: string }) {
               </p>
             ) : null}
             <p>{t('noCookies')}</p>
+            <p>
+              <a href='https://www.openstreetmap.org/copyright' rel='noopener noreferrer' target='_blank'>
+                {t('mapCredit')}
+              </a>
+            </p>
           </div>
         </div>
         <p className='site-footer-legal'>{t('rights', { year: new Date().getFullYear() })}</p>
