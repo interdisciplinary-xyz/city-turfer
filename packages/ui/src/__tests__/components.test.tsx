@@ -3,7 +3,20 @@ import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { act, create, type ReactTestInstance, type ReactTestRenderer } from 'react-test-renderer';
 
-import { ActivityRow, Badge, Button, Card, Stat, ThemeProvider, tint, TurfLegend, usePalette } from '../index';
+import {
+  ActivityRow,
+  Badge,
+  Button,
+  Card,
+  DayStrip,
+  type DayStripDay,
+  ProgressBar,
+  Stat,
+  ThemeProvider,
+  tint,
+  TurfLegend,
+  usePalette,
+} from '../index';
 
 function render(element: ReactElement): ReactTestRenderer {
   let tree: ReactTestRenderer | undefined;
@@ -206,5 +219,78 @@ describe('TurfLegend', () => {
 
   it('shows only the swatches when compact', () => {
     expect(render(<TurfLegend compact />).root.findAllByType(Text)).toHaveLength(0);
+  });
+});
+
+describe('ProgressBar', () => {
+  it('fills its share in the accent on a border track and reports the percentage', () => {
+    const tree = render(
+      <ThemeProvider scheme='dark'>
+        <ProgressBar progress={0.25} accessibilityLabel='5 of 20 minutes today' testID='bar' />
+      </ThemeProvider>
+    );
+    const bar = host(tree, 'bar');
+    expect(bar.props.accessibilityRole).toBe('progressbar');
+    expect(bar.props.accessibilityLabel).toBe('5 of 20 minutes today');
+    expect(bar.props.accessibilityValue).toEqual({ min: 0, max: 100, now: 25 });
+    expect(flat(bar.props.style).backgroundColor).toBe(DARK.border);
+    const fill = bar.findByType(View);
+    expect(flat(fill.props.style)).toMatchObject({ width: '25%', backgroundColor: ACCENT });
+  });
+
+  it('clamps over-target and invalid values', () => {
+    const over = render(<ProgressBar progress={1.8} testID='bar' />);
+    expect(host(over, 'bar').props.accessibilityValue.now).toBe(100);
+    const nan = render(<ProgressBar progress={Number.NaN} testID='bar' />);
+    expect(host(nan, 'bar').props.accessibilityValue.now).toBe(0);
+  });
+});
+
+describe('DayStrip', () => {
+  const day = (i: number, over: Partial<DayStripDay> = {}): DayStripDay => ({
+    key: `d${i}`,
+    label: `D${i}`,
+    progress: 0,
+    met: false,
+    accessibilityLabel: `Day ${i}`,
+    testID: `day-${i}`,
+    ...over,
+  });
+  /** The day's native views: [0] the day, [1] its column, [2] the fill. */
+  const views = (tree: ReactTestRenderer, id: string) => host(tree, id).findAll((n) => (n.type as unknown) === 'View');
+  const column = (tree: ReactTestRenderer, id: string) => views(tree, id)[1];
+
+  it('gives each day its label for a screen reader and outlines empty days in borderControl', () => {
+    const tree = render(
+      <ThemeProvider scheme='dark'>
+        <DayStrip testID='strip' days={[day(0), day(1, { progress: 0.5 }), day(2, { met: true, current: true })]} />
+      </ThemeProvider>
+    );
+    expect(host(tree, 'day-0').props.accessible).toBe(true);
+    expect(host(tree, 'day-0').props.accessibilityLabel).toBe('Day 0');
+    expect(flat(column(tree, 'day-0').props.style).borderColor).toBe(DARK.borderControl);
+    // Half a day: a half-height accent fill.
+    expect(flat(views(tree, 'day-1')[2].props.style)).toMatchObject({
+      height: '50%',
+      backgroundColor: ACCENT,
+    });
+    // Met: accent outline, full fill and a check mark (never colour alone).
+    expect(flat(column(tree, 'day-2').props.style).borderColor).toBe(ACCENT);
+    expect(
+      host(tree, 'day-2')
+        .findAllByType(Text)
+        .map((t) => t.props.children)
+    ).toEqual(['✓', 'D2']);
+  });
+
+  it('draws a day without a target as a quiet dashed outline, never a tier colour or red', () => {
+    const tree = render(
+      <ThemeProvider scheme='dark'>
+        <DayStrip days={[day(0, { noTarget: true })]} />
+      </ThemeProvider>
+    );
+    const style = flat(column(tree, 'day-0').props.style);
+    expect(style).toMatchObject({ borderColor: DARK.border, borderStyle: 'dashed' });
+    expect(Object.values(RAMP)).not.toContain(style.borderColor);
   });
 });
