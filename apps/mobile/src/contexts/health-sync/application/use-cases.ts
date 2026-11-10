@@ -1,7 +1,7 @@
 import { type ActivityType, DomainError } from '@/shared-kernel';
 
 import type { HealthSyncStatus } from '../contract';
-import type { ImportReport } from '../domain/health-sync-state';
+import { endsAfterConnect, type ImportReport, lastImportAfter } from '../domain/health-sync-state';
 import {
   activityTypeFor,
   healthUuidOf,
@@ -69,9 +69,10 @@ type ImportOutcome = 'imported' | 'known' | 'duplicate' | 'no-route' | 'failed';
 
 /**
  * Imports walks, hikes, runs and rides from Apple Health as Activities (which then claim turf).
- * Only workouts that end after Apple Health was connected: older ones stay in Apple Health, so a new
- * Turfer's map starts with what they do from then on. Skips workouts CityTurfer wrote, workouts already imported (or imported and later deleted), and
- * outings already in CityTurfer from another source. Workouts whose route isn't readable yet are
+ * Only workouts that end after Apple Health was connected: older ones stay in Apple Health, so a
+ * new Turfer's map starts with what they do from then on. Skips workouts CityTurfer wrote, workouts
+ * already imported (or imported and later deleted, at any start date), and outings already in
+ * CityTurfer from another source. Workouts whose route isn't readable yet are
  * retried on later syncs for a few days. One run at a time: a second caller joins the running one.
  */
 export class ImportHealthWorkouts {
@@ -99,17 +100,22 @@ export class ImportHealthWorkouts {
     return this.running;
   }
 
-  private async active(): Promise<boolean> {
+  /** The connection time while importing may run (connected, switched on, foreground), else null. */
+  private async connectedAt(): Promise<number | null> {
     const s = await this.d.repo.state();
-    return this.d.store.available && s.connectedAt != null && s.importEnabled && this.d.isForeground();
+    return this.d.store.available && s.importEnabled && this.d.isForeground() ? s.connectedAt : null;
+  }
+
+  private async active(): Promise<boolean> {
+    return (await this.connectedAt()) != null;
   }
 
   private async run(full: boolean): Promise<ImportReport | null> {
-    if (!(await this.active())) {
+    // Workouts that ended before the connection stay in Apple Health.
+    const from = await this.connectedAt();
+    if (from == null) {
       return null;
     }
-    // active() checked the connection; workouts that ended before it stay in Apple Health.
-    const from = (await this.d.repo.state()).connectedAt ?? Infinity;
     const n = { imported: 0, withoutRoute: 0, duplicates: 0, beforeStart: 0, skipped: 0 };
     const count = (o: ImportOutcome) => {
       if (o === 'imported') {
@@ -127,7 +133,7 @@ export class ImportHealthWorkouts {
     // 1. Workouts that had no route (or failed) last time.
     const now = this.d.clock.now();
     for (const p of await this.d.repo.pendingImports()) {
-      if (now - p.endedAt > IMPORT_RETRY_WINDOW_MS || p.endedAt < from) {
+      if (now - p.endedAt > IMPORT_RETRY_WINDOW_MS || !endsAfterConnect(p.endedAt, from)) {
         await this.d.repo.removePendingImport(p.healthUuid);
         continue;
       }
@@ -153,8 +159,13 @@ export class ImportHealthWorkouts {
           n.skipped++;
           continue;
         }
-        if (w.endedAt < from) {
-          n.beforeStart++;
+        if (!endsAfterConnect(w.endedAt, from)) {
+          // Already linked (imported earlier, perhaps deleted since): not "left in Apple Health".
+          if (await this.isLinked(w.uuid)) {
+            n.skipped++;
+          } else {
+            n.beforeStart++;
+          }
           continue;
         }
         const outcome = await this.importOne(w.uuid, type, w.startedAt, w.endedAt);
@@ -177,8 +188,17 @@ export class ImportHealthWorkouts {
       }
     }
     const report: ImportReport = { at: this.d.clock.now(), ...n };
-    await this.d.repo.saveState({ lastImport: report });
+    const previous = (await this.d.repo.state()).lastImport;
+    await this.d.repo.saveState({ lastImport: lastImportAfter(previous, report, full) });
     return report;
+  }
+
+  private async isLinked(uuid: string): Promise<boolean> {
+    try {
+      return (await this.d.repo.linkOfHealthUuid(uuid)) != null;
+    } catch {
+      return false;
+    }
   }
 
   private async importOne(

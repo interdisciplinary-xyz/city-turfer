@@ -18,6 +18,26 @@ export interface ImportReport {
 }
 
 /**
+ * The import starts when Apple Health is connected: a workout is imported only if it ends at or
+ * after that moment, so one still going on at connect counts. Older ones stay in Apple Health.
+ */
+export function endsAfterConnect(endedAt: number, connectedAt: number): boolean {
+  return endedAt >= connectedAt;
+}
+
+/**
+ * The report to keep as the last import. A sync since the anchor that found nothing to tell (nothing
+ * imported, already here, without a route or from before connecting) keeps the previous report, so
+ * Import now's "from before you connected" count doesn't turn into a bare "0 workouts added" on the
+ * next foreground sync. A full scan (Import now) always replaces it.
+ */
+export function lastImportAfter(previous: ImportReport | null, latest: ImportReport, full: boolean): ImportReport {
+  const foundNothing =
+    latest.imported === 0 && latest.duplicates === 0 && latest.withoutRoute === 0 && !latest.beforeStart;
+  return !full && previous && foundNothing ? previous : latest;
+}
+
+/**
  * A workout to try again on the next sync: its route wasn't there yet (Apple Watch still syncing,
  * route permission given later) or reading it failed. Dropped once the workout is older than the
  * retry window.
