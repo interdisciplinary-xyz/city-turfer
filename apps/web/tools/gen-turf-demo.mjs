@@ -1,7 +1,7 @@
 // Builds the landing page's street-glow demo (docs/plans/homepage-sections-2026-10-28.md, section 3)
 // from the Gdańsk demo history, with the app's own rules: cells from @cityturfer/core/h3 (H3 res 11)
 // and tiers from the territory domain's strength formula. Writes plain numbers to
-// src/app/[locale]/turf-demo/turf-demo.data.json, so the page never loads core or h3-js.
+// src/domains/homepage/components/turf-demo/turf-demo.data.json, so the page never loads core or h3-js.
 //
 //   pnpm --filter @cityturfer/web run turf-demo           write the data file
 //   pnpm --filter @cityturfer/web run turf-demo -- --check exit 1 if the committed file is stale
@@ -15,7 +15,7 @@ import { GDANSK_ROUTES, planGdanskDemo, pointsOf } from '@cityturfer/core/demo';
 import { H3CellGrid } from '@cityturfer/core/h3';
 import { strengthOf, tierOf } from '@cityturfer/core/territory';
 
-const OUT = path.resolve(import.meta.dirname, '../src/app/[locale]/turf-demo/turf-demo.data.json');
+const OUT = path.resolve(import.meta.dirname, '../src/domains/homepage/components/turf-demo/turf-demo.data.json');
 const TODAY = Date.UTC(2026, 9, 28);
 const TIERS = ['faint', 'glowing', 'strong', 'blazing'];
 const VIEW = { width: 800, height: 1000, pad: 40 };

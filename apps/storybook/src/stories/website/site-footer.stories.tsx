@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
-import { SiteFooter } from '@/app/[locale]/site-footer';
+import { SiteFooter } from '@/domains/layout';
 
 const meta = {
   title: 'Website/SiteFooter',

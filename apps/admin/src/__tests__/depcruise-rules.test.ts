@@ -28,7 +28,7 @@ function fires(name: string, from: string, to: string): boolean {
 describe('apps/admin dependency rules', () => {
   it('forbids other apps (depcruise reports them as ../<app>/…), not packages', () => {
     expect(fires('no-other-apps', 'src/x.ts', '../api/src/app.ts')).toBe(true);
-    expect(fires('no-other-apps', 'src/x.ts', '../web/src/api/client.ts')).toBe(true);
+    expect(fires('no-other-apps', 'src/x.ts', '../web/src/lib/api/client.ts')).toBe(true);
     expect(fires('no-other-apps', 'src/x.ts', '../../packages/brand/src/index.ts')).toBe(false);
     expect(fires('no-other-apps', 'src/x.ts', '../../node_modules/next/index.js')).toBe(false);
   });

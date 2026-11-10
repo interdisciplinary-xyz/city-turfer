@@ -1,17 +1,23 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
+import {
+  Audience,
+  Faq,
+  FinalCta,
+  HeroCity,
+  HeroCopy,
+  HeroMotion,
+  HeroScreens,
+  Highlights,
+  HowItWorks,
+  LocalFirst,
+  RevealMotion,
+  Section,
+  SectionHead,
+} from '@/domains/homepage';
+import { AppHeader, SiteFooter } from '@/domains/layout';
+import { WAITLIST, WaitlistForm } from '@/domains/waitlist';
 import type { Locale } from '@/i18n/routing';
-
-import { WAITLIST } from '../waitlist-config';
-import { AppHeader } from './app-header';
-import { HeroCity } from './hero-city';
-import { HeroCopy } from './hero-copy';
-import { HeroMotion } from './hero-motion';
-import { HeroScreens } from './hero-screens';
-import { Audience, Faq, FinalCta, Highlights, HowItWorks, LocalFirst, Section, SectionHead } from './home-sections';
-import { RevealMotion } from './reveal-motion';
-import { SiteFooter } from './site-footer';
-import { WaitlistForm } from './waitlist-form';
 
 export default async function Home({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;

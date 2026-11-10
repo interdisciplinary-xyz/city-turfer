@@ -15,7 +15,7 @@
     "arch": "depcruise src tools server.mjs next.config.ts --config .dependency-cruiser.cjs",
     "typecheck": "next typegen && tsc --noEmit",
     "lint": "eslint src tools e2e playwright.config.ts next.config.ts server.mjs",
-    "api:types": "openapi-typescript ../api/openapi.json -o src/api/schema.gen.ts && prettier --write src/api/schema.gen.ts"
+    "api:types": "openapi-typescript ../api/openapi.json -o src/lib/api/schema.gen.ts && prettier --write src/lib/api/schema.gen.ts"
   },
   "dependencies": {
     "@cityturfer/brand": "workspace:*",

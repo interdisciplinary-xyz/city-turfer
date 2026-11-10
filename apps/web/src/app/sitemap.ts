@@ -1,8 +1,7 @@
 import type { MetadataRoute } from 'next';
 
 import { routing } from '@/i18n/routing';
-
-import { SITE_URL } from './site-url';
+import { SITE_URL } from '@/lib/site-url';
 
 // Static export: generated once at build time.
 export const dynamic = 'force-static';

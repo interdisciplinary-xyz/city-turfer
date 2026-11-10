@@ -115,6 +115,9 @@ apps/mobile/                         the Expo app (package @cityturfer/mobile); 
   e2e/                               Maestro flows
   tools/                             mobile dev tools (GPX generator, stats oracle, simulator GPS playback, turf preview)
 apps/web/                            Next.js landing page (@cityturfer/web): static export (out/), hosted on Vercel
+  src/app/                           routes only (pages, layouts); components live in src/domains
+  src/domains/<domain>/              ui, waitlist, homepage, layout · portal, auth, account, activities (barrel-only imports)
+  src/lib/                           infrastructure: api/ (the portal's API client), site URLs
 apps/admin/                          @cityturfer/admin: staff admin portal (Payload CMS on Next), own database, staff accounts only
 apps/storybook/                      @cityturfer/storybook: one Storybook for @cityturfer/ui (react-native-web) and apps/web pieces
 apps/api/                            @cityturfer/api: HTTP API (Hono on Vercel), /v1 routes over the app's use cases, OpenAPI + Swagger

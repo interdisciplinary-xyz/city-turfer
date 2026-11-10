@@ -23,7 +23,7 @@ const OUT_DIR = path.resolve(HERE, '../public/city-maps');
 const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter'];
 const USER_AGENT = 'CityTurfer hero map generator (dev tool; https://github.com/interdisciplinary-xyz/city-turfer)';
 
-/** Cities that get a map. Keep in sync with HERO_CITY_IDS in src/app/[locale]/hero-city (a test checks). */
+/** Cities that get a map. Keep in sync with HERO_CITY_IDS in src/domains/homepage/components/hero-city (a test checks). */
 export const MAP_CITY_IDS = [
   'pl-gdansk',
   'pl-warsaw',

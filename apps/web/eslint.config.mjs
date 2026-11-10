@@ -38,6 +38,13 @@ export default [
     rules: { 'react/prop-types': 'off' },
   },
   {
+    // A domain's public surface is its barrel (docs/decisions/web-domains-2026-11-10.md): code outside
+    // src/domains/<d> imports '@/domains/<d>', never a file inside it.
+    files: ['src/**/*.{ts,tsx}', 'e2e/**/*.ts'],
+    // Besides the barrel, a domain may expose `logic` (logic.ts): its React-free entry.
+    rules: { 'local-rules/no-deep-domain-import': ['error', { exemptEntrypoints: ['logic'] }] },
+  },
+  {
     // Config files, the dev server (server.mjs) and tools/ run in Node and print to stdout.
     files: ['*.config.*', 'server.mjs', 'tools/**'],
     languageOptions: { globals: { ...globals.node } },

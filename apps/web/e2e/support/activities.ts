@@ -7,7 +7,7 @@ import { randomBytes } from 'node:crypto';
 
 import { type APIRequestContext, expect } from '@playwright/test';
 
-import type { ActivitySummary, ActivityType, ActivityUpload, GapRoute, TrackPoint } from '../../src/api/schema';
+import type { ActivitySummary, ActivityType, ActivityUpload, GapRoute, TrackPoint } from '../../src/lib/api/schema';
 import { CLIENT_HEADER } from './constants';
 
 /** Długi Targ (Long Market), Gdańsk: [lon, lat] of a public square, where every made-up route starts. */

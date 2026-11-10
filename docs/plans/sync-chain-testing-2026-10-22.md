@@ -103,8 +103,8 @@ S13 is not in the chain suite: a foreground phone in Jest cannot prove it. It st
 
 ### Phone ↔ web portal (`phone-and-web.test.ts`, live API with browser sessions)
 
-The web observer signs in and calls the API exactly as the portal client (apps/web/src/api) does on
-#141: an e-mailed code, `client: "browser"`, the `__Host-ct_session` cookie, and `Origin`,
+The web observer signs in and calls the API exactly as the portal client (apps/web/src/lib/api) does
+on #141: an e-mailed code, `client: "browser"`, the `__Host-ct_session` cookie, and `Origin`,
 `Sec-Fetch-Site` and `CityTurfer-Client: web/…` on writes. It reads only what the pages show.
 
 | #   | Steps                                                                                                                         | Checked                                                                                                                                                                                            |

@@ -262,6 +262,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`decisions/monorepo-turborepo-2026-10-18.md`](decisions/monorepo-turborepo-2026-10-18.md):
   v0.3.0 moves the repo to a pnpm + Turborepo monorepo — apps/mobile (Expo), apps/web (Next.js
   landing page), packages/brand and packages/config — in three PRs
+- ✅ [`decisions/web-domains-2026-11-10.md`](decisions/web-domains-2026-11-10.md): apps/web/src is
+  split into domains like respect.click and empatalk.app — src/app holds routes only, components
+  live in src/domains/<domain>, src/lib is infrastructure; depcruise checks which domain may import
+  which, ESLint keeps imports between domains on the barrels
 - ✅ [`decisions/web-portal-2026-10-22.md`](decisions/web-portal-2026-10-22.md): Web portal Slice 0
   (trust page) — signed-in pages inside apps/web under /[locale]/account, static export kept,
   browser sessions by cookie (14 days sliding, 30 days absolute, 8 h on a shared computer),

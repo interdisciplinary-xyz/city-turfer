@@ -16,7 +16,7 @@ import { pathToFileURL } from 'node:url';
 
 /** Strings that only the portal's bundles contain (also checked to be present there: a positive control). */
 export const PORTAL_MARKERS = [
-  'CityTurfer-Client', // src/api/client.ts
+  'CityTurfer-Client', // src/lib/api/client.ts
   'No QueryClient set', // @tanstack/react-query
   'querySerializer', // openapi-fetch
   'maplibregl', // maplibre-gl (Slice 1)

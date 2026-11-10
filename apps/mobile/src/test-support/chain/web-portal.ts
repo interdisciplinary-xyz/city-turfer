@@ -1,6 +1,6 @@
 /**
  * The web portal in the sync chain: signs in and calls the API exactly as the portal's client does
- * (apps/web/src/api), and reads only what its pages show. No browser: the pages render these
+ * (apps/web/src/lib/api), and reads only what its pages show. No browser: the pages render these
  * answers, and the portal's own tests cover the rendering.
  *
  * Slice 0 (built) shows the account, the backup consents and the signed-in devices. Slice 1 (the

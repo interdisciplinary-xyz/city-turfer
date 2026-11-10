@@ -103,14 +103,14 @@ motion components should share one gsap chunk.
 
 ## Files
 
-| File                                                     | Change                                                                |
-| -------------------------------------------------------- | --------------------------------------------------------------------- |
-| `apps/web/src/app/[locale]/scroll-motion/*` (new)        | The component and its constants                                       |
-| `apps/web/src/app/[locale]/page.tsx`                     | Wrap the sections after the hero in `<ScrollMotion>`                  |
-| `apps/web/src/app/[locale]/home-sections/*.tsx`          | `data-reveal` roles; `data-count` (final value, decimals) on numbers  |
-| `apps/web/src/app/[locale]/waitlist-form/*` / `page.tsx` | `data-reveal` on the waitlist title and form row                      |
-| `apps/web/src/app/[locale]/home-sections/*.css`          | `transform-origin: left` on the legend steps and the progress fill    |
-| `.claude/skills/web-motion/SKILL.md`                     | ScrollTrigger is in the stack; the `data-reveal` rule; updated checks |
+| File                                                                    | Change                                                                |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `apps/web/src/app/[locale]/scroll-motion/*` (new)                       | The component and its constants                                       |
+| `apps/web/src/app/[locale]/page.tsx`                                    | Wrap the sections after the hero in `<ScrollMotion>`                  |
+| `apps/web/src/domains/homepage/components/home-sections/*.tsx`          | `data-reveal` roles; `data-count` (final value, decimals) on numbers  |
+| `apps/web/src/domains/waitlist/components/waitlist-form/*` / `page.tsx` | `data-reveal` on the waitlist title and form row                      |
+| `apps/web/src/domains/homepage/components/home-sections/*.css`          | `transform-origin: left` on the legend steps and the progress fill    |
+| `.claude/skills/web-motion/SKILL.md`                                    | ScrollTrigger is in the stack; the `data-reveal` rule; updated checks |
 
 No change to `packages/brand`, `packages/ui` or the app. No new copy.
 
