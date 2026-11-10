@@ -80,6 +80,13 @@ the versioned docs of the others. Say which you checked.
 Never report the API as working in production from local runs: deploys, Neon and Vercel limits are
 verified only on Vercel.
 
+## When you review
+
+Asked to review a diff rather than build, report only what the `verify-change` skill's "What a
+review reports" allows: blockers and should-fix findings, each with `file:line`, the scenario (input
+or state → wrong result) and the fix. No nits; at most one **Optional** line, never an inline
+comment.
+
 ## Report
 
 - **Changed:** the decision or change, and files.
