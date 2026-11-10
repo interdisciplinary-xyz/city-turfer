@@ -32,7 +32,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'The last 7 days of the daily goal, oldest first, today last (bold label). Each column fills from the bottom by its share of that day’s goal; a met day is full with a check mark, an empty one an outline (`borderControl`), a day without a goal a quiet dashed outline. A day under the goal is a partly filled day, never red. Each day is one element for a screen reader, units spelled out.',
+          'The last 7 days of the daily goal, oldest first, today last (bold label). Each column fills from the bottom by its share of that day’s goal; a met day is full with a check mark, an empty one an outline (`borderControl`), a day without a goal the same `borderControl` outline, dashed (quiet by its dash, not a fainter colour, so it keeps 3:1). A day under the goal is a partly filled day, never red. Each day is one element for a screen reader, units spelled out.',
       },
     },
   },

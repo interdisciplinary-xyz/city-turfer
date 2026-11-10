@@ -72,6 +72,7 @@ const PAIRS: Pair[] = [
   })),
   // Labels drawn on brand fills.
   { name: 'on-accent text on accent', fg: ON_ACCENT, bg: ACCENT, min: MIN_CONTRAST.text },
+  { name: 'app day check on accent', fg: ON_ACCENT, bg: ACCENT, min: MIN_CONTRAST.ui },
   { name: 'light on-accent text on accent', fg: LIGHT.onAccent, bg: ACCENT, min: MIN_CONTRAST.text },
   { name: 'web on-accent text on accent', fg: WEB_ON_ACCENT, bg: ACCENT, min: MIN_CONTRAST.text },
   { name: 'web on-glow text on glowing', fg: WEB_ON_ACCENT, bg: TIER_COLOR.glowing, min: MIN_CONTRAST.text },

@@ -8,8 +8,8 @@ const clamp01 = (n: number) => (Number.isFinite(n) ? Math.min(1, Math.max(0, n))
 
 /**
  * A row of days, each a column filled from the bottom by its share of the target: accent fill,
- * `borderControl` outline when empty, a check mark when met, a quiet `border` outline on a day
- * without a target. Plain Views (no SVG); each day is one element for a screen reader.
+ * `borderControl` outline when empty, a check mark when met, a dashed `borderControl` outline on a
+ * day without a target (the dash, not a fainter colour, keeps it quiet and visible at 3:1). Plain Views (no SVG); each day is one element for a screen reader.
  */
 export function DayStrip({ days, style, testID }: DayStripProps) {
   const p = usePalette();
@@ -23,7 +23,7 @@ export function DayStrip({ days, style, testID }: DayStripProps) {
               style={[
                 s.column,
                 {
-                  borderColor: d.met ? ACCENT : d.noTarget ? p.border : p.borderControl,
+                  borderColor: d.met ? ACCENT : p.borderControl,
                   borderStyle: d.noTarget ? 'dashed' : 'solid',
                 },
               ]}

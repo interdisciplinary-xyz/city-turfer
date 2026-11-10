@@ -283,14 +283,14 @@ describe('DayStrip', () => {
     ).toEqual(['✓', 'D2']);
   });
 
-  it('draws a day without a target as a quiet dashed outline, never a tier colour or red', () => {
+  it('draws a day without a target as a dashed borderControl outline (3:1), never a tier colour or red', () => {
     const tree = render(
       <ThemeProvider scheme='dark'>
         <DayStrip days={[day(0, { noTarget: true })]} />
       </ThemeProvider>
     );
     const style = flat(column(tree, 'day-0').props.style);
-    expect(style).toMatchObject({ borderColor: DARK.border, borderStyle: 'dashed' });
+    expect(style).toMatchObject({ borderColor: DARK.borderControl, borderStyle: 'dashed' });
     expect(Object.values(RAMP)).not.toContain(style.borderColor);
   });
 });

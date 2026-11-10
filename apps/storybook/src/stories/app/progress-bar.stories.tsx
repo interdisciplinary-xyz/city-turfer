@@ -9,7 +9,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Progress toward a target (the daily goal on the Start tab): an accent fill on a border-coloured track. Never a tier colour (those mean turf), never red: a part-filled bar is progress, not a failure. Over the target it stays full.',
+          'Progress toward a target (the daily goal on the Start tab): an accent fill on a border-coloured track. The accent, never a turf tier’s meaning (ACCENT shares its hex with the glowing tier), never red: a part-filled bar is progress, not a failure. Over the target it stays full.',
       },
     },
   },
