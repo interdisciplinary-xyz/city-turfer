@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 import { act, create, type ReactTestInstance, type ReactTestRenderer } from 'react-test-renderer';
 
+import { ACCENT } from '@/constants/colors';
 import { applyLanguageSetting, resetLanguageStateForTests } from '@/i18n/language-state';
 import { translator } from '@/i18n/translator';
 import { useApp, useContainer } from '@/ui-kit/app-context';
@@ -20,6 +21,7 @@ jest.mock('react-native', () => {
     View: host('View'),
     Text: host('Text'),
     Pressable: host('Pressable'),
+    Platform: { OS: 'ios' },
     StyleSheet: { create: <S,>(s: S) => s, hairlineWidth: 1 },
     AppState: { addEventListener: () => ({ remove: () => undefined }) },
   };
@@ -30,8 +32,11 @@ jest.mock('@/ui-kit/components', () => {
     createElement(name, props, props.children as never);
   return { Button: host('Button'), Card: host('Card'), DayStrip: host('DayStrip'), ProgressBar: host('ProgressBar') };
 });
-// expo-symbols ships ES modules only; the flame is decorative.
-jest.mock('@/ui-kit/symbol', () => ({ AppSymbol: () => null }));
+// expo-symbols ships ES modules only; a plain host stands in for the flame.
+jest.mock('@/ui-kit/symbol', () => {
+  const { createElement } = jest.requireActual<typeof import('react')>('react');
+  return { AppSymbol: (props: Record<string, unknown>) => createElement('AppSymbol', props) };
+});
 jest.mock('@/ui-kit/theme', () => ({
   usePalette: () => ({ text: 'text', muted: 'muted', border: 'border', borderControl: 'control', card: 'card' }),
 }));
@@ -159,9 +164,9 @@ describe('GoalCard in Polish', () => {
       'wt.',
     ]);
     expect(days.slice(0, 3).map((d: { accessibilityLabel: string }) => d.accessibilityLabel)).toEqual([
-      'środa: 20 minut, bez celu',
-      'czwartek: 1 minuta, bez celu',
-      'piątek: 2 minuty, bez celu',
+      'środa: 20 minut, cel nieustawiony',
+      'czwartek: 1 minuta, cel nieustawiony',
+      'piątek: 2 minuty, cel nieustawiony',
     ]);
     expect(days[4].accessibilityLabel).toBe('niedziela: 31 z 30 minut, cel osiągnięty');
     expect(days[6].accessibilityLabel).toBe('Dziś: 18 z 30 minut');
@@ -189,7 +194,7 @@ describe('GoalCard in Polish', () => {
       'Dziś 0 z 22 minut',
       'Dziś 0 z 25 minut',
     ]);
-    expect(t('weekSummary', { count: 0 })).toBe('Każdy dzień zaczyna się od nowa');
+    expect(t('weekSummary', { count: 0 })).toBe('Każdy dzień to nowy początek');
     expect(t('met', { done: 32 })).toBe('Cel dnia osiągnięty · 32 min dziś');
   });
 });
@@ -217,6 +222,21 @@ describe('GoalCard: streak', () => {
     const tree = render(<GoalCard view={view([30, 0, 0, 0, 0, 0, 0], goals)} {...handlers()} />);
     expect(tree.root.findAll((n) => n.props.testID === 'goal-streak-days')).toHaveLength(0);
     expect(texts(tree)).toContain('Meet your goal today to start a streak');
+    // iOS: an unlit outline flame in the control-border colour.
+    expect(tree.root.findByType('AppSymbol' as never).props).toMatchObject({ name: 'flame', color: 'control' });
+  });
+
+  it('draws no flame on Android without a streak (its emoji fallback ignores colour)', () => {
+    const platform = jest.requireMock<{ Platform: { OS: string } }>('react-native').Platform;
+    platform.OS = 'android';
+    try {
+      const none = render(<GoalCard view={view([30, 0, 0, 0, 0, 0, 0], goals)} {...handlers()} />);
+      expect(none.root.findAllByType('AppSymbol' as never)).toHaveLength(0);
+      const lit = render(<GoalCard view={view([0, 0, 0, 0, 0, 30, 30], goals)} {...handlers()} />);
+      expect(lit.root.findByType('AppSymbol' as never).props).toMatchObject({ name: 'flame.fill', color: ACCENT });
+    } finally {
+      platform.OS = 'ios';
+    }
   });
 
   it('has every Polish plural form', () => {

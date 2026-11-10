@@ -1,14 +1,14 @@
-import { FONT_FAMILY, FONT_SIZE, FONT_WEIGHT, LABEL_TRACKING, SPACE } from '@cityturfer/brand';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { DISPLAY_CASE, DISPLAY_TRACKING, FONT_SIZE, FONT_WEIGHT, LABEL_TRACKING, SPACE } from '@cityturfer/brand';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { ACCENT } from '@/constants/colors';
+import { ACCENT, FONT_FAMILY } from '@/constants/colors';
 import { useT } from '@/i18n';
 import { Button, Card, DayStrip, ProgressBar } from '@/ui-kit/components';
 import { AppSymbol } from '@/ui-kit/symbol';
 import { usePalette } from '@/ui-kit/theme';
 
 import { goalStreak } from '../index';
-import type { GoalCardProps } from './goal-card.constants';
+import { type GoalCardProps, STREAK_FLAME_IDLE_SIZE, STREAK_FLAME_SIZE } from './goal-card.constants';
 import { minutesOf, shareOf, stripDays } from './goal-days';
 
 /**
@@ -79,12 +79,15 @@ export function GoalCard({ view, onSet, onHide, onChange }: GoalCardProps) {
           accessibilityLabel={[t('streakLabel', { count: streak }), streakHint].filter(Boolean).join('. ')}
           style={s.streak}
         >
-          <AppSymbol
-            name={streak > 0 ? 'flame.fill' : 'flame'}
-            fallback='🔥'
-            size={streak > 0 ? 34 : 24}
-            color={streak > 0 ? ACCENT : p.muted}
-          />
+          {/* Android draws the text fallback, which ignores colour: no full-colour flame for "no streak". */}
+          {(streak > 0 || Platform.OS !== 'android') && (
+            <AppSymbol
+              name={streak > 0 ? 'flame.fill' : 'flame'}
+              fallback='🔥'
+              size={streak > 0 ? STREAK_FLAME_SIZE : STREAK_FLAME_IDLE_SIZE}
+              color={streak > 0 ? ACCENT : p.borderControl}
+            />
+          )}
           <View style={s.streakText}>
             {streak > 0 && (
               <Text testID='goal-streak-days' style={[s.streakDays, { color: p.text }]}>
@@ -127,7 +130,12 @@ const s = StyleSheet.create({
   figure: { fontFamily: FONT_FAMILY.numeric, fontVariant: ['tabular-nums'], fontSize: FONT_SIZE.stat },
   streak: { flexDirection: 'row', alignItems: 'center', gap: SPACE.sm },
   streakText: { flex: 1, gap: 2 },
-  streakDays: { fontFamily: FONT_FAMILY.display, fontSize: FONT_SIZE.stat, fontWeight: FONT_WEIGHT.heavy },
+  streakDays: {
+    fontFamily: FONT_FAMILY.display,
+    fontSize: FONT_SIZE.stat,
+    textTransform: DISPLAY_CASE,
+    letterSpacing: DISPLAY_TRACKING,
+  },
   label: {
     marginTop: SPACE.xs,
     fontSize: FONT_SIZE.label,

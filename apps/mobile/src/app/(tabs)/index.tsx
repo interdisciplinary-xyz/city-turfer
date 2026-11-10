@@ -118,7 +118,7 @@ export default function DashboardScreen() {
         <GoalCard
           view={goal}
           onSet={() => router.push('/goal')}
-          onHide={() => void goalActions.hideOffer()}
+          onHide={() => void goalActions.hideOffer().catch(() => undefined)}
           onChange={() => router.push('/goal')}
         />
       )}
