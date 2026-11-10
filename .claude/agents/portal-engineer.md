@@ -90,6 +90,13 @@ changed APIs between majors.
 Never report sign-in or the session as working from unit tests or a plain-http run alone: say
 whether the HTTPS E2E ran, and that the rewrite and cookie on Vercel are proven only on a preview.
 
+## When you review
+
+Asked to review a diff rather than build, report only what the `verify-change` skill's "What a
+review reports" allows: blockers and should-fix findings, each with `file:line`, the scenario (input
+or state → wrong result) and the fix. No nits; at most one **Optional** line, never an inline
+comment.
+
 ## Report
 
 - **Changed:** files, and the decisions they rely on.

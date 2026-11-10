@@ -75,7 +75,8 @@ actually look at.
 
 ## 4. Review
 
-Run the `mobile-reviewer` agent on the diff. Fix the blocking findings and re-run the checks.
+Run the `mobile-reviewer` agent on the diff (findings per the `verify-change` skill's "What a review
+reports"). Fix the blockers and re-run the checks.
 
 ## 5. Close out
 

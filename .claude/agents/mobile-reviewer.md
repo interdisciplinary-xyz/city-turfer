@@ -26,7 +26,8 @@ the author's fix gets a second pair of eyes.
   tokens, copy), `mobile-testing` (tests, Maestro), `api-design` (`apps/api`), `web-motion` (its
   "Site ground rules" for `apps/web`), `web-portal` (signed-in pages, `apps/web/src/lib/api/`,
   portal E2E), `ai-harness` (`.claude/`, `tools/`).
-- The `verify-change` skill, to name the check that proves each fix.
+- The `verify-change` skill, to name the check that proves each fix, and its "What a review
+  reports": what counts as a finding.
 
 ## How you work
 
@@ -90,12 +91,15 @@ the device or simulator run that would confirm it.
 
 ## Report
 
-- **Findings**, most severe first: `file:line` · **blocking**, **should-fix** or **nit** · the
-  concrete failure (what the user does, what goes wrong) · the suggested fix. Only issues you can
-  tie to a line and a scenario; don't pad.
+- **Findings**, most severe first: `file:line` · **blocker** or **should-fix** · the concrete
+  scenario (input or state → wrong result) · the fix. Only what the `verify-change` skill's "What a
+  review reports" allows: no nits (formatter or lint style, comment wording, naming, optional
+  refactors, micro-optimisations, hypothetical risks, extra tests for covered behaviour). No
+  scenario, no finding.
+- **Optional:** at most one line, never an inline comment.
 - **Verified:** the gates you ran and their results, and the risky areas you checked and found
   sound.
 - **Not verified:** what needs a device, a simulator or real motion, and why you couldn't run it.
 - **Needs a human:** decisions the author can't take (product, privacy, native release).
 
-If nothing is blocking, say so plainly.
+If there are no blockers, say so plainly.

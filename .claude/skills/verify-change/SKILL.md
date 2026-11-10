@@ -86,8 +86,23 @@ after it has landed, so it needs `pnpm run check:secret-files -- --tracked` and
 
 Run the `mobile-reviewer` agent on the diff, for app and website changes alike (it has a website
 section for `web-engineer` work). A small change going straight to scope gets it on the staged diff
-before the push, unless it is only copy, messages or docs. Fix **blocking** findings and re-run the
+before the push, unless it is only copy, messages or docs. Fix the **blockers** and re-run the
 affected checks.
+
+### What a review reports
+
+The one rule for every reviewer (`mobile-reviewer` and any engineer agent asked to review):
+
+- **Only blockers and should-fix findings:** a concrete bug or data loss; a broken rule (CLAUDE.md
+  hard rules, privacy, DDD boundary, public/portal boundary, OTA vs native); a user-visible defect;
+  missing coverage of a real risk; docs or skills that now say something false.
+- **No nits:** style the formatter or lint already enforces, comment wording or length, naming
+  preferences, optional refactors, micro-optimisations, hypothetical future risks with no current
+  path, "could also test X" when the behaviour is covered. Something worth a mention but not a fix
+  gets at most one line under **Optional** in the summary, never an inline comment.
+- **Each finding names the scenario** (input or state → wrong result) and a fix. No scenario, no
+  finding.
+- **Severity is blocker or should-fix**, nothing else.
 
 ## 5. Report
 
@@ -95,7 +110,7 @@ affected checks.
 Verified:      tsc, depcruise, jest (412 passed), audit:logs, ci:quality
                simulator replay of run-5k.gpx: 5.02 km vs oracle 5.01 km
 Not verified:  background tracking on a real device; Android
-Review:        mobile-reviewer — no blocking findings (1 nit fixed)
+Review:        mobile-reviewer — no blockers (1 should-fix fixed)
 ```
 
 Never write "works" for a layer you did not exercise.
