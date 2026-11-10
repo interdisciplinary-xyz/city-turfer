@@ -303,7 +303,8 @@ h1 {
 
 /* ---------- Buttons: one system ----------
    Primary: a black pill with a white label (--text on --card; the hover lifts the black toward the
-   label colour). The pink stays for the turf itself. Secondary: the same shape as an outline in
+   label colour). The pink stays for the turf itself; the APK button (.store-btn-android) wears the same
+   black look, so each scheme has one primary. Secondary: the same shape as an outline in
    --border-control (3:1 on the page). 48 px tall pills; .btn-compact (40 px) is for tight rows. Every
    call to action and form button uses these (the header's link has its own copy in app-header.css,
    which must work on pages without this file). */
@@ -396,17 +397,16 @@ h1 {
 }
 
 .store-btn-android {
-  background: var(--glow);
-  color: var(--on-glow);
+  /* The same primary look as .btn-primary: black fill (--text), white label (--card). */
+  background: var(--text);
+  color: var(--card);
   box-shadow: 0 8px 24px color-mix(in srgb, var(--faint) 28%, transparent);
 }
 
 .store-btn-android:hover,
 .store-btn-android:focus-visible {
-  /* Mixes toward --blazing, not --text: on the light scheme --text darkens the pink and drops the
-     night label to 4.29:1; --blazing brightens it in both schemes (about 6.1:1, pinned in
-     packages/brand contrast.test.ts). */
-  background: color-mix(in srgb, var(--glow) 86%, var(--blazing));
+  background: color-mix(in srgb, var(--text) 82%, var(--card));
+  color: var(--card);
 }
 
 .store-btn-android:focus-visible {
@@ -456,7 +456,7 @@ h1 {
 /* The waitlist is its own banded section under the hero, centred under its head like every section. */
 
 .waitlist {
-  margin: var(--head-gap) auto 0;
+  margin: 0 auto;
   max-width: 34rem;
   text-align: center;
 }

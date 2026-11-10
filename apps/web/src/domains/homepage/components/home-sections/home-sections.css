@@ -5,13 +5,14 @@
    Card: radius-card, padding lg, hairline border. ActivityRow: radius-control, padding md. Stat:
    numeric face, tabular figures, uppercase label with label tracking. TurfLegend: a stepped Ramp. */
 
-/* The page's rhythm, one scale: every section pads 120 px at the top and 36 px (phones) or 64 px
-   (desktop) at the bottom, the heading block is 120 px from its content, the eyebrow 20 px from its
-   title. Every other section is a faint band (--band: a touch deeper than the page, the white cards
+/* The page's rhythm, one scale: from 768 px every section pads 120 px at the top and 64 px at the
+   bottom, and the heading block is 120 px from its content; on phones 72 px, 36 px and 56 px. The
+   eyebrow is 20 px from its title. Every other section is a faint band (--band: a touch deeper than the page, the white cards
    stand out on it). */
 :root {
-  --section-pad-top: 120px;
+  --section-pad-top: 72px;
   --section-pad: 36px;
+  --head-space: 56px;
   --head-gap: 40px;
   --band: color-mix(in srgb, var(--border) 25%, var(--bg));
 }
@@ -19,6 +20,13 @@
 @media (min-width: 720px) {
   :root {
     --section-pad: 64px;
+  }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --section-pad-top: 120px;
+    --head-space: 120px;
   }
 }
 
@@ -44,16 +52,17 @@
 
 /* ---------- Section heading (section.tsx): eyebrow, claim, lede ---------- */
 
-/* Centred in every section (the hero has its own heading), with 120 px under it before the content. */
+/* Centred in every section (the hero has its own heading), with --head-space under it before the
+   content (120 px from 768 px, 56 px on phones). */
 .section-head {
   min-width: 0;
-  margin-bottom: 120px;
+  margin-bottom: var(--head-space);
   text-align: center;
 }
 
-/* The heading owns the gap: the block right after it starts with no top margin. (Some section
-   blocks still set a --head-gap top margin later in this file; inside the block-level .wrap it
-   collapses into the head's 120px, so the visible gap stays 120px.) */
+/* The heading owns the gap: the block right after it sets no top margin of its own, so the gap
+   never depends on margin collapse. Keep it so: a block that follows a .section-head must not set a
+   top margin. */
 .section-head + * {
   margin-top: 0;
 }
@@ -277,7 +286,7 @@
 .home-steps {
   display: grid;
   gap: var(--space-lg);
-  margin: var(--head-gap) 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -342,6 +351,11 @@
   text-align: center;
 }
 
+.home-caption a {
+  color: inherit;
+  text-underline-offset: 2px;
+}
+
 @media (min-width: 860px) {
   .home-split {
     grid-template-columns: minmax(0, 1fr) minmax(0, 480px);
@@ -378,7 +392,7 @@
 }
 
 .home-privacy {
-  margin-top: var(--head-gap);
+  margin-top: 0;
   max-width: var(--measure);
 }
 
@@ -425,7 +439,7 @@
 .home-grid {
   display: grid;
   gap: var(--space-lg);
-  margin: var(--head-gap) 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -537,7 +551,6 @@
   display: grid;
   align-items: start;
   gap: var(--space-md);
-  margin-top: var(--head-gap);
 }
 
 .home-faq-item {

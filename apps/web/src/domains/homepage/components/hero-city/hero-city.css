@@ -84,3 +84,23 @@
   --city-streets: url('/city-maps/lt-vilnius-streets.svg');
   --city-water: url('/city-maps/lt-vilnius-water.svg');
 }
+
+/* The OpenStreetMap credit: the corner of the map, above it (the map is behind the hero's content).
+   --muted on the page colour (the map fades to --bg here) is well over 4.5:1. */
+.hero-map-credit {
+  position: absolute;
+  right: var(--space-md);
+  bottom: 4px;
+  z-index: 1;
+  padding: 4px 6px;
+  color: var(--muted);
+  font-size: var(--font-caption);
+  line-height: 1.2;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.hero-map-credit:hover,
+.hero-map-credit:focus-visible {
+  color: var(--text);
+}

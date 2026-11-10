@@ -149,8 +149,10 @@ const PAIRS: Pair[] = [
   // Swagger and Storybook (SITE_SCHEME, dark).
   { name: 'site --on-accent on --accent', fg: SITE['--on-accent'], bg: SITE['--accent'], min: MIN_CONTRAST.text },
   { name: 'site --accent-text on --card', fg: SITE['--accent-text'], bg: SITE['--card'], min: MIN_CONTRAST.text },
-  // Primary button hover: color-mix(in srgb, var(--glow) 86%, var(--blazing)) under the night label.
-  // Mixing toward --text would darken the pink on the light scheme (4.29); --blazing holds in both.
+  // Pink fill hover: color-mix(in srgb, var(--glow) 86%, var(--blazing)) under the night label, for
+  // the pink fills that remain (night panels, Swagger, Storybook). The website's primary buttons,
+  // the APK button included, are black; their hover (--text 82% toward --card) is pinned above.
+  // Mixing toward --text would darken the pink on the light scheme (4.29); --blazing holds in all.
   ...(
     [
       ['web', WEB],
