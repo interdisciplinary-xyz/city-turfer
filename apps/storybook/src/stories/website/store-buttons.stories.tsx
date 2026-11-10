@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
-import { StoreButtons } from '@/app/[locale]/store-buttons';
+import { StoreButtons } from '@/domains/homepage';
 
 const meta = {
   title: 'Website/StoreButtons',

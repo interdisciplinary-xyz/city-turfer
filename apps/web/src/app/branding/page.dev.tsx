@@ -34,9 +34,10 @@ import { NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import type { CSSProperties, ReactNode } from 'react';
 
-import { AppHeader } from '../[locale]/app-header';
-import { bodyFont, displayFont, numericFont, taglineFont } from '../fonts';
-import { WAITLIST } from '../waitlist-config';
+import { bodyFont, displayFont, numericFont, taglineFont } from '@/app/fonts';
+import { AppHeader } from '@/domains/layout';
+import { WAITLIST } from '@/domains/waitlist';
+
 import { BrandNav } from './brand-nav';
 import {
   ACTIVITY_LABEL,
@@ -89,7 +90,7 @@ export default async function BrandingPage() {
   if (process.env.NODE_ENV === 'development') {
     const { shouldRenderDevToolbar } = await import('@interdisciplinary/dev-toolbar/next');
     if (await shouldRenderDevToolbar()) {
-      const { DevToolbarWithApp } = await import('../dev-toolbar-with-app');
+      const { DevToolbarWithApp } = await import('@/app/dev-toolbar-with-app');
       devToolbar = <DevToolbarWithApp />;
     }
   }

@@ -1,10 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
-import { HeroCity, HeroCityLine } from '@/app/[locale]/hero-city';
-import { HeroCopy } from '@/app/[locale]/hero-copy';
-import { HeroMotion } from '@/app/[locale]/hero-motion';
-import { HeroScreens } from '@/app/[locale]/hero-screens';
-import { StoreButtons } from '@/app/[locale]/store-buttons';
+import { HeroCity, HeroCopy, HeroMotion, HeroScreens, StoreButtons } from '@/domains/homepage';
 
 /** The landing page's hero as apps/web/src/app/[locale]/page.tsx composes it. */
 function Hero({ apkUrl }: { apkUrl: string | null }) {
@@ -16,7 +12,6 @@ function Hero({ apkUrl }: { apkUrl: string | null }) {
         <HeroScreens />
         <StoreButtons apkUrl={apkUrl} />
       </div>
-      <HeroCityLine />
     </HeroMotion>
   );
 }

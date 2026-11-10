@@ -6,7 +6,7 @@ scope:
   [
     apps/mobile/eas.json,
     apps/mobile/tools/publish-android-apk.mjs,
-    apps/web/src/app/download-url.ts,
+    apps/web/src/lib/download-url.ts,
   ]
 summary:
   Build the Android APK on EAS, publish it to the website download link, test it on an emulator

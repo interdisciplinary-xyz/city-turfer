@@ -203,12 +203,13 @@ WCAG 2.2 AA: 4.5:1 body text, 3:1 large text (≥ 24 px or ≥ 18.5 px bold), ic
 Check a pair with `contrastRatio(fg, bg)` from `@cityturfer/brand`
 (`packages/brand/src/contrast.ts`). `packages/brand/src/__tests__/contrast.test.ts` covers every
 pairing the apps draw: each light `-text` / `-graphic` variant on `LIGHT.bg` and `LIGHT.card`, and
-the website's own pairs read from `cssVariables(WEB_SCHEME)` (night label on glow 5.49, accent text
-on card 5.7), the night panels' from `cssVariables(APP_SCHEME)` (the glow disc on card 4.95, glow on
-border 4.05, the faint legend step on bg 3.32), and Swagger's and Storybook's from `SITE_SCHEME`.
-The primary button hover is `color-mix(in srgb, var(--glow) 86%, var(--blazing))` (about 6.1 in
-every scheme; mixing toward `--text` fell to 4.29 on the light one). Its `KNOWN_FAILURES` are what
-remains:
+the website's own pairs read from `cssVariables(WEB_SCHEME)` (the black primary button: card label
+on text and its hover, accent text on card 5.7), the night panels' from `cssVariables(APP_SCHEME)`
+(the glow disc on card 4.95, glow on border 4.05, the faint legend step on bg 3.32), and Swagger's
+and Storybook's from `SITE_SCHEME`. The website's primary button is black with a white label
+(`--text` fill, `--card` label; hover `color-mix(in srgb, var(--text) 82%, var(--card))`, founder
+call 2026-11-05 in `docs/plans/homepage-tidy-2026-11-01.md`); pink is for the turf. Its
+`KNOWN_FAILURES` are what remains:
 
 - **Live in the app (dark):** white on glow (`ON_ACCENT`, 3.5:1) and the same pair on the glow tier
   chip (`ON_TIER.glowing`), plus white on the dark `danger` fill (2.9:1). Kept so the app does not

@@ -1,6 +1,6 @@
 import type { Decorator, Meta, StoryObj } from '@storybook/react-native-web-vite';
 
-import { AppHeader } from '@/app/[locale]/app-header';
+import { AppHeader } from '@/domains/layout';
 
 /** Lets the sticky header be scrolled against. */
 const withScroll: Decorator = (Story) => (

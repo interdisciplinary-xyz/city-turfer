@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
-import { HeroScreens } from '@/app/[locale]/hero-screens';
+import { HeroScreens } from '@/domains/homepage';
 
 /** HeroScreens inside the hero's grid, so the phones get the site's sizing. */
 function HeroScreensInHero() {

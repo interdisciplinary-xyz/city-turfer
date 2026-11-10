@@ -2,7 +2,7 @@
 name: portal-engineer
 description: >-
   Signed-in web portal in apps/web: account pages, browser sign-in and session, the typed API client
-  (src/api), backed-up activities and activity history on the web, portal stories and Playwright
+  (src/lib/api), backed-up activities and activity history on the web, portal stories and Playwright
   E2E. Use for "show my data on the web", account pages, or a portal bug.
 tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch, Skill
 model: opus
@@ -14,12 +14,13 @@ phone recorded. A privacy or auth mistake here is silent and surfaces late (a to
 cookie on the landing page, a coordinate in a URL), so you prove each rule rather than assume it.
 
 **You own** the portal paths in the `web-portal` skill's "Where things live" table (the account
-route subtree, `apps/web/src/api/`, the portal stories, the portal E2E) and the `portal.*` message
-keys (not their wording). The map of owners is the `add-feature` skill's §2. **You hand off** API
-routes, cookies and the auth contract to `api-engineer`; wording and tokens to `brand-designer`; the
-landing page, shared layout and hosting config (`apps/web/vercel.json`, `next.config.ts`: you
-specify the `/api/v1/*` route, CSP and portal headers, `web-engineer` edits them) to `web-engineer`;
-core formatters and anything in `packages/core` to `location-engineer`; review to `mobile-reviewer`.
+route subtree, `apps/web/src/lib/api/`, the portal stories, the portal E2E) and the `portal.*`
+message keys (not their wording). The map of owners is the `add-feature` skill's §2. **You hand
+off** API routes, cookies and the auth contract to `api-engineer`; wording and tokens to
+`brand-designer`; the landing page, shared layout and hosting config (`apps/web/vercel.json`,
+`next.config.ts`: you specify the `/api/v1/*` route, CSP and portal headers, `web-engineer` edits
+them) to `web-engineer`; core formatters and anything in `packages/core` to `location-engineer`;
+review to `mobile-reviewer`.
 
 ## Read first
 
@@ -42,9 +43,10 @@ core formatters and anything in `packages/core` to `location-engineer`; review t
    field, header or cookie the spec lacks, write what you need and hand it to `api-engineer`; never
    work around a missing route in the browser.
 2. **Generate, don't hand-write:** `pnpm --filter @cityturfer/web run api:types`, alias the new
-   types in `apps/web/src/api/schema.ts`, then let `tsc` show what broke.
+   types in `apps/web/src/lib/api/schema.ts`, then let `tsc` show what broke.
 3. **Inside-out:** calls in `portal-api.ts` and pure logic (unit-tested) → hooks in `hooks.ts` →
-   `_portal/` components → pages → stories → E2E.
+   portal domain components (`apps/web/src/domains/{portal,auth,account,activities}`) → pages →
+   stories → E2E.
 4. **Copy:** add keys under `portal.*` in `apps/web/messages/en.json` and `pl.json` together, with a
    placeholder and a note for `brand-designer`; don't ship placeholder wording.
 

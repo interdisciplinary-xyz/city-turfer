@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
+import { SignInPage } from '@/domains/auth';
 import type { Locale } from '@/i18n/routing';
-
-import { SignInPage } from '../_portal/sign-in-page';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;

@@ -1,8 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
-import { ErrorMessage } from '@/app/[locale]/account/_portal/error-message';
-import { Notice } from '@/app/[locale]/account/_portal/notice';
-import { Unreachable } from '@/app/[locale]/account/_portal/unreachable';
+import { ErrorMessage, Notice, Unreachable } from '@/domains/portal';
 
 import { ERRORS } from './fixtures';
 

@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { useLocale, useTranslations } from 'next-intl';
 
-import { Section, SectionHead } from '@/app/[locale]/home-sections';
-import { WaitlistForm } from '@/app/[locale]/waitlist-form';
+import { Section, SectionHead } from '@/domains/homepage';
+import { WaitlistForm } from '@/domains/waitlist';
 
 /** The waitlist section; the form posts to an address that never answers, so no one is signed up. */
 function Waitlist() {
@@ -10,7 +10,7 @@ function Waitlist() {
   const t = useTranslations('waitlist');
   return (
     <Section name='waitlist' band className='waitlist-section'>
-      <SectionHead name='waitlist' eyebrow={t('eyebrow')} title={t('title')} align='center' />
+      <SectionHead name='waitlist' eyebrow={t('eyebrow')} title={t('title')} />
       <WaitlistForm
         action='https://example.invalid/brevo'
         controller='CityTurfer (example)'

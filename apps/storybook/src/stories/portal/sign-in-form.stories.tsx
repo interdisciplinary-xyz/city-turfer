@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
-import { SignInForm } from '@/app/[locale]/account/_portal/sign-in-form';
+import { SignInForm } from '@/domains/auth';
 
 import { after, ERRORS } from './fixtures';
 

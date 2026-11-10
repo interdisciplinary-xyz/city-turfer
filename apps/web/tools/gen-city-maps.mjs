@@ -6,11 +6,10 @@
 // SVG masks to apps/web/public/city-maps/: <id>-streets.svg and <id>-water.svg. The site colours them
 // with brand CSS variables (mask-image), so the files hold no colour. Output is committed: the build
 // and the visitor's browser never call OpenStreetMap. Map data © OpenStreetMap contributors (ODbL);
-// the hero shows the credit.
+// the site footer shows the credit.
 //
 //   node tools/gen-city-maps.mjs                          # every city in MAP_CITY_IDS
 //   node tools/gen-city-maps.mjs pl-gdansk --cache /tmp/osm   # one city; reuse saved Overpass answers
-//   node tools/gen-city-maps.mjs --data-only              # only hero-cities.data.json (no network)
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -20,13 +19,11 @@ import { gzipSync } from 'node:zlib';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CATALOG = path.resolve(HERE, '../../../packages/core/src/contexts/territory/domain/city-catalog.ts');
 const OUT_DIR = path.resolve(HERE, '../public/city-maps');
-// The hero's city centres as plain data, so the public page never loads @cityturfer/core.
-const DATA_OUT = path.resolve(HERE, '../src/app/[locale]/hero-city/hero-cities.data.json');
 /** Public Overpass instances, tried in turn when one is busy. */
 const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter'];
 const USER_AGENT = 'CityTurfer hero map generator (dev tool; https://github.com/interdisciplinary-xyz/city-turfer)';
 
-/** Cities that get a map. Keep in sync with HERO_CITY_IDS in src/app/[locale]/hero-city (a test checks). */
+/** Cities that get a map. Keep in sync with HERO_CITY_IDS in src/domains/homepage/components/hero-city (a test checks). */
 export const MAP_CITY_IDS = [
   'pl-gdansk',
   'pl-warsaw',
@@ -361,26 +358,11 @@ export function renderWithinBudget(city, osm) {
   return out;
 }
 
-/** The hero's cities with their catalogue centres ([lon, lat]), in MAP_CITY_IDS order. */
-export function cityData(catalog) {
-  return MAP_CITY_IDS.map((id) => {
-    const city = catalog.get(id);
-    if (!city) {
-      throw new Error(`${id} is not in the Home City catalogue`);
-    }
-    return { id, center: [city.lon, city.lat] };
-  });
-}
-
 async function main(argv) {
   const cacheAt = argv.indexOf('--cache');
   const cacheDir = cacheAt >= 0 ? argv[cacheAt + 1] : null;
   const ids = argv.filter((a, i) => !a.startsWith('--') && (cacheAt < 0 || i !== cacheAt + 1));
   const catalog = readCatalog(readFileSync(CATALOG, 'utf8'));
-  writeFileSync(DATA_OUT, `${JSON.stringify(cityData(catalog), null, 2)}\n`);
-  if (argv.includes('--data-only')) {
-    return;
-  }
   mkdirSync(OUT_DIR, { recursive: true });
   for (const id of ids.length ? ids : MAP_CITY_IDS) {
     const city = catalog.get(id);

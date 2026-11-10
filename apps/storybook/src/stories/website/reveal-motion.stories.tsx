@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
-import { RevealMotion } from '@/app/[locale]/reveal-motion';
+import { RevealMotion } from '@/domains/homepage';
 
 /** A few `data-reveal` blocks down a tall page: scroll and each one rises and fades in once. */
 function RevealDemo() {

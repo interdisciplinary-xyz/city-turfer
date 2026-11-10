@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
-import { DeleteAccount } from '@/app/[locale]/account/_portal/delete-account';
+import { DeleteAccount } from '@/domains/account';
 
 import { ERRORS } from './fixtures';
 

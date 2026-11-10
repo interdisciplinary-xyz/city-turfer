@@ -3,7 +3,7 @@
 // Also loads the portal's stylesheet, which only the portal root's layout imports on the site.
 import '@/app/[locale]/account/portal.css';
 
-import { PortalError } from '@/api/errors';
+import { PortalError } from '@/lib/api/errors';
 import type {
   ActivityDetail,
   ActivitySummary,
@@ -14,7 +14,7 @@ import type {
   LonLat,
   Track,
   User,
-} from '@/api/schema';
+} from '@/lib/api/schema';
 
 export const USER: User = {
   id: 'u_story',

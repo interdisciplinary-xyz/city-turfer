@@ -9,9 +9,9 @@ import {
   LocalFirst,
   Section,
   SectionHead,
+  TurfDemo,
   WhereItStands,
-} from '@/app/[locale]/home-sections';
-import { TurfDemo } from '@/app/[locale]/turf-demo';
+} from '@/domains/homepage';
 
 /** Everything under the hero and the waitlist, in page order (the glow demo is inside How it works). */
 function HomeSections() {
@@ -63,7 +63,7 @@ export const WhereItStandsOnly: StoryObj<typeof meta> = { render: () => <WhereIt
 
 export const FaqOnly: StoryObj<typeof meta> = { render: () => <Faq /> };
 
-/** The shared heading: eyebrow (plain name), claim and an optional lede; centred for the closing sections. */
+/** The shared heading: eyebrow (plain name), claim and an optional lede, centred in every section. */
 export const SectionHeading: StoryObj<typeof meta> = {
   render: () => (
     <Section name='how'>
@@ -73,14 +73,6 @@ export const SectionHeading: StoryObj<typeof meta> = {
         title='One loop. Every street.'
         lede='Record an outing, see the turf you gained, watch it glow when you come back.'
       />
-    </Section>
-  ),
-};
-
-export const SectionHeadingCentred: StoryObj<typeof meta> = {
-  render: () => (
-    <Section name='cta'>
-      <SectionHead name='cta' eyebrow='Waitlist' title='Your turf starts at your door' align='center' />
     </Section>
   ),
 };
