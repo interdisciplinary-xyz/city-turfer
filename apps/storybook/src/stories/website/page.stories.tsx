@@ -1,23 +1,22 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { useLocale, useTranslations } from 'next-intl';
 
-import { AppHeader } from '@/app/[locale]/app-header';
-import { HeroCity } from '@/app/[locale]/hero-city';
-import { HeroCopy } from '@/app/[locale]/hero-copy';
-import { HeroMotion } from '@/app/[locale]/hero-motion';
-import { HeroScreens } from '@/app/[locale]/hero-screens';
 import {
   Audience,
   Faq,
   FinalCta,
+  HeroCity,
+  HeroCopy,
+  HeroMotion,
+  HeroScreens,
   Highlights,
   HowItWorks,
   LocalFirst,
   Section,
   SectionHead,
-} from '@/app/[locale]/home-sections';
-import { SiteFooter } from '@/app/[locale]/site-footer';
-import { WaitlistForm } from '@/app/[locale]/waitlist-form';
+} from '@/domains/homepage';
+import { AppHeader, SiteFooter } from '@/domains/layout';
+import { WaitlistForm } from '@/domains/waitlist';
 import type { Locale } from '@/i18n/routing';
 
 type PageProps = { waitlist: boolean };

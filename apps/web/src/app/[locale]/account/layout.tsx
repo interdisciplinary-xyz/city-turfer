@@ -1,5 +1,5 @@
 // The shared header sheet holds --header-h and the language switcher (.lang) the portal frame uses.
-import '../app-header/app-header.css';
+import '@/domains/layout/components/app-header/app-header.css';
 import './portal.css';
 
 import type { Metadata } from 'next';
@@ -7,7 +7,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 
-import { PortalApiProvider } from '@/api/provider';
+import { PortalApiProvider } from '@/lib/api/provider';
 
 import { PORTAL_CLIENT_NAMESPACES } from './layout.constants';
 

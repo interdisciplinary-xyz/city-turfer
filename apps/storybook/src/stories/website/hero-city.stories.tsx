@@ -1,8 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { useEffect } from 'react';
 
-import { HeroCity } from '@/app/[locale]/hero-city';
-import { HERO_CITY_IDS, type HeroCityId } from '@/app/[locale]/hero-city/hero-city.constants';
+import { HERO_CITY_IDS, HeroCity, type HeroCityId } from '@/domains/homepage';
 
 /** The hero's map layer on its own, in a hero-sized box, for one city. */
 function HeroCityPreview({ city }: { city: HeroCityId }) {

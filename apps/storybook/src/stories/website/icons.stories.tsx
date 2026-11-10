@@ -2,7 +2,7 @@ import { APP_SCHEME, cssVariables } from '@cityturfer/brand';
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import type { CSSProperties } from 'react';
 
-import { Icon, ICON_FOR_TYPE, ICON_NAMES } from '@/app/[locale]/icons';
+import { Icon, ICON_FOR_TYPE, ICON_NAMES } from '@/domains/homepage';
 
 const SIZES = [20, 24, 32, 48] as const;
 
@@ -95,7 +95,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "The marketing pages' outline icons (apps/web/src/app/[locale]/icons): one 24 × 24 grid, 1.75 stroke, round caps and joins, the mark's line. Inline SVG in currentColor, decorative unless given a title. Discs (.icon-disc, -walk / -run / -ride) tint the icon's own token 12% and draw it in the -text token; bare activity icons use the -graphic tokens. No turf tier colours on the light page.",
+          "The marketing pages' outline icons (apps/web/src/domains/homepage/components/icons): one 24 × 24 grid, 1.75 stroke, round caps and joins, the mark's line. Inline SVG in currentColor, decorative unless given a title. Discs (.icon-disc, -walk / -run / -ride) tint the icon's own token 12% and draw it in the -text token; bare activity icons use the -graphic tokens. No turf tier colours on the light page.",
       },
     },
   },

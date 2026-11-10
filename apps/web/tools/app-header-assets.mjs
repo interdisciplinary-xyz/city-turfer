@@ -11,7 +11,7 @@ import { build } from 'esbuild';
 export const APP_HEADER_SCRIPT = '__app-header.js';
 export const APP_HEADER_STYLES = '__app-header.css';
 
-/** Waitlist settings the header reads (src/app/waitlist-config.ts), from .env* like Next does. */
+/** Waitlist settings the header reads (src/domains/waitlist/waitlist-config.ts), from .env* like Next does. */
 const WAITLIST_ENV = ['NEXT_PUBLIC_WAITLIST_FORM_URL', 'NEXT_PUBLIC_WAITLIST_CONTROLLER', 'NEXT_PUBLIC_CONTACT_EMAIL'];
 
 /** Mount point and script for a page. Goes first in <body>. */
@@ -47,7 +47,10 @@ export function appHeaderAssets(webRoot) {
       define,
       absWorkingDir: webRoot,
     });
-    const stylesheet = await readFile(path.join(webRoot, 'src/app/[locale]/app-header/app-header.css'), 'utf8');
+    const stylesheet = await readFile(
+      path.join(webRoot, 'src/domains/layout/components/app-header/app-header.css'),
+      'utf8'
+    );
     // No variable block here: AppHeaderView sets the header's own scheme (HEADER_SCHEME) inline on
     // the <header>, so the host page's :root (Swagger's dark skin, Storybook) stays as it is.
     // Opaque on these pages, so the host page never shows through the bar: the header's white.

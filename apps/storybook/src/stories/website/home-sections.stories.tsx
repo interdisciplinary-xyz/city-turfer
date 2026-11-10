@@ -9,9 +9,9 @@ import {
   LocalFirst,
   Section,
   SectionHead,
+  TurfDemo,
   WhereItStands,
-} from '@/app/[locale]/home-sections';
-import { TurfDemo } from '@/app/[locale]/turf-demo';
+} from '@/domains/homepage';
 
 /** Everything under the hero and the waitlist, in page order (the glow demo is inside How it works). */
 function HomeSections() {

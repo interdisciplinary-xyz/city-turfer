@@ -25,7 +25,7 @@ test('the theme stylesheet is the site scheme variables plus a skin that only us
   const used = [...skin.matchAll(/var\((--[\w-]+)/g)].map((m) => m[1]);
   const own = new Set([...skin.matchAll(/^\s*(--ct-[\w-]+):/gm)].map((m) => m[1]));
   // The site header's stylesheet (served with the page as __app-header.css) defines --header-h.
-  const header = await readFile(path.join(WEB, 'src/app/[locale]/app-header/app-header.css'), 'utf8');
+  const header = await readFile(path.join(WEB, 'src/domains/layout/components/app-header/app-header.css'), 'utf8');
   const fromHeader = new Set([...header.matchAll(/^\s*(--[\w-]+):/gm)].map((m) => m[1]));
   for (const name of used) {
     assert.ok(

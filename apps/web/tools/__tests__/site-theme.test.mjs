@@ -3,11 +3,11 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { test } from 'node:test';
 
-const SRC = path.resolve(import.meta.dirname, '../../src/app');
+const SRC = path.resolve(import.meta.dirname, '../../src');
 const read = (file) => readFile(path.join(SRC, file), 'utf8');
 
 test('the layout takes its scheme from WEB_SCHEME, never a literal', async () => {
-  const layout = await read('[locale]/layout.tsx');
+  const layout = await read('app/[locale]/layout.tsx');
   assert.match(layout, /cssVariables\(WEB_SCHEME\)/);
   assert.match(layout, /themeColor:\s*THEMES\[WEB_SCHEME\]\.card/);
   assert.match(layout, /colorScheme:\s*WEB_SCHEME/);
@@ -16,19 +16,25 @@ test('the layout takes its scheme from WEB_SCHEME, never a literal', async () =>
 });
 
 test('globals.css declares a light colour scheme (WEB_SCHEME)', async () => {
-  const css = await read('globals.css');
+  const css = await read('app/globals.css');
   assert.match(css, /color-scheme:\s*light\s*;/);
   assert.doesNotMatch(css, /color-scheme:\s*dark/);
 });
 
 test('the hero phones keep the dark app scheme on the light page', async () => {
-  const constants = await read('[locale]/hero-screens/hero-screens.constants.ts');
+  const constants = await read('domains/homepage/components/hero-screens/hero-screens.constants.ts');
   assert.match(constants, /cssVariables\(APP_SCHEME\)/);
-  assert.match(await read('[locale]/hero-screens/hero-screens.tsx'), /className='phone' style=\{PHONE_VARIABLES\}/);
+  assert.match(
+    await read('domains/homepage/components/hero-screens/hero-screens.tsx'),
+    /className='phone' style=\{PHONE_VARIABLES\}/
+  );
 });
 
 test("the light site's white header uses the day wordmark; the branding page uses the site scheme", async () => {
-  const files = ['[locale]/app-header/app-header.tsx', '[locale]/account/_portal/portal-header/portal-header.tsx'];
+  const files = [
+    'domains/layout/components/app-header/app-header.tsx',
+    'domains/portal/components/portal-header/portal-header.tsx',
+  ];
   for (const file of files) {
     const source = await read(file);
     assert.match(source, /svg\/wordmark-light\.svg/, file);
@@ -38,40 +44,47 @@ test("the light site's white header uses the day wordmark; the branding page use
   const entry = await readFile(path.resolve(import.meta.dirname, '../app-header-entry.mjs'), 'utf8');
   assert.match(entry, /svg\/wordmark-light\.svg/);
   assert.doesNotMatch(entry, /svg\/wordmark\.svg/);
-  const branding = await read('branding/page.dev.tsx');
+  const branding = await read('app/branding/page.dev.tsx');
   assert.match(branding, /cssVariables\(SITE_SCHEME\)/);
-  assert.match(await read('branding/branding.css'), /color-scheme:\s*dark\s*;/);
+  assert.match(await read('app/branding/branding.css'), /color-scheme:\s*dark\s*;/);
 });
 
 test('the header sets its own light scheme inline, from HEADER_SCHEME', async () => {
-  const view = await read('[locale]/app-header/app-header-view.tsx');
+  const view = await read('domains/layout/components/app-header/app-header-view.tsx');
   assert.match(view, /<header className='app-header' style=\{HEADER_VARIABLES\}>/);
-  const constants = await read('[locale]/app-header/app-header.constants.ts');
+  const constants = await read('domains/layout/components/app-header/app-header.constants.ts');
   assert.match(constants, /cssVariables\(HEADER_SCHEME\)/);
-  assert.match(await read('[locale]/app-header/app-header.css'), /\.app-header \{[^}]*background:\s*var\(--card\)/);
-  assert.match(await read('[locale]/account/portal.css'), /\.portal-header \{[^}]*background:\s*var\(--card\)/);
+  assert.match(
+    await read('domains/layout/components/app-header/app-header.css'),
+    /\.app-header \{[^}]*background:\s*var\(--card\)/
+  );
+  assert.match(await read('app/[locale]/account/portal.css'), /\.portal-header \{[^}]*background:\s*var\(--card\)/);
 });
 
 test('the pieces that draw turf tiers are night panels from APP_SCHEME', async () => {
-  const constants = await read('[locale]/home-sections/home-sections.constants.ts');
+  const constants = await read('domains/homepage/components/home-sections/home-sections.constants.ts');
   assert.match(constants, /cssVariables\(APP_SCHEME\)/);
-  const tsx = await read('[locale]/home-sections/home-sections.tsx');
+  const tsx = await read('domains/homepage/components/home-sections/home-sections.tsx');
   for (const piece of ['app-record', 'app-gain', 'app-legend']) {
     assert.match(tsx, new RegExp(`className='${piece}' style=\\{APP_VARIABLES\\}`), piece);
   }
   // The glow demo's map panel is a night panel too (its scheme is passed to the client player).
   assert.match(
-    await read('[locale]/turf-demo/turf-demo.constants.ts'),
+    await read('domains/homepage/components/turf-demo/turf-demo.constants.ts'),
     /DEMO_SCHEME_STYLE = cssVariables\(APP_SCHEME\)/
   );
   assert.match(
-    await read('[locale]/turf-demo/turf-demo-player.tsx'),
+    await read('domains/homepage/components/turf-demo/turf-demo-player.tsx'),
     /className='turf-demo-panel' style=\{schemeStyle\}/
   );
 });
 
 test('pink and amber text go through the -text variables, never the raw fill', async () => {
-  for (const file of ['globals.css', '[locale]/home-sections/home-sections.css', '[locale]/account/portal.css']) {
+  for (const file of [
+    'app/globals.css',
+    'domains/homepage/components/home-sections/home-sections.css',
+    'app/[locale]/account/portal.css',
+  ]) {
     const css = await read(file);
     assert.doesNotMatch(css, /[^-]color:\s*var\(--(glow|accent|strong|blazing)\)/, file);
   }

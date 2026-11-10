@@ -177,9 +177,9 @@ It stays right under the hero, as today. It gets the waitlist question from slic
   - The visit counts per tier come out of the formula, not a hand-picked 1/3/6/12.
   - It picks the street as the most-repeated stretch in the demo, about 600 m, and pins it by route
     id so the output is stable.
-  - The output is `apps/web/src/app/[locale]/turf-demo/turf-demo.data.json`: hex polygons projected
-    to an 800 × 1000 viewBox (4:5), rounded to 1 decimal, with the tier per step. Budget: ≤ 30 KB
-    gzipped, checked by the test. h3-js never reaches the browser.
+  - The output is `apps/web/src/domains/homepage/components/turf-demo/turf-demo.data.json`: hex
+    polygons projected to an 800 × 1000 viewBox (4:5), rounded to 1 decimal, with the tier per step.
+    Budget: ≤ 30 KB gzipped, checked by the test. h3-js never reaches the browser.
   - Spike question: can a `.mjs` tool import core's TS source directly, or does it need the runner
     the API's dev scripts use? Settle this in the slice-2 spike.
 - **Drawing:**

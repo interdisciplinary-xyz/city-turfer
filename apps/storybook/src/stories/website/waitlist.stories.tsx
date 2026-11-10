@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { useLocale, useTranslations } from 'next-intl';
 
-import { Section, SectionHead } from '@/app/[locale]/home-sections';
-import { WaitlistForm } from '@/app/[locale]/waitlist-form';
+import { Section, SectionHead } from '@/domains/homepage';
+import { WaitlistForm } from '@/domains/waitlist';
 
 /** The waitlist section; the form posts to an address that never answers, so no one is signed up. */
 function Waitlist() {

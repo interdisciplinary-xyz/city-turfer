@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
-import { HeroCopy } from '@/app/[locale]/hero-copy';
+import { HeroCopy } from '@/domains/homepage';
 
 /** HeroCopy inside the hero's grid, so it gets the site's spacing and type. */
 function HeroCopyInHero() {

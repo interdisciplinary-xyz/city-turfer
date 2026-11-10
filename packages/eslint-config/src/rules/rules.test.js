@@ -31,7 +31,13 @@ describe('local-rules plugin', () => {
     const names = Object.keys(plugin.rules).sort();
     if (
       names.join(',') !==
-      ['enforce-tailwind-arbitrary', 'enforce-types-in-constants', 'no-duplicate-imports', 'no-raw-text'].join(',')
+      [
+        'enforce-tailwind-arbitrary',
+        'enforce-types-in-constants',
+        'no-deep-domain-import',
+        'no-duplicate-imports',
+        'no-raw-text',
+      ].join(',')
     ) {
       throw new Error(`unexpected rule set: ${names.join(', ')}`);
     }
@@ -161,6 +167,53 @@ ruleTester.run('no-raw-text', plugin.rules['no-raw-text'], {
     {
       code: "Alert.alert(t('title'), undefined, [{ text: 'Cancel', style: 'cancel' }, { text: t('ok') }]);",
       errors: raw,
+    },
+  ],
+});
+
+ruleTester.run('no-deep-domain-import', plugin.rules['no-deep-domain-import'], {
+  valid: [
+    { filename: `${SRC}/domains/layout/components/x/x.tsx`, code: "import { a } from '@/domains/homepage';" },
+    { filename: `${SRC}/app/page.tsx`, code: "import { a } from '@/domains/homepage';" },
+    {
+      // A domain's own deep self-alias is fine.
+      filename: `${SRC}/domains/homepage/components/x/x.tsx`,
+      code: "import { a } from '@/domains/homepage/components/y/y.constants';",
+    },
+    { filename: `${SRC}/lib/x.ts`, code: "import { a } from '@/lib/api/client';" },
+    // Stylesheets are assets, not code API.
+    { filename: `${SRC}/app/layout.tsx`, code: "import '@/domains/layout/components/app-header/app-header.css';" },
+  ],
+  invalid: [
+    {
+      filename: `${SRC}/domains/layout/components/x/x.tsx`,
+      code: "import { a } from '@/domains/homepage/components/y';",
+      errors: [{ messageId: 'deepImport' }],
+    },
+    {
+      filename: `${SRC}/app/page.tsx`,
+      code: "export { a } from '../domains/homepage/components/y';",
+      errors: [{ messageId: 'deepImport' }],
+    },
+    {
+      filename: `${SRC}/domains/homepage/components/x/x.tsx`,
+      code: "import { a } from '@/domains/homepage';",
+      errors: [{ messageId: 'selfBarrel' }],
+    },
+    {
+      filename: `${SRC}/domains/layout/components/x/x.tsx`,
+      code: "import { a } from '../../../homepage/components/y';",
+      errors: [{ messageId: 'deepImport' }],
+    },
+    {
+      filename: `${SRC}/domains/homepage/components/x/x.tsx`,
+      code: "import { a } from '../../';",
+      errors: [{ messageId: 'selfBarrel' }],
+    },
+    {
+      filename: `${SRC}/domains/layout/components/x/x.test.ts`,
+      code: "vi.mock('@/domains/homepage/components/y');",
+      errors: [{ messageId: 'deepImport' }],
     },
   ],
 });

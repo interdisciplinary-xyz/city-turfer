@@ -9,8 +9,8 @@ import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 
 import en from '../messages/en.json';
-import { AppHeaderView } from '../src/app/[locale]/app-header/app-header-view';
-import { WAITLIST } from '../src/app/waitlist-config';
+import { AppHeaderView } from '../src/domains/layout/components/app-header/app-header-view';
+import { WAITLIST } from '../src/domains/waitlist/waitlist-config';
 
 const LOCALE = 'en';
 const LOCALES = ['en', 'pl'];

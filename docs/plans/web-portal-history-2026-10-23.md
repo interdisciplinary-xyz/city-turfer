@@ -4,7 +4,7 @@ verified: 2026-10-24
 owner: founder
 scope:
   - 'apps/web/src/app/[locale]/account'
-  - 'apps/web/src/api'
+  - 'apps/web/src/lib/api'
   - 'apps/web/messages'
   - 'apps/web/e2e'
   - 'packages/core/src/shared-kernel'
@@ -118,7 +118,7 @@ are.
 Open for the founder:
 
 - English dates read en-GB style (day first, 24-hour) on every portal page (`dateLocale` in
-  `_portal/format.ts`); the default until the founder chooses otherwise.
+  `apps/web/src/domains/portal/utils/format.ts`); the default until the founder chooses otherwise.
 - Acceptance 8: brand-designer's review of the Polish copy is applied (the Polish glossary says
   _terytorium_ now, not turf); the founder's approval of the wording is still open.
 

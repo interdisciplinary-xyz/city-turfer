@@ -98,7 +98,7 @@ skills and agents link here instead of restating it. Small means all of:
   outbox, `EventDispatcher`).
 - Code that runs on the server or both sides, and auth, privacy or security code:
   `packages/core/**`, `apps/api/**` (routes, `openapi.json`, `drizzle/` migrations), `apps/admin/**`
-  (its staff access tests need Postgres and are skipped locally), `apps/web/src/api/**`,
+  (its staff access tests need Postgres and are skipped locally), `apps/web/src/lib/api/**`,
   `apps/web/server.mjs`.
 - Native and runtime-fingerprint files: `apps/mobile/app.json`, `apps/mobile/plugins/**`,
   `apps/mobile/modules/**`, `apps/mobile/react-native.config.js`,

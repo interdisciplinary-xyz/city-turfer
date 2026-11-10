@@ -48,8 +48,8 @@ export const SURFACES = [
     theme: [
       'apps/web/src/app/[locale]/layout.tsx',
       'apps/web/src/app/globals.css',
-      'apps/web/src/app/[locale]/home-sections/home-sections.css',
-      'apps/web/src/app/[locale]/icons/marketing-icon.css',
+      'apps/web/src/domains/homepage/components/home-sections/home-sections.css',
+      'apps/web/src/domains/homepage/components/icons/marketing-icon.css',
     ],
     fonts: ['apps/web/src/app/fonts.ts'],
     logo: ['apps/web/src/app/[locale]/layout.tsx', 'apps/web/public/og-image.png'],
@@ -65,7 +65,7 @@ export const SURFACES = [
     // Under [locale]/layout.tsx, so globals.css applies; account/layout.tsx adds portal.css.
     theme: ['apps/web/src/app/globals.css', 'apps/web/src/app/[locale]/account/portal.css'],
     fonts: ['apps/web/src/app/fonts.ts'],
-    logo: ['apps/web/src/app/[locale]/app-header'],
+    logo: ['apps/web/src/domains/layout/components/app-header'],
     copy: ['apps/web/messages/en.json', 'apps/web/messages/pl.json'],
     snapshot: { base: 'web', paths: ['/en/account'], sizes: WEB_SIZES },
     note: 'Signed out it shows the sign-in form; sign in first for the history pages.',
