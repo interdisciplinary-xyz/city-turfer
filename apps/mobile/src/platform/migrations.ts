@@ -295,6 +295,32 @@ const MIGRATIONS: { version: number; sql: string }[] = [
       CREATE INDEX idx_ter_claim_cells_cell ON ter_claim_cells(cell);
     `,
   },
+  {
+    version: 14,
+    sql: `
+      -- Health Sync: show Apple Health workouts from before the Turfer started using CityTurfer.
+      -- Off by default: older imports are removed from CityTurfer (they stay in Apple Health).
+      ALTER TABLE hs_state ADD COLUMN show_history INTEGER NOT NULL DEFAULT 0;
+    `,
+  },
+  {
+    version: 15,
+    sql: `
+      -- Goals: the Daily goal's history, one row per local day it was set (a change applies from
+      -- that day on; past days keep the goal in force then). The range (10–180, step 5) lives in
+      -- the domain. Personal settings only: no coordinates, not in the cloud backup.
+      CREATE TABLE goal_daily_targets (
+        effective_from TEXT PRIMARY KEY,               -- 'YYYY-MM-DD', device-local
+        minutes INTEGER NOT NULL CHECK (minutes >= 0), -- 0 = goal off from that day
+        set_at INTEGER NOT NULL
+      ) WITHOUT ROWID;
+      -- Goals: one row; the Turfer hid the "Set a daily goal" offer.
+      CREATE TABLE goal_state (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        offer_hidden INTEGER NOT NULL DEFAULT 0
+      );
+    `,
+  },
 ];
 
 /** The newest schema version this build knows. */

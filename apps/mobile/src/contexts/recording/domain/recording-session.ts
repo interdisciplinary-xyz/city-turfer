@@ -45,6 +45,7 @@ export interface LiveSnapshot {
   readonly type: ActivityType;
   readonly status: SessionStatus;
   readonly gps: 'acquiring' | 'ok';
+  readonly startedAt: number; // epoch ms the session started
   readonly distanceM: number;
   readonly activeS: number; // wall clock minus pauses
   readonly movingS: number;
@@ -315,6 +316,7 @@ export class RecordingSession {
       type: s.type,
       status: s.status,
       gps: s.pointCount > 0 ? 'ok' : 'acquiring',
+      startedAt: s.startedAt,
       distanceM: s.distanceM,
       activeS: Math.max(0, Math.round(((s.endedAt ?? now) - s.startedAt - s.pausedMs - pausedNow) / 1000)),
       movingS: Math.round(s.movingS),

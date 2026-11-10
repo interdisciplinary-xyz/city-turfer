@@ -41,8 +41,8 @@ empatalk's `FEATURES.md`.
 > | SQLite schema         | `apps/mobile/src/platform/migrations.ts`                                 |
 
 Today: <!-- probe:achievements -->20<!-- /probe --> achievements,
-<!-- probe:e2e-flows -->18<!-- /probe --> Maestro flows,
-<!-- probe:migrations -->13<!-- /probe --> migrations.
+<!-- probe:e2e-flows -->19<!-- /probe --> Maestro flows,
+<!-- probe:migrations -->15<!-- /probe --> migrations.
 
 ## 1. Tabs
 
@@ -58,6 +58,11 @@ opens on Dashboard after sign-in.
   (`packages/core/src/contexts/achievements/domain/onboarding.ts`).
 - Live-session banner when a recording is running (taps through to Record).
 - "Start recording" button when there are no activities yet.
+- **Daily goal** (`goals/ui`; plan `docs/plans/daily-goal-2026-11-10.md`): opt-in; until set, a
+  hideable "Set a daily goal" offer. Once set: today's moving time against the goal (10–180 min,
+  step 5) with a bar, counting walks, runs and rides, Apple Health imports included, each in full on
+  the day it started; a live recording counts as it goes. A strip of the last 7 days with ✓ on days
+  the goal was met, and a flame with the streak of consecutive met days. Change opens the editor.
 - This week: distance, moving time, activity count.
 - **Current city** (v0.15.0, #209; `territory/ui/current-city-card.tsx`, `dashboard-city`): the Home
   City's name, "N of M districts" holding turf with a bar, the turf in the city and the district
@@ -116,7 +121,8 @@ opens on Dashboard after sign-in.
 ### Me (`apps/mobile/src/ui-kit/me-menu.tsx`)
 
 The Me tab doesn't open a screen: it slides in a drawer from the right with **Profile**,
-**Account**, **City** and **Info**. (The `(tabs)/me` route only backs the tab and renders Profile.)
+**Account**, **City**, **Daily goal** and **Info**. (The `(tabs)/me` route only backs the tab and
+renders Profile.)
 
 ## 2. Screens pushed from the tabs
 
@@ -129,6 +135,9 @@ The Me tab doesn't open a screen: it slides in a drawer from the right with **Pr
   empty name is refused; `activity-log/ui/rename-activity-dialog.tsx`), delete with confirmation
   (releases its turf). Shows "Saving your activity…" until the outbox has delivered
   `SessionFinished`. Imported workouts say "From Apple Health".
+- **Daily goal** (`apps/mobile/src/app/goal.tsx`, modal): the goal editor, from the Dashboard card
+  or Me › Daily goal. A stepper of 10–180 min in 5-minute steps (30 suggested), Save, and Turn off.
+  A change applies from today; past days keep the goal in force then.
 - **Profile** (`apps/mobile/src/app/profile.tsx`): avatar, name, email, totals (activities,
   distance, turf), unlocked achievements → Achievements.
 - **Achievements** (`apps/mobile/src/app/achievements.tsx`): every achievement with progress and an

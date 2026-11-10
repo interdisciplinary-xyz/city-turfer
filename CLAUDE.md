@@ -108,6 +108,8 @@ apps/mobile/                         the Expo app (package @cityturfer/mobile); 
     domain/ application/ infrastructure/ ui/ index.ts
   src/contexts/achievements/         cards + onboarding dismissal flag; the pure evaluation is in core
     infrastructure/ ui/ index.ts (shim)
+  src/contexts/goals/                Daily goal: minutes of moving time a day, opt-in, history per day (migration v15)
+    domain/ application/ infrastructure/ ui/ index.ts contract.ts
   src/platform/                      SQLite, migrations, outbox + EventDispatcher, one-off jobs, diagnostics (no coordinates)
   src/composition-root.ts            lazy, React-free wiring (used by UI and headless task)
   modules/background-session/        native iOS module (CLBackgroundActivitySession + liveUpdates)

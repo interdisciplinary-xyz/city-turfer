@@ -8,7 +8,14 @@ import {
   trackFromPoints,
   type TrackPoint,
 } from '../../../shared-kernel';
-import type { ActivityArchive, ActivityDetail, ActivityListItem, RestoredActivity, RestoreOutcome } from '../contract';
+import type {
+  ActivityArchive,
+  ActivityDetail,
+  ActivityListItem,
+  ActivityStart,
+  RestoredActivity,
+  RestoreOutcome,
+} from '../contract';
 import { Activity, type DefaultNameWords } from '../domain/activity';
 import type { ActivityRepository } from '../domain/activity-repository';
 import { estimatedTotals, type GapRoute } from '../domain/gap-route';
@@ -392,6 +399,17 @@ export class ListActivities {
   constructor(private readonly d: ActivityLogDeps) {}
   execute(limit = 30, before?: number): Promise<ActivityListItem[]> {
     return this.d.activities.list(limit, before);
+  }
+}
+
+/** Activities that started in [from, to) with their moving time (daily totals, e.g. the Daily goal). */
+export class ActivityStartsQuery {
+  constructor(private readonly d: Pick<ActivityLogDeps, 'activities'>) {}
+  execute(from: number, to: number): Promise<ActivityStart[]> {
+    if (!(to > from)) {
+      return Promise.resolve([]);
+    }
+    return this.d.activities.startsBetween(from, to);
   }
 }
 

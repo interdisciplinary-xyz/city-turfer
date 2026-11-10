@@ -18,6 +18,7 @@
     "info": "Info",
     "city": "Your city",
     "linkBackup": "Cloud backup",
-    "districts": "Districts"
+    "districts": "Districts",
+    "goal": "Daily goal"
   }
 }

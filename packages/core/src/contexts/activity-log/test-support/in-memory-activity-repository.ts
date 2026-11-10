@@ -63,6 +63,17 @@ export class InMemoryActivityRepository implements ActivityRepository {
       };
     });
   }
+  async startsBetween(from: number, to: number) {
+    return [...this.rows.values()]
+      .filter((r) => r.state.startedAt >= from && r.state.startedAt < to)
+      .sort((a, b) => a.state.startedAt - b.state.startedAt || a.state.id.localeCompare(b.state.id))
+      .map((r) => ({
+        id: r.state.id,
+        type: r.state.type,
+        startedAt: r.state.startedAt,
+        movingS: r.state.summary.movingS + estimatedTotals(r.routes).movingS,
+      }));
+  }
   async trackOf(id: string) {
     return [...(this.rows.get(id)?.track ?? [])];
   }

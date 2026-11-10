@@ -7,6 +7,7 @@ import enCities from '../../messages/en/cities.json';
 import enCommon from '../../messages/en/common.json';
 import enDashboard from '../../messages/en/dashboard.json';
 import enErrors from '../../messages/en/errors.json';
+import enGoals from '../../messages/en/goals.json';
 import enHealth from '../../messages/en/health.json';
 import enInfo from '../../messages/en/info.json';
 import enMe from '../../messages/en/me.json';
@@ -25,6 +26,7 @@ import plCities from '../../messages/pl/cities.json';
 import plCommon from '../../messages/pl/common.json';
 import plDashboard from '../../messages/pl/dashboard.json';
 import plErrors from '../../messages/pl/errors.json';
+import plGoals from '../../messages/pl/goals.json';
 import plHealth from '../../messages/pl/health.json';
 import plInfo from '../../messages/pl/info.json';
 import plMe from '../../messages/pl/me.json';
@@ -60,6 +62,7 @@ const SOURCE = {
   info: enInfo,
   profile: enProfile,
   me: enMe,
+  goals: enGoals,
 };
 export type Messages = typeof SOURCE;
 export type Namespace = keyof Messages;
@@ -86,6 +89,7 @@ const RAW: Record<Locale, Catalogue> = {
     info: plInfo,
     profile: plProfile,
     me: plMe,
+    goals: plGoals,
   },
 };
 

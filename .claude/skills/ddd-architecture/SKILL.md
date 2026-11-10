@@ -14,7 +14,7 @@ DDD is a **hard requirement** for this project. The design lives in `docs/poc-pl
 ## Where does this code go?
 
 Contexts: Identity, Recording, Activity Log, Territory, Health Sync, Cloud Backup, Achievements,
-plus the Shared Kernel (`CLAUDE.md` has the layout).
+Goals, plus the Shared Kernel (`CLAUDE.md` has the layout).
 
 First, which package. **`packages/core` (`@cityturfer/core`)** holds what the phone and the server
 both run: the shared kernel, the core constants (activity types, tracking thresholds, Earth radius,
