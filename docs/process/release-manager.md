@@ -129,8 +129,9 @@ How:
    `--no-verify`).
 4. **Review before the push**, unless the change is only copy or messages (`apps/*/messages/**`) or
    docs: run the `mobile-reviewer` agent on the staged diff (`git diff --staged`) and fix its
-   blocking findings. Name the review in the commit body (`Reviewed-by: mobile-reviewer`) so it can
-   be told from an unreviewed commit later.
+   blocker and should-fix findings (it reports nothing else: "What a review reports" in the
+   `verify-change` skill). Name the review in the commit body (`Reviewed-by: mobile-reviewer`) so it
+   can be told from an unreviewed commit later.
 5. Push: `git push origin HEAD:refs/heads/scope/vX.Y.Z`. Never force: the server rejects a push that
    is not a fast-forward; then `git pull --rebase origin scope/vX.Y.Z` on the local commit, rerun
    the gate, push again.

@@ -136,9 +136,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   small changes straight to scope, the release review's fixes; JS only (iOS c9cca32d before the
   release commit's app.json bump), no OTA published
 - ✅ [`sessions/v0.15.0.md`](sessions/v0.15.0.md): Session log v0.15.0 (in progress, scope PR 208) —
-  a Current city card on the Dashboard and a turf share bar on each Districts row (#209); JS only so
-  far, iOS fingerprint 0d465570 on the scope; the founder's iPhone runs a Release build of the scope
-  head
+  Current city card and district share bars, a Daily goal with a streak, Apple Health import only
+  from the moment of connecting, the homepage tidy-up and founder follow-ups, apps/web split into
+  domains, reviews without nits; app JS only by diff (fingerprint not re-measured on the head)
 - 🕰️ [`sessions/v0.2.0.md`](sessions/v0.2.0.md): Session log v0.2.0 through the Me menu and
   achievements; predates the Dashboard, Me drawer and login rename (PRs 23–25) and still says
   app.json is unpinned (pinned in f04bcf3)
@@ -299,9 +299,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   landing page's sections, top to bottom, presenting CityTurfer as an honest early prototype that
   recruits testers; a street-glow demo built from the Gdańsk demo data, audience, highlights,
   comparison, status, FAQ and a tester call, in six slices
-- 🚧 [`plans/homepage-tidy-2026-11-01.md`](plans/homepage-tidy-2026-11-01.md): Three-phase tidy-up
+- 🕰️ [`plans/homepage-tidy-2026-11-01.md`](plans/homepage-tidy-2026-11-01.md): Three-phase tidy-up
   of the landing page (bugs and one heading system, then fewer sections and one button/card grammar,
-  then polish), approved by the founder on 2026-11-01
+  then polish), approved by the founder on 2026-11-01; built in PR 213, the founder follow-ups in PR
+  215 (v0.15.0)
 - ✅ [`plans/sync-chain-testing-2026-10-22.md`](plans/sync-chain-testing-2026-10-22.md): How to test
   that the four apps stay one system — every scenario starts on the phone (the source of truth) or
   reaches it, and is checked in the API, the web portal and the admin portal as each is built today;
@@ -310,9 +311,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   the web portal's activity history (v0.11.0) — a list of the backed-up walks, runs and rides with
   totals and a type filter, and a detail page with stats, splits and the route shape; read-only, no
   map tiles, numbers from core's formatters shared with the app
-- 🚧 [`plans/web-scroll-motion-2026-10-25.md`](plans/web-scroll-motion-2026-10-25.md): Plan for GSAP
-  ScrollTrigger reveals on the landing page below the hero (waitlist, how it works, your week,
-  local-first, closing call to action) in the brand's glow-in language, with nothing hidden by CSS,
-  a reduced-motion path, no layout shift and one small client bundle
+- ⚠️ [`plans/web-scroll-motion-2026-10-25.md`](plans/web-scroll-motion-2026-10-25.md): Superseded by
+  docs/plans/homepage-tidy-2026-11-01.md phase 3 (scroll-in for heads and cards, PR 213). Was the
+  plan for GSAP ScrollTrigger reveals on the landing page below the hero (waitlist, how it works,
+  your week, local-first, closing call to action) in the brand's glow-in language, with nothing
+  hidden by CSS, a reduced-motion path, no layout shift and one small client bundle
 
 <!-- docs-index:end -->
