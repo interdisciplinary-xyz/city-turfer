@@ -28,6 +28,9 @@ import {
   type Sha256,
 } from '@/contexts/cloud-backup';
 import { SqliteBackupRepository } from '@/contexts/cloud-backup/infrastructure/sqlite-backup-repository';
+import { createGoalsApi, type LocalCalendar } from '@/contexts/goals';
+import { deviceLocalCalendar } from '@/contexts/goals/infrastructure/device-local-calendar';
+import { SqliteGoalRepository } from '@/contexts/goals/infrastructure/sqlite-goal-repository';
 import { createHealthSyncApi, type HealthStore } from '@/contexts/health-sync';
 import { SqliteHealthSyncRepository } from '@/contexts/health-sync/infrastructure/sqlite-health-sync-repository';
 import { UNAVAILABLE_HEALTH_STORE } from '@/contexts/health-sync/infrastructure/unavailable-health-store';
@@ -66,6 +69,8 @@ export interface DeviceAdapters {
    * Health and demo imports). Omitted: core's English.
    */
   defaultNameWords?: () => DefaultNameWords | Promise<DefaultNameWords>;
+  /** The local calendar the Daily goal counts days in. Omitted: the device's (Date, current zone). */
+  calendar?: LocalCalendar;
   clock?: Clock;
 }
 
@@ -176,6 +181,17 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     tracks: { trackOf: (id) => activityLog.trackQuery.execute(id) },
     districts: bundledDistricts,
     clock,
+    afterCommit,
+  });
+
+  // Activity Log → Goals (query only): moving time of the Activities started in a range of days.
+  const goals = createGoalsApi({
+    goals: new SqliteGoalRepository(db),
+    activities: { startsBetween: (from, to) => activityLog.startsBetween.execute(from, to) },
+    calendar: a.calendar ?? deviceLocalCalendar,
+    clock,
+    // DailyGoalSet / DailyGoalOfferHidden have no handler: dispatching them still fires
+    // dispatcher.onChange, which bumps the UI's dataVersion.
     afterCommit,
   });
 
@@ -335,6 +351,7 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     recording,
     activityLog,
     territory,
+    goals,
     healthSync,
     cloudBackup,
   };

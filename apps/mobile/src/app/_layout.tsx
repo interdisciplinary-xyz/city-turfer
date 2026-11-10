@@ -112,6 +112,20 @@ function Gate() {
             ),
           }}
         />
+        <Stack.Screen
+          name='goal'
+          options={{
+            presentation: 'modal',
+            headerShown: true,
+            title: t('screens.goal'),
+            headerBackVisible: false,
+            headerRight: () => (
+              <Pressable testID='goal-close' onPress={() => router.back()} accessibilityRole='button' hitSlop={12}>
+                <Text style={{ color: p.text, fontSize: FONT_SIZE.body, fontWeight: FONT_WEIGHT.bold }}>{close}</Text>
+              </Pressable>
+            ),
+          }}
+        />
       </Stack.Protected>
     </Stack>
   );

@@ -12,6 +12,8 @@ import { activityStats } from '@/contexts/activity-log/ui/activity-stats';
 import { useActivities } from '@/contexts/activity-log/ui/hooks';
 import { RecentActivities } from '@/contexts/activity-log/ui/recent-activities';
 import { RestoreCard } from '@/contexts/cloud-backup/ui/restore-card';
+import { GoalCard } from '@/contexts/goals/ui/goal-card';
+import { useDailyGoal, useGoalActions } from '@/contexts/goals/ui/hooks';
 import { useBackupLinkTarget } from '@/contexts/identity/ui/hooks';
 import { LiveSessionBanner } from '@/contexts/recording/ui/live-session-banner';
 import { useLiveSession } from '@/contexts/recording/ui/use-live-session';
@@ -31,7 +33,7 @@ const ONBOARDING_ROUTE: Record<OnboardingStepId, '/record' | '/turf' | '/achieve
   'unlock-three': '/achievements',
 };
 
-/** Start tab: composes Identity, Activity Log, Territory (turf, Current city), Achievements and Recording. */
+/** Start tab: composes Identity, Activity Log, Goals, Territory (turf, Current city), Achievements and Recording. */
 export default function DashboardScreen() {
   const p = usePalette();
   const insets = useSafeAreaInsets();
@@ -43,6 +45,9 @@ export default function DashboardScreen() {
   const activities = useActivities();
   const summary = useTurfSummary();
   const live = useLiveSession();
+  // Today's goal counts the recording in progress (shown, never stored).
+  const goal = useDailyGoal(live);
+  const goalActions = useGoalActions();
   // A linkable local profile restores after a code in Info, not a sign-in (the card's wording).
   const localProfile = useBackupLinkTarget() != null;
   // Recompute "this week" when the day changes, not only when data does (the tab stays mounted).
@@ -107,6 +112,14 @@ export default function DashboardScreen() {
           label={t('startRecording')}
           color={ACCENT}
           onPress={() => router.navigate('/record')}
+        />
+      )}
+      {goal && (
+        <GoalCard
+          view={goal}
+          onSet={() => router.push('/goal')}
+          onHide={() => void goalActions.hideOffer()}
+          onChange={() => router.push('/goal')}
         />
       )}
       <Card style={{ gap: 12 }}>

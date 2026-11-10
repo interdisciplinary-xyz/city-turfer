@@ -94,6 +94,16 @@ export function formatDayMonth(ms: number, locale: string = currentDateLocale())
   return dateFormat(locale, { day: 'numeric', month: 'numeric' }, 'dayMonth').format(new Date(ms));
 }
 
+/** A short weekday name, e.g. "Mon" (en) or "pon." (pl): the daily goal's day strip. */
+export function formatWeekdayShort(ms: number, locale: string = currentDateLocale()): string {
+  return dateFormat(locale, { weekday: 'short' }, 'weekdayShort').format(new Date(ms));
+}
+
+/** A full weekday name, e.g. "Monday" (en) or "poniedziałek" (pl): screen-reader labels. */
+export function formatWeekday(ms: number, locale: string = currentDateLocale()): string {
+  return dateFormat(locale, { weekday: 'long' }, 'weekday').format(new Date(ms));
+}
+
 /** Day, month, year and time, e.g. "Oct 22, 2026, 09:15 AM" (en-US) or "22 paź 2026, 09:15" (pl). */
 export function formatDateTime(ms: number, locale: string = currentDateLocale()): string {
   return dateFormat(
