@@ -108,7 +108,7 @@ const s = StyleSheet.create({
   districtName: { flex: 2, fontSize: FONT_SIZE.caption, fontWeight: FONT_WEIGHT.bold },
   districtTrack: { flex: 3 },
   percent: {
-    minWidth: 36,
+    minWidth: CITY_CARD_BAR.percentWidth,
     textAlign: 'right',
     fontFamily: FONT_FAMILY.numeric,
     fontSize: FONT_SIZE.label,
