@@ -16,18 +16,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  commitlint:
-    name: commit naming
-    if: >-
-      ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft == false) ||
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/scope/')) }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-      - uses: wagoid/commitlint-github-action@v6
-        # No commitDepth: lint every commit in the PR range (base..head), or in a direct push to scope.
-
   quality:
     name: lint + format + types + arch + unit
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}

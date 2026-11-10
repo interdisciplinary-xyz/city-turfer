@@ -142,8 +142,8 @@ The commit lands in the CHANGELOG like any other (`release.yml` builds it from t
 Commits on merge to `main`). It has no PR number: the session log and the scope → release PR body
 list it by short SHA (`docs-engineer` reads them from `git log --first-parent`) and flag any direct
 commit without a review (other than copy, messages or docs) as a blocking item. CI runs on every
-push to `scope/**` (quality and commit naming), but only after the commit has landed, and not at all
-for a push that changes only Markdown or `docs/` (`paths-ignore`): hence the local gate first.
+push to `scope/**` (quality and commit naming), but only after the commit has landed; quality not at
+all for a push that changes only Markdown or `docs/` (`paths-ignore`): hence the local gate first.
 
 Guards: the `pre-bash` hook denies force-pushes, deletes and pushes to `main` in any refspec
 spelling, and asks before a push of another branch onto `release/*` or onto a scope older than the
@@ -194,7 +194,8 @@ hidden). Don't edit it by hand.
   tsc, dependency rules, unit tests, builds, the admin's generated-files check, Node tool tests,
   log, harness, i18n and E2E audits). A throwaway Postgres service backs `apps/admin`'s Payload
   tests.
-- `commitlint` lints every commit in the PR range, not only the last one, and the commits of a push
+- `commitlint` (`commit-naming.yml`, its own workflow without `paths-ignore`, so docs-only PRs are
+  checked too) lints every commit in the PR range, not only the last one, and the commits of a push
   to `scope/**`.
 
 Cost control is kept by: skipping draft PRs, skipping docs-only changes (`paths-ignore`), cancelling
