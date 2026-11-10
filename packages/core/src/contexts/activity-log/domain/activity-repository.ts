@@ -1,5 +1,5 @@
 import type { TrackPoint } from '../../../shared-kernel';
-import type { ActivityListItem } from '../contract';
+import type { ActivityListItem, ActivityStart } from '../contract';
 import type { Activity } from './activity';
 import type { GapRoute } from './gap-route';
 
@@ -24,6 +24,8 @@ export interface ActivityRepository {
   /** Atomic: delete activity + its track + ActivityDeleted → outbox. */
   delete(activity: Activity): Promise<void>;
   list(limit: number, beforeStartedAt?: number): Promise<ActivityListItem[]>;
+  /** Every Activity that started in [from, to) (epoch ms), oldest first (ties by id); no cap. */
+  startsBetween(from: number, to: number): Promise<ActivityStart[]>;
   trackOf(id: string): Promise<TrackPoint[]>;
   /** Atomic: updated totals + replaced track + pulled events → outbox. */
   saveCorrection(activity: Activity, track: readonly TrackPoint[]): Promise<void>;

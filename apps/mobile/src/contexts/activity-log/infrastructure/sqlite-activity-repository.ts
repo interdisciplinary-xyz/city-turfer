@@ -12,7 +12,7 @@ import type { Database, SqlExecutor } from '@/platform/database';
 import { appendToOutbox } from '@/platform/outbox';
 import type { TrackPoint } from '@/shared-kernel';
 
-import type { ActivityDistanceEstimated, ActivityListItem } from '../contract';
+import type { ActivityDistanceEstimated, ActivityListItem, ActivityStart } from '../contract';
 
 type Row = {
   id: string;
@@ -184,6 +184,15 @@ export class SqliteActivityRepository implements ActivityRepository {
       estimatedDistanceM: r.estimated_m,
       preview: r.preview ? JSON.parse(r.preview) : [],
     }));
+  }
+
+  /** Uses idx_log_activities_started; no LIMIT (a day or a week holds few Activities). */
+  startsBetween(from: number, to: number): Promise<ActivityStart[]> {
+    return this.db.all<ActivityStart>(
+      `SELECT id, type, started_at AS startedAt, moving_s + estimated_moving_s AS movingS FROM log_activities
+       WHERE started_at >= ? AND started_at < ? ORDER BY started_at, id`,
+      [from, to]
+    );
   }
 
   async saveCorrection(activity: Activity, track: readonly TrackPoint[]) {
