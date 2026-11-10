@@ -2,6 +2,103 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.15.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.14.0...v0.15.0) (2026-11-10)
+
+
+### Features
+
+* **app:** current city card on the dashboard ([61690a5](https://github.com/interdisciplinary-xyz/city-turfer/commit/61690a5c7489981eb80cf7199b9be4f2c216d3a0))
+* **core:** query activity starts and moving time in a time range ([d5a84dc](https://github.com/interdisciplinary-xyz/city-turfer/commit/d5a84dc0b6c29fb052ddb79ba63f99cd2aba2d38))
+* **goals:** add a daily goal in minutes with a streak ([cfa7bd2](https://github.com/interdisciplinary-xyz/city-turfer/commit/cfa7bd2ca5a82a55df27f10aac96b0ed0bfd4809))
+* **territory:** progress bar with the turf share on each district row ([983d829](https://github.com/interdisciplinary-xyz/city-turfer/commit/983d8291b3e56efb169db4834b5471738c0b14f1))
+* **ui:** add ProgressBar and DayStrip components ([a2247ae](https://github.com/interdisciplinary-xyz/city-turfer/commit/a2247ae322e51f728ad15ab27a64653022ad74a3))
+* **web:** a calmer hero ([846a63c](https://github.com/interdisciplinary-xyz/city-turfer/commit/846a63c79424fca6388b65164c7c910037d5487a))
+* **web:** a compact hero on tablets ([db2d8f8](https://github.com/interdisciplinary-xyz/city-turfer/commit/db2d8f8284a14cf6c86ff8bc774992961b557aee))
+* **web:** merge the homepage into fewer sections ([abe68b1](https://github.com/interdisciplinary-xyz/city-turfer/commit/abe68b136652ee25af4d6facff2586022ff25614))
+* **web:** one button system ([2a6ea03](https://github.com/interdisciplinary-xyz/city-turfer/commit/2a6ea0368d0eeda3f3ead662ca5ff2351c72c4f4))
+* **web:** one card style and no orphan grids ([5ad49e3](https://github.com/interdisciplinary-xyz/city-turfer/commit/5ad49e30aff09213f6b39cf2a9a6b8bcd3214816))
+* **web:** one content width ([1a70702](https://github.com/interdisciplinary-xyz/city-turfer/commit/1a70702ba8a1cb657d5b689503d4d390a2f17530))
+* **web:** one heading for every homepage section ([22f3539](https://github.com/interdisciplinary-xyz/city-turfer/commit/22f353969432d29a530ab704c73eec96b7f56e85))
+* **web:** one outline icon set for the marketing pages ([b397a59](https://github.com/interdisciplinary-xyz/city-turfer/commit/b397a59307f293d25f5403674c930dddcad49da7))
+* **web:** one spacing rhythm with faint bands, a real footer, a trust row ([d42f9c8](https://github.com/interdisciplinary-xyz/city-turfer/commit/d42f9c87e64a5f7b60c78bd9d41524e7333cfe6e))
+* **web:** scroll-in for section heads and cards ([4c73ee9](https://github.com/interdisciplinary-xyz/city-turfer/commit/4c73ee9582f33cb1f574c3fd9efaa1b92bfac298))
+* **web:** section links in the header from 1024 px ([4f7298f](https://github.com/interdisciplinary-xyz/city-turfer/commit/4f7298f9ddae3b2b528230a0e3e513449d1c453a))
+* **web:** the marketing icon set in the audience, step chips and highlight cards ([ff56201](https://github.com/interdisciplinary-xyz/city-turfer/commit/ff562011c7bc589dff1056ef9fadcf507df629e6))
+* **web:** tidy the homepage after founder review ([660bfd5](https://github.com/interdisciplinary-xyz/city-turfer/commit/660bfd504e0ed5a99e2ad95f4c26941c39f7176f))
+
+
+### Bug Fixes
+
+* **goals:** polish the card and copy, test the editor and midnight ([d039b5e](https://github.com/interdisciplinary-xyz/city-turfer/commit/d039b5e159ef66735f13c87d790b4ac45b39970d))
+* **goals:** save same-day changes and read history only for a long streak ([0799891](https://github.com/interdisciplinary-xyz/city-turfer/commit/079989124cec6d0b1a29c9dd5f61b49daba4a1d5)), closes [#214](https://github.com/interdisciplinary-xyz/city-turfer/issues/214)
+* **health-sync:** import only workouts that end after Apple Health was connected ([1fa198f](https://github.com/interdisciplinary-xyz/city-turfer/commit/1fa198f36365654736aacb51cb12d13e27326bef))
+* **health-sync:** keep linked workouts and the before-connect count out of the way ([5597775](https://github.com/interdisciplinary-xyz/city-turfer/commit/5597775eecbae8d70032a049f02d802b063d2f26))
+* **territory:** read the city card's top districts to VoiceOver ([52506f7](https://github.com/interdisciplinary-xyz/city-turfer/commit/52506f7b5ebe5c5ac3a3b9cddc266aa7ebc9f2f7))
+* **ui:** make a day without a goal visible in the day strip ([b04c26f](https://github.com/interdisciplinary-xyz/city-turfer/commit/b04c26fd971bd15f5ac7384f9178a2c3468d19df))
+* **web:** badge icon gets a big star so it no longer reads as record ([1221930](https://github.com/interdisciplinary-xyz/city-turfer/commit/1221930525cbb9ae199b3986c38286078a1c1fde))
+* **web:** cell icon uses the mark's own geometry ([f9493bf](https://github.com/interdisciplinary-xyz/city-turfer/commit/f9493bfddbd981964f2a8913ac2fb1074fca6420))
+* **web:** copy from the review ([3ed12ad](https://github.com/interdisciplinary-xyz/city-turfer/commit/3ed12adf79ae2cbd46eed9a7c70dcd3915a48e64))
+* **web:** credit OpenStreetMap on the map, lighter phone spacing, black APK button ([c1642b7](https://github.com/interdisciplinary-xyz/city-turfer/commit/c1642b708b765820f2f6d78a6e4862bb6274852a))
+* **web:** even optical size for walk, run and ride ([320009b](https://github.com/interdisciplinary-xyz/city-turfer/commit/320009b2264fd53a9acd3231d5edb825c6bf0bc7))
+* **web:** icon contrast test reads its tokens from marketing-icon.css ([35f136a](https://github.com/interdisciplinary-xyz/city-turfer/commit/35f136a89cb3aa0d8286ecfe3ee95f16b21c8982))
+* **web:** keep the Polish tagline on two lines at desktop width ([238a561](https://github.com/interdisciplinary-xyz/city-turfer/commit/238a561a8b9cec0f17d3ea59914eef4ed624ef1d))
+* **web:** keep turf-demo.data.json as the generator writes it ([274142d](https://github.com/interdisciplinary-xyz/city-turfer/commit/274142d556fde0fdf813d785cb36a2ff183bd6c1))
+* **web:** labelled icons carry aria-label only, no <title> ([68c9de9](https://github.com/interdisciplinary-xyz/city-turfer/commit/68c9de99dfcbf84eafe6fd7e5ccd9519bbd742be))
+* **web:** make the Polish header link's name match its text ([c90ddc4](https://github.com/interdisciplinary-xyz/city-turfer/commit/c90ddc46efbe012c57dfd6b752faa52c89b95102))
+* **web:** match the portal's primary button to the homepage pill ([7a2aa78](https://github.com/interdisciplinary-xyz/city-turfer/commit/7a2aa7854e4e8d51e6d0a7f68ca26cabbfe254a2))
+* **web:** one pink pill in the header, and the review's smaller fixes ([d18f6db](https://github.com/interdisciplinary-xyz/city-turfer/commit/d18f6db53e30fd66d9bd8bc7cc6bd965d53a3f2c))
+* **web:** regenerate turf-demo.data.json (Prettier had reformatted it again) ([fc9bb53](https://github.com/interdisciplinary-xyz/city-turfer/commit/fc9bb53aa12754273340e2fca26f00b41708fe37))
+* **web:** repeat icon is a loop coming back to its point, not sync ([946fa1b](https://github.com/interdisciplinary-xyz/city-turfer/commit/946fa1b5595f50646145fbfbb93cff1eda07fecf))
+* **web:** say the same about Apple Health in both sections ([e4d9677](https://github.com/interdisciplinary-xyz/city-turfer/commit/e4d9677c9432ba80dd17ecb402dac81be6f2369d))
+* **web:** stop the homepage overflowing sideways at 320 px ([3ee4374](https://github.com/interdisciplinary-xyz/city-turfer/commit/3ee4374a6c8f50341f372fec1460250db1b3d82f))
+* **web:** tighten the domain rules from the [#216](https://github.com/interdisciplinary-xyz/city-turfer/issues/216) review ([604f728](https://github.com/interdisciplinary-xyz/city-turfer/commit/604f72810a0304a9650058be55c960895606fca9))
+
+
+### Performance
+
+* **web:** drop Barlow Medium, which no CSS asks for ([4462786](https://github.com/interdisciplinary-xyz/city-turfer/commit/44627869403fc7cb69040129c6cf49a93aa7e39d))
+
+
+### Refactoring
+
+* **web:** drop the check and infinity icons the page never uses ([c186718](https://github.com/interdisciplinary-xyz/city-turfer/commit/c18671877bb714f65c207d1587f81e4833f6c22f))
+* **web:** split apps/web/src into domains ([dad567f](https://github.com/interdisciplinary-xyz/city-turfer/commit/dad567fcb0792fc381f532a3fbeb37fc2ae3ef32))
+
+
+### Documentation
+
+* **brand:** the website's primary buttons are black, pink is the app accent ([8f0734e](https://github.com/interdisciplinary-xyz/city-turfer/commit/8f0734e461e4778efb2e018073075c5752c58a1e))
+* **claude:** teach the apple-health skill the import start date ([1736290](https://github.com/interdisciplinary-xyz/city-turfer/commit/1736290b6af6762e3396a7f45eea3f69b769d127))
+* **docs:** describe the Apple Health import from the moment of connecting ([8e36a13](https://github.com/interdisciplinary-xyz/city-turfer/commit/8e36a1388a9789057c19016d551a54b4726e7dec))
+* **docs:** update all docs for v0.15.0 and close the v0.14.0 log ([7929d67](https://github.com/interdisciplinary-xyz/city-turfer/commit/7929d67a32e17f9a98daeb8d8d08e5995918af7c)), closes [#209](https://github.com/interdisciplinary-xyz/city-turfer/issues/209) [#7](https://github.com/interdisciplinary-xyz/city-turfer/issues/7)
+* **docs:** update all docs for v0.15.0 before promotion ([e17a0a7](https://github.com/interdisciplinary-xyz/city-turfer/commit/e17a0a7828ac53307061160cf08b97d477a12f74)), closes [#209](https://github.com/interdisciplinary-xyz/city-turfer/issues/209) [-#218](https://github.com/interdisciplinary-xyz/-/issues/218) [#213](https://github.com/interdisciplinary-xyz/city-turfer/issues/213) [#7](https://github.com/interdisciplinary-xyz/city-turfer/issues/7)
+* **health-sync:** record that the Apple Health import starts on the day it is connected ([a717eb9](https://github.com/interdisciplinary-xyz/city-turfer/commit/a717eb9a13e6c239774f2fd328bff85645def405))
+* plan the daily goal and record the Goals context ([db74360](https://github.com/interdisciplinary-xyz/city-turfer/commit/db74360019d96049d63fa8b7a71690e4aabf0b47))
+* **product:** exact section counts in the homepage tidy note ([ebbd4bf](https://github.com/interdisciplinary-xyz/city-turfer/commit/ebbd4bf71030b74b70d1b3bbd8d625a706aa072a)), closes [#212](https://github.com/interdisciplinary-xyz/city-turfer/issues/212)
+* **product:** product-manager note on the homepage tidy-up ([fa93c52](https://github.com/interdisciplinary-xyz/city-turfer/commit/fa93c52413141d01444f86af9fd39cf892aaf35f))
+* record the daily goal in features, brief and plan ([a8343d7](https://github.com/interdisciplinary-xyz/city-turfer/commit/a8343d7061e27c3fe8265012b7431004f12dfb13))
+* **storybook:** icon story adds the 48 px size ([be8bc2c](https://github.com/interdisciplinary-xyz/city-turfer/commit/be8bc2c803bfa886edf52047707adc535f970924))
+* **web:** plan the homepage tidy-up in three phases ([0eb4e55](https://github.com/interdisciplinary-xyz/city-turfer/commit/0eb4e55792b4b0d1b2499dac9a82d993fcd089d3))
+
+
+### Tests
+
+* **api:** keep the session-cookie turf test on the harness clock ([e1e2aea](https://github.com/interdisciplinary-xyz/city-turfer/commit/e1e2aeab2dbeee4c80e231e07fd5341b708ae6dc))
+* **api:** keep the session-cookie turf test on the harness clock ([dde7f31](https://github.com/interdisciplinary-xyz/city-turfer/commit/dde7f312f79b366708bf1d130da58c9ea30e9a68))
+* **api:** keep the turf cookie test on the harness clock ([3c7a224](https://github.com/interdisciplinary-xyz/city-turfer/commit/3c7a22497407ad6344097b4d8cdbdb8670c8b9ca))
+* **api:** use the same cookie-test fix as feat/web-homepage-polish ([800ada2](https://github.com/interdisciplinary-xyz/city-turfer/commit/800ada2a7ab832d79eac0d11bd665686e6aa7816))
+* **e2e:** add the daily goal flow ([cc1af67](https://github.com/interdisciplinary-xyz/city-turfer/commit/cc1af67dbdfd3128dac5cf5fcc137b59c9bbf1cd))
+* **e2e:** flow 18 checks the row share and the current city card ([3663a33](https://github.com/interdisciplinary-xyz/city-turfer/commit/3663a334f0799a6cd0d252b76535b97d8c6cec3d))
+* **e2e:** wait for the goal editor and scroll before each check ([3b6eabe](https://github.com/interdisciplinary-xyz/city-turfer/commit/3b6eabefbe33e1b0d00d98aa08f24667172bc241))
+* **web:** build the e2e export with a dummy waitlist, and refuse one without ([15c6b71](https://github.com/interdisciplinary-xyz/city-turfer/commit/15c6b7123e315ae5e176b7d21d63dbe450938f01))
+* **web:** stronger landing checks (review of [#213](https://github.com/interdisciplinary-xyz/city-turfer/issues/213)) ([8eb2f69](https://github.com/interdisciplinary-xyz/city-turfer/commit/8eb2f691cf7629dff8f9ee71ca60cc78f403ad31))
+
+
+### CI/CD
+
+* **tooling:** check commit naming on docs-only changes too ([0c04131](https://github.com/interdisciplinary-xyz/city-turfer/commit/0c04131c2a2eb60bb57e1a0f92a8ac3c0a62a5c1)), closes [#212](https://github.com/interdisciplinary-xyz/city-turfer/issues/212)
+* **tooling:** skip the two [#212](https://github.com/interdisciplinary-xyz/city-turfer/issues/212) commits with long lines in commitlint ([17eecd1](https://github.com/interdisciplinary-xyz/city-turfer/commit/17eecd1ff8f6e177d868f60d5ad56f5946e7ebc1))
+
 ## [0.14.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.13.0...v0.14.0) (2026-10-31)
 
 
