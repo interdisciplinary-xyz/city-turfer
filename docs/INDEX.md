@@ -279,6 +279,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   back-end release (opt-in backup, real accounts, restore to a new phone, delete account, export) —
   founder decisions of 2026-10-22, what feat/backend-sync built (shipped in v0.9.0), what changed
   since, and what is left before testers can use it
+- ✅ [`plans/daily-goal-2026-11-10.md`](plans/daily-goal-2026-11-10.md): The founder's Goals request
+  as one opt-in Daily goal in minutes of moving time a day, shown on the Dashboard tab with the last
+  7 days; team plan from product, architecture and brand.
 - ✅ [`plans/districts-2026-10-29.md`](plans/districts-2026-10-29.md): Plan for the Districts
   screen, a modal opened from the Turf tab that shows the Home City split into its administrative
   districts (OpenStreetMap boundaries bundled with the app) on a map, with a list of districts and

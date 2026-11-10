@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: canonical
 verified: 2026-11-10
 owner: founder
 scope:
@@ -11,7 +11,7 @@ scope:
   ]
 summary:
   The founder's Goals request as one opt-in Daily goal in minutes of moving time a day, shown on the
-  Start tab with the last 7 days; team plan from product, architecture and brand.
+  Dashboard tab with the last 7 days; team plan from product, architecture and brand.
 ---
 
 # Daily goal (Goals v1)
@@ -28,20 +28,22 @@ tester has asked for it yet (discovery board).
 
 ## Rules (v1)
 
-| Question          | Decision                                                                                                                                                                                |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Name              | **Daily goal** / **Cel dnia** in the UI (one goal, not a system of "Goals"); context `goals` in code                                                                                    |
-| What counts       | **Moving time** (`movingS`, recorded + estimated), the number Stats shows as "Time"                                                                                                     |
-| Types             | walk, run, cycle equally; Apple Health imports count (they are Activities)                                                                                                              |
-| Day               | Local calendar day of the device; an activity counts in full on the **day it started** (same rule as Stats and onboarding; a 23:40–00:20 walk counts for the first day)                 |
-| Range             | 10–180 min, step 5, suggested 30                                                                                                                                                        |
-| On by default?    | **Opt-in.** Until set, the Start tab shows a "Set a daily goal" offer the Turfer can hide                                                                                               |
-| Changing the goal | Applies from today. Past days keep the goal in force then (log of changes, one row per day). Turning it off hides the card from today; past days keep their goal                        |
-| Live recording    | Counts toward today in real time (live `movingS` added on screen, never stored)                                                                                                         |
-| Week              | The last 7 days ending today                                                                                                                                                            |
-| Met               | moving seconds ≥ goal × 60; minutes shown rounded down                                                                                                                                  |
-| Colours           | `ACCENT` for progress and met (brand: tier colours mean turf only); `border` for the empty track, `borderControl` for empty day outlines; never red for a day under the goal            |
-| Out of scope      | notifications, goal achievements, per-type or weekly goals, cloud backup / API / web portal, Apple Health goals, Record-screen overlay, history beyond 7 days, travel across time zones |
+| Question          | Decision                                                                                                                                                                                            |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Name              | **Daily goal** / **Cel dnia** in the UI (one goal, not a system of "Goals"); context `goals` in code                                                                                                |
+| What counts       | **Moving time** (`movingS`, recorded + estimated), the number Stats shows as "Time"                                                                                                                 |
+| Types             | walk, run, cycle equally; Apple Health imports count (they are Activities)                                                                                                                          |
+| Day               | Local calendar day of the device; an activity counts in full on the **day it started** (same rule as Stats and onboarding; a 23:40–00:20 walk counts for the first day)                             |
+| Range             | 10–180 min, step 5, suggested 30                                                                                                                                                                    |
+| On by default?    | **Opt-in.** Until set, the Dashboard tab shows a "Set a daily goal" offer the Turfer can hide                                                                                                       |
+| Changing the goal | Applies from today. Past days keep the goal in force then (log of changes, one row per day). Turning it off hides the card from today; past days keep their goal                                    |
+| Live recording    | Counts toward today in real time (live `movingS` added on screen, never stored)                                                                                                                     |
+| Week              | The last 7 days ending today                                                                                                                                                                        |
+| Met               | moving seconds ≥ goal × 60; minutes shown rounded down                                                                                                                                              |
+| Colours           | `ACCENT` for progress and met (brand: tier colours mean turf only); `border` for the empty track, `borderControl` for empty day outlines; never red for a day under the goal                        |
+| Time zone         | **Days follow the device's current time zone** (conservative default, pending founder confirmation). After travel, a day's total can differ from History, which dates each activity in its own zone |
+| Offer after off   | The "Set a daily goal" offer **does not return** once a goal was set and then turned off (conservative default, pending founder confirmation); the Turfer turns it back on from Me › Daily goal     |
+| Out of scope      | notifications, goal achievements, per-type or weekly goals, cloud backup / API / web portal, Apple Health goals, Record-screen overlay, history beyond 7 days, travel across time zones             |
 
 ## Streak (founder decision, 2026-11-10)
 
@@ -53,6 +55,7 @@ Day Streak" screen: the card now leads with a flame and "N-day streak".
   going"). Without a streak: "Meet your goal today to start a streak", no zero.
 - A day under the goal, with the goal off or before the first goal ends the run. Read back to the
   first day a goal was set (`metBeforeWeek`), so it reaches past the 7 days shown.
+- `GetDailyGoal` reads the 7-day week first and reads further back only when the whole week is met.
 - Kind copy still applies: no "missed", "lost" or "broken" wording; the flame is the brand accent.
 - Risk to watch with testers: the regret test (guilt or pressure). Soften first if it shows up.
 
@@ -103,12 +106,12 @@ pure so it can move later).
   `container.goals`: `view.execute(): Promise<DailyGoalView>`, `set.execute(minutes | null)`,
   `hideOffer.execute()`; `DAILY_GOAL_LIMITS = { min: 10, max: 180, step: 5, suggested: 30 }`.
 
-- **UI:** Start tab card under the greeting / restore card, before "This week": offer state (Set,
-  hide) or progress (`goal-today`, bar, 7-day strip `goal-day-0…6`, Change). Editor as a modal route
-  `/goal` (stepper `goal-minus` / `goal-plus` / `goal-value`, `goal-save`, `goal-off`), also reached
-  from a "Daily goal" row in the Me tab. Progress bar and day strip as plain-View components in
-  `@cityturfer/ui` with stories (no native code, fingerprint unchanged). i18n namespace `goals` en +
-  pl, full Polish plurals.
+- **UI:** Dashboard tab card under the greeting / restore card, before "This week": offer state
+  (Set, hide) or progress (`goal-today`, bar, 7-day strip `goal-day-0…6`, Change). Editor as a modal
+  route `/goal` (stepper `goal-minus` / `goal-plus` / `goal-value`, `goal-save`, `goal-off`), also
+  reached from a "Daily goal" row in the Me tab. Progress bar and day strip as plain-View components
+  in `@cityturfer/ui` with stories (no native code, fingerprint unchanged). i18n namespace `goals`
+  en + pl, full Polish plurals.
 
 ## Acceptance criteria
 
