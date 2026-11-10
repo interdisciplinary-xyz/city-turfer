@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { backupState, canRequestExport, confirmationMatches, sortSessions } from '@/domains/account';
-import { sanitizeCode } from '@/domains/auth';
-import { describeWait } from '@/domains/portal';
+import { backupState, canRequestExport, confirmationMatches, sortSessions } from '@/domains/account/logic';
+import { sanitizeCode } from '@/domains/auth/logic';
+import { describeWait } from '@/domains/portal/logic';
 import { EXPORT_POLL_MS, exportPollInterval } from '@/lib/api/hooks';
 import type { AuthSession, Consent, DataExportJob } from '@/lib/api/schema';
 

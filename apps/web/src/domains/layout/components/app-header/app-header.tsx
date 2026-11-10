@@ -5,7 +5,7 @@ import wordmark from '@cityturfer/brand/svg/wordmark-light.svg';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 
-import { SECTION_ANCHORS } from '@/domains/homepage';
+import { SECTION_ANCHORS } from '@/domains/homepage/logic';
 import { LanguageSwitcher } from '@/domains/ui';
 
 import type { AppHeaderProps } from './app-header.constants';

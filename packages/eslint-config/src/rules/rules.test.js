@@ -181,6 +181,18 @@ ruleTester.run('no-deep-domain-import', plugin.rules['no-deep-domain-import'], {
       code: "import { a } from '@/domains/homepage/components/y/y.constants';",
     },
     { filename: `${SRC}/lib/x.ts`, code: "import { a } from '@/lib/api/client';" },
+    // An entrypoint the consumer exempts (CityTurfer: `logic`, React-free).
+    {
+      filename: `${SRC}/domains/layout/components/x/x.tsx`,
+      code: "import { a } from '@/domains/homepage/logic';",
+      options: [{ exemptEntrypoints: ['logic'] }],
+    },
+    // A folder listed in exemptDomains is not a domain.
+    {
+      filename: `${SRC}/app/page.tsx`,
+      code: "import { a } from '@/domains/fixtures/x';",
+      options: [{ exemptDomains: ['fixtures'] }],
+    },
     // Stylesheets are assets, not code API.
     { filename: `${SRC}/app/layout.tsx`, code: "import '@/domains/layout/components/app-header/app-header.css';" },
   ],
@@ -209,6 +221,23 @@ ruleTester.run('no-deep-domain-import', plugin.rules['no-deep-domain-import'], {
       filename: `${SRC}/domains/homepage/components/x/x.tsx`,
       code: "import { a } from '../../';",
       errors: [{ messageId: 'selfBarrel' }],
+    },
+    // Every spelling of a domain's own barrel is the same cycle.
+    ...["'@/domains/homepage/'", "'@/domains/homepage/index'", "'../../index'", "'../../index.ts'"].map((spec) => ({
+      filename: `${SRC}/domains/homepage/components/x/x.tsx`,
+      code: `import { a } from ${spec};`,
+      errors: [{ messageId: 'selfBarrel' }],
+    })),
+    {
+      filename: `${SRC}/domains/homepage/index.ts`,
+      code: "export * from './index';",
+      errors: [{ messageId: 'selfBarrel' }],
+    },
+    // Without the option, `logic` is just a deep path.
+    {
+      filename: `${SRC}/domains/layout/components/x/x.tsx`,
+      code: "import { a } from '@/domains/homepage/logic';",
+      errors: [{ messageId: 'deepImport' }],
     },
     {
       filename: `${SRC}/domains/layout/components/x/x.test.ts`,

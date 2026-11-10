@@ -28,8 +28,8 @@ import {
   type TrackColumns,
   trackLines,
   unwrapLines,
-} from '@/domains/activities';
-import { dateLocale, formatDate, portalLocation } from '@/domains/portal';
+} from '@/domains/activities/logic';
+import { dateLocale, formatDate, portalLocation } from '@/domains/portal/logic';
 import { isActivityId } from '@/lib/api/activity-id';
 import { PortalError } from '@/lib/api/errors';
 import { forgetActivity, QUERY_KEYS } from '@/lib/api/hooks';

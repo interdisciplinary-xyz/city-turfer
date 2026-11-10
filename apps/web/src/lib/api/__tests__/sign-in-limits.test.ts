@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { INITIAL_RATE_LIMIT_STATE, onAttempt, onBlockEnded, onFailure, secondsUntil } from '@/domains/auth';
+import { INITIAL_RATE_LIMIT_STATE, onAttempt, onBlockEnded, onFailure, secondsUntil } from '@/domains/auth/logic';
 import { PortalError } from '@/lib/api/errors';
 
 const NOW = 1_000_000;

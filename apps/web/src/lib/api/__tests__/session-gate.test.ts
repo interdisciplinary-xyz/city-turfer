@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { gateView } from '@/domains/portal';
+import { gateView } from '@/domains/portal/logic';
 import { PortalError } from '@/lib/api/errors';
 
 const offline = new PortalError('unreachable');

@@ -3,7 +3,7 @@
 // unknown to this browser; months group by that local day. Pure (the zone fallback is a parameter),
 // so tests pin it. Other portal dates (sign-in, devices) use format.ts: the visitor's zone. Both
 // take the route locale and format with format.ts's `dateLocale` (English pages: en-GB style).
-import { dateLocale } from '@/domains/portal';
+import { dateLocale } from '@/domains/portal/logic';
 
 export type Dated = { startedAt: string; timeZone: string | null };
 

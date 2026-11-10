@@ -41,7 +41,8 @@ export default [
     // A domain's public surface is its barrel (docs/decisions/web-domains-2026-11-10.md): code outside
     // src/domains/<d> imports '@/domains/<d>', never a file inside it.
     files: ['src/**/*.{ts,tsx}', 'e2e/**/*.ts'],
-    rules: { 'local-rules/no-deep-domain-import': 'error' },
+    // Besides the barrel, a domain may expose `logic` (logic.ts): its React-free entry.
+    rules: { 'local-rules/no-deep-domain-import': ['error', { exemptEntrypoints: ['logic'] }] },
   },
   {
     // Config files, the dev server (server.mjs) and tools/ run in Node and print to stdout.

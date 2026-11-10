@@ -4,7 +4,7 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { useRef } from 'react';
 
-import { PAGE_LOADED_CLASS, PAGE_LOADED_EVENT } from '@/domains/ui';
+import { PAGE_LOADED_CLASS, PAGE_LOADED_EVENT } from '@/domains/ui/logic';
 
 import { EASE, type HeroMotionProps, MAP_DRIFT_PX } from './hero-motion.constants';
 

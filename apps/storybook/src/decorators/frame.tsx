@@ -3,10 +3,9 @@ import { ThemeProvider } from '@cityturfer/ui';
 import { NextIntlClientProvider } from 'next-intl';
 import { type CSSProperties, useLayoutEffect } from 'react';
 
-import {
-  PAGE_LOADED_CLASS,
-  PAGE_LOADED_EVENT,
-} from '../../../web/src/domains/ui/components/page-loader/page-loader.constants';
+// The ui domain's React-free entry: two constants, without the domain's components.
+import { PAGE_LOADED_CLASS, PAGE_LOADED_EVENT } from '@/domains/ui/logic';
+
 import { type FrameProps, MESSAGES, type NightPanelProps } from './frame.constants';
 
 /**

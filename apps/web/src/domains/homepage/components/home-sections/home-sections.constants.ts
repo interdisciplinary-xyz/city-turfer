@@ -1,7 +1,7 @@
 import { APP_SCHEME, cssVariables, TIER_ORDER } from '@cityturfer/brand';
 import type { CSSProperties, ReactNode } from 'react';
 
-import { ICON_FOR_HIGHLIGHT, type IconName } from '@/domains/homepage/components/icons';
+import { ICON_FOR_HIGHLIGHT, type IconName } from '@/domains/homepage/components/icons/marketing-icon.constants';
 
 /** The three activity types as the app names them (`cycle` is shown as "Ride"). */
 export type HomeActivityType = 'walk' | 'run' | 'cycle';

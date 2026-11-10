@@ -17,9 +17,15 @@ const DOMAIN_EDGES = {
   portal: ['ui'],
   auth: ['portal', 'ui'],
   account: ['portal', 'ui'],
-  activities: ['account', 'portal', 'ui'],
+  activities: ['portal', 'ui'],
 };
 const PORTAL_DOMAINS = ['portal', 'auth', 'account', 'activities'];
+/** Every marketing domain but the light base `ui`: the portal never imports them (GSAP lives there). */
+const MARKETING_DOMAINS = Object.keys(DOMAIN_EDGES).filter((d) => d !== 'ui' && !PORTAL_DOMAINS.includes(d));
+/** What portal code, and the `ui` base it shares with the landing page, must never load. */
+const gsap = '(^|/)node_modules/(gsap|@gsap/[^/]+)/';
+/** A domain's light parts: its React-free `logic` entry, constants files and utils. */
+const light = '^src/domains/[^/]+/(logic\\.ts$|utils/|(components|hooks)/[^/]+/[^/]+\\.constants\\.ts$)';
 
 /** The portal's own code: its routes and its domains. Marketing code never imports it. */
 const portal = `^src/(app/\\[locale\\]/account/|domains/(${PORTAL_DOMAINS.join('|')})/)`;
@@ -30,7 +36,7 @@ const portalCode = `^src/(app/\\[locale\\]/account/|domains/(${PORTAL_DOMAINS.jo
 const site = '^(src/|tools/|server\\.mjs$|next\\.config\\.ts$)';
 
 const domainRules = Object.entries(DOMAIN_EDGES).map(([domain, allowed]) => ({
-  name: `domain-${domain}`,
+  name: `domain-edges-${domain}`,
   severity: 'error',
   comment: allowed.length
     ? `src/domains/${domain} imports only ${allowed.join(', ')} (DOMAIN_EDGES).`
@@ -106,6 +112,9 @@ module.exports = {
     {
       name: 'domain-declared',
       severity: 'error',
+      // Fires on a module that imports something (depcruise rules are about imports); a new domain
+      // made only of leaf files would slip through, but every domain has an index.ts barrel that
+      // re-exports its units, so a real one always trips it.
       comment: 'Every folder in src/domains is listed in DOMAIN_EDGES (and in the web-domains decision).',
       from: { path: '^src/domains/', pathNot: `^src/domains/(${Object.keys(DOMAIN_EDGES).join('|')})/` },
       to: {},
@@ -115,12 +124,31 @@ module.exports = {
       name: 'portal-no-gsap',
       severity: 'error',
       comment:
-        'No GSAP or hero motion on portal pages (docs/decisions/web-portal-2026-10-22.md): portal code imports no marketing domain but ui (layout and waitlist reach homepage, which loads GSAP).',
+        'No GSAP or hero motion on portal pages (docs/decisions/web-portal-2026-10-22.md): portal code imports no marketing domain but ui (MARKETING_DOMAINS reach homepage, which loads GSAP).',
       from: { path: portalCode },
       // Stylesheets are fine: the portal layout loads the app header's CSS for its language switch.
       to: {
-        path: '(^|/)node_modules/(gsap|@gsap/[^/]+)/|^src/domains/(homepage|layout|waitlist)/',
+        path: `${gsap}|^src/domains/(${MARKETING_DOMAINS.join('|')})/`,
         pathNot: '\\.css$',
+      },
+    },
+    {
+      name: 'ui-no-gsap',
+      severity: 'error',
+      comment:
+        'ui is the base the portal and the shared layout import whole (its barrel): it never loads GSAP, or every portal page would.',
+      from: { path: '^src/domains/ui/' },
+      to: { path: gsap },
+    },
+    {
+      name: 'logic-is-light',
+      severity: 'error',
+      comment:
+        "A domain's logic entry, constants and utils stay React-free: no components (.tsx), barrels, React, Next, next-intl, GSAP or TanStack (type-only imports are fine).",
+      from: { path: light },
+      to: {
+        path: '\\.tsx$|^src/domains/[^/]+/(index\\.ts$|(components|hooks)/[^/]+/index\\.ts$)|(^|/)node_modules/(react|react-dom|next|next-intl|gsap|@gsap/[^/]+|@tanstack/[^/]+)/',
+        dependencyTypesNot: ['type-only'],
       },
     },
     {

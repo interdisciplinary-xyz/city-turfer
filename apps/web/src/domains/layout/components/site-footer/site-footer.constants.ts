@@ -1,4 +1,4 @@
-import { SECTION_ANCHORS } from '@/domains/homepage';
+import { SECTION_ANCHORS } from '@/domains/homepage/logic';
 
 /** The footer's section links: the header's four, labelled by `header.nav.<key>`. */
 export const FOOTER_LINKS = [

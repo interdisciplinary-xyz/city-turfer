@@ -5,52 +5,56 @@
  * outside that domain must import from the barrel, never from a file
  * inside it:
  *
- *   ✗ import type { FactorCategory } from '@/domains/survey/factors/types';
- *   ✓ import type { FactorCategory } from '@/domains/survey';
+ *   ✗ import { SectionHead } from '@/domains/homepage/components/home-sections/section';
+ *   ✓ import { SectionHead } from '@/domains/homepage';
  *
  * Reaching past the barrel couples callers to a domain's internal layout,
  * so every move inside a domain becomes a cross-tree refactor, and it
- * hides the real dependency graph the DAG audit reads.
+ * hides the real dependency graph between domains.
  *
  * A domain's own files may reach each other by self-alias
- * (`@/domains/survey/factors` from inside `survey/`) — the alternative is
- * `'../../../../factors'`, which is worse to read and breaks whenever a file
- * moves. What they must never do is import their own barrel: that is a cycle.
+ * (`@/domains/homepage/components/icons` from inside `homepage/`) — the
+ * alternative is `'../../../icons'`, which is worse to read and breaks
+ * whenever a file moves. What they must never do is import their own barrel,
+ * in any spelling (`@/domains/homepage`, `@/domains/homepage/`,
+ * `@/domains/homepage/index`, `'../..'`, `'./index'`): that is a cycle.
  *
- *   ✗ import { hasUserDnaSurvey } from '@/domains/survey';  // in survey/
- *   ✓ import { hasUserDnaSurvey } from '@/domains/survey/constants';
+ * Options (all optional):
  *
- * Covers alias (`@/domains/…`) and relative (`../../survey/…`) specifiers, and
+ *   exemptDomains      folders under src/domains that are not domains and have no
+ *                      barrel (default ['e2e']: Playwright specs and fixtures)
+ *   exemptEntrypoints  extra public entries a domain may expose beside its barrel,
+ *                      as `@/domains/<domain>/<entry>` (default []; CityTurfer uses
+ *                      `logic`, a React-free surface; empatalk uses `server` and
+ *                      `register-modals`)
+ *
+ * Covers alias (`@/domains/…`) and relative (`../../homepage/…`) specifiers, and
  * module-mocking calls (`vi.mock('@/domains/…')`), so the rule can't be
  * sidestepped by walking up the tree or by mocking a path nothing imports.
+ * Stylesheets (`.css`) are assets, not code API, and are never reported.
  *
- * Ported from empatalk (apps/web/eslint-local-rules). Opt-in: enable it in an
- * app with a `src/domains/` tree (CityTurfer: apps/web).
+ * Ported from empatalk (apps/web/eslint-local-rules) and made configurable so both
+ * apps can share this copy. Opt-in: enable it in an app with a `src/domains/` tree.
  */
 
 import path from 'node:path';
 
 const DOMAINS_SEGMENT = `${path.sep}src${path.sep}domains${path.sep}`;
+const INDEX_FILE = /^index(\.[cm]?[jt]sx?)?$/;
 
-/**
- * Domains that have no barrel and are not product code. `e2e` is the
- * home for Playwright specs + shared test fixtures, not a domain.
- */
-const EXEMPT_DOMAINS = new Set(['e2e']);
+/** Drops empty segments and a trailing `index` file: every spelling of the barrel becomes `[]`. */
+const normalise = (segments) => {
+  const parts = segments.filter((part) => part && part !== '.');
+  return parts.length && INDEX_FILE.test(parts.at(-1)) ? parts.slice(0, -1) : parts;
+};
 
-/**
- * Public entrypoints a domain may expose alongside its barrel. None in this repo yet; empatalk uses
- * `server` (a Node-safe surface) and `register-modals` (a side-effect import).
- */
-const EXEMPT_ENTRYPOINTS = new Set([]);
-
-/** `@/domains/survey/factors/types` → `{ domain: 'survey', subPath: ['factors','types'] }`. */
+/** `@/domains/homepage/components/icons` → `{ domain: 'homepage', subPath: ['components','icons'] }`. */
 const domainFromAlias = (source) => {
   const match = /^@\/domains\/([^/]+)(?:\/(.*))?$/.exec(source);
   if (!match) {
     return null;
   }
-  return { domain: match[1], subPath: match[2] ? match[2].split('/') : [] };
+  return { domain: match[1], subPath: normalise(match[2] ? match[2].split('/') : []) };
 };
 
 /** Absolute file path → the domain it lives in, or null. */
@@ -75,7 +79,7 @@ const domainFromRelative = (source, filename) => {
   }
   const index = resolved.indexOf(DOMAINS_SEGMENT);
   const rest = resolved.slice(index + DOMAINS_SEGMENT.length);
-  return { domain, subPath: rest.split(path.sep).slice(1) };
+  return { domain, subPath: normalise(rest.split(path.sep).slice(1)) };
 };
 
 export default {
@@ -91,67 +95,50 @@ export default {
     },
     // Deliberately not `fixable`: the barrel may not export the symbol yet,
     // and adding it is a choice about the domain's public surface.
-    schema: [],
+    schema: [
+      {
+        type: 'object',
+        properties: {
+          exemptDomains: { type: 'array', items: { type: 'string' }, uniqueItems: true },
+          exemptEntrypoints: { type: 'array', items: { type: 'string' }, uniqueItems: true },
+        },
+        additionalProperties: false,
+      },
+    ],
   },
 
   create(context) {
+    const options = context.options[0] ?? {};
+    const exemptDomains = new Set(options.exemptDomains ?? ['e2e']);
+    const exemptEntrypoints = new Set(options.exemptEntrypoints ?? []);
     const filename = context.filename ?? context.getFilename();
     const ownDomain = domainFromFilename(filename);
 
     const check = (node, source) => {
-      if (typeof source !== 'string') {
+      if (typeof source !== 'string' || source.endsWith('.css')) {
         return;
       }
-      // A stylesheet is a side-effect asset, not part of the domain's code API: a page may load a
-      // unit's CSS (CityTurfer's portal layout loads the app header's) without its React tree.
-      if (source.endsWith('.css')) {
+      const target = domainFromAlias(source) ?? domainFromRelative(source, filename);
+      if (!target || exemptDomains.has(target.domain)) {
         return;
       }
-
-      const alias = domainFromAlias(source);
-
-      // A file importing its own domain's barrel is a cycle. Deeper
-      // self-aliases (`@/domains/survey/factors` from inside `survey/`) are
-      // fine — they beat `'../../../../factors'` on both readability and
-      // resilience to file moves.
-      if (alias && alias.domain === ownDomain) {
-        if (alias.subPath.length === 0) {
-          context.report({
-            node,
-            messageId: 'selfBarrel',
-            data: { domain: ownDomain, source },
-          });
+      if (target.domain === ownDomain) {
+        // Deeper self-imports are fine; the barrel itself, in any spelling, is a cycle.
+        if (target.subPath.length === 0) {
+          context.report({ node, messageId: 'selfBarrel', data: { domain: ownDomain, source } });
         }
         return;
       }
-
-      const target = alias ?? domainFromRelative(source, filename);
-      if (!target) {
+      if (target.subPath.length === 0) {
         return;
       }
-      // `'../..'` from inside a domain is its own barrel too: the same cycle by a relative path.
-      if (target.domain === ownDomain && target.subPath.filter(Boolean).length === 0) {
-        context.report({ node, messageId: 'selfBarrel', data: { domain: ownDomain, source } });
+      if (target.subPath.length === 1 && exemptEntrypoints.has(target.subPath[0])) {
         return;
       }
-      if (target.subPath.filter(Boolean).length === 0) {
-        return;
-      }
-      if (EXEMPT_DOMAINS.has(target.domain) || target.domain === ownDomain) {
-        return;
-      }
-      if (target.subPath.length === 1 && EXEMPT_ENTRYPOINTS.has(target.subPath[0])) {
-        return;
-      }
-
-      context.report({
-        node,
-        messageId: 'deepImport',
-        data: { domain: target.domain, source },
-      });
+      context.report({ node, messageId: 'deepImport', data: { domain: target.domain, source } });
     };
 
-    // `vi.mock('@/domains/survey/factors')` names a module path just as an
+    // `vi.mock('@/domains/homepage/components/icons')` names a module path just as an
     // import does, and a mock aimed at an internal file silently stops
     // intercepting the moment that file moves.
     const isModuleMockCall = (node) =>
