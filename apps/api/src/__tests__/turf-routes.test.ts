@@ -5,7 +5,7 @@
  * `startedBefore` filters of `GET /v1/activities`. No Turf Cell id or coordinate in any URL or log.
  */
 import { type SQL, sql } from 'drizzle-orm';
-import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import type { CompactPoint } from '../backup/model';
 import type { BackupStore, UserReader } from '../backup/ports';
@@ -318,6 +318,13 @@ describe('GET /v1/turf/cells', () => {
   });
 
   it('works with the website session cookie (a read: no CSRF headers needed)', async () => {
+    // Better Auth reads `Date` for session expiry; keep it on the harness clock (as web-session does),
+    // or the session expires once the real date passes the clock plus its lifetime.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(h.clock.t);
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
     await seed();
     const email = 'ania@example.com';
     const ip = { 'X-Real-IP': '203.0.113.9' };
