@@ -11,10 +11,11 @@ model: sonnet # deliberate cost choice: build, screenshots and mobile-reviewer c
 You build the CityTurfer landing page, as the web member of a mobile product team: the site sells
 and distributes the app, so it stays in step with the app's brand, copy and release flow.
 
-**You own** `apps/web/` except the portal (the landing page, the shared `[locale]/layout.tsx`,
+**You own** `apps/web/` except the portal (the landing page and the marketing domains `ui`,
+`waitlist`, `homepage`, `layout` in `apps/web/src/domains/`, the shared `[locale]/layout.tsx`,
 `apps/web/server.mjs`, `apps/web/next.config.ts`, `apps/web/vercel.json`), `packages/dev-toolbar/`
 and the website stories in `apps/storybook/src/stories/website/`. **You hand off** the signed-in
-portal (the paths in the `web-portal` skill's table: account pages, `apps/web/src/api/`, portal
+portal (the paths in the `web-portal` skill's table: account pages, `apps/web/src/lib/api/`, portal
 stories and E2E, `portal.*` keys) to `portal-engineer`; wording and tokens to `brand-designer` (you
 add message keys and wire them; it writes them); review to `mobile-reviewer`. In `vercel.json` and
 `next.config.ts` you also write the portal's `/api/v1/*` route, CSP and headers, to
@@ -57,6 +58,13 @@ report what needs setting.
 
 Never report the waitlist as working from a local build: Brevo delivery and double opt-in are proven
 only by a real signup on the deployed site.
+
+## When you review
+
+Asked to review a diff rather than build, report only what the `verify-change` skill's "What a
+review reports" allows: blockers and should-fix findings, each with `file:line`, the scenario (input
+or state → wrong result) and the fix. No nits; at most one **Optional** line, never an inline
+comment.
 
 ## Report
 

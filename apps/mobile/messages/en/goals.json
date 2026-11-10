@@ -1,0 +1,33 @@
+{
+  "title": "Daily goal",
+  "offer": {
+    "title": "Set a daily goal",
+    "body": "Pick how many minutes a day you'd like to be out. Walks, runs and rides all count.",
+    "set": "Set a goal",
+    "hide": "Hide",
+    "hideLabel": "Hide the daily goal offer"
+  },
+  "progress": "{done} of {goal} min",
+  "progressLabel": "{done} of {goal, plural, one {# minute} other {# minutes}} today",
+  "toGo": "{left} min to go",
+  "met": "Goal met · {done} min today",
+  "empty": "Nothing yet today. A short walk counts.",
+  "streak": "{count, plural, one {#-day streak} other {#-day streak}}",
+  "streakLabel": "{count, plural, =0 {No streak yet} one {Streak: goal met # day in a row} other {Streak: goal met # days in a row}}",
+  "streakKeep": "Meet today's goal to keep it going",
+  "streakStart": "Meet your goal today to start a streak",
+  "change": "Change",
+  "changeLabel": "Change the daily goal",
+  "weekTitle": "Last 7 days",
+  "weekSummary": "{count, plural, =0 {Every day starts fresh} one {Goal met on # day of 7} other {Goal met on # days of 7}}",
+  "today": "Today",
+  "dayLabel": "{day}: {done} of {goal, plural, one {# minute} other {# minutes}}{met, select, yes {, goal met} other {}}",
+  "dayNoGoal": "{day}: {done, plural, one {# minute} other {# minutes}}, no goal set",
+  "value": "{minutes} min",
+  "settingValue": "{minutes, plural, one {# minute} other {# minutes}} a day",
+  "hint": "{health, select, yes {Walks, runs and rides count, recorded or from Apple Health.} other {Walks, runs and rides you record count.}} A change applies from today.",
+  "decrease": "Decrease goal by 5 minutes",
+  "increase": "Increase goal by 5 minutes",
+  "save": "Save",
+  "off": "Turn off the daily goal"
+}

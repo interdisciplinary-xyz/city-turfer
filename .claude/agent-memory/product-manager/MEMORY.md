@@ -9,3 +9,5 @@ Index of the Product Owner's own notes (one line per note file). Product facts l
   e-mail-code account on v0.9.0; contradicts B1 and "no account" copy
 - [Back-end recommendation 2026-10-22](backend-recommendation-2026-10-22.md) — backup-first, opt-in
   API scope I proposed and the founder's B1–B6 outcome; check before re-recommending
+- [Homepage tidy 2026-11-01](homepage-tidy-recommendation-2026-11-01.md) — 11→6 sections, 4-link
+  nav, hero cleanup I proposed; founder approved all three phases

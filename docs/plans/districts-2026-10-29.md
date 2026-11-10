@@ -31,6 +31,13 @@ Status: **built in #195** (`feat/territory-districts`, merged into `scope/v0.14.
   (`districts-selection.ts`); `use-districts.test.tsx` renders the hook (#204);
 - flow 18 now uses Warsaw (below).
 
+v0.15.0 builds on it in #209 (`e232d90`, merged into `scope/v0.15.0` on 2026-11-01): each row gets a
+bar and the district's `share` as a whole percent (`territory/ui/district-share.ts`, "<1%" for a
+sliver), read by VoiceOver in the row label, and the Dashboard gets a **Current city** card
+(`territory/ui/current-city-card.tsx`: districts with turf out of all, the city's turf, the top
+three districts with their share; a tap opens this screen). Flow 18 checks both. Still no lit state:
+the §9 decision is open.
+
 ## 1. What we are building
 
 A new screen, **Districts**, opened as a modal from the **Turf** tab. It shows the Turfer's Home
@@ -128,7 +135,8 @@ the turf rules and the phone, API and portal can all use it later.
      covered area (desc), then name.
 - `contract.ts`:
   `DistrictCoverageView { id, name, areaKm2, coveredKm2, cellCount, share, bounds, polygons }` and
-  `DistrictsView` (the union above). `share` = covered / area, used only for map shading.
+  `DistrictsView` (the union above). `share` = covered / area: map shading, and since #209 the row
+  bar and percent and the Dashboard's Current city card.
 - `index.ts`: `createTerritoryApi` gets `districts: new GetDistrictCoverage(deps)` and the deps type
   gains `districts: DistrictCatalog`. `createTurfApi` (the API's) is unchanged.
 - **Adapter**: new core entry `@cityturfer/core/districts` (`packages/core/src/districts/`)

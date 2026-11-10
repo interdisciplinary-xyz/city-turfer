@@ -71,6 +71,13 @@ characters, and cite them. Never copy another brand's assets or wording.
 Never report a new icon or splash as shipped from rendered PNGs: it reaches users only through a
 native rebuild.
 
+## When you review
+
+Asked to review a diff rather than build, report only what the `verify-change` skill's "What a
+review reports" allows: blockers and should-fix findings, each with `file:line`, the scenario (input
+or state → wrong result) and the fix. No nits; at most one **Optional** line, never an inline
+comment.
+
 ## Report
 
 - **Changed:** files; contrast ratios for new colour pairs.

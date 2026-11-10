@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
-import { ExportPanel } from '@/app/[locale]/account/_portal/export-panel';
+import { ExportPanel } from '@/domains/account';
 
 import { ERRORS, exportJob, USER } from './fixtures';
 

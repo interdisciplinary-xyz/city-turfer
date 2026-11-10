@@ -34,9 +34,10 @@ import { NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import type { CSSProperties, ReactNode } from 'react';
 
-import { AppHeader } from '../[locale]/app-header';
-import { bodyFont, displayFont, numericFont, taglineFont } from '../fonts';
-import { WAITLIST } from '../waitlist-config';
+import { bodyFont, displayFont, numericFont, taglineFont } from '@/app/fonts';
+import { AppHeader } from '@/domains/layout';
+import { WAITLIST } from '@/domains/waitlist';
+
 import { BrandNav } from './brand-nav';
 import {
   ACTIVITY_LABEL,
@@ -89,7 +90,7 @@ export default async function BrandingPage() {
   if (process.env.NODE_ENV === 'development') {
     const { shouldRenderDevToolbar } = await import('@interdisciplinary/dev-toolbar/next');
     if (await shouldRenderDevToolbar()) {
-      const { DevToolbarWithApp } = await import('../dev-toolbar-with-app');
+      const { DevToolbarWithApp } = await import('@/app/dev-toolbar-with-app');
       devToolbar = <DevToolbarWithApp />;
     }
   }
@@ -466,7 +467,7 @@ export default async function BrandingPage() {
                     min={MIN_CONTRAST.text}
                   />
                   <ContrastRow
-                    name='Night label on glow button (web)'
+                    name='Night label on glow button (Swagger, Storybook)'
                     fg={WEB_ON_ACCENT}
                     bg={ACCENT}
                     min={MIN_CONTRAST.text}
@@ -490,10 +491,16 @@ export default async function BrandingPage() {
                 <tbody>
                   <tr>
                     <th colSpan={4} scope='rowgroup'>
-                      Light: the admin’s light mode only
+                      Light: the website and portal (WEB_SCHEME), the admin’s light mode
                     </th>
                   </tr>
                   <ContrastRow name='Text on light' fg={LIGHT.text} bg={LIGHT.bg} min={MIN_CONTRAST.text} />
+                  <ContrastRow
+                    name='White label on black button (web)'
+                    fg={LIGHT.card}
+                    bg={LIGHT.text}
+                    min={MIN_CONTRAST.text}
+                  />
                   <ContrastRow name='Muted on light card' fg={LIGHT.muted} bg={LIGHT.card} min={MIN_CONTRAST.text} />
                   <ContrastRow
                     name='Link / pink text on light'

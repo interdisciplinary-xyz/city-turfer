@@ -2,21 +2,24 @@ import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { useLocale } from 'next-intl';
 import { useState } from 'react';
 
-import { ActivitiesEmpty } from '@/app/[locale]/account/_portal/activities-empty';
-import type { HistoryEmptyKind } from '@/app/[locale]/account/_portal/activities-empty/activities-empty.constants';
-import { ActivityDetailView } from '@/app/[locale]/account/_portal/activity-detail';
-import { ActivityFilter } from '@/app/[locale]/account/_portal/activity-filter';
-import type { HistoryFilter } from '@/app/[locale]/account/_portal/activity-filter/activity-filter.constants';
-import { ActivityList } from '@/app/[locale]/account/_portal/activity-list';
-import { ActivityState } from '@/app/[locale]/account/_portal/activity-state';
-import { ActivityTotals } from '@/app/[locale]/account/_portal/activity-totals';
-import { PortalFrame } from '@/app/[locale]/account/_portal/portal-frame';
-import { PortalNav } from '@/app/[locale]/account/_portal/portal-nav';
-import { previewLines, routeShape, simplifyLines, trackLines } from '@/app/[locale]/account/_portal/route-shape';
-import { RouteSvg } from '@/app/[locale]/account/_portal/route-svg';
-import { DETAIL_BOX, ROW_BOX } from '@/app/[locale]/account/_portal/route-svg/route-svg.constants';
-import { SignOutButton } from '@/app/[locale]/account/_portal/sign-out-button';
-import { Unreachable } from '@/app/[locale]/account/_portal/unreachable';
+import {
+  ActivitiesEmpty,
+  ActivityDetailView,
+  ActivityFilter,
+  ActivityList,
+  ActivityState,
+  ActivityTotals,
+  DETAIL_BOX,
+  type HistoryEmptyKind,
+  type HistoryFilter,
+  previewLines,
+  routeShape,
+  RouteSvg,
+  ROW_BOX,
+  simplifyLines,
+  trackLines,
+} from '@/domains/activities';
+import { PortalFrame, PortalNav, SignOutButton, Unreachable } from '@/domains/portal';
 import type { Locale } from '@/i18n/routing';
 
 import { ACTIVITIES, DETAIL, TOTALS, TRACK } from './fixtures';

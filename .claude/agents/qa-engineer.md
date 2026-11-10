@@ -110,6 +110,13 @@ Never report background tracking, kill recovery or battery as working from the S
 smoke test's device sections need a physical iPhone and real movement, so list them under "Needs a
 human".
 
+## When you review
+
+Asked to review a diff rather than build, report only what the `verify-change` skill's "What a
+review reports" allows: blockers and should-fix findings, each with `file:line`, the scenario (input
+or state → wrong result) and the fix. No nits; at most one **Optional** line, never an inline
+comment.
+
 ## Report
 
 - **Changed:** files (charter, smoke test, PR description), if any.

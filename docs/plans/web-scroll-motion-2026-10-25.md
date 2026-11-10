@@ -1,18 +1,24 @@
 ---
-status: proposed
-verified: 2026-10-25
+status: superseded
+verified: 2026-11-10
 owner: founder
 scope: ['apps/web/src/app/[locale]', .claude/skills/web-motion]
 summary:
-  Plan for GSAP ScrollTrigger reveals on the landing page below the hero (waitlist, how it works,
-  your week, local-first, closing call to action) in the brand's glow-in language, with nothing
-  hidden by CSS, a reduced-motion path, no layout shift and one small client bundle
+  Superseded by docs/plans/homepage-tidy-2026-11-01.md phase 3 (scroll-in for heads and cards, PR
+  213). Was the plan for GSAP ScrollTrigger reveals on the landing page below the hero (waitlist,
+  how it works, your week, local-first, closing call to action) in the brand's glow-in language,
+  with nothing hidden by CSS, a reduced-motion path, no layout shift and one small client bundle
 ---
 
 # Scroll motion on the landing page (plan)
 
-Status: **proposed**, for the founder to approve. Builds on #175 (the homepage in the app's pieces)
-and #177 (plain headline). Rules: the `web-motion` and `gsap-react` skills.
+Status: **superseded, not built as written.** The homepage tidy-up shipped a smaller version in #213
+(`4c73ee9`, v0.15.0, `docs/plans/homepage-tidy-2026-11-01.md` phase 3): section heads and cards rise
+and fade in once (`RevealMotion` in `apps/web/src/domains/homepage`, `ScrollTrigger.batch` inside a
+reduced-motion `matchMedia`, nothing hidden without the boot script's motion class). The per-section
+effects below (count-ups, legend steps, the Dashboard figure, the hero phone drift) were not built,
+and "Your week" and "Local-first" are no longer sections. Builds on #175 (the homepage in the app's
+pieces) and #177 (plain headline). Rules: the `web-motion` and `gsap-react` skills.
 
 ## Goal
 
@@ -103,14 +109,14 @@ motion components should share one gsap chunk.
 
 ## Files
 
-| File                                                     | Change                                                                |
-| -------------------------------------------------------- | --------------------------------------------------------------------- |
-| `apps/web/src/app/[locale]/scroll-motion/*` (new)        | The component and its constants                                       |
-| `apps/web/src/app/[locale]/page.tsx`                     | Wrap the sections after the hero in `<ScrollMotion>`                  |
-| `apps/web/src/app/[locale]/home-sections/*.tsx`          | `data-reveal` roles; `data-count` (final value, decimals) on numbers  |
-| `apps/web/src/app/[locale]/waitlist-form/*` / `page.tsx` | `data-reveal` on the waitlist title and form row                      |
-| `apps/web/src/app/[locale]/home-sections/*.css`          | `transform-origin: left` on the legend steps and the progress fill    |
-| `.claude/skills/web-motion/SKILL.md`                     | ScrollTrigger is in the stack; the `data-reveal` rule; updated checks |
+| File                                                                    | Change                                                                |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `apps/web/src/app/[locale]/scroll-motion/*` (new)                       | The component and its constants                                       |
+| `apps/web/src/app/[locale]/page.tsx`                                    | Wrap the sections after the hero in `<ScrollMotion>`                  |
+| `apps/web/src/domains/homepage/components/home-sections/*.tsx`          | `data-reveal` roles; `data-count` (final value, decimals) on numbers  |
+| `apps/web/src/domains/waitlist/components/waitlist-form/*` / `page.tsx` | `data-reveal` on the waitlist title and form row                      |
+| `apps/web/src/domains/homepage/components/home-sections/*.css`          | `transform-origin: left` on the legend steps and the progress fill    |
+| `.claude/skills/web-motion/SKILL.md`                                    | ScrollTrigger is in the stack; the `data-reveal` rule; updated checks |
 
 No change to `packages/brand`, `packages/ui` or the app. No new copy.
 

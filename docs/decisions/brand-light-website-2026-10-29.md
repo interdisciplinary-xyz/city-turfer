@@ -62,8 +62,15 @@ product when the page around them is light.
   (`scheme: 'web'` for web and portal) and `tools/brand-audit.mjs` (knows `WEB_SCHEME`,
   `HEADER_SCHEME`, `APP_SCHEME`).
 - Contrast: `packages/brand/src/__tests__/contrast.test.ts` reads `WEB_SCHEME`, `APP_SCHEME` and
-  `SITE_SCHEME` separately. The pink button hover mixes toward `--blazing` (about 6.1:1 in all
-  three; toward `--text` it was 4.29:1 on light).
+  `SITE_SCHEME` separately. The pink fill hover mixes toward `--blazing` (about 6.1:1 in all three;
+  toward `--text` it was 4.29:1 on light). **Update 2026-11-05:** the website's primary button (and
+  the header's call to action) is now black with a white label, a founder call
+  (`docs/plans/homepage-tidy-2026-11-01.md`, "Founder follow-ups"); pink stays for the turf.
+  **Update 2026-11-10:** the APK download button (`.store-btn-android`) is black too: one primary
+  look per scheme (reversible by the founder). The `--blazing` hover now applies only to the
+  remaining pink fills (night panels, Swagger, Storybook), not to any website primary button; the
+  black hover is `color-mix(in srgb, var(--text) 82%, var(--card))` (11.1:1 under the white label;
+  the label on the black fill is 18.9:1).
 - `SITE_SCHEME` keeps its name although it no longer means "the site"; renaming it (for example
   `TOOLS_SCHEME`) is left to the founder. The brand-system skill documents the four constants.
 - The social image `apps/web/public/og-image.png` stays the dark artwork (founder's call).

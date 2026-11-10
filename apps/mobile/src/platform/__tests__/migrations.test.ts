@@ -183,3 +183,61 @@ describe('migration v13 (claim cells by cell)', () => {
     expect(details).not.toMatch(/^SCAN cc\b/m);
   });
 });
+
+describe('migration v15 (Daily goal)', () => {
+  it('adds empty goal tables to an older database, keeping its activities', async () => {
+    const db = openNodeDatabase();
+    await migrate(db, 13);
+    await db.run(
+      `INSERT INTO log_activities (id, type, name, started_at, ended_at, distance_m, moving_s, elapsed_s, splits, created_at)
+       VALUES ('s1', 'walk', 'Evening walk', 1, 2, 2000, 1500, 1600, '[]', 3)`
+    );
+    await migrate(db, 15);
+    expect(await version(db)).toBe(15);
+    expect(await db.first('SELECT id FROM log_activities')).toEqual({ id: 's1' });
+    expect(await db.first('SELECT COUNT(*) AS n FROM goal_daily_targets')).toEqual({ n: 0 });
+    expect(await db.first('SELECT COUNT(*) AS n FROM goal_state')).toEqual({ n: 0 });
+  });
+
+  it('allows one state row, one target per day and no negative minutes', async () => {
+    const db = openNodeDatabase();
+    await migrate(db);
+    await db.run('INSERT INTO goal_state (id, offer_hidden) VALUES (1, 1)');
+    await expect(db.run('INSERT INTO goal_state (id) VALUES (2)')).rejects.toThrow();
+    await db.run("INSERT INTO goal_daily_targets (effective_from, minutes, set_at) VALUES ('2026-11-11', 0, 1)");
+    await expect(
+      db.run("INSERT INTO goal_daily_targets (effective_from, minutes, set_at) VALUES ('2026-11-11', 30, 2)")
+    ).rejects.toThrow();
+    await expect(
+      db.run("INSERT INTO goal_daily_targets (effective_from, minutes, set_at) VALUES ('2026-11-12', -1, 2)")
+    ).rejects.toThrow();
+  });
+});
+
+describe('migration v14 (Health Sync show_history)', () => {
+  // Pins v14 as fix/health-sync (#214) has it: `ALTER TABLE hs_state ADD COLUMN show_history INTEGER
+  // NOT NULL DEFAULT 0;`. The two branches each carry v14 until #214 merges, so it must stay
+  // byte-identical to fix/health-sync's v14; a device that ran one build's v14 never runs the other's.
+  it('adds hs_state.show_history INTEGER NOT NULL DEFAULT 0', async () => {
+    const db = openNodeDatabase();
+    await migrate(db, 13);
+    expect((await db.all<{ name: string }>('PRAGMA table_info(hs_state)')).map((c) => c.name)).not.toContain(
+      'show_history'
+    );
+    await migrate(db, 14);
+    expect(await version(db)).toBe(14);
+    const column = (
+      await db.all<{ name: string; type: string; notnull: number; dflt_value: string | null; pk: number }>(
+        'PRAGMA table_info(hs_state)'
+      )
+    ).find((c) => c.name === 'show_history');
+    expect(column).toEqual({
+      cid: expect.any(Number),
+      name: 'show_history',
+      type: 'INTEGER',
+      notnull: 1,
+      dflt_value: '0',
+      pk: 0,
+    });
+  });
+});

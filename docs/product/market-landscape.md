@@ -86,6 +86,9 @@ Different:
    still asks every new user to sign in with an e-mailed code, which creates an account (a way in
    without one is decided, not built).
 3. **Native recorder + Apple Health back-import**: years of turf on day one; no Strava dependency.
+   (_Note 2026-11-10: since v0.15.0, #214, the import takes only workouts that end after Apple
+   Health was connected, by founder decision of 2026-11-05; the back-import half of this strength no
+   longer holds. Open for `product-manager`._)
 4. **Walk, run and ride equally**, with ~50 m street cells (short urban walks visibly fill in).
 
 Weak:

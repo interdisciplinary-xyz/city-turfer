@@ -43,6 +43,14 @@ export interface ActivityListItem {
   preview: [number, number][]; // [lon, lat], simplified
 }
 
+/** When an Activity started and how long it moved: what a daily total needs (no track, no preview). */
+export interface ActivityStart {
+  id: string;
+  type: ActivityType;
+  startedAt: number;
+  movingS: number; // recorded + estimated, as ActivityListItem.movingS
+}
+
 export interface ActivityDetail extends ActivityListItem {
   endedAt: number;
   elapsedS: number;

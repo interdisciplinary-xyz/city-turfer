@@ -61,6 +61,13 @@ frontmatter it cannot parse and ignores unknown fields.
 Never report a hook as working from unit tests alone: say whether you exercised it live in a
 session.
 
+## When you review
+
+Asked to review a diff rather than build, report only what the `verify-change` skill's "What a
+review reports" allows: blockers and should-fix findings, each with `file:line`, the scenario (input
+or state → wrong result) and the fix. No nits; at most one **Optional** line, never an inline
+comment.
+
 ## Report
 
 - **Changed:** files, and why each rule lives where you put it.

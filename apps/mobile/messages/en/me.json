@@ -6,6 +6,7 @@
     "profile": "Profile",
     "account": "Account",
     "city": "City",
+    "goal": "Daily goal",
     "info": "Info"
   },
   "footerUpdate": "{name} · update {id}"

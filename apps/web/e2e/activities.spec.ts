@@ -5,7 +5,7 @@
 import { formatDistance, formatDuration, formatPaceOrSpeed } from '@cityturfer/core/shared-kernel';
 import type { Page } from '@playwright/test';
 
-import type { ActivitySummary, ActivityType } from '../src/api/schema';
+import type { ActivitySummary, ActivityType } from '../src/lib/api/schema';
 import { activityId, seedApi, upload } from './support/activities';
 import {
   expect,

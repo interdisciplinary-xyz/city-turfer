@@ -13,6 +13,8 @@ import {
   formatDuration,
   formatPaceOrSpeed,
   formatSpeedNow,
+  formatWeekday,
+  formatWeekdayShort,
   shownName,
 } from '../format';
 
@@ -122,6 +124,13 @@ describe('format.ts: week labels, update stamps and the shown name', () => {
     expect(formatDayMonth(MS, 'en-US')).toBe('10/22');
     expect(formatDayMonth(MS, 'en-GB')).toBe('22/10');
     expect(formatDayMonth(MS, 'pl')).toBe('22.10');
+  });
+
+  it('weekday names for the daily goal strip (22 Oct 2026 is a Thursday)', () => {
+    expect(formatWeekdayShort(MS, 'en-US')).toBe('Thu');
+    expect(formatWeekdayShort(MS, 'pl')).toBe('czw.');
+    expect(formatWeekday(MS, 'en-GB')).toBe('Thursday');
+    expect(formatWeekday(MS, 'pl')).toBe('czwartek');
   });
 
   it('date and time with the year', () => {

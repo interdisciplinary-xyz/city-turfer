@@ -3,7 +3,7 @@ name: web-portal
 description: >-
   The signed-in user portal in apps/web: public/portal boundary, browser sign-in and session cookie,
   typed API client and error codes, read-only backed-up data and activity history, privacy and
-  checks. Use before changing account pages, src/api or portal E2E, or when asked "show my data on
+  checks. Use before changing account pages, lib/api or portal E2E, or when asked "show my data on
   the web".
 ---
 
@@ -19,19 +19,19 @@ wording, "sign out everywhere", domain…) are still recommendations: for any of
 
 ## Where things live
 
-| What                   | Path                                                                                                  | Owner                                              |
-| ---------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| Portal root (D3)       | `apps/web/src/app/[locale]/account/` (its `layout.tsx` mounts the query client and portal copy)       | `portal-engineer`                                  |
-| Gated pages            | `apps/web/src/app/[locale]/account/(signed-in)/` (behind the session gate); `sign-in/`, `register/`   | `portal-engineer`                                  |
-| Components             | `apps/web/src/app/[locale]/account/_portal/<name>/` (`<name>.tsx`, `<name>.constants.ts`, `index.ts`) | `portal-engineer`                                  |
-| API client             | `apps/web/src/api/` (`client.ts`, `portal-api.ts`, `hooks.ts`, `errors.ts`, `schema.ts`)              | `portal-engineer`                                  |
-| Portal stories         | `apps/storybook/src/stories/portal/` (made-up data in `fixtures.ts`)                                  | `portal-engineer`                                  |
-| Portal E2E             | `apps/web/e2e/{portal,activities}.spec.ts`, `apps/web/e2e/support/`                                   | `portal-engineer`                                  |
-| Copy                   | `portal.*` in `apps/web/messages/en.json` and `pl.json`                                               | wording: `brand-designer`; keys: `portal-engineer` |
-| Route, CSP and headers | `apps/web/vercel.json`, `apps/web/next.config.ts`                                                     | `web-engineer` edits, to `portal-engineer`'s spec  |
-| Contract and cookie    | `apps/api/openapi.json` (generated), `apps/api/src/session-cookie.ts`, `apps/api/src/middleware.ts`   | `api-engineer`                                     |
+| What                   | Path                                                                                                                                                                                                                | Owner                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Portal root (D3)       | `apps/web/src/app/[locale]/account/` (its `layout.tsx` mounts the query client and portal copy)                                                                                                                     | `portal-engineer`                                  |
+| Gated pages            | `apps/web/src/app/[locale]/account/(signed-in)/` (behind the session gate); `sign-in/`, `register/`                                                                                                                 | `portal-engineer`                                  |
+| Components             | `apps/web/src/domains/{portal,auth,account,activities}/components/<name>/` (`<name>.tsx`, `<name>.constants.ts`, `index.ts`; import other domains through their barrel, `docs/decisions/web-domains-2026-11-10.md`) | `portal-engineer`                                  |
+| API client             | `apps/web/src/lib/api/` (`client.ts`, `portal-api.ts`, `hooks.ts`, `errors.ts`, `schema.ts`)                                                                                                                        | `portal-engineer`                                  |
+| Portal stories         | `apps/storybook/src/stories/portal/` (made-up data in `fixtures.ts`)                                                                                                                                                | `portal-engineer`                                  |
+| Portal E2E             | `apps/web/e2e/{portal,activities}.spec.ts`, `apps/web/e2e/support/`                                                                                                                                                 | `portal-engineer`                                  |
+| Copy                   | `portal.*` in `apps/web/messages/en.json` and `pl.json`                                                                                                                                                             | wording: `brand-designer`; keys: `portal-engineer` |
+| Route, CSP and headers | `apps/web/vercel.json`, `apps/web/next.config.ts`                                                                                                                                                                   | `web-engineer` edits, to `portal-engineer`'s spec  |
+| Contract and cookie    | `apps/api/openapi.json` (generated), `apps/api/src/session-cookie.ts`, `apps/api/src/middleware.ts`                                                                                                                 | `api-engineer`                                     |
 
-In code, link through `PORTAL_ROOT` (`apps/web/src/api/next-path.ts`); the route folder,
+In code, link through `PORTAL_ROOT` (`apps/web/src/lib/api/next-path.ts`); the route folder,
 `vercel.json`'s header source, `apps/web/tools/check-export.mjs` and the E2E also name `/account`.
 In the harness say "the portal root".
 
@@ -41,7 +41,7 @@ Public pages keep the site's promise (the `web-motion` skill's Site ground rules
 API calls, no third-party scripts for a signed-out visitor.** The portal never weakens that.
 
 - Gates, not habits: `apps/web/.dependency-cruiser.cjs` (marketing code never imports the portal
-  root, `apps/web/src/api/`, TanStack Query, openapi-fetch, maplibre-gl or `@cityturfer/core`
+  root, `apps/web/src/lib/api/`, TanStack Query, openapi-fetch, maplibre-gl or `@cityturfer/core`
   (`marketing-not-core`); the portal uses core's shared kernel only
   (`portal-core-shared-kernel-only`), `@cityturfer/core/h3` only in the portal; the client never
   imports pages; no GSAP in the portal) and `apps/web/tools/check-export.mjs` after every build (no
@@ -66,19 +66,19 @@ API calls, no third-party scripts for a signed-out visitor.** The portal never w
   CORS (Vercel `routes` in `vercel.json`; dev: `apps/web/server.mjs`).
 - Every request sends `CityTurfer-Client: web/<version>`; unsafe ones also need the right `Origin`
   and `Sec-Fetch-Site`, else 403 `auth.csrf` (W4).
-- **401 anywhere** (outside sign-in and sign-out) → `leave()` in `apps/web/src/api/leave.ts` clears
-  the whole query cache and goes to sign-in; `?next=` only through `apps/web/src/api/next-path.ts`.
-  A page restored from the back-forward cache clears it too.
+- **401 anywhere** (outside sign-in and sign-out) → `leave()` in `apps/web/src/lib/api/leave.ts`
+  clears the whole query cache and goes to sign-in; `?next=` only through
+  `apps/web/src/lib/api/next-path.ts`. A page restored from the back-forward cache clears it too.
 - Nothing in apps/web assumes an admin or staff role.
 
 ## API client and errors
 
 - Types come from `apps/api/openapi.json`: `pnpm --filter @cityturfer/web run api:types` writes
-  `apps/web/src/api/schema.gen.ts`; name them in `schema.ts`. Never hand-write a request or response
-  type; a unit test fails when the generated file is stale.
+  `apps/web/src/lib/api/schema.gen.ts`; name them in `schema.ts`. Never hand-write a request or
+  response type; a unit test fails when the generated file is stale.
 - Calls go through `portalApi()` in `portal-api.ts` (one per operation, via `unwrap`), pages use the
-  hooks in `hooks.ts` (TanStack Query, in memory only, never persisted). Only `apps/web/src/api/`
-  calls the API.
+  hooks in `hooks.ts` (TanStack Query, in memory only, never persisted). Only
+  `apps/web/src/lib/api/` calls the API.
 - Errors: `toPortalError` maps the problem `code` to `portal.errors.<code>` for the codes in
   `PORTAL_ERROR_CODES` (pinned to the contract's `ProblemCode`); others are `signed-out`,
   `unreachable` or `generic` (with the `X-Request-Id`). Never show `title` or `detail`, never echo
@@ -101,10 +101,11 @@ API calls, no third-party scripts for a signed-out visitor.** The portal never w
 
 - Pages under `(signed-in)/`: `/[locale]/account/activities` and `/[locale]/account/activity?id=`
   (H2: the static export can't prerender one page per id; the id is the phone's opaque id, checked
-  with `apps/web/src/api/activity-id.ts` before any call; `?next=` and the language links keep only
-  a valid `id`). Components in `_portal/` (`activities-page`, `activity-page`, `activity-list`,
-  `activity-detail`, `route-svg`…), pure logic in `_portal/activity-time.ts`, `route-shape.ts` and
-  `activity-numbers.ts`, tested in `apps/web/src/api/__tests__/activity-history.test.ts`.
+  with `apps/web/src/lib/api/activity-id.ts` before any call; `?next=` and the language links keep
+  only a valid `id`). Components in the `activities` domain (`activities-page`, `activity-page`,
+  `activity-list`, `activity-detail`, `route-svg`…), pure logic in
+  `apps/web/src/domains/activities/utils/` (`activity-time.ts`, `route-shape.ts`,
+  `activity-numbers.ts`), tested in `apps/web/src/lib/api/__tests__/activity-history.test.ts`.
 - Gap routes: `afterSegment` is the core's index into the ordered segments, not a segment number.
 - H1: the route is an **inline SVG of its shape, no basemap, no tiles**: the list from the summary's
   `preview`, the detail from the track simplified with core's `simplify`, GPS-gap estimates dashed.
@@ -112,8 +113,9 @@ API calls, no third-party scripts for a signed-out visitor.** The portal never w
   there from the app by `location-engineer`), so the numbers match the app. apps/web uses core's
   shared kernel only; never re-implement a formatter.
 - H5: day and time in the activity's own `timeZone` (the browser's when null); months group by that
-  local day. Dates elsewhere in the portal use `_portal/format.ts` (the visitor's zone). English
-  pages format every date en-GB style (day first, 24-hour) through `dateLocale` in `format.ts`.
+  local day. Dates elsewhere in the portal use `apps/web/src/domains/portal/utils/format.ts` (the
+  visitor's zone). English pages format every date en-GB style (day first, 24-hour) through
+  `dateLocale` in `format.ts`.
 - H6: `GET /v1/activities` cursor pages of 50 with "Show more"; the type filter in page state, not
   the URL. Totals from `GET /v1/activity-totals`.
 

@@ -49,8 +49,8 @@ No persona research exists yet. What the product implies today:
 
 - **City walkers, dog-walkers, commuters on foot or bike** who repeat the same streets and would
   enjoy seeing them glow — the founder's own Warsaw walks and rides are the reference use.
-- **Runners and cyclists with an Apple Watch history**: Apple Health import fills the map on day one
-  instead of starting from empty.
+- **Runners and cyclists with an Apple Watch**: Apple Health import turns their Watch workouts into
+  turf from the moment they connect (older ones stay in Apple Health: founder decision 2026-11-05).
 - **Poland first, then European cities**: Polish company, EN/PL website, the Home City catalogue is
   Polish cities first, then major European ones
   (`packages/core/src/contexts/territory/domain/city-catalog.ts`).
@@ -90,8 +90,8 @@ Voice: confident, playful, outdoorsy; never guilt, fake urgency, leaderboards, "
 
 ## 5. What a user can do today (v0.10.0)
 
-Tabs: **Dashboard · Turf · Record · Stats · Me** (drawer: Profile, Account, City, Info). Full
-inventory: [features.md](../engineering/features.md).
+Tabs: **Dashboard · Turf · Record · Stats · Me** (drawer: Profile, Account, City, Daily goal, Info).
+Full inventory: [features.md](../engineering/features.md).
 
 - **Record** walk/run/ride with live map and stats, auto-pause, pause/resume, hold-to-finish;
   survives screen lock (iOS native background session) and app kill. A "⬡ Turf" chip shows your turf
@@ -101,9 +101,11 @@ inventory: [features.md](../engineering/features.md).
 - **Review**: Dashboard (this week, recent, next achievement, checklist), Stats (8-week chart, turf
   area/cells/strong, all-time per type), History, Activity detail (splits, elevation ≈, turf gained,
   rename, delete).
-- **Apple Health (iOS)**: import walks, hikes, runs and rides with routes (whole history, Apple
-  Watch included) so they claim turf; save new recordings to Health.
+- **Apple Health (iOS)**: import walks, hikes, runs and rides with routes (from the day you connect,
+  Apple Watch included) so they claim turf; save new recordings to Health.
 - **Your city**: pick a Home City so maps open there.
+- **Daily goal** (opt-in): minutes of moving time a day on the Dashboard, the last 7 days and a
+  streak of days met; never a "missed" day.
 - **Account** (v0.9.0, v0.10.0): sign in with an e-mailed code, or an optional account password;
   change name, e-mail and password; export your data; delete the account.
 - **Cloud backup** (opt-in, Info): one-way upload of activities, restore onto a new phone; Apple

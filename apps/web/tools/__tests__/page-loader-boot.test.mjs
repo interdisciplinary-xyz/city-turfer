@@ -9,7 +9,7 @@ import {
   LOADER_SHOW_MS,
   PAGE_LOADED_CLASS,
   PAGE_LOADED_EVENT,
-} from '../../src/app/[locale]/page-loader/page-loader.constants.ts';
+} from '../../src/domains/ui/components/page-loader/page-loader.constants.ts';
 
 /** A stub browser: classList, timers and listeners we can fire by hand. */
 function setup({

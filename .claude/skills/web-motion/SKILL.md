@@ -33,7 +33,8 @@ motion rules follow. Both the `web-engineer` and the `mobile-reviewer` work from
   (`docs/decisions/brand-light-website-2026-10-29.md`). Text and lines use the `-text` / `-graphic`
   variables, never the raw `--glow`, `--walk`, `--run` or `--ride` (`brand-system` skill). A change
   in `packages/brand` also changes the mobile app.
-- **Stories:** every component in `apps/web/src/app/[locale]/` has a story in
+- **Stories:** every component in the marketing domains
+  (`apps/web/src/domains/{ui,waitlist,homepage,layout}`) has a story in
   `apps/storybook/src/stories/website/`, except pure motion wrappers (`hero-motion`) and dev-only
   pieces (`dev-toolbar-with-app`). Website pieces stay synchronous (`useTranslations`, not
   `await getTranslations`): Storybook cannot render async server components.
@@ -51,10 +52,16 @@ cleanup, SSR). This skill adds what is specific to CityTurfer.
 ## Stack
 
 - `gsap` + `@gsap/react` in `apps/web`. Register `useGSAP` once per module:
-  `gsap.registerPlugin(useGSAP)`. No ScrollTrigger yet (the page is one screen).
-- Motion lives in client components under `apps/web/src/app/[locale]/` (e.g. `hero-motion/`). Pages
-  stay server components; they mark elements with `data-anim` and wrap them in the motion component,
-  which passes its root ref as `scope`.
+  `gsap.registerPlugin(useGSAP)`. ScrollTrigger is used in one place only: `reveal-motion/`
+  (scroll-in of `[data-reveal]` section heads and cards, `ScrollTrigger.batch`, `once`, a rise of
+  0.4em, `expo.out`, inside `gsap.matchMedia` for no-preference and reverted in cleanup). CSS hides
+  `[data-reveal]` only under the boot script's `motion` class, so reduced motion, no script and the
+  2.5 s fallback all show everything; no pinning or scrub, and nothing above the fold waits for a
+  scroll.
+- Motion lives in client components in the `homepage` domain
+  (`apps/web/src/domains/homepage/components/`, e.g. `hero-motion/`). Pages stay server components;
+  they mark elements with `data-anim` and wrap them in the motion component, which passes its root
+  ref as `scope`.
 - The site is a **static export**: no GSAP during render, everything inside `useGSAP`.
 
 ## Motion language (brand)
@@ -73,10 +80,11 @@ The brand is the turf strength ramp: things **glow in**, they don't bounce.
 
 ## No flash, no stuck content
 
-- `MOTION_BOOT_SCRIPT` (inline in `<head>` of `[locale]/layout.tsx`) adds `.motion` to `<html>`
-  before the first paint unless reduced motion is on; CSS hides `.motion [data-anim]`. GSAP reveals
-  them with `autoAlpha` and adds `.motion-ready`. If the bundle never runs, the script removes
-  `.motion` after 2.5 s, so nothing stays hidden.
+- `MOTION_BOOT_SCRIPT` (`domains/ui/components/motion-boot`, inline in `<head>` of
+  `[locale]/layout.tsx`; in `ui` so the layout the portal shares never loads the homepage domain)
+  adds `.motion` to `<html>` before the first paint unless reduced motion is on; CSS hides
+  `.motion [data-anim]`. GSAP reveals them with `autoAlpha` and adds `.motion-ready`. If the bundle
+  never runs, the script removes `.motion` after 2.5 s, so nothing stays hidden.
 - `<html suppressHydrationWarning>` exists only because of that class; don't add other client-only
   attributes to `<html>`.
 - New animated element: give it `data-anim="<role>"` and add it to the timeline. An element with

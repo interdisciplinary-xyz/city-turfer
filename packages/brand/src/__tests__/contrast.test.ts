@@ -72,6 +72,7 @@ const PAIRS: Pair[] = [
   })),
   // Labels drawn on brand fills.
   { name: 'on-accent text on accent', fg: ON_ACCENT, bg: ACCENT, min: MIN_CONTRAST.text },
+  { name: 'app day check on accent', fg: ON_ACCENT, bg: ACCENT, min: MIN_CONTRAST.ui },
   { name: 'light on-accent text on accent', fg: LIGHT.onAccent, bg: ACCENT, min: MIN_CONTRAST.text },
   { name: 'web on-accent text on accent', fg: WEB_ON_ACCENT, bg: ACCENT, min: MIN_CONTRAST.text },
   { name: 'web on-glow text on glowing', fg: WEB_ON_ACCENT, bg: TIER_COLOR.glowing, min: MIN_CONTRAST.text },
@@ -82,6 +83,55 @@ const PAIRS: Pair[] = [
   { name: 'web --accent-text on --bg', fg: WEB['--accent-text'], bg: WEB['--bg'], min: MIN_CONTRAST.text },
   { name: 'web --muted on --bg', fg: WEB['--muted'], bg: WEB['--bg'], min: MIN_CONTRAST.text },
   { name: 'web --text on --bg', fg: WEB['--text'], bg: WEB['--bg'], min: MIN_CONTRAST.text },
+  // The website's primary button (.btn-primary, header CTA): a --card label on a --text fill, and on
+  // its hover mix (--text 82% toward --card); the fill must also stand out from the page.
+  { name: 'web primary button --card on --text', fg: WEB['--card'], bg: WEB['--text'], min: MIN_CONTRAST.text },
+  {
+    name: 'web primary button --card on its hover mix',
+    fg: WEB['--card'],
+    bg: mixSrgb(WEB['--text'], WEB['--card'], 0.82),
+    min: MIN_CONTRAST.text,
+  },
+  { name: 'web primary button fill --text on --bg', fg: WEB['--text'], bg: WEB['--bg'], min: MIN_CONTRAST.ui },
+  // The website's secondary button (.btn-secondary): an outline in --border-control, a --text label, on the page or a card.
+  {
+    name: 'web secondary button edge --border-control on --bg',
+    fg: WEB['--border-control'],
+    bg: WEB['--bg'],
+    min: MIN_CONTRAST.ui,
+  },
+  {
+    name: 'web secondary button edge --border-control on --card',
+    fg: WEB['--border-control'],
+    bg: WEB['--card'],
+    min: MIN_CONTRAST.ui,
+  },
+  { name: 'web --text on --card', fg: WEB['--text'], bg: WEB['--card'], min: MIN_CONTRAST.text },
+  // Every other homepage section sits on a faint band: color-mix(in srgb, --border 25%, --bg).
+  {
+    name: 'web --text on the band',
+    fg: WEB['--text'],
+    bg: mixSrgb(WEB['--border'], WEB['--bg'], 0.25),
+    min: MIN_CONTRAST.text,
+  },
+  {
+    name: 'web --muted on the band',
+    fg: WEB['--muted'],
+    bg: mixSrgb(WEB['--border'], WEB['--bg'], 0.25),
+    min: MIN_CONTRAST.text,
+  },
+  {
+    name: 'web --accent-text on the band',
+    fg: WEB['--accent-text'],
+    bg: mixSrgb(WEB['--border'], WEB['--bg'], 0.25),
+    min: MIN_CONTRAST.text,
+  },
+  {
+    name: 'web --border-control on the band',
+    fg: WEB['--border-control'],
+    bg: mixSrgb(WEB['--border'], WEB['--bg'], 0.25),
+    min: MIN_CONTRAST.ui,
+  },
   // Turf pieces on the website are night panels (APP_SCHEME), read from the variables they get.
   { name: 'app glow disc on --card', fg: APP['--glow'], bg: APP['--card'], min: MIN_CONTRAST.ui }, // 4.95
   { name: 'app faint legend step on --bg', fg: APP['--faint'], bg: APP['--bg'], min: MIN_CONTRAST.ui }, // 3.32
@@ -99,8 +149,10 @@ const PAIRS: Pair[] = [
   // Swagger and Storybook (SITE_SCHEME, dark).
   { name: 'site --on-accent on --accent', fg: SITE['--on-accent'], bg: SITE['--accent'], min: MIN_CONTRAST.text },
   { name: 'site --accent-text on --card', fg: SITE['--accent-text'], bg: SITE['--card'], min: MIN_CONTRAST.text },
-  // Primary button hover: color-mix(in srgb, var(--glow) 86%, var(--blazing)) under the night label.
-  // Mixing toward --text would darken the pink on the light scheme (4.29); --blazing holds in both.
+  // Pink fill hover: color-mix(in srgb, var(--glow) 86%, var(--blazing)) under the night label, for
+  // the pink fills that remain (night panels, Swagger, Storybook). The website's primary buttons,
+  // the APK button included, are black; their hover (--text 82% toward --card) is pinned above.
+  // Mixing toward --text would darken the pink on the light scheme (4.29); --blazing holds in all.
   ...(
     [
       ['web', WEB],

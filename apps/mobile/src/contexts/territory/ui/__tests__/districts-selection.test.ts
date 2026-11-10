@@ -69,12 +69,14 @@ describe('districtSelectionReducer (Districts screen selection)', () => {
 });
 
 describe('district row layout (getItemLayout)', () => {
-  const base = 2 * (DISTRICT_ROW.border + DISTRICT_ROW.paddingVertical) + 2 * DISTRICT_ROW.nameLine;
+  const frame = 2 * (DISTRICT_ROW.border + DISTRICT_ROW.paddingVertical) + DISTRICT_ROW.progressGap;
+  const lines = 2 * DISTRICT_ROW.nameLine + DISTRICT_ROW.progressLine;
+  const base = frame + lines;
 
-  it('holds two lines of the name, growing with the text size but never below scale 1', () => {
+  it('holds two lines of the name and the progress line, growing with the text size but never below scale 1', () => {
     expect(districtRowHeight(1)).toBe(base);
     expect(districtRowHeight(0.8)).toBe(base);
-    expect(districtRowHeight(1.5)).toBe(Math.ceil(base + DISTRICT_ROW.nameLine));
+    expect(districtRowHeight(1.5)).toBe(Math.ceil(frame + lines * 1.5));
   });
 
   it('places row n after the top padding, the header and n slots of row + gap', () => {

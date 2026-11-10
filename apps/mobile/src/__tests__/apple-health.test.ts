@@ -8,13 +8,14 @@ import { migrate } from '@/platform/migrations';
 import { openNodeDatabase } from '@/test-support/node-database';
 import { wire } from '@/wiring';
 
+// Apple Health is connected at the clock's start (30 Sep); the workouts to import come after it.
 const T0 = Date.parse('2026-10-01T07:00:00Z');
 const DAY = 86_400_000;
 
 function setup() {
   const db = openNodeDatabase();
   const health = new FakeHealthStore();
-  let now = Date.parse('2026-10-18T12:00:00Z');
+  let now = Date.parse('2026-09-30T12:00:00Z');
   let n = 0;
   let running = false;
   const app = { foreground: true };
@@ -67,11 +68,15 @@ describe('Apple Health import', () => {
     t.health.add({ uuid: 'r1', kind: 'running' }, straightRoute({ lat: 52.3, lon: 21.0, t: T0 + DAY }, 20, 3));
     t.health.add({ uuid: 'c1', kind: 'cycling' }, straightRoute({ lat: 52.2, lon: 21.1, t: T0 + 2 * DAY }, 20, 6));
     t.health.add({ uuid: 'h1', kind: 'hiking' }, walk(3));
-    t.health.add({ uuid: 'treadmill', kind: 'running' }, []);
+    t.health.add(
+      { uuid: 'treadmill', kind: 'running', startedAt: T0 + 4 * DAY, endedAt: T0 + 4 * DAY + 3_600_000 },
+      []
+    );
     t.health.add({ uuid: 'yoga', kind: 'other' }, []);
 
     await c.healthSync.connect.execute();
     expect(t.health.accessRequests).toBe(1);
+    t.advance(18 * DAY); // the workouts are behind the clock when they are imported, as on a phone
     const report = await c.syncHealth();
     expect(report).toMatchObject({ imported: 4, withoutRoute: 1, skipped: 1 });
     await c.dispatcher.dispatchPending();
@@ -100,7 +105,7 @@ describe('Apple Health import', () => {
     const c = await t.container();
     const total = IMPORT_PAGE_SIZE * 2 + 3;
     for (let i = 0; i < total; i++) {
-      t.health.add({ uuid: `w${i}` }, straightRoute({ lat: 52.25, lon: 21.01, t: T0 - i * DAY }, 3));
+      t.health.add({ uuid: `w${i}` }, straightRoute({ lat: 52.25, lon: 21.01, t: T0 + i * DAY }, 3));
     }
     await c.healthSync.connect.execute();
     expect(await c.syncHealth()).toMatchObject({ imported: total });
@@ -129,6 +134,7 @@ describe('Apple Health import', () => {
     const t = setup();
     const c = await t.container();
     await c.healthSync.connect.execute();
+    t.advance(DAY);
     const recent = straightRoute({ lat: 52.25, lon: 21.01, t: t.now() - 3_600_000 }, 20);
     t.health.add({ uuid: 'late', startedAt: recent[0].t, endedAt: recent[recent.length - 1].t }, []);
     expect(await c.syncHealth()).toMatchObject({ imported: 0, withoutRoute: 1 });
@@ -143,6 +149,7 @@ describe('Apple Health import', () => {
     const t = setup();
     const c = await t.container();
     await c.healthSync.connect.execute();
+    t.advance(DAY);
     t.health.add(
       { uuid: 'treadmill', kind: 'running', startedAt: t.now() - 7_200_000, endedAt: t.now() - 3_600_000 },
       []
@@ -169,9 +176,11 @@ describe('Apple Health import', () => {
     const t = setup();
     const c = await t.container();
     await c.healthSync.connect.execute();
-    t.health.add({ uuid: 'old-no-route' }, []);
+    t.advance(20 * DAY);
+    const route = walk(0);
+    t.health.add({ uuid: 'old-no-route', startedAt: route[0].t, endedAt: route[route.length - 1].t }, []);
     await c.syncHealth(); // not recent: no retry, anchor moves past it
-    t.health.setRoute('old-no-route', walk(0));
+    t.health.setRoute('old-no-route', route);
     expect(await c.syncHealth()).toMatchObject({ imported: 0 });
     expect(await c.healthSync.importWorkouts.execute({ full: true })).toMatchObject({ imported: 1 });
   });
@@ -197,6 +206,97 @@ describe('Apple Health import', () => {
     await c.healthSync.setDirections.execute({ importEnabled: false });
     expect(await c.syncHealth()).toBeNull();
     expect(await activityIds(c)).toEqual([]);
+  });
+
+  it('leaves workouts from before Apple Health was connected in Apple Health, even on Import now', async () => {
+    const t = setup();
+    const c = await t.container();
+    const old = straightRoute({ lat: 52.25, lon: 21.01, t: t.now() - 400 * DAY }, 20);
+    const lastWeek = straightRoute({ lat: 52.26, lon: 21.01, t: t.now() - 7 * DAY }, 20);
+    t.health.add({ uuid: 'old', kind: 'running' }, old);
+    t.health.add({ uuid: 'last-week' }, lastWeek);
+    t.health.add({ uuid: 'new' }, walk(0));
+    await c.healthSync.connect.execute();
+
+    expect(await c.syncHealth()).toMatchObject({ imported: 1, beforeStart: 2, skipped: 0 });
+    expect(await c.healthSync.importWorkouts.execute({ full: true })).toMatchObject({ imported: 0, beforeStart: 2 });
+    expect(await activityIds(c)).toEqual(['hk-new']);
+  });
+
+  it('imports a workout that was still going on when Apple Health was connected', async () => {
+    const t = setup();
+    const c = await t.container();
+    const route = straightRoute({ lat: 52.25, lon: 21.01, t: t.now() - 600_000 }, 20);
+    t.health.add({ uuid: 'ongoing' }, route);
+    await c.healthSync.connect.execute();
+    expect(await c.syncHealth()).toMatchObject({ imported: 1, beforeStart: 0 });
+  });
+
+  it('imports a workout that ends exactly when Apple Health was connected', async () => {
+    const t = setup();
+    const c = await t.container();
+    const route = straightRoute({ lat: 52.25, lon: 21.01, t: t.now() - 20 * 60_000 }, 20);
+    t.health.add({ uuid: 'boundary', endedAt: t.now() }, route);
+    await c.healthSync.connect.execute();
+    expect(await c.syncHealth()).toMatchObject({ imported: 1, beforeStart: 0 });
+  });
+
+  it('does not count workouts already in CityTurfer (or deleted from it) as left in Apple Health after reconnecting', async () => {
+    const t = setup();
+    const c = await t.container();
+    t.health.add({ uuid: 'kept' }, walk(0));
+    t.health.add({ uuid: 'deleted' }, walk(1));
+    await c.healthSync.connect.execute();
+    expect(await c.syncHealth()).toMatchObject({ imported: 2 });
+    await c.dispatcher.dispatchPending();
+    await c.activityLog.remove.execute('hk-deleted');
+    await c.dispatcher.dispatchPending();
+
+    // Reconnecting later moves the start date past both workouts.
+    t.advance(30 * DAY);
+    await c.healthSync.disconnect.execute();
+    await c.healthSync.connect.execute();
+    expect(await c.healthSync.importWorkouts.execute({ full: true })).toMatchObject({
+      imported: 0,
+      beforeStart: 0,
+      skipped: 2,
+    });
+    expect(await activityIds(c)).toEqual(['hk-kept']);
+  });
+
+  it('drops a pending import that ended before Apple Health was (re)connected', async () => {
+    const t = setup();
+    const c = await t.container();
+    await c.healthSync.connect.execute();
+    t.advance(DAY);
+    const recent = straightRoute({ lat: 52.25, lon: 21.01, t: t.now() - 3_600_000 }, 20);
+    t.health.add({ uuid: 'late', startedAt: recent[0].t, endedAt: recent[recent.length - 1].t }, []);
+    expect(await c.syncHealth()).toMatchObject({ withoutRoute: 1 });
+    expect(await t.db.all('SELECT health_uuid FROM hs_pending_imports')).toEqual([{ health_uuid: 'late' }]);
+
+    await c.healthSync.disconnect.execute();
+    t.advance(60_000);
+    await c.healthSync.connect.execute();
+    t.health.setRoute('late', recent); // the route arrives, but the workout is now from before the start
+    expect(await c.syncHealth()).toMatchObject({ imported: 0 });
+    expect(await t.db.all('SELECT * FROM hs_pending_imports')).toEqual([]);
+    expect(await activityIds(c)).toEqual([]);
+  });
+
+  it('keeps the "from before you connected" count after a later sync finds nothing new', async () => {
+    const t = setup();
+    const c = await t.container();
+    t.health.add({ uuid: 'old' }, straightRoute({ lat: 52.25, lon: 21.01, t: t.now() - 7 * DAY }, 20));
+    await c.healthSync.connect.execute();
+    expect(await c.healthSync.importWorkouts.execute({ full: true })).toMatchObject({ beforeStart: 1 });
+
+    t.advance(60_000);
+    expect(await c.syncHealth()).toMatchObject({ imported: 0, beforeStart: 0 });
+    expect((await c.healthSync.status.execute()).lastImport).toMatchObject({ imported: 0, beforeStart: 1 });
+
+    t.health.add({ uuid: 'new' }, walk(0));
+    await c.syncHealth();
+    expect((await c.healthSync.status.execute()).lastImport).toMatchObject({ imported: 1 });
   });
 
   it('is not available without Apple Health', async () => {

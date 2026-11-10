@@ -9,7 +9,7 @@ export type HealthErrorKey = 'errors.unavailable' | 'errors.generic';
 /** Error codes the card explains; anything else (HealthKit, SQLite) gets the generic message. */
 const ERROR_KEY_OF_CODE: Record<string, HealthErrorKey> = { 'health.unavailable': 'errors.unavailable' };
 
-/** "12 workouts added · 2 already in CityTurfer · 3 without a route" — the last import, in words. */
+/** "12 workouts added · 2 already in CityTurfer · 3 without a route · 40 from before you connected…" — the last import, in words. */
 export function describeImport(r: ImportReport, t: T<'health'>): string {
   const parts = [t('report.imported', { count: r.imported })];
   if (r.duplicates > 0) {
@@ -17,6 +17,9 @@ export function describeImport(r: ImportReport, t: T<'health'>): string {
   }
   if (r.withoutRoute > 0) {
     parts.push(t('report.withoutRoute', { count: r.withoutRoute }));
+  }
+  if (r.beforeStart) {
+    parts.push(t('report.beforeStart', { count: r.beforeStart }));
   }
   return parts.join(' · ');
 }

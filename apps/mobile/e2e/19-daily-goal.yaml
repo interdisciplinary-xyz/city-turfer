@@ -1,0 +1,47 @@
+# Daily goal: open the editor (Start tab offer or card, else Me > Daily goal), start from a fresh
+# goal (turn an existing one off first), step the value with plus/minus, save, and see the Start
+# tab card read "of <value> min"; change it again from the card. Minutes done are never asserted
+# (they depend on the demo history). The goal is turned off again even when an assertion fails
+# (onFlowComplete), so later flows start without one; the offer does not come back after that.
+appId: com.turftrack.poc
+tags: [me]
+onFlowComplete:
+  - runFlow: subflows/clear-daily-goal.yaml
+---
+- runFlow: subflows/launch.yaml
+- runFlow: subflows/open-goal-editor.yaml
+# A goal already in force: turn it off, then reopen the editor, which starts at the suggested 30.
+- runFlow:
+    when: { visible: { id: 'goal-off' } }
+    commands:
+      - tapOn: { id: 'goal-off' }
+      - extendedWaitUntil: { notVisible: { id: 'goal-save' }, timeout: 5000 }
+      - runFlow: subflows/open-goal-editor.yaml
+- extendedWaitUntil: { visible: { id: 'goal-value' }, timeout: 5000 }
+- tapOn: { id: 'goal-plus' }
+- tapOn: { id: 'goal-plus' }
+- assertVisible: { id: 'goal-value' }
+- takeScreenshot: 19-goal-editor
+- tapOn: { id: 'goal-save' }
+- extendedWaitUntil: { notVisible: { id: 'goal-save' }, timeout: 5000 }
+- tapOn: { id: 'tab-dashboard' }
+- scrollUntilVisible: { element: { id: 'goal-streak' }, timeout: 15000 }
+- assertVisible: { id: 'goal-streak' }
+- scrollUntilVisible: { element: { id: 'goal-today' }, timeout: 15000 }
+- assertVisible: { id: 'goal-today', text: '.*of 40 min.*' }
+- scrollUntilVisible: { element: { id: 'goal-strip' }, timeout: 15000 }
+- assertVisible: { id: 'goal-strip' }
+- scrollUntilVisible: { element: { id: 'goal-week-summary' }, timeout: 15000 }
+- assertVisible: { id: 'goal-week-summary' }
+- takeScreenshot: 19-goal-card
+# Change it from the card: one step down.
+- scrollUntilVisible: { element: { id: 'goal-edit' }, timeout: 15000 }
+- tapOn: { id: 'goal-edit' }
+- extendedWaitUntil: { visible: { id: 'goal-save' }, timeout: 10000 }
+- assertVisible: { id: 'goal-value' }
+- tapOn: { id: 'goal-minus' }
+- assertVisible: { id: 'goal-value' }
+- tapOn: { id: 'goal-save' }
+- extendedWaitUntil: { notVisible: { id: 'goal-save' }, timeout: 5000 }
+- scrollUntilVisible: { element: { id: 'goal-today' }, timeout: 15000 }
+- assertVisible: { id: 'goal-today', text: '.*of 35 min.*' }

@@ -27,10 +27,12 @@ import { usePalette } from '@/ui-kit/theme';
 
 import type { DistrictCoverageView } from '../contract';
 import { districtAt } from './district-at';
+import { shareBarWidth, shareText } from './district-share';
 import { districtItemLayout, districtRowHeight, districtSelectionReducer } from './districts-selection';
 import { NO_DISTRICT_SELECTED } from './districts-selection.constants';
 import {
   CREDIT_HIT_SLOP,
+  DISTRICT_BAR,
   DISTRICT_FILL,
   DISTRICT_FIT_MS,
   DISTRICT_FIT_PADDING,
@@ -186,6 +188,7 @@ const DistrictRow = memo(function DistrictRow({ district: d, selected, onToggle,
   const t = useT('turf');
   const covered = spokenArea(d.coveredKm2);
   const area = spokenArea(d.areaKm2);
+  const share = shareText(d.cellCount > 0 ? d.share : 0);
   return (
     <Pressable
       testID={`district-${d.id}`}
@@ -199,30 +202,41 @@ const DistrictRow = memo(function DistrictRow({ district: d, selected, onToggle,
         areaUnit: area.unit,
         areaCount: area.count,
         area: area.text,
+        share,
       })}
       accessibilityHint={t('districts.selectHint')}
       accessibilityState={{ selected }}
       style={[s.row, { height, backgroundColor: p.card, borderColor: selected ? ACCENT : p.border }]}
     >
-      <View
-        style={[
-          s.swatch,
-          d.cellCount > 0
-            ? {
-                backgroundColor: TIER_COLOR.glowing,
-                opacity: Math.min(1, DISTRICT_SWATCH.floor + d.share * DISTRICT_SWATCH.perShare),
-              }
-            : { borderWidth: 1, borderColor: p.borderControl },
-        ]}
-      />
-      <Text style={[s.name, { color: p.text }]} numberOfLines={2}>
-        {d.name}
-      </Text>
-      <View style={s.figures}>
-        <Text style={[s.covered, { color: p.text }]} testID={`district-${d.id}-covered`}>
-          {formatArea(d.coveredKm2)}
+      <View style={s.line}>
+        <View
+          style={[
+            s.swatch,
+            d.cellCount > 0
+              ? {
+                  backgroundColor: TIER_COLOR.glowing,
+                  opacity: Math.min(1, DISTRICT_SWATCH.floor + d.share * DISTRICT_SWATCH.perShare),
+                }
+              : { borderWidth: 1, borderColor: p.borderControl },
+          ]}
+        />
+        <Text style={[s.name, { color: p.text }]} numberOfLines={2}>
+          {d.name}
         </Text>
-        <Text style={[s.area, { color: p.muted }]}>{t('districts.rowArea', { area: formatArea(d.areaKm2) })}</Text>
+        <View style={s.figures}>
+          <Text style={[s.covered, { color: p.text }]} testID={`district-${d.id}-covered`}>
+            {formatArea(d.coveredKm2)}
+          </Text>
+          <Text style={[s.area, { color: p.muted }]}>{t('districts.rowArea', { area: formatArea(d.areaKm2) })}</Text>
+        </View>
+      </View>
+      <View style={s.progress} testID={`district-${d.id}-progress`}>
+        <View style={[s.track, { backgroundColor: p.border }]}>
+          <View style={[s.fill, { width: shareBarWidth(d.cellCount > 0 ? d.share : 0, DISTRICT_BAR.minPct) }]} />
+        </View>
+        <Text style={[s.percent, { color: p.muted }]} testID={`district-${d.id}-share`}>
+          {share}
+        </Text>
       </View>
     </Pressable>
   );
@@ -380,15 +394,26 @@ const s = StyleSheet.create({
   summary: { fontSize: FONT_SIZE.caption },
   hint: { fontSize: FONT_SIZE.caption, marginTop: SPACE.xs },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACE.sm,
+    justifyContent: 'center',
+    gap: DISTRICT_ROW.progressGap,
     paddingHorizontal: SPACE.md,
     paddingVertical: DISTRICT_ROW.paddingVertical,
     marginBottom: DISTRICT_ROW.gap,
     borderRadius: RADIUS.card,
     borderWidth: DISTRICT_ROW.border,
     overflow: 'hidden',
+  },
+  line: { flexDirection: 'row', alignItems: 'center', gap: SPACE.sm },
+  progress: { flexDirection: 'row', alignItems: 'center', gap: SPACE.sm, minHeight: DISTRICT_ROW.progressLine },
+  track: { flex: 1, height: DISTRICT_BAR.height, borderRadius: DISTRICT_BAR.radius, overflow: 'hidden' },
+  fill: { height: '100%', borderRadius: DISTRICT_BAR.radius, backgroundColor: TIER_COLOR.glowing },
+  percent: {
+    minWidth: DISTRICT_BAR.percentWidth,
+    textAlign: 'right',
+    fontFamily: FONT_FAMILY.numeric,
+    fontSize: FONT_SIZE.label,
+    lineHeight: DISTRICT_ROW.progressLine,
+    fontVariant: ['tabular-nums'],
   },
   swatch: { width: DISTRICT_SWATCH.size, height: DISTRICT_SWATCH.size, borderRadius: DISTRICT_SWATCH.radius },
   name: { flex: 1, fontSize: FONT_SIZE.body, lineHeight: DISTRICT_ROW.nameLine, fontWeight: FONT_WEIGHT.bold },
