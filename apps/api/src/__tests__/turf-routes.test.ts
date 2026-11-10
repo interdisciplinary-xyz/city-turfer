@@ -318,16 +318,15 @@ describe('GET /v1/turf/cells', () => {
   });
 
   it('works with the website session cookie (a read: no CSRF headers needed)', async () => {
-    // Better Auth reads `Date` for session expiry; keep it on the harness clock (as web-session does),
-    // or the session expires once the real date passes the clock plus its lifetime.
+    await seed();
+    const email = 'ania@example.com';
+    const ip = { 'X-Real-IP': '203.0.113.9' };
+    // Better Auth reads `Date` for session expiry; keep it on the harness clock (as web-session.test.ts).
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(h.clock.t);
     onTestFinished(() => {
       vi.useRealTimers();
     });
-    await seed();
-    const email = 'ania@example.com';
-    const ip = { 'X-Real-IP': '203.0.113.9' };
     const web = { Origin: DEV_WEB_ORIGIN, 'Sec-Fetch-Site': 'same-origin', 'CityTurfer-Client': 'web/0.10.0' };
     await h.call('POST', '/v1/auth/codes', { token: null, body: { email }, headers: ip });
     const signIn = await h.call('POST', '/v1/auth/sign-in', {
