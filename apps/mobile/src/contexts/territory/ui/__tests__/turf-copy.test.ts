@@ -1,6 +1,7 @@
 import { translator } from '@/i18n/translator';
 import { fixed } from '@/ui-kit/format';
 
+import { cityCardLabel } from '../city-card-label';
 import { shareText } from '../district-share';
 import { spokenArea } from '../spoken-area';
 
@@ -66,6 +67,25 @@ describe('turf copy', () => {
     );
     expect(row('pl', 0.42, 12.5)).toBe(
       'Oliwa, 0,42 kilometra kwadratowego terytorium, powierzchnia dzielnicy 12,5 kilometra kwadratowego, 3% dzielnicy'
+    );
+  });
+
+  it('reads the whole city card to VoiceOver, listed districts and their shares included', () => {
+    const card = { city: 'Gdańsk', area: '1.2 km²', withTurf: '5', total: '35' };
+    const top = [
+      { name: 'Oliwa', share: 0.12 },
+      { name: 'Wrzeszcz', share: 0.004 },
+    ];
+    expect(cityCardLabel(translator('turf', 'en'), { ...card, top }, 'en')).toBe(
+      'Current city, Gdańsk: 1.2 km² of turf in 5 of 35 districts. ' +
+        'Most turf: Oliwa, 12% of the district; Wrzeszcz, <1% of the district'
+    );
+    expect(cityCardLabel(translator('turf', 'pl'), { ...card, top }, 'pl')).toBe(
+      'Bieżące miasto, Gdańsk: 1.2 km² terytorium w 5 z 35 dzielnic. ' +
+        'Najwięcej terytorium: Oliwa, 12% dzielnicy; Wrzeszcz, <1% dzielnicy'
+    );
+    expect(cityCardLabel(translator('turf', 'en'), { ...card, top: [] })).toBe(
+      'Current city, Gdańsk: 1.2 km² of turf in 5 of 35 districts'
     );
   });
 });

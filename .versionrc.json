@@ -43,6 +43,14 @@
     {
       "filename": "apps/api/package.json",
       "type": "json"
+    },
+    {
+      "filename": "apps/admin/package.json",
+      "type": "json"
+    },
+    {
+      "filename": "packages/core/package.json",
+      "type": "json"
     }
   ],
   "types": [

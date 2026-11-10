@@ -37,6 +37,8 @@
     "summary": "{area} terytorium · najwięcej: {district}",
     "summaryNone": "Nie masz tu jeszcze terytorium. Nagraj spacer, bieg albo przejażdżkę, a dzielnice się rozświetlą.",
     "label": "Bieżące miasto, {city}: {area} terytorium w {withTurf} z {total} dzielnic",
+    "labelTop": "Najwięcej terytorium: {districts}",
+    "labelDistrict": "{name}, {share} dzielnicy",
     "hint": "Otwiera dzielnice",
     "noCity": "Wybierz swoje miasto, aby zobaczyć, ile z niego jest Twoje.",
     "noData": "Dzielnice miasta {city} nie są jeszcze dostępne."

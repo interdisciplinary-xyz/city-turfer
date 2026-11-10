@@ -7,6 +7,7 @@ import { Button, Card } from '@/ui-kit/components';
 import { fixed, formatArea } from '@/ui-kit/format';
 import { usePalette } from '@/ui-kit/theme';
 
+import { cityCardLabel } from './city-card-label';
 import { CITY_CARD_BAR, CITY_CARD_TOP, type CurrentCityCardProps } from './current-city-card.constants';
 import { shareBarWidth, shareText } from './district-share';
 import { useDistricts } from './hooks';
@@ -54,7 +55,7 @@ export function CurrentCityCard({ onOpenDistricts, onPickCity }: CurrentCityCard
       testID='dashboard-city'
       onPress={onOpenDistricts}
       accessibilityRole='button'
-      accessibilityLabel={t('cityCard.label', { city: name, area, ...counts })}
+      accessibilityLabel={cityCardLabel(t, { city: name, area, ...counts, top })}
       accessibilityHint={t('cityCard.hint')}
     >
       <Card style={s.card}>
@@ -107,7 +108,7 @@ const s = StyleSheet.create({
   districtName: { flex: 2, fontSize: FONT_SIZE.caption, fontWeight: FONT_WEIGHT.bold },
   districtTrack: { flex: 3 },
   percent: {
-    minWidth: 36,
+    minWidth: CITY_CARD_BAR.percentWidth,
     textAlign: 'right',
     fontFamily: FONT_FAMILY.numeric,
     fontSize: FONT_SIZE.label,

@@ -1,0 +1,30 @@
+name: Commit naming
+
+# Its own workflow, without CI's paths-ignore: docs-only PRs and pushes still get their commit
+# messages checked. Before, a docs PR skipped this check and its long lines failed the scope →
+# release PR later, when they could no longer be reworded.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main, 'release/**', 'scope/**']
+  push:
+    branches: ['scope/**']
+
+concurrency:
+  group: commit-naming-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  commitlint:
+    name: commit naming
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: wagoid/commitlint-github-action@v6
+        # No commitDepth: lint every commit in the PR range (base..head), or in a direct push to scope.

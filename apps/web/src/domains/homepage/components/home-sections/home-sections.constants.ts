@@ -65,7 +65,6 @@ export const HIGHLIGHTS: readonly { key: HighlightKey; icon: IconName; iphone: b
   { key: 'city', icon: ICON_FOR_HIGHLIGHT.city, iphone: false },
 ];
 
-/** The two "what's different" lines under the audience cards (the third, privacy, lives in Privacy). */
 /** The Privacy points, in order (keys under home.local). */
 export const LOCAL_POINTS = ['phone', 'backup', 'portal', 'leaves', 'account', 'private', 'site'] as const;
 
