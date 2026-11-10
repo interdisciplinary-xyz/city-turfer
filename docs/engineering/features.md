@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-23
+verified: 2026-11-10
 owner: founder
 scope:
   [
@@ -20,10 +20,11 @@ summary:
 Every feature in the app, derived on `scope/v0.11.0` (the v0.10.0 release) and kept up to date
 since; v0.12.0 changed the app only in its sign-in wordmark, v0.13.0 the turf week (under
 Dashboard), v0.14.0 the Districts screen (under Turf), the sign-in wordmark (Anton, one colour) and
-a lighter secondary text colour, v0.15.0 so far the Current city card (under Dashboard) and a share
-bar on each Districts row. Grouped by where a person meets it: the five tabs, the Me drawer, and the
-screens pushed from them; then what the server and the web portal add. Format adapted from
-empatalk's `FEATURES.md`.
+a lighter secondary text colour, v0.15.0 so far the Current city card and the Daily goal (under
+Dashboard; the goal editor under pushed screens), a share bar on each Districts row and the Apple
+Health import from the moment of connecting. Grouped by where a person meets it: the five tabs, the
+Me drawer, and the screens pushed from them; then what the server and the web portal add. Format
+adapted from empatalk's `FEATURES.md`.
 
 > **Derived from code on 2026-10-23.** Where this doc and the code disagree, the code wins. Don't
 > hand-edit counts; re-derive them:
@@ -228,11 +229,19 @@ renders Profile.)
   #198 (`docs/decisions/brand-light-website-2026-10-29.md`); one page shows what the server holds,
   the backup state, export, delete account and signed-in devices. One `__Host-` session cookie
   through `/api/v1`; public pages stay cookie-free. Design:
-  `docs/decisions/web-portal-2026-10-22.md`.
+  `docs/decisions/web-portal-2026-10-22.md`. Since v0.15.0 (#216) the routes stay under
+  `apps/web/src/app/[locale]/account/` and the components live in
+  `apps/web/src/domains/{portal,auth,account,activities}`
+  (`docs/decisions/web-domains-2026-11-10.md`).
 - **Web portal activity history** (v0.11.0, `apps/web/src/app/[locale]/account/(signed-in)/`): all
   backed-up activities with all-time totals, a type filter and a list by month; one activity's
   stats, splits and route as an inline SVG (gap estimates dashed), no basemap or tile requests.
   Read-only. Plan: `docs/plans/web-portal-history-2026-10-23.md`.
+- **Website** (`apps/web`, static export, en and pl): since v0.15.0 (#213, #215) the homepage has
+  eight blocks (hero, waitlist strip, How it works with the street-glow demo, Who it's for, The app,
+  Privacy, FAQ, final call), section links in the header from 1024 px, scroll-in for section heads
+  and cards (none with reduced motion), black primary buttons and the OpenStreetMap credit on the
+  hero map and in the footer. Components in `apps/web/src/domains/{ui,waitlist,homepage,layout}`.
 - **Not built yet:** the Turf Map on the web (cells, tiles), the phone pulling changes from the
   server, a web delete removing the activity everywhere, the staff admin portal's data views
   (`apps/admin` is a scaffold with staff sign-in only; no `/internal/admin` routes). Planned in
@@ -256,7 +265,8 @@ renders Profile.)
 - **System prompts stay English.** iOS permission prompts (location, Health) and the app's language
   in iOS Settings need native strings: a later binary release (decision L10 in
   `docs/decisions/mobile-i18n-2026-10-23.md`). Store listings are English only.
-- **No city coverage.** There is no "% of your city" gauge; what 100 % means is undecided.
+- **No city coverage.** There is no "% of your city" gauge; what 100 % means is undecided. The
+  Current city card counts the districts with turf and shows each district's share, not the city's.
 - **The PoC report (M6) isn't written** and the Q4 performance budget (a year of history on a
   mid-range Android) is unmeasured.
 - **Achievements have no unlock dates or celebration.**

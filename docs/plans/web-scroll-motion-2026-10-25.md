@@ -1,18 +1,24 @@
 ---
-status: proposed
-verified: 2026-10-25
+status: superseded
+verified: 2026-11-10
 owner: founder
 scope: ['apps/web/src/app/[locale]', .claude/skills/web-motion]
 summary:
-  Plan for GSAP ScrollTrigger reveals on the landing page below the hero (waitlist, how it works,
-  your week, local-first, closing call to action) in the brand's glow-in language, with nothing
-  hidden by CSS, a reduced-motion path, no layout shift and one small client bundle
+  Superseded by docs/plans/homepage-tidy-2026-11-01.md phase 3 (scroll-in for heads and cards, PR
+  213). Was the plan for GSAP ScrollTrigger reveals on the landing page below the hero (waitlist,
+  how it works, your week, local-first, closing call to action) in the brand's glow-in language,
+  with nothing hidden by CSS, a reduced-motion path, no layout shift and one small client bundle
 ---
 
 # Scroll motion on the landing page (plan)
 
-Status: **proposed**, for the founder to approve. Builds on #175 (the homepage in the app's pieces)
-and #177 (plain headline). Rules: the `web-motion` and `gsap-react` skills.
+Status: **superseded, not built as written.** The homepage tidy-up shipped a smaller version in #213
+(`4c73ee9`, v0.15.0, `docs/plans/homepage-tidy-2026-11-01.md` phase 3): section heads and cards rise
+and fade in once (`RevealMotion` in `apps/web/src/domains/homepage`, `ScrollTrigger.batch` inside a
+reduced-motion `matchMedia`, nothing hidden without the boot script's motion class). The per-section
+effects below (count-ups, legend steps, the Dashboard figure, the hero phone drift) were not built,
+and "Your week" and "Local-first" are no longer sections. Builds on #175 (the homepage in the app's
+pieces) and #177 (plain headline). Rules: the `web-motion` and `gsap-react` skills.
 
 ## Goal
 

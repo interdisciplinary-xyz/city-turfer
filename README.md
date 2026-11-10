@@ -10,14 +10,15 @@
 and turns every street you cover into your **turf**: a corridor of map cells that stays yours and
 glows brighter each time you come back.
 
-| You do                       | CityTurfer does                                                                |
-| ---------------------------- | ------------------------------------------------------------------------------ |
-| Walk, run or ride            | Records the route in the background, with auto-pause and recovery after a kill |
-| Finish the activity          | Claims the streets you covered as cells on an H3 hexagon grid (~50 m)          |
-| Come back to the same street | Makes those cells stronger: the Turf Map glows brighter where you live         |
-| Open the Record tab          | Shows your turf under the live map, so you can head for streets you haven't    |
-| Pick your city               | Centres the maps on your Home City                                             |
-| Use Apple Health (iOS)       | Imports walks, hikes, runs and rides with routes; saves recordings back        |
+| You do                       | CityTurfer does                                                                                  |
+| ---------------------------- | ------------------------------------------------------------------------------------------------ |
+| Walk, run or ride            | Records the route in the background, with auto-pause and recovery after a kill                   |
+| Finish the activity          | Claims the streets you covered as cells on an H3 hexagon grid (~50 m)                            |
+| Come back to the same street | Makes those cells stronger: the Turf Map glows brighter where you live                           |
+| Open the Record tab          | Shows your turf under the live map, so you can head for streets you haven't                      |
+| Pick your city               | Centres the maps on your Home City                                                               |
+| Set a daily goal (optional)  | Counts today's moving minutes on the Dashboard, with the last 7 days and a streak of days met    |
+| Use Apple Health (iOS)       | Imports walks, hikes, runs and rides with routes from the day you connect; saves recordings back |
 
 **Not for:** competing for territory with other people, training plans or heart-rate analysis.
 CityTurfer is single-player and local-first: the phone is the source of truth.

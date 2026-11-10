@@ -74,10 +74,13 @@ commit; the app's only new dependencies are the dev dependencies `react-test-ren
 v0.13 installs take no OTA from it. No OTA was published for v0.14.0 (the newest update on
 `production` is about two weeks old, from the 0.2.0 build).
 
-**Current install** (runbook #7): the founder's iPhone runs a Release build of `scope/v0.15.0` at
-`e232d90` (reports 0.14.0, iOS `0d465570…`), installed 2026-11-01. It takes OTAs published from
-`scope/v0.15.0` while that branch's fingerprint stays `0d465570…`; the v0.15.0 release commit's
-`app.json` bump will move it again.
+**Current install** (runbook #7): the 2026-11-01 Release build of `scope/v0.15.0` at `e232d90`
+(reports 0.14.0, iOS `0d465570…`) expired around 2026-11-08. Per PR #217, the founder's iPhone got a
+Release build of `feat/goals` on top of `fix/health-sync` plus uncommitted work, before #217 opened
+on 2026-11-10. That build is not a commit on any branch: its fingerprint isn't recorded, so don't
+count on it taking an OTA. Reinstall from the scope head (or the release) first. The v0.15.0 diff
+changes nothing native, so the scope head should still measure `0d465570…` (not re-measured on
+`6014319`); the v0.15.0 release commit's `app.json` bump will move it.
 
 To check, compare the fingerprint of the checkout you'll publish from with the runtime of the latest
 update the phone already runs:

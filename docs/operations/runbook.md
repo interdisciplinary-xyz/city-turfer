@@ -256,10 +256,12 @@ ls -t apps/mobile/e2e-results | head -1              # newest run: junit report 
 ## #7 — The app won't open: free Apple ID signing expired
 
 **Symptom:** The app on the iPhone closes immediately or iOS says it can't be verified. Builds
-signed with a free Apple ID expire after 7 days. The current install is a Release build of
-`scope/v0.15.0` at `e232d90` (reports 0.14.0, iOS fingerprint
-`0d465570442d6d6d81addfae7e4c38632b1df37f`), installed 2026-11-01 over the earlier build after
-`expo prebuild --platform ios --clean`: it expires around **2026-11-08**. (Before it: `1607339`,
+signed with a free Apple ID expire after 7 days. Per PR #217, the current install is a Release build
+of `feat/goals` on top of `fix/health-sync` plus uncommitted work, installed before #217 opened on
+2026-11-10 (date, head and fingerprint not recorded): it expires 7 days after its install. Reinstall
+from the scope head before device checks. (Before it: `scope/v0.15.0` at `e232d90`, reports 0.14.0,
+iOS fingerprint `0d465570442d6d6d81addfae7e4c38632b1df37f`, installed 2026-11-01 after
+`expo prebuild --platform ios --clean`, expired around 2026-11-08. Before that: `1607339`,
 `scope/v0.14.0` with `app.json` 0.13.0, iOS `c9cca32d…`, installed 2026-10-31 with
 `xcrun devicectl device install app` because the phone was locked.)
 
@@ -298,7 +300,6 @@ xcrun devicectl device install app --device <device-udid> <path/to/the.app>
 
 A reinstall is also the moment for anything that changes the runtime fingerprint (pending native
 changes, the `app.json` version pin). After it, OTAs must be published from a checkout with the same
-fingerprint (incident #3). The `e232d90` install includes the v0.14.0 release commit's `app.json`
-bump (`c6ee7fe`); `scope/v0.15.0` at `bdd3ac0` and `e232d90` has the same iOS fingerprint (measured
-2026-11-01), so updates published from it reach the phone while that stays so. The v0.15.0 release
-commit's bump will move it again.
+fingerprint (incident #3). `scope/v0.15.0` at `bdd3ac0` and `e232d90` measured iOS `0d465570…`
+(2026-11-01, after the v0.14.0 release commit's `app.json` bump `c6ee7fe`); v0.15.0 changes nothing
+native since (not re-measured on `6014319`). The v0.15.0 release commit's bump will move it again.

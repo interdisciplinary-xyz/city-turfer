@@ -1,6 +1,6 @@
 ---
-status: proposed
-verified: 2026-11-01
+status: historical
+verified: 2026-11-10
 owner: founder
 scope:
   [
@@ -12,10 +12,17 @@ scope:
   ]
 summary:
   Three-phase tidy-up of the landing page (bugs and one heading system, then fewer sections and one
-  button/card grammar, then polish), approved by the founder on 2026-11-01
+  button/card grammar, then polish), approved by the founder on 2026-11-01; built in PR 213, the
+  founder follow-ups in PR 215 (v0.15.0)
 ---
 
 # Homepage tidy-up (2026-11-01)
+
+Status: **built.** All three phases in #213 (`feat/web-homepage-tidy`, merged into `scope/v0.15.0`
+on 2026-11-01, `90c16d0`), the icon set from #211; the founder follow-ups below in #215
+(`feat/web-homepage-polish`, merged 2026-11-10, `6014319`), which also put the OpenStreetMap credit
+back on the hero map. Kept in `plans/` until the code comments and the brand-system skill that link
+here move with it to `archive/`.
 
 The founder approved this plan after an audit of `/en` and `/pl` at 320, 390, 1024 and 1440 px. It
 ships as three phases on one branch (`feat/web-homepage-tidy`), one PR per phase going into the
