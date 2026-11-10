@@ -22,7 +22,8 @@
     "taglineRamp": "Own your streets.",
     "lede": "Walk, run or ride — every street you cover becomes your turf. Come back and watch it glow.",
     "join": "Join the waitlist",
-    "seeGlow": "See it glow"
+    "seeGlow": "See it glow",
+    "mapCredit": "© OpenStreetMap"
   },
   "screens": {
     "turfMap": {
@@ -147,7 +148,8 @@
       "stepsLabel": "Show a step",
       "replay": "Replay",
       "alt": "A street in Gdańsk drawn as turf cells. It is Faint after {faint, plural, one {# visit} other {# visits}}, Glowing after {glowing}, Strong after {strong} and Blazing after {blazing}. Then the whole city after four months, brightest along the routes repeated most.",
-      "caption": "Example data from our demo account: {activities} walks, runs and rides in Gdańsk · {area} km² · {cells, plural, one {# cell} other {# cells}}."
+      "caption": "Example data from our demo account: {activities} walks, runs and rides in Gdańsk · {area} km² · {cells, plural, one {# cell} other {# cells}}.",
+      "mapCredit": "Street shapes: © OpenStreetMap contributors"
     },
     "audience": {
       "eyebrow": "Who it’s for",

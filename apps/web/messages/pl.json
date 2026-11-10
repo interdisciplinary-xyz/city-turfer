@@ -22,7 +22,8 @@
     "taglineRamp": "Ulice są Twoje.",
     "lede": "Spacery, bieganie albo jazda na rowerze, solo lub z psem — każda ulica, którą pokonasz, staje się Twoim terytorium. Wracaj i patrz, jak świeci coraz jaśniej.",
     "join": "Zapisz się na listę",
-    "seeGlow": "Zobacz, jak świeci"
+    "seeGlow": "Zobacz, jak świeci",
+    "mapCredit": "© OpenStreetMap"
   },
   "screens": {
     "turfMap": {
@@ -147,7 +148,8 @@
       "stepsLabel": "Pokaż etap",
       "replay": "Jeszcze raz",
       "alt": "Ulica w Gdańsku narysowana jako komórki terytorium. Po {faint, plural, one {# razie} few {# razach} many {# razach} other {# razach}} jest blada, po {glowing, plural, one {# razie} few {# razach} many {# razach} other {# razach}} świeci, po {strong, plural, one {# razie} few {# razach} many {# razach} other {# razach}} jest mocna, a po {blazing, plural, one {# razie} few {# razach} many {# razach} other {# razach}} płonie. Potem całe miasto po czterech miesiącach, najjaśniejsze na najczęstszych trasach.",
-      "caption": "Przykładowe dane z konta demo: {activities, plural, one {# spacer, bieg lub przejażdżka} few {# spacery, biegi i przejażdżki} many {# spacerów, biegów i przejażdżek} other {# spaceru, biegu lub przejażdżki}} w Gdańsku · {area} km² · {cells, plural, one {# komórka} few {# komórki} many {# komórek} other {# komórki}}."
+      "caption": "Przykładowe dane z konta demo: {activities, plural, one {# spacer, bieg lub przejażdżka} few {# spacery, biegi i przejażdżki} many {# spacerów, biegów i przejażdżek} other {# spaceru, biegu lub przejażdżki}} w Gdańsku · {area} km² · {cells, plural, one {# komórka} few {# komórki} many {# komórek} other {# komórki}}.",
+      "mapCredit": "Kształt ulic: © współtwórcy OpenStreetMap"
     },
     "audience": {
       "eyebrow": "Dla kogo",

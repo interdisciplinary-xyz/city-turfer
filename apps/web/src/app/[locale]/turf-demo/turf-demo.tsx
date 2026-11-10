@@ -46,23 +46,17 @@ export function TurfDemo() {
     <TurfDemoPlayer
       labels={{ steps, stepsLabel: t('stepsLabel'), replay: t('replay') }}
       schemeStyle={DEMO_SCHEME_STYLE}
-      head={
-        <SectionHead
-          name='how'
-          level={3}
-          titleId='demo-title'
-          eyebrow={t('eyebrow')}
-          title={t('title')}
-          lede={t('body')}
-        />
-      }
+      head={<SectionHead level={3} titleId='demo-title' eyebrow={t('eyebrow')} title={t('title')} lede={t('body')} />}
       caption={
         <p id='demo-caption' className='home-caption'>
           {t('caption', {
             activities: totals.activities,
             area: format.number(totals.areaKm2, { minimumFractionDigits: 2 }),
             cells: totals.cells,
-          })}
+          })}{' '}
+          <a href='https://www.openstreetmap.org/copyright' rel='noopener noreferrer' target='_blank'>
+            {t('mapCredit')}
+          </a>
         </p>
       }
     >

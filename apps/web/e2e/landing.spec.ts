@@ -42,7 +42,12 @@ for (const path of ['/en', '/pl']) {
     await expect(page.locator('main > section')).toHaveCount(8);
     await expect(page.locator('h1')).toHaveCount(1);
     await expect(page.locator('footer.site-footer')).toBeVisible();
-    // The hero's street map is OpenStreetMap data: the credit lives in the footer.
+    // The hero's street map is OpenStreetMap data: a corner credit on the map, and one in the footer.
+    const credit = page.locator('#top a.hero-map-credit[href="https://www.openstreetmap.org/copyright"]');
+    await expect(credit).toBeVisible();
+    await expect(credit).toHaveText(/OpenStreetMap/);
+    // The street demo's shapes are routed along OpenStreetMap streets: its caption credits them.
+    await expect(page.locator('#demo-caption a[href="https://www.openstreetmap.org/copyright"]')).toHaveCount(1);
     await expect(page.locator('footer.site-footer a[href="https://www.openstreetmap.org/copyright"]')).toHaveCount(1);
   });
 

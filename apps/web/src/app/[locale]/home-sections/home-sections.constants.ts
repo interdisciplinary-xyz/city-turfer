@@ -117,9 +117,7 @@ export type SectionProps = {
   children: ReactNode;
 };
 
-export type SectionHeadProps = {
-  /** The section's name: the h2 gets the id `<name>-title`. */
-  name: SectionName;
+type SectionHeadBase = {
   /** The section's plain name, shown above the claim. */
   eyebrow: string;
   /** The claim (the h2). */
@@ -128,9 +126,14 @@ export type SectionHeadProps = {
   lede?: ReactNode;
   /** 2 for a section (default); 3 for a block inside one, such as the street demo. */
   level?: 2 | 3;
-  /** The heading's id when it is not `<name>-title` (a block inside a section). */
-  titleId?: string;
 };
+
+/**
+ * The heading's id is `<name>-title` for a section, or the given `titleId` for a block inside one
+ * (then `name` is not needed).
+ */
+export type SectionHeadProps = SectionHeadBase &
+  ({ name: SectionName; titleId?: undefined } | { name?: undefined; titleId: string });
 
 /** The closing call to action's trust row, in order (keys under home.cta.trust): all true today. */
 export const TRUST_POINTS = ['cookies', 'eu', 'phone', 'backup'] as const;
