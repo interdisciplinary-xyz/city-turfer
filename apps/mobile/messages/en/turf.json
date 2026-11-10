@@ -37,6 +37,8 @@
     "summary": "{area} of turf · most in {district}",
     "summaryNone": "No turf here yet. Record a walk, run or ride and its districts light up.",
     "label": "Current city, {city}: {area} of turf in {withTurf} of {total} districts",
+    "labelTop": "Most turf: {districts}",
+    "labelDistrict": "{name}, {share} of the district",
     "hint": "Opens the districts",
     "noCity": "Choose your city to see how much of it is yours.",
     "noData": "Districts for {city} aren’t available yet."
