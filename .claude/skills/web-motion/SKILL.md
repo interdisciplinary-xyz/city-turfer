@@ -77,9 +77,11 @@ The brand is the turf strength ramp: things **glow in**, they don't bounce.
 - **The hero text is the largest paint (LCP): never fade it from opacity 0.** Chrome counts text
   only when its opacity animation ends, and an entrance that waits for the GSAP bundle cost 3.7 s of
   mobile LCP (performance audit 2026-11-11). The headline, lede and buttons enter with CSS
-  (`data-enter` in `globals.css`, started by the boot script's `loaded` class once fonts are ready,
-  no JavaScript): the headline and lede only rise, visible from the first paint; the small buttons
-  also fade. GSAP animates only the phones, the map and the pointer tilt.
+  (`data-enter` in `globals.css`, no JavaScript), started by the `loaded` class that
+  `LOADER_BOOT_SCRIPT` (`domains/ui/components/page-loader`) sets once fonts are ready and the DOM
+  is parsed, or at its `LOADER_MAX_MS` cap (at once on reduced motion and reload): the headline and
+  lede only rise, visible from the first paint; the small buttons also fade. GSAP animates only the
+  phones, the map and the pointer tilt.
 - Animate **transform and opacity only** (`x`, `y`, `scale`, `rotate`, `autoAlpha`). Never width,
   height, top/left or margins: no layout shift.
 - Copy stays readable: never animate text letter by letter; lines rise by ≤ 0.5 em.
