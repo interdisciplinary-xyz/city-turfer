@@ -12,7 +12,8 @@ gsap.registerPlugin(useGSAP);
 
 /**
  * Entrance and ambient motion for the hero (`web-motion` skill):
- * - entrance: headline lines → lede → buttons, phones rise alongside;
+ * - entrance: the phones rise alongside the headline, lede and buttons (those enter with CSS,
+ *   `data-enter`, so the page's largest paint never waits for this bundle);
  * - the city map behind the hero fades in after the headline;
  * - on desktop with a mouse, the phones tilt a little towards the pointer and the map drifts away
  *   from it.
@@ -49,23 +50,14 @@ export function HeroMotion({ className, children }: HeroMotionProps) {
           } else {
             window.addEventListener(PAGE_LOADED_EVENT, play, { once: true });
           }
+          // The headline, lede and buttons enter with CSS (`data-enter` in globals.css) so the
+          // largest paint does not wait for this bundle; GSAP adds the phones and the map.
           tl.fromTo(
-            '[data-anim="line"]',
-            { autoAlpha: 0, y: '0.45em' },
-            { autoAlpha: 1, y: 0, duration: 0.8, stagger: 0.12 }
+            '[data-anim="phone"]',
+            { autoAlpha: 0, y: 70, rotate: (i: number) => (i ? 4 : -4) },
+            { autoAlpha: 1, y: 0, rotate: 0, duration: 1.2, stagger: 0.15 },
+            0.25
           )
-            .fromTo(
-              '[data-anim="copy"]',
-              { autoAlpha: 0, y: 16 },
-              { autoAlpha: 1, y: 0, duration: 0.7, stagger: 0.08 },
-              '-=0.5'
-            )
-            .fromTo(
-              '[data-anim="phone"]',
-              { autoAlpha: 0, y: 70, rotate: (i: number) => (i ? 4 : -4) },
-              { autoAlpha: 1, y: 0, rotate: 0, duration: 1.2, stagger: 0.15 },
-              0.25
-            )
             // The city's streets glow in behind everything, slowly, once the headline is up.
             .fromTo('[data-anim="map"]', { autoAlpha: 0, scale: 1.04 }, { autoAlpha: 1, scale: 1, duration: 1.2 }, 0.6);
           html.classList.add('motion-ready');

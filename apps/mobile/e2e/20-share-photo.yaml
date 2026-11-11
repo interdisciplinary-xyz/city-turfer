@@ -1,0 +1,74 @@
+# Share photo from History: activity > Share photo > Choose from library (system picker, no
+# permission prompt) > the 9:16 card preview, both layouts, the turf and place controls > Share
+# opens the system share sheet > Close returns to the activity. Needs one photo in the simulator's
+# library (the Simulator ships sample photos). The camera path needs a device (no camera here).
+appId: com.turftrack.poc
+tags: [share, history]
+---
+- runFlow: subflows/launch.yaml
+- runFlow:
+    when: { visible: { id: 'sign-in-email' } }
+    commands:
+      - runFlow: { file: subflows/sign-in.yaml, env: { EMAIL: 'admin@cityturfer.com', PASSWORD: 'admin1234' } }
+- extendedWaitUntil: { visible: { id: 'dashboard-greeting' }, timeout: 20000 }
+- tapOn: { id: 'tab-dashboard' }
+- tapOn: { id: 'dashboard-see-all-activities' }
+- tapOn: { id: 'history-item-0' }
+- extendedWaitUntil: { visible: { id: 'turf-gained' }, timeout: 15000 }
+# From History the "Share a photo?" prompt never shows.
+- assertNotVisible: { id: 'share-prompt' }
+- scrollUntilVisible: { element: { id: 'share-photo' }, timeout: 15000 }
+- tapOn: { id: 'share-photo' }
+- extendedWaitUntil: { visible: { id: 'share-photo-library' }, timeout: 8000 }
+- assertVisible: { id: 'share-photo-camera' }
+- assertVisible: { id: 'share-photo-cancel' }
+- takeScreenshot: 20-share-sheet
+- tapOn: { id: 'share-photo-library' }
+# The system picker (PHPicker) lists the library's photos by their date.
+- extendedWaitUntil: { visible: 'Photo, .*', timeout: 15000 }
+- tapOn: { text: 'Photo, .*', index: 1 }
+- extendedWaitUntil: { visible: { id: 'share-card-preview' }, timeout: 20000 }
+- assertVisible: { id: 'share-toggle-layout' }
+- assertVisible: { id: 'share-photo-send' }
+- takeScreenshot: 20-card-top
+# Layout: one tap switches, another brings it back.
+- tapOn: { id: 'share-toggle-layout' }
+- assertVisible: 'Layout, Bottom'
+- takeScreenshot: 20-card-bottom
+- tapOn: { id: 'share-toggle-layout' }
+- assertVisible: 'Layout, Top'
+# Turf line: the toggle exists only when the activity claimed new cells; it starts on.
+- runFlow:
+    when: { visible: { id: 'share-toggle-turf' } }
+    commands:
+      - assertVisible: { id: 'share-toggle-turf', checked: true }
+      - tapOn: { id: 'share-toggle-turf' }
+      - assertVisible: { id: 'share-toggle-turf', checked: false }
+      - tapOn: { id: 'share-toggle-turf' }
+# Place: Off by default (iOS reports the checked radio through its text); City and District are offered where the city is known.
+- assertVisible: { id: 'share-place-off', text: 'radio button, checked' }
+- runFlow:
+    when: { visible: { id: 'share-place-city' } }
+    commands:
+      - tapOn: { id: 'share-place-city' }
+      - assertVisible: { id: 'share-place-city', text: 'radio button, checked' }
+      - tapOn: { id: 'share-place-off' }
+      - assertVisible: { id: 'share-place-off', text: 'radio button, checked' }
+- scrollUntilVisible: { element: { id: 'share-photo-change' }, timeout: 10000 }
+# Change photo re-opens the sheet; Cancel keeps the screen.
+- tapOn: { id: 'share-photo-change' }
+- extendedWaitUntil: { visible: { id: 'share-photo-library' }, timeout: 8000 }
+- tapOn: { id: 'share-photo-cancel' }
+- assertVisible: { id: 'share-card-preview' }
+- scrollUntilVisible: { element: { id: 'share-photo-send' }, direction: UP, timeout: 10000 }
+# Share renders the card and opens the system share sheet.
+- tapOn: { id: 'share-photo-send' }
+- extendedWaitUntil: { visible: 'Save Image', timeout: 20000 }
+- takeScreenshot: 20-system-share-sheet
+# Save Image closes the system sheet (the Simulator's sheet has no close button); then leave.
+- tapOn: 'Save Image'
+- extendedWaitUntil: { visible: { id: 'share-photo-close' }, timeout: 10000 }
+- tapOn: { id: 'share-photo-close' }
+- extendedWaitUntil: { visible: { id: 'turf-gained' }, timeout: 10000 }
+- runFlow: subflows/back.yaml
+- runFlow: subflows/back.yaml
