@@ -67,34 +67,24 @@ for (const path of ['/en', '/pl']) {
       );
       expect(wide).toEqual([]);
       // The header's boxes sit side by side, never over each other, and share one row.
-      const boxes = await page
-        .locator('.app-header-home, .app-header-nav, .app-header-link, .lang')
-        .evaluateAll((nodes) =>
-          nodes
-            .map((node) => node.getBoundingClientRect())
-            .filter((box) => box.width > 0)
-            .map(({ left, right, top, bottom }) => ({ left, right, centre: (top + bottom) / 2 }))
-            .sort((a, b) => a.left - b.left)
-        );
+      const boxes = await page.locator('.app-header-home, .app-header-nav, .lang').evaluateAll((nodes) =>
+        nodes
+          .map((node) => node.getBoundingClientRect())
+          .filter((box) => box.width > 0)
+          .map(({ left, right, top, bottom }) => ({ left, right, centre: (top + bottom) / 2 }))
+          .sort((a, b) => a.left - b.left)
+      );
       for (let i = 1; i < boxes.length; i++) {
         expect(boxes[i].left, 'header boxes overlap').toBeGreaterThanOrEqual(boxes[i - 1].right - 0.5);
       }
       for (const box of boxes) {
         expect(Math.abs(box.centre - boxes[0].centre), 'one header row').toBeLessThanOrEqual(4);
       }
-      // The join link's name is its visible text (no aria-label): "Zapisz się" on phones, the long label from 600 px.
-      const link = page.locator('.app-header-link');
-      await expect(link).not.toHaveAttribute('aria-label', /.*/);
-      const names =
-        path === '/pl'
-          ? { short: 'Zapisz się', long: 'Zapisz się na listę' }
-          : { short: 'Join', long: 'Join the waitlist' };
-      await expect(link).toHaveAccessibleName(width >= 600 ? names.long : names.short);
       // The whole page is scanned, hero phone mock-ups (.screens) included: axe finds no violation there now.
       // Scan after the hero entrance: mid-fade text reads as low contrast.
       await expect(page.locator('[data-anim="line"]').last()).toHaveCSS('opacity', '1');
-      // `label-content-name-mismatch` is an experimental axe rule (off by default): the header link's
-      // accessible name must contain its visible text.
+      // `label-content-name-mismatch` is an experimental axe rule (off by default): a link's or
+      // button's accessible name must contain its visible text.
       const results = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'experimental'])
         .options({ rules: { 'label-content-name-mismatch': { enabled: true } } })
@@ -136,7 +126,14 @@ test.describe('header section links', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' }); // an instant jump, nothing to wait for
     await page.goto('/en');
     const nav = page.getByRole('navigation', { name: 'Page sections' });
-    await expect(nav.getByRole('link')).toHaveText(['How it works', 'The app', 'Privacy', 'FAQ']);
+    await expect(nav.getByRole('link')).toHaveText([
+      'Waitlist',
+      'How it works',
+      'Who it’s for',
+      'The app',
+      'Privacy',
+      'FAQ',
+    ]);
     await nav.getByRole('link', { name: 'The app' }).click();
     await expect(page).toHaveURL(/#app$/);
     const header = await page.locator('header.app-header').boundingBox();
@@ -148,6 +145,21 @@ test.describe('header section links', () => {
       expect(heading?.y).toBeGreaterThanOrEqual(bottom + 16);
       expect(heading?.y).toBeLessThanOrEqual(bottom + 48);
     }).toPass({ timeout: 5000 });
+  });
+
+  test('every home section has a link, in page order (not the hero or the closing call to action)', async ({
+    page,
+  }) => {
+    await page.goto('/en');
+    const sections = await page
+      .locator('main > section[id]')
+      .evaluateAll((nodes) => nodes.map((node) => node.id).filter((id) => id !== 'top' && id !== 'cta'));
+    const links = await page
+      .getByRole('navigation', { name: 'Page sections' })
+      .getByRole('link')
+      .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('href')));
+    expect(sections.length).toBeGreaterThan(0);
+    expect(links).toEqual(sections.map((id) => `#${id}`));
   });
 
   test('the current link follows the scroll; the hero clears it, the page bottom marks the last', async ({ page }) => {
@@ -162,6 +174,8 @@ test.describe('header section links', () => {
     await expect(current).toHaveCount(0);
     await readAt(page, 'h2#how-title');
     await expect(current).toHaveText('How it works');
+    await readAt(page, 'h2#who-title');
+    await expect(current).toHaveText('Who it’s for');
     await readAt(page, 'h2#privacy-title');
     await expect(current).toHaveText('Privacy');
     await readAt(page, 'h2#app-title');
@@ -172,11 +186,13 @@ test.describe('header section links', () => {
     await expect(current).toHaveCount(0);
   });
 
-  test('the Polish labels fit next to the button and the language switch at 1024 px', async ({ page }) => {
+  test('the Polish labels fit next to the language switch at 1024 px', async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 800 });
     await page.goto('/pl');
     await expect(page.getByRole('navigation', { name: 'Sekcje strony' }).getByRole('link')).toHaveText([
+      'Lista oczekujących',
       'Jak to działa',
+      'Dla kogo',
       'Aplikacja',
       'Prywatność',
       'Pytania',
@@ -184,24 +200,23 @@ test.describe('header section links', () => {
     await expectNoHorizontalScroll(page);
     const inner = await page.locator('.app-header-inner').evaluate((node) => node.scrollWidth - node.clientWidth);
     expect(inner).toBeLessThanOrEqual(0);
-    // Nothing wraps: the logo, the links, the button and the switch share one row (centres within 4 px).
-    const centres = await page
-      .locator('.app-header-home, .app-header-nav a, .app-header-link, .lang')
-      .evaluateAll((nodes) =>
-        nodes.map((node) => {
-          const box = node.getBoundingClientRect();
-          return (box.top + box.bottom) / 2;
-        })
-      );
+    // Nothing wraps: the logo, the links and the switch share one row (centres within 4 px).
+    const centres = await page.locator('.app-header-home, .app-header-nav a, .lang').evaluateAll((nodes) =>
+      nodes.map((node) => {
+        const box = node.getBoundingClientRect();
+        return (box.top + box.bottom) / 2;
+      })
+    );
     expect(Math.max(...centres) - Math.min(...centres)).toBeLessThanOrEqual(4);
   });
 });
 
-test('phones get no section links, only the logo, the call to action and the language', async ({ page }) => {
+test('phones get no section links, only the logo and the language', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/en');
   await expect(page.getByRole('navigation', { name: 'Page sections' })).toBeHidden();
-  await expect(page.getByRole('link', { name: 'Join', exact: true })).toBeVisible();
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Join', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('banner').getByRole('link', { name: 'CityTurfer, home' })).toBeVisible();
 });
 
 // A calm hero: on a 390 x 844 phone the tagline, the lede and the main button all sit on the first screen.

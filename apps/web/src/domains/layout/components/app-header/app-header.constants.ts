@@ -5,12 +5,10 @@ import type { Locale } from '@/i18n/routing';
 
 export type AppHeaderProps = {
   locale: Locale;
-  /** Whether the waitlist section exists on the page (mirrors the WAITLIST settings). */
-  waitlist: boolean;
-  /** Where "Join the waitlist" goes: the section on the home page, `/<locale>#waitlist` elsewhere. */
-  waitlistHref?: string;
-  /** Section links between the logo and the actions (the landing page only). */
+  /** Section links on the right, before the language switcher (the landing page only). */
   nav?: boolean;
+  /** Whether the page has the waitlist section (mirrors the WAITLIST settings): adds its link. */
+  waitlistSection?: boolean;
 };
 
 /** The header's section links (the landing page): a labelled list of in-page anchors. */
@@ -22,7 +20,6 @@ export type AppHeaderViewProps = {
   homeLabel: string;
   /** The mark and wordmark images (next/image on the site, plain <img> on the dev pages). */
   logo: ReactNode;
-  waitlist: { href: string; label: string; shortLabel: string } | null;
   /** Section links, shown from 1024 px. Omit (or null) for none, as on the dev pages. */
   nav?: AppHeaderNav | null;
   /** The language switcher. */
