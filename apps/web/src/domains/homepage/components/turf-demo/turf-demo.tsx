@@ -37,6 +37,7 @@ const dots = (flat: number[]) => {
 export function TurfDemo() {
   const t = useTranslations('home.demo');
   const ttier = useTranslations('home.tiers');
+  const ta = useTranslations('a11y');
   const format = useFormatter();
   const { view, street, city, totals, visitsPerTier } = TURF_DEMO;
   const steps = [
@@ -57,6 +58,7 @@ export function TurfDemo() {
           })}{' '}
           <a href='https://www.openstreetmap.org/copyright' rel='noopener noreferrer' target='_blank'>
             {t('mapCredit')}
+            <span className='visually-hidden'> {ta('newTab')}</span>
           </a>
         </p>
       }

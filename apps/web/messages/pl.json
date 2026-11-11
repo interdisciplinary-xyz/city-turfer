@@ -257,6 +257,9 @@
     "noCookies": "Ta strona nie zapisuje plików cookie i nie ładuje trackerów.",
     "mapCredit": "© współtwórcy OpenStreetMap"
   },
+  "a11y": {
+    "newTab": "(otwiera się w nowej karcie)"
+  },
   "language": {
     "label": "Język",
     "en": "English",

@@ -509,7 +509,8 @@ h1 {
   outline-offset: -4px;
 }
 
-.btn:disabled {
+.btn:disabled,
+.btn[aria-disabled='true'] {
   opacity: 0.6;
   cursor: progress;
 }
@@ -553,6 +554,11 @@ h1 {
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: var(--card);
+}
+
+/* Focused by script after sending (so screen readers read it); it is not a control: no ring. */
+.waitlist-done:focus {
+  outline: none;
 }
 
 /* Very narrow phones stack them again, each a full pill. */
