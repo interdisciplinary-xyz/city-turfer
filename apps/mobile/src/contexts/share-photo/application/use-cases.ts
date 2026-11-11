@@ -1,4 +1,5 @@
 import type {
+  CardFiles,
   CardRenderer,
   CardTarget,
   PhotoPick,
@@ -13,6 +14,7 @@ export interface SharePhotoDeps {
   renderer: CardRenderer;
   share: ShareTarget;
   files: TempFiles;
+  cards: CardFiles;
   prompt: SharePromptFlag;
 }
 
@@ -33,29 +35,44 @@ export class PickPhoto {
 export type ShareCardResult = { kind: 'shared' } | { kind: 'render-failed' } | { kind: 'share-failed' };
 
 /**
- * Share: render the card to a JPEG, hand it to the share sheet, and delete the file once the sheet
- * has closed (or failed). The output is a fresh render, so the photo's EXIF never travels.
+ * Share: sweep old cards, render the card to a JPEG and hand it to the share sheet. The card is
+ * deleted when the sheet has closed where that means the target has it (`CardFiles.deleteAfterShare`),
+ * otherwise left for a later sweep; on every failure it is deleted at once (no target has it). The
+ * output is a fresh render, so the photo's EXIF never travels.
  */
 export class ShareCard {
   constructor(private readonly d: SharePhotoDeps) {}
   async execute(target: CardTarget): Promise<ShareCardResult> {
+    await this.d.cards.sweep().catch(() => undefined);
     let uri: string;
     try {
       uri = await this.d.renderer.render(target);
     } catch {
       return { kind: 'render-failed' };
     }
+    let shared = false;
     try {
       if (!(await this.d.share.isAvailable())) {
         return { kind: 'share-failed' };
       }
       await this.d.share.share(uri);
+      shared = true;
       return { kind: 'shared' };
     } catch {
       return { kind: 'share-failed' };
     } finally {
-      await this.d.files.delete(uri);
+      if (!shared || this.d.cards.deleteAfterShare) {
+        await this.d.files.delete(uri);
+      }
     }
+  }
+}
+
+/** The share screen opened: delete cards kept from earlier shares that no target still reads. */
+export class SweepCards {
+  constructor(private readonly d: SharePhotoDeps) {}
+  execute(): Promise<void> {
+    return this.d.cards.sweep().catch(() => undefined);
   }
 }
 

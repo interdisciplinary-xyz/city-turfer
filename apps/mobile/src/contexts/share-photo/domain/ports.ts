@@ -33,6 +33,20 @@ export interface TempFiles {
   delete(uri: string): Promise<void>;
 }
 
+/**
+ * The rendered card files and when they may go. Where the share sheet resolves only after the
+ * target has the file (iOS), the card is deleted right after sharing. Where it resolves before the
+ * target has read it (Android: the chooser returns while Quick Share, Drive or Instagram still read
+ * the file), the card stays and a later sweep deletes the cards old enough that no target still
+ * needs them.
+ */
+export interface CardFiles {
+  /** Whether a shared card can be deleted as soon as `ShareTarget.share` resolves. */
+  readonly deleteAfterShare: boolean;
+  /** Deletes our earlier, old card files (only ours, only in the app's cache). Never throws. */
+  sweep(): Promise<void>;
+}
+
 /** Don't ask again for the after-Finish prompt, per user. */
 export interface SharePromptFlag {
   isOff(userId: string): Promise<boolean>;

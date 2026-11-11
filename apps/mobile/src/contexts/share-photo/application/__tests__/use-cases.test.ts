@@ -27,29 +27,59 @@ describe('PickPhoto', () => {
 });
 
 describe('ShareCard', () => {
-  it('renders, shares, then deletes the rendered file', async () => {
+  it('sweeps old cards, renders, shares, then deletes the rendered file (iOS)', async () => {
     const f = fakeSharePhotoDeps();
     expect(await createSharePhotoApi(f.deps).share.execute({})).toEqual({ kind: 'shared' });
-    expect(f.log).toEqual(['render', 'share file:///tmp/card.jpg', 'delete file:///tmp/card.jpg']);
+    expect(f.log).toEqual(['sweep', 'render', 'share file:///tmp/card.jpg', 'delete file:///tmp/card.jpg']);
+  });
+
+  it('keeps a shared card for a later sweep where the target may still read it (Android)', async () => {
+    const f = fakeSharePhotoDeps({ keepShared: true });
+    expect(await createSharePhotoApi(f.deps).share.execute({})).toEqual({ kind: 'shared' });
+    expect(f.log).toEqual(['sweep', 'render', 'share file:///tmp/card.jpg']);
   });
 
   it('a failed render shares nothing and leaves no file', async () => {
     const f = fakeSharePhotoDeps();
     f.state.renderFails = true;
     expect(await createSharePhotoApi(f.deps).share.execute({})).toEqual({ kind: 'render-failed' });
-    expect(f.log).toEqual([]);
+    expect(f.log).toEqual(['sweep']);
   });
 
-  it('a failed or unavailable share sheet still deletes the file', async () => {
-    const f = fakeSharePhotoDeps();
-    f.state.shareFails = true;
-    expect(await createSharePhotoApi(f.deps).share.execute({})).toEqual({ kind: 'share-failed' });
-    expect(f.log).toEqual(['render', 'delete file:///tmp/card.jpg']);
+  it.each([false, true])(
+    'a failed or unavailable share sheet still deletes the file (keepShared %s)',
+    async (keepShared) => {
+      const f = fakeSharePhotoDeps({ keepShared });
+      f.state.shareFails = true;
+      expect(await createSharePhotoApi(f.deps).share.execute({})).toEqual({ kind: 'share-failed' });
+      expect(f.log).toEqual(['sweep', 'render', 'delete file:///tmp/card.jpg']);
 
-    const g = fakeSharePhotoDeps();
-    g.state.shareAvailable = false;
-    expect(await createSharePhotoApi(g.deps).share.execute({})).toEqual({ kind: 'share-failed' });
-    expect(g.log).toEqual(['render', 'delete file:///tmp/card.jpg']);
+      const g = fakeSharePhotoDeps({ keepShared });
+      g.state.shareAvailable = false;
+      expect(await createSharePhotoApi(g.deps).share.execute({})).toEqual({ kind: 'share-failed' });
+      expect(g.log).toEqual(['sweep', 'render', 'delete file:///tmp/card.jpg']);
+    }
+  );
+
+  it('a failed sweep never stops the share', async () => {
+    const f = fakeSharePhotoDeps({ keepShared: true });
+    f.state.sweepFails = true;
+    expect(await createSharePhotoApi(f.deps).share.execute({})).toEqual({ kind: 'shared' });
+    expect(f.log).toEqual(['render', 'share file:///tmp/card.jpg']);
+  });
+});
+
+describe('SweepCards', () => {
+  it('sweeps the kept cards', async () => {
+    const f = fakeSharePhotoDeps({ keepShared: true });
+    await createSharePhotoApi(f.deps).sweepCards.execute();
+    expect(f.log).toEqual(['sweep']);
+  });
+
+  it('never throws', async () => {
+    const f = fakeSharePhotoDeps({ keepShared: true });
+    f.state.sweepFails = true;
+    await expect(createSharePhotoApi(f.deps).sweepCards.execute()).resolves.toBeUndefined();
   });
 });
 

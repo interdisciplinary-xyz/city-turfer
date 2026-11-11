@@ -1,11 +1,14 @@
 import type { SharePhotoDeps } from '../application/use-cases';
 import type { PhotoPick } from '../domain/ports';
 
-/** In-memory Share Photo adapters: what was rendered, shared and deleted, in order. */
-export function fakeSharePhotoDeps(over: { camera?: PhotoPick; library?: PhotoPick } = {}) {
+/**
+ * In-memory Share Photo adapters: what was swept, rendered, shared and deleted, in order. `keepShared`
+ * plays Android's policy (the shared card stays for a later sweep); the default plays iOS's.
+ */
+export function fakeSharePhotoDeps(over: { camera?: PhotoPick; library?: PhotoPick; keepShared?: boolean } = {}) {
   const log: string[] = [];
   const flags = new Set<string>();
-  const state = { renderFails: false, shareAvailable: true, shareFails: false, pickThrows: false };
+  const state = { renderFails: false, shareAvailable: true, shareFails: false, pickThrows: false, sweepFails: false };
   const deps: SharePhotoDeps = {
     photos: {
       takePhoto: async () => {
@@ -37,6 +40,15 @@ export function fakeSharePhotoDeps(over: { camera?: PhotoPick; library?: PhotoPi
     files: {
       delete: async (uri) => {
         log.push(`delete ${uri}`);
+      },
+    },
+    cards: {
+      deleteAfterShare: !over.keepShared,
+      sweep: async () => {
+        if (state.sweepFails) {
+          throw new Error('sweep failed');
+        }
+        log.push('sweep');
       },
     },
     prompt: {

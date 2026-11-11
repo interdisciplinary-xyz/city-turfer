@@ -1,4 +1,4 @@
-import { isInside, normalisePath, tempRoots } from '../temp-paths';
+import { cacheDirs, isInside, normalisePath, tempRoots } from '../temp-paths';
 
 const IOS = 'file:///var/mobile/Containers/Data/Application/ABC';
 const IOS_ROOTS = tempRoots(`${IOS}/Library/Caches/`, `${IOS}/Documents/`);
@@ -34,5 +34,13 @@ describe('temp paths', () => {
     expect(isInside('file:///var/mobile/Containers/Data/Application/OTHER/tmp/a.jpg', IOS_ROOTS)).toBe(false);
     expect(isInside(`${IOS}/tmp`, IOS_ROOTS)).toBe(false);
     expect(isInside('/storage/emulated/0/Android/data/other.app/cache/a.jpg', ANDROID_ROOTS)).toBe(false);
+  });
+
+  it("lists Android's internal and external cache folders (where the card may be)", () => {
+    expect(cacheDirs('file:///data/user/0/com.cityturfer.app/cache/')).toEqual([
+      '/data/user/0/com.cityturfer.app/cache',
+      '/storage/emulated/0/Android/data/com.cityturfer.app/cache',
+    ]);
+    expect(cacheDirs(`${IOS}/Library/Caches/`)).toEqual(['/var/mobile/Containers/Data/Application/ABC/Library/Caches']);
   });
 });

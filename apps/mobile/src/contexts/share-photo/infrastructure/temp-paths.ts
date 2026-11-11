@@ -23,15 +23,24 @@ export function normalisePath(uriOrPath: string): string {
 }
 
 /**
+ * The app's cache folders on Android: the internal cache and the app's external cache (no storage
+ * permission needed), the two places view-shot may write the card.
+ */
+export function cacheDirs(cacheUri: string): string[] {
+  const cache = normalisePath(cacheUri);
+  const pkg = cache.match(/\/([^/]+)\/cache$/)?.[1];
+  return [cache, ...(pkg ? [`/storage/emulated/0/Android/data/${pkg}/cache`] : [])];
+}
+
+/**
  * Our temp folders from the app's cache and document folders: the cache (the picker's copies,
  * view-shot on Android), the iOS container's tmp (view-shot on iOS) and the app's external cache on
  * Android (view-shot's fallback).
  */
 export function tempRoots(cacheUri: string, documentUri: string): string[] {
-  const cache = normalisePath(cacheUri);
+  const [cache, ...external] = cacheDirs(cacheUri);
   const container = normalisePath(`${normalisePath(documentUri)}/..`);
-  const pkg = cache.match(/\/([^/]+)\/cache$/)?.[1];
-  return [cache, `${container}/tmp`, ...(pkg ? [`/storage/emulated/0/Android/data/${pkg}/cache`] : [])];
+  return [cache, `${container}/tmp`, ...external];
 }
 
 /** Whether `uri` is a file inside one of `roots` (never a root itself, never outside via `..`). */

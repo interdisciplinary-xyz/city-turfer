@@ -34,25 +34,25 @@ separate feature.
 
 ## Rules (v1)
 
-| Question     | Decision                                                                                                                                                                                                                                                                                                                                                                            |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Name         | **Share photo** / **Udostępnij zdjęcie**; the image is a **share card** (ubiquitous language: Share Card)                                                                                                                                                                                                                                                                           |
-| Entry points | (1) "Share photo" button on the activity screen (`activity/[id].tsx`), for every activity, including past ones from History; (2) **"Share a photo?" prompt right after Finish** (founder, 2026-11-11), see below                                                                                                                                                                    |
-| After Finish | Record lands on the activity screen with `justFinished=1`; a dismissible card above the stats offers **Take photo** / **Choose from library** / **Not now**. Shown once per finished activity, never when an activity is opened from History. **Don't ask again** hides it for good for that user (the button stays)                                                                |
-| Photo source | Camera or library (one action sheet). Library uses the system picker (PHPicker / Android Photo Picker): no library permission needed. Camera asks for camera permission on first use only                                                                                                                                                                                           |
-| Format       | 9:16 only, rendered at 1080×1920, as in the reference (Instagram / Facebook / WhatsApp stories) (founder, 2026-11-11)                                                                                                                                                                                                                                                               |
-| Photo fit    | Cover-crop, centred. Pan / zoom is "later"                                                                                                                                                                                                                                                                                                                                          |
-| Stats shown  | Distance, moving time, average pace (walk, run) or speed (cycle), exactly as on the activity screen (`formatDistance`, `formatDuration`, `formatPaceOrSpeed`), in the app language                                                                                                                                                                                                  |
-| Turf line    | "+N new turf cells" from the activity's claim (`useClaim`), when N > 0: the one thing Garmin or Strava can't show. Toggle, on by default                                                                                                                                                                                                                                            |
-| Title block  | Type icon + activity name; date and start time (`formatDate`)                                                                                                                                                                                                                                                                                                                       |
-| Place        | Three-way choice, **Off** by default: **Off** / **City** ("Gdańsk") / **District** ("Oliwa, Gdańsk"; the reference shows "@ Nowe Miasteczko") (founder, 2026-11-11). Text only. The district is the one holding most of the activity's points, found on the phone; with no district data for that city, District falls back to City, and with no known city both options are hidden |
-| Brand mark   | CityTurfer wordmark, always the night (white, outlined) variant on the scrim (`apps/mobile/assets/brand/out/wordmark.png`), small, bottom right                                                                                                                                                                                                                                     |
-| Legibility   | `DARK.text` with a soft shadow over dark scrims (0.6 plateau, see Card design), so stats read on any photo, white ones included                                                                                                                                                                                                                                                     |
-| Layouts      | Two presets: stats top left (as the reference) and stats bottom. One tap switches                                                                                                                                                                                                                                                                                                   |
-| Output       | System share sheet (`expo-sharing`): Instagram, Facebook, WhatsApp, Messenger, Save Image, AirDrop… whatever the phone offers. Direct "Share to Instagram Stories" is later (founder, 2026-11-11)                                                                                                                                                                                   |
-| Privacy      | No map, route, start/end point or coordinates on the card. The output is a fresh render, so the source photo's EXIF (incl. its GPS) is **not** carried over. The photo and card are never stored in SQLite, backed up or uploaded; temp files are deleted after sharing. No analytics on what was shared                                                                            |
-| Apple Health | Works for imported activities too (they are Activities); no Health data beyond what the activity screen already shows                                                                                                                                                                                                                                                               |
-| Out of scope | Map / route on the card, turf-map image, video, stickers, filters, pan/zoom, 4:5 and 1:1 formats, Instagram Stories deep link (later; needs `react-native-share` + a Facebook App ID), web portal share, saving the photo with the activity                                                                                                                                         |
+| Question     | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Name         | **Share photo** / **Udostępnij zdjęcie**; the image is a **share card** (ubiquitous language: Share Card)                                                                                                                                                                                                                                                                                                                                                                           |
+| Entry points | (1) "Share photo" button on the activity screen (`activity/[id].tsx`), for every activity, including past ones from History; (2) **"Share a photo?" prompt right after Finish** (founder, 2026-11-11), see below                                                                                                                                                                                                                                                                    |
+| After Finish | Record lands on the activity screen with `justFinished=1`; a dismissible card above the stats offers **Take photo** / **Choose from library** / **Not now**. Shown once per finished activity, never when an activity is opened from History. **Don't ask again** hides it for good for that user (the button stays)                                                                                                                                                                |
+| Photo source | Camera or library (one action sheet). Library uses the system picker (PHPicker / Android Photo Picker): no library permission needed. Camera asks for camera permission on first use only                                                                                                                                                                                                                                                                                           |
+| Format       | 9:16 only, rendered at 1080×1920, as in the reference (Instagram / Facebook / WhatsApp stories) (founder, 2026-11-11)                                                                                                                                                                                                                                                                                                                                                               |
+| Photo fit    | Cover-crop, centred. Pan / zoom is "later"                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| Stats shown  | Distance, moving time, average pace (walk, run) or speed (cycle), exactly as on the activity screen (`formatDistance`, `formatDuration`, `formatPaceOrSpeed`), in the app language                                                                                                                                                                                                                                                                                                  |
+| Turf line    | "+N new turf cells" from the activity's claim (`useClaim`), when N > 0: the one thing Garmin or Strava can't show. Toggle, on by default                                                                                                                                                                                                                                                                                                                                            |
+| Title block  | Type icon + activity name; date and start time (`formatDate`)                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Place        | Three-way choice, **Off** by default: **Off** / **City** ("Gdańsk") / **District** ("Oliwa, Gdańsk"; the reference shows "@ Nowe Miasteczko") (founder, 2026-11-11). Text only. The district is the one holding most of the activity's points, found on the phone; with no district data for that city, District falls back to City, and with no known city both options are hidden                                                                                                 |
+| Brand mark   | CityTurfer wordmark, always the night (white, outlined) variant on the scrim (`apps/mobile/assets/brand/out/wordmark.png`), small, bottom right                                                                                                                                                                                                                                                                                                                                     |
+| Legibility   | `DARK.text` with a soft shadow over dark scrims (0.6 plateau, see Card design), so stats read on any photo, white ones included                                                                                                                                                                                                                                                                                                                                                     |
+| Layouts      | Two presets: stats top left (as the reference) and stats bottom. One tap switches                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Output       | System share sheet (`expo-sharing`): Instagram, Facebook, WhatsApp, Messenger, Save Image, AirDrop… whatever the phone offers. Direct "Share to Instagram Stories" is later (founder, 2026-11-11)                                                                                                                                                                                                                                                                                   |
+| Privacy      | No map, route, start/end point or coordinates on the card. The output is a fresh render, so the source photo's EXIF (incl. its GPS) is **not** carried over. The photo and card are never stored in SQLite, backed up or uploaded. Temp files: the photo copy is deleted when replaced or when the share screen closes; the card right after sharing on iOS, while on Android it stays and is swept once older than an hour (see Temp files below). No analytics on what was shared |
+| Apple Health | Works for imported activities too (they are Activities); no Health data beyond what the activity screen already shows                                                                                                                                                                                                                                                                                                                                                               |
+| Out of scope | Map / route on the card, turf-map image, video, stickers, filters, pan/zoom, 4:5 and 1:1 formats, Instagram Stories deep link (later; needs `react-native-share` + a Facebook App ID), web portal share, saving the photo with the activity                                                                                                                                                                                                                                         |
 
 ## Card design
 
@@ -151,12 +151,12 @@ photo, both layouts, en + pl, longest values (`1:34:44`, `102,35 km`), a two-lin
 
 ### Dependencies (native: new dev build, not OTA)
 
-| Package                  | Why                                                                                                       |
-| ------------------------ | --------------------------------------------------------------------------------------------------------- |
-| `expo-image-picker`      | Camera capture + system photo picker; config plugin adds `NSCameraUsageDescription`, Android `CAMERA`     |
-| `react-native-view-shot` | Renders the composed card `View` to a 1080×1920 JPEG                                                      |
-| `expo-sharing`           | Hands the file to the system share sheet                                                                  |
-| `expo-file-system`       | Deletes the temp files after sharing (`CLAUDE.md` says it is not installed yet; GPX export will reuse it) |
+| Package                  | Why                                                                                                   |
+| ------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `expo-image-picker`      | Camera capture + system photo picker; config plugin adds `NSCameraUsageDescription`, Android `CAMERA` |
+| `react-native-view-shot` | Renders the composed card `View` to a 1080×1920 JPEG                                                  |
+| `expo-sharing`           | Hands the file to the system share sheet                                                              |
+| `expo-file-system`       | Deletes the temp files and sweeps old Android cards (GPX export will reuse it)                        |
 
 Add with `pnpm -C apps/mobile exec expo install …`. All four change the runtime fingerprint, so the
 feature ships in a new build (iOS dev build + Android APK), never as an OTA update. Update the
@@ -168,6 +168,30 @@ shows).
 Usage strings (en + pl via `InfoPlist.strings` / app config), e.g. camera: "CityTurfer uses the
 camera to take a photo for your activity's share card. The photo stays on your phone until you share
 it."
+
+### Temp files
+
+The picker's photo copy and the rendered card are ours, in the app's cache; `TempFiles` deletes only
+files inside our temp folders. The **card** follows the `CardFiles` policy, chosen per platform in
+`ExpoCardFiles` (Share Photo infrastructure):
+
+- **iOS:** `shareAsync` resolves once the chosen action has finished, so the card is deleted right
+  after sharing. Nothing to sweep.
+- **Android:** `shareAsync` (expo-sharing 57) resolves when the chooser returns, not when the target
+  has read the `content://` URI: Quick Share, Bluetooth, Drive, Gmail or Instagram (its own task)
+  may still be reading it. So the shared card stays, named `cityturfer-share-card<digits>.jpg`
+  (view-shot `fileName`), and a sweep deletes our cards older than **one hour** (`CARD_KEEP_MS`:
+  slow uploads and transfers fit with room to spare; a leftover is about 1 MB of cache the OS may
+  clear anyway) when the share screen opens and before each capture. Never when the screen closes: a
+  background transfer may still be reading the card. The sweep lists only the app's internal and
+  external cache folders and deletes only files with that prefix.
+- **Failures** (render failed, no share sheet, the sheet threw): the card is deleted at once on both
+  platforms; no target has it.
+
+Android permissions: `app.json` blocks `READ_EXTERNAL_STORAGE` and `WRITE_EXTERNAL_STORAGE` (merged
+in by expo-file-system and expo-image-picker) as well as `RECORD_AUDIO`. Nothing needs them: the
+library uses the Photo Picker, the camera needs only `CAMERA`, and view-shot writes to the app's own
+cache folders.
 
 ### Place of an activity (Territory, `packages/core`)
 
@@ -222,7 +246,8 @@ New modal route `share-photo/[id]` in `apps/mobile/src/app/share-photo` (full-sc
    Cancel. Or, right after Finish, the same two choices straight from the "Share a photo?" card.
 2. Picker returns → share screen shows the live card preview (photo + `ShareOverlay`), controls
    under it: layout, turf line, place (Off / City / District). **Change photo** re-opens the sheet.
-3. **Share** → render off-screen at 1080×1920 → share sheet → on close delete the temp file.
+3. **Share** → sweep old cards (Android) → render off-screen at 1080×1920 → share sheet → on close
+   delete the card (iOS; on Android it stays for the sweep, see Temp files).
 4. Cancel at any step returns to the activity screen; nothing is saved.
 5. Camera permission denied → short explainer with "Open Settings" and "Choose from library".
 
@@ -276,7 +301,8 @@ Rough size: 4–5 days of work, most of it in steps 3a and 4–6.
 6. **Share** opens the system share sheet with a 1080×1920 JPEG; Instagram (story/post), WhatsApp
    and Save Image work on a real iPhone and an Android phone.
 7. The shared JPEG carries no GPS EXIF (checked with `exiftool` on a saved copy).
-8. Nothing is written to SQLite, backup queue or API; temp files are gone after the sheet closes.
+8. Nothing is written to SQLite, backup queue or API; the photo copy is gone when the screen closes,
+   the card when the sheet closes (iOS) or at the first sweep after an hour (Android).
 9. Card text is in the app language (en, pl) with correct Polish plurals; `audit:i18n` passes.
 10. Text stays readable on a white photo and on a dark photo (scrims), checked in Storybook.
 11. `pnpm run ci:quality` passes; Maestro flow `share-photo.yaml` passes on the iOS Simulator.
