@@ -91,8 +91,10 @@ for (const path of ['/en', '/pl']) {
           : { short: 'Join', long: 'Join the waitlist' };
       await expect(link).toHaveAccessibleName(width >= 600 ? names.long : names.short);
       // The whole page is scanned, hero phone mock-ups (.screens) included: axe finds no violation there now.
-      // Scan after the hero entrance: mid-fade text reads as low contrast.
-      await expect(page.locator('[data-anim="line"]').last()).toHaveCSS('opacity', '1');
+      // Scan after the hero entrance: mid-fade text reads as low contrast. The buttons (CSS) and the
+      // phones (GSAP) fade in last.
+      await expect(page.locator('.hero-actions[data-enter]')).toHaveCSS('opacity', '1');
+      await expect(page.locator('[data-anim="phone"]').last()).toHaveCSS('opacity', '1');
       // `label-content-name-mismatch` is an experimental axe rule (off by default): the header link's
       // accessible name must contain its visible text.
       const results = await new AxeBuilder({ page })

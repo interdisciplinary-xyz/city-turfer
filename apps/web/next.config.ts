@@ -22,6 +22,9 @@ const config: NextConfig = {
   // The portal's API client sends `CityTurfer-Client: web/<version>` (src/lib/api/client.ts).
   env: { CITYTURFER_WEB_VERSION: pkg.version },
   poweredByHeader: false,
+  // The site's CSS (~8 KB gzipped) goes inline in each page's <head>: no render-blocking stylesheet
+  // round trip before the first paint (homepage performance audit, 2026-11-11).
+  experimental: { inlineCss: true },
   // Dev only: the portless URL (`pnpm run web:dev` -> https://cityturfer.local), incl. worktree subdomains.
   allowedDevOrigins: ['cityturfer.local', '*.cityturfer.local'],
 };
