@@ -297,9 +297,12 @@ h1 {
 /* The hero text's entrance is CSS, not GSAP, so the largest paint never waits for the JavaScript
    bundle. The headline and lede are the page's largest paint: Chrome counts text only once its
    opacity animation ends, so they are visible from the first paint and only rise into place
-   (0.45em, expo.out) once the boot script marks the page `loaded` (fonts ready). The buttons are
-   small, so they also fade in. Without `.motion` (reduced motion, no script, the 2.5 s fallback)
-   nothing moves. Homepage performance audit 2026-11-11: mobile LCP 3.7 s with the fade. */
+   (0.45em, expo.out) once the page loader's boot script (LOADER_BOOT_SCRIPT) marks the page
+   `loaded` (fonts ready, or its time cap). The buttons are small, so they also fade in. Without
+   `.motion` (reduced motion, no script, the 2.5 s fallback) nothing moves. Homepage performance
+   audit 2026-11-11: mobile LCP 3.7 s with the fade. Keep the `.motion.loaded` rules after the
+   hidden ones: `.motion .hero-actions[data-enter]` and `.motion.loaded [data-enter]` have equal
+   specificity, so source order decides which wins. */
 .motion [data-enter] {
   translate: 0 0.45em;
 }
