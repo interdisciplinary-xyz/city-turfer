@@ -1,3 +1,11 @@
+# Finish the recording (long-press Stop). A saved activity opens with the "Share a photo?" prompt
+# above its stats (share-photo, first Finish of a user), which pushes `turf-gained` off screen:
+# wait for it (or for the too-short dialog) and dismiss it with Not now, so callers can go on.
 appId: com.turftrack.poc
 ---
 - longPressOn: { id: 'record-stop' }
+- extendedWaitUntil: { visible: 'Share a photo\?|Too short to save', timeout: 20000, optional: true }
+- runFlow:
+    when: { visible: { id: 'share-prompt-dismiss' } }
+    commands:
+      - tapOn: { id: 'share-prompt-dismiss' }

@@ -14,6 +14,7 @@ import enMe from '../../messages/en/me.json';
 import enNav from '../../messages/en/nav.json';
 import enProfile from '../../messages/en/profile.json';
 import enRecord from '../../messages/en/record.json';
+import enShare from '../../messages/en/share.json';
 import enSignIn from '../../messages/en/signIn.json';
 import enStats from '../../messages/en/stats.json';
 import enTurf from '../../messages/en/turf.json';
@@ -33,6 +34,7 @@ import plMe from '../../messages/pl/me.json';
 import plNav from '../../messages/pl/nav.json';
 import plProfile from '../../messages/pl/profile.json';
 import plRecord from '../../messages/pl/record.json';
+import plShare from '../../messages/pl/share.json';
 import plSignIn from '../../messages/pl/signIn.json';
 import plStats from '../../messages/pl/stats.json';
 import plTurf from '../../messages/pl/turf.json';
@@ -63,6 +65,7 @@ const SOURCE = {
   profile: enProfile,
   me: enMe,
   goals: enGoals,
+  share: enShare,
 };
 export type Messages = typeof SOURCE;
 export type Namespace = keyof Messages;
@@ -90,6 +93,7 @@ const RAW: Record<Locale, Catalogue> = {
     profile: plProfile,
     me: plMe,
     goals: plGoals,
+    share: plShare,
   },
 };
 

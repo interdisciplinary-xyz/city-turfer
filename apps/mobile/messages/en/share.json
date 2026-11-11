@@ -1,0 +1,51 @@
+{
+  "button": "Share photo",
+  "sheet": {
+    "title": "Add a photo",
+    "camera": "Take photo",
+    "library": "Choose from library",
+    "cancel": "Cancel"
+  },
+  "prompt": {
+    "title": "Share a photo?",
+    "body": "Put your stats on a photo and share it.",
+    "camera": "Take photo",
+    "library": "Choose from library",
+    "dismiss": "Not now",
+    "never": "Don't ask again"
+  },
+  "screen": {
+    "title": "Share photo",
+    "share": "Share",
+    "change": "Change photo",
+    "layout": "Layout",
+    "layoutTop": "Top",
+    "layoutBottom": "Bottom",
+    "turf": "Show new turf",
+    "place": "Place",
+    "placeOff": "Off",
+    "placeCity": "City",
+    "placeDistrict": "District",
+    "rendering": "Making your image…",
+    "preview": "Share card: {title}, {when}"
+  },
+  "permission": {
+    "title": "No camera access",
+    "body": "To take a photo, allow camera access for CityTurfer in Settings. Or pick one from your library.",
+    "settings": "Open Settings",
+    "library": "Choose from library"
+  },
+  "card": {
+    "distance": "Distance",
+    "movingTime": "Moving time",
+    "pace": "Avg pace",
+    "speed": "Avg speed",
+    "turfCells": "{cells, plural, one {+# new turf cell} other {+# new turf cells}}",
+    "placeDistrict": "{district}, {city}",
+    "when": "{date} · {time}"
+  },
+  "error": {
+    "render": "Couldn't make the image. Try again.",
+    "share": "Couldn't open sharing. Try again."
+  }
+}

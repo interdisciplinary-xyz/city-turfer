@@ -1,0 +1,51 @@
+{
+  "button": "Udostępnij zdjęcie",
+  "sheet": {
+    "title": "Dodaj zdjęcie",
+    "camera": "Zrób zdjęcie",
+    "library": "Wybierz z galerii",
+    "cancel": "Anuluj"
+  },
+  "prompt": {
+    "title": "Udostępnić zdjęcie?",
+    "body": "Dodaj statystyki do zdjęcia i udostępnij je.",
+    "camera": "Zrób zdjęcie",
+    "library": "Wybierz z galerii",
+    "dismiss": "Nie teraz",
+    "never": "Nie pytaj więcej"
+  },
+  "screen": {
+    "title": "Udostępnij zdjęcie",
+    "share": "Udostępnij",
+    "change": "Zmień zdjęcie",
+    "layout": "Układ",
+    "layoutTop": "Góra",
+    "layoutBottom": "Dół",
+    "turf": "Pokaż nowe terytorium",
+    "place": "Miejsce",
+    "placeOff": "Brak",
+    "placeCity": "Miasto",
+    "placeDistrict": "Dzielnica",
+    "rendering": "Tworzę obraz…",
+    "preview": "Karta do udostępnienia: {title}, {when}"
+  },
+  "permission": {
+    "title": "Brak dostępu do aparatu",
+    "body": "Aby zrobić zdjęcie, zezwól CityTurfer na dostęp do aparatu w Ustawieniach. Możesz też wybrać zdjęcie z galerii.",
+    "settings": "Otwórz Ustawienia",
+    "library": "Wybierz z galerii"
+  },
+  "card": {
+    "distance": "Dystans",
+    "movingTime": "Czas w ruchu",
+    "pace": "Śr. tempo",
+    "speed": "Śr. prędkość",
+    "turfCells": "{cells, plural, one {+# nowa komórka terytorium} few {+# nowe komórki terytorium} many {+# nowych komórek terytorium} other {+# nowej komórki terytorium}}",
+    "placeDistrict": "{district}, {city}",
+    "when": "{date} · {time}"
+  },
+  "error": {
+    "render": "Nie udało się utworzyć obrazu. Spróbuj ponownie.",
+    "share": "Nie udało się otworzyć udostępniania. Spróbuj ponownie."
+  }
+}

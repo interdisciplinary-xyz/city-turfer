@@ -96,6 +96,17 @@ module.exports = {
         ],
       },
     },
+    {
+      name: 'background-task-no-share-natives',
+      severity: 'error',
+      comment:
+        "The headless background task (imported first by index.ts) never loads Share Photo's native modules: view-shot looks up its TurboModule at import. Share Photo is wired in its ui/share-photo-api.ts, not in the composition root.",
+      from: { path: '^src/contexts/recording/infrastructure/background-task\\.ts$' },
+      to: {
+        path: '(^|/)node_modules/(expo-image-picker|react-native-view-shot|expo-sharing|expo-file-system)/',
+        reachable: true,
+      },
+    },
     { name: 'no-circular', severity: 'error', from: {}, to: { circular: true } },
   ],
   options: {

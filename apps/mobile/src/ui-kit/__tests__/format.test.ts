@@ -13,6 +13,7 @@ import {
   formatDuration,
   formatPaceOrSpeed,
   formatSpeedNow,
+  formatTime,
   formatWeekday,
   formatWeekdayShort,
   shownName,
@@ -64,6 +65,12 @@ describe('format.ts in English (byte-identical to the toFixed output the Maestro
     );
     expect(formatDay(MS, 'en-US')).toBe('Oct 22, 2026');
     expect(formatDay(MS, 'en-GB')).toBe('22 Oct 2026');
+  });
+
+  it('a clock time in the regional variant (the share card)', () => {
+    expect(formatTime(MS, 'en-GB')).toBe('09:05');
+    expect(formatTime(MS, 'pl')).toBe('09:05');
+    expect(formatTime(MS, 'en-US')).toMatch(/^09:05\s?AM$/);
   });
 });
 
