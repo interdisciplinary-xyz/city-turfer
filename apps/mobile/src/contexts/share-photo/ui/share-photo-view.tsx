@@ -47,8 +47,9 @@ import { usePhotoPicker } from './use-photo-picker';
 /**
  * The share screen: the live card (photo + ShareOverlay) and its controls (layout, turf line,
  * place), Change photo and Share. Share captures a second, hidden copy of the card laid out at
- * exactly 1080 px wide (no resampling, so the JPEG stays sharp) and opens the share sheet;
- * the files are deleted afterwards, and the photo when the screen closes. Nothing is saved.
+ * exactly 1080 px wide (no resampling, so the JPEG stays sharp) and opens the share sheet; the card
+ * is deleted afterwards (on Android swept later, see ExpoCardFiles), the photo when the screen
+ * closes. Nothing is saved.
  */
 export function SharePhotoView({ activity, newCells, place, photo: initial }: SharePhotoViewProps) {
   const p = usePalette();
@@ -64,16 +65,25 @@ export function SharePhotoView({ activity, newCells, place, photo: initial }: Sh
   // The hidden copy's photo has loaded (per uri): Share waits for it, so the capture is never blank.
   const [loadedUri, setLoadedUri] = useState<string | null>(null);
 
+  // Share runs once at a time: a ref, set before the first await, so a second fast tap (before
+  // `busy` re-renders) never starts another capture. `mounted` skips setState after leaving.
+  const inFlight = useRef(false);
+  const mounted = useRef(true);
+
   // The photo file is ours (the picker's cache copy): delete it when replaced or when leaving.
+  // Opening the screen sweeps cards kept from earlier shares (Android); never on leaving, where a
+  // target may still be reading the card in the background.
   const current = useRef(photo?.uri ?? null);
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    mounted.current = true;
+    void sharePhoto.sweepCards.execute();
+    return () => {
+      mounted.current = false;
       if (current.current) {
         void sharePhoto.discardPhoto.execute(current.current);
       }
-    },
-    []
-  );
+    };
+  }, []);
   const replacePhoto = useCallback((next: PickedPhoto) => {
     const old = current.current;
     current.current = next.uri;
@@ -102,12 +112,20 @@ export function SharePhotoView({ activity, newCells, place, photo: initial }: Sh
   );
 
   const share = async () => {
-    if (busy || !ready || !card.current) {
+    if (inFlight.current || !ready || !card.current) {
       return;
     }
+    inFlight.current = true;
     setBusy(true);
-    const r = await sharePhoto.share.execute(card);
-    setBusy(false);
+    const r = await sharePhoto.share.execute(card).finally(() => {
+      inFlight.current = false;
+      if (mounted.current) {
+        setBusy(false);
+      }
+    });
+    if (!mounted.current) {
+      return;
+    }
     if (r.kind === 'render-failed') {
       Alert.alert(t('screen.title'), t('error.render'));
     } else if (r.kind === 'share-failed') {
