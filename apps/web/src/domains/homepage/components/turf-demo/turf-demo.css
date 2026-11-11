@@ -159,6 +159,10 @@
     background: Highlight;
     color: HighlightText;
   }
+  /* forced-color-adjust: none keeps the author focus colour too: give it a system one. */
+  .turf-demo-step[aria-pressed='true']:focus-visible {
+    outline-color: CanvasText;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
