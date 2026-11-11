@@ -117,8 +117,10 @@ step-up code and spends about 2 minutes asleep on purpose.
 - **Share photo has no camera or Instagram coverage.** The Simulator has no camera, so
   `20-share-photo` covers the library path only; the camera permission flow, Instagram, WhatsApp and
   Android need a device. `21-share-prompt` leaves the profile on Don't ask again (a Keychain flag):
-  rerun it alone only after `xcrun simctl keychain booted reset`. `finish.yaml` dismisses the
-  after-Finish prompt so the other recording flows still see `turf-gained`.
+  rerun it alone only after `xcrun simctl keychain booted reset`. `finish.yaml` (a saved Finish)
+  waits for the after-Finish prompt by its `share-prompt-dismiss` id and dismisses it, so the other
+  recording flows still see `turf-gained`; `finish-too-short.yaml` handles the too-short alert
+  (matched by text: a system alert has no test ID).
 
 ## 4. Adding a flow
 

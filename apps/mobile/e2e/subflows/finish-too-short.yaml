@@ -1,0 +1,9 @@
+# Finish a recording too short to save (long-press Stop): the app refuses with a system alert and
+# offers Discard, which returns to the start state. A system alert has no test ID, so its title
+# (record `tooShortTitle`, English) and button are matched by text.
+appId: com.turftrack.poc
+---
+- longPressOn: { id: 'record-stop' }
+- extendedWaitUntil: { visible: 'Too short to save', timeout: 10000 }
+- tapOn: 'Discard'
+- extendedWaitUntil: { visible: { id: 'record-start' }, timeout: 10000 }
