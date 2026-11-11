@@ -257,6 +257,9 @@
     "noCookies": "This site sets no cookies and loads no trackers.",
     "mapCredit": "© OpenStreetMap contributors"
   },
+  "a11y": {
+    "newTab": "(opens in a new tab)"
+  },
   "language": {
     "label": "Language",
     "en": "English",
