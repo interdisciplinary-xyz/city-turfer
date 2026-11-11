@@ -8,6 +8,7 @@ import { useActivity } from '@/contexts/activity-log/ui/hooks';
 import { RenameActivityDialog } from '@/contexts/activity-log/ui/rename-activity-dialog';
 import { isImportedFromHealth } from '@/contexts/health-sync';
 import type { PickedPhoto } from '@/contexts/share-photo';
+import { pendingPhoto } from '@/contexts/share-photo/ui/pending-photo';
 import { SharePhotoButton } from '@/contexts/share-photo/ui/share-photo-button';
 import { SharePromptCard } from '@/contexts/share-photo/ui/share-prompt-card';
 import { useClaim } from '@/contexts/territory/ui/hooks';
@@ -32,13 +33,11 @@ export default function ActivityScreen() {
   const { detail, remove, rename } = useActivity(id);
   const claim = useClaim(id);
   const [renaming, setRenaming] = useState(false);
-  // The photo is a local cache file; the share screen deletes it when it closes.
+  // The photo is a local cache file, handed over in memory (never in the route, which a deep link
+  // can fill); the share screen deletes it when it closes.
   const openShare = useCallback(
     (photo: PickedPhoto) =>
-      router.push({
-        pathname: '/share-photo/[id]',
-        params: { id, uri: photo.uri, w: String(photo.width), h: String(photo.height) },
-      }),
+      router.push({ pathname: '/share-photo/[id]', params: { id, photo: pendingPhoto.give(photo) } }),
     [id]
   );
 
