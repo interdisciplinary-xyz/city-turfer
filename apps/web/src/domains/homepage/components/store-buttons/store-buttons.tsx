@@ -6,7 +6,7 @@ import type { StoreButtonsProps } from './store-buttons.constants';
 export function StoreButtons({ apkUrl }: StoreButtonsProps) {
   const t = useTranslations('download');
   return (
-    <div className='download' data-anim='copy'>
+    <div className='download' data-enter='copy'>
       <div className='store-buttons'>
         {apkUrl ? (
           <a className='store-btn store-btn-android' href={apkUrl} download>

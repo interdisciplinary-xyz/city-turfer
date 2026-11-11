@@ -72,8 +72,16 @@ The brand is the turf strength ramp: things **glow in**, they don't bounce.
   interactive follow (pointer), `sine.inOut` for ambient loops. No `back`, `elastic` or `bounce`.
 - Durations: entrances 0.6–1.2 s, staggers 0.08–0.15 s, the whole entrance done in about 2 s.
   Ambient loops slow (≥ 5 s) and subtle (none on the site today: the headline is plain text).
-- Order on load: mark → wordmark → headline lines → lede and calls to action → phones rise alongside
-  (they start early, at 0.25 s).
+- Order on load: headline lines → lede and calls to action → phones rise alongside (they start
+  early, at 0.25 s), then the city map.
+- **The hero text is the largest paint (LCP): never fade it from opacity 0.** Chrome counts text
+  only when its opacity animation ends, and an entrance that waits for the GSAP bundle cost 3.7 s of
+  mobile LCP (performance audit 2026-11-11). The headline, lede and buttons enter with CSS
+  (`data-enter` in `globals.css`, no JavaScript), started by the `loaded` class that
+  `LOADER_BOOT_SCRIPT` (`domains/ui/components/page-loader`) sets once fonts are ready and the DOM
+  is parsed, or at its `LOADER_MAX_MS` cap (at once on reduced motion and reload): the headline and
+  lede only rise, visible from the first paint; the small buttons also fade. GSAP animates only the
+  phones, the map and the pointer tilt.
 - Animate **transform and opacity only** (`x`, `y`, `scale`, `rotate`, `autoAlpha`). Never width,
   height, top/left or margins: no layout shift.
 - Copy stays readable: never animate text letter by letter; lines rise by ≤ 0.5 em.
