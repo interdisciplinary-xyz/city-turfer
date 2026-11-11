@@ -27,7 +27,7 @@ language is `docs/poc-plan.md` §2. Where this doc and the code disagree, the co
 
 ## 1. Context map
 
-There are <!-- probe:contexts -->8<!-- /probe --> bounded contexts, one directory each in
+There are <!-- probe:contexts -->9<!-- /probe --> bounded contexts, one directory each in
 `apps/mobile/src/contexts/`:
 
 - **identity** (generic): `AuthGateway` port with two adapters, `MockAuthGateway` (the local `admin`
@@ -64,6 +64,13 @@ There are <!-- probe:contexts -->8<!-- /probe --> bounded contexts, one director
   `LocalCalendar` port (device calendar). Reads Activity Log's `startsBetween` query; publishes
   `DailyGoalSet`, `DailyGoalOfferHidden` (no handlers yet). Plan:
   `docs/plans/daily-goal-2026-11-10.md`.
+- **share-photo** (generic): Share photo, a 9:16 share card of one activity's stats over a photo
+  from the camera or library, handed to the system share sheet. Pure `shareCardContent`, ports
+  `PhotoSource`, `CardRenderer`, `ShareTarget`, `TempFiles` (expo-image-picker, view-shot,
+  expo-sharing, expo-file-system), the "Don't ask again" flag in `expo-secure-store`. No tables, no
+  events; the screen passes plain facts from Activity Log, Territory's claim and its
+  `GetActivityPlace` query. No map or coordinates on the card. Plan:
+  `docs/plans/share-photo-2026-11-11.md`.
 
 ```
             SessionFinished                ActivityRecorded · ActivityDeleted

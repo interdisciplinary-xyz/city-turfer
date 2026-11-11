@@ -13,7 +13,8 @@
       "supportsTablet": false,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "CFBundleDisplayName": "CityTurfer"
+        "CFBundleDisplayName": "CityTurfer",
+        "NSPhotoLibraryAddUsageDescription": "CityTurfer saves your activity's share card to Photos when you choose Save Image."
       },
       "appleTeamId": "KD9S2F8UCY"
     },
@@ -33,6 +34,11 @@
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_LOCATION",
         "android.permission.RECEIVE_BOOT_COMPLETED"
+      ],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ]
     },
     "plugins": [
@@ -77,7 +83,16 @@
           "NSHealthUpdateUsageDescription": "CityTurfer saves the walks, runs and rides you record to Apple Health as workouts with their routes.",
           "background": false
         }
-      ]
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "CityTurfer uses the camera to take a photo for your activity's share card. The photo stays on your phone until you share it.",
+          "photosPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      "expo-sharing"
     ],
     "runtimeVersion": {
       "policy": "fingerprint"

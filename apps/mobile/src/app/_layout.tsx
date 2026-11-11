@@ -13,6 +13,7 @@ function Gate() {
   const { auth } = useApp();
   const [language] = useLanguageSetting();
   const t = useT('nav');
+  const share = useT('share');
   const common = useT('common');
   const back = common('back');
   const close = common('close');
@@ -121,6 +122,25 @@ function Gate() {
             headerBackVisible: false,
             headerRight: () => (
               <Pressable testID='goal-close' onPress={() => router.back()} accessibilityRole='button' hitSlop={12}>
+                <Text style={{ color: p.text, fontSize: FONT_SIZE.body, fontWeight: FONT_WEIGHT.bold }}>{close}</Text>
+              </Pressable>
+            ),
+          }}
+        />
+        <Stack.Screen
+          name='share-photo/[id]'
+          options={{
+            presentation: 'fullScreenModal',
+            headerShown: true,
+            title: share('screen.title'),
+            headerBackVisible: false,
+            headerRight: () => (
+              <Pressable
+                testID='share-photo-close'
+                onPress={() => router.back()}
+                accessibilityRole='button'
+                hitSlop={12}
+              >
                 <Text style={{ color: p.text, fontSize: FONT_SIZE.body, fontWeight: FONT_WEIGHT.bold }}>{close}</Text>
               </Pressable>
             ),

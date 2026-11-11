@@ -75,7 +75,8 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
   (`apps/mobile/src/contexts/recording/infrastructure/live-session-store.ts`, read via
   `useSyncExternalStore`). No zustand.
 - **Export**: GPX 1.1 export is planned (M7 stretch), not built; `expo-file-system` and
-  `expo-sharing` are not installed yet
+  `expo-sharing` are installed (Share photo: `apps/mobile/src/contexts/share-photo`, with
+  `expo-image-picker` + `react-native-view-shot`; `docs/plans/share-photo-2026-11-11.md`)
 - **Tests**: Jest (`babel-preset-expo`, node environment, real SQL through `better-sqlite3` in
   `apps/mobile/src/test-support/node-database.ts`); Maestro for E2E
 
@@ -110,6 +111,8 @@ apps/mobile/                         the Expo app (package @cityturfer/mobile); 
     infrastructure/ ui/ index.ts (shim)
   src/contexts/goals/                Daily goal: minutes of moving time a day, opt-in, history per day (migration v15)
     domain/ application/ infrastructure/ ui/ index.ts contract.ts
+  src/contexts/share-photo/          Share photo: camera/library photo + activity stats card → system share sheet (no map)
+    domain/ application/ infrastructure/ ui/ index.ts
   src/platform/                      SQLite, migrations, outbox + EventDispatcher, one-off jobs, diagnostics (no coordinates)
   src/composition-root.ts            lazy, React-free wiring (used by UI and headless task)
   modules/background-session/        native iOS module (CLBackgroundActivitySession + liveUpdates)
