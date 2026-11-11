@@ -9,7 +9,8 @@ export const PLACE_SAMPLE = 300;
 /**
  * How far from a city's centre, in its radii, its district boundaries are searched. A city's
  * districts reach up to about 2.5 radii from its centre (Szczecin, Rzeszów, Opole), as the catalogue
- * radius is the built-up core, not the administrative area.
+ * radius is the built-up core, not the administrative area. Pinned by the bundled-districts data test
+ * (packages/core/src/districts/__tests__/data.test.ts).
  */
 export const PLACE_SEARCH_RADII = 3;
 
