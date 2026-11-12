@@ -8,9 +8,12 @@ import { cacheDirs } from './temp-paths';
  * When the rendered card may be deleted, per platform. iOS: right after the share sheet closes (it
  * resolves once the chosen action has finished), and nothing to sweep. Android: the sheet resolves
  * when the chooser returns, before the target has read the file, so the card stays and is swept
- * once it is older than CARD_KEEP_MS, when the share screen opens or before the next capture (never
- * on close: a background transfer may still be reading it). Best effort, never throws, never logs
- * a path. Paths are read on each call: Paths needs the native module, never at import time.
+ * once it is older than CARD_KEEP_MS: at app launch and on each return to the foreground, when the
+ * share screen opens and before the next capture (never on close: a background transfer may still
+ * be reading it). Cards are written to the internal cache; the external cache is swept too, for
+ * cards an earlier test build (view-shot tmpfile) may have left there. Best effort, never throws,
+ * never logs a path. Paths are read on each call: Paths needs the native module, never at import
+ * time.
  */
 export class ExpoCardFiles implements CardFiles {
   readonly deleteAfterShare: boolean;

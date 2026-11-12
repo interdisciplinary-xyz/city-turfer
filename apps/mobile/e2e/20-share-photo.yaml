@@ -1,7 +1,7 @@
 # Share photo from History: activity > Share photo > Choose from library (system picker, no
 # permission prompt) > the 9:16 card preview, both layouts, the turf and place controls > Share
 # opens the system share sheet > Close returns to the activity. Needs one photo in the simulator's
-# library (the Simulator ships sample photos). The camera path needs a device (no camera here).
+# library: run.sh adds e2e/fixtures/share-photo.png (simctl addmedia) before every run. The camera path needs a device (no camera here).
 appId: com.turftrack.poc
 tags: [share, history]
 ---
@@ -26,7 +26,7 @@ tags: [share, history]
 - tapOn: { id: 'share-photo-library' }
 # The system picker (PHPicker) lists the library's photos by their date.
 - extendedWaitUntil: { visible: 'Photo, .*', timeout: 15000 }
-- tapOn: { text: 'Photo, .*', index: 1 }
+- tapOn: { text: 'Photo, .*', index: 0 }
 - extendedWaitUntil: { visible: { id: 'share-card-preview' }, timeout: 20000 }
 - assertVisible: { id: 'share-toggle-layout' }
 - assertVisible: { id: 'share-photo-send' }
