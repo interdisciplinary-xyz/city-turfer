@@ -152,13 +152,14 @@ img {
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - var(--header-h));
-  min-height: calc(100svh - var(--header-h));
+  /* A full screen tall, header not subtracted. svh on phones, so the browser bar never hides the bottom. */
+  min-height: 100vh;
+  min-height: 100svh;
   padding: 16px 0 40px;
   isolation: isolate;
 }
 
-/* The hero fills the screen; its content sits in the vertical middle of the space under the bar. */
+/* The hero is a full screen tall; its content sits in its vertical middle. */
 .hero-grid {
   flex: 1;
   align-content: center;
