@@ -1,0 +1,786 @@
+[
+  {
+    "file": "web/landing-en-full-390.png",
+    "surface": "web",
+    "page": "landing-en-full",
+    "width": 390,
+    "locale": "en",
+    "notes": "hero-only page (PR #229): no waitlist/how/who/app/privacy/FAQ/final-CTA sections and no footer exist to shoot; both hero buttons link to #waitlist and #how, which are not on the page (dead in-page anchors); dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-en-first-screen-390.png",
+    "surface": "web",
+    "page": "landing-en-first-screen",
+    "width": 390,
+    "locale": "en",
+    "notes": "hero-only page (PR #229): no waitlist/how/who/app/privacy/FAQ/final-CTA sections and no footer exist to shoot; both hero buttons link to #waitlist and #how, which are not on the page (dead in-page anchors); dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-en-header-390.png",
+    "surface": "web",
+    "page": "landing-en-header",
+    "width": 390,
+    "locale": "en",
+    "notes": "dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-en-hero-390.png",
+    "surface": "web",
+    "page": "landing-en-hero",
+    "width": 390,
+    "locale": "en",
+    "notes": "hero-only page (PR #229): no waitlist/how/who/app/privacy/FAQ/final-CTA sections and no footer exist to shoot; both hero buttons link to #waitlist and #how, which are not on the page (dead in-page anchors); dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-en-full-768.png",
+    "surface": "web",
+    "page": "landing-en-full",
+    "width": 768,
+    "locale": "en",
+    "notes": "hero-only page (PR #229): no waitlist/how/who/app/privacy/FAQ/final-CTA sections and no footer exist to shoot; both hero buttons link to #waitlist and #how, which are not on the page (dead in-page anchors); tablet: hero copy sits low with a wide empty band above it (min-height hero, judgement call); dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-en-first-screen-768.png",
+    "surface": "web",
+    "page": "landing-en-first-screen",
+    "width": 768,
+    "locale": "en",
+    "notes": "hero-only page (PR #229): no waitlist/how/who/app/privacy/FAQ/final-CTA sections and no footer exist to shoot; both hero buttons link to #waitlist and #how, which are not on the page (dead in-page anchors); tablet: hero copy sits low with a wide empty band above it (min-height hero, judgement call); dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-en-header-768.png",
+    "surface": "web",
+    "page": "landing-en-header",
+    "width": 768,
+    "locale": "en",
+    "notes": "tablet: hero copy sits low with a wide empty band above it (min-height hero, judgement call); dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-en-hero-768.png",
+    "surface": "web",
+    "page": "landing-en-hero",
+    "width": 768,
+    "locale": "en",
+    "notes": "hero-only page (PR #229): no waitlist/how/who/app/privacy/FAQ/final-CTA sections and no footer exist to shoot; both hero buttons link to #waitlist and #how, which are not on the page (dead in-page anchors); tablet: hero copy sits low with a wide empty band above it (min-height hero, judgement call); dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-en-full-1440.png",
+    "surface": "web",
+    "page": "landing-en-full",
+    "width": 1440,
+    "locale": "en",
+    "notes": "hero-only page (PR #229): no waitlist/how/who/app/privacy/FAQ/final-CTA sections and no footer exist to shoot; both hero buttons link to #waitlist and #how, which are not on the page (dead in-page anchors); dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-en-first-screen-1440.png",
+    "surface": "web",
+    "page": "landing-en-first-screen",
+    "width": 1440,
+    "locale": "en",
+    "notes": "hero-only page (PR #229): no waitlist/how/who/app/privacy/FAQ/final-CTA sections and no footer exist to shoot; both hero buttons link to #waitlist and #how, which are not on the page (dead in-page anchors); dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-en-header-1440.png",
+    "surface": "web",
+    "page": "landing-en-header",
+    "width": 1440,
+    "locale": "en",
+    "notes": "dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-en-hero-1440.png",
+    "surface": "web",
+    "page": "landing-en-hero",
+    "width": 1440,
+    "locale": "en",
+    "notes": "hero-only page (PR #229): no waitlist/how/who/app/privacy/FAQ/final-CTA sections and no footer exist to shoot; both hero buttons link to #waitlist and #how, which are not on the page (dead in-page anchors); dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-pl-full-390.png",
+    "surface": "web",
+    "page": "landing-pl-full",
+    "width": 390,
+    "locale": "pl",
+    "notes": "hero-only page (PR #229): no waitlist/how/who/app/privacy/FAQ/final-CTA sections and no footer exist to shoot; both hero buttons link to #waitlist and #how, which are not on the page (dead in-page anchors); PL lede adds \"solo lub z psem\" (solo or with a dog), not in the EN lede: copy divergence; dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-pl-first-screen-390.png",
+    "surface": "web",
+    "page": "landing-pl-first-screen",
+    "width": 390,
+    "locale": "pl",
+    "notes": "hero-only page (PR #229): no waitlist/how/who/app/privacy/FAQ/final-CTA sections and no footer exist to shoot; both hero buttons link to #waitlist and #how, which are not on the page (dead in-page anchors); PL lede adds \"solo lub z psem\" (solo or with a dog), not in the EN lede: copy divergence; dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-pl-header-390.png",
+    "surface": "web",
+    "page": "landing-pl-header",
+    "width": 390,
+    "locale": "pl",
+    "notes": "PL lede adds \"solo lub z psem\" (solo or with a dog), not in the EN lede: copy divergence; dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-pl-hero-390.png",
+    "surface": "web",
+    "page": "landing-pl-hero",
+    "width": 390,
+    "locale": "pl",
+    "notes": "hero-only page (PR #229): no waitlist/how/who/app/privacy/FAQ/final-CTA sections and no footer exist to shoot; both hero buttons link to #waitlist and #how, which are not on the page (dead in-page anchors); PL lede adds \"solo lub z psem\" (solo or with a dog), not in the EN lede: copy divergence; dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-pl-full-768.png",
+    "surface": "web",
+    "page": "landing-pl-full",
+    "width": 768,
+    "locale": "pl",
+    "notes": "hero-only page (PR #229): no waitlist/how/who/app/privacy/FAQ/final-CTA sections and no footer exist to shoot; both hero buttons link to #waitlist and #how, which are not on the page (dead in-page anchors); tablet: hero copy sits low with a wide empty band above it (min-height hero, judgement call); PL lede adds \"solo lub z psem\" (solo or with a dog), not in the EN lede: copy divergence; dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-pl-first-screen-768.png",
+    "surface": "web",
+    "page": "landing-pl-first-screen",
+    "width": 768,
+    "locale": "pl",
+    "notes": "hero-only page (PR #229): no waitlist/how/who/app/privacy/FAQ/final-CTA sections and no footer exist to shoot; both hero buttons link to #waitlist and #how, which are not on the page (dead in-page anchors); tablet: hero copy sits low with a wide empty band above it (min-height hero, judgement call); PL lede adds \"solo lub z psem\" (solo or with a dog), not in the EN lede: copy divergence; dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-pl-header-768.png",
+    "surface": "web",
+    "page": "landing-pl-header",
+    "width": 768,
+    "locale": "pl",
+    "notes": "tablet: hero copy sits low with a wide empty band above it (min-height hero, judgement call); PL lede adds \"solo lub z psem\" (solo or with a dog), not in the EN lede: copy divergence; dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-pl-hero-768.png",
+    "surface": "web",
+    "page": "landing-pl-hero",
+    "width": 768,
+    "locale": "pl",
+    "notes": "hero-only page (PR #229): no waitlist/how/who/app/privacy/FAQ/final-CTA sections and no footer exist to shoot; both hero buttons link to #waitlist and #how, which are not on the page (dead in-page anchors); tablet: hero copy sits low with a wide empty band above it (min-height hero, judgement call); PL lede adds \"solo lub z psem\" (solo or with a dog), not in the EN lede: copy divergence; dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-pl-full-1440.png",
+    "surface": "web",
+    "page": "landing-pl-full",
+    "width": 1440,
+    "locale": "pl",
+    "notes": "hero-only page (PR #229): no waitlist/how/who/app/privacy/FAQ/final-CTA sections and no footer exist to shoot; both hero buttons link to #waitlist and #how, which are not on the page (dead in-page anchors); PL lede adds \"solo lub z psem\" (solo or with a dog), not in the EN lede: copy divergence; dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-pl-first-screen-1440.png",
+    "surface": "web",
+    "page": "landing-pl-first-screen",
+    "width": 1440,
+    "locale": "pl",
+    "notes": "hero-only page (PR #229): no waitlist/how/who/app/privacy/FAQ/final-CTA sections and no footer exist to shoot; both hero buttons link to #waitlist and #how, which are not on the page (dead in-page anchors); PL lede adds \"solo lub z psem\" (solo or with a dog), not in the EN lede: copy divergence; dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-pl-header-1440.png",
+    "surface": "web",
+    "page": "landing-pl-header",
+    "width": 1440,
+    "locale": "pl",
+    "notes": "PL lede adds \"solo lub z psem\" (solo or with a dog), not in the EN lede: copy divergence; dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/landing-pl-hero-1440.png",
+    "surface": "web",
+    "page": "landing-pl-hero",
+    "width": 1440,
+    "locale": "pl",
+    "notes": "hero-only page (PR #229): no waitlist/how/who/app/privacy/FAQ/final-CTA sections and no footer exist to shoot; both hero buttons link to #waitlist and #how, which are not on the page (dead in-page anchors); PL lede adds \"solo lub z psem\" (solo or with a dog), not in the EN lede: copy divergence; dev overlays (Next indicator, dev toolbar) hidden for the shot; dev-only: canonical/hreflang point at http://localhost:3000"
+  },
+  {
+    "file": "web/404-full-1440.png",
+    "surface": "web",
+    "page": "404-full",
+    "width": 1440,
+    "locale": "en",
+    "notes": "HTTP 404; Next.js default 404: unbranded, no header or way home, English on /pl (no not-found page in apps/web)"
+  },
+  {
+    "file": "web/404-pl-full-1440.png",
+    "surface": "web",
+    "page": "404-pl-full",
+    "width": 1440,
+    "locale": "pl",
+    "notes": "HTTP 404; Next.js default 404: unbranded, no header or way home, English on /pl (no not-found page in apps/web)"
+  },
+  {
+    "file": "web/branding-full-1440.png",
+    "surface": "web",
+    "page": "branding-full",
+    "width": 1440,
+    "locale": "en",
+    "notes": "HTTP 200; dev-only page (/branding)"
+  },
+  {
+    "file": "portal/sign-in-email-1440.png",
+    "surface": "portal",
+    "page": "sign-in-email",
+    "width": 1440,
+    "locale": "en",
+    "notes": "URL /en/account/sign-in; lede breaks inside \"e-|mail\" at the hyphen"
+  },
+  {
+    "file": "portal/sign-in-email-390.png",
+    "surface": "portal",
+    "page": "sign-in-email",
+    "width": 390,
+    "locale": "en",
+    "notes": "URL /en/account/sign-in"
+  },
+  {
+    "file": "portal/sign-in-code-1440.png",
+    "surface": "portal",
+    "page": "sign-in-code",
+    "width": 1440,
+    "locale": "en",
+    "notes": "shows the test address demo@cityturfer.com"
+  },
+  {
+    "file": "portal/sign-in-code-390.png",
+    "surface": "portal",
+    "page": "sign-in-code",
+    "width": 390,
+    "locale": "en",
+    "notes": "shows the test address demo@cityturfer.com"
+  },
+  {
+    "file": "portal/account-home-full-1440.png",
+    "surface": "portal",
+    "page": "account-home-full",
+    "width": 1440,
+    "locale": "en",
+    "notes": "shows the test address demo@cityturfer.com; shows \"Privacy policy version dev-mock\" (dev PGlite value)"
+  },
+  {
+    "file": "portal/account-your-account-1440.png",
+    "surface": "portal",
+    "page": "account-your-account",
+    "width": 1440,
+    "locale": "en",
+    "notes": "shows the test address demo@cityturfer.com"
+  },
+  {
+    "file": "portal/account-backup-1440.png",
+    "surface": "portal",
+    "page": "account-backup",
+    "width": 1440,
+    "locale": "en",
+    "notes": "shows \"Privacy policy version dev-mock\" (dev PGlite value)"
+  },
+  {
+    "file": "portal/account-what-we-store-1440.png",
+    "surface": "portal",
+    "page": "account-what-we-store",
+    "width": 1440,
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "portal/account-get-a-copy-1440.png",
+    "surface": "portal",
+    "page": "account-get-a-copy",
+    "width": 1440,
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "portal/account-signed-in-devices-1440.png",
+    "surface": "portal",
+    "page": "account-signed-in-devices",
+    "width": 1440,
+    "locale": "en",
+    "notes": "only this browser (the shooting session) listed"
+  },
+  {
+    "file": "portal/account-delete-your-account-1440.png",
+    "surface": "portal",
+    "page": "account-delete-your-account",
+    "width": 1440,
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "portal/account-delete-confirmation-1440.png",
+    "surface": "portal",
+    "page": "account-delete-confirmation",
+    "width": 1440,
+    "locale": "en",
+    "notes": "confirmation shown, NOT confirmed; disabled \"Delete my account for good\": white on pale red, low contrast (disabled, WCAG-exempt)"
+  },
+  {
+    "file": "portal/activities-list-1440.png",
+    "surface": "portal",
+    "page": "activities-list",
+    "width": 1440,
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "portal/activities-list-first-screen-1440.png",
+    "surface": "portal",
+    "page": "activities-list-first-screen",
+    "width": 1440,
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "portal/activity-detail-1440.png",
+    "surface": "portal",
+    "page": "activity-detail",
+    "width": 1440,
+    "locale": "en",
+    "notes": "route shape of a synthetic Gdańsk demo run, no map tiles"
+  },
+  {
+    "file": "portal/account-home-full-390.png",
+    "surface": "portal",
+    "page": "account-home-full",
+    "width": 390,
+    "locale": "en",
+    "notes": "shows the test address demo@cityturfer.com; shows \"Privacy policy version dev-mock\" (dev PGlite value)"
+  },
+  {
+    "file": "portal/account-your-account-390.png",
+    "surface": "portal",
+    "page": "account-your-account",
+    "width": 390,
+    "locale": "en",
+    "notes": "shows the test address demo@cityturfer.com"
+  },
+  {
+    "file": "portal/account-backup-390.png",
+    "surface": "portal",
+    "page": "account-backup",
+    "width": 390,
+    "locale": "en",
+    "notes": "shows \"Privacy policy version dev-mock\" (dev PGlite value)"
+  },
+  {
+    "file": "portal/account-what-we-store-390.png",
+    "surface": "portal",
+    "page": "account-what-we-store",
+    "width": 390,
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "portal/account-get-a-copy-390.png",
+    "surface": "portal",
+    "page": "account-get-a-copy",
+    "width": 390,
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "portal/account-signed-in-devices-390.png",
+    "surface": "portal",
+    "page": "account-signed-in-devices",
+    "width": 390,
+    "locale": "en",
+    "notes": "only this browser (the shooting session) listed"
+  },
+  {
+    "file": "portal/account-delete-your-account-390.png",
+    "surface": "portal",
+    "page": "account-delete-your-account",
+    "width": 390,
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "portal/account-delete-confirmation-390.png",
+    "surface": "portal",
+    "page": "account-delete-confirmation",
+    "width": 390,
+    "locale": "en",
+    "notes": "confirmation shown, NOT confirmed; disabled \"Delete my account for good\": white on pale red, low contrast (disabled, WCAG-exempt)"
+  },
+  {
+    "file": "portal/activities-list-390.png",
+    "surface": "portal",
+    "page": "activities-list",
+    "width": 390,
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "portal/activities-list-first-screen-390.png",
+    "surface": "portal",
+    "page": "activities-list-first-screen",
+    "width": 390,
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "portal/activity-detail-390.png",
+    "surface": "portal",
+    "page": "activity-detail",
+    "width": 390,
+    "locale": "en",
+    "notes": "route shape of a synthetic Gdańsk demo run, no map tiles"
+  },
+  {
+    "file": "portal/account-home-pl-full-1440.png",
+    "surface": "portal",
+    "page": "account-home-pl-full",
+    "width": 1440,
+    "locale": "pl",
+    "notes": "shows the test address demo@cityturfer.com; shows \"Privacy policy version dev-mock\" (dev PGlite value)"
+  },
+  {
+    "file": "portal/account-home-pl-full-390.png",
+    "surface": "portal",
+    "page": "account-home-pl-full",
+    "width": 390,
+    "locale": "pl",
+    "notes": "shows the test address demo@cityturfer.com; shows \"Privacy policy version dev-mock\" (dev PGlite value)"
+  },
+  {
+    "file": "portal/activities-list-pl-first-screen-390.png",
+    "surface": "portal",
+    "page": "activities-list-pl-first-screen",
+    "width": 390,
+    "locale": "pl",
+    "notes": ""
+  },
+  {
+    "file": "swagger/swagger-web-top-1440.png",
+    "surface": "swagger",
+    "page": "swagger-web-top",
+    "width": 1440,
+    "locale": "en",
+    "notes": "spec info.version 0.6.1 while apps/api package is 0.16.0; /v1/health example shows coreVersion 0.9.0, live answers 0.16.0"
+  },
+  {
+    "file": "swagger/swagger-web-full-1440.png",
+    "surface": "swagger",
+    "page": "swagger-web-full",
+    "width": 1440,
+    "locale": "en",
+    "notes": "spec info.version 0.6.1 while apps/api package is 0.16.0; /v1/health example shows coreVersion 0.9.0, live answers 0.16.0"
+  },
+  {
+    "file": "swagger/swagger-web-operation-1440.png",
+    "surface": "swagger",
+    "page": "swagger-web-operation",
+    "width": 1440,
+    "locale": "en",
+    "notes": "spec info.version 0.6.1 while apps/api package is 0.16.0; /v1/health example shows coreVersion 0.9.0, live answers 0.16.0; green \"Controls Accept header.\" hint on the dark theme has low contrast"
+  },
+  {
+    "file": "swagger/swagger-api-top-1440.png",
+    "surface": "swagger",
+    "page": "swagger-api-top",
+    "width": 1440,
+    "locale": "en",
+    "notes": "spec info.version 0.6.1 while apps/api package is 0.16.0; /v1/health example shows coreVersion 0.9.0, live answers 0.16.0; the API's own /swagger is stock light Swagger UI, unbranded (site /swagger is branded dark)"
+  },
+  {
+    "file": "swagger/swagger-api-full-1440.png",
+    "surface": "swagger",
+    "page": "swagger-api-full",
+    "width": 1440,
+    "locale": "en",
+    "notes": "spec info.version 0.6.1 while apps/api package is 0.16.0; /v1/health example shows coreVersion 0.9.0, live answers 0.16.0; the API's own /swagger is stock light Swagger UI, unbranded (site /swagger is branded dark)"
+  },
+  {
+    "file": "swagger/swagger-api-operation-1440.png",
+    "surface": "swagger",
+    "page": "swagger-api-operation",
+    "width": 1440,
+    "locale": "en",
+    "notes": "spec info.version 0.6.1 while apps/api package is 0.16.0; /v1/health example shows coreVersion 0.9.0, live answers 0.16.0; the API's own /swagger is stock light Swagger UI, unbranded (site /swagger is branded dark)"
+  },
+  {
+    "file": "storybook/start-1440.png",
+    "surface": "storybook",
+    "page": "start",
+    "width": 1440,
+    "locale": "en",
+    "notes": "URL /storybook/?path=/docs/app-activityrow--docs; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/app-activityrow--run-1440.png",
+    "surface": "storybook",
+    "page": "app-activityrow--run",
+    "width": 1440,
+    "locale": "en",
+    "notes": "App/ActivityRow; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/app-badge--activity-1440.png",
+    "surface": "storybook",
+    "page": "app-badge--activity",
+    "width": 1440,
+    "locale": "en",
+    "notes": "App/Badge; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/app-button--primary-1440.png",
+    "surface": "storybook",
+    "page": "app-button--primary",
+    "width": 1440,
+    "locale": "en",
+    "notes": "App/Button; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/app-card--default-1440.png",
+    "surface": "storybook",
+    "page": "app-card--default",
+    "width": 1440,
+    "locale": "en",
+    "notes": "App/Card; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/app-daystrip--default-1440.png",
+    "surface": "storybook",
+    "page": "app-daystrip--default",
+    "width": 1440,
+    "locale": "en",
+    "notes": "App/DayStrip; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/app-native-placeholders--turf-map-1440.png",
+    "surface": "storybook",
+    "page": "app-native-placeholders--turf-map",
+    "width": 1440,
+    "locale": "en",
+    "notes": "App/Native (placeholders); manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/app-progressbar--default-1440.png",
+    "surface": "storybook",
+    "page": "app-progressbar--default",
+    "width": 1440,
+    "locale": "en",
+    "notes": "App/ProgressBar; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/app-shareoverlay--white-photo-1440.png",
+    "surface": "storybook",
+    "page": "app-shareoverlay--white-photo",
+    "width": 1440,
+    "locale": "en",
+    "notes": "App/ShareOverlay; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/app-stat--default-1440.png",
+    "surface": "storybook",
+    "page": "app-stat--default",
+    "width": 1440,
+    "locale": "en",
+    "notes": "App/Stat; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/app-turflegend--default-1440.png",
+    "surface": "storybook",
+    "page": "app-turflegend--default",
+    "width": 1440,
+    "locale": "en",
+    "notes": "App/TurfLegend; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/foundations-tokens--all-1440.png",
+    "surface": "storybook",
+    "page": "foundations-tokens--all",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Foundations/Tokens; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/foundations-typography--typefaces-1440.png",
+    "surface": "storybook",
+    "page": "foundations-typography--typefaces",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Foundations/Typography; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/portal-activityhistory--list-1440.png",
+    "surface": "storybook",
+    "page": "portal-activityhistory--list",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Portal/ActivityHistory; story shows an error; CRASH \"TypeError: i is not a function\": the Storybook shim for @/i18n/navigation (apps/storybook/src/shims/i18n-navigation.tsx) exports only Link; LanguageSwitcher calls getPathname; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/portal-deleteaccount--closed-1440.png",
+    "surface": "storybook",
+    "page": "portal-deleteaccount--closed",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Portal/DeleteAccount; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/portal-devicespanel--three-devices-1440.png",
+    "surface": "storybook",
+    "page": "portal-devicespanel--three-devices",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Portal/DevicesPanel; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/portal-exportpanel--idle-1440.png",
+    "surface": "storybook",
+    "page": "portal-exportpanel--idle",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Portal/ExportPanel; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/portal-messages--all-1440.png",
+    "surface": "storybook",
+    "page": "portal-messages--all",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Portal/Messages; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/portal-pages--privacy-and-data-1440.png",
+    "surface": "storybook",
+    "page": "portal-pages--privacy-and-data",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Portal/Pages; story shows an error; CRASH \"TypeError: i is not a function\": the Storybook shim for @/i18n/navigation (apps/storybook/src/shims/i18n-navigation.tsx) exports only Link; LanguageSwitcher calls getPathname; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/portal-privacysections--backup-on-1440.png",
+    "surface": "storybook",
+    "page": "portal-privacysections--backup-on",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Portal/PrivacySections; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/portal-signinform--email-step-1440.png",
+    "surface": "storybook",
+    "page": "portal-signinform--email-step",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Portal/SignInForm; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/website-appheader--english-1440.png",
+    "surface": "storybook",
+    "page": "website-appheader--english",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Website/AppHeader; story shows an error; CRASH \"TypeError: i is not a function\": the Storybook shim for @/i18n/navigation (apps/storybook/src/shims/i18n-navigation.tsx) exports only Link; LanguageSwitcher calls getPathname; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/website-hero-city-map--gdansk-1440.png",
+    "surface": "storybook",
+    "page": "website-hero-city-map--gdansk",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Website/Hero city map; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/website-herocopy--default-1440.png",
+    "surface": "storybook",
+    "page": "website-herocopy--default",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Website/HeroCopy; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/website-heroscreens--default-1440.png",
+    "surface": "storybook",
+    "page": "website-heroscreens--default",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Website/HeroScreens; phone mock text looks lighter/narrower than on the live site (font fallback inside the phone screens?); manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/website-hero--coming-soon-1440.png",
+    "surface": "storybook",
+    "page": "website-hero--coming-soon",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Website/Hero; phone mock text looks lighter/narrower than on the live site (font fallback inside the phone screens?); manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/website-homesections--default-1440.png",
+    "surface": "storybook",
+    "page": "website-homesections--default",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Website/HomeSections; component no longer on the hero-only landing page; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/website-icons--all-icons-1440.png",
+    "surface": "storybook",
+    "page": "website-icons--all-icons",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Website/Icons; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/website-languageswitcher--english-1440.png",
+    "surface": "storybook",
+    "page": "website-languageswitcher--english",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Website/LanguageSwitcher; story shows an error; CRASH \"TypeError: i is not a function\": the Storybook shim for @/i18n/navigation (apps/storybook/src/shims/i18n-navigation.tsx) exports only Link; LanguageSwitcher calls getPathname; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/website-pageloader--loading-1440.png",
+    "surface": "storybook",
+    "page": "website-pageloader--loading",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Website/PageLoader; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/website-page--launch-1440.png",
+    "surface": "storybook",
+    "page": "website-page--launch",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Website/Page; story shows an error; CRASH \"TypeError: i is not a function\": the Storybook shim for @/i18n/navigation (apps/storybook/src/shims/i18n-navigation.tsx) exports only Link; LanguageSwitcher calls getPathname; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/website-revealmotion--default-1440.png",
+    "surface": "storybook",
+    "page": "website-revealmotion--default",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Website/RevealMotion; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/website-sitefooter--default-1440.png",
+    "surface": "storybook",
+    "page": "website-sitefooter--default",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Website/SiteFooter; component no longer on the hero-only landing page; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/website-storebuttons--coming-soon-1440.png",
+    "surface": "storybook",
+    "page": "website-storebuttons--coming-soon",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Website/StoreButtons; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "storybook/website-waitlist--default-1440.png",
+    "surface": "storybook",
+    "page": "website-waitlist--default",
+    "width": 1440,
+    "locale": "en",
+    "notes": "Website/Waitlist; component no longer on the hero-only landing page; manager chrome shown; dev toolbar hidden"
+  },
+  {
+    "file": "web/branding-first-screen-1440.png",
+    "surface": "web",
+    "page": "branding-first-screen",
+    "width": 1440,
+    "locale": "en",
+    "notes": "dev-only page (/branding)"
+  }
+]

@@ -1,0 +1,554 @@
+[
+  {
+    "file": "01-sign-in-empty.png",
+    "area": "Auth",
+    "feature": "Sign-in",
+    "state": "Email step",
+    "locale": "en",
+    "notes": "Scheme: dark (the app is dark in both system appearances; simulator system appearance was light)."
+  },
+  {
+    "file": "02-sign-in-password-filled.png",
+    "area": "Auth",
+    "feature": "Sign-in",
+    "state": "Demo profile, password step, keyboard up",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "03-dashboard-top.png",
+    "area": "Dashboard",
+    "feature": "Dashboard",
+    "state": "Top: greeting, daily goal prompt, this week",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "04-dashboard-city-recent-achievements.png",
+    "area": "Dashboard",
+    "feature": "Dashboard",
+    "state": "Scrolled: this week, current city, recent activities, achievements",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "06-stats-tab.png",
+    "area": "Stats",
+    "feature": "Stats tab",
+    "state": "Weekly bars, turf totals, all-time",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "07-turf-map-city.png",
+    "area": "Turf",
+    "feature": "Turf Map",
+    "state": "Opens fitted to the user position, whole-city overview",
+    "locale": "en",
+    "notes": "Top card covers the northern part of the map."
+  },
+  {
+    "file": "08-turf-map-all.png",
+    "area": "Turf",
+    "feature": "Turf Map",
+    "state": "All-routes fit",
+    "locale": "en",
+    "notes": "Summary card covers top ~third of the map."
+  },
+  {
+    "file": "09-turf-map-zoomed.png",
+    "area": "Turf",
+    "feature": "Turf Map",
+    "state": "Zoomed in: H3 cells coloured by type, route lines",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "10-turf-map-attribution-popup.png",
+    "area": "Turf",
+    "feature": "Turf Map",
+    "state": "MapLibre attribution popup (info button)",
+    "locale": "en",
+    "notes": "Not a turf legend: no in-app turf legend (TurfLegend component) is reachable; popup shows \"MapLibre Native iOS\" and links."
+  },
+  {
+    "file": "11-turf-map-run-filter-off.png",
+    "area": "Turf",
+    "feature": "Turf Map",
+    "state": "Run filter chip switched off",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "12-districts-list.png",
+    "area": "Districts",
+    "feature": "Districts",
+    "state": "List with map overview and shares",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "13-districts-selected.png",
+    "area": "Districts",
+    "feature": "Districts",
+    "state": "District selected, map zoomed to it",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "14-me-menu.png",
+    "area": "Me",
+    "feature": "Me drawer",
+    "state": "Profile, Account, City, Daily goal, Info",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "15-home-city-picker.png",
+    "area": "Home City",
+    "feature": "City picker",
+    "state": "Current city ticked, Clear action",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "16-home-city-picker-search.png",
+    "area": "Home City",
+    "feature": "City picker",
+    "state": "Search \"krak\"",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "17-daily-goal-editor.png",
+    "area": "Goal",
+    "feature": "Daily goal",
+    "state": "Editor modal",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "19-profile.png",
+    "area": "Me",
+    "feature": "Profile",
+    "state": "Totals and achievements entry",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "20-achievements.png",
+    "area": "Achievements",
+    "feature": "Achievements",
+    "state": "List top, 15 of 20 unlocked",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "21-achievements-scrolled.png",
+    "area": "Achievements",
+    "feature": "Achievements",
+    "state": "Scrolled, progress bars",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "22-dashboard-goal-card-top.png",
+    "area": "Goal",
+    "feature": "Daily goal card",
+    "state": "Dashboard card after setting 40 min",
+    "locale": "en",
+    "notes": "Card header sits under the status bar because of the scroll position (not a layout bug)."
+  },
+  {
+    "file": "23-account-settings.png",
+    "area": "Me",
+    "feature": "Account settings",
+    "state": "Local profile, before linking",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "24-info-top.png",
+    "area": "Info",
+    "feature": "Info",
+    "state": "Top: app version, your data, Apple Health card (not connected)",
+    "locale": "en",
+    "notes": "Apple Health only shown as the not-connected card; no real access granted."
+  },
+  {
+    "file": "25-info-scroll-1.png",
+    "area": "Info",
+    "feature": "Info",
+    "state": "Cloud backup offer, language, developer tools",
+    "locale": "en",
+    "notes": "Developer tools section is dev-build only."
+  },
+  {
+    "file": "26-info-scroll-2.png",
+    "area": "Info",
+    "feature": "Info",
+    "state": "Language, developer tools, device token",
+    "locale": "en",
+    "notes": "Dev-build only section."
+  },
+  {
+    "file": "28-history-list.png",
+    "area": "History",
+    "feature": "History list",
+    "state": "Demo history",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "29-activity-detail-top.png",
+    "area": "Activity detail",
+    "feature": "Activity detail",
+    "state": "Map, stats, turf gained, share photo",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "30-share-photo-source-sheet.png",
+    "area": "Share photo",
+    "feature": "Share photo",
+    "state": "Photo source sheet (Take photo / Choose from library)",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "31-share-card-top-place-off.png",
+    "area": "Share photo",
+    "feature": "Share photo",
+    "state": "Card preview over photo, layout Top, place Off, +1 new turf cell line",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "32-share-card-controls.png",
+    "area": "Share photo",
+    "feature": "Share photo",
+    "state": "Controls scrolled into view",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "33-share-card-place-city.png",
+    "area": "Share photo",
+    "feature": "Share photo",
+    "state": "Place = City (Gdańsk)",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "34-share-card-district-bottom-layout.png",
+    "area": "Share photo",
+    "feature": "Share photo",
+    "state": "Place = District, layout Bottom",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "35-share-card-turf-line-off-place-off.png",
+    "area": "Share photo",
+    "feature": "Share photo",
+    "state": "Turf line off, place off",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "36-activity-detail-bottom.png",
+    "area": "Activity detail",
+    "feature": "Activity detail",
+    "state": "Bottom: Share photo, Rename, Delete, splits",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "37-activity-rename-dialog.png",
+    "area": "Activity detail",
+    "feature": "Rename",
+    "state": "Rename dialog",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "38-activity-delete-confirmation.png",
+    "area": "Activity detail",
+    "feature": "Delete",
+    "state": "Delete confirmation",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "39-record-idle.png",
+    "area": "Record",
+    "feature": "Record",
+    "state": "Idle, map with turf overlay, Walk/Run/Ride",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "40-record-started-before-movement.png",
+    "area": "Record",
+    "feature": "Record",
+    "state": "Just started, 0 m",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "41-recording-live-turf-overlay.png",
+    "area": "Record",
+    "feature": "Record",
+    "state": "Recording, replaying a synthetic Gdańsk walk fixture, turf overlay on",
+    "locale": "en",
+    "notes": "Pace shows 6:56/km while the replay ran at 4 m/s (4:10/km); distance 109 m in 52 s, so the Simulator delivered fixes slower than the requested speed (replay artefact, not confirmed as an app issue)."
+  },
+  {
+    "file": "42-recording-live-later.png",
+    "area": "Record",
+    "feature": "Record",
+    "state": "Recording later, live track",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "43-recording-paused-manually.png",
+    "area": "Record",
+    "feature": "Record",
+    "state": "Paused manually",
+    "locale": "en",
+    "notes": "Auto-pause not reached: after the replay the Simulator sent no new fixes for stopped location, so the timer kept running (no auto-pause screen)."
+  },
+  {
+    "file": "44-finish-share-prompt.png",
+    "area": "Record",
+    "feature": "Finish",
+    "state": "Activity summary with \"Share a photo?\" prompt",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "45-recorded-summary-stats-turf.png",
+    "area": "Record",
+    "feature": "Finish",
+    "state": "Summary stats and Turf gained below the prompt",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "46-share-card-after-recording.png",
+    "area": "Share photo",
+    "feature": "Share photo",
+    "state": "Card after a fresh recording (+1 new turf cell)",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "50-pl-info-language.png",
+    "area": "Info",
+    "feature": "Language",
+    "state": "Polish selected",
+    "locale": "pl",
+    "notes": ""
+  },
+  {
+    "file": "51-pl-record-idle.png",
+    "area": "Record",
+    "feature": "Record",
+    "state": "Idle in Polish",
+    "locale": "pl",
+    "notes": ""
+  },
+  {
+    "file": "52-pl-history.png",
+    "area": "History",
+    "feature": "History list",
+    "state": "Polish",
+    "locale": "pl",
+    "notes": "Activity names stay English (stored names, e.g. \"Afternoon walk\"); dates and numbers are localised."
+  },
+  {
+    "file": "53-pl-activity-detail.png",
+    "area": "Activity detail",
+    "feature": "Activity detail",
+    "state": "Polish",
+    "locale": "pl",
+    "notes": "\"Usuń aktywność\" wraps to two lines; title stays English (stored name)."
+  },
+  {
+    "file": "54-pl-share-photo-card.png",
+    "area": "Share photo",
+    "feature": "Share photo",
+    "state": "Card in Polish, place City",
+    "locale": "pl",
+    "notes": "Card title stays the English stored activity name."
+  },
+  {
+    "file": "55-pl-turf-map.png",
+    "area": "Turf",
+    "feature": "Turf Map",
+    "state": "Zoomed, Polish",
+    "locale": "pl",
+    "notes": ""
+  },
+  {
+    "file": "56-pl-me-menu.png",
+    "area": "Me",
+    "feature": "Me drawer",
+    "state": "Polish",
+    "locale": "pl",
+    "notes": ""
+  },
+  {
+    "file": "57-pl-dashboard.png",
+    "area": "Dashboard",
+    "feature": "Dashboard",
+    "state": "Polish, daily goal and city cards",
+    "locale": "pl",
+    "notes": ""
+  },
+  {
+    "file": "60-info-cloud-backup-offer.png",
+    "area": "Cloud backup",
+    "feature": "Cloud backup card",
+    "state": "Offer for the local profile (\"Email me a code\")",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "61-cloud-backup-code-screen.png",
+    "area": "Cloud backup",
+    "feature": "Cloud backup",
+    "state": "Code entry. Used a LOCAL dev API on 127.0.0.1 (PGlite), not a real server",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "62-cloud-backup-linked.png",
+    "area": "Cloud backup",
+    "feature": "Cloud backup card",
+    "state": "Backup on (local dev API), Back up now, Restore",
+    "locale": "en",
+    "notes": "Status says \"Backed up 74 of 74 activities\" while the Stats tab showed 75 activities (a walk had just been recorded): possible stale count or the new walk not queued."
+  },
+  {
+    "file": "64-account-settings-linked.png",
+    "area": "Me",
+    "feature": "Account settings",
+    "state": "After linking an email",
+    "locale": "en",
+    "notes": "NAME shows \"Not set\" although the profile was \"Ola\" before linking (23) and the greeting still says Ola: possible regression."
+  },
+  {
+    "file": "70-empty-turf-map-no-city.png",
+    "area": "Home City",
+    "feature": "Turf Map",
+    "state": "No home city: \"Your city\" chip",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "71-empty-record-no-city.png",
+    "area": "Home City",
+    "feature": "Record",
+    "state": "No home city: \"Your city\" chip",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "72-empty-dashboard-city-card-no-city.png",
+    "area": "Home City",
+    "feature": "Dashboard",
+    "state": "Current city card with \"Choose your city\"",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "80-remove-demo-confirm.png",
+    "area": "Dev tools",
+    "feature": "Remove demo data",
+    "state": "Confirmation dialog",
+    "locale": "en",
+    "notes": "Dev-build only."
+  },
+  {
+    "file": "81-empty-dashboard.png",
+    "area": "Onboarding",
+    "feature": "Getting started checklist",
+    "state": "2 of 5 after one walk",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "82-empty-stats.png",
+    "area": "Stats",
+    "feature": "Stats",
+    "state": "After demo removed, one 234 m walk",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "83-turf-map-one-walk-after-demo-removed.png",
+    "area": "Turf",
+    "feature": "Turf Map",
+    "state": "One small walk after demo removed",
+    "locale": "en",
+    "notes": "9 cells are not visible at this zoom (map shows no turf); fine but the screen looks empty."
+  },
+  {
+    "file": "84-dashboard-one-activity-bottom.png",
+    "area": "Dashboard",
+    "feature": "Dashboard",
+    "state": "Near-empty: one activity, 1 of 35 districts, achievements 1/20",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "85-empty-after-last-activity-deleted.png",
+    "area": "Empty state",
+    "feature": "Dashboard",
+    "state": "No activities: goal, \"No turf here yet\", achievements 0/20",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "86-empty-stats.png",
+    "area": "Empty state",
+    "feature": "Stats",
+    "state": "All zeros",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "87-empty-history.png",
+    "area": "Empty state",
+    "feature": "History",
+    "state": "\"No activities yet. Record your first walk!\"",
+    "locale": "en",
+    "notes": "Plain text on a blank screen, no illustration or action."
+  },
+  {
+    "file": "88-empty-turf-map.png",
+    "area": "Empty state",
+    "feature": "Turf Map",
+    "state": "0 m², \"Record a walk, run or ride\" hint",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "89-empty-achievements.png",
+    "area": "Empty state",
+    "feature": "Achievements",
+    "state": "0 of 20 unlocked",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "90-first-run-getting-started-checklist.png",
+    "area": "Onboarding",
+    "feature": "Getting started checklist",
+    "state": "0 of 5 + Start recording button (first run)",
+    "locale": "en",
+    "notes": ""
+  }
+]
