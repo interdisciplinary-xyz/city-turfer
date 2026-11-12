@@ -103,7 +103,7 @@ Bounded contexts: <!-- probe:contexts -->9<!-- /probe -->
 - `achievements`: `id:` entries in `packages/core/src/contexts/achievements/domain/achievements.ts`
   (<!-- probe:achievements -->20<!-- /probe -->)
 - `e2e-flows`: `flowsOrder` entries in `apps/mobile/e2e/config.yaml`
-  (<!-- probe:e2e-flows -->19<!-- /probe -->)
+  (<!-- probe:e2e-flows -->21<!-- /probe -->)
 - `migrations`: `version:` entries in `apps/mobile/src/platform/migrations.ts`
   (<!-- probe:migrations -->15<!-- /probe -->)
 - `cities-pl`, `cities-europe`: Home City catalogue entries in

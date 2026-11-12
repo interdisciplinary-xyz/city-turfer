@@ -165,9 +165,10 @@ considered: `@shopify/react-native-skia` to draw the card; rejected for v1 (larg
 and `@cityturfer/ui` already render in plain Views, and view-shot captures exactly what the preview
 shows).
 
-Usage strings (en + pl via `InfoPlist.strings` / app config), e.g. camera: "CityTurfer uses the
-camera to take a photo for your activity's share card. The photo stays on your phone until you share
-it."
+Usage strings: English only for now, like the location and Health prompts; Polish comes with the
+native-strings release (decision L10 in `docs/decisions/mobile-i18n-2026-10-23.md`). E.g. camera:
+"CityTurfer uses the camera to take a photo for your activity's share card. The photo stays on your
+phone until you share it."
 
 ### Temp files
 
@@ -180,18 +181,23 @@ files inside our temp folders. The **card** follows the `CardFiles` policy, chos
 - **Android:** `shareAsync` (expo-sharing 57) resolves when the chooser returns, not when the target
   has read the `content://` URI: Quick Share, Bluetooth, Drive, Gmail or Instagram (its own task)
   may still be reading it. So the shared card stays, named `cityturfer-share-card<digits>.jpg`
-  (view-shot `fileName`), and a sweep deletes our cards older than **one hour** (`CARD_KEEP_MS`:
-  slow uploads and transfers fit with room to spare; a leftover is about 1 MB of cache the OS may
-  clear anyway) when the share screen opens and before each capture. Never when the screen closes: a
-  background transfer may still be reading the card. The sweep lists only the app's internal and
-  external cache folders and deletes only files with that prefix.
+  (`cardFileName`), and a sweep deletes our cards older than **one hour** (`CARD_KEEP_MS`: slow
+  uploads and transfers fit with room to spare; a leftover is about 1 MB of cache the OS may clear
+  anyway) at app launch and on each return to the foreground (`useCardSweep` in the root layout),
+  when the share screen opens and before each capture. Never when the screen closes: a background
+  transfer may still be reading the card. The card is captured to base64 and written to the app's
+  **internal** cache: a view-shot tmpfile may land in the external cache, which apps holding storage
+  permission can read on Android 9 and older. The sweep lists the app's internal and external cache
+  folders and deletes only files with that prefix.
 - **Failures** (render failed, no share sheet, the sheet threw): the card is deleted at once on both
   platforms; no target has it.
 
-Android permissions: `app.json` blocks `READ_EXTERNAL_STORAGE` and `WRITE_EXTERNAL_STORAGE` (merged
-in by expo-file-system and expo-image-picker) as well as `RECORD_AUDIO`. Nothing needs them: the
-library uses the Photo Picker, the camera needs only `CAMERA`, and view-shot writes to the app's own
-cache folders.
+Android permissions: `app.json` blocks `READ_EXTERNAL_STORAGE` (merged in by expo-file-system and
+expo-image-picker) and `RECORD_AUDIO`: the library uses the Photo Picker and the card is written to
+the app's own cache. `WRITE_EXTERNAL_STORAGE` stays (both libraries declare it with
+`maxSdkVersion="32"`, so Android 13 and later never see it): on Android 7–9 (API < 29)
+expo-image-picker's `launchCameraAsync` asks for it together with `CAMERA` and fails unless both are
+granted, so blocking it made Take photo fail silently there.
 
 ### Place of an activity (Territory, `packages/core`)
 
