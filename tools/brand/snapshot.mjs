@@ -13,8 +13,12 @@
  * Needs `pnpm run web:dev` for the web surfaces (Storybook under /storybook needs a static build)
  * and `pnpm --filter @cityturfer/api dev` for the API's Swagger; a surface that does not answer is
  * listed as skipped, never captured as an error page. The simulator is captured only when one is
- * booted, as it is (navigate to the screen first). Screenshots stay local: the app's screens can
- * show routes, so never upload or commit them (CLAUDE.md, location data is personal data).
+ * booted, as it is (navigate to the screen first). Screenshots stay local by default: the app's
+ * screens can show routes (CLAUDE.md, location data is personal data). They may be published to the
+ * `pr-assets` branch for a release PR only when they show demo or mock data (the demo account,
+ * fixture GPX replays) and someone has looked at every image first; never a real account, device
+ * or route (docs/process/release-manager.md, "Screenshots in release PRs"). Never commit them to
+ * the repo.
  *
  * Output: <out>/<surface>/<path>-<w>x<h>-reduced.png per page and size (every still uses reduced
  * motion, so no loader or entrance hides the page), ios-simulator.png for the app, and

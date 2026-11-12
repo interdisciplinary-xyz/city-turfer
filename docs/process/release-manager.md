@@ -1,6 +1,6 @@
 ---
 status: canonical
-verified: 2026-10-30
+verified: 2026-11-12
 owner: founder
 scope: [.github/workflows, .husky, .versionrc.json, commitlint.config.mjs, tools/release]
 summary:
@@ -76,6 +76,8 @@ feat/<domain>  ─PR→  scope/vX.Y.Z  ─PR→  release/vX.Y.Z  ─PR→  main 
    merged back down into the next scope.
 8. Hotfixes on `main` (`hotfix/*`) must be merged back down into the active `release/*` and
    `scope/*`.
+9. Scope → release and release → main PRs carry screenshots of every surface, demo data only
+   ([Screenshots in release PRs](#screenshots-in-release-prs)). Decided by the founder, 2026-11-12.
 
 ## Small changes straight to scope
 
@@ -175,6 +177,38 @@ hidden). Don't edit it by hand.
   rollback".
 - A release PR lists the runtime fingerprint it ships
   (`pnpm -C apps/mobile exec expo-updates fingerprint:generate --platform ios`).
+
+## Screenshots in release PRs
+
+Every `scope/*` → `release/*` and `release/*` → `main` PR carries screenshots of every feature as a
+global review. Feature PRs may add them for a visible change; they are not required there.
+
+1. **Shoot** on the PR head: each surface at phone and desktop width. `pnpm run brand:snapshot`
+   covers the website, portal, `/branding`, both Swaggers and Storybook (needs `pnpm run web:dev`,
+   the API and a Storybook static build); the admin by hand at `/admin` (its login page, no staff
+   data). App screens come from the iOS Simulator (`xcrun simctl io booted screenshot <file>`),
+   signed in as `demo@cityturfer.com` (Gdańsk demo history, `apps/mobile/src/dev/gdansk-demo.ts`),
+   or recording a fixture GPX replay (`apps/mobile/tools/sim-location.sh`). Images go to a temp
+   folder, never into the repo.
+2. **Look at every image before anything is published.** The repo is public. Only the demo account,
+   the mock accounts and fixture replays may appear: never a real account, a real device's data or a
+   real route, and no token, real e-mail address or real place someone lives. One doubtful image
+   stops the publish. A defect you see is reported in the PR body, not fixed in the same step.
+3. **Publish** to the `pr-assets` branch (images only, never merged anywhere) under `pr-<n>/`, in a
+   separate worktree of that branch (the first time:
+   `git worktree add --orphan -b pr-assets <dir>`), one commit
+   `docs(release): screenshots for #<n>`, then push it. The founder pushes it, or the main session
+   with the founder's OK for that push; agents never push it on their own.
+4. **Embed** them in the PR body under `## Screenshots`, one row per surface, as
+   `https://raw.githubusercontent.com/interdisciplinary-xyz/city-turfer/pr-assets/pr-<n>/<file>`,
+   with the SHA they were shot on. A later push that changes what is visible means shooting again; a
+   table from an older head is marked as such.
+
+Checklist line for the PR body:
+`- [ ] Screenshots of every surface (phone + desktop, app on the demo account) on head <sha>, checked for real data, under ## Screenshots`.
+
+A screenshot is evidence of what the build renders, not a design review: `brand-designer` and
+`art-director-specialist` still judge the look.
 
 ## Hooks
 

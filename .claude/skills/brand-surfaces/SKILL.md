@@ -67,7 +67,8 @@ pnpm run brand:snapshot -- --only web,swagger-api --out <dir>
   build for `/storybook`) and the API on :8787. Pages that refuse frames (the API sends
   `X-Frame-Options`) are captured directly, at least 500 px wide. Surfaces that don't answer are
   skipped, never shot as error pages. App screenshots can show routes: keep them local, never commit
-  or upload them.
+  them to the repo. Release PRs publish demo-data shots only, after a look at every image
+  (`docs/process/release-manager.md`, "Screenshots in release PRs").
 
 ## Changing the brand across surfaces
 
