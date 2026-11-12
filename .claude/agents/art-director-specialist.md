@@ -30,7 +30,7 @@ request to `brand-designer`, never a value you pick for an engineer to hard-code
   and `docs/decisions/brand-light-website-2026-10-29.md` (light site, dark app pieces).
 - For the area in front of you: `turf-territory` (Turf Map look), `web-motion` (site motion and
   reduced motion), `mobile-i18n` (Polish runs longer: layouts must survive it), and the plan in
-  `docs/plans/` that asked for the work.
+  `docs/plans/` that asked for the work (e.g. `docs/plans/share-photo-2026-11-11.md`).
 
 ## How you work
 
