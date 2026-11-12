@@ -1,0 +1,106 @@
+[
+  {
+    "file": "01-sign-in-email-empty.png",
+    "area": "Auth",
+    "feature": "Sign-in",
+    "state": "Email step",
+    "locale": "en",
+    "notes": "Expo dev 'Tools' gear button floats top-right (dev build only)."
+  },
+  {
+    "file": "02-sign-in-password-step.png",
+    "area": "Auth",
+    "feature": "Sign-in",
+    "state": "Demo profile, password step, keyboard up",
+    "locale": "en",
+    "notes": "Gear button visible (dev build)."
+  },
+  {
+    "file": "03-dashboard-top.png",
+    "area": "Dashboard",
+    "feature": "Dashboard",
+    "state": "Top: greeting, daily goal prompt, this week",
+    "locale": "en",
+    "notes": "Gear button visible (dev build)."
+  },
+  {
+    "file": "04-dashboard-bottom.png",
+    "area": "Dashboard",
+    "feature": "Dashboard",
+    "state": "Scrolled: this week, current city, recent activities, achievements",
+    "locale": "en",
+    "notes": "Content scrolls under the transparent status bar; gear button visible."
+  },
+  {
+    "file": "05-stats.png",
+    "area": "Stats",
+    "feature": "Stats tab",
+    "state": "Weekly bars, turf totals, all-time",
+    "locale": "en",
+    "notes": "Gear button visible (dev build)."
+  },
+  {
+    "file": "06-turf-map.png",
+    "area": "Turf",
+    "feature": "Turf Map",
+    "state": "City overview with filters and Districts",
+    "locale": "en",
+    "notes": "Gear button visible (dev build)."
+  },
+  {
+    "file": "07-districts.png",
+    "area": "Turf",
+    "feature": "Districts",
+    "state": "List of Gdansk districts; map area shows no tiles/boundaries yet",
+    "locale": "en",
+    "notes": "Taken right after opening: map tiles had not drawn (an earlier shot of the same screen showed boundaries)."
+  },
+  {
+    "file": "08-history.png",
+    "area": "History",
+    "feature": "History",
+    "state": "Activity list",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "09-activity-detail.png",
+    "area": "Activity",
+    "feature": "Activity detail",
+    "state": "Morning run: stats, turf gained",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "10-share-photo-source-sheet.png",
+    "area": "Share photo",
+    "feature": "Source sheet",
+    "state": "Take photo / Choose from library / Cancel",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "11-share-photo-card.png",
+    "area": "Share photo",
+    "feature": "Card",
+    "state": "Share card over the fixture image with Layout, Show new turf, Place controls",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "12-record-idle.png",
+    "area": "Recording",
+    "feature": "Record idle",
+    "state": "Walk/Run/Ride and Start walk; map tiles not drawn yet",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "13-record-recording-geo-replay.png",
+    "area": "Recording",
+    "feature": "Recording live",
+    "state": "145 m after adb emu geo fix replay of the Gdansk walk",
+    "locale": "en",
+    "notes": ""
+  }
+]

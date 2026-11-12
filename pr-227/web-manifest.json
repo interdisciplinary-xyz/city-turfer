@@ -782,5 +782,229 @@
     "width": 1440,
     "locale": "en",
     "notes": "dev-only page (/branding)"
+  },
+  {
+    "file": "portal/account-home-full-768.png",
+    "surface": "portal",
+    "page": "account-home-full",
+    "width": 768,
+    "locale": "en",
+    "notes": "shows the test address demo@cityturfer.com; shot on a worktree copy of the site (shots.cityturfer.local, same app code) against an in-memory PGlite API seeded with the demo history; shows \"Privacy policy version dev-mock\" (dev PGlite value); only this browser listed under signed-in devices; dev overlays (Next indicator, dev toolbar) hidden for the shot"
+  },
+  {
+    "file": "portal/account-home-first-screen-768.png",
+    "surface": "portal",
+    "page": "account-home-first-screen",
+    "width": 768,
+    "locale": "en",
+    "notes": "shot on a worktree copy of the site (shots.cityturfer.local, same app code) against an in-memory PGlite API seeded with the demo history; shows \"Privacy policy version dev-mock\" (dev PGlite value); only this browser listed under signed-in devices; dev overlays (Next indicator, dev toolbar) hidden for the shot"
+  },
+  {
+    "file": "portal/activities-list-768.png",
+    "surface": "portal",
+    "page": "activities-list",
+    "width": 768,
+    "locale": "en",
+    "notes": "shot on a worktree copy of the site (shots.cityturfer.local, same app code) against an in-memory PGlite API seeded with the demo history; ends with \"Show more\" (first page of 74 demo activities); dev overlays (Next indicator, dev toolbar) hidden for the shot"
+  },
+  {
+    "file": "portal/activities-list-first-screen-768.png",
+    "surface": "portal",
+    "page": "activities-list-first-screen",
+    "width": 768,
+    "locale": "en",
+    "notes": "shot on a worktree copy of the site (shots.cityturfer.local, same app code) against an in-memory PGlite API seeded with the demo history; dev overlays (Next indicator, dev toolbar) hidden for the shot"
+  },
+  {
+    "file": "portal/activity-detail-768.png",
+    "surface": "portal",
+    "page": "activity-detail",
+    "width": 768,
+    "locale": "en",
+    "notes": "route shape of a synthetic Gdańsk demo run, no map tiles; shot on a worktree copy of the site (shots.cityturfer.local, same app code) against an in-memory PGlite API seeded with the demo history; splits table spans only ~60% of the card width at 768 (judgement call); dev overlays (Next indicator, dev toolbar) hidden for the shot"
+  },
+  {
+    "file": "portal/register-en-email-390.png",
+    "surface": "portal",
+    "page": "register-en-email",
+    "width": 390,
+    "locale": "en",
+    "notes": "URL /en/account/register; wordmark hidden in header at 390 (icon only); signed-out page still shows the portal footer \"Signing out here doesn't touch your phone\" (copy meant for signed-in pages); dev overlays (Next indicator, dev toolbar) hidden for the shot"
+  },
+  {
+    "file": "portal/register-en-code-390.png",
+    "surface": "portal",
+    "page": "register-en-code",
+    "width": 390,
+    "locale": "en",
+    "notes": "mock address new-user@example.com; code requested only (local console mailer, local PGlite), never submitted, no account created; \"Send the code again\" / \"Use a different e-mail\" links sit ~5px right of the form column edge; signed-out page still shows the portal footer \"Signing out here doesn't touch your phone\" (copy meant for signed-in pages); dev overlays (Next indicator, dev toolbar) hidden for the shot"
+  },
+  {
+    "file": "portal/register-en-email-768.png",
+    "surface": "portal",
+    "page": "register-en-email",
+    "width": 768,
+    "locale": "en",
+    "notes": "URL /en/account/register; signed-out page still shows the portal footer \"Signing out here doesn't touch your phone\" (copy meant for signed-in pages); dev overlays (Next indicator, dev toolbar) hidden for the shot"
+  },
+  {
+    "file": "portal/register-en-code-768.png",
+    "surface": "portal",
+    "page": "register-en-code",
+    "width": 768,
+    "locale": "en",
+    "notes": "mock address new-user@example.com; code requested only (local console mailer, local PGlite), never submitted, no account created; \"Send the code again\" / \"Use a different e-mail\" links sit ~5px right of the form column edge; signed-out page still shows the portal footer \"Signing out here doesn't touch your phone\" (copy meant for signed-in pages); dev overlays (Next indicator, dev toolbar) hidden for the shot"
+  },
+  {
+    "file": "portal/register-en-email-1440.png",
+    "surface": "portal",
+    "page": "register-en-email",
+    "width": 1440,
+    "locale": "en",
+    "notes": "URL /en/account/register; signed-out page still shows the portal footer \"Signing out here doesn't touch your phone\" (copy meant for signed-in pages); dev overlays (Next indicator, dev toolbar) hidden for the shot"
+  },
+  {
+    "file": "portal/register-en-code-1440.png",
+    "surface": "portal",
+    "page": "register-en-code",
+    "width": 1440,
+    "locale": "en",
+    "notes": "mock address new-user@example.com; code requested only (local console mailer, local PGlite), never submitted, no account created; \"Send the code again\" / \"Use a different e-mail\" links sit ~5px right of the form column edge; signed-out page still shows the portal footer \"Signing out here doesn't touch your phone\" (copy meant for signed-in pages); dev overlays (Next indicator, dev toolbar) hidden for the shot"
+  },
+  {
+    "file": "portal/register-pl-email-390.png",
+    "surface": "portal",
+    "page": "register-pl-email",
+    "width": 390,
+    "locale": "pl",
+    "notes": "URL /pl/account/register; wordmark hidden in header at 390 (icon only); signed-out page still shows the portal footer \"Signing out here doesn't touch your phone\" (copy meant for signed-in pages); dev overlays (Next indicator, dev toolbar) hidden for the shot"
+  },
+  {
+    "file": "portal/register-pl-code-390.png",
+    "surface": "portal",
+    "page": "register-pl-code",
+    "width": 390,
+    "locale": "pl",
+    "notes": "mock address nowy-uzytkownik@example.com; code requested only (local console mailer, local PGlite), never submitted, no account created; \"Send the code again\" / \"Use a different e-mail\" links sit ~5px right of the form column edge; signed-out page still shows the portal footer \"Signing out here doesn't touch your phone\" (copy meant for signed-in pages); dev overlays (Next indicator, dev toolbar) hidden for the shot"
+  },
+  {
+    "file": "portal/register-pl-email-768.png",
+    "surface": "portal",
+    "page": "register-pl-email",
+    "width": 768,
+    "locale": "pl",
+    "notes": "URL /pl/account/register; signed-out page still shows the portal footer \"Signing out here doesn't touch your phone\" (copy meant for signed-in pages); dev overlays (Next indicator, dev toolbar) hidden for the shot"
+  },
+  {
+    "file": "portal/register-pl-code-768.png",
+    "surface": "portal",
+    "page": "register-pl-code",
+    "width": 768,
+    "locale": "pl",
+    "notes": "mock address nowy-uzytkownik@example.com; code requested only (local console mailer, local PGlite), never submitted, no account created; \"Send the code again\" / \"Use a different e-mail\" links sit ~5px right of the form column edge; signed-out page still shows the portal footer \"Signing out here doesn't touch your phone\" (copy meant for signed-in pages); dev overlays (Next indicator, dev toolbar) hidden for the shot"
+  },
+  {
+    "file": "portal/register-pl-email-1440.png",
+    "surface": "portal",
+    "page": "register-pl-email",
+    "width": 1440,
+    "locale": "pl",
+    "notes": "URL /pl/account/register; signed-out page still shows the portal footer \"Signing out here doesn't touch your phone\" (copy meant for signed-in pages); dev overlays (Next indicator, dev toolbar) hidden for the shot"
+  },
+  {
+    "file": "portal/register-pl-code-1440.png",
+    "surface": "portal",
+    "page": "register-pl-code",
+    "width": 1440,
+    "locale": "pl",
+    "notes": "mock address nowy-uzytkownik@example.com; code requested only (local console mailer, local PGlite), never submitted, no account created; \"Send the code again\" / \"Use a different e-mail\" links sit ~5px right of the form column edge; signed-out page still shows the portal footer \"Signing out here doesn't touch your phone\" (copy meant for signed-in pages); dev overlays (Next indicator, dev toolbar) hidden for the shot"
+  },
+  {
+    "file": "portal/sign-in-pl-email-390.png",
+    "surface": "portal",
+    "page": "sign-in-pl-email",
+    "width": 390,
+    "locale": "pl",
+    "notes": "URL /pl/account/sign-in; signed-out page still shows the portal footer \"Signing out here doesn't touch your phone\" (copy meant for signed-in pages); dev overlays (Next indicator, dev toolbar) hidden for the shot"
+  },
+  {
+    "file": "portal/sign-in-pl-code-390.png",
+    "surface": "portal",
+    "page": "sign-in-pl-code",
+    "width": 390,
+    "locale": "pl",
+    "notes": "shows the test address demo@cityturfer.com; code not submitted; code-sent message breaks \"6-|cyfrowy\" at the hyphen; \"Send the code again\" / \"Use a different e-mail\" links sit ~5px right of the form column edge; signed-out page still shows the portal footer \"Signing out here doesn't touch your phone\" (copy meant for signed-in pages); dev overlays (Next indicator, dev toolbar) hidden for the shot"
+  },
+  {
+    "file": "portal/sign-in-pl-email-1440.png",
+    "surface": "portal",
+    "page": "sign-in-pl-email",
+    "width": 1440,
+    "locale": "pl",
+    "notes": "URL /pl/account/sign-in; lede breaks inside \"e-|mail\" at the hyphen; title wraps with a one-word orphan line \"kopię\"; signed-out page still shows the portal footer \"Signing out here doesn't touch your phone\" (copy meant for signed-in pages); dev overlays (Next indicator, dev toolbar) hidden for the shot"
+  },
+  {
+    "file": "portal/sign-in-pl-code-1440.png",
+    "surface": "portal",
+    "page": "sign-in-pl-code",
+    "width": 1440,
+    "locale": "pl",
+    "notes": "shows the test address demo@cityturfer.com; code not submitted; lede breaks inside \"e-|mail\" at the hyphen; title wraps with a one-word orphan line \"kopię\"; \"Send the code again\" / \"Use a different e-mail\" links sit ~5px right of the form column edge; signed-out page still shows the portal footer \"Signing out here doesn't touch your phone\" (copy meant for signed-in pages); dev overlays (Next indicator, dev toolbar) hidden for the shot"
+  },
+  {
+    "file": "admin/login-1440.png",
+    "surface": "admin",
+    "page": "login",
+    "width": 1440,
+    "locale": "en",
+    "notes": "URL /admin/login; no heading or \"staff only\" context above the form, just the wordmark and stock Payload labels (\"Email\", \"Login\"); small label text on the pink button; throwaway local Postgres DB, throwaway account staff@example.com; served directly on http://127.0.0.1:3100 (ADMIN_URL), Next dev indicator hidden"
+  },
+  {
+    "file": "admin/login-390.png",
+    "surface": "admin",
+    "page": "login",
+    "width": 390,
+    "locale": "en",
+    "notes": "URL /admin/login; no heading or \"staff only\" context above the form, just the wordmark and stock Payload labels (\"Email\", \"Login\"); small label text on the pink button; throwaway local Postgres DB, throwaway account staff@example.com; served directly on http://127.0.0.1:3100 (ADMIN_URL), Next dev indicator hidden"
+  },
+  {
+    "file": "admin/dashboard-1440.png",
+    "surface": "admin",
+    "page": "dashboard",
+    "width": 1440,
+    "locale": "en",
+    "notes": "URL /admin; side nav collapsed at 1440 (hamburger only); one \"Staff\" card in a near-empty page; throwaway local Postgres DB, throwaway account staff@example.com; served directly on http://127.0.0.1:3100 (ADMIN_URL), Next dev indicator hidden"
+  },
+  {
+    "file": "admin/staff-list-1440.png",
+    "surface": "admin",
+    "page": "staff-list",
+    "width": 1440,
+    "locale": "en",
+    "notes": "URL /admin/collections/staff; \"Disabled\" column shows a raw \"false\" code chip; dates in US 12-hour format (\"November 12th 2026, 4:26 PM\"), unlike the en-GB site and portal; throwaway local Postgres DB, throwaway account staff@example.com; served directly on http://127.0.0.1:3100 (ADMIN_URL), Next dev indicator hidden"
+  },
+  {
+    "file": "admin/staff-edit-1440.png",
+    "surface": "admin",
+    "page": "staff-edit",
+    "width": 1440,
+    "locale": "en",
+    "notes": "URL /admin/collections/staff/1; the signed-in staff member's own record, not saved; Roles and Disabled sit outside the white card that holds Email (uneven grouping); US 12-hour dates; throwaway local Postgres DB, throwaway account staff@example.com; served directly on http://127.0.0.1:3100 (ADMIN_URL), Next dev indicator hidden"
+  },
+  {
+    "file": "admin/staff-create-1440.png",
+    "surface": "admin",
+    "page": "staff-create",
+    "width": 1440,
+    "locale": "en",
+    "notes": "URL /admin/collections/staff/create; form opened, nothing submitted; title reads \"[UNTITLED]\" before an e-mail is typed; Roles defaults to support-read; throwaway local Postgres DB, throwaway account staff@example.com; served directly on http://127.0.0.1:3100 (ADMIN_URL), Next dev indicator hidden"
+  },
+  {
+    "file": "admin/account-1440.png",
+    "surface": "admin",
+    "page": "account",
+    "width": 1440,
+    "locale": "en",
+    "notes": "URL /admin/account; not saved; \"Payload Settings\" heading names the vendor and is not in the brand display face used by other headings; US 12-hour dates; throwaway local Postgres DB, throwaway account staff@example.com; served directly on http://127.0.0.1:3100 (ADMIN_URL), Next dev indicator hidden"
   }
 ]

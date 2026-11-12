@@ -550,5 +550,173 @@
     "state": "0 of 5 + Start recording button (first run)",
     "locale": "en",
     "notes": ""
+  },
+  {
+    "file": "100-sign-in-code-email-entered.png",
+    "area": "Auth",
+    "feature": "Sign-in by emailed code",
+    "state": "Email step, address typed (local API, e2e test address)",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "101-sign-in-code-step.png",
+    "area": "Auth",
+    "feature": "Sign-in by emailed code",
+    "state": "Code step: 'We emailed a 6-digit code', Sign in, Send a new code",
+    "locale": "en",
+    "notes": "Wordmark overlaps the status-bar clock while the keyboard is up."
+  },
+  {
+    "file": "102-sign-in-code-filled.png",
+    "area": "Auth",
+    "feature": "Sign-in by emailed code",
+    "state": "Code entered (000000, local API fixed code)",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "103-dashboard-after-code-sign-in.png",
+    "area": "Dashboard",
+    "feature": "Getting started",
+    "state": "Fresh cloud account after code sign-in",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "104-account-overview-cloud-account.png",
+    "area": "Account",
+    "feature": "Account",
+    "state": "Name, Email, Account password rows, Sign out, Export my data, Delete account",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "105-account-name-edit.png",
+    "area": "Account",
+    "feature": "Account name",
+    "state": "Your name field + Save",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "106-account-email-change.png",
+    "area": "Account",
+    "feature": "Account email",
+    "state": "Step 1: Send code to the current address",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "107-account-password-set.png",
+    "area": "Account",
+    "feature": "Account password",
+    "state": "Set account password, Send code",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "108-account-export-my-data.png",
+    "area": "Account",
+    "feature": "Export my data",
+    "state": "'On its way' alert: download link emailed, works once for 24 h",
+    "locale": "en",
+    "notes": "Tapping the row sends the export mail at once (local API only)."
+  },
+  {
+    "file": "109-account-delete-confirm.png",
+    "area": "Account",
+    "feature": "Delete account",
+    "state": "Confirmation 'Delete your account?' with Delete / Cancel (cancelled)",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "110-record-location-permission-idle.png",
+    "area": "Recording",
+    "feature": "Location permission",
+    "state": "iOS 'Allow CityTurfer to use your location?' prompt on opening Record",
+    "locale": "en",
+    "notes": "System prompt; the app has no own explainer."
+  },
+  {
+    "file": "111-record-location-denied.png",
+    "area": "Recording",
+    "feature": "Location permission",
+    "state": "After Don't Allow: Record idle with the turf glow",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "112-record-location-denied-start-tapped.png",
+    "area": "Recording",
+    "feature": "Location permission",
+    "state": "Start tapped while denied: 'Location needed' alert pointing to Settings",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "113-share-photo-camera-denied-explainer.png",
+    "area": "Share photo",
+    "feature": "Camera denied",
+    "state": "'No camera access' sheet: Open Settings, Choose from library, Cancel",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "114-recording-live-gdansk-replay.png",
+    "area": "Recording",
+    "feature": "Recording live",
+    "state": "Walk started, GPX replay running, 58 m",
+    "locale": "en",
+    "notes": "Gdansk walk fixture replay."
+  },
+  {
+    "file": "115-dashboard-live-session-banner.png",
+    "area": "Dashboard",
+    "feature": "Live session banner",
+    "state": "'Recording walk' banner above the greeting while recording",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "116-recording-live-trail.png",
+    "area": "Recording",
+    "feature": "Recording live",
+    "state": "Live trail over existing turf, 696 m",
+    "locale": "en",
+    "notes": ""
+  },
+  {
+    "file": "117-pl-record-recording.png",
+    "area": "Recording",
+    "feature": "Record (Polish)",
+    "state": "Recording in Polish: Dystans, Czas, Tempo, Pauza, Trzymaj, by zakonczyc",
+    "locale": "pl",
+    "notes": ""
+  },
+  {
+    "file": "118-pl-stats.png",
+    "area": "Stats",
+    "feature": "Stats (Polish)",
+    "state": "Statystyki",
+    "locale": "pl",
+    "notes": ""
+  },
+  {
+    "file": "119-pl-achievements.png",
+    "area": "Achievements",
+    "feature": "Achievements (Polish)",
+    "state": "Osiagniecia, 15 z 20",
+    "locale": "pl",
+    "notes": ""
+  },
+  {
+    "file": "120-pl-finish-share-prompt.png",
+    "area": "Share photo",
+    "feature": "Finish prompt (Polish)",
+    "state": "Udostepnic zdjecie? after finishing the replayed walk",
+    "locale": "pl",
+    "notes": ""
   }
 ]
