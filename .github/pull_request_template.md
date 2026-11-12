@@ -11,6 +11,8 @@
 
 - [ ] `pnpm run ci:quality` clean locally
 - [ ] `pnpm run test:e2e` (Maestro, iOS Simulator) — required for scope → release
+- [ ] Screenshots of every surface under `## Screenshots`, demo data only, every image checked —
+      required for scope → release and release → main (`docs/process/release-manager.md`)
 
 ## Out of scope
 
