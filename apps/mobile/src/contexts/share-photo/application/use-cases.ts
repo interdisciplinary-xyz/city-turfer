@@ -68,7 +68,10 @@ export class ShareCard {
   }
 }
 
-/** The share screen opened: delete cards kept from earlier shares that no target still reads. */
+/**
+ * Delete cards kept from earlier shares that no target still reads: at app launch, on each return to
+ * the foreground and when the share screen opens.
+ */
 export class SweepCards {
   constructor(private readonly d: SharePhotoDeps) {}
   execute(): Promise<void> {

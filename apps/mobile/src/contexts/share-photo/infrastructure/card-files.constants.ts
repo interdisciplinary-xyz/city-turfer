@@ -1,7 +1,7 @@
 /**
- * Name prefix of the rendered card on Android (view-shot's `fileName`; the file is
- * `<prefix><digits>.jpg` in the app's cache). The sweep deletes only files with this prefix, so it
- * never touches the picker's copies or anything else in the cache.
+ * Name prefix of the rendered card on Android (`cardFileName`; the file is `<prefix><digits>.jpg`
+ * in the app's internal cache). The sweep deletes only files with this prefix, so it never touches
+ * the picker's copies or anything else in the cache.
  */
 export const CARD_FILE_PREFIX = 'cityturfer-share-card';
 
