@@ -6,11 +6,11 @@
   },
   "header": {
     "home": "CityTurfer, strona główna",
-    "waitlist": "Zapisz się na listę",
-    "waitlistShort": "Zapisz się",
     "nav": {
       "label": "Sekcje strony",
+      "waitlist": "Lista oczekujących",
       "how": "Jak to działa",
+      "who": "Dla kogo",
       "app": "Aplikacja",
       "privacy": "Prywatność",
       "faq": "Pytania"

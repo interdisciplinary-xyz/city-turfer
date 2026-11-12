@@ -6,11 +6,11 @@
   },
   "header": {
     "home": "CityTurfer, home",
-    "waitlist": "Join the waitlist",
-    "waitlistShort": "Join",
     "nav": {
       "label": "Page sections",
+      "waitlist": "Waitlist",
       "how": "How it works",
+      "who": "Who it’s for",
       "app": "The app",
       "privacy": "Privacy",
       "faq": "FAQ"
