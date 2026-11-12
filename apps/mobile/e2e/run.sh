@@ -56,6 +56,10 @@ if ! curl -fs "$API_URL/v1/health" >/dev/null 2>&1 && ! curl -s -o /dev/null "$A
   EXCLUDE=(--exclude-tags=account)
 fi
 
+# Flows 20 and 21 pick a photo in the system picker; an erased Simulator has none. Add a tiny
+# generated image (no EXIF/GPS) so the picker always has one; the newest photo lists first.
+xcrun simctl addmedia "$DEVICE" e2e/fixtures/share-photo.png >/dev/null 2>&1 || echo "WARNING: could not add e2e/fixtures/share-photo.png to the Simulator library." >&2
+
 OUT="e2e-results/$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$OUT"
 TARGET="e2e"
