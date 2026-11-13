@@ -2,6 +2,46 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.16.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.15.0...v0.16.0) (2026-11-13)
+
+
+### Features
+
+* **app:** share photo of an activity ([e0b3fb4](https://github.com/interdisciplinary-xyz/city-turfer/commit/e0b3fb4b11fa6542154452144313e839dc8ae6c3))
+* **claude:** add art-director-specialist agent ([aebca1b](https://github.com/interdisciplinary-xyz/city-turfer/commit/aebca1bf233c518e1d7a77cbfbd1e427cb03b5c7))
+* **web:** header links to every home section ([ff629f1](https://github.com/interdisciplinary-xyz/city-turfer/commit/ff629f1e0d03731e8dc5689628b6f6ad68e31443))
+* **web:** show only the header and the hero on the homepage ([92dfc53](https://github.com/interdisciplinary-xyz/city-turfer/commit/92dfc53c0493d42eded8f3fa2a733b7f3aa745b4))
+
+
+### Bug Fixes
+
+* **app:** block unused storage permissions and guard Share against double taps ([a6bdbf7](https://github.com/interdisciplinary-xyz/city-turfer/commit/a6bdbf736d4ca7ee63ffe96d8e38ce597912d246))
+* **app:** sweep Android share cards after an hour instead of deleting on share ([d96bbcd](https://github.com/interdisciplinary-xyz/city-turfer/commit/d96bbcd0397104003ecdf633b41537bb0c86c2ee))
+* **app:** take photo on Android 7-9 and keep share cards off external storage ([396aaf3](https://github.com/interdisciplinary-xyz/city-turfer/commit/396aaf3fafb86757047eda2f0bf5cee7bc75d9c7))
+* **web:** homepage accessibility fixes ([71e019f](https://github.com/interdisciplinary-xyz/city-turfer/commit/71e019f71749957b77355e68ac51743d3a31203c))
+* **web:** keep the focus ring on the picked turf step in high contrast ([6375ab9](https://github.com/interdisciplinary-xyz/city-turfer/commit/6375ab92bfa9b0fcd4b9ab8b03e85df81c32247f))
+
+
+### Performance
+
+* **web:** show the hero headline at first paint ([66a0caf](https://github.com/interdisciplinary-xyz/city-turfer/commit/66a0cafafa3459ab9ec4cbbd5f8df710e42d0157))
+
+
+### Documentation
+
+* **claude:** name the page loader as the source of the loaded class ([ebf0d64](https://github.com/interdisciplinary-xyz/city-turfer/commit/ebf0d645d4abdc3e6515bb7cbb62800cc3c0854e))
+* **e2e:** full path to the share-photo fixture image ([5b95076](https://github.com/interdisciplinary-xyz/city-turfer/commit/5b9507674b63295347354cd089fb28d71adf29e2))
+* **product:** add the product feature scope ([9f91855](https://github.com/interdisciplinary-xyz/city-turfer/commit/9f918554eb57a9b512038c5f1481beccd5bae623))
+* **product:** define the feature scope ([cca34a5](https://github.com/interdisciplinary-xyz/city-turfer/commit/cca34a5055a3d22d9ee3c88d61027bd31ede0df4))
+* **release:** publish demo-data screenshots in release PRs ([9902e25](https://github.com/interdisciplinary-xyz/city-turfer/commit/9902e255ffd3460b541c154f32705a7b4cd57c1c))
+* share-photo plan matches the app; e2e flow counts 19 -> 21 ([bf8d72b](https://github.com/interdisciplinary-xyz/city-turfer/commit/bf8d72b8a939839ed562a376666f0f0e91843da9))
+
+
+### Tests
+
+* **e2e:** seed a photo before the share-photo flow opens the picker ([906def7](https://github.com/interdisciplinary-xyz/city-turfer/commit/906def7268cfc683986c92d08ba525031048355a))
+* **e2e:** wait on the share prompt id and split the too-short finish subflow ([032db50](https://github.com/interdisciplinary-xyz/city-turfer/commit/032db5049ad940fe715f66dc107516cfedb299c4))
+
 ## [0.15.0](https://github.com/interdisciplinary-xyz/city-turfer/compare/v0.14.0...v0.15.0) (2026-11-10)
 
 
