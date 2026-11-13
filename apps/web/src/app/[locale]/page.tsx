@@ -1,22 +1,8 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-import {
-  Audience,
-  Faq,
-  FinalCta,
-  HeroCity,
-  HeroCopy,
-  HeroMotion,
-  HeroScreens,
-  Highlights,
-  HowItWorks,
-  LocalFirst,
-  RevealMotion,
-  Section,
-  SectionHead,
-} from '@/domains/homepage';
-import { AppHeader, SiteFooter } from '@/domains/layout';
-import { WAITLIST, WaitlistForm } from '@/domains/waitlist';
+import { HeroCity, HeroCopy, HeroMotion, HeroScreens } from '@/domains/homepage';
+import { AppHeader } from '@/domains/layout';
+import { WAITLIST } from '@/domains/waitlist';
 import type { Locale } from '@/i18n/routing';
 
 export default async function Home({ params }: { params: Promise<{ locale: Locale }> }) {
@@ -29,8 +15,9 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
       <a className='skip' href='#main'>
         {t('hero.skip')}
       </a>
-      <AppHeader locale={locale} waitlist={Boolean(WAITLIST)} nav />
-      {/* tabIndex -1: the skip link moves focus to <main> (the header's links scroll to their sections). */}
+      {/* Only the header and the hero for now: no section links, there are no sections to link to. */}
+      <AppHeader locale={locale} />
+      {/* tabIndex -1: the skip link moves focus to <main>. */}
       <main id='main' tabIndex={-1}>
         <section id='top' aria-labelledby='hero-title'>
           <HeroMotion className='hero'>
@@ -38,31 +25,10 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
             <div className='wrap hero-grid'>
               <HeroCopy waitlist={Boolean(WAITLIST)} />
               <HeroScreens />
-              {/* No download buttons for now: the waitlist comes first (StoreButtons stays for later). */}
             </div>
           </HeroMotion>
         </section>
-        {WAITLIST ? (
-          <Section name='waitlist' band className='waitlist-section'>
-            <SectionHead name='waitlist' eyebrow={t('waitlist.eyebrow')} title={t('waitlist.title')} />
-            <WaitlistForm
-              action={WAITLIST.url}
-              controller={WAITLIST.controller}
-              contactEmail={WAITLIST.contactEmail}
-              locale={locale}
-              headingId='waitlist-title'
-            />
-          </Section>
-        ) : null}
-        <HowItWorks />
-        <Audience />
-        <Highlights />
-        <LocalFirst />
-        <Faq />
-        {WAITLIST ? <FinalCta /> : null}
       </main>
-      <RevealMotion />
-      <SiteFooter contactEmail={WAITLIST?.contactEmail} />
     </>
   );
 }

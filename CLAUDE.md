@@ -75,7 +75,8 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
   (`apps/mobile/src/contexts/recording/infrastructure/live-session-store.ts`, read via
   `useSyncExternalStore`). No zustand.
 - **Export**: GPX 1.1 export is planned (M7 stretch), not built; `expo-file-system` and
-  `expo-sharing` are not installed yet
+  `expo-sharing` are installed (Share photo: `apps/mobile/src/contexts/share-photo`, with
+  `expo-image-picker` + `react-native-view-shot`; `docs/plans/share-photo-2026-11-11.md`)
 - **Tests**: Jest (`babel-preset-expo`, node environment, real SQL through `better-sqlite3` in
   `apps/mobile/src/test-support/node-database.ts`); Maestro for E2E
 
@@ -110,6 +111,8 @@ apps/mobile/                         the Expo app (package @cityturfer/mobile); 
     infrastructure/ ui/ index.ts (shim)
   src/contexts/goals/                Daily goal: minutes of moving time a day, opt-in, history per day (migration v15)
     domain/ application/ infrastructure/ ui/ index.ts contract.ts
+  src/contexts/share-photo/          Share photo: camera/library photo + activity stats card → system share sheet (no map)
+    domain/ application/ infrastructure/ ui/ index.ts
   src/platform/                      SQLite, migrations, outbox + EventDispatcher, one-off jobs, diagnostics (no coordinates)
   src/composition-root.ts            lazy, React-free wiring (used by UI and headless task)
   modules/background-session/        native iOS module (CLBackgroundActivitySession + liveUpdates)
@@ -238,13 +241,14 @@ node apps/mobile/tools/turf-preview.mjs apps/mobile/tools/fixtures/history --out
   portal in apps/web), `brand-surfaces` (one brand across app, site, portal, Swagger, Storybook).
 - Agents (`.claude/agents/`): `rn-architect`, `location-engineer`, `mobile-ui-engineer`,
   `mobile-test-engineer`, `qa-engineer` (release QA and acceptance testing across all apps),
-  `mobile-reviewer`, `brand-designer`, `health-engineer` (Apple Health), `web-engineer` (apps/web
-  landing and hosting), `portal-engineer` (signed-in web portal), `api-engineer` (back end:
-  apps/api, server data, sync), `product-manager` (the Product Owner persona; talk to it as the main
-  session with the agent flag), `harness-engineer` (skills, agents, hooks, audits), `docs-engineer`
-  (release docs: scope and release PR bodies, session log, CHANGELOG preview, stale docs). When the
-  founder says **"update all docs"**, start `docs-engineer` (worktree isolation) before scope →
-  release or release → main.
+  `mobile-reviewer`, `brand-designer`, `art-director-specialist` (visual direction and critique of
+  rendered screens, cards and pages; read-only), `health-engineer` (Apple Health), `web-engineer`
+  (apps/web landing and hosting), `portal-engineer` (signed-in web portal), `api-engineer` (back
+  end: apps/api, server data, sync), `product-manager` (the Product Owner persona; talk to it as the
+  main session with the agent flag), `harness-engineer` (skills, agents, hooks, audits),
+  `docs-engineer` (release docs: scope and release PR bodies, session log, CHANGELOG preview, stale
+  docs). When the founder says **"update all docs"**, start `docs-engineer` (worktree isolation)
+  before scope → release or release → main.
 - Commands (`.claude/commands/`): `audit-docs` (`/audit-docs`).
 - Hooks (`.claude/settings.json`, rules in `tools/harness/hook-rules.mjs`): deny edits that break
   the dependency rule, touch `CHANGELOG.md`, secret files or generated native folders; deny push to

@@ -33,7 +33,7 @@ function Page({ waitlist }: PageProps) {
       <a className='skip' href='#main'>
         {t('hero.skip')}
       </a>
-      <AppHeader locale={locale} waitlist={waitlist} nav />
+      <AppHeader locale={locale} nav waitlistSection={waitlist} />
       <main id='main' tabIndex={-1}>
         <section id='top' aria-labelledby='hero-title'>
           <HeroMotion className='hero'>

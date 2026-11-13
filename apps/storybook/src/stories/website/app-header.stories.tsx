@@ -13,14 +13,14 @@ const withScroll: Decorator = (Story) => (
 const meta = {
   title: 'Website/AppHeader',
   component: AppHeader,
-  args: { locale: 'en', waitlist: true, nav: true },
+  args: { locale: 'en', nav: true, waitlistSection: true },
   argTypes: { locale: { control: 'inline-radio', options: ['en', 'pl'] } },
   decorators: [withScroll],
   parameters: {
     docs: {
       description: {
         component:
-          'Sticky top bar with the logo, the section links (the landing page only, from 1024 px), the waitlist link and the language switcher. Solid from the start, on every page. The portal (sign in, create account) is reached by its own URLs, not from here.',
+          'Sticky top bar across the full window width (48 px side padding from 600 px): the logo on the left; on the right the section links (the landing page only, from 1024 px) and the language switcher. Solid from the start, on every page. The portal (sign in, create account) is reached by its own URLs, not from here.',
       },
     },
   },
@@ -36,9 +36,7 @@ export const WithoutNav: StoryObj<typeof meta> = { args: { nav: false } };
 
 export const Polish: StoryObj<typeof meta> = { args: { locale: 'pl' } };
 
-export const NoWaitlist: StoryObj<typeof meta> = { args: { waitlist: false } };
-
-/** The smallest phone we support: logo mark, the short call to action ("Zapisz się") and the switch must fit. */
+/** The smallest phone we support: the logo mark and the switch must fit. */
 export const Polish320: StoryObj<typeof meta> = {
   args: { locale: 'pl' },
   decorators: [(Story) => <div style={{ width: 320, border: '1px dashed var(--border)' }}>{Story()}</div>],

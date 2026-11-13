@@ -150,6 +150,21 @@
   outline-offset: 2px;
 }
 
+/* Windows high contrast drops the fill and the swatches: mark the picked step in system colours. */
+@media (forced-colors: active) {
+  /* forced-color-adjust: none, or the browser's text backplate hides HighlightText. */
+  .turf-demo-step[aria-pressed='true'] {
+    forced-color-adjust: none;
+    border-color: Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+  /* forced-color-adjust: none keeps the author focus colour too: give it a system one. */
+  .turf-demo-step[aria-pressed='true']:focus-visible {
+    outline-color: CanvasText;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .td-street,
   .td-city,

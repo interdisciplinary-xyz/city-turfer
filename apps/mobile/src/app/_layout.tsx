@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ACCENT, DARK, DISPLAY_CASE, DISPLAY_TRACKING, FONT_FAMILY } from '@/constants/colors';
+import { useCardSweep } from '@/contexts/share-photo/ui/use-card-sweep';
 import { I18nProvider, useLanguageSetting, useT } from '@/i18n';
 import { AppProvider, useApp } from '@/ui-kit/app-context';
 import { usePalette } from '@/ui-kit/theme';
@@ -13,6 +14,7 @@ function Gate() {
   const { auth } = useApp();
   const [language] = useLanguageSetting();
   const t = useT('nav');
+  const share = useT('share');
   const common = useT('common');
   const back = common('back');
   const close = common('close');
@@ -126,12 +128,33 @@ function Gate() {
             ),
           }}
         />
+        <Stack.Screen
+          name='share-photo/[id]'
+          options={{
+            presentation: 'fullScreenModal',
+            headerShown: true,
+            title: share('screen.title'),
+            headerBackVisible: false,
+            headerRight: () => (
+              <Pressable
+                testID='share-photo-close'
+                onPress={() => router.back()}
+                accessibilityRole='button'
+                hitSlop={12}
+              >
+                <Text style={{ color: p.text, fontSize: FONT_SIZE.body, fontWeight: FONT_WEIGHT.bold }}>{close}</Text>
+              </Pressable>
+            ),
+          }}
+        />
       </Stack.Protected>
     </Stack>
   );
 }
 
 export default function RootLayout() {
+  // Android share cards older than an hour go at launch and on each return to the app.
+  useCardSweep();
   return (
     <SafeAreaProvider>
       <I18nProvider>

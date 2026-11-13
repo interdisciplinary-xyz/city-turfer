@@ -1,4 +1,5 @@
 // Public API of the Territory context.
+import { GetActivityPlace } from './application/activity-place';
 import { GetDistrictCoverage } from './application/districts';
 import {
   ChooseHomeCity,
@@ -44,6 +45,7 @@ export function createTerritoryApi(deps: TerritoryDeps & HomeCityDeps & { distri
     chooseHomeCity: new ChooseHomeCity(deps),
     searchCities: new SearchCities(),
     districts: new GetDistrictCoverage(deps),
+    activityPlace: new GetActivityPlace(deps),
   };
 }
 export type TerritoryApi = ReturnType<typeof createTerritoryApi>;

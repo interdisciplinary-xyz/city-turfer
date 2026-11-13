@@ -15,6 +15,8 @@ export { DayStrip } from './day-strip/day-strip';
 export type { DayStripDay, DayStripProps } from './day-strip/day-strip.constants';
 export { ProgressBar } from './progress-bar/progress-bar';
 export type { ProgressBarProps } from './progress-bar/progress-bar.constants';
+export { ShareOverlay } from './share-overlay/share-overlay';
+export type { ShareOverlayLayout, ShareOverlayProps, ShareOverlayStat } from './share-overlay/share-overlay.constants';
 export { Stat } from './stat/stat';
 export type { StatProps } from './stat/stat.constants';
 export { ThemeProvider, usePalette, useScheme } from './theme/theme';

@@ -15,6 +15,7 @@ export function SiteFooter({ contactEmail }: { contactEmail?: string }) {
   const t = useTranslations('footer');
   const th = useTranslations('header.nav');
   const tagline = useTranslations('hero');
+  const ta = useTranslations('a11y');
   return (
     <footer className='site-footer' aria-label={t('label')}>
       <div className='wrap'>
@@ -44,6 +45,7 @@ export function SiteFooter({ contactEmail }: { contactEmail?: string }) {
             <p>
               <a href='https://www.openstreetmap.org/copyright' rel='noopener noreferrer' target='_blank'>
                 {t('mapCredit')}
+                <span className='visually-hidden'> {ta('newTab')}</span>
               </a>
             </p>
           </div>

@@ -13,6 +13,7 @@ import { CITY_BOOT_SCRIPT, DEFAULT_HERO_CITY } from './hero-city.constants';
  */
 export function HeroCity() {
   const t = useTranslations('hero');
+  const ta = useTranslations('a11y');
   return (
     <>
       <div className='hero-city' data-city={DEFAULT_HERO_CITY} suppressHydrationWarning>
@@ -29,6 +30,7 @@ export function HeroCity() {
         target='_blank'
       >
         {t('mapCredit')}
+        <span className='visually-hidden'> {ta('newTab')}</span>
       </a>
     </>
   );

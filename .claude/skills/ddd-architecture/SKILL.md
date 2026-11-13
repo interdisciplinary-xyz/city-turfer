@@ -14,7 +14,7 @@ DDD is a **hard requirement** for this project. The design lives in `docs/poc-pl
 ## Where does this code go?
 
 Contexts: Identity, Recording, Activity Log, Territory, Health Sync, Cloud Backup, Achievements,
-Goals, plus the Shared Kernel (`CLAUDE.md` has the layout).
+Goals, Share Photo, plus the Shared Kernel (`CLAUDE.md` has the layout).
 
 First, which package. **`packages/core` (`@cityturfer/core`)** holds what the phone and the server
 both run: the shared kernel, the core constants (activity types, tracking thresholds, Earth radius,
@@ -79,9 +79,22 @@ Read the live file; don't copy rules into docs.
 
 Exceptions: the root `index.ts` imports the background task module (it sits outside
 `apps/mobile/src/`, so depcruise doesn't cruise it), and `apps/mobile/src/composition-root.ts` /
-`apps/mobile/src/wiring.ts` may import anything (no rule has them as a `from`). Don't relax the
-rules. When you add a rule, prove it with a deliberately violating file, check that `arch` fails,
-then delete the file.
+`apps/mobile/src/wiring.ts` are not the `from` of any rule. They are still not free to import
+anything: two rules guard the headless background task, and the composition root is loaded by it
+(through `getContainer()`):
+
+- `background-task-stays-offline`: `background-task.ts` and `location-batch-handler.ts` import
+  nothing from Cloud Backup, Identity's `api-auth-gateway` / `secure-store-credential-store`, or any
+  context's `infrastructure/fetch-*`, `api-*` or `osm-*` adapter.
+- `background-task-no-share-natives`: nothing **reachable** from `background-task.ts` loads
+  `expo-image-picker`, `react-native-view-shot`, `expo-sharing` or `expo-file-system` (view-shot
+  looks up its TurboModule at import). Wiring them into `composition-root.ts` or `wiring.ts` fails
+  `pnpm test`. Share Photo wires its native adapters in
+  `apps/mobile/src/contexts/share-photo/ui/share-photo-api.ts`, loaded by the UI only; do the same
+  for any other UI-only native module.
+
+Don't relax the rules. When you add a rule, prove it with a deliberately violating file, check that
+`arch` fails, then delete the file.
 
 ## Patterns
 

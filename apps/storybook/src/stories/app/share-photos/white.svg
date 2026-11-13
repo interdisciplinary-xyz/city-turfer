@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+<!-- White: Storybook sample photo for ShareOverlay; generated, not a real photo. -->
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgb(250,251,252)"/><stop offset="0.6" stop-color="rgb(236,240,244)"/><stop offset="1" stop-color="rgb(255,255,255)"/></linearGradient></defs><rect width="1080" height="1920" fill="url(#g)"/><ellipse cx="540" cy="1500" rx="900" ry="220" fill="rgb(245,247,250)"/>
+</svg>

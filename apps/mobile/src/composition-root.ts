@@ -28,6 +28,7 @@ import { SecureStoreSessionStore } from '@/contexts/identity/infrastructure/secu
 import { backgroundActivitySession } from '@/contexts/recording/infrastructure/background-activity-session';
 import { ExpoLocationTracker, ExpoPermissionGateway } from '@/contexts/recording/infrastructure/expo-location-tracker';
 import { liveSessionStore } from '@/contexts/recording/infrastructure/live-session-store';
+import { SecureStoreSharePromptFlag } from '@/contexts/share-photo/infrastructure/secure-store-share-prompt-flag';
 import { turfOverlayPreference } from '@/contexts/territory/infrastructure/turf-overlay-preference';
 import { deleteExpoDatabase, openExpoDatabase } from '@/platform/expo-database';
 import { runWhenForeground } from '@/platform/foreground';
@@ -42,6 +43,9 @@ import { type Container, wire } from './wiring';
 const sessionStore = new CachedSessionStore(new SecureStoreSessionStore());
 const tracker = new ExpoLocationTracker();
 const profileNames = new SecureStoreProfileNameStore();
+// Only the Share Photo flag (to forget it with a profile): the rest of Share Photo is wired in its
+// ui/share-photo-api.ts, so the headless background task never loads camera, view-shot or sharing.
+const sharePromptFlag = new SecureStoreSharePromptFlag();
 
 const CLIENT = `${Platform.OS}/${Constants.expoConfig?.version ?? 'dev'}`;
 const databaseName = (profileId: string) => `turftrack-${profileId}.db`;
@@ -72,8 +76,8 @@ async function profileHasActivities(profileId: string): Promise<boolean> {
     const c = await current.promise.catch(() => null);
     return c ? (await c.activityLog.list.execute(1)).length > 0 : false;
   }
-  // expo-sqlite has no "does it exist" nor read-only open, and expo-file-system is not a dependency
-  // of the app (adding it changes the runtime fingerprint). So: open, and if the file holds no
+  // expo-sqlite has no "does it exist" nor read-only open (expo-file-system, added for Share photo,
+  // could check the file, but this probe predates it and works). So: open, and if the file holds no
   // tables at all it was never used (this probe just created it): delete it again, so asking
   // leaves no empty database behind.
   const name = databaseName(profileId);
@@ -106,6 +110,7 @@ async function eraseProfile(profileId: string): Promise<void> {
   });
   await new SecureStoreDeviceTokenStore(profileId).clear();
   await onboardingDismissal.forget(profileId);
+  await sharePromptFlag.forget(profileId);
   await turfOverlayPreference.forget(profileId);
   await profileNames.forget(profileId);
 }

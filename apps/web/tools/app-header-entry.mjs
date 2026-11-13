@@ -10,7 +10,6 @@ import { createRoot } from 'react-dom/client';
 
 import en from '../messages/en.json';
 import { AppHeaderView } from '../src/domains/layout/components/app-header/app-header-view';
-import { WAITLIST } from '../src/domains/waitlist/waitlist-config';
 
 const LOCALE = 'en';
 const LOCALES = ['en', 'pl'];
@@ -41,9 +40,6 @@ if (host) {
           h('img', { className: 'app-header-mark', src: mark, alt: '', width: 32, height: 32 }),
           h('img', { className: 'app-header-wordmark', src: wordmark, alt: '', width: 90, height: 20 })
         ),
-        waitlist: WAITLIST
-          ? { href: `/${LOCALE}#waitlist`, label: en.header.waitlist, shortLabel: en.header.waitlistShort }
-          : null,
         languages,
       })
     );

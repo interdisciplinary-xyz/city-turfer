@@ -25,8 +25,5 @@ tags: [recording, turf]
 - extendedWaitUntil: { visible: { id: 'stat-distance' }, timeout: 15000 }
 - tapOn: { id: 'record-turf' }
 - assertVisible: { id: 'record-turf', checked: true }
-- runFlow: subflows/finish.yaml
-- extendedWaitUntil: { visible: 'Too short to save', timeout: 10000 }
-- tapOn: 'Discard'
-- extendedWaitUntil: { visible: { id: 'record-start' }, timeout: 10000 }
+- runFlow: subflows/finish-too-short.yaml
 - assertVisible: { id: 'record-turf', checked: true }

@@ -104,7 +104,9 @@ Body = `.github/pull_request_template.md`, filled honestly:
   reinstall)? Anything in `apps/mobile/app.json`, `apps/mobile/plugins/`, `apps/mobile/modules/`,
   native dependencies or `packages/ui` dependencies is suspect: compare
   `pnpm -C apps/mobile exec expo-updates fingerprint:generate --platform ios` with the base.
-- Release PRs also list the fingerprint they ship.
+- Release PRs also list the fingerprint they ship, and carry `## Screenshots` of every surface, demo
+  data only (`docs/process/release-manager.md`, "Screenshots in release PRs"; you don't push
+  `pr-assets` without the founder's OK).
 - End with the PR attribution line from the system reminder when one is given.
 
 ## 4. After

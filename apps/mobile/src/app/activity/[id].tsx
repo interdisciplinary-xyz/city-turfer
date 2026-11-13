@@ -1,28 +1,46 @@
 import { SPACE } from '@cityturfer/brand';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Text, View } from 'react-native';
 
 import { ActivityDetailView } from '@/contexts/activity-log/ui/activity-detail-view';
 import { useActivity } from '@/contexts/activity-log/ui/hooks';
 import { RenameActivityDialog } from '@/contexts/activity-log/ui/rename-activity-dialog';
 import { isImportedFromHealth } from '@/contexts/health-sync';
+import type { PickedPhoto } from '@/contexts/share-photo';
+import { SharePhotoButton } from '@/contexts/share-photo/ui/share-photo-button';
+import { SharePromptCard } from '@/contexts/share-photo/ui/share-prompt-card';
 import { useClaim } from '@/contexts/territory/ui/hooks';
 import { ClaimLayers } from '@/contexts/territory/ui/layers';
 import { TurfGainedCard } from '@/contexts/territory/ui/turf-gained-card';
 import { useT } from '@/i18n';
+import { useApp } from '@/ui-kit/app-context';
 import { Button } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
 
-/** Composes Activity Log (the activity) with Territory (the turf it claimed). */
+/**
+ * Composes Activity Log (the activity) with Territory (the turf it claimed) and Share Photo (the
+ * button, and the "Share a photo?" card when opened straight from Finish: `justFinished=1`).
+ */
 export default function ActivityScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, justFinished } = useLocalSearchParams<{ id: string; justFinished?: string }>();
+  const { auth } = useApp();
+  const userId = auth.status === 'signed-in' ? auth.user.id : null;
   const p = usePalette();
   const t = useT('activity');
   const tc = useT('common');
   const { detail, remove, rename } = useActivity(id);
   const claim = useClaim(id);
   const [renaming, setRenaming] = useState(false);
+  // The photo is a local cache file; the share screen deletes it when it closes.
+  const openShare = useCallback(
+    (photo: PickedPhoto) =>
+      router.push({
+        pathname: '/share-photo/[id]',
+        params: { id, uri: photo.uri, w: String(photo.width), h: String(photo.height) },
+      }),
+    [id]
+  );
 
   if (detail === undefined || detail === null) {
     return (
@@ -36,13 +54,18 @@ export default function ActivityScreen() {
   return (
     <>
       <Stack.Screen options={{ title: detail.name }} />
-      <ActivityDetailView a={detail} mapOverlay={<ClaimLayers claim={claim} />}>
+      <ActivityDetailView
+        a={detail}
+        mapOverlay={<ClaimLayers claim={claim} />}
+        top={<SharePromptCard userId={userId} justFinished={justFinished === '1'} onPicked={openShare} />}
+      >
         {isImportedFromHealth(detail.id) && (
           <Text testID='from-apple-health' style={{ color: p.muted, textAlign: 'center' }}>
             {t('fromAppleHealth')}
           </Text>
         )}
         <TurfGainedCard claim={claim} />
+        <SharePhotoButton onPicked={openShare} />
         <View style={{ flexDirection: 'row', gap: SPACE.sm }}>
           <Button
             testID='rename-activity'

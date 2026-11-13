@@ -6,11 +6,11 @@
   },
   "header": {
     "home": "CityTurfer, home",
-    "waitlist": "Join the waitlist",
-    "waitlistShort": "Join",
     "nav": {
       "label": "Page sections",
+      "waitlist": "Waitlist",
       "how": "How it works",
+      "who": "Who it’s for",
       "app": "The app",
       "privacy": "Privacy",
       "faq": "FAQ"
@@ -256,6 +256,9 @@
     "navLabel": "Footer links",
     "noCookies": "This site sets no cookies and loads no trackers.",
     "mapCredit": "© OpenStreetMap contributors"
+  },
+  "a11y": {
+    "newTab": "(opens in a new tab)"
   },
   "language": {
     "label": "Language",

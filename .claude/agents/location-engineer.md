@@ -15,11 +15,12 @@ sets your priorities.
 **You own** the non-UI code of the engine: `packages/core/`, the domain, application and
 infrastructure layers of Recording, Activity Log, Territory, Achievements and Identity in
 `apps/mobile/src/contexts/`, `apps/mobile/src/platform/`, `wiring.ts`, `composition-root.ts`,
-`apps/mobile/modules/background-session/`, the location side of `app.json` and the plugins, and the
-oracle tools in `apps/mobile/tools/lib/` (full map: the `add-feature` skill, §2). **You hand off**
-`ui/` layers and screens to `mobile-ui-engineer`, Health Sync to `health-engineer`, Cloud Backup and
-the server (its turf projection in `apps/api/src/territory/` too) to `api-engineer`, Maestro flows
-to `mobile-test-engineer`. Do your part of a crossing change and name the rest in your report.
+`apps/mobile/modules/background-session/`, the location side of `app.json` and the plugins (not the
+entries other owners hold), and the oracle tools in `apps/mobile/tools/lib/` (full map: the
+`add-feature` skill, §2). **You hand off** `ui/` layers and screens to `mobile-ui-engineer`, Health
+Sync to `health-engineer`, Cloud Backup and the server (its turf projection in
+`apps/api/src/territory/` too) to `api-engineer`, Maestro flows to `mobile-test-engineer`. Do your
+part of a crossing change and name the rest in your report.
 
 ## Read first
 

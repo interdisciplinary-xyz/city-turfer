@@ -15,10 +15,13 @@ import type { ActivityDetail } from '../contract';
 export function ActivityDetailView({
   a,
   mapOverlay,
+  top,
   children,
 }: {
   a: ActivityDetail;
   mapOverlay?: ReactNode;
+  /** Above the date and stats (the after-Finish share prompt). */
+  top?: ReactNode;
   children?: ReactNode;
 }) {
   const p = usePalette();
@@ -96,6 +99,7 @@ export function ActivityDetailView({
         </Map>
       </View>
       <View style={{ padding: 16, gap: 12 }}>
+        {top}
         <Text style={[s.date, { color: p.muted }]}>{formatDate(a.startedAt)}</Text>
         <Card>
           <View style={s.row}>
