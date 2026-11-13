@@ -252,7 +252,8 @@ deep link, web turf map, admin.
 
 **v0.16.0 native impact.** `expo-file-system`, `expo-sharing`, `expo-image-picker`,
 `react-native-view-shot` and two config plugins are new since v0.15.0, so testers need a new iOS
-build and Android APK; it can't ship over the air. `apps/mobile/app.json` still says 0.15.0.
+build and Android APK; it can't ship over the air. `apps/mobile/app.json` says 0.16.0 since the
+release commit `caafd6e` (2026-11-13).
 
 ## 5. Non-goals
 

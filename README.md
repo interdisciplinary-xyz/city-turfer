@@ -19,11 +19,12 @@ glows brighter each time you come back.
 | Pick your city               | Centres the maps on your Home City                                                               |
 | Set a daily goal (optional)  | Counts today's moving minutes on the Dashboard, with the last 7 days and a streak of days met    |
 | Use Apple Health (iOS)       | Imports walks, hikes, runs and rides with routes from the day you connect; saves recordings back |
+| Share a photo                | Lays the activity's stats over your photo (no map, place optional) and opens the share sheet     |
 
 **Not for:** competing for territory with other people, training plans or heart-rate analysis.
 CityTurfer is single-player and local-first: the phone is the source of truth.
 
-> [!NOTE] Status: **v0.14.0 released** (proof of concept: iOS dev builds, Android APK), **v0.15.0 in
+> [!NOTE] Status: **v0.16.0 released** (proof of concept: iOS dev builds, Android APK), **v0.17.0 in
 > progress**. Local profiles `admin@cityturfer.com` / `admin1234` and `demo@cityturfer.com` /
 > `demo1234` (Gdańsk demo data); any other e-mail signs in with an e-mailed code against the API.
 > Data stays on the phone unless you turn on **Cloud backup** (opt-in, one way, signed-in account).
@@ -315,9 +316,9 @@ pnpm -C apps/mobile dlx eas-cli@latest update --channel production --environment
 ```
 
 OTA updates reach only builds with the same runtime fingerprint. Changing native code, plugins or
-`app.json` (including its `version`) needs a new build: v0.10.0 is such a release (the Street Plate
-typefaces, and the release commit bumps `app.json`'s `version`). Details:
-[OTA release](./docs/operations/ota-release.md),
+`app.json` (including its `version`) needs a new build: v0.10.0 (the Street Plate typefaces) and
+v0.16.0 (Share photo's native modules) are such releases, and every release commit bumps
+`app.json`'s `version`. Details: [OTA release](./docs/operations/ota-release.md),
 [Android release](./docs/operations/android-release.md).
 
 ---
