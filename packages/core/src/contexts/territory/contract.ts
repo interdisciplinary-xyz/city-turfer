@@ -93,6 +93,19 @@ export interface DistrictCoverageView {
   polygons: [number, number][][][];
 }
 
+/**
+ * Where an activity happened, for a label on its share card: the catalogue city holding most of its
+ * Track Points and, where the app has the city's boundaries, the district holding most of them.
+ * Computed on the phone on demand; never stored, logged or sent. Display names: `city.name` is the
+ * catalogue (English) name, so screens localise it by `city.id`; district names are local (as OSM).
+ */
+export interface ActivityPlaceView {
+  /** Null when the activity is in no catalogue city (or has no track). */
+  city: CityView | null;
+  /** Null without a city, when the city has no bundled districts, or when no point is in one. */
+  district: string | null;
+}
+
 /** The Districts screen: no Home City, a Home City without district data, or its districts. */
 export type DistrictsView =
   | { status: 'no-city' }

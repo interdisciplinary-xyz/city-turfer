@@ -146,6 +146,14 @@ const PAIRS: Pair[] = [
   },
   { name: 'app focus outline --text on --bg', fg: APP['--text'], bg: APP['--bg'], min: MIN_CONTRAST.ui },
   { name: 'app Replay --accent-text on --bg', fg: APP['--accent-text'], bg: APP['--bg'], min: MIN_CONTRAST.text },
+  // Share card (docs/plans/share-photo-2026-11-11.md, Card design): text on the scrim plateau, DARK.bg at
+  // 0.6 opacity, over the worst-case photo, pure white. 4.51 before the text shadow.
+  {
+    name: 'share card text on the 0.6 scrim over a white photo',
+    fg: DARK.text,
+    bg: mixSrgb(DARK.bg, '#FFFFFF', 0.6),
+    min: MIN_CONTRAST.text,
+  },
   // Swagger and Storybook (SITE_SCHEME, dark).
   { name: 'site --on-accent on --accent', fg: SITE['--on-accent'], bg: SITE['--accent'], min: MIN_CONTRAST.text },
   { name: 'site --accent-text on --card', fg: SITE['--accent-text'], bg: SITE['--card'], min: MIN_CONTRAST.text },

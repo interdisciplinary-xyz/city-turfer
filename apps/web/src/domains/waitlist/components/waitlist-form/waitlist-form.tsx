@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { type FormEvent, useId, useState } from 'react';
+import { type FormEvent, useEffect, useId, useRef, useState } from 'react';
 
 import { BREVO_FIELDS, type WaitlistFormProps, type WaitlistState } from './waitlist-form.constants';
 
@@ -14,9 +14,21 @@ export function WaitlistForm({ action, controller, contactEmail, locale, heading
   const t = useTranslations('waitlist');
   const id = useId();
   const [state, setState] = useState<WaitlistState>('idle');
+  const done = useRef<HTMLParagraphElement>(null);
+
+  // The form (and the button that had focus) is replaced by the confirmation: move focus to it, so
+  // keyboard and screen reader users land on the message instead of the top of the page.
+  useEffect(() => {
+    if (state === 'sent') {
+      done.current?.focus();
+    }
+  }, [state]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (state === 'sending') {
+      return; // the button is aria-disabled, not disabled, so it keeps focus while sending
+    }
     const form = event.currentTarget;
     const data = new FormData(form);
     if (data.get(BREVO_FIELDS.honeypot)) {
@@ -35,7 +47,9 @@ export function WaitlistForm({ action, controller, contactEmail, locale, heading
   if (state === 'sent') {
     return (
       <div className='waitlist' role='status'>
-        <p className='waitlist-done'>{t('sent')}</p>
+        <p ref={done} className='waitlist-done' tabIndex={-1}>
+          {t('sent')}
+        </p>
       </div>
     );
   }
@@ -56,7 +70,7 @@ export function WaitlistForm({ action, controller, contactEmail, locale, heading
           inputMode='email'
           placeholder={t('emailPlaceholder')}
         />
-        <button className='btn btn-primary' type='submit' disabled={state === 'sending'}>
+        <button className='btn btn-primary' type='submit' aria-disabled={state === 'sending' || undefined}>
           {state === 'sending' ? t('sending') : t('submit')}
         </button>
       </div>

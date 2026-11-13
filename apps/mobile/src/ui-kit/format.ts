@@ -89,6 +89,11 @@ export function formatDay(ms: number, locale: string = currentDateLocale()): str
   return dateFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' }, 'day').format(new Date(ms));
 }
 
+/** A clock time, e.g. "05:36 PM" (en-US), "17:36" (en-GB, pl): the share card's start time. */
+export function formatTime(ms: number, locale: string = currentDateLocale()): string {
+  return dateFormat(locale, { hour: '2-digit', minute: '2-digit' }, 'time').format(new Date(ms));
+}
+
 /** A day and month in digits, e.g. "10/22" (en-US), "22/10" (en-GB) or "22.10" (pl): week labels on Stats. */
 export function formatDayMonth(ms: number, locale: string = currentDateLocale()): string {
   return dateFormat(locale, { day: 'numeric', month: 'numeric' }, 'dayMonth').format(new Date(ms));

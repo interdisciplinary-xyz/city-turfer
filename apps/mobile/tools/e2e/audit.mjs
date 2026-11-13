@@ -22,6 +22,7 @@ export const ALLOWED_TAGS = [
   'dashboard',
   'health',
   'account',
+  'share',
 ];
 export const LAST_FLOW = '08-sign-out';
 
@@ -119,6 +120,12 @@ export function collectSourceTestIds(srcText) {
   // `testID={cond ? 'a' : 'b'}`: every quoted literal inside the braces is a possible id.
   for (const m of srcText.matchAll(/testID\s*=\s*\{([^{}]*\?[^{}]*)\}/g)) {
     for (const q of m[1].matchAll(/(['"])([\w-]+)\1/g)) {
+      add(q[2]);
+    }
+  }
+  // `const PLACE_TEST_ID = { off: 'share-place-off', ... }`: a map named *TEST_ID* passed as testID.
+  for (const m of srcText.matchAll(/\b\w*TEST_IDS?\w*\b[^=\n]*=\s*\{([^{}]*)\}/g)) {
+    for (const q of m[1].matchAll(/:\s*(['"])([\w-]+)\1/g)) {
       add(q[2]);
     }
   }

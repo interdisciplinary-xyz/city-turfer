@@ -8,7 +8,4 @@ tags: [recording]
 - assertVisible: 'Start ride'
 - tapOn: { id: 'record-start' }
 - runFlow: subflows/allow-location.yaml
-- runFlow: subflows/finish.yaml
-- extendedWaitUntil: { visible: 'Too short to save', timeout: 10000 }
-- tapOn: 'Discard'
-- extendedWaitUntil: { visible: { id: 'record-start' }, timeout: 10000 }
+- runFlow: subflows/finish-too-short.yaml

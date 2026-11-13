@@ -82,6 +82,8 @@ tester who fixes what they find marks their own homework.
   PGlite or a Neon branch). Never use or copy a real user's data, and ask before copying anything
   off the founder's iPhone.
 - No coordinates, tokens or e-mail addresses in bug reports, screenshots you commit or PR text.
+  Release-PR screenshots show the demo account or fixture replays only
+  (`docs/process/release-manager.md`).
 - A sync-chain observer that is not live yet is _pending_, never _pass_.
 - Never tick a box in `docs/quality/smoke-test.md` itself; tick the copy in the PR.
 - Never merge, release, publish an EAS Update or change Vercel settings: report what needs doing.

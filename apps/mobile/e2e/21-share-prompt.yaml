@@ -1,0 +1,68 @@
+# After Finish the "Share a photo?" prompt sits above the stats: Not now hides it for that
+# activity; Don't ask again hides it for good (the next Finish does not show it, the Share photo
+# button stays). It never shows when an activity is opened from History.
+# Leaves the profile on Don't ask again (a Keychain flag): the next full run.sh resets the keychain;
+# to rerun this flow alone, run `xcrun simctl keychain booted reset` first.
+appId: com.turftrack.poc
+tags: [share, recording]
+---
+- runFlow: subflows/launch.yaml
+- runFlow:
+    when: { visible: { id: 'sign-in-email' } }
+    commands:
+      - runFlow: { file: subflows/sign-in.yaml, env: { EMAIL: 'admin@cityturfer.com', PASSWORD: 'admin1234' } }
+- extendedWaitUntil: { visible: { id: 'dashboard-greeting' }, timeout: 20000 }
+
+# --- Finish #1: prompt shows; Not now hides it ---
+- tapOn: { id: 'tab-record' }
+- tapOn: { id: 'activity-type-walk' }
+- tapOn: { id: 'record-start' }
+- runFlow: subflows/allow-location.yaml
+- extendedWaitUntil: { visible: { id: 'stat-distance' }, timeout: 15000 }
+- runFlow: subflows/travel-walk-bg.yaml
+- longPressOn: { id: 'record-stop' }
+- extendedWaitUntil: { visible: { id: 'share-prompt' }, timeout: 30000 }
+- assertVisible: { id: 'share-prompt-camera' }
+- assertVisible: { id: 'share-prompt-library' }
+- assertVisible: { id: 'share-prompt-never' }
+- takeScreenshot: 21-share-prompt
+- tapOn: { id: 'share-prompt-dismiss' }
+- assertNotVisible: { id: 'share-prompt' }
+- extendedWaitUntil: { visible: { id: 'turf-gained' }, timeout: 10000 }
+# The button stays.
+- scrollUntilVisible: { element: { id: 'share-photo' }, timeout: 15000 }
+- runFlow: subflows/back.yaml
+
+# --- Opened from History: no prompt ---
+- tapOn: { id: 'tab-dashboard' }
+- tapOn: { id: 'dashboard-see-all-activities' }
+- tapOn: { id: 'history-item-0' }
+- extendedWaitUntil: { visible: { id: 'turf-gained' }, timeout: 15000 }
+- assertNotVisible: { id: 'share-prompt' }
+- runFlow: subflows/back.yaml
+- runFlow: subflows/back.yaml
+
+# --- Finish #2: Don't ask again ---
+- tapOn: { id: 'tab-record' }
+- tapOn: { id: 'activity-type-walk' }
+- tapOn: { id: 'record-start' }
+- extendedWaitUntil: { visible: { id: 'stat-distance' }, timeout: 15000 }
+- runFlow: subflows/travel-walk-bg.yaml
+- longPressOn: { id: 'record-stop' }
+- extendedWaitUntil: { visible: { id: 'share-prompt' }, timeout: 30000 }
+- tapOn: { id: 'share-prompt-never' }
+- assertNotVisible: { id: 'share-prompt' }
+- extendedWaitUntil: { visible: { id: 'turf-gained' }, timeout: 10000 }
+- runFlow: subflows/back.yaml
+
+# --- Finish #3: stays hidden ---
+- tapOn: { id: 'tab-record' }
+- tapOn: { id: 'activity-type-walk' }
+- tapOn: { id: 'record-start' }
+- extendedWaitUntil: { visible: { id: 'stat-distance' }, timeout: 15000 }
+- runFlow: subflows/travel-walk-bg.yaml
+- longPressOn: { id: 'record-stop' }
+- extendedWaitUntil: { visible: { id: 'turf-gained' }, timeout: 30000 }
+- assertNotVisible: { id: 'share-prompt' }
+- scrollUntilVisible: { element: { id: 'share-photo' }, timeout: 15000 }
+- runFlow: subflows/back.yaml

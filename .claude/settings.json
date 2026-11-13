@@ -76,5 +76,19 @@
         ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "product@product-engineering": true,
+    "ai-shipping@product-engineering": true,
+    "agent-teams@product-engineering": true,
+    "agent-harness@product-engineering": true,
+    "app-stack@product-engineering": true,
+    "work-humanizer@product-engineering": true
+  },
+  "extraKnownMarketplaces": {
+    "product-engineering": {
+      "source": { "source": "github", "repo": "phuryn/product-engineering" },
+      "autoUpdate": true
+    }
   }
 }

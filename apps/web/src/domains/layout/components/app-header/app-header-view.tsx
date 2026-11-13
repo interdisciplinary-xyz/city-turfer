@@ -5,7 +5,7 @@ import { type AppHeaderViewProps, HEADER_VARIABLES } from './app-header.constant
  * Storybook and Swagger pages through `tools/app-header-entry.mjs`, so they never drift apart.
  * Styles: `app-header.css`.
  */
-export function AppHeaderView({ homeHref, homeLabel, logo, waitlist, nav, languages }: AppHeaderViewProps) {
+export function AppHeaderView({ homeHref, homeLabel, logo, nav, languages }: AppHeaderViewProps) {
   return (
     <header className='app-header' style={HEADER_VARIABLES}>
       <div className='app-header-inner'>
@@ -23,17 +23,7 @@ export function AppHeaderView({ homeHref, homeLabel, logo, waitlist, nav, langua
             </ul>
           </nav>
         ) : null}
-        <div className='app-header-actions'>
-          {waitlist ? (
-            // No aria-label: the accessible name is the visible text. Each span is display:none at the other
-            // width (app-header.css), so a screen reader hears only the label that is shown.
-            <a className='app-header-link' href={waitlist.href}>
-              <span className='app-header-link-long'>{waitlist.label}</span>
-              <span className='app-header-link-short'>{waitlist.shortLabel}</span>
-            </a>
-          ) : null}
-          {languages}
-        </div>
+        <div className='app-header-actions'>{languages}</div>
       </div>
     </header>
   );

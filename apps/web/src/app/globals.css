@@ -152,13 +152,14 @@ img {
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - var(--header-h));
-  min-height: calc(100svh - var(--header-h));
+  /* A full screen tall, header not subtracted. svh on phones, so the browser bar never hides the bottom. */
+  min-height: 100vh;
+  min-height: 100svh;
   padding: 16px 0 40px;
   isolation: isolate;
 }
 
-/* The hero fills the screen; its content sits in the vertical middle of the space under the bar. */
+/* The hero is a full screen tall; its content sits in its vertical middle. */
 .hero-grid {
   flex: 1;
   align-content: center;
@@ -292,6 +293,46 @@ h1 {
    motion is allowed, and removed after 2.5 s if the script never runs. */
 .motion [data-anim] {
   visibility: hidden;
+}
+
+/* The hero text's entrance is CSS, not GSAP, so the largest paint never waits for the JavaScript
+   bundle. The headline and lede are the page's largest paint: Chrome counts text only once its
+   opacity animation ends, so they are visible from the first paint and only rise into place
+   (0.45em, expo.out) once the boot script marks the page `loaded` (fonts ready). The buttons are
+   small, so they also fade in. Without `.motion` (reduced motion, no script, the 2.5 s fallback)
+   nothing moves. Homepage performance audit 2026-11-11: mobile LCP 3.7 s with the fade. */
+.motion [data-enter] {
+  translate: 0 0.45em;
+}
+
+.motion .hero-actions[data-enter],
+.motion .download[data-enter] {
+  opacity: 0;
+  translate: 0 16px;
+}
+
+.motion.loaded [data-enter] {
+  opacity: 1;
+  translate: none;
+  transition:
+    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    translate 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.motion.loaded [data-enter='line'] + [data-enter='line'] {
+  transition-delay: 0.12s;
+}
+
+.motion.loaded .lede[data-enter] {
+  transition-delay: 0.3s;
+}
+
+.motion.loaded .hero-actions[data-enter] {
+  transition-delay: 0.42s;
+}
+
+.motion.loaded .download[data-enter] {
+  transition-delay: 0.5s;
 }
 
 .lede {
@@ -509,7 +550,8 @@ h1 {
   outline-offset: -4px;
 }
 
-.btn:disabled {
+.btn:disabled,
+.btn[aria-disabled='true'] {
   opacity: 0.6;
   cursor: progress;
 }
@@ -553,6 +595,11 @@ h1 {
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: var(--card);
+}
+
+/* Focused by script after sending (so screen readers read it); it is not a control: no ring. */
+.waitlist-done:focus {
+  outline: none;
 }
 
 /* Very narrow phones stack them again, each a full pill. */

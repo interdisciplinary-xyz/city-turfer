@@ -36,7 +36,6 @@ import type { CSSProperties, ReactNode } from 'react';
 
 import { bodyFont, displayFont, numericFont, taglineFont } from '@/app/fonts';
 import { AppHeader } from '@/domains/layout';
-import { WAITLIST } from '@/domains/waitlist';
 
 import { BrandNav } from './brand-nav';
 import {
@@ -111,11 +110,7 @@ export default async function BrandingPage() {
       <body className='brand'>
         {/* The site's header (same as /en), so /branding reads as part of the site. */}
         <NextIntlClientProvider locale={BRANDING_LOCALE}>
-          <AppHeader
-            locale={BRANDING_LOCALE}
-            waitlist={Boolean(WAITLIST)}
-            waitlistHref={`/${BRANDING_LOCALE}#waitlist`}
-          />
+          <AppHeader locale={BRANDING_LOCALE} />
         </NextIntlClientProvider>
         <header className='brand-hero'>
           <div className='brand-wrap'>

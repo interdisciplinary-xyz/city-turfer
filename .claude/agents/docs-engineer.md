@@ -123,10 +123,12 @@ right _before_ it is written:
 7. **PR descriptions last**, once your docs PR exists: rewrite the scope and release PR bodies with
    `gh pr edit <n> --body-file <file>`, following the template and the previous release PR's
    structure: Summary, What ships (every PR, merged or open, and every direct commit by SHA), Test
-   plan (only what ran, with the head it ran on), Runtime fingerprint, Out of scope / candidates,
-   Risk & rollback, founder steps, Open decisions, the delivery checklist, Quality gate, the
-   attribution line. Each unreviewed direct commit (step 1) is a **blocking** item in the scope →
-   release body until someone reviews it by SHA. Name your docs PR in "What ships" as open.
+   plan (only what ran, with the head it ran on), Runtime fingerprint, Screenshots (keep the
+   published table, mark it stale if the head moved; never publish to `pr-assets` yourself), Out of
+   scope / candidates, Risk & rollback, founder steps, Open decisions, the delivery checklist,
+   Quality gate, the attribution line. Each unreviewed direct commit (step 1) is a **blocking** item
+   in the scope → release body until someone reviews it by SHA. Name your docs PR in "What ships" as
+   open.
 
 ## Non-negotiables
 

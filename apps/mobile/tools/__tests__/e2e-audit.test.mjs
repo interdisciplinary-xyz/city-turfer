@@ -56,6 +56,15 @@ test('source testID matching handles a conditional testID', () => {
   assert.ok(sourceHasTestId(ids, 'pw-save'));
 });
 
+test('source testID matching reads ids from a *TEST_ID map', () => {
+  const ids = collectSourceTestIds(
+    "export const PLACE_TEST_ID: Record<P, string> = {\n  off: 'share-place-off',\n  city: 'share-place-city',\n};"
+  );
+  assert.ok(sourceHasTestId(ids, 'share-place-off'));
+  assert.ok(sourceHasTestId(ids, 'share-place-city'));
+  assert.ok(!sourceHasTestId(ids, 'share-place-nope'));
+});
+
 test('clean fixture passes; dotfiles and subflows are ignored', () => {
   const root = fixture({ flows: { '01-a': FLOW('auth'), '08-sign-out': FLOW('auth') } });
   assert.deepEqual(audit(root).errors, []);
