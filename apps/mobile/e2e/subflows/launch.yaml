@@ -1,6 +1,6 @@
 # Launch the app. With DEV_URL (dev build) open it through the dev-client link so
 # the JS comes from Metro; otherwise launch the installed (release) app.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 ---
 - runFlow:
     when: { true: '${DEV_URL}' }

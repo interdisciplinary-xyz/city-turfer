@@ -1,5 +1,5 @@
 # Dashboard: greeting, this week, recent activities, achievements card; Stats links to History.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 tags: [dashboard]
 ---
 - runFlow: subflows/launch.yaml

@@ -1,5 +1,5 @@
 # Dashboard shows recent activities; "See all" opens History; detail shows stats and turf gained.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 tags: [history]
 ---
 - runFlow: subflows/launch.yaml
