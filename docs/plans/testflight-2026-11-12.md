@@ -41,7 +41,7 @@ profiles and gap-estimation off by default have shipped. A capped public link co
 | Area            | State today                                                                                                                                                                                                                                                                        |
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Apple account   | Builds are signed with a **free Apple ID** and expire after 7 days (`docs/operations/runbook.md` #7). TestFlight needs a paid Developer Program membership for team `KD9S2F8UCY`, an App Store Connect (ASC) app record and an ASC API key                                         |
-| Bundle id       | `com.turftrack.poc`, permanent once the ASC record exists                                                                                                                                                                                                                          |
+| Bundle id       | `com.turftrack.poc` when written; **superseded by T2**: `com.cityturfer.app` since #236 (Android keeps `com.turftrack.poc`)                                                                                                                                                        |
 | EAS             | `apps/mobile/eas.json` has only `android-apk`; no iOS store profile, no `submit` config. `appVersionSource: remote`                                                                                                                                                                |
 | Version         | v0.16.0 released; `app.json` says 0.16.0, the packages 0.17.0; runtime version = fingerprint                                                                                                                                                                                       |
 | App env         | `EXPO_PUBLIC_APP_ENV` is set for the APK but **no code reads it**; only `__DEV__` separates dev from release                                                                                                                                                                       |
@@ -115,7 +115,14 @@ or the no-account start once #2 ships; not the Gdańsk demo profile, which shows
 
 - [x] Privacy manifest: checked 2026-11-15, prebuild generates one (see §2). Confirm ASC processing
       shows no ITMS-91053 warning; confirm the built Info.plist has no stray photo-library read or
-      motion key.
+      motion key. Watch build 1 for **ITMS-90683 on `NSMotionUsageDescription`**: expo-location
+      links `CMMotionActivityManager` even though the app never calls it
+      (`motionUsagePermission: false` in `app.json`, PR #235 review). If ASC flags it, replace
+      `"motionUsagePermission": false` in the `expo-location` plugin of `app.json` with a truthful
+      text ("CityTurfer doesn't use motion and fitness data; it records your route from location
+      only."). `false` makes the plugin delete the key at prebuild, so an `infoPlist` entry alone is
+      lost. Add `NSMotionUsageDescription` to `apps/mobile/locales/pl.json` too. No prompt appears,
+      because the API is never called. This changes the fingerprint.
 - [ ] `brand-designer` + `mobile-ui-engineer`: Polish purpose strings (`expo.locales.pl`, §8) and
       the sharper when-in-use string, if decision #4 says build 1 carries them.
 - [ ] `api-engineer` + founder, if T3 keeps backup: confirm production `GET /v1/health` answers
@@ -132,8 +139,16 @@ or the no-account start once #2 ships; not the Gdańsk demo profile, which shows
 ### Phase 2 — Ring 0 (scope/v0.17.0 builds, 2–3 weeks)
 
 - [ ] Release gate (§7) on the TestFlight binary; fix blockers; new build per fix.
-- [ ] Founder moves own recordings to the new bundle id: backup on the old app → sign in on the new
-      one → restore. Check a restore round-trips everything, including Health links.
+- [ ] Founder moves own recordings to the new bundle id. Keep the old `com.turftrack.poc` app
+      (re-sign it from tag `v0.16.0` if its 7-day signature expired; same id, so its data stays) and
+      never delete it before the last step passes:
+  1. In the old app, turn on Cloud backup **and "Include Apple Health workouts"**. Without the
+     toggle, Health-imported activities (`hk-` ids) never reach the backup, and the new app can't
+     import them again (it only takes workouts that end after its own connection).
+  2. Wait until the backup queue is empty (Info › Cloud backup).
+  3. Sign in on the new app and restore.
+  4. Compare the activity count, `hk-` ids included, and the turf with the old app. Check the Health
+     links.
 - [ ] Ring-0 testers get the "What to Test" text (§8) and the tester brief.
 
 ### Phase 3 — Before strangers (v0.17.0)

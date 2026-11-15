@@ -91,8 +91,10 @@ commit `caafd6e` (tag `v0.16.0`) bumps `app.json` to 0.16.0, so the tag has yet 
 **Current install** (runbook #7): no build of v0.16.0 or later is recorded on the founder's iPhone.
 The last recorded one is a Release build of `feat/goals` on top of `fix/health-sync` plus
 uncommitted work, installed before #217 opened on 2026-11-10 (fingerprint not recorded); it predates
-the Share photo permissions (#233). It takes no OTA from v0.16.0. Reinstall from the tag `v0.16.0`
-or the scope head, then publish OTAs only from a checkout with that build's fingerprint.
+the Share photo permissions (#233). It takes no OTA from v0.16.0. Re-sign it from the tag `v0.16.0`
+(same bundle id, data kept), then publish OTAs only from a checkout with that build's fingerprint.
+The scope head since #236 builds `com.cityturfer.app`, a separate app: it takes no OTA meant for
+`com.turftrack.poc` builds and starts empty (runbook #7).
 
 To check, compare the fingerprint of the checkout you'll publish from with the runtime of the latest
 update the phone already runs:
