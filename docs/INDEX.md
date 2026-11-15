@@ -323,6 +323,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   that the four apps stay one system — every scenario starts on the phone (the source of truth) or
   reaches it, and is checked in the API, the web portal and the admin portal as each is built today;
   scenarios report pending until the routes they need exist
+- 🚧 [`plans/testflight-2026-11-12.md`](plans/testflight-2026-11-12.md): First iOS release through
+  TestFlight: Apple account and app record, the EAS store build, a release gate on a real iPhone, an
+  internal ring from scope/v0.17.0, strangers only on the v0.17.0 release after the privacy policy,
+  no-account start and hidden mock profiles.
 - ✅ [`plans/web-portal-history-2026-10-23.md`](plans/web-portal-history-2026-10-23.md): Plan for
   the web portal's activity history (v0.11.0) — a list of the backed-up walks, runs and rides with
   totals and a type filter, and a detail page with stats, splits and the route shape; read-only, no
