@@ -39,9 +39,9 @@ default) keeps a copy on our server.
   `packages/brand/src/copy.ts`)
 - Differentiator: other trackers show a list of workouts; CityTurfer turns your whole history into
   one glowing picture of your city that only grows.
-- Company: Interdisciplinary sp. z o.o. (Poland). Formerly **TurfTrack**; internal ids (bundle
-  `com.turftrack.poc`, scheme, DB file name) keep the old name on purpose — renaming breaks installs
-  and OTA.
+- Company: Interdisciplinary sp. z o.o. (Poland). Formerly **TurfTrack**; internal ids (Android
+  package `com.turftrack.poc`, scheme, DB file name) keep the old name on purpose — renaming breaks
+  installs and OTA. The iOS bundle id is `com.cityturfer.app` from the first TestFlight build.
 
 ## 2. Who it's for
 

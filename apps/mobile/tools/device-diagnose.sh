@@ -7,5 +7,5 @@ DEVICE="${1:-00008120-0001591C3493C01E}"
 DEST="$HOME/ct-phone"
 mkdir -p "$DEST"
 xcrun devicectl device copy from --device "$DEVICE" --domain-type appDataContainer \
-  --domain-identifier com.turftrack.poc --source Documents/SQLite --destination "$DEST" >/dev/null
+  --domain-identifier com.cityturfer.app --source Documents/SQLite --destination "$DEST" >/dev/null
 node "$(dirname "$0")/diagnose-recording.mjs" "$DEST/turftrack-admin.db"

@@ -1,5 +1,5 @@
 # Finishing with < 2 points is refused and offers Discard; discarding returns to the start state.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 tags: [recording]
 ---
 - runFlow: subflows/launch.yaml

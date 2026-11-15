@@ -8,4 +8,7 @@ const { SourceSkips } = require('expo/fingerprint');
 module.exports = {
   sourceSkips: SourceSkips.PackageJsonScriptsAll,
   ignorePaths: ['eas.json'],
+  // iOS permission texts per language (app.json `locales`): native strings, so a change needs a
+  // new binary. The fingerprint hashes only the path in app.json, not the file, without this.
+  extraSources: [{ type: 'dir', filePath: 'locales', reasons: ['expoLocales'] }],
 };

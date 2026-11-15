@@ -1,6 +1,6 @@
 # Record tab: the Turf toggle shows the Turfer's turf under the map. It is on by default, stays
 # available while recording, and the choice survives a restart. Ends switched on (the default).
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 tags: [recording, turf]
 ---
 - runFlow: subflows/launch.yaml

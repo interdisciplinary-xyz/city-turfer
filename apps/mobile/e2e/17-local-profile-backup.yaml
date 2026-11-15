@@ -15,7 +15,7 @@
 # recently" and still opens the code field (with the resend held), so the fixed code goes in as
 # usual. Any other error on the send (offline, server) leaves the screen on the request step: the
 # flow waits for the send button to be enabled again (up to about 70 s) and taps it once.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 tags: [account]
 env:
   AUTH_FIXED_CODE: '000000'

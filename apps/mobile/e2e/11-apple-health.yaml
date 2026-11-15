@@ -1,6 +1,6 @@
 # Apple Health (iOS only): connect, put sample workouts into Health, import them as activities.
 # The Simulator has no Apple Watch, so the dev tool writes workouts with routes into Health first.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 tags: [health]
 ---
 - runFlow:

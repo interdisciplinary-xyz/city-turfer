@@ -1,5 +1,5 @@
 # Go back one screen. iOS: the header's "Back" button ("Wstecz" in Polish). Android: the system back (the header arrow has no label).
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 ---
 - runFlow:
     when: { platform: iOS }

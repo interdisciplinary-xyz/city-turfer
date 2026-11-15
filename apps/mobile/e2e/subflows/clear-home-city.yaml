@@ -1,6 +1,6 @@
 # Clear the Home City from wherever the app is (Districts modal, tab bar or Me drawer), so later
 # flows start without one. Safe when none is set: the picker then has no Clear button.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 ---
 - runFlow:
     when: { visible: { id: 'districts-close' } }

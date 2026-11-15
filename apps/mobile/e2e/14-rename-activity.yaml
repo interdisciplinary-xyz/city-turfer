@@ -1,5 +1,5 @@
 # Renaming an activity: an empty name is refused, a new one shows in the title and in History.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 tags: [history]
 ---
 - runFlow: subflows/launch.yaml

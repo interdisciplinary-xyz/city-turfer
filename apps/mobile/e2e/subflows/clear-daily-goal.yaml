@@ -2,7 +2,7 @@
 # later flows start without one: an open editor is closed first, then the Start tab is opened (its
 # tab bar is covered by an open Me drawer, which the optional tap dismisses). Safe when none is
 # set: the editor then has no "off" button.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 ---
 - runFlow:
     when: { visible: { id: 'goal-save' } }

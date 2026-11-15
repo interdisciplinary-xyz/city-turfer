@@ -9,7 +9,7 @@
 # password, so no address bucket is reached twice. Only the three step-up codes (change e-mail, set
 # password, remove password) share a bucket, so the flow waits out the minute before the second and
 # third (subflows/wait-for-code-bucket.js, from the step-up request time); about 2 minutes in all.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 tags: [account]
 env:
   AUTH_FIXED_CODE: '000000'

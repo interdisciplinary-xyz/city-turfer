@@ -144,7 +144,7 @@ Example (shape of a flow):
 
 ```yaml
 # What the flow proves, and the state it leaves behind.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 tags: [recording]
 ---
 - runFlow: subflows/launch.yaml

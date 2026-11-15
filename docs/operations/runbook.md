@@ -102,7 +102,7 @@ with code `outbox.dead-letter`; single failures are only `console.warn`ed in dev
 
 ```bash
 # Simulator: the database lives in the app's data container
-DB="$(xcrun simctl get_app_container booted com.turftrack.poc data)/Documents/SQLite/turftrack-admin.db"
+DB="$(xcrun simctl get_app_container booted com.cityturfer.app data)/Documents/SQLite/turftrack-admin.db"
 # iPhone (ask first): apps/mobile/tools/device-diagnose.sh <udid>, then DB=~/ct-phone/turftrack-admin.db
 sqlite3 "$DB" "SELECT id, type, attempts, dead_lettered_at, datetime(created_at/1000,'unixepoch','localtime')
                FROM sys_outbox WHERE processed_at IS NULL ORDER BY id;"
