@@ -74,13 +74,25 @@ commit; the app's only new dependencies are the dev dependencies `react-test-ren
 v0.13 installs take no OTA from it. No OTA was published for v0.14.0 (the newest update on
 `production` is about two weeks old, from the 0.2.0 build).
 
-**Current install** (runbook #7): the 2026-11-01 Release build of `scope/v0.15.0` at `e232d90`
-(reports 0.14.0, iOS `0d465570…`) expired around 2026-11-08. Per PR #217, the founder's iPhone got a
-Release build of `feat/goals` on top of `fix/health-sync` plus uncommitted work, before #217 opened
-on 2026-11-10. That build is not a commit on any branch: its fingerprint isn't recorded, so don't
-count on it taking an OTA. Reinstall from the scope head (or the release) first. The v0.15.0 diff
-changes nothing native, so the scope head should still measure `0d465570…` (not re-measured on
-`6014319`); the v0.15.0 release commit's `app.json` bump will move it.
+v0.15.0 is JS only, released 2026-11-10: nothing native changed before the release commit. The
+release commit `9a16278` (tag `v0.15.0`) bumps `app.json` to 0.15.0; at it iOS is
+`d247ad96c5be76bc478066a7e1cefbda8adc0210`, Android `2472ae7ca971de85b30cafe4b0e93ae2cd2b1141`
+(measured 2026-11-13 for PR #233). No OTA is recorded for v0.15.0.
+
+**v0.16.0 is native**, released 2026-11-13: Share photo (#225, #231) adds expo-image-picker,
+react-native-view-shot, expo-sharing and expo-file-system and changes `app.json` (camera and
+photo-save usage strings, blocked storage permissions). On the release head `3640a4b`, before the
+bump: iOS `b3c62d344cd6e8e7b0a80c06b3ac897245036df7`, Android
+`6e92863335271bc895ee69a38e4c19a18a00eb42` (measured 2026-11-13 for PR #233). **No OTA from v0.16.0
+or later reaches a v0.15.0 (or older) install**: testers need a new iOS build and APK. The release
+commit `caafd6e` (tag `v0.16.0`) bumps `app.json` to 0.16.0, so the tag has yet another fingerprint
+(not measured).
+
+**Current install** (runbook #7): no build of v0.16.0 or later is recorded on the founder's iPhone.
+The last recorded one is a Release build of `feat/goals` on top of `fix/health-sync` plus
+uncommitted work, installed before #217 opened on 2026-11-10 (fingerprint not recorded); it predates
+the Share photo permissions (#233). It takes no OTA from v0.16.0. Reinstall from the tag `v0.16.0`
+or the scope head, then publish OTAs only from a checkout with that build's fingerprint.
 
 To check, compare the fingerprint of the checkout you'll publish from with the runtime of the latest
 update the phone already runs:

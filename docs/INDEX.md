@@ -139,10 +139,18 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   street-glow demo, a street map of the visitor's city behind the hero, staff admin under /admin,
   small changes straight to scope, the release review's fixes; JS only (iOS c9cca32d before the
   release commit's app.json bump), no OTA published
-- ✅ [`sessions/v0.15.0.md`](sessions/v0.15.0.md): Session log v0.15.0 (in progress, scope PR 208) —
-  Current city card and district share bars, a Daily goal with a streak, Apple Health import only
-  from the moment of connecting, the homepage tidy-up and founder follow-ups, apps/web split into
-  domains, reviews without nits; app JS only by diff (fingerprint not re-measured on the head)
+- 🕰️ [`sessions/v0.15.0.md`](sessions/v0.15.0.md): Session log v0.15.0 (released 2026-11-10, tag
+  v0.15.0, PRs 208 and 221) — Current city card and district share bars, a Daily goal with a streak,
+  Apple Health import only from the moment of connecting, the homepage tidy-up and founder
+  follow-ups, apps/web split into domains, reviews without nits; app JS only by diff (fingerprint
+  not re-measured on the head)
+- 🕰️ [`sessions/v0.16.0.md`](sessions/v0.16.0.md): Session log v0.16.0 (released 2026-11-13, tag
+  v0.16.0, PRs 227 and 233) — Share photo (native, new fingerprint), homepage trimmed to header and
+  hero, LCP 4.94 s to 1.23 s, accessibility fixes, art-director agent, product feature scope; global
+  review must-fix items carried into v0.17.0
+- ✅ [`sessions/v0.17.0.md`](sessions/v0.17.0.md): Session log v0.17.0 (in progress, cut 2026-11-13)
+  — scope cut from the v0.16.0 release commit; must-fix items carried from the v0.16.0 global
+  review, open founder decisions, proposed "first strangers" line
 - 🕰️ [`sessions/v0.2.0.md`](sessions/v0.2.0.md): Session log v0.2.0 through the Me menu and
   achievements; predates the Dashboard, Me drawer and login rename (PRs 23–25) and still says
   app.json is unpinned (pinned in f04bcf3)
@@ -307,9 +315,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   of the landing page (bugs and one heading system, then fewer sections and one button/card grammar,
   then polish), approved by the founder on 2026-11-01; built in PR 213, the founder follow-ups in PR
   215 (v0.15.0)
-- 🚧 [`plans/share-photo-2026-11-11.md`](plans/share-photo-2026-11-11.md): Share photo after an
+- ✅ [`plans/share-photo-2026-11-11.md`](plans/share-photo-2026-11-11.md): Share photo after an
   activity: the Turfer takes or picks a photo, the app lays the activity's stats over it
   (Garmin-style story card) and hands the image to the system share sheet. No map, no coordinates.
+  Built in v0.16.0 (#225, review fixes #231); device checks still open.
 - ✅ [`plans/sync-chain-testing-2026-10-22.md`](plans/sync-chain-testing-2026-10-22.md): How to test
   that the four apps stay one system — every scenario starts on the phone (the source of truth) or
   reaches it, and is checked in the API, the web portal and the admin portal as each is built today;

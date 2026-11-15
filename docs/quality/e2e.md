@@ -142,3 +142,9 @@ the closing call to action, which a build without those variables leaves out (`s
 refuses such an export). The form is never submitted. `test:e2e:run` runs the suite against the
 `out/` that exists. Playwright needs free ports (`E2E_SITE_PORT`, `E2E_API_PORT`) when the defaults
 are taken. CI (`ci:quality`) does not run this suite.
+
+**Known drift (found 2026-11-13, not run):** since v0.16.0 (#229) the homepage is the header and the
+hero only, but `apps/web/e2e/landing.spec.ts` still asserts the eight blocks, the section anchors,
+the closing call to action and the footer's OpenStreetMap credit. #229 left it unrun and expected to
+fail until the spec matches the page (owner `web-engineer`, `docs/sessions/v0.17.0.md`). The suite
+last passed on `2959558` (52/52, 2026-11-12), before #229.
