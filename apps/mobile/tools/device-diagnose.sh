@@ -11,7 +11,8 @@ DEST="$HOME/ct-phone"
 mkdir -p "$DEST"
 if ! out=$(xcrun devicectl device copy from --device "$DEVICE" --domain-type appDataContainer \
   --domain-identifier "$BUNDLE" --source Documents/SQLite --destination "$DEST" 2>&1); then
-  echo "No data container for $BUNDLE on $DEVICE (old install? try BUNDLE=com.turftrack.poc)." >&2
+  echo "Copy failed for $BUNDLE on $DEVICE (wrong id, locked phone, or not a development build?" >&2
+  echo "Installs from v0.16.0 or older: BUNDLE=com.turftrack.poc). devicectl said:" >&2
   echo "$out" >&2
   exit 1
 fi

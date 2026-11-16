@@ -145,10 +145,15 @@ or the no-account start once #2 ships; not the Gdańsk demo profile, which shows
   1. In the old app, turn on Cloud backup **and "Include Apple Health workouts"**. Without the
      toggle, Health-imported activities (`hk-` ids) never reach the backup, and the new app can't
      import them again (it only takes workouts that end after its own connection).
-  2. Wait until the backup queue is empty (Info › Cloud backup).
-  3. Sign in on the new app and restore.
-  4. Compare the activity count, `hk-` ids included, and the turf with the old app. Check the Health
-     links.
+  2. Keep the old app open until, after a run that finished after you turned the Health switch on,
+     Info › Cloud backup reads "Backed up N of N activities · last run …", with no "can't be backed
+     up" line and no error. The card shows no queue; that line is the signal. If any activity is
+     refused (too long or unreadable), it can't move: keep the old app.
+  3. Sign in on the new app with the same account and restore in one go (no interruption).
+  4. Compare that N with the new app's "Restored N activities." and look at the turf. The UI shows
+     no `hk-` ids (and the new app's backup card leaves them out while its Health switch is off);
+     the only way to check them is `apps/mobile/tools/device-diagnose.sh`, which copies data off the
+     phone, so only with the founder's OK.
 - [ ] Ring-0 testers get the "What to Test" text (§8) and the tester brief.
 
 ### Phase 3 — Before strangers (v0.17.0)

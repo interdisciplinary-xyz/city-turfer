@@ -263,11 +263,23 @@ opened on 2026-11-10 (date, head and fingerprint not recorded): it expires 7 day
 and predates Share photo's permissions (PR #233). **Since #236 the scope head is a different iOS
 app** (`com.cityturfer.app`): installing it gives a second, empty, signed-out CityTurfer and leaves
 the old app's data where it is. To get the old app back, re-sign it from tag `v0.16.0` (still
-`com.turftrack.poc`, so iOS keeps its data container), then back it up with "Include Apple Health
-workouts" on before moving to the new id (`docs/plans/testflight-2026-11-12.md`, Phase 2). **Never
-delete the `com.turftrack.poc` app** until the restore on the new one is confirmed. (Before it:
-`scope/v0.15.0` at `e232d90`, reports 0.14.0, iOS fingerprint
-`0d465570442d6d6d81addfae7e4c38632b1df37f`, installed 2026-11-01 after
+`com.turftrack.poc`, so iOS keeps its data container). `apps/mobile/ios/` is gitignored and
+`expo run:ios` only prebuilds when it is missing, so a plain checkout builds into whichever id the
+last prebuild left:
+
+1. `git checkout v0.16.0` (or a worktree of it), then
+   `pnpm -C apps/mobile exec expo prebuild --platform ios --clean`.
+2. Check the id: `grep PRODUCT_BUNDLE_IDENTIFIER apps/mobile/ios/*.xcodeproj/project.pbxproj` must
+   show `com.turftrack.poc`.
+3. Build Release onto the phone with team `KD9S2F8UCY`. If the install fails with a team or
+   entitlement mismatch, stop: never accept an offer to delete the app.
+4. Back to `scope/v0.17.0`: `expo prebuild --platform ios --clean` again, or the scope's JS lands in
+   the old app, on the real database.
+
+Then back it up with "Include Apple Health workouts" on before moving to the new id
+(`docs/plans/testflight-2026-11-12.md`, Phase 2). **Never delete the `com.turftrack.poc` app** until
+the restore on the new one is confirmed. (Before it: `scope/v0.15.0` at `e232d90`, reports 0.14.0,
+iOS fingerprint `0d465570442d6d6d81addfae7e4c38632b1df37f`, installed 2026-11-01 after
 `expo prebuild --platform ios --clean`, expired around 2026-11-08. Before that: `1607339`,
 `scope/v0.14.0` with `app.json` 0.13.0, iOS `c9cca32d…`, installed 2026-10-31 with
 `xcrun devicectl device install app` because the phone was locked.)
