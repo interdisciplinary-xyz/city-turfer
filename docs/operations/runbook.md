@@ -104,6 +104,7 @@ with code `outbox.dead-letter`; single failures are only `console.warn`ed in dev
 # Simulator: the database lives in the app's data container
 DB="$(xcrun simctl get_app_container booted com.cityturfer.app data)/Documents/SQLite/turftrack-admin.db"
 # iPhone (ask first): apps/mobile/tools/device-diagnose.sh <udid>, then DB=~/ct-phone/turftrack-admin.db
+# (an install from v0.16.0 or older: BUNDLE=com.turftrack.poc apps/mobile/tools/device-diagnose.sh <udid>)
 sqlite3 "$DB" "SELECT id, type, attempts, dead_lettered_at, datetime(created_at/1000,'unixepoch','localtime')
                FROM sys_outbox WHERE processed_at IS NULL ORDER BY id;"
 sqlite3 "$DB" "SELECT datetime(at/1000,'unixepoch','localtime'), kind, data FROM sys_diagnostics
@@ -259,9 +260,26 @@ ls -t apps/mobile/e2e-results | head -1              # newest run: junit report 
 signed with a free Apple ID expire after 7 days. Per PR #217, the last recorded install is a Release
 build of `feat/goals` on top of `fix/health-sync` plus uncommitted work, installed before #217
 opened on 2026-11-10 (date, head and fingerprint not recorded): it expires 7 days after its install
-and predates Share photo's permissions (PR #233). Reinstall from the tag `v0.16.0` or the scope head
-before device checks. (Before it: `scope/v0.15.0` at `e232d90`, reports 0.14.0, iOS fingerprint
-`0d465570442d6d6d81addfae7e4c38632b1df37f`, installed 2026-11-01 after
+and predates Share photo's permissions (PR #233). **Since #236 the scope head is a different iOS
+app** (`com.cityturfer.app`): installing it gives a second, empty, signed-out CityTurfer and leaves
+the old app's data where it is. To get the old app back, re-sign it from tag `v0.16.0` (still
+`com.turftrack.poc`, so iOS keeps its data container). `apps/mobile/ios/` is gitignored and
+`expo run:ios` only prebuilds when it is missing, so a plain checkout builds into whichever id the
+last prebuild left:
+
+1. `git checkout v0.16.0` (or a worktree of it), then
+   `pnpm -C apps/mobile exec expo prebuild --platform ios --clean`.
+2. Check the id: `grep PRODUCT_BUNDLE_IDENTIFIER apps/mobile/ios/*.xcodeproj/project.pbxproj` must
+   show `com.turftrack.poc`.
+3. Build Release onto the phone with team `KD9S2F8UCY`. If the install fails with a team or
+   entitlement mismatch, stop: never accept an offer to delete the app.
+4. Back to `scope/v0.17.0`: `expo prebuild --platform ios --clean` again, or the scope's JS lands in
+   the old app, on the real database.
+
+Then back it up with "Include Apple Health workouts" on before moving to the new id
+(`docs/plans/testflight-2026-11-12.md`, Phase 2). **Never delete the `com.turftrack.poc` app** until
+the restore on the new one is confirmed. (Before it: `scope/v0.15.0` at `e232d90`, reports 0.14.0,
+iOS fingerprint `0d465570442d6d6d81addfae7e4c38632b1df37f`, installed 2026-11-01 after
 `expo prebuild --platform ios --clean`, expired around 2026-11-08. Before that: `1607339`,
 `scope/v0.14.0` with `app.json` 0.13.0, iOS `c9cca32d…`, installed 2026-10-31 with
 `xcrun devicectl device install app` because the phone was locked.)
