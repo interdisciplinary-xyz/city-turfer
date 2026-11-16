@@ -1,5 +1,5 @@
 # The app keeps recording while backgrounded (screen-off scenario).
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 tags: [recording, background]
 ---
 - runFlow: subflows/launch.yaml

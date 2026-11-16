@@ -1,6 +1,6 @@
 # Sign in by e-mailed code (AUTH_FIXED_CODE works for @e2e.cityturfer.test addresses only).
 # Env: EMAIL, AUTH_FIXED_CODE. Leaves the first code request time in output.codeAt.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 ---
 - tapOn: { id: 'sign-in-email' }
 - eraseText: 80

@@ -1,5 +1,5 @@
 # Demo history seeds turf; the Turf map shows the summary and type filters.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 tags: [turf]
 ---
 - runFlow: subflows/launch.yaml

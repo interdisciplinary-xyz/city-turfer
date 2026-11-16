@@ -48,21 +48,15 @@ pnpm -C apps/mobile run android:build      # EAS cloud build, profile android-ap
 adb install -r cityturfer.apk
 adb shell pm grant com.turftrack.poc android.permission.ACCESS_FINE_LOCATION   # + COARSE, BACKGROUND, POST_NOTIFICATIONS
 adb emu geo fix 21.0122 52.2497                                                # longitude latitude
-cd apps/mobile && maestro --device emulator-5554 test e2e --config e2e/config.yaml -e DEV_URL=""
 ```
 
 Check at least: launch, sign-in, a recording with the foreground-service notification, the Turf Map.
 Background tracking still needs a real phone with the screen off.
 
-Against the release APK the suite runs through 05 and then stops at 06: its demo-history seeder is a
-dev tool, hidden in release builds until five long presses on the version in Info. Run 07–09 on
-their own (`maestro test e2e/<flow>.yaml`); 10 needs that seeded history. Flows 12–16 came after the
-last emulator run (2026-10-18) and have not run on Android; 11 is iOS only, and 15 needs the local
-API (`apps/mobile/e2e/run.sh` skips it when the API is down). Start each run from a clean app
-(`adb shell pm clear com.turftrack.poc`, then grant the permissions again). Otherwise a recording
-left over from an earlier run blocks sign-out. If Maestro times out (`eraseText`,
-`DEADLINE_EXCEEDED`), the emulator is overloaded. Cold boot it (`-no-snapshot-load`) and wait until
-it is idle.
+**Maestro can't run on Android today:** the flows' `appId` is the iOS bundle id
+(`com.cityturfer.app`, since #236) and Android keeps `com.turftrack.poc`, so every flow fails at
+launch (`docs/quality/e2e.md`). Test the APK by hand with the list above. Running it on Android
+again needs the flows' `appId` made per platform, a separate change.
 
 ## Publish
 

@@ -6,7 +6,7 @@
 # 06-turf-map has seeded it in a full run; run alone, the flow seeds it itself when the districts
 # read no turf. Rows are found by testID, never by a district name or the sort order. The Home City
 # is cleared again even when an assertion fails (onFlowComplete), so later flows start without one.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 tags: [turf]
 onFlowComplete:
   - runFlow: subflows/clear-home-city.yaml

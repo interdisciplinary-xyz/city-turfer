@@ -1,5 +1,5 @@
 # Mock sign-in: wrong password rejected, demo account accepted, session survives a restart.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 tags: [auth]
 ---
 - stopApp

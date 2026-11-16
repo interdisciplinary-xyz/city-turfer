@@ -1,5 +1,5 @@
 # Deleting an activity asks for confirmation and removes it from History.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 tags: [history]
 ---
 - runFlow: subflows/launch.yaml
