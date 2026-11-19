@@ -12,6 +12,7 @@
     "test:e2e:build": "NEXT_PUBLIC_WAITLIST_FORM_URL=https://example.invalid/brevo NEXT_PUBLIC_WAITLIST_CONTROLLER='CityTurfer (test)' NEXT_PUBLIC_CONTACT_EMAIL=privacy@example.invalid pnpm run build",
     "test:e2e": "pnpm run test:e2e:build && playwright test",
     "test:e2e:run": "playwright test",
+    "test:e2e:closed": "NEXT_PUBLIC_WAITLIST_FORM_URL= NEXT_PUBLIC_WAITLIST_CONTROLLER= NEXT_PUBLIC_CONTACT_EMAIL= pnpm run build && E2E_NO_WAITLIST=1 playwright test e2e/landing-closed.spec.ts",
     "arch": "depcruise src tools server.mjs next.config.ts --config .dependency-cruiser.cjs",
     "typecheck": "next typegen && tsc --noEmit",
     "lint": "eslint src tools e2e playwright.config.ts next.config.ts server.mjs",

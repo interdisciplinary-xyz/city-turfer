@@ -7,8 +7,6 @@ export type AppHeaderProps = {
   locale: Locale;
   /** Section links on the right, before the language switcher (the landing page only). */
   nav?: boolean;
-  /** Whether the page has the waitlist section (mirrors the WAITLIST settings): adds its link. */
-  waitlistSection?: boolean;
 };
 
 /** The header's section links (the landing page): a labelled list of in-page anchors. */
