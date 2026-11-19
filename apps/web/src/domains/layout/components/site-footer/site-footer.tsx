@@ -7,7 +7,7 @@ import { FOOTER_LINKS } from './site-footer.constants';
 
 /**
  * The page's footer. Left: the wordmark and the tagline. Middle: the section links (the header's
- * four). Right: contact (when the waitlist is set up, it names the address), what the site does not
+ * six). Right: contact (when the waitlist is set up, it names the address), what the site does not
  * do and the OpenStreetMap credit for the hero's street map. Bottom: ©. No portal link. The language
  * switch stays in the header only, so the page has one "Language" landmark.
  */

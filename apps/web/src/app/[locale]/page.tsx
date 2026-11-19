@@ -1,8 +1,20 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-import { HeroCity, HeroCopy, HeroMotion, HeroScreens } from '@/domains/homepage';
-import { AppHeader } from '@/domains/layout';
-import { WAITLIST } from '@/domains/waitlist';
+import {
+  Audience,
+  Faq,
+  HeroCity,
+  HeroCopy,
+  HeroMotion,
+  HeroScreens,
+  Highlights,
+  HowItWorks,
+  Join,
+  LocalFirst,
+  RevealMotion,
+} from '@/domains/homepage';
+import { AppHeader, SiteFooter } from '@/domains/layout';
+import { WAITLIST, WaitlistForm } from '@/domains/waitlist';
 import type { Locale } from '@/i18n/routing';
 
 export default async function Home({ params }: { params: Promise<{ locale: Locale }> }) {
@@ -15,9 +27,8 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
       <a className='skip' href='#main'>
         {t('hero.skip')}
       </a>
-      {/* Only the header and the hero for now: no section links, there are no sections to link to. */}
-      <AppHeader locale={locale} />
-      {/* tabIndex -1: the skip link moves focus to <main>. */}
+      <AppHeader locale={locale} nav />
+      {/* tabIndex -1: the skip link moves focus to <main> (the header's links scroll to their sections). */}
       <main id='main' tabIndex={-1}>
         <section id='top' aria-labelledby='hero-title'>
           <HeroMotion className='hero'>
@@ -28,7 +39,28 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
             </div>
           </HeroMotion>
         </section>
+        <HowItWorks />
+        <Highlights />
+        <Audience />
+        <LocalFirst />
+        <Faq />
+        {/* The form goes in as a slot: the homepage domain does not import the waitlist domain. */}
+        <Join
+          form={
+            WAITLIST ? (
+              <WaitlistForm
+                action={WAITLIST.url}
+                controller={WAITLIST.controller}
+                contactEmail={WAITLIST.contactEmail}
+                locale={locale}
+                headingId='join-title'
+              />
+            ) : undefined
+          }
+        />
       </main>
+      <RevealMotion />
+      <SiteFooter contactEmail={WAITLIST?.contactEmail} />
     </>
   );
 }

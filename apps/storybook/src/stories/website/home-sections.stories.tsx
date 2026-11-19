@@ -1,28 +1,45 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
+import { useLocale } from 'next-intl';
 
 import {
   Audience,
   Faq,
-  FinalCta,
   Highlights,
   HowItWorks,
+  Join,
   LocalFirst,
   Section,
   SectionHead,
   TurfDemo,
   WhereItStands,
 } from '@/domains/homepage';
+import { WaitlistForm } from '@/domains/waitlist';
+import type { Locale } from '@/i18n/routing';
 
-/** Everything under the hero and the waitlist, in page order (the glow demo is inside How it works). */
+/** The waitlist form as the page passes it into Join (it posts to an address that never answers). */
+function ExampleForm() {
+  const locale = useLocale() as Locale;
+  return (
+    <WaitlistForm
+      action='https://example.invalid/brevo'
+      controller='CityTurfer (example)'
+      contactEmail='privacy@example.invalid'
+      locale={locale}
+      headingId='join-title'
+    />
+  );
+}
+
+/** Everything under the hero, in page order (the glow demo is inside How it works). */
 function HomeSections() {
   return (
     <>
       <HowItWorks />
-      <Audience />
       <Highlights />
+      <Audience />
       <LocalFirst />
       <Faq />
-      <FinalCta />
+      <Join form={<ExampleForm />} />
     </>
   );
 }
@@ -34,7 +51,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "The landing page below the hero, drawn in the app's own pieces as CSS (Card, Stat, ActivityRow, type chips, the Record button, TurfLegend): how it works (three cards, then the street-glow demo), who it's for with what is different, the app's highlights with where it stands, privacy, the FAQ and a call back to the waitlist (docs/plans/homepage-sections-2026-10-28.md). Copy comes from apps/web/messages (home.*).",
+          "The landing page below the hero, drawn in the app's own pieces as CSS (Card, Stat, ActivityRow, type chips, the Record button, TurfLegend): how it works (three cards, then the street-glow demo), what you get (six tiles with tags), who it's for, privacy, the FAQ and Join (where it stands, then the waitlist form or a closed line) (docs/plans/homepage-value-2026-11-19.md). Copy comes from apps/web/messages (home.*).",
       },
     },
   },
@@ -58,6 +75,15 @@ export const TurfDemoOnly: StoryObj<typeof meta> = {
 export const AudienceOnly: StoryObj<typeof meta> = { render: () => <Audience /> };
 
 export const HighlightsOnly: StoryObj<typeof meta> = { render: () => <Highlights /> };
+
+/** The last section with the waitlist form (the NEXT_PUBLIC_WAITLIST_* variables are set). */
+export const JoinWithForm: StoryObj<typeof meta> = { render: () => <Join form={<ExampleForm />} /> };
+
+/** Without the form: the stage strip and one honest line (the variables are not set). */
+export const JoinWithoutForm: StoryObj<typeof meta> = { render: () => <Join /> };
+
+/** Six tiles, three and three; the tags read "New" (Share photo) and "iPhone only" (Apple Watch). */
+export const HighlightsWithTags: StoryObj<typeof meta> = { render: () => <Highlights /> };
 
 export const WhereItStandsOnly: StoryObj<typeof meta> = { render: () => <WhereItStands /> };
 
