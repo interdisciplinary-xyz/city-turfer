@@ -36,6 +36,9 @@ export interface RecordingSessionState {
   readonly pausedMs: number;
   readonly distanceM: number;
   readonly movingS: number;
+  // Time of the last accepted fix whose step counted as moving; null after a still step or a
+  // manual Resume. Absent in states saved before v0.17.0. Drives the live moving-time clock.
+  readonly lastMovingAt?: number | null;
   readonly pointCount: number;
   readonly recent: readonly { t: number; d: number }[]; // (time, cumulative distance) for current pace
 }
@@ -49,6 +52,8 @@ export interface LiveSnapshot {
   readonly distanceM: number;
   readonly activeS: number; // wall clock minus pauses
   readonly movingS: number;
+  /** While recording and moving: epoch ms of the last moving fix (the clock runs on from it). */
+  readonly lastMovingAt: number | null;
   readonly currentSpeedMps: number | null;
   readonly pointCount: number;
   readonly computedAt: number; // the `now` this snapshot was computed for
@@ -97,6 +102,7 @@ export class RecordingSession {
       pausedMs: 0,
       distanceM: 0,
       movingS: 0,
+      lastMovingAt: null,
       pointCount: 0,
       recent: [],
     });
@@ -160,6 +166,7 @@ export class RecordingSession {
       resumedSegments,
       tail: null,
       pauseAnchor: null,
+      lastMovingAt: null,
       recent: [],
     };
     this.record({
@@ -271,6 +278,7 @@ export class RecordingSession {
         pointCount: s.pointCount + 1,
         distanceM: distanceTotal,
         movingS: s.movingS + (step.moving ? step.dtS : 0),
+        lastMovingAt: step.moving ? fix.t : null,
         recent: [...s.recent.filter((r) => fix.t - r.t <= RECENT_WINDOW_MS), { t: fix.t, d: distanceTotal }],
       };
     }
@@ -320,6 +328,7 @@ export class RecordingSession {
       distanceM: s.distanceM,
       activeS: Math.max(0, Math.round(((s.endedAt ?? now) - s.startedAt - s.pausedMs - pausedNow) / 1000)),
       movingS: Math.round(s.movingS),
+      lastMovingAt: s.status === 'recording' ? (s.lastMovingAt ?? null) : null,
       currentSpeedMps: s.status === 'recording' && span >= 5 ? (last.d - first.d) / span : null,
       pointCount: s.pointCount,
       computedAt: now,

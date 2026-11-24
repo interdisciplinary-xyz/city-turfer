@@ -4,6 +4,7 @@ import { liveSessionStore } from '@/composition-root';
 import type { ActivityType, TrackPoint } from '@/shared-kernel';
 import { useContainer } from '@/ui-kit/app-context';
 
+import { liveMovingS } from '../domain/live-moving-time';
 import type { LiveSnapshot } from '../domain/recording-session';
 
 const subscribe = (l: () => void) => liveSessionStore.subscribe(l);
@@ -45,16 +46,22 @@ export function useRecording() {
     return () => clearTimeout(id);
   }, [c, pointCount, snapshot?.sessionId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Timer keeps ticking between location batches while recording.
-  const activeS = snapshot
-    ? snapshot.activeS +
-      (snapshot.status === 'recording' ? Math.max(0, Math.floor((now - snapshot.computedAt) / 1000)) : 0)
-    : 0;
+  // Moving time only: ticks between fixes while moving, stops when you stop. Never shown going
+  // backwards when a fix turns out still (the run-on is at most a few seconds).
+  const shown = useRef<{ sessionId: string; s: number } | null>(null);
+  let movingS = snapshot ? liveMovingS(snapshot, now) : 0;
+  if (snapshot) {
+    const prev = shown.current;
+    if (prev && prev.sessionId === snapshot.sessionId) {
+      movingS = Math.max(movingS, prev.s);
+    }
+    shown.current = { sessionId: snapshot.sessionId, s: movingS };
+  }
 
   return {
     snapshot,
     track,
-    activeS,
+    movingS,
     prepare: useCallback(() => c.recording.prepare.execute(), [c]),
     start: useCallback((type: ActivityType) => c.recording.start.execute(type), [c]),
     pause: useCallback(() => c.recording.pause.execute(), [c]),
