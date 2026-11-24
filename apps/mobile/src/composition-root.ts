@@ -28,6 +28,8 @@ import { SecureStoreSessionStore } from '@/contexts/identity/infrastructure/secu
 import { backgroundActivitySession } from '@/contexts/recording/infrastructure/background-activity-session';
 import { ExpoLocationTracker, ExpoPermissionGateway } from '@/contexts/recording/infrastructure/expo-location-tracker';
 import { liveSessionStore } from '@/contexts/recording/infrastructure/live-session-store';
+import { OsrmStreetRouter } from '@/contexts/route-planning/infrastructure/osrm-street-router';
+import { SecureStoreRoutingConsent } from '@/contexts/route-planning/infrastructure/secure-store-routing-consent';
 import { SecureStoreSharePromptFlag } from '@/contexts/share-photo/infrastructure/secure-store-share-prompt-flag';
 import { turfOverlayPreference } from '@/contexts/territory/infrastructure/turf-overlay-preference';
 import { deleteExpoDatabase, openExpoDatabase } from '@/platform/expo-database';
@@ -112,6 +114,7 @@ async function eraseProfile(profileId: string): Promise<void> {
   await onboardingDismissal.forget(profileId);
   await sharePromptFlag.forget(profileId);
   await turfOverlayPreference.forget(profileId);
+  await SecureStoreRoutingConsent.forget(profileId);
   await profileNames.forget(profileId);
 }
 
@@ -176,6 +179,11 @@ const adapters = {
     // Street estimates only while the user has the app open: never on a headless launch.
     isForeground: () => AppState.currentState === 'active',
     wait: (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
+  },
+  routePlanning: {
+    // Called only after the Turfer's consent, from the planner (foreground).
+    router: new OsrmStreetRouter({ appVersion: Constants.expoConfig?.version ?? 'dev' }),
+    consent: (userId: string) => new SecureStoreRoutingConsent(userId),
   },
   health: new HealthKitHealthStore(),
   isForeground: () => AppState.currentState === 'active',

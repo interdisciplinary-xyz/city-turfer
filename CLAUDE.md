@@ -113,6 +113,8 @@ apps/mobile/                         the Expo app (package @cityturfer/mobile); 
     domain/ application/ infrastructure/ ui/ index.ts contract.ts
   src/contexts/share-photo/          Share photo: camera/library photo + activity stats card → system share sheet (no map)
     domain/ application/ infrastructure/ ui/ index.ts
+  src/contexts/route-planning/       Route planner: Planned Route (tap Waypoints, opt-in OSRM snapping, turf estimate; migration v16)
+    domain/ application/ infrastructure/ ui/ index.ts contract.ts
   src/platform/                      SQLite, migrations, outbox + EventDispatcher, one-off jobs, diagnostics (no coordinates)
   src/composition-root.ts            lazy, React-free wiring (used by UI and headless task)
   modules/background-session/        native iOS module (CLBackgroundActivitySession + liveUpdates)

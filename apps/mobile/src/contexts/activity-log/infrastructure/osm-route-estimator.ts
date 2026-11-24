@@ -1,19 +1,20 @@
 import { type RouteEstimator, RouterRateLimited, RouterUnreachable } from '@cityturfer/core/activity-log';
 
+import {
+  OSM_ROUTING_BASE_URL,
+  OSM_ROUTING_DECIMALS,
+  OSM_ROUTING_PROFILE,
+  OSM_ROUTING_TIMEOUT_MS,
+  osmRoutingHeaders,
+} from '@/constants/routing';
 import type { ActivityType, GeoPoint } from '@/shared-kernel';
 
 /**
- * FOSSGIS OpenStreetMap routing (OSRM). Receives only the two endpoints of a
- * gap, rounded to 4 decimals (~10 m), never a whole track. Identifies the app
- * as the usage policy asks. Fine for the PoC; production needs its own router.
+ * FOSSGIS OpenStreetMap routing (OSRM, constants/routing.ts). Receives only the two endpoints of a
+ * gap, rounded to 4 decimals (~10 m), never a whole track. Identifies the app as the usage policy
+ * asks. Fine for the PoC; production needs its own router.
  */
-const PROFILE: Record<ActivityType, string> = { walk: 'routed-foot', run: 'routed-foot', cycle: 'routed-bike' };
-const BASE = 'https://routing.openstreetmap.de';
-export const PROJECT_URL = 'https://github.com/interdisciplinary-xyz/city-turfer';
-const TIMEOUT_MS = 10_000;
-
-/** 4 decimals of a degree: about 11 m of latitude. Enough to route, too coarse to pinpoint a door. */
-const coord = (p: GeoPoint) => `${p.lon.toFixed(4)},${p.lat.toFixed(4)}`;
+const coord = (p: GeoPoint) => `${p.lon.toFixed(OSM_ROUTING_DECIMALS)},${p.lat.toFixed(OSM_ROUTING_DECIMALS)}`;
 
 export interface OsmRouteEstimatorOptions {
   appVersion: string;
@@ -30,17 +31,13 @@ export class OsmRouteEstimator implements RouteEstimator {
 
   constructor(o: OsmRouteEstimatorOptions) {
     this.fetch = o.fetch ?? ((input, init) => fetch(input, init));
-    this.timeoutMs = o.timeoutMs ?? TIMEOUT_MS;
+    this.timeoutMs = o.timeoutMs ?? OSM_ROUTING_TIMEOUT_MS;
     this.now = o.now ?? Date.now;
-    this.headers = {
-      'User-Agent': `CityTurfer/${o.appVersion} (+${PROJECT_URL})`,
-      Referer: PROJECT_URL,
-      Accept: 'application/json',
-    };
+    this.headers = osmRoutingHeaders(o.appVersion);
   }
 
   static urlFor(from: GeoPoint, to: GeoPoint, type: ActivityType): string {
-    return `${BASE}/${PROFILE[type]}/route/v1/driving/${coord(from)};${coord(to)}?overview=full&geometries=geojson`;
+    return `${OSM_ROUTING_BASE_URL}/${OSM_ROUTING_PROFILE[type]}/route/v1/driving/${coord(from)};${coord(to)}?overview=full&geometries=geojson`;
   }
 
   async route(from: GeoPoint, to: GeoPoint, type: ActivityType) {

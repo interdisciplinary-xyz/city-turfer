@@ -214,6 +214,39 @@ describe('migration v15 (Daily goal)', () => {
   });
 });
 
+describe('migration v16 (Planned Route)', () => {
+  it('adds an empty planned-route table to a v15 database, keeping its activities and goal', async () => {
+    const db = openNodeDatabase();
+    await migrate(db, 15);
+    await db.run(
+      `INSERT INTO log_activities (id, type, name, started_at, ended_at, distance_m, moving_s, elapsed_s, splits, created_at)
+       VALUES ('s1', 'walk', 'Evening walk', 1, 2, 2000, 1500, 1600, '[]', 3)`
+    );
+    await db.run("INSERT INTO goal_daily_targets (effective_from, minutes, set_at) VALUES ('2026-11-11', 30, 1)");
+    await migrate(db, 16);
+    expect(await version(db)).toBe(16);
+    expect(await db.first('SELECT id FROM log_activities')).toEqual({ id: 's1' });
+    expect(await db.first('SELECT minutes FROM goal_daily_targets')).toEqual({ minutes: 30 });
+    expect(await db.first('SELECT COUNT(*) AS n FROM rp_planned_routes')).toEqual({ n: 0 });
+  });
+
+  it('allows one row, the three activity types and a 0/1 Record flag only', async () => {
+    const db = openNodeDatabase();
+    await migrate(db);
+    const insert = (id: number, type: string, shown: number) =>
+      db.run(
+        `INSERT INTO rp_planned_routes (id, type, waypoints, legs, show_on_record, created_at, updated_at)
+         VALUES (?, ?, '[]', '[]', ?, 1, 1)`,
+        [id, type, shown]
+      );
+    await insert(1, 'cycle', 1);
+    await expect(insert(2, 'walk', 0)).rejects.toThrow();
+    await db.run('DELETE FROM rp_planned_routes');
+    await expect(insert(1, 'swim', 0)).rejects.toThrow();
+    await expect(insert(1, 'walk', 2)).rejects.toThrow();
+  });
+});
+
 describe('migration v14 (Health Sync show_history)', () => {
   // Pins v14 as fix/health-sync (#214) has it: `ALTER TABLE hs_state ADD COLUMN show_history INTEGER
   // NOT NULL DEFAULT 0;`. The two branches each carry v14 until #214 merges, so it must stay

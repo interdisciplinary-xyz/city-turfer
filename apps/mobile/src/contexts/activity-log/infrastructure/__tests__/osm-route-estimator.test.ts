@@ -1,6 +1,8 @@
 import { RouterRateLimited, RouterUnreachable } from '@cityturfer/core/activity-log';
 
-import { OsmRouteEstimator, PROJECT_URL } from '../osm-route-estimator';
+import { OSM_ROUTING_PROJECT_URL as PROJECT_URL } from '@/constants/routing';
+
+import { OsmRouteEstimator } from '../osm-route-estimator';
 
 const FROM = { lat: 52.2297123456, lon: 21.0122287654 };
 const TO = { lat: 52.23519, lon: 21.00848 };

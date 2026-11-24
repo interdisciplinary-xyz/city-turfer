@@ -39,6 +39,8 @@ import { MockAuthGateway } from '@/contexts/identity/infrastructure/mock-auth-ga
 import { createRecordingApi, SerialCommandExecutor, type SessionFinished } from '@/contexts/recording';
 import type { LiveSessionNotifier, LocationTracker, PermissionGateway } from '@/contexts/recording/application/ports';
 import { SqliteRecordingSessionRepository } from '@/contexts/recording/infrastructure/sqlite-recording-session-repository';
+import { createRoutePlanningApi, type RoutingConsent, type StreetRouter } from '@/contexts/route-planning';
+import { SqlitePlannedRouteRepository } from '@/contexts/route-planning/infrastructure/sqlite-planned-route-repository';
 import { createTerritoryApi, type HomeCityChosen } from '@/contexts/territory';
 import { SqliteHomeCityRepository } from '@/contexts/territory/infrastructure/sqlite-home-city-repository';
 import { SqliteTerritoryRepository } from '@/contexts/territory/infrastructure/sqlite-territory-repository';
@@ -71,8 +73,21 @@ export interface DeviceAdapters {
   defaultNameWords?: () => DefaultNameWords | Promise<DefaultNameWords>;
   /** The local calendar the Daily goal counts days in. Omitted: the device's (Date, current zone). */
   calendar?: LocalCalendar;
+  /** Route Planning's street router and a profile's consent to it. Omitted: never asked, never sent. */
+  routePlanning?: RoutePlanningAdapters;
   clock?: Clock;
 }
+
+export interface RoutePlanningAdapters {
+  router: StreetRouter;
+  consent: (userId: string) => RoutingConsent;
+}
+
+/** No router given (most tests): consent stays unasked and nothing is ever routed (legs stay straight). */
+const NO_STREET_ROUTING: RoutePlanningAdapters = {
+  router: { route: async () => ({ kind: 'unavailable', reason: 'failed' }) },
+  consent: () => ({ state: async () => 'unasked', set: async () => undefined }),
+};
 
 export interface CloudBackupAdapters {
   api: ApiClientFactory;
@@ -193,6 +208,16 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     // DailyGoalSet / DailyGoalOfferHidden have no handler: dispatching them still fires
     // dispatcher.onChange, which bumps the UI's dataVersion.
     afterCommit,
+  });
+
+  // Territory → Route Planning (query only): the turf a Planned Route would claim, on the phone.
+  const routing = a.routePlanning ?? NO_STREET_ROUTING;
+  const routePlanning = createRoutePlanningApi({
+    routes: new SqlitePlannedRouteRepository(db),
+    router: routing.router,
+    consent: routing.consent(userId),
+    turf: { estimate: (line) => territory.estimateGain.execute(line) },
+    clock,
   });
 
   const healthSync = createHealthSyncApi({
@@ -352,6 +377,7 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     activityLog,
     territory,
     goals,
+    routePlanning,
     healthSync,
     cloudBackup,
   };
