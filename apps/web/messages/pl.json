@@ -448,7 +448,6 @@
         "distance": "Dystans",
         "movingTime": "Czas w ruchu",
         "average": "{type, select, cycle {Śr. prędkość} other {Śr. tempo}}",
-        "elapsed": "Czas całkowity",
         "elevation": "Przewyższenie"
       },
       "totals": {

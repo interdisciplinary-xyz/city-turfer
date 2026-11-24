@@ -108,7 +108,6 @@ export function ActivityDetailView({
             <Stat label={t('stat.average', { type: a.type })} value={pace.value} unit={pace.unit} />
           </View>
           <View style={[s.row, { marginTop: 14 }]}>
-            <Stat label={t('stat.elapsed')} value={formatDuration(a.elapsedS)} />
             <Stat
               label={t('stat.elevation')}
               value={a.elevGainM != null ? `+${a.elevGainM}` : '—'}

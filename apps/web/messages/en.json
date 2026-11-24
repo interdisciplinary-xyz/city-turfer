@@ -448,7 +448,6 @@
         "distance": "Distance",
         "movingTime": "Moving time",
         "average": "{type, select, cycle {Avg speed} other {Avg pace}}",
-        "elapsed": "Elapsed time",
         "elevation": "Elevation gain"
       },
       "totals": {
