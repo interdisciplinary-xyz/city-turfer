@@ -100,6 +100,10 @@ function Gate() {
         <Stack.Screen name='info' options={{ headerShown: true, title: t('screens.info'), headerBackTitle: back }} />
         <Stack.Screen name='city' options={{ headerShown: true, title: t('screens.city'), headerBackTitle: back }} />
         <Stack.Screen
+          name='plan-route'
+          options={{ headerShown: true, title: t('screens.planRoute'), headerBackTitle: back }}
+        />
+        <Stack.Screen
           name='districts'
           options={{
             presentation: 'modal',

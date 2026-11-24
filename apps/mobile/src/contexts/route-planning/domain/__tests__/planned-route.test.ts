@@ -1,7 +1,7 @@
 import { distanceM } from '@/shared-kernel';
 
 import { legLengthM, PlannedRoute } from '../planned-route';
-import { MAX_WAYPOINTS, PLANNING_SPEED_MPS } from '../planned-route.constants';
+import { MAX_ROUTE_M, MAX_WAYPOINTS, PLANNING_SPEED_MPS } from '../planned-route.constants';
 
 // Synthetic points in Gdańsk (no real user data).
 const A = { lat: 54.35, lon: 18.65 };
@@ -59,6 +59,15 @@ describe('PlannedRoute', () => {
     }
     expect(() => r.addWaypoint(D, 99)).toThrow('planned-route.too-many-waypoints');
     expect(r.waypoints).toHaveLength(MAX_WAYPOINTS);
+  });
+
+  it('rejects a Waypoint that would take the route past MAX_ROUTE_M in straight lines', () => {
+    const r = route(A);
+    // About 30 km north of A per step (0.27° latitude).
+    r.addWaypoint({ lat: 54.62, lon: 18.65 }, 2);
+    expect(() => r.addWaypoint({ lat: 54.89, lon: 18.65 }, 3)).toThrow('planned-route.too-long');
+    expect(r.waypoints).toHaveLength(2);
+    expect(distanceM(A, { lat: 54.62, lon: 18.65 })).toBeLessThan(MAX_ROUTE_M);
   });
 
   it('measures every leg as drawn (shared-kernel haversine) and times it at the type speed', () => {

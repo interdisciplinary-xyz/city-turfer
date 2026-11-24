@@ -13,5 +13,11 @@ export const TRAVEL_MODE: Record<ActivityType, 'foot' | 'bike'> = { walk: 'foot'
 /** At most this many Waypoints on one Planned Route (a tap route, not a route library). */
 export const MAX_WAYPOINTS = 30;
 
+/**
+ * At most this far, in straight lines between Waypoints, on one Planned Route: a city route, and a
+ * bound on the turf estimate (it scores every cell along the line on each edit).
+ */
+export const MAX_ROUTE_M = 50_000;
+
 /** The type a new Planned Route starts with until the Turfer picks another. */
 export const DEFAULT_PLANNED_ROUTE_TYPE: ActivityType = 'walk';

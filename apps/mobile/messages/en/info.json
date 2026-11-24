@@ -8,9 +8,11 @@
   "updateFailedTitle": "Update failed",
   "updateFailedBody": "The update could not be downloaded. Check your connection and try again.",
   "yourData": "Your data",
-  "yourDataBody": "Activities and turf live on this phone; they reach our server only if you turn on Cloud backup below. When GPS drops out, just the two ends of the gap are sent to the OpenStreetMap router to estimate the street route — never your whole track.",
+  "yourDataBody": "Activities and turf live on this phone; they reach our server only if you turn on Cloud backup below. When GPS drops out, just the two ends of the gap are sent to the OpenStreetMap router to estimate the street route — never your whole track. If you let the route planner follow streets, the stops you tap are sent there too.",
   "estimateGaps": "Estimate GPS gaps along streets",
   "estimateGapsOff": "Off: no requests leave the phone; gaps stay as dashed straight lines.",
+  "planAlongStreets": "Plan routes along streets",
+  "planAlongStreetsOff": "Off: planned routes stay straight lines and their stops never leave the phone.",
   "settingNotSaved": "The setting did not change. Try again.",
   "footer": "{name} · Surf your city. Own your streets."
 }

@@ -19,6 +19,7 @@
     "city": "Your city",
     "linkBackup": "Cloud backup",
     "districts": "Districts",
-    "goal": "Daily goal"
+    "goal": "Daily goal",
+    "planRoute": "Plan a route"
   }
 }

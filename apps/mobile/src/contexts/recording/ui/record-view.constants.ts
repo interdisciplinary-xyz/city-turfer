@@ -29,6 +29,8 @@ export type RecordViewProps = {
   onViewChange?: (view: RecordMapView) => void;
   /** Shows the turf toggle chip (top right), before and during a recording. */
   turf?: RecordTurfToggle;
+  /** More map chips from the screen (e.g. hiding a planned route), in the column under the turf chip. */
+  mapChips?: ReactNode;
 };
 
 /** The live track's lowest layer: overlays go under it with `beforeId`. */

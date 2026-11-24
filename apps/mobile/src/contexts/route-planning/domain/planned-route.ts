@@ -1,6 +1,6 @@
 import { type ActivityType, distanceM, DomainError, type GeoPoint, geoPoint } from '@/shared-kernel';
 
-import { MAX_WAYPOINTS, PLANNING_SPEED_MPS, TRAVEL_MODE } from './planned-route.constants';
+import { MAX_ROUTE_M, MAX_WAYPOINTS, PLANNING_SPEED_MPS, TRAVEL_MODE } from './planned-route.constants';
 
 /**
  * A Route Leg: the way from one Waypoint to the next. Snapped: along streets (the router's path);
@@ -31,6 +31,11 @@ export interface WaypointAdded {
 const samePoint = (a: GeoPoint, b: GeoPoint) => a.lat === b.lat && a.lon === b.lon;
 const straight = (from: GeoPoint, to: GeoPoint): RouteLeg => ({ path: [from, to], snapped: false });
 /** A leg's length as drawn, metres (shared-kernel haversine). */
+/** Length of the straight lines through `w`, in metres (what MAX_ROUTE_M bounds). */
+function straightLengthM(w: readonly GeoPoint[]): number {
+  return w.slice(1).reduce((m, p, i) => m + distanceM(w[i], p), 0);
+}
+
 export function legLengthM(leg: RouteLeg): number {
   let m = 0;
   for (let i = 1; i < leg.path.length; i++) {
@@ -133,6 +138,9 @@ export class PlannedRoute {
     }
     if (w.length >= MAX_WAYPOINTS) {
       throw new DomainError('planned-route.too-many-waypoints', String(MAX_WAYPOINTS));
+    }
+    if (last && straightLengthM(w) + distanceM(last, point) > MAX_ROUTE_M) {
+      throw new DomainError('planned-route.too-long', String(MAX_ROUTE_M));
     }
     const legs = last ? [...this.state.legs, straight(last, point)] : this.state.legs;
     this.state = { ...this.state, waypoints: [...w, point], legs, updatedAt: now };

@@ -108,9 +108,14 @@ function runsOf(legs: readonly number[]): [number, number][] {
 
 const lonLat = (p: GeoPoint): [number, number] => [p.lon, p.lat];
 
-async function viewOf(route: PlannedRoute, turf: TurfGainEstimator, stored: boolean): Promise<PlannedRouteView> {
+async function viewOf(
+  route: PlannedRoute,
+  turf: TurfGainEstimator,
+  stored: boolean,
+  estimate = true
+): Promise<PlannedRouteView> {
   const line = route.line();
-  const gain = line.length > 0 ? await turf.estimate(line) : { cells: [], newCells: [], newAreaM2: 0 };
+  const gain = estimate && line.length > 0 ? await turf.estimate(line) : { cells: [], newCells: [], newAreaM2: 0 };
   return {
     type: route.type,
     waypoints: route.waypoints.map((p) => ({ lat: p.lat, lon: p.lon })),
@@ -130,10 +135,11 @@ async function viewOf(route: PlannedRoute, turf: TurfGainEstimator, stored: bool
 /** The Planned Route as it is now, with a fresh turf estimate (turf grows after every recording). */
 export class GetActivePlannedRoute {
   constructor(private readonly d: RoutePlanningDeps) {}
-  async execute(): Promise<PlannedRouteView> {
+  /** `estimate: false` leaves the turf estimate empty: the Record guide draws only the legs. */
+  async execute(opts: { estimate?: boolean } = {}): Promise<PlannedRouteView> {
     const stored = await this.d.routes.active();
     const route = stored ?? PlannedRoute.draft(DEFAULT_PLANNED_ROUTE_TYPE, this.d.clock.now());
-    return viewOf(route, this.d.turf, stored != null);
+    return viewOf(route, this.d.turf, stored != null, opts.estimate ?? true);
   }
 }
 

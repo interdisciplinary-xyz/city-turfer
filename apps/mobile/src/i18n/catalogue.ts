@@ -12,6 +12,7 @@ import enHealth from '../../messages/en/health.json';
 import enInfo from '../../messages/en/info.json';
 import enMe from '../../messages/en/me.json';
 import enNav from '../../messages/en/nav.json';
+import enPlanner from '../../messages/en/planner.json';
 import enProfile from '../../messages/en/profile.json';
 import enRecord from '../../messages/en/record.json';
 import enShare from '../../messages/en/share.json';
@@ -32,6 +33,7 @@ import plHealth from '../../messages/pl/health.json';
 import plInfo from '../../messages/pl/info.json';
 import plMe from '../../messages/pl/me.json';
 import plNav from '../../messages/pl/nav.json';
+import plPlanner from '../../messages/pl/planner.json';
 import plProfile from '../../messages/pl/profile.json';
 import plRecord from '../../messages/pl/record.json';
 import plShare from '../../messages/pl/share.json';
@@ -66,6 +68,7 @@ const SOURCE = {
   me: enMe,
   goals: enGoals,
   share: enShare,
+  planner: enPlanner,
 };
 export type Messages = typeof SOURCE;
 export type Namespace = keyof Messages;
@@ -94,6 +97,7 @@ const RAW: Record<Locale, Catalogue> = {
     me: plMe,
     goals: plGoals,
     share: plShare,
+    planner: plPlanner,
   },
 };
 

@@ -1,0 +1,49 @@
+{
+  "emptyHint": "Tap the map to add your start",
+  "nextHint": "Tap again to add the next stop",
+  "stat": {
+    "distance": "Distance",
+    "time": "Est. time",
+    "newCells": "New cells"
+  },
+  "time": "{long, select, yes {{hours} h {minutes} min} other {{minutes} min}}",
+  "newCells": "≈ {cells}",
+  "newArea": "≈ {area} of new turf if you go this way",
+  "summaryLabel": "Planned route: {km, plural, one {{kmText} kilometre} other {{kmText} kilometres}}, about {minutes, plural, one {# minute} other {# minutes}}, about {count, plural, one {# new cell} other {# new cells}}",
+  "straight": "Not snapped to streets",
+  "straightHint": "Dashed parts are straight lines.",
+  "followStreets": "Follow streets",
+  "followStreetsLabel": "Follow streets: ask about sending your route stops to the route service",
+  "retry": "Try again",
+  "retryLabel": "Try again to follow streets",
+  "routing": "Following streets…",
+  "undo": "Undo",
+  "undoLabel": "Remove the last stop",
+  "clear": "Clear",
+  "clearLabel": "Remove every stop",
+  "closeLoop": "Close loop",
+  "closeLoopLabel": "Close the loop back to the start",
+  "useOnRecord": "Use on Record",
+  "shownOnRecord": "Shown on Record",
+  "useOnRecordLabel": "Show this route on the Record map",
+  "attribution": "Map and routes © OpenStreetMap contributors",
+  "hideRoute": "Hide route",
+  "hideRouteLabel": "Hide the planned route from the Record map",
+  "errors": {
+    "tooLong": "A route can be up to 50 km. Undo a stop or pick one closer.",
+    "tooManyWaypoints": "A route can have up to {max} stops. Undo one to change the end.",
+    "loopTooShort": "Add at least two stops before closing the loop.",
+    "tooShort": "Add at least two stops to use the route on Record.",
+    "generic": "That didn’t work. Try again."
+  },
+  "consent": {
+    "title": "Follow the streets?",
+    "body": "To draw your route along streets, your route stops are sent to the OpenStreetMap route service:",
+    "privacy": "They’re rounded to about 10 m and sent without your account; that service may keep them in its logs. Nothing else leaves your phone, and nothing is sent unless you agree. You can change this in Info.",
+    "follow": "Follow streets",
+    "straight": "Straight lines",
+    "straightHint": "Straight lines: nothing is sent, and the route is still measured.",
+    "host": "routing.openstreetmap.de"
+  },
+  "typeLabel": "{type, select, walk {Plan a walk} run {Plan a run} cycle {Plan a ride} other {Plan a walk}}"
+}
