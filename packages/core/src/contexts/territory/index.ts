@@ -10,6 +10,7 @@ import {
 } from './application/home-city';
 import {
   ClaimTurfFromActivity,
+  EstimateTurfGain,
   GetClaimForActivity,
   GetTurfInViewport,
   GetTurfSummary,
@@ -46,6 +47,8 @@ export function createTerritoryApi(deps: TerritoryDeps & HomeCityDeps & { distri
     searchCities: new SearchCities(),
     districts: new GetDistrictCoverage(deps),
     activityPlace: new GetActivityPlace(deps),
+    /** The turf a line (a Planned Route) would claim: its corridor of cells, which are new, their area. */
+    estimateGain: new EstimateTurfGain(deps),
   };
 }
 export type TerritoryApi = ReturnType<typeof createTerritoryApi>;

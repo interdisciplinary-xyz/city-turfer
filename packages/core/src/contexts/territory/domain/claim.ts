@@ -1,6 +1,7 @@
-import { type ActivityType, distanceM, DomainError, interpolate, type Track } from '../../../shared-kernel';
+import { type ActivityType, DomainError, type Track } from '../../../shared-kernel';
 import type { TurfClaimed } from '../contract';
 import type { CellGrid, CellId } from './cell-grid';
+import { cellsAlong } from './corridor';
 
 export interface ClaimState {
   readonly activityId: string;
@@ -27,19 +28,10 @@ export class Claim {
       throw new DomainError('claim.in-future');
     }
     const cells = new Set<CellId>();
-    const step = grid.cellWidthM / 2;
+    // Never bridge segment gaps: each segment is walked independently.
     for (const seg of track.segments) {
-      // Never bridge segment gaps: each segment is walked independently.
-      for (let i = 0; i < seg.length; i++) {
-        cells.add(grid.cellOf(seg[i]));
-        const next = seg[i + 1];
-        if (!next) {
-          break;
-        }
-        const n = Math.ceil(distanceM(seg[i], next) / step);
-        for (let s = 1; s < n; s++) {
-          cells.add(grid.cellOf(interpolate(seg[i], next, s / n)));
-        }
+      for (const c of cellsAlong(seg, grid)) {
+        cells.add(c);
       }
     }
     if (cells.size === 0) {
