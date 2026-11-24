@@ -315,6 +315,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   of the landing page (bugs and one heading system, then fewer sections and one button/card grammar,
   then polish), approved by the founder on 2026-11-01; built in PR 213, the founder follow-ups in PR
   215 (v0.15.0)
+- 🚧 [`plans/route-planner-2026-11-24.md`](plans/route-planner-2026-11-24.md): Route planner, slice
+  1: the Turfer taps waypoints on their turf map, the route snaps to streets (opt-in, public OSRM),
+  shows distance and the new turf it would claim, and becomes a guide line on the Record map. One
+  active plan on the phone; auto loops and unclaimed-street hints later.
 - ✅ [`plans/share-photo-2026-11-11.md`](plans/share-photo-2026-11-11.md): Share photo after an
   activity: the Turfer takes or picks a photo, the app lays the activity's stats over it
   (Garmin-style story card) and hands the image to the system share sheet. No map, no coordinates.

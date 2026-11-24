@@ -27,7 +27,7 @@ language is `docs/poc-plan.md` §2. Where this doc and the code disagree, the co
 
 ## 1. Context map
 
-There are <!-- probe:contexts -->9<!-- /probe --> bounded contexts, one directory each in
+There are <!-- probe:contexts -->10<!-- /probe --> bounded contexts, one directory each in
 `apps/mobile/src/contexts/`:
 
 - **identity** (generic): `AuthGateway` port with two adapters, `MockAuthGateway` (the local `admin`
@@ -71,6 +71,11 @@ There are <!-- probe:contexts -->9<!-- /probe --> bounded contexts, one director
   events; the screen passes plain facts from Activity Log, Territory's claim and its
   `GetActivityPlace` query. No map or coordinates on the card. Plan:
   `docs/plans/share-photo-2026-11-11.md`.
+- **route-planning** (supporting): one active `PlannedRoute` (Waypoints, Route Legs snapped or
+  straight) in `rp_planned_routes` (migration v16), never backed up. Ports `StreetRouter` (public
+  OSRM, only after the per-profile `RoutingConsent`), `PlannedRouteRepository`, `TurfGainEstimator`
+  (Territory's `EstimateTurfGain`, on the phone). No events. Plan:
+  [route-planner-2026-11-24.md](../plans/route-planner-2026-11-24.md).
 
 ```
             SessionFinished                ActivityRecorded · ActivityDeleted
