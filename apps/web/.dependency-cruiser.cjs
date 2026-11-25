@@ -29,7 +29,7 @@ const light = '^src/domains/[^/]+/(logic\\.ts$|utils/|(components|hooks)/[^/]+/[
 
 /** The portal's own code: its routes and its domains. Marketing code never imports it. */
 const portal = `^src/(app/\\[locale\\]/account/|domains/(${PORTAL_DOMAINS.join('|')})/)`;
-const portalLibraries = '(^|/)node_modules/(@tanstack/[^/]+|openapi-fetch|maplibre-gl)/';
+const portalLibraries = '(^|/)node_modules/(@tanstack/[^/]+|openapi-fetch|maplibre-gl|@sentry/[^/]+)/';
 /** The portal plus the API client it alone uses. */
 const portalCode = `^src/(app/\\[locale\\]/account/|domains/(${PORTAL_DOMAINS.join('|')})/|lib/api/)`;
 // Not portal code either: the dev server, the dev tools it loads and the Next config.
@@ -65,9 +65,17 @@ module.exports = {
     {
       name: 'portal-libraries-only-in-portal',
       severity: 'error',
-      comment: 'TanStack Query, openapi-fetch and maplibre-gl load only on portal pages.',
+      comment: 'TanStack Query, openapi-fetch, maplibre-gl and Sentry load only on portal pages.',
       from: { path: '^src/', pathNot: portalCode },
       to: { path: portalLibraries },
+    },
+    {
+      name: 'sentry-only-in-its-adapter',
+      severity: 'error',
+      comment:
+        'The Sentry SDK is reached only through src/lib/api/sentry-reporter.ts and the sentry-sdk.ts it imports dynamically (portal pages only); public pages run no third-party script.',
+      from: { path: '^src/', pathNot: '^src/lib/api/sentry-(reporter|sdk)\\.ts$' },
+      to: { path: '(^|/)node_modules/@sentry/' },
     },
     {
       name: 'core-h3-only-in-portal',
@@ -98,9 +106,9 @@ module.exports = {
       name: 'portal-core-shared-kernel-only',
       severity: 'error',
       comment:
-        'apps/web uses @cityturfer/core through its shared kernel only (and /h3 for the portal map), never the contexts.',
+        'apps/web uses @cityturfer/core through its shared kernel only (plus /h3 for the portal map and /error-scrub for its error reports), never the contexts.',
       from: { path: portalCode },
-      to: { path: '(^|/)packages/core/src/', pathNot: '(^|/)packages/core/src/(shared-kernel|h3)/' },
+      to: { path: '(^|/)packages/core/src/', pathNot: '(^|/)packages/core/src/(shared-kernel|h3|error-scrub)/' },
     },
     {
       name: 'lib-is-infrastructure',

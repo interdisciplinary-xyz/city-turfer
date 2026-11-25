@@ -25,6 +25,9 @@ for (const path of ['/en', '/pl']) {
     expect(network.setCookies).toEqual([]);
     expect(await context.cookies()).toEqual([]);
     expect(await page.evaluate(() => document.cookie)).toBe('');
+    // No error reporting on public pages: no Sentry chunk or request, no SDK global.
+    expect(network.urls.filter((url) => /sentry/i.test(url))).toEqual([]);
+    expect(await page.evaluate(() => '__SENTRY__' in globalThis)).toBe(false);
   });
 
   test(`landing ${path}: every section and a footer`, async ({ page }) => {

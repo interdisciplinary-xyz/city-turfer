@@ -3,6 +3,7 @@ export * from './components/notice';
 export * from './components/portal-frame';
 export * from './components/portal-header';
 export * from './components/portal-nav';
+export * from './components/render-error';
 export * from './components/session-gate';
 export * from './components/sign-out-button';
 export * from './components/unreachable';
