@@ -42,6 +42,7 @@ export function RecordView({
   mapOverlay,
   onViewChange,
   turf,
+  mapChips,
 }: RecordViewProps) {
   const p = usePalette();
   const t = useT('record');
@@ -242,6 +243,7 @@ export function RecordView({
             <Text style={{ color: turf.shown ? ON_TIER.glowing : p.text, fontWeight: '700' }}>{t('turfChip')}</Text>
           </Pressable>
         )}
+        {mapChips}
         {!following && (
           <Pressable
             testID='recenter'

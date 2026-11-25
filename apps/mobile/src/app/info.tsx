@@ -10,6 +10,7 @@ import { BackupDeveloperCard } from '@/contexts/cloud-backup/ui/backup-developer
 import { CloudBackupCard } from '@/contexts/cloud-backup/ui/cloud-backup-card';
 import { AppleHealthCard } from '@/contexts/health-sync/ui/apple-health-card';
 import { useBackupLinkTarget } from '@/contexts/identity/ui/hooks';
+import { useRoutingConsent } from '@/contexts/route-planning/ui/hooks';
 import { announceDeveloperTools, DeveloperToolsCard } from '@/dev/developer-tools';
 import { LANGUAGE_SETTINGS, type LanguageSetting, type Locale, useLanguageSetting, useT } from '@/i18n';
 import { Button, Card, tint } from '@/ui-kit/components';
@@ -86,6 +87,8 @@ export default function InfoScreen() {
   const showDevTools = __DEV__ || devUnlocked;
   const [check, setCheck] = useState<UpdateCheck>('idle');
   const [estimateGaps, setEstimateGaps] = useGapEstimationSetting();
+  const [routingConsent, setRoutingConsent] = useRoutingConsent();
+  const planAlongStreets = routingConsent === 'granted';
   // A local profile (mock admin, demo) backs up after a code to its own address (Identity knows it).
   const linkTarget = useBackupLinkTarget();
   // One push per tap: a double tap would open the code screen twice (and send two codes). Ready
@@ -176,6 +179,22 @@ export default function InfoScreen() {
           />
         </View>
         <Text style={{ color: p.muted, fontSize: 13 }}>{t('estimateGapsOff')}</Text>
+        <View style={s.row}>
+          <Text style={[s.label, { color: p.text }]}>{t('planAlongStreets')}</Text>
+          <Switch
+            testID='plan-along-streets-switch'
+            accessibilityRole='switch'
+            accessibilityLabel={t('planAlongStreets')}
+            accessibilityState={{ checked: planAlongStreets, disabled: routingConsent == null }}
+            value={planAlongStreets}
+            disabled={routingConsent == null}
+            onValueChange={(on) =>
+              setRoutingConsent(on).catch(() => Alert.alert(tc('couldNotSave'), t('settingNotSaved')))
+            }
+            trackColor={{ true: ACCENT, false: p.border }}
+          />
+        </View>
+        <Text style={{ color: p.muted, fontSize: 13 }}>{t('planAlongStreetsOff')}</Text>
       </Card>
       <AppleHealthCard />
       <CloudBackupCard link={backupLink} />

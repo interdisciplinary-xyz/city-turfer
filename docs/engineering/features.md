@@ -43,7 +43,7 @@ the web portal add. Format adapted from empatalk's `FEATURES.md`.
 
 Today: <!-- probe:achievements -->20<!-- /probe --> achievements,
 <!-- probe:e2e-flows -->21<!-- /probe --> Maestro flows,
-<!-- probe:migrations -->15<!-- /probe --> migrations.
+<!-- probe:migrations -->16<!-- /probe --> migrations.
 
 ## 1. Tabs
 

@@ -3,7 +3,7 @@ import type { Database } from './database';
 /**
  * Ordered, append-only. Never edit a shipped migration — add a new one.
  * Tables are prefixed by owning context: rec_ (Recording), log_ (Activity Log),
- * ter_ (Territory), sys_ (platform).
+ * ter_ (Territory), sys_ (platform), rp_ (Route Planning).
  */
 const MIGRATIONS: { version: number; sql: string }[] = [
   {
@@ -318,6 +318,23 @@ const MIGRATIONS: { version: number; sql: string }[] = [
       CREATE TABLE goal_state (
         id INTEGER PRIMARY KEY CHECK (id = 1),
         offer_hidden INTEGER NOT NULL DEFAULT 0
+      );
+    `,
+  },
+  {
+    version: 16,
+    sql: `
+      -- Route Planning: the one active Planned Route (one row). Waypoints and leg paths are JSON
+      -- [lon, lat]; each leg {path, snapped}. Distance and the turf estimate derive from them and
+      -- the turf at read time, so they are not stored. Personal data: never backed up or synced.
+      CREATE TABLE rp_planned_routes (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        type TEXT NOT NULL CHECK (type IN ('walk', 'run', 'cycle')),
+        waypoints TEXT NOT NULL,
+        legs TEXT NOT NULL,
+        show_on_record INTEGER NOT NULL DEFAULT 0 CHECK (show_on_record IN (0, 1)),
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
       );
     `,
   },
