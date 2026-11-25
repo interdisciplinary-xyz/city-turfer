@@ -1,5 +1,5 @@
-import { MAX_FIX_GAP_MS } from '@/constants/tracking';
-import { type ActivityType, distanceM } from '@/shared-kernel';
+import { MAX_FIX_GAP_MS, MOVING_SPEED_MPS } from '@/constants/tracking';
+import { type ActivityType, analyzeTrack, distanceM, trackFromPoints, type TrackPoint } from '@/shared-kernel';
 
 import type { Fix } from '../fix';
 import { RecordingSession } from '../recording-session';
@@ -217,5 +217,63 @@ describe('segment gaps (MAX_FIX_GAP_MS)', () => {
     const r = s.ingestWithReport([fix(30, 50, { accuracy: 90 }), fix(60, 60)]);
     expect(r.rejected.inaccurate).toBe(1);
     expect(r.gapSplits).toBe(1);
+  });
+});
+
+describe('moving time agrees with analyzeTrack (the saved activity), Doppler or not', () => {
+  const savedMovingS = (points: readonly TrackPoint[]) =>
+    analyzeTrack(trackFromPoints(points), MOVING_SPEED_MPS.walk).movingS;
+
+  /** Walk 1 Hz at 1.4 m/s with Doppler, standing `standS` (speed 0, ±0.5 m wander) at each of `stops` crossings. */
+  function walkWithStops(stops: number, standS: number): Fix[] {
+    const fixes: Fix[] = [];
+    let t = 0,
+      y = 0;
+    for (let leg = 0; leg <= stops; leg++) {
+      for (let i = 0; i < 30; i++, t++, y += 1.4) {
+        fixes.push(fix(t, y, { speed: 1.4 }));
+      }
+      if (leg < stops) {
+        for (let i = 0; i < standS; i++, t++) {
+          fixes.push(fix(t, y + wobble(t) / 2, { speed: 0 }));
+        }
+      }
+    }
+    return fixes;
+  }
+
+  it('does not count an 8 s stand that ends in a fresh 1.4 m/s Doppler reading', () => {
+    const s = RecordingSession.start('s1', 'walk', T0);
+    const fixes = walkWithStops(1, 8);
+    const points = s.ingest(fixes);
+    expect(s.status).toBe('recording');
+    const live = s.snapshot(fixes[fixes.length - 1]!.t).movingS;
+    expect(live).toBe(savedMovingS(points));
+    expect(live).toBeLessThanOrEqual(60); // 2 × 30 s walking; the stand adds nothing
+  });
+
+  it('stays level with the saved activity across ten crossings', () => {
+    const s = RecordingSession.start('s1', 'walk', T0);
+    const fixes = walkWithStops(10, 8);
+    const points = s.ingest(fixes);
+    const live = s.snapshot(fixes[fixes.length - 1]!.t).movingS;
+    expect(live).toBe(savedMovingS(points));
+    expect(live).toBeLessThanOrEqual(11 * 30);
+  });
+
+  it('counts nothing for a long stand on the fix that ends an auto-pause', () => {
+    const s = RecordingSession.start('s1', 'walk', T0);
+    const fixes = walkWithStops(1, 60); // 60 s stand: auto-pauses after 15 s
+    let paused = false;
+    const points: TrackPoint[] = [];
+    for (const f of fixes) {
+      points.push(...s.ingest([f]));
+      paused ||= s.status === 'autoPaused';
+    }
+    expect(paused).toBe(true);
+    expect(s.status).toBe('recording');
+    const live = s.snapshot(fixes[fixes.length - 1]!.t).movingS;
+    expect(live).toBe(savedMovingS(points));
+    expect(live).toBeLessThanOrEqual(60);
   });
 });

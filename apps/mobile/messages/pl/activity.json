@@ -10,7 +10,6 @@
     "distance": "Dystans",
     "movingTime": "Czas w ruchu",
     "average": "{type, select, cycle {Śr. prędkość} other {Śr. tempo}}",
-    "elapsed": "Czas całkowity",
     "elevation": "Przewyższenie ≈"
   },
   "estimatedNote": "W tym {distance} oszacowano wzdłuż ulic tam, gdzie GPS zgubił sygnał (linia przerywana). Oszacowane odcinki nie wliczają się do terytorium.",

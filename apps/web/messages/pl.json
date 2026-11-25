@@ -8,12 +8,12 @@
     "home": "CityTurfer, strona główna",
     "nav": {
       "label": "Sekcje strony",
-      "waitlist": "Lista oczekujących",
       "how": "Jak to działa",
       "who": "Dla kogo",
-      "app": "Aplikacja",
+      "app": "Co dostajesz",
       "privacy": "Prywatność",
-      "faq": "Pytania"
+      "faq": "Pytania",
+      "join": "Dołącz"
     }
   },
   "hero": {
@@ -22,8 +22,9 @@
     "taglineRamp": "Ulice są Twoje.",
     "lede": "Spacery, bieganie albo jazda na rowerze, solo lub z psem — każda ulica, którą pokonasz, staje się Twoim terytorium. Wracaj i patrz, jak świeci coraz jaśniej.",
     "join": "Zapisz się na listę",
-    "seeGlow": "Zobacz, jak świeci",
-    "mapCredit": "© OpenStreetMap"
+    "seeGlow": "Zobacz, jak to działa",
+    "mapCredit": "© OpenStreetMap",
+    "getIt": "Jak dołączyć"
   },
   "screens": {
     "turfMap": {
@@ -55,7 +56,7 @@
         "subtitle": "{area} km² terytorium · +{week} km² w tym tygodniu",
         "thisWeek": "W tym tygodniu",
         "distance": "Dystans",
-        "time": "Czas",
+        "time": "Czas w ruchu",
         "count": "Aktywności",
         "unitKm": "km",
         "rowDistance": "{distance} km",
@@ -119,25 +120,25 @@
       "eyebrow": "Prywatność",
       "title": "Oryginał zostaje w telefonie",
       "phone": "Twoje aktywności są zapisane w telefonie, w aplikacji.",
-      "backup": "Kopia w chmurze jest wyłączona, dopóki jej nie włączysz. Gdy ją wyłączysz, kopia na naszym serwerze zostanie usunięta.",
+      "backup": "Kopia w chmurze jest wyłączona, dopóki jej nie włączysz, a treningi z Apple Health trafiają do niej tylko po włączeniu drugiego przełącznika. Gdy ją wyłączysz, usuniemy naszą kopię.",
       "portal": "Po zalogowaniu w przeglądarce widzisz tylko to, co trafiło do kopii.",
       "leaves": "Co opuszcza telefon: kafelki mapy dla oglądanego obszaru, sprawdzanie aktualizacji oraz, jeśli nie wyłączysz uzupełniania luk, dwa końce luki GPS. Logowanie wysyła Twój adres e-mail na nasz serwer.",
-      "account": "Na razie do aplikacji logujesz się kontem.",
+      "account": "Na razie logujesz się do aplikacji adresem e-mail. Korzystanie bez konta jest w planach.",
       "site": "Publiczne strony nie zapisują ciasteczek i nie ładują skryptów śledzących.",
       "private": "Bez tablicy aktywności, obserwujących i publicznego profilu."
     },
-    "cta": {
+    "join": {
       "title": "Twoje terytorium zaczyna się za progiem",
-      "body": "Zostaw e-mail, a damy znać, gdy aplikacja będzie gotowa do pobrania.",
-      "join": "Zapisz się na listę",
-      "eyebrow": "Lista oczekujących",
+      "body": "Najpierw na iPhonie. Zostaw e-mail, a napiszemy do Ciebie, gdy CityTurfer będzie gotowy do wypróbowania.",
+      "eyebrow": "Dołącz",
       "trust": {
         "label": "Na czym możesz polegać",
         "cookies": "Ta strona nie używa ciasteczek",
         "eu": "E-maile z listy trzymamy w UE (Brevo)",
         "phone": "Twoje aktywności zostają w telefonie",
         "backup": "Kopia tylko, jeśli ją włączysz"
-      }
+      },
+      "closed": "Wkrótce otworzymy tu listę oczekujących. Zajrzyj za jakiś czas."
     },
     "demo": {
       "eyebrow": "Zobacz, jak świeci",
@@ -160,30 +161,35 @@
       "notFor": "Nie dla Ciebie, jeśli szukasz rankingów, drużyn albo stref treningowych. CityTurfer to Ty i Twoje ulice."
     },
     "highlights": {
-      "eyebrow": "Aplikacja",
-      "title": "Co potrafi już dziś",
+      "eyebrow": "Co dostajesz",
+      "title": "Już w aplikacji",
       "iphone": "Tylko iPhone",
       "gain": {
         "title": "Nowe terytorium po każdym wyjściu",
         "body": "Po zakończeniu aplikacja pokazuje, ile terytorium przybyło i które ulice świecą jaśniej."
       },
-      "record": {
-        "title": "Nagrywa przy wygaszonym ekranie",
-        "body": "Mapa i statystyki na żywo, autopauza, przytrzymaj, by zakończyć. Zablokuj telefon i ruszaj dalej."
-      },
       "health": {
-        "title": "Twoja historia z Apple Health też się liczy",
-        "body": "Zaimportuj dawne spacery, biegi i przejażdżki z trasami z Apple Health, a od pierwszego dnia staną się terytorium."
+        "title": "Treningi z Apple Watch też się liczą",
+        "body": "Połącz Apple Health: od tego dnia spacery, biegi i przejażdżki nagrane zegarkiem Apple Watch też stają się terytorium."
       },
       "achievements": {
-        "title": "Osiągnięcia bez serii",
-        "body": "{count, plural, one {# osiągnięcie} few {# osiągnięcia} many {# osiągnięć} other {# osiągnięcia}} do odblokowania po drodze. Nie ma serii do pilnowania."
+        "title": "Osiągnięcia po drodze",
+        "body": "{count, plural, one {# osiągnięcie} few {# osiągnięcia} many {# osiągnięć} other {# osiągnięcia}} do odblokowania. Przerwa nie odbierze Ci żadnego."
       },
-      "city": {
-        "title": "Zaczyna się w Twoim mieście",
-        "body": "Wybierz swoje miasto z listy, a mapa otworzy się właśnie tam."
+      "lede": "Do tego historia i statystyki, po polsku i po angielsku.",
+      "new": "Nowość",
+      "districts": {
+        "title": "Twoje miasto, dzielnica po dzielnicy",
+        "body": "Wybierz swoje miasto, a mapa otworzy się właśnie tam. W wielu polskich miastach i w Berlinie zobaczysz terytorium w podziale na dzielnice."
       },
-      "lede": "Do tego historia i statystyki, po polsku i angielsku."
+      "goal": {
+        "title": "Cel dnia bez opuszczonych dni",
+        "body": "Wybierz, ile minut dziennie chcesz spędzać w ruchu. Liczą się spacery, biegi i przejażdżki, a dzień, w którym się nie uda, nigdy nie jest oznaczany jako opuszczony."
+      },
+      "share": {
+        "title": "Pokaż chwilę, nie trasę",
+        "body": "Dodaj statystyki do zdjęcia i udostępnij je. Bez mapy i trasy, a miejsce pojawi się tylko, jeśli je dodasz."
+      }
     },
     "differs": {
       "repeats": {
@@ -191,25 +197,28 @@
         "body": "Większość map zaznacza ulicę raz. Tu najjaśniej świecą ulice, do których wracasz."
       },
       "fades": {
-        "title": "Nic nie blednie",
-        "body": "Twoje terytorium nie słabnie, nawet jeśli długo Cię nie było."
+        "title": "Twoje na dobre",
+        "body": "Twoje terytorium nie blednie, nawet jeśli długo Cię nie było, i nikt Ci go nie odbierze."
       },
       "label": "Czym się różni"
     },
     "status": {
-      "title": "Uczciwie: to wczesny prototyp",
+      "title": "Wczesne testy, najpierw iPhone",
       "testing": {
         "title": "W testach",
+        "healthImport": "Treningi z Apple Watch w statystykach, na prawdziwym iPhonie",
         "health": "Zapisywanie aktywności w Apple Health",
         "battery": "Zużycie baterii na długich wyjściach",
-        "backup": "Kopia w chmurze (po włączeniu)"
+        "backup": "Kopia w chmurze (po włączeniu)",
+        "locked": "Nagrywanie przy zablokowanym ekranie w najnowszej wersji",
+        "share": "Udostępnianie zdjęcia na prawdziwym iPhonie"
       },
       "notYet": {
         "title": "Jeszcze nie",
         "android": "Aplikacja na Androida na prawdziwych telefonach",
-        "store": "Wydanie w App Store",
+        "store": "TestFlight i App Store",
         "gpx": "Eksport GPX",
-        "sharing": "Udostępnianie"
+        "account": "Korzystanie bez konta"
       }
     },
     "faq": {
@@ -217,7 +226,7 @@
       "title": "Zanim zapytasz",
       "when": {
         "q": "Kiedy mogę ją pobrać?",
-        "a": "Zapisz się na listę, a napiszemy, gdy aplikacja będzie gotowa do pobrania."
+        "a": "Zaczynamy od małej grupy na iPhonie. Jak dołączyć, piszemy na końcu tej strony."
       },
       "free": {
         "q": "Czy jest darmowa?",
@@ -229,11 +238,11 @@
       },
       "account": {
         "q": "Czy potrzebuję konta?",
-        "a": "Na razie tak: logujesz się adresem e-mail. Aktywności i tak zostają na Twoim telefonie."
+        "a": "Na razie tak: logujesz się adresem e-mail. Korzystanie bez konta jest w planach. Tak czy inaczej, aktywności zostają na Twoim telefonie."
       },
       "data": {
         "q": "Czy mogę usunąć swoje dane?",
-        "a": "Aktywności są na Twoim telefonie: usuń je tam, a znikną. Kopia w chmurze jest wyłączona, dopóki jej nie włączysz, a gdy ją wyłączysz, usuniemy naszą kopię."
+        "a": "Aktywności są na Twoim telefonie: usuń je tam, a znikną. Gdy wyłączysz kopię w chmurze, usuniemy naszą kopię. W aplikacji możesz też zamówić kopię danych z naszego serwera albo usunąć konto."
       },
       "android": {
         "q": "Czy jest wersja na Androida?",
@@ -241,11 +250,23 @@
       },
       "watch": {
         "q": "Czy potrzebuję Apple Watch?",
-        "a": "Nie. Aplikacja nagrywa na telefonie. Import z Apple Health to dodatek na iPhonie."
+        "a": "Nie. Aplikacja nagrywa na telefonie. Jeśli masz zegarek, połącz Apple Health na iPhonie, a Twoje treningi będą się liczyć od tego dnia."
       },
       "cities": {
         "q": "W jakich miastach działa?",
-        "a": "Nagrywanie działa wszędzie. Swoje miasto wybierasz z listy miast w Polsce i Europie, a mapa otwiera się właśnie tam."
+        "a": "Nagrywanie działa wszędzie. Wybierz swoje miasto z listy miast w Polsce i Europie, a mapa otworzy się właśnie tam. W wielu polskich miastach i w Berlinie zobaczysz też terytorium w podziale na dzielnice."
+      },
+      "share": {
+        "q": "Czy udostępnianie pokazuje, gdzie mieszkam?",
+        "a": "Karta pokazuje statystyki, nigdy mapę ani trasę. Miejsce pojawi się tylko, jeśli dodasz miasto albo dzielnicę. Zdjęcie wybierasz Ty."
+      },
+      "goal": {
+        "q": "A jeśli opuszczę dzień?",
+        "a": "Terytorium i osiągnięcia zostają, a dzień nigdy nie jest oznaczany jako opuszczony. Jutro zaczynasz od nowa."
+      },
+      "language": {
+        "q": "Czy jest po polsku?",
+        "a": "Tak. Aplikacja i ta strona są po polsku i po angielsku."
       }
     }
   },
@@ -448,7 +469,6 @@
         "distance": "Dystans",
         "movingTime": "Czas w ruchu",
         "average": "{type, select, cycle {Śr. prędkość} other {Śr. tempo}}",
-        "elapsed": "Czas całkowity",
         "elevation": "Przewyższenie"
       },
       "totals": {

@@ -137,14 +137,14 @@ Separate from the Maestro flows: it drives the built static export of `apps/web`
 landing page, the signed-in portal against an in-memory API).
 `pnpm --filter @cityturfer/web run test:e2e` builds first with `test:e2e:build`, which sets dummy
 `example.invalid` values for `NEXT_PUBLIC_WAITLIST_FORM_URL`, `NEXT_PUBLIC_WAITLIST_CONTROLLER` and
-`NEXT_PUBLIC_CONTACT_EMAIL`: the landing tests need the waitlist strip, the header's join link and
-the closing call to action, which a build without those variables leaves out (`site-server.mjs`
-refuses such an export). The form is never submitted. `test:e2e:run` runs the suite against the
-`out/` that exists. Playwright needs free ports (`E2E_SITE_PORT`, `E2E_API_PORT`) when the defaults
-are taken. CI (`ci:quality`) does not run this suite.
+`NEXT_PUBLIC_CONTACT_EMAIL`: the landing tests need the waitlist form in Join, which a build without
+those variables leaves out (`site-server.mjs` refuses such an export). The form is never submitted.
+`test:e2e:run` runs the suite against the `out/` that exists. `test:e2e:closed` builds without the
+waitlist variables and runs `landing-closed.spec.ts` (seven sections, the closed line, no form);
+`test:e2e` chains it after the main run, so one command covers both builds (the closed build is what
+production gets until the Brevo values are set). Playwright needs free ports (`E2E_SITE_PORT`,
+`E2E_API_PORT`) when the defaults are taken. CI (`ci:quality`) does not run this suite.
 
-**Known drift (found 2026-11-13, not run):** since v0.16.0 (#229) the homepage is the header and the
-hero only, but `apps/web/e2e/landing.spec.ts` still asserts the eight blocks, the section anchors,
-the closing call to action and the footer's OpenStreetMap credit. #229 left it unrun and expected to
-fail until the spec matches the page (owner `web-engineer`, `docs/sessions/v0.17.0.md`). The suite
-last passed on `2959558` (52/52, 2026-11-12), before #229.
+**Landing spec:** #238 brought the homepage sections back and updated `landing.spec.ts` and the new
+`landing-closed.spec.ts` to match; the suite last passed on `2959558` (52/52, 2026-11-12), and has
+not been run since #238.

@@ -28,11 +28,14 @@ if (!existsSync(path.join(outDir, 'en.html'))) {
   throw new Error('No static export in apps/web/out: run `pnpm --filter @cityturfer/web build` first');
 }
 
-// The landing tests need the waitlist strip and the join link, which a build without the
-// NEXT_PUBLIC_WAITLIST_* variables leaves out: refuse such an export rather than fail three tests.
-if (!readFileSync(path.join(outDir, 'en.html'), 'utf8').includes('id="waitlist"')) {
+// The landing tests need the waitlist form (in #join) and, in the closed spec, its absence: refuse an
+// export built the other way round rather than fail several tests. E2E_NO_WAITLIST=1 expects no form.
+const hasForm = readFileSync(path.join(outDir, 'en.html'), 'utf8').includes('class="waitlist"');
+if (hasForm === Boolean(process.env.E2E_NO_WAITLIST)) {
   throw new Error(
-    'apps/web/out was built without the waitlist variables (no #waitlist): run `pnpm --filter @cityturfer/web run test:e2e:build`'
+    process.env.E2E_NO_WAITLIST
+      ? 'apps/web/out was built WITH the waitlist variables: run `pnpm --filter @cityturfer/web run test:e2e:closed`'
+      : 'apps/web/out was built without the waitlist variables (no waitlist form): run `pnpm --filter @cityturfer/web run test:e2e:build`'
   );
 }
 

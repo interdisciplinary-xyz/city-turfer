@@ -2,7 +2,7 @@
   "title": "Stats",
   "thisWeek": "This week",
   "distance": "Distance",
-  "time": "Time",
+  "time": "Moving time",
   "activities": "Activities",
   "weeksChartLabel": "{weeks, plural, one {Distance per week, last week} other {Distance per week, last # weeks}}",
   "turf": "Turf",

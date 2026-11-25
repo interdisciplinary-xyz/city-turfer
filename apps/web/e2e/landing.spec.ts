@@ -1,18 +1,20 @@
 // The public pages keep their promise for a signed-out visitor (web-motion Site ground rules):
 // no cookie, no API call, nothing from another origin. The allow-list itself is checked by the
 // `network` fixture after each test. The homepage sections follow
-// docs/plans/homepage-sections-2026-10-28.md.
+// docs/plans/homepage-value-2026-11-19.md. This file runs against the build WITH the waitlist
+// variables (test:e2e:build); landing-closed.spec.ts covers the build without them.
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 
 import { expect, expectNoHorizontalScroll, test } from './support/fixtures';
+import { expectHeadingBelowHeader } from './support/landing';
 
 /**
  * The homepage sections by anchor, in page order (home-sections.constants.ts, SECTION_ANCHORS): each is a
- * `<section id=anchor>` labelled by its `h2#<anchor>-title`. The waitlist strip and the closing call to
- * action need NEXT_PUBLIC_WAITLIST_FORM_URL, NEXT_PUBLIC_WAITLIST_CONTROLLER and NEXT_PUBLIC_CONTACT_EMAIL at build time (pnpm run test:e2e:build sets dummy values; the form is never submitted here).
+ * `<section id=anchor>` labelled by its `h2#<anchor>-title`. The waitlist form inside Join needs
+ * NEXT_PUBLIC_WAITLIST_FORM_URL, NEXT_PUBLIC_WAITLIST_CONTROLLER and NEXT_PUBLIC_CONTACT_EMAIL at build time (pnpm run test:e2e:build sets dummy values; the form is never submitted here).
  */
-const ANCHORS = ['waitlist', 'how', 'who', 'app', 'privacy', 'faq'];
+const ANCHORS = ['how', 'app', 'who', 'privacy', 'faq', 'join'];
 
 for (const path of ['/en', '/pl']) {
   test(`landing ${path}: no cookie, no /api request, self only`, async ({ page, context, network }) => {
@@ -37,9 +39,9 @@ for (const path of ['/en', '/pl']) {
     await expect(page.locator('section#how .turf-demo .section-head h3#demo-title.section-title')).toHaveCount(1);
     await expect(page.locator('section#top[aria-labelledby="hero-title"] h1#hero-title')).toHaveCount(1);
     await expect(page.locator('main#main')).toHaveAttribute('tabindex', '-1');
-    await expect(page.locator('h2#cta-title')).toHaveCount(1);
-    // No more blocks: the hero, the waitlist strip, five content sections and the closing call.
-    await expect(page.locator('main > section')).toHaveCount(8);
+    // No more blocks: the hero and the six sections (Join is the last, with the form inside).
+    await expect(page.locator('main > section')).toHaveCount(7);
+    await expect(page.locator('section#join form.waitlist')).toHaveCount(1);
     await expect(page.locator('h1')).toHaveCount(1);
     await expect(page.locator('footer.site-footer')).toBeVisible();
     // The hero's street map is OpenStreetMap data: a corner credit on the map, and one in the footer.
@@ -99,17 +101,57 @@ for (const path of ['/en', '/pl']) {
   }
 }
 
-// "What it does today" sells Apple Health import, so the "being tested" strip under it may only name
-// saving to Apple Health (not checked on a device yet).
-for (const [path, imports, testing] of [
-  ['/en', 'Import past walks', 'Saving your activities to Apple Health'],
-  ['/pl', 'Zaimportuj dawne spacery', 'Zapisywanie aktywności w Apple Health'],
+// Apple Health counts from the day you connect (forward only, decision 2026-11-05): the tile and the
+// FAQ never speak of past workouts, history or day one, and "being tested" names only saving to it.
+for (const [path, from, testing, banned] of [
+  [
+    '/en',
+    'from that day on',
+    'Saving your activities to Apple Health',
+    /past workouts|Import past|day one|your history/i,
+  ],
+  ['/pl', 'od tego dnia', 'Zapisywanie aktywności w Apple Health', /dawne|od pierwszego dnia|twoja historia/i],
 ] as const) {
-  test(`landing ${path}: Apple Health is the same story in the tile and the status strip`, async ({ page }) => {
+  test(`landing ${path}: Apple Health counts from the day you connect, in the tile and the FAQ`, async ({ page }) => {
     await page.goto(path);
-    await expect(page.locator('.home-highlight-health')).toContainText(imports);
+    await expect(page.locator('.home-highlight-health')).toContainText(from);
+    await expect(page.locator('.home-highlight-health')).not.toContainText(banned);
+    await expect(page.locator('.home-faq-item').filter({ hasText: 'Apple Health' })).not.toContainText(banned);
     await expect(page.locator('.home-status-testing')).toContainText(testing);
     await expect(page.locator('.home-status-notYet')).not.toContainText('Apple Health');
+  });
+}
+
+// The honesty rules (plan §2): nothing on the page says "no streaks", "no account" or "screen off".
+for (const path of ['/en', '/pl']) {
+  test(`landing ${path}: no claim the app can't back`, async ({ page }) => {
+    await page.goto(path);
+    // textContent, not innerText: the FAQ answers sit in closed <details> and innerText skips them.
+    // The "Not yet" column may name the missing feature ("Using the app without an account"): that is the honest side.
+    const text = await page.locator('main').evaluate((main) => {
+      const clone = main.cloneNode(true) as HTMLElement;
+      clone.querySelectorAll('.home-status-notYet').forEach((node) => node.remove());
+      return clone.textContent ?? '';
+    });
+    expect(text).not.toMatch(/no streaks?|bez serii|no account(?! is)|bez konta(?! jest)|screen off|wygaszon/i);
+  });
+}
+
+// Both hero buttons land on sections that exist, with the section's heading below the sticky header.
+for (const [path, primary, secondary] of [
+  ['/en', 'Join the waitlist', 'See how it works'],
+  ['/pl', 'Zapisz się na listę', 'Zobacz, jak to działa'],
+] as const) {
+  test(`landing ${path}: the hero buttons scroll to #join and #how`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' }); // an instant jump, nothing to wait for
+    await page.goto(path);
+    await page.locator('.hero-actions').getByRole('link', { name: primary, exact: true }).click();
+    await expect(page).toHaveURL(/#join$/);
+    await expectHeadingBelowHeader(page, 'section#join h2#join-title');
+    await page.goto(path);
+    await page.locator('.hero-actions').getByRole('link', { name: secondary, exact: true }).click();
+    await expect(page).toHaveURL(/#how$/);
+    await expectHeadingBelowHeader(page, 'section#how h2#how-title');
   });
 }
 
@@ -129,14 +171,14 @@ test.describe('header section links', () => {
     await page.goto('/en');
     const nav = page.getByRole('navigation', { name: 'Page sections' });
     await expect(nav.getByRole('link')).toHaveText([
-      'Waitlist',
       'How it works',
+      'What you get',
       'Who it’s for',
-      'The app',
       'Privacy',
       'FAQ',
+      'Join',
     ]);
-    await nav.getByRole('link', { name: 'The app' }).click();
+    await nav.getByRole('link', { name: 'What you get' }).click();
     await expect(page).toHaveURL(/#app$/);
     const header = await page.locator('header.app-header').boundingBox();
     const bottom = (header?.y ?? 0) + (header?.height ?? 0);
@@ -149,13 +191,11 @@ test.describe('header section links', () => {
     }).toPass({ timeout: 5000 });
   });
 
-  test('every home section has a link, in page order (not the hero or the closing call to action)', async ({
-    page,
-  }) => {
+  test('every home section has a link, in page order (not the hero)', async ({ page }) => {
     await page.goto('/en');
     const sections = await page
       .locator('main > section[id]')
-      .evaluateAll((nodes) => nodes.map((node) => node.id).filter((id) => id !== 'top' && id !== 'cta'));
+      .evaluateAll((nodes) => nodes.map((node) => node.id).filter((id) => id !== 'top'));
     const links = await page
       .getByRole('navigation', { name: 'Page sections' })
       .getByRole('link')
@@ -176,14 +216,16 @@ test.describe('header section links', () => {
     await expect(current).toHaveCount(0);
     await readAt(page, 'h2#how-title');
     await expect(current).toHaveText('How it works');
+    await readAt(page, 'h2#app-title');
+    await expect(current).toHaveText('What you get');
     await readAt(page, 'h2#who-title');
     await expect(current).toHaveText('Who it’s for');
     await readAt(page, 'h2#privacy-title');
     await expect(current).toHaveText('Privacy');
-    await readAt(page, 'h2#app-title');
-    await expect(current).toHaveText('The app');
-    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await readAt(page, 'h2#faq-title');
     await expect(current).toHaveText('FAQ');
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await expect(current).toHaveText('Join');
     await page.evaluate(() => window.scrollTo(0, 0));
     await expect(current).toHaveCount(0);
   });
@@ -192,12 +234,12 @@ test.describe('header section links', () => {
     await page.setViewportSize({ width: 1024, height: 800 });
     await page.goto('/pl');
     await expect(page.getByRole('navigation', { name: 'Sekcje strony' }).getByRole('link')).toHaveText([
-      'Lista oczekujących',
       'Jak to działa',
+      'Co dostajesz',
       'Dla kogo',
-      'Aplikacja',
       'Prywatność',
       'Pytania',
+      'Dołącz',
     ]);
     await expectNoHorizontalScroll(page);
     const inner = await page.locator('.app-header-inner').evaluate((node) => node.scrollWidth - node.clientWidth);
@@ -223,7 +265,7 @@ test('phones get no section links, only the logo and the language', async ({ pag
 
 // A calm hero: on a 390 x 844 phone the tagline, the lede and the main button all sit on the first screen.
 for (const path of ['/en', '/pl']) {
-  test(`landing ${path}: tagline, lede and the waitlist button fit the first screen at 390 x 844`, async ({ page }) => {
+  test(`landing ${path}: tagline, lede and the primary button fit the first screen at 390 x 844`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(path);
@@ -237,10 +279,10 @@ for (const path of ['/en', '/pl']) {
   });
 }
 
-// One card grammar, no orphan grids: the five highlight tiles are 3 + 2 from 720 px, and the step cards
+// One card grammar, no orphan grids: the six highlight tiles are 3 + 3 from 720 px, and the step cards
 // are three across from 1024 px (the turf legend's labels need the width) and stack below.
 for (const width of [768, 1440]) {
-  test(`landing: highlights are 3 + 2 and the step cards fit at ${width} px`, async ({ page }) => {
+  test(`landing: highlights are 3 + 3 and the step cards fit at ${width} px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/en');
     const rows = async (selector: string) =>
@@ -252,7 +294,7 @@ for (const width of [768, 1440]) {
         }
         return [...counts.values()];
       });
-    expect(await rows('.home-grid-highlights > li')).toEqual([3, 2]);
+    expect(await rows('.home-grid-highlights > li')).toEqual([3, 3]);
     expect(await rows('.home-steps > li')).toEqual(width < 1024 ? [1, 1, 1] : [3]);
     expect(await rows('.home-grid-3 > li')).toEqual([3]);
   });
@@ -261,8 +303,8 @@ for (const width of [768, 1440]) {
 // Scroll-in (reveal-motion): nothing may stay hidden. With reduced motion everything shows at once; with the
 // scripts blocked, the boot script's fallback shows everything after 2.5 s; with motion on, scrolling
 // through the page reveals every element.
-const allRevealed = (page: Page) =>
-  page.locator('[data-reveal]').evaluateAll(
+const allRevealed = (page: Page, selector = '[data-reveal]') =>
+  page.locator(selector).evaluateAll(
     (nodes) =>
       nodes.filter((node) => {
         const style = getComputedStyle(node);
@@ -275,7 +317,9 @@ for (const path of ['/en', '/pl']) {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(path);
     expect(await page.locator('[data-reveal]').count()).toBeGreaterThan(10);
-    expect(await allRevealed(page)).toBe(0);
+    expect(await page.locator('[data-anim]').count()).toBeGreaterThan(0);
+    // The hero phones and map (data-anim) too: reduced motion shows them at once.
+    expect(await allRevealed(page, '[data-reveal], [data-anim]')).toBe(0);
   });
 
   test(`landing ${path}: every reveal element is visible when the scripts never run`, async ({ page }) => {
