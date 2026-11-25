@@ -183,7 +183,7 @@
         "body": "Pick your city and the map opens there. In many Polish cities and Berlin, see your turf district by district."
       },
       "goal": {
-        "title": "A daily goal, no guilt",
+        "title": "A daily goal, never a missed day",
         "body": "Choose how many minutes a day you’d like to be out. Walks, runs and rides all count, and a day you don’t make it is never marked as missed."
       },
       "share": {
@@ -241,7 +241,7 @@
       },
       "data": {
         "q": "Can I delete my data?",
-        "a": "Your activities are on your phone, so deleting one there deletes it. Turn cloud backup off and our copy is deleted. In the app you can also export your data or delete your account."
+        "a": "Your activities are on your phone, so deleting one there deletes it. Turn cloud backup off and our copy is deleted. In the app you can also ask for a copy of what our server holds, or delete your account."
       },
       "android": {
         "q": "Is there an Android app?",

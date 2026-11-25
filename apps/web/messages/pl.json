@@ -183,7 +183,7 @@
         "body": "Wybierz swoje miasto, a mapa otworzy się właśnie tam. W wielu polskich miastach i w Berlinie zobaczysz terytorium w podziale na dzielnice."
       },
       "goal": {
-        "title": "Cel dnia, bez wyrzutów",
+        "title": "Cel dnia bez opuszczonych dni",
         "body": "Wybierz, ile minut dziennie chcesz spędzać w ruchu. Liczą się spacery, biegi i przejażdżki, a dzień, w którym się nie uda, nigdy nie jest oznaczany jako opuszczony."
       },
       "share": {
@@ -241,7 +241,7 @@
       },
       "data": {
         "q": "Czy mogę usunąć swoje dane?",
-        "a": "Aktywności są na Twoim telefonie: usuń je tam, a znikną. Gdy wyłączysz kopię w chmurze, usuniemy naszą kopię. W aplikacji możesz też pobrać swoje dane albo usunąć konto."
+        "a": "Aktywności są na Twoim telefonie: usuń je tam, a znikną. Gdy wyłączysz kopię w chmurze, usuniemy naszą kopię. W aplikacji możesz też zamówić kopię danych z naszego serwera albo usunąć konto."
       },
       "android": {
         "q": "Czy jest wersja na Androida?",
