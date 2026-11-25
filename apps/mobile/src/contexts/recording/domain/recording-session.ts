@@ -242,18 +242,20 @@ export class RecordingSession {
         // This fix just ended an auto-pause and is always recorded (even a jitter verdict
         // with fresh Doppler speed), so the next fix is not measured from a stale tail.
         // The verdict was measured from the pause anchor; the track continues from the last
-        // recorded point, so measure from there (drawn line == counted distance). Moving
-        // time covers only the interval since the previous fix, never the stop itself.
-        step = {
-          m: s.tail ? distanceM(s.tail, fix) : 0,
-          dtS: lastSeenT != null ? (fix.t - lastSeenT) / 1000 : 0,
-          moving: s.tail != null,
-        };
+        // recorded point, so measure from there (drawn line == counted distance), and judge
+        // moving over that same interval, as analyzeTrack will: a long stop averages out
+        // below moving speed and counts nothing.
+        const m = s.tail ? distanceM(s.tail, fix) : 0;
+        const dtS = s.tail ? (fix.t - s.tail.t) / 1000 : 0;
+        step = { m, dtS, moving: dtS > 0 && m / dtS >= profile.movingSpeedMps };
       } else if (verdict.kind === 'accept') {
+        // Moving by distance over time since the tail, exactly as analyzeTrack judges the saved
+        // track, so the live clock agrees with the activity. Doppler speed only drives auto-pause:
+        // it would count a stand at a crossing that ends in a fresh 1.4 m/s reading.
         step = {
           m: verdict.distanceM,
           dtS: verdict.dtS,
-          moving: verdict.dtS > 0 && verdict.speedMps >= profile.movingSpeedMps,
+          moving: verdict.dtS > 0 && verdict.distanceM / verdict.dtS >= profile.movingSpeedMps,
         };
       } else {
         jitter++;

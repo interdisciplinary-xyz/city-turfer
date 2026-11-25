@@ -4,7 +4,7 @@ import { liveSessionStore } from '@/composition-root';
 import type { ActivityType, TrackPoint } from '@/shared-kernel';
 import { useContainer } from '@/ui-kit/app-context';
 
-import { liveMovingS } from '../domain/live-moving-time';
+import { advanceLiveClock, type LiveClock } from '../domain/live-moving-time';
 import type { LiveSnapshot } from '../domain/recording-session';
 
 const subscribe = (l: () => void) => liveSessionStore.subscribe(l);
@@ -23,14 +23,16 @@ export function useRecording() {
     c.recording.liveSnapshot.execute().then((s) => s && liveSessionStore.publish(s));
   }, [c]);
 
-  // 1 Hz clock for the running timer.
+  // 1 Hz clock for the running timer. Keyed on having a session, not on each snapshot, so fixes
+  // arriving about once a second cannot keep resetting the interval before it fires.
+  const hasSession = snapshot !== null;
   useEffect(() => {
-    if (!snapshot) {
+    if (!hasSession) {
       return;
     }
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
-  }, [snapshot]);
+  }, [hasSession]);
 
   // Refresh the live track when new points arrive (throttled).
   const pointCount = snapshot?.pointCount ?? 0;
@@ -46,17 +48,13 @@ export function useRecording() {
     return () => clearTimeout(id);
   }, [c, pointCount, snapshot?.sessionId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Moving time only: ticks between fixes while moving, stops when you stop. Never shown going
-  // backwards when a fix turns out still (the run-on is at most a few seconds).
-  const shown = useRef<{ sessionId: string; s: number } | null>(null);
-  let movingS = snapshot ? liveMovingS(snapshot, now) : 0;
+  // Moving time only: ticks between fixes while moving, stops when you stop, never goes backwards.
+  // The run-on is timed on the phone's clock from each moving fix's arrival (advanceLiveClock).
+  const clock = useRef<LiveClock | null>(null);
   if (snapshot) {
-    const prev = shown.current;
-    if (prev && prev.sessionId === snapshot.sessionId) {
-      movingS = Math.max(movingS, prev.s);
-    }
-    shown.current = { sessionId: snapshot.sessionId, s: movingS };
+    clock.current = advanceLiveClock(clock.current, snapshot, now);
   }
+  const movingS = snapshot ? (clock.current?.shownS ?? 0) : 0;
 
   return {
     snapshot,
