@@ -1,5 +1,6 @@
 import { DomainError } from '@cityturfer/core/shared-kernel';
 import { type BaseTransportOptions, createTransport, type ErrorEvent, type Transport } from '@sentry/core';
+import { ServerRuntimeClient } from '@sentry/core/server';
 import { HTTPException } from 'hono/http-exception';
 import { validator } from 'hono/validator';
 import { describe, expect, it, vi } from 'vitest';
@@ -7,7 +8,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createApp } from '../app';
 import { AppError } from '../backup/app-error';
 import { defaultDeps, type ErrorReportContext, silentLog } from '../deps';
-import { createErrorReporter, REDACTED_MESSAGE, reporterState } from '../sentry';
+import { createErrorReporter, DATA_COLLECTION_OFF, REDACTED_MESSAGE, reporterState } from '../sentry';
 import { productionDeps } from '../wiring';
 
 // Wrap the shared scrubber in spies (same behaviour), to prove the reporter runs it.
@@ -111,6 +112,40 @@ describe('error reports', () => {
     expect(event.user).toBeUndefined();
     expect(JSON.stringify(transport.sent)).not.toMatch(LEAKS);
     expect(scrub.scrubEvent).toHaveBeenCalled();
+  });
+
+  it('build the client with every personal-data collection off and no tracing', () => {
+    const created: ServerRuntimeClient[] = [];
+    const original = ServerRuntimeClient.prototype.init;
+    const init = vi.spyOn(ServerRuntimeClient.prototype, 'init').mockImplementation(function (
+      this: ServerRuntimeClient
+    ) {
+      created.push(this);
+      original.call(this);
+    });
+    try {
+      expect(createErrorReporter(PRODUCTION, { transport: capturingTransport().make })).not.toBeNull();
+    } finally {
+      init.mockRestore();
+    }
+    expect(created).toHaveLength(1);
+    const [client] = created as [ServerRuntimeClient];
+    expect(client.getOptions()).toMatchObject({ dataCollection: DATA_COLLECTION_OFF, tracesSampleRate: 0 });
+    expect(client.getOptions()).not.toHaveProperty('sendDefaultPii');
+    // What the SDK resolved (its defaults are all on): nothing personal is collected.
+    expect(client.getDataCollectionOptions()).toMatchObject({
+      userInfo: false,
+      cookies: false,
+      httpHeaders: { request: false, response: false },
+      httpBodies: [],
+      urlQueryParams: false,
+      graphQL: { document: false, variables: false },
+      genAI: { inputs: false, outputs: false },
+      mcp: { inputs: false, outputs: false },
+      databaseQueryData: false,
+      queues: false,
+      stackFrameVariables: false,
+    });
   });
 
   it('never report expected answers: AppError 403/412/422, DomainError, 404, 413, invalid JSON', async () => {

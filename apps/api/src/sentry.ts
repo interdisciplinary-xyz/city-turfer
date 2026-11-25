@@ -3,6 +3,7 @@ import {
   type BaseTransportOptions,
   createStackParser,
   createTransport,
+  type DataCollection,
   type ErrorEvent,
   linkedErrorsIntegration,
   Scope,
@@ -99,6 +100,27 @@ export function stripEvent(event: ErrorEvent): ErrorEvent {
   return event;
 }
 
+/**
+ * SDK v11 `dataCollection` (it replaced `sendDefaultPii`): every category of personal data off.
+ * Its defaults are all **on**, so each field is set explicitly — no user or IP (`userInfo`), no
+ * cookies, headers, bodies or query strings, no database, queue, GraphQL, AI or MCP payloads, no local
+ * variables in stack frames. No integration that would read them is installed either; this is the
+ * second lock.
+ */
+export const DATA_COLLECTION_OFF: Readonly<DataCollection> = {
+  userInfo: false,
+  cookies: false,
+  httpHeaders: { request: false, response: false },
+  httpBodies: [],
+  urlQueryParams: false,
+  graphQL: { document: false, variables: false },
+  genAI: { inputs: false, outputs: false },
+  mcp: { inputs: false, outputs: false },
+  databaseQueryData: false,
+  queues: false,
+  stackFrameVariables: false,
+};
+
 export interface ReporterOptions {
   /** Tests: where envelopes go instead of Sentry. */
   transport?: (options: BaseTransportOptions) => Transport;
@@ -116,7 +138,7 @@ export function createErrorReporter(env: NodeJS.ProcessEnv, options: ReporterOpt
     dsn: env.SENTRY_DSN?.trim(),
     environment: env.VERCEL_ENV,
     release: env.VERCEL_GIT_COMMIT_SHA || undefined,
-    sendDefaultPii: false,
+    dataCollection: DATA_COLLECTION_OFF,
     tracesSampleRate: 0,
     sendClientReports: false,
     maxBreadcrumbs: 20,
