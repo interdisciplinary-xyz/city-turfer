@@ -47,7 +47,10 @@ evidence yet), architecture from rn-architect.
 cycle; tap to add waypoints; Undo, Clear, Close loop. A card shows distance, estimated time and "≈ N
 new cells". The new cells along the route are outlined. "Use on Record" makes it the active plan;
 the Record map draws it as a guide line under the live track (dismissable). The draft is saved after
-every edit and restored after the app is killed. Recording code is untouched.
+every edit and restored after the app is killed. At most 30 Waypoints and 50 km in straight lines
+(`MAX_ROUTE_M`), which also bounds the estimate; the Record guide reads the plan without the
+estimate. Recording's behaviour is unchanged: `record-view` only gained an optional `mapChips` slot
+(the Hide route chip), and Recording imports nothing from Route Planning.
 
 **Consent.** The first time a route needs snapping, a sheet explains that waypoints go to
 routing.openstreetmap.de. Declining, offline, 429 or timeout: those legs are straight dashed lines
@@ -64,8 +67,10 @@ routing.openstreetmap.de. Declining, offline, 429 or timeout: those legs are str
   `TurfGainEstimator` port, wired in `apps/mobile/src/wiring.ts`.
 - Ports: `StreetRouter` (multi-waypoint OSRM, own fair-use budget), `PlannedRouteRepository`
   (SQLite), `RoutingConsent` (secure store), `TurfGainEstimator`.
-- Migration v16: `rp_planned_routes` (one active row: type, waypoints, geometry, per-leg snapped
-  flags, distance, new cells, timestamps). Personal data: not in cloud backup.
+- Migration v16: `rp_planned_routes`, one active row: type, waypoints, legs (`{path, snapped}`),
+  `show_on_record`, timestamps. Distance comes from the geometry and the turf estimate is recomputed
+  on every read (turf grows after each recording), so neither is stored. Personal data: not in cloud
+  backup.
 - JS-only: no `app.json`, plugin or native dependency change, so it ships as an OTA (confirm with
   the fingerprint check).
 
@@ -85,4 +90,5 @@ routing.openstreetmap.de. Declining, offline, 429 or timeout: those legs are str
 
 - FOSSGIS usage policy for multi-waypoint user-driven requests: re-read before release.
 - A self-hosted router (budget, hosting) before slice 3 and before public launch.
-- Privacy policy and in-app disclosure need a line for route planning.
+- Privacy policy needs a line for route planning (the in-app disclosure is in Info › Your data and
+  the consent sheet).
