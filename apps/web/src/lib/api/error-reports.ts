@@ -150,6 +150,9 @@ export function createErrorReporter({
   connect: ErrorSinkFactory;
 }): ErrorReporter {
   let sink: Promise<ErrorSink | null> | null = null;
+  // Set by the portal root's cleanup: once the Turfer has left the portal (e.g. for a public
+  // page), a late query failure must not load the SDK again.
+  let left = false;
   const reported = new WeakSet<object>();
 
   const ensure = (): Promise<ErrorSink | null> | null => {
@@ -162,8 +165,10 @@ export function createErrorReporter({
 
   return {
     start() {
+      left = false;
       const started = ensure();
       return () => {
+        left = true;
         if (started && sink === started) {
           sink = null;
           void started.then((s) => s?.close());
@@ -171,7 +176,7 @@ export function createErrorReporter({
       };
     },
     report(error, context) {
-      if (!config || !isUnexpected(error)) {
+      if (!config || left || !isUnexpected(error)) {
         return;
       }
       if (typeof error === 'object' && error !== null) {

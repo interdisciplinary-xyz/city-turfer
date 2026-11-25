@@ -14,6 +14,7 @@ import { LOCATION_TASK } from '@/constants/location';
 import { backgroundActivitySession } from './background-activity-session';
 import { toFix } from './expo-location-tracker';
 import { createLocationBatchHandler } from './location-batch-handler';
+import { isExpectedLocationTaskError } from './location-task-error';
 
 /** Well below the time iOS grants a background wake-up; a healthy batch commits in milliseconds. */
 const INGEST_TIMEOUT_MS = 15_000;
@@ -49,15 +50,11 @@ TaskManager.defineTask<{ locations: Location.LocationObject[] }>(LOCATION_TASK, 
     if (__DEV__) {
       console.warn('[location-task]', error.message);
     }
-    // Logged and forwarded to crash reporting (area 'recording'; the message is scrubbed there).
+    // Logged; forwarded to crash reporting (area 'recording'; the message is scrubbed there) unless
+    // it is an ordinary CLLocationManager outcome (location unknown, permission denied).
+    const forward = isExpectedLocationTaskError(error.code) ? false : { area: 'recording', tags: { source: 'task' } };
     void getContainer()
-      .then((c) =>
-        c?.diagnostics.log(
-          'task-error',
-          { code: error.code, message: error.message },
-          { area: 'recording', tags: { source: 'task' } }
-        )
-      )
+      .then((c) => c?.diagnostics.log('task-error', { code: error.code, message: error.message }, forward))
       .catch(() => undefined);
     return;
   }

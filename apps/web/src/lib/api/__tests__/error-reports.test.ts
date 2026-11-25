@@ -149,6 +149,22 @@ describe('createErrorReporter', () => {
     expect(sink.close).toHaveBeenCalledTimes(1);
   });
 
+  it('does not load the SDK again after the portal root unmounted (a late failure on a public page)', async () => {
+    const { connect, captured } = fakeSink();
+    const reporter = createErrorReporter({ config: CONFIG, connect });
+    const stop = reporter.start();
+    await settle();
+    stop();
+    reporter.report(new TypeError('late'), { source: 'query' });
+    await settle();
+    expect(captured).toHaveLength(0);
+    expect(connect).toHaveBeenCalledTimes(1);
+    reporter.start();
+    reporter.report(new TypeError('back'), { source: 'query' });
+    await settle();
+    expect(captured).toHaveLength(1);
+  });
+
   it('stays quiet when the SDK fails to load', async () => {
     const reporter = createErrorReporter({ config: CONFIG, connect: () => Promise.reject(new Error('chunk')) });
     expect(() => reporter.report(new TypeError('boom'), { source: 'render' })).not.toThrow();

@@ -55,6 +55,10 @@ export function startSentryReporter(config: SentryReporterConfig): ErrorReporter
       environment: config.environment,
       release: config.release,
       sendDefaultPii: false,
+      // Errors only: no release-health sessions (the native SDKs send one per app open, with an
+      // install id) and no client reports about dropped events.
+      enableAutoSessionTracking: false,
+      sendClientReports: false,
       tracesSampleRate: 0,
       // No trace headers on any request (the router and our API included).
       tracePropagationTargets: [],

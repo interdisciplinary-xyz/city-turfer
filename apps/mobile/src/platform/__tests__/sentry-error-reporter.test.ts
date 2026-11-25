@@ -23,6 +23,8 @@ it('starts Sentry without PII, traces, replay or profiling, scrubbing events and
   expect(options).toMatchObject({
     ...config,
     sendDefaultPii: false,
+    enableAutoSessionTracking: false,
+    sendClientReports: false,
     tracesSampleRate: 0,
     tracePropagationTargets: [],
     profilesSampleRate: 0,
