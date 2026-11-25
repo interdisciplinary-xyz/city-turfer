@@ -3,7 +3,9 @@
 import {
   redactCoordinates,
   REDACTED_COORD,
+  REDACTED_EMAIL,
   REDACTED_PAIR,
+  redactEmails,
   routePattern,
   scrubBreadcrumb,
   scrubEvent,
@@ -62,11 +64,53 @@ describe('redactCoordinates', () => {
   });
 });
 
+describe('redactEmails', () => {
+  it.each([
+    ['someone@example.com', REDACTED_EMAIL],
+    ['Sign-in failed for jan.kowalski@example.pl.', `Sign-in failed for ${REDACTED_EMAIL}.`],
+    ['user+cityturfer@mail.example.co.uk rejected', `${REDACTED_EMAIL} rejected`],
+    [
+      'Nie udało się wysłać kodu na adres łukasz.żółć@poczta.example.pl, spróbuj ponownie',
+      `Nie udało się wysłać kodu na adres ${REDACTED_EMAIL}, spróbuj ponownie`,
+    ],
+    ['(<a@b.io>) and "c_d@e-f.org"', `(<${REDACTED_EMAIL}>) and "${REDACTED_EMAIL}"`],
+    ['UPPER.Case@Example.COM', REDACTED_EMAIL],
+  ])('%s', (input, expected) => {
+    expect(redactEmails(input)).toBe(expected);
+  });
+
+  it.each([
+    'decorator v1.2@3 applied',
+    'release cityturfer@0.17.0+abc',
+    'sdk @sentry/react-native@7.11.0',
+    'import from @cityturfer/core/error-scrub',
+    'mention @someone in a thread',
+    'trailing at@',
+  ])('leaves %s alone', (input) => {
+    expect(redactEmails(input)).toBe(input);
+  });
+
+  it('stays fast on long runs without an address', () => {
+    const inputs = ['a'.repeat(50_000), `${'a.'.repeat(25_000)}@`, `x@${'b.'.repeat(25_000)}1`, '@'.repeat(50_000)];
+    const start = Date.now();
+    for (const input of inputs) {
+      expect(redactEmails(input)).toBe(input);
+    }
+    expect(Date.now() - start).toBeLessThan(500);
+  });
+});
+
 describe('scrubText', () => {
   it('scrubs URLs inside a message, keeping sentence punctuation', () => {
     expect(scrubText(`Network request failed: ${OSRM}.`)).toBe(
       'Network request failed: https://routing.openstreetmap.de.'
     );
+  });
+
+  it('redacts e-mail addresses next to URLs and coordinates', () => {
+    expect(
+      scrubText('Backup for someone@example.com failed at 54.352,18.654: https://user:pw@api.example.com/v1/me')
+    ).toBe(`Backup for ${REDACTED_EMAIL} failed at ${REDACTED_PAIR}: https://api.example.com/v1/me`);
   });
 });
 
@@ -159,6 +203,19 @@ describe('scrubEvent', () => {
       { category: 'navigation', data: { from: '/activity/:id', to: '/(tabs)/map' } },
       { category: 'app.lifecycle', message: `resumed at ${REDACTED_PAIR}` },
     ]);
+  });
+
+  it('redacts e-mail addresses in the message, exception values and breadcrumb messages', () => {
+    const out = scrubEvent({
+      ...base,
+      message: 'Sign-in failed for someone@example.com',
+      exception: { values: [{ type: 'Error', value: 'Konto jan+test@example.pl nie istnieje' }] },
+      breadcrumbs: [{ category: 'auth', message: 'signed out someone@example.com' }],
+    });
+    expect(JSON.stringify(out)).not.toMatch(/@example\./);
+    expect(out.message).toBe(`Sign-in failed for ${REDACTED_EMAIL}`);
+    expect(out.exception?.values?.[0]?.value).toBe(`Konto ${REDACTED_EMAIL} nie istnieje`);
+    expect(out.breadcrumbs).toEqual([{ category: 'auth', message: `signed out ${REDACTED_EMAIL}` }]);
   });
 
   it('keeps only the error name and code of a HealthKit error', () => {

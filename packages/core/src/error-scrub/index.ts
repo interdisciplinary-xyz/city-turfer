@@ -12,4 +12,12 @@ export {
   type ScrubbableException,
   scrubEvent,
 } from './scrub-event';
-export { redactCoordinates, REDACTED_COORD, REDACTED_PAIR, scrubText, scrubUrl } from './scrub-text';
+export {
+  redactCoordinates,
+  REDACTED_COORD,
+  REDACTED_EMAIL,
+  REDACTED_PAIR,
+  redactEmails,
+  scrubText,
+  scrubUrl,
+} from './scrub-text';
