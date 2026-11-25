@@ -81,10 +81,6 @@ export function ActivityDetailView({
             </dd>
           </div>
           <div className='portal-stat'>
-            <dt>{t('stat.elapsed')}</dt>
-            <dd>{n.elapsed}</dd>
-          </div>
-          <div className='portal-stat'>
             <dt>{t('stat.elevation')}</dt>
             <dd>
               {n.elevation ?? '—'}
