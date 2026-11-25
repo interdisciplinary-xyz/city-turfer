@@ -17,6 +17,7 @@ import { Button, Card, tint } from '@/ui-kit/components';
 import { formatDateTime } from '@/ui-kit/format';
 import { AppSymbol } from '@/ui-kit/symbol';
 import { usePalette } from '@/ui-kit/theme';
+import { useCrashReports } from '@/ui-kit/use-crash-reports';
 
 /** Long-presses on the version text needed to reveal developer tools in release builds. */
 const DEV_TAPS = 5;
@@ -89,6 +90,7 @@ export default function InfoScreen() {
   const [estimateGaps, setEstimateGaps] = useGapEstimationSetting();
   const [routingConsent, setRoutingConsent] = useRoutingConsent();
   const planAlongStreets = routingConsent === 'granted';
+  const crashReports = useCrashReports();
   // A local profile (mock admin, demo) backs up after a code to its own address (Identity knows it).
   const linkTarget = useBackupLinkTarget();
   // One push per tap: a double tap would open the code screen twice (and send two codes). Ready
@@ -195,6 +197,24 @@ export default function InfoScreen() {
           />
         </View>
         <Text style={{ color: p.muted, fontSize: 13 }}>{t('planAlongStreetsOff')}</Text>
+        <View style={s.row}>
+          <Text style={[s.label, { color: p.text }]}>{t('crashReports')}</Text>
+          <Switch
+            testID='crash-reports-switch'
+            accessibilityRole='switch'
+            accessibilityLabel={t('crashReports')}
+            accessibilityHint={t('crashReportsBody')}
+            accessibilityState={{
+              checked: crashReports.enabled ?? false,
+              disabled: crashReports.enabled == null || crashReports.saving,
+            }}
+            value={crashReports.enabled ?? false}
+            disabled={crashReports.enabled == null || crashReports.saving}
+            onValueChange={(on) => void crashReports.setEnabled(on)}
+            trackColor={{ true: ACCENT, false: p.border }}
+          />
+        </View>
+        <Text style={{ color: p.muted, fontSize: 13 }}>{t('crashReportsBody')}</Text>
       </Card>
       <AppleHealthCard />
       <CloudBackupCard link={backupLink} />

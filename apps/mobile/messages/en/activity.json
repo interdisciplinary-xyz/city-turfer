@@ -25,5 +25,8 @@
     "failed": "Couldn't save the new name. Try again.",
     "empty": "Give it a name.",
     "tooLong": "{max, plural, one {Keep it to # character.} other {Keep it to # characters.}}"
+  },
+  "toast": {
+    "deleted": "Activity deleted."
   }
 }

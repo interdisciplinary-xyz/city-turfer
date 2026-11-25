@@ -14,5 +14,7 @@
   "planAlongStreets": "Plan routes along streets",
   "planAlongStreetsOff": "Off: planned routes stay straight lines and their stops never leave the phone.",
   "settingNotSaved": "The setting did not change. Try again.",
-  "footer": "{name} · Surf your city. Own your streets."
+  "footer": "{name} · Surf your city. Own your streets.",
+  "crashReports": "Send crash reports",
+  "crashReportsBody": "When something breaks, the app sends crash details to our error tracker in the EU. Never your location, Apple Health data or email."
 }

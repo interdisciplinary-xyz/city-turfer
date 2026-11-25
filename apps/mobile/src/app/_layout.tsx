@@ -1,14 +1,17 @@
 import { FONT_SIZE, FONT_WEIGHT } from '@cityturfer/brand';
 import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { crashReporting } from '@/composition-root';
 import { ACCENT, DARK, DISPLAY_CASE, DISPLAY_TRACKING, FONT_FAMILY } from '@/constants/colors';
 import { useCardSweep } from '@/contexts/share-photo/ui/use-card-sweep';
 import { I18nProvider, useLanguageSetting, useT } from '@/i18n';
 import { AppProvider, useApp } from '@/ui-kit/app-context';
 import { usePalette } from '@/ui-kit/theme';
+import { ToastProvider } from '@/ui-kit/toast-provider';
 
 function Gate() {
   const { auth } = useApp();
@@ -159,13 +162,20 @@ function Gate() {
 export default function RootLayout() {
   // Android share cards older than an hour go at launch and on each return to the app.
   useCardSweep();
+  // Crash reporting by the Turfer's setting, from the first screen on (sign-in included), not only
+  // once a container opens. The background task is defined by now (index.ts imports it first).
+  useEffect(() => {
+    void crashReporting.ensureStarted();
+  }, []);
   return (
     <SafeAreaProvider>
       <I18nProvider>
-        <AppProvider>
-          <StatusBar style='auto' />
-          <Gate />
-        </AppProvider>
+        <ToastProvider reporter={crashReporting.reporter}>
+          <AppProvider>
+            <StatusBar style='auto' />
+            <Gate />
+          </AppProvider>
+        </ToastProvider>
       </I18nProvider>
     </SafeAreaProvider>
   );

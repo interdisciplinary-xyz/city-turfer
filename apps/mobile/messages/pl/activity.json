@@ -25,5 +25,8 @@
     "failed": "Nie udało się zapisać nowej nazwy. Spróbuj ponownie.",
     "empty": "Nadaj jej nazwę.",
     "tooLong": "{max, plural, one {Maksymalnie # znak.} few {Maksymalnie # znaki.} many {Maksymalnie # znaków.} other {Maksymalnie # znaku.}}"
+  },
+  "toast": {
+    "deleted": "Aktywność usunięta."
   }
 }

@@ -6,6 +6,7 @@ import { ACCENT } from '@/constants/colors';
 import { useT } from '@/i18n';
 import { Button, Card } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
+import { useAsyncAction } from '@/ui-kit/use-async-action';
 
 import { ERROR_KEY, type RestoreCardProps } from './cloud-backup-card.constants';
 import { describeOffer, describeRestoreProgress, describeRestoreResult } from './format';
@@ -21,8 +22,13 @@ export function RestoreCard({ localProfile = false }: RestoreCardProps) {
   const tc = useT('common');
   const te = useT('errors');
   const { offer, progress, result, running, start, dismiss, turnOnBackup } = useRestore();
-  const [enabling, setEnabling] = useState(false);
   const [enableError, setEnableError] = useState<keyof typeof ERROR_KEY | null>(null);
+  // "Turn on backup" after a restore: the card shows a refusal inline; a crash is reported and toasted.
+  const { run, isLoading: enabling } = useAsyncAction<Awaited<ReturnType<typeof turnOnBackup>>>({
+    area: 'cloud-backup',
+    code: 'restore-turn-on',
+    successKey: (r) => (r.kind === 'ok' ? 'backup.toast.turnedOn' : null),
+  });
   const message = describeRestoreResult(result, t, { health: Platform.OS === 'ios', localProfile });
   const offered = offer && offer.kind !== 'none' ? offer : null;
   if (!offered && !message) {
@@ -31,15 +37,10 @@ export function RestoreCard({ localProfile = false }: RestoreCardProps) {
   const done = result?.kind === 'done';
   const backupOff = result?.kind === 'done' && !result.backupOn;
   const enable = async () => {
-    setEnabling(true);
     setEnableError(null);
-    try {
-      const r = await turnOnBackup();
-      setEnableError(r.kind === 'failed' ? r.error : null);
-    } catch {
-      setEnableError('server');
-    } finally {
-      setEnabling(false);
+    const r = await run(turnOnBackup);
+    if (r.status === 'done') {
+      setEnableError(r.value.kind === 'failed' ? r.value.error : null);
     }
   };
   return (

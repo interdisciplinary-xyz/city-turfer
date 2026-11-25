@@ -17,6 +17,7 @@ import { useT } from '@/i18n';
 import { useApp } from '@/ui-kit/app-context';
 import { Button } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
+import { useAsyncAction } from '@/ui-kit/use-async-action';
 
 /**
  * Composes Activity Log (the activity) with Territory (the turf it claimed) and Share Photo (the
@@ -32,6 +33,12 @@ export default function ActivityScreen() {
   const { detail, remove, rename } = useActivity(id);
   const claim = useClaim(id);
   const [renaming, setRenaming] = useState(false);
+  // Deleting leaves this screen, so a toast says it went through (or why it didn't).
+  const deletion = useAsyncAction<void>({
+    area: 'activity-log',
+    code: 'delete-activity',
+    successKey: 'activity.toast.deleted',
+  });
   // The photo is a local cache file; the share screen deletes it when it closes.
   const openShare = useCallback(
     (photo: PickedPhoto) =>
@@ -80,6 +87,7 @@ export default function ActivityScreen() {
             label={t('deleteButton')}
             color={p.card}
             textColor={p.danger}
+            busy={deletion.isLoading}
             style={{ flex: 1 }}
             onPress={() =>
               Alert.alert(t('deleteTitle'), t('deleteBody'), [
@@ -88,8 +96,9 @@ export default function ActivityScreen() {
                   text: tc('delete'),
                   style: 'destructive',
                   onPress: async () => {
-                    await remove();
-                    router.back();
+                    if ((await deletion.run(remove)).status === 'done') {
+                      router.back();
+                    }
                   },
                 },
               ])

@@ -62,5 +62,11 @@
     "stayedOff": "Backup stays off. The server’s copy is deleted. Everything stays on this phone.",
     "stayedOffPending": "Backup stays off. The server’s copy is deleted the next time this phone is online. Everything stays on this phone.",
     "newAccount": "This email now has a new CityTurfer account, and backup for it is off. Tap Turn on backup to start."
+  },
+  "toast": {
+    "backedUp": "Backup finished. Your activities are safe in the cloud.",
+    "restored": "Restore finished.",
+    "linked": "Backup is on for this phone.",
+    "turnedOn": "Backup is on."
   }
 }

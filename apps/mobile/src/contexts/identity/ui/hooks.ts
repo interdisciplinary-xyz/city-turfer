@@ -1,9 +1,10 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { identity } from '@/composition-root';
 import type { BackupLinkTarget, User } from '@/contexts/identity';
 import { useApp } from '@/ui-kit/app-context';
+import { useAsyncAction } from '@/ui-kit/use-async-action';
 
 import { failureMessage } from './account-messages';
 import type { AccountRefusal, AccountSettingsState, ErrorMessage } from './account-settings.constants';
@@ -82,12 +83,9 @@ export function useAccountActions() {
  * would only push the wait further).
  */
 export function useSubmit() {
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<ErrorMessage | null>(null);
   /** Epoch ms until which the server asked us to wait; 0: no wait. */
   const [waitUntil, setWaitUntil] = useState(0);
-  // A ref, not the state: a second keyboard submit in the same frame must see the first one.
-  const inFlight = useRef(false);
 
   useEffect(() => (waitUntil ? watchCooldown(waitUntil, () => setWaitUntil(0)) : undefined), [waitUntil]);
 
@@ -99,23 +97,25 @@ export function useSubmit() {
     return failureMessage(f);
   }, []);
 
-  const run = useCallback(async (work: () => Promise<ErrorMessage | null | void>) => {
-    if (inFlight.current) {
-      return;
-    }
-    inFlight.current = true;
-    setBusy(true);
-    setError(null);
-    try {
-      setError((await work()) ?? null);
-    } catch {
-      setError(failureMessage({ kind: 'unavailable' }));
-    } finally {
-      inFlight.current = false;
-      setBusy(false);
-    }
-  }, []);
-  return { busy, error, setError, run, refused, waiting: waitUntil !== 0, waitUntil };
+  // Loading, one request at a time and crash reports from the shared standard; errors stay inline.
+  const action = useAsyncAction<ErrorMessage | null | void>({ area: 'identity', code: 'account', errorKey: null });
+  const start = action.run;
+  const run = useCallback(
+    async (work: () => Promise<ErrorMessage | null | void>) => {
+      const r = await start(async () => {
+        setError(null);
+        return work();
+      });
+      if (r.status === 'done') {
+        setError(r.value ?? null);
+      } else if (r.status === 'failed') {
+        const offline = r.kind.expected && r.kind.reason === 'offline';
+        setError(failureMessage({ kind: offline ? 'offline' : 'unavailable' }));
+      }
+    },
+    [start]
+  );
+  return { busy: action.isLoading, error, setError, run, refused, waiting: waitUntil !== 0, waitUntil };
 }
 
 /** Whole seconds left until `until` (epoch ms), ticking once a second; 0 once it has passed or with no wait. */

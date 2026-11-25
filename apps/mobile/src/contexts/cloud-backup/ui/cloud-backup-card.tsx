@@ -6,15 +6,18 @@ import { ACCENT } from '@/constants/colors';
 import { translator, useT } from '@/i18n';
 import { Button, Card } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
+import type { MessageRef } from '@/ui-kit/toast-provider.constants';
+import { useAsyncAction } from '@/ui-kit/use-async-action';
 
 import type { BackupCommandResult } from '../contract';
+import { type BackupErrorKey, type CloudBackupCardProps, ERROR_KEY } from './cloud-backup-card.constants';
 import {
-  ACTION_ERROR_KEY,
-  type BackupErrorKey,
-  type CloudBackupCardProps,
-  ERROR_KEY,
-} from './cloud-backup-card.constants';
-import { cloudBackupCardMode, offPendingNotice, shownLastError } from './cloud-backup-card-state';
+  backedUpMessage,
+  backupActionError,
+  cloudBackupCardMode,
+  offPendingNotice,
+  shownLastError,
+} from './cloud-backup-card-state';
 import { describeProgress, describeRefused, describeRestoreProgress, describeRestoreResult } from './format';
 import { useCloudBackup, useRestore } from './hooks';
 
@@ -25,13 +28,6 @@ const confirmOff = (off: () => void) => {
     { text: translator('common')('cancel'), style: 'cancel' },
     { text: t('turnOff'), style: 'destructive', onPress: off },
   ]);
-};
-
-/** A failed action: its domain code's message, else a generic one (never the raw error text). */
-const showError = (e: unknown) => {
-  const code = (e as { code?: string })?.code;
-  const te = translator('errors');
-  Alert.alert(translator('backup')('title'), te((code && ACTION_ERROR_KEY[code]) || 'generic'));
 };
 
 /**
@@ -46,8 +42,13 @@ export function CloudBackupCard({ link }: CloudBackupCardProps) {
   const te = useT('errors');
   const { status, refresh, setEnabled, setHealthIncluded, backUpNow } = useCloudBackup();
   const restore = useRestore({ ask: false });
-  const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<BackupErrorKey | null>(null);
+  // Each action resolves with its success message, or null when the card already shows the result.
+  const { run: start, isLoading: busy } = useAsyncAction<MessageRef | null>({
+    area: 'cloud-backup',
+    successKey: (message) => message,
+    errorKey: backupActionError,
+  });
 
   if (!status) {
     return null;
@@ -63,12 +64,9 @@ export function CloudBackupCard({ link }: CloudBackupCardProps) {
     );
   }
 
-  const run = (work: () => Promise<unknown>) => {
-    setBusy(true);
+  const run = (work: () => Promise<MessageRef | null | void>) => {
     setNotice(null);
-    work()
-      .catch(showError)
-      .finally(() => setBusy(false));
+    void start(async () => (await work()) ?? null);
   };
 
   // Turning off that couldn't reach the server shows from the status (offPendingNotice), worded
@@ -195,6 +193,7 @@ export function CloudBackupCard({ link }: CloudBackupCardProps) {
               if (r?.kind === 'skipped' && r.reason === 'busy') {
                 setNotice('backupWaitingForRestore');
               }
+              return backedUpMessage(r);
             })
           }
         />
@@ -220,7 +219,12 @@ export function CloudBackupCard({ link }: CloudBackupCardProps) {
             textColor={p.text}
             busy={restore.running}
             disabled={busy || status.running}
-            onPress={() => run(() => restore.start().then(refresh))}
+            onPress={() =>
+              run(async () => {
+                await restore.start(); // its own toast ("Restore finished")
+                await refresh();
+              })
+            }
           />
         </>
       )}

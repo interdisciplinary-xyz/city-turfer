@@ -1,3 +1,5 @@
+import type { MessageKey } from '@/ui-kit/toast-provider.constants';
+
 import type { PickedPhoto, PlaceChoice, ShareCardActivity, ShareCardPlace } from '../index';
 
 export type SharePhotoViewProps = {
@@ -36,3 +38,12 @@ export const LAYOUT_KEY = { top: 'screen.layoutTop', bottom: 'screen.layoutBotto
 export const CAPTURE_WIDTH_PX = 1080;
 /** The captured card sits this far left of the screen: rendered, never seen. */
 export const OFFSCREEN_X = -10000;
+
+/** What failed when Share did not go through: making the image, or the share sheet. */
+export type ShareFailure = 'render' | 'share';
+
+/** Its toast (`share.error.*`). */
+export const SHARE_ERROR_KEY = { render: 'share.error.render', share: 'share.error.share' } as const satisfies Record<
+  ShareFailure,
+  MessageKey
+>;
