@@ -28,7 +28,8 @@ If the working tree holds the user's unrelated work in progress, verify only you
   - `pnpm -C apps/mobile run arch` (dependency rules)
   - `pnpm -C apps/mobile exec jest --findRelatedTests <changed files>`, then the full
     `pnpm -C apps/mobile exec jest`
-  - `pnpm run audit:logs` (privacy: no unguarded console, no coordinates in diagnostics)
+  - `pnpm run audit:logs` (privacy: no unguarded console, no coordinates in diagnostics or error
+    reports)
 - `packages/core/**` (`@cityturfer/core`: shared kernel, core constants, the domain and application
   layers of Territory, Activity Log, Achievements, Identity; used by the app and the API)
   - `pnpm exec turbo run typecheck arch test:unit --filter=@cityturfer/core --filter=@cityturfer/mobile --filter=@cityturfer/api`

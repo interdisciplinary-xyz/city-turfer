@@ -60,6 +60,11 @@ English JSON: a new namespace is one import per locale in `apps/mobile/src/i18n/
 - **Apostrophes:** a single `'` is literal (`Don't`); `'{'` escapes a brace; `''` is one quote.
   Polish quotes are „…”.
 - **Errors:** map an error code to an `errors` key; never show `Error.message`.
+- **Toasts** (`useAsyncAction`, the `add-feature` skill): keys are `<namespace>.toast.<name>`
+  (`activity.toast.deleted`, `backup.toast.backedUp`) and typed, so a missing key fails tsc; a key
+  with values is `{ key, values }`. The shared errors are `common.toast.error.generic` and
+  `common.toast.error.offline`: add a specific error only when the Turfer can act on it. One or two
+  short sentences, in both locales.
 
 ## Numbers, dates, units
 

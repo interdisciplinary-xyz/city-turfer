@@ -11,6 +11,9 @@ scope:
     apps/mobile/src/wiring.ts,
     apps/mobile/src/contexts/recording/infrastructure,
     apps/api/src/middleware.ts,
+    apps/api/src/sentry.ts,
+    apps/web/src/lib/api/error-reports.ts,
+    apps/web/src/lib/api/sentry-reporter.ts,
     tools/audit-logs.mjs,
     tools/chain/run.mjs,
   ]
@@ -93,6 +96,22 @@ and dSYM upload), `SENTRY_ORG` and `SENTRY_PROJECT` (the config plugin in `app.j
 EU `url`). `eas.json` sets `SENTRY_ALLOW_FAILURE=true` so a build without the token still succeeds
 (no symbols uploaded).
 
+**Signed-in web portal** (`apps/web/src/lib/api/`): the query client (`query-client.ts`) offers
+every failed query and mutation to `portalErrorReporter` (`portal-error-reporter.ts`), and the
+account `error.tsx` reports render crashes. `isUnexpected` (`error-reports.ts`) keeps only 5xx
+`generic` answers and errors that are not a PortalError; refusals the API explained, a lost session,
+offline and cancelled requests are shown, not reported. Reporting is on only in a production build
+deployed as Vercel production with an EU DSN (`NEXT_PUBLIC_SENTRY_DSN`, inlined at build time); the
+SDK is downloaded only then, only on portal pages, through `sentry-reporter.ts` (dependency-cruiser
+`sentry-only-in-its-adapter`). No user, IP, cookies, headers, query or bodies, no tracing or replay;
+breadcrumbs are page changes as route patterns; events pass core's scrubber plus an e-mail pass;
+only a query key's first part, when it is a plain name, becomes a tag. **Public pages load no
+Sentry:** `apps/web/tools/check-export.mjs` fails an export whose HTML mentions it.
+
+**API**: only the `500 internal` branch of `app.onError` reports, through `apps/api/src/sentry.ts`
+(runbook and founder setup: `docs/operations/api-deploy.md`, "Error reports"). The rule behind all
+three: `docs/decisions/error-tracking-2026-11-25.md`.
+
 ## 2. Console output
 
 - `console.*` is allowed only behind `if (__DEV__)` (stripped from production behaviour). Today the
@@ -105,9 +124,14 @@ EU `url`). `eas.json` sets `SENTRY_ALLOW_FAILURE=true` so a build without the to
 `tools/audit-logs.mjs` runs in `ci:quality` and fails on:
 
 1. any `console.*` in `apps/mobile/src/` not guarded by `__DEV__`;
-2. any `diagnostics.log(...)` payload that names `lat`, `lon`, `latitude`, `longitude`, `coords` or
-   `coordinate(s)` (identifiers are split on camelCase and underscores, so `firstLat` and
-   `start_latitude` are caught, `latency` and `colon` are not).
+2. any `diagnostics.log(...)` payload in `apps/mobile/src/` that names `lat`, `lon`, `lng`,
+   `latitude`, `longitude`, `coords`, `coordinate(s)` or `waypoint(s)` (identifiers are split on
+   camelCase and underscores, so `firstLat` and `start_latitude` are caught, `latency` and `colon`
+   are not);
+3. any error-report call (`.report(`, `reportError(`, `captureException(`, `captureMessage(`,
+   `captureEvent(`) whose arguments name one of those words outside a plain string literal, in
+   `apps/mobile/src/`, `apps/api/src/` and `apps/web/src/` (a code such as `'coords-load'` is a
+   label and passes; `{ lat }` or a template literal with `${fix.latitude}` fails).
 
 It is a regex audit, not an AST: spread payloads are not inspected and tests are skipped. It
 complements, not replaces, code review.
@@ -125,9 +149,9 @@ item; there are none today (the `batch` payload's accuracy figure is built in `d
 
 ## 4. Future: error tags by bounded context
 
-If remote error reporting (for example Sentry) is ever added, it must be opt-in, strip location data
-before send, and use a **closed tag set** so reports stay comparable, as empatalk does with its
-`domain` tag. Proposed:
+Written before §1a. Error reporting now exists, on by default with an opt-out in the app (the
+founder's choice, `docs/decisions/error-tracking-2026-11-25.md`); what is still a proposal is a
+**closed tag set** so reports stay comparable, as empatalk does with its `domain` tag. Proposed:
 
 | Tag         | Values                                                                                                                                  |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------- |
@@ -147,4 +171,5 @@ id, method, route pattern, status and duration. Never bodies, ids, coordinates o
 unexpected error adds a `request.error` line with the error class and code, never its message
 (`docs/operations/api-deploy.md`, Check). `turf:backfill` and `turf:rebuild` print counts only.
 `pnpm test:chain` fails when the API's log holds anything that looks like a coordinate
-(`tools/chain/run.mjs`). `audit:logs` covers `apps/mobile/src/` only, not the API.
+(`tools/chain/run.mjs`). `audit:logs` reads `apps/api/src/` only for coordinate words in error
+reports (§3, rule 3), not its log lines.

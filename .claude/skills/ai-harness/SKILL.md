@@ -56,9 +56,10 @@ description: >-
   commands and of pnpm scripts that only check (`PNPM_READ_ONLY_SCRIPT`); with `--allow <paths>`
   also redirects into those paths and branch/commit/push/PR, for agents with an edit allowlist.
 - **PostToolUse Edit|Write|MultiEdit** `format-ts.sh` (Prettier) and `post-edit.mjs`: block-feedback
-  for `audit:logs` privacy findings and newly hard-coded brand hex; once-per-session reminders for
-  turf/geo parity (`packages/core` and the app), runtime fingerprint, migrations, background task,
-  Health privacy.
+  for `audit:logs` privacy findings (the app's rules in `apps/mobile/src`, coordinate words in error
+  reports also in `apps/api/src` and `apps/web/src`) and newly hard-coded brand hex;
+  once-per-session reminders for turf/geo parity (`packages/core` and the app), runtime fingerprint,
+  migrations, background task, Health privacy.
 
 ## Where does a new rule go?
 
