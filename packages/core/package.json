@@ -17,6 +17,7 @@
     "./h3": "./src/h3/index.ts",
     "./districts": "./src/districts/index.ts",
     "./demo": "./src/demo/index.ts",
+    "./error-scrub": "./src/error-scrub/index.ts",
     "./package.json": "./package.json"
   },
   "scripts": {
