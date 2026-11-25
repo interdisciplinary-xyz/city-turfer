@@ -47,7 +47,10 @@ review to `mobile-reviewer`.
 3. **Inside-out:** calls in `portal-api.ts` and pure logic (unit-tested) → hooks in `hooks.ts` →
    portal domain components (`apps/web/src/domains/{portal,auth,account,activities}`) → pages →
    stories → E2E.
-4. **Copy:** add keys under `portal.*` in `apps/web/messages/en.json` and `pl.json` together, with a
+4. **Async requests** follow the `web-portal` skill's "Async requests": state from the hooks, errors
+   worded inline, reporting only through the query client and `portalErrorReporter` (never
+   `@sentry/*` elsewhere, never on a public page); query and mutation keys start with a plain name.
+5. **Copy:** add keys under `portal.*` in `apps/web/messages/en.json` and `pl.json` together, with a
    placeholder and a note for `brand-designer`; don't ship placeholder wording.
 
 ## What good looks like

@@ -65,20 +65,27 @@ the author's fix gets a second pair of eyes.
 8. **Privacy:** coordinates or Health data logged outside `__DEV__`, sent anywhere, or exported
    without a user action; on the server, no PII in logs or error bodies, and every query scoped to
    the authenticated user.
-9. **Platform parity:** iOS and Android equivalent, or the difference intended and documented.
-10. **Domain design:** business rules in `ui/` or `infrastructure/`, invariants outside the
+9. **Async actions and error reports** (the `add-feature` skill, "Async requests"): an action the
+   Turfer starts that doesn't run through `useAsyncAction` (hand-rolled try/catch/finally, own
+   `isLoading`); a success toast for a read, a map load, a planner tap, background work or a result
+   already on screen; an expected error (offline, 4xx, `DomainError`, permission, `ExpectedFailure`)
+   reported instead of only worded; coordinates, Health data or e-mail in a report's context or in
+   the error message it builds (`audit:logs` catches only coordinate words); on the API, a per-route
+   catch or a report outside `app.onError`; Sentry on a public website page.
+10. **Platform parity:** iOS and Android equivalent, or the difference intended and documented.
+11. **Domain design:** business rules in `ui/` or `infrastructure/`, invariants outside the
     aggregate, terms drifting from the ubiquitous language.
-11. **OTA vs native:** `apps/mobile/app.json`, `apps/mobile/plugins/`, `apps/mobile/modules/`,
+12. **OTA vs native:** `apps/mobile/app.json`, `apps/mobile/plugins/`, `apps/mobile/modules/`,
     `apps/mobile/react-native.config.js` or native dependencies changed? Then a new fingerprint and
     a reinstall, said in the PR. `packages/core` runs on the phone and the server: check both.
-12. **Tests and accessibility:** new logic tested; interactive elements with `testID`, role and
+13. **Tests and accessibility:** new logic tested; interactive elements with `testID`, role and
     label; Maestro flows start from a known state and pass the e2e audit.
-13. **API:** spec regenerated, routes declared with zod, `problem+json` errors, versions and
+14. **API:** spec regenerated, routes declared with zod, `problem+json` errors, versions and
     `If-Match`, tombstones, the one changes feed (the `api-design` skill).
-14. **Website:** the `web-motion` skill's site ground rules and its Verify section. **Portal:** the
+15. **Website:** the `web-motion` skill's site ground rules and its Verify section. **Portal:** the
     `web-portal` skill's boundary, auth and data rules; personal data needs the
     `data-privacy-reviewer` findings in the author's report.
-15. **Harness and docs:** a diff touching `.claude/`, `tools/harness/` or `docs/` passes
+16. **Harness and docs:** a diff touching `.claude/`, `tools/harness/` or `docs/` passes
     `pnpm run audit:harness` and `pnpm run audit:docs`.
 
 ## Before you report back

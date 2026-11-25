@@ -83,6 +83,15 @@ API calls, no third-party scripts for a signed-out visitor.** The portal never w
   `PORTAL_ERROR_CODES` (pinned to the contract's `ProblemCode`); others are `signed-out`,
   `unreachable` or `generic` (with the `X-Request-Id`). Never show `title` or `detail`, never echo
   input. Another user's id is a 404: say "not found".
+- **Async requests** (the founder's rule; the `add-feature` skill, "Async requests"): loading and
+  error state come from the hooks (`isPending`, `error`), worded inline; never a hand-rolled
+  try/catch around a call. Reporting is wired once: the query client
+  (`apps/web/src/lib/api/query-client.ts`) offers every failed query and mutation to
+  `portalErrorReporter` (`portal-error-reporter.ts`), and `isUnexpected` in `error-reports.ts` keeps
+  only 5xx `generic` answers and non-PortalErrors; the account `error.tsx` reports render crashes.
+  Sentry (EU, Vercel production only, scrubbed) loads only through `sentry-reporter.ts`
+  (dependency-cruiser `sentry-only-in-its-adapter`); public pages never load it. A query or mutation
+  key's first part becomes a tag, so it is a plain name (`activity`), never an id or a coordinate.
 
 ## Data rules
 

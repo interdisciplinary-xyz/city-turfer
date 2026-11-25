@@ -1,5 +1,5 @@
 import { SPACE } from '@cityturfer/brand';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ACCENT } from '@/constants/colors';
@@ -7,6 +7,7 @@ import { accountFieldError, displayName } from '@/contexts/identity';
 import { useT } from '@/i18n';
 import { useApp } from '@/ui-kit/app-context';
 import { Button } from '@/ui-kit/components';
+import { useAsyncAction } from '@/ui-kit/use-async-action';
 
 import { AccountField } from './account-field';
 import { failureMessage } from './account-messages';
@@ -37,32 +38,32 @@ export function NameForm({ onDone }: NameFormProps) {
   const user = auth.status === 'signed-in' ? auth.user : null;
   const [draft, setDraft] = useState(user?.name ?? '');
   const [error, setError] = useState<ErrorMessage | null>(null);
-  const [busy, setBusy] = useState(false);
-  const inFlight = useRef(false);
+  // Saved: back to Account, where the new name shows; the toast says it went through.
+  const { run, isLoading: busy } = useAsyncAction<Awaited<ReturnType<typeof updateName>>>({
+    area: 'identity',
+    code: 'update-name',
+    errorKey: null,
+    successKey: (r) => (r.kind === 'saved' ? 'account.toast.nameSaved' : null),
+  });
   const problem = problemOf(draft);
   const shown = problem ?? error;
 
   const save = async () => {
-    if (problem || inFlight.current) {
+    if (problem) {
       return;
     }
-    inFlight.current = true;
-    setBusy(true);
     setError(null);
-    try {
-      const r = await updateName(draft);
-      if (r.kind === 'saved') {
+    const r = await run(() => updateName(draft));
+    if (r.status === 'failed') {
+      setError(failureMessage({ kind: r.kind.expected && r.kind.reason === 'offline' ? 'offline' : 'unavailable' }));
+    } else if (r.status === 'done') {
+      if (r.value.kind === 'saved') {
         onDone();
-      } else if (r.kind === 'field-error') {
-        setError(FIELD_ERROR[r.code]);
+      } else if (r.value.kind === 'field-error') {
+        setError(FIELD_ERROR[r.value.code]);
       } else {
-        setError(failureMessage(r));
+        setError(failureMessage(r.value));
       }
-    } catch {
-      setError(failureMessage({ kind: 'unavailable' }));
-    } finally {
-      inFlight.current = false;
-      setBusy(false);
     }
   };
 

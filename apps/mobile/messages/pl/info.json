@@ -14,5 +14,7 @@
   "planAlongStreets": "Planuj trasy wzdłuż ulic",
   "planAlongStreetsOff": "Wyłączone: zaplanowane trasy zostają liniami prostymi, a ich punkty nie opuszczają telefonu.",
   "settingNotSaved": "Ustawienie się nie zmieniło. Spróbuj ponownie.",
-  "footer": "{name} · Surfuj po mieście. Ulice są Twoje."
+  "footer": "{name} · Surfuj po mieście. Ulice są Twoje.",
+  "crashReports": "Wysyłaj raporty o błędach",
+  "crashReportsBody": "Gdy coś się zepsuje, aplikacja wysyła szczegóły błędu do naszego narzędzia do śledzenia błędów w UE. Nigdy Twojej lokalizacji, danych z Apple Health ani adresu e-mail."
 }

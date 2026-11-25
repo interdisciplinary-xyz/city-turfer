@@ -75,7 +75,7 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   cron), migrations before the merge, the server turf rollout (migrate 0005 and 0006 before the
   merge, deploy, turf:backfill, then the web map; turf:rebuild straight after redeploying from a
   rollback), the daily retention cron with its turf catch-up, adopting the admin data, device
-  tokens, support requests (find, delete), checking health
+  tokens, support requests (find, delete), error reports (Sentry EU), checking health
 - ✅ [`operations/apple-health.md`](operations/apple-health.md): Install the Apple Health build on
   the iPhone and check import and export with real data
 - ✅ [`operations/observability.md`](operations/observability.md): What the app and the API record
@@ -255,6 +255,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`decisions/design-system-2026-10-19.md`](decisions/design-system-2026-10-19.md): v0.5.0 design
   system — tokens in @cityturfer/brand (TS + CSS variables), React Native components in
   @cityturfer/ui, one Storybook (react-native-web) for the app and the website, shipped OTA
+- 🚧 [`decisions/error-tracking-2026-11-25.md`](decisions/error-tracking-2026-11-25.md): Error
+  tracking and the async request rule — every user action shows loading, a success or error message,
+  and reports only unexpected errors to Sentry (EU, scrubbed, opt-out in the app); the API catches
+  once in onError; public website pages load no Sentry
 - ✅ [`decisions/home-city-2026-10-19.md`](decisions/home-city-2026-10-19.md): v0.7.0 Home City —
   the Turfer picks a city from a bundled catalogue and the Turf Map (and the Record map before the
   first fix) opens on it; stored per user as a catalogue id, sent to the API only with cloud backup

@@ -1,5 +1,6 @@
 import type { T } from '@/i18n';
 import { DomainError } from '@/shared-kernel';
+import type { MessageRef } from '@/ui-kit/toast-provider.constants';
 
 import type { ImportReport } from '../contract';
 
@@ -27,4 +28,17 @@ export function describeImport(r: ImportReport, t: T<'health'>): string {
 /** Which message explains `e` to the Turfer: known Health Sync codes, else the generic one. */
 export function healthErrorKey(e: unknown): HealthErrorKey {
   return (e instanceof DomainError && ERROR_KEY_OF_CODE[e.code]) || 'errors.generic';
+}
+
+/**
+ * The error toast of every Apple Health action (`useAsyncAction`'s `errorKey`): always a `health`
+ * message, so a HealthKit or SQLite failure never shows its own text (nor any Health data).
+ */
+export function healthActionError(e: unknown): MessageRef {
+  return `health.${healthErrorKey(e)}`;
+}
+
+/** The success toast of Import now: how many workouts it added (none when the import didn't run). */
+export function importedToast(report: ImportReport | null): MessageRef | null {
+  return report ? { key: 'health.toast.imported', values: { count: report.imported } } : null;
 }

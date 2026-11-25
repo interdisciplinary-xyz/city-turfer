@@ -32,5 +32,12 @@
     "strong": "Strong",
     "blazing": "Blazing"
   },
-  "turfLegendTitle": "Turf strength"
+  "turfLegendTitle": "Turf strength",
+  "toast": {
+    "error": {
+      "generic": "Something went wrong. Try again.",
+      "offline": "No connection. Try again when you’re online."
+    },
+    "dismissHint": "Closes the message"
+  }
 }

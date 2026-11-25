@@ -407,6 +407,7 @@
         "devices": "Kiedy każde urządzenie się zalogowało i kiedy było ostatnio używane. Bez adresów IP, nazw urządzeń i lokalizacji.",
         "deletions": "Dla każdej usuniętej aktywności jej identyfikator i datę usunięcia, żeby nie wróciła do kopii. Bez trasy.",
         "rateLimits": "Przez około dobę zaszyfrowaną postać Twojego adresu e-mail i IP, aby nikt nie zgadywał kodów logowania.",
+        "crashReports": "Gdy aplikacja, ta strona po zalogowaniu lub nasz serwer trafią na nieoczekiwany błąd, raport o awarii trafia do Sentry (UE), naszego podmiotu przetwarzającego: sam błąd, wersja aplikacji i model urządzenia. Wcześniej usuwamy z niego współrzędne, dane Apple Health i adresy e-mail, a Sentry jest skonfigurowane tak, by nie zapisywać adresów IP. Raporty są przechowywane przez ograniczony czas. Możesz to wyłączyć w aplikacji: Info › Twoje dane. Strony publiczne nic z tego nie ładują.",
         "nothingElse": "Żadnej analityki, narzędzi śledzących ani reklam."
       },
       "devices": {

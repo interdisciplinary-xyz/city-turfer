@@ -1,39 +1,52 @@
-import { useState } from 'react';
-import { Alert, StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Switch, Text, View } from 'react-native';
 
 import { ACCENT } from '@/constants/colors';
-import { translator, useT } from '@/i18n';
+import { useT } from '@/i18n';
 import { Button, Card } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
+import { useAsyncAction } from '@/ui-kit/use-async-action';
 
-import { describeImport, healthErrorKey } from './apple-health-card.constants';
+import type { ImportReport } from '../contract';
+import { describeImport, healthActionError, importedToast } from './apple-health-card.constants';
 import { useHealthSync } from './hooks';
 
-/** Explains a failure in the app language; the error's own text (and any Health data) is never shown. */
-const showError = (e: unknown) => {
-  const t = translator('health');
-  Alert.alert(t('errors.title'), t(healthErrorKey(e)));
-};
-
-/** Settings card: connect Apple Health, choose import/export, import now. Hidden where Health doesn't exist. */
+/**
+ * Settings card: connect Apple Health, choose import/export, import now. Hidden where Health
+ * doesn't exist. Every action follows the async-request rule (`useAsyncAction`): an unexpected
+ * failure is reported with area and code only (never Health data), every failure shows a toast in
+ * the app language (never the error's own text). Success toasts only where the card doesn't show
+ * the result itself: Import now (how many were added) and Disconnect.
+ */
 export function AppleHealthCard() {
   const p = usePalette();
   const t = useT('health');
   const { status, progress, connect, disconnect, importNow, setDirections } = useHealthSync();
-  const [busy, setBusy] = useState(false);
+  // Connect and the switches show their result on the card: no success toast.
+  const connecting = useAsyncAction<unknown>({ area: 'health-sync', code: 'connect', errorKey: healthActionError });
+  const directions = useAsyncAction<void>({
+    area: 'health-sync',
+    code: 'set-directions',
+    errorKey: healthActionError,
+  });
+  const importing = useAsyncAction<ImportReport | null>({
+    area: 'health-sync',
+    code: 'import-now',
+    errorKey: healthActionError,
+    successKey: importedToast,
+  });
+  const disconnecting = useAsyncAction<void>({
+    area: 'health-sync',
+    code: 'disconnect',
+    errorKey: healthActionError,
+    successKey: 'health.toast.disconnected',
+  });
 
   if (!status?.available) {
     return null;
   }
 
-  const run = (work: () => Promise<unknown>) => {
-    setBusy(true);
-    work()
-      .catch(showError)
-      .finally(() => setBusy(false));
-  };
-
-  const importing = progress != null || status.importing;
+  const busy = connecting.isLoading || directions.isLoading || importing.isLoading || disconnecting.isLoading;
+  const importRunning = progress != null || status.importing;
   const last = status.lastImport;
 
   return (
@@ -47,8 +60,9 @@ export function AppleHealthCard() {
             testID='health-connect'
             label={t('connect')}
             color={ACCENT}
-            busy={busy}
-            onPress={() => run(connect)}
+            busy={connecting.isLoading}
+            disabled={busy}
+            onPress={() => void connecting.run(connect)}
           />
         </>
       ) : (
@@ -57,9 +71,12 @@ export function AppleHealthCard() {
             <Text style={[s.label, { color: p.text }]}>{t('importSwitch')}</Text>
             <Switch
               testID='health-import-switch'
+              accessibilityRole='switch'
               accessibilityLabel={t('importSwitchLabel')}
+              accessibilityState={{ checked: status.importEnabled, disabled: busy }}
               value={status.importEnabled}
-              onValueChange={(on) => run(() => setDirections({ importEnabled: on }))}
+              disabled={busy}
+              onValueChange={(on) => void directions.run(() => setDirections({ importEnabled: on }))}
               trackColor={{ true: ACCENT, false: p.border }}
             />
           </View>
@@ -67,20 +84,23 @@ export function AppleHealthCard() {
             <Text style={[s.label, { color: p.text }]}>{t('exportSwitch')}</Text>
             <Switch
               testID='health-export-switch'
+              accessibilityRole='switch'
               accessibilityLabel={t('exportSwitchLabel')}
+              accessibilityState={{ checked: status.exportEnabled, disabled: busy }}
               value={status.exportEnabled}
-              onValueChange={(on) => run(() => setDirections({ exportEnabled: on }))}
+              disabled={busy}
+              onValueChange={(on) => void directions.run(() => setDirections({ exportEnabled: on }))}
               trackColor={{ true: ACCENT, false: p.border }}
             />
           </View>
           <Text testID='health-last-import' style={{ color: p.muted, fontSize: 13 }}>
-            {importing
+            {importRunning
               ? t('importing', { count: progress ?? 0 })
               : last
                 ? t('lastImport', { summary: describeImport(last, t) })
                 : t('notImported')}
           </Text>
-          {!importing && last && last.imported === 0 && last.duplicates === 0 && !last.beforeStart && (
+          {!importRunning && last && last.imported === 0 && last.duplicates === 0 && !last.beforeStart && (
             <Text style={{ color: p.muted, fontSize: 13 }}>{t('noWorkoutsHint')}</Text>
           )}
           {status.importEnabled && (
@@ -89,9 +109,9 @@ export function AppleHealthCard() {
               label={t('importNow')}
               color={p.border}
               textColor={p.text}
-              busy={importing}
+              busy={importRunning || importing.isLoading}
               disabled={busy}
-              onPress={() => run(importNow)}
+              onPress={() => void importing.run(importNow)}
             />
           )}
           <Text style={{ color: p.muted, fontSize: 12 }}>{t('privacy')}</Text>
@@ -100,8 +120,9 @@ export function AppleHealthCard() {
             label={t('disconnect')}
             color={p.card}
             textColor={p.danger}
-            disabled={busy || importing}
-            onPress={() => run(disconnect)}
+            busy={disconnecting.isLoading}
+            disabled={busy || importRunning}
+            onPress={() => void disconnecting.run(disconnect)}
           />
         </>
       )}

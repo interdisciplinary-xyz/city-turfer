@@ -1,10 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
-import { ErrorMessage, Notice, Unreachable } from '@/domains/portal';
+import { ErrorMessage, Notice, RenderError, Unreachable } from '@/domains/portal';
 
 import { ERRORS } from './fixtures';
 
-/** The portal's messages: an empty-state notice, the API-unreachable state, and mapped errors. */
+/**
+ * The portal's messages: an empty-state notice, the API-unreachable state, mapped errors, and the
+ * error boundary's fallback (a page that crashed while rendering).
+ */
 function Messages() {
   return (
     <div className='portal-page'>
@@ -29,3 +32,8 @@ const meta = {
 export default meta;
 
 export const All: StoryObj<typeof meta> = {};
+
+/** The portal root's error boundary (`account/error.tsx`): generic copy and a retry, no frame. */
+export const RenderCrash: StoryObj<typeof meta> = {
+  render: () => <RenderError onRetry={() => undefined} />,
+};

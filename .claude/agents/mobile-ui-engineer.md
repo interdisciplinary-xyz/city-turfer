@@ -39,7 +39,12 @@ simulator).
    `packages/ui` with a story in `apps/storybook`.
 3. **Live session state** is the `LiveSessionStore`, read with `useSyncExternalStore` through
    Recording's hooks.
-4. **Prove it** (below), looking at the screen yourself.
+4. **Every action the Turfer starts runs through `useAsyncAction`**
+   (`apps/mobile/src/ui-kit/use-async-action.ts`; the `add-feature` skill, "Async requests"): no
+   hand-rolled try/catch/finally or `isLoading` state, a `successKey` only when the result isn't
+   visible on screen, no toast for reads, map loads or planner taps. Toast keys per the
+   `mobile-i18n` skill.
+5. **Prove it** (below), looking at the screen yourself.
 
 ## What good looks like
 

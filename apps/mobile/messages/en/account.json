@@ -127,5 +127,8 @@
     "offlineText": "Nothing was deleted. Try again when you’re online.",
     "failedTitle": "Could not delete",
     "failedText": "Nothing was deleted. Try again in a moment."
+  },
+  "toast": {
+    "nameSaved": "Name saved."
   }
 }

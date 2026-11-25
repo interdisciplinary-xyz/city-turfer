@@ -407,6 +407,7 @@
         "devices": "When each device signed in and was last used. No IP addresses, device names or locations.",
         "deletions": "For each activity you deleted, its id and when, so it isn't backed up again. No route.",
         "rateLimits": "For about a day, a scrambled form of your e-mail and IP address, to stop people guessing sign-in codes.",
+        "crashReports": "When the app, this signed-in site or our server hits an unexpected error, a crash report goes to Sentry (EU), our error-reporting processor: the error, app version and device model. Coordinates, Apple Health data and e-mail addresses are scrubbed first, and Sentry is configured not to store IP addresses. Reports are kept for a limited time. You can turn this off in the app: Info › Your data. Public pages load none of it.",
         "nothingElse": "No analytics, no trackers, no advertising."
       },
       "devices": {

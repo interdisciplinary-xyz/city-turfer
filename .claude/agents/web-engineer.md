@@ -44,6 +44,11 @@ report what needs setting.
    `pnpm exec turbo run typecheck test:unit --filter=@cityturfer/brand --filter=@cityturfer/ui --filter=@cityturfer/mobile`
    and say in your report that the app is affected.
 3. Keep every website component's story rendering when props change.
+4. **Public pages get no error tracking.** The waitlist form keeps its own pending, success and
+   error states in the page, and nothing is reported: no Sentry SDK, loader or DSN on a landing page
+   (`check-export.mjs` fails an export whose HTML mentions Sentry; dependency-cruiser keeps
+   `@sentry/*` in the portal's adapter). Portal reporting is `portal-engineer`'s (the `web-portal`
+   skill).
 
 ## Before you report back
 

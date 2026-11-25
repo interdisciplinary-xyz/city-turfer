@@ -127,5 +127,8 @@
     "offlineText": "Nic nie zostało usunięte. Spróbuj ponownie, gdy będziesz online.",
     "failedTitle": "Nie udało się usunąć",
     "failedText": "Nic nie zostało usunięte. Spróbuj ponownie za chwilę."
+  },
+  "toast": {
+    "nameSaved": "Imię zapisane."
   }
 }
