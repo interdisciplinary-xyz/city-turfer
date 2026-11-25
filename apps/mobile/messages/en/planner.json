@@ -9,7 +9,7 @@
   "time": "{long, select, yes {{hours} h {minutes} min} other {{minutes} min}}",
   "newCells": "≈ {cells}",
   "newArea": "≈ {area} of new turf if you go this way",
-  "summaryLabel": "Planned route: {km, plural, one {{kmText} kilometre} other {{kmText} kilometres}}, about {minutes, plural, one {# minute} other {# minutes}}, about {count, plural, one {# new cell} other {# new cells}}",
+  "summaryLabel": "Planned route: {km, plural, one {{kmText} kilometres} other {{kmText} kilometres}}, about {minutes, plural, one {# minute} other {# minutes}}, about {count, plural, one {# new cell} other {# new cells}}",
   "straight": "Not snapped to streets",
   "straightHint": "Dashed parts are straight lines.",
   "followStreets": "Follow streets",
@@ -39,7 +39,7 @@
   "consent": {
     "title": "Follow the streets?",
     "body": "To draw your route along streets, your route stops are sent to the OpenStreetMap route service:",
-    "privacy": "They’re rounded to about 10 m and sent without your account; that service may keep them in its logs. Nothing else leaves your phone, and nothing is sent unless you agree. You can change this in Info.",
+    "privacy": "They’re rounded to about 10 m and sent without your account details. Like any website, that service also sees your phone’s IP address and may keep both in its logs. Nothing is sent unless you agree. You can change this in Info.",
     "follow": "Follow streets",
     "straight": "Straight lines",
     "straightHint": "Straight lines: nothing is sent, and the route is still measured.",
