@@ -80,12 +80,12 @@ export const DIFFERS = ['repeats', 'fades'] as const;
 /**
  * Where it stands, as a strip under the highlights: what is being tested and what is not there yet
  * (what works is the highlights above). One list to update per release (docs-engineer checks it on
- * "update all docs"). Keys under home.status.<column>.<item>. Apple Health: import ran on an iPhone
- * (the health tile says so), saving to it has not been checked on a device (testing), see
- * docs/product/product-brief.md.
+ * "update all docs"). Keys under home.status.<column>.<item>. Apple Health: neither direction has a device
+ * run of the current rules (import counts forward only since 2026-11-05, ran on the Simulator only;
+ * saving has not been checked on a device), so both sit under testing, see docs/product/product-brief.md.
  */
 export const STATUS_COLUMNS = [
-  { key: 'testing', items: ['locked', 'health', 'share', 'battery', 'backup'] },
+  { key: 'testing', items: ['locked', 'healthImport', 'health', 'share', 'battery', 'backup'] },
   { key: 'notYet', items: ['account', 'store', 'android', 'gpx'] },
 ] as const;
 

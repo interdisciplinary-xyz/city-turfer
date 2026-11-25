@@ -393,6 +393,7 @@
 
 .home-privacy {
   margin-top: 0;
+  margin-inline: auto;
   max-width: var(--measure);
 }
 
@@ -490,6 +491,7 @@
 }
 
 .home-not-for {
+  margin-inline: auto;
   max-width: var(--measure);
 }
 
@@ -517,6 +519,7 @@
 
 .home-differs {
   margin-top: var(--space-xxl);
+  margin-inline: auto;
   max-width: var(--measure);
 }
 

@@ -129,7 +129,7 @@
     },
     "join": {
       "title": "Twoje terytorium zaczyna się za progiem",
-      "body": "Zapraszamy małymi grupami, najpierw na iPhonie. Zostaw e-mail, a napiszemy, gdy przyjdzie Twoja kolej.",
+      "body": "Najpierw na iPhonie. Zostaw e-mail, a napiszemy do Ciebie, gdy CityTurfer będzie gotowy do wypróbowania.",
       "eyebrow": "Dołącz",
       "trust": {
         "label": "Na czym możesz polegać",
@@ -206,6 +206,7 @@
       "title": "Wczesne testy, najpierw iPhone",
       "testing": {
         "title": "W testach",
+        "healthImport": "Treningi z Apple Watch w statystykach, na prawdziwym iPhonie",
         "health": "Zapisywanie aktywności w Apple Health",
         "battery": "Zużycie baterii na długich wyjściach",
         "backup": "Kopia w chmurze (po włączeniu)",

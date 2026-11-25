@@ -129,7 +129,7 @@
     },
     "join": {
       "title": "Your turf starts at your door",
-      "body": "We’re inviting people in small groups, iPhone first. Leave your email and we’ll write when it’s your turn.",
+      "body": "iPhone first. Leave your email and we’ll write to you when CityTurfer is ready to try.",
       "eyebrow": "Join",
       "trust": {
         "label": "What you can rely on",
@@ -206,6 +206,7 @@
       "title": "An early test, iPhone first",
       "testing": {
         "title": "Being tested",
+        "healthImport": "Apple Watch outings counting, on a real iPhone",
         "health": "Saving your activities to Apple Health",
         "battery": "Battery use on long outings",
         "backup": "Opt-in cloud backup",

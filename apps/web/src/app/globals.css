@@ -696,6 +696,7 @@ h1 {
 .site-footer-brand {
   display: grid;
   gap: var(--space-sm);
+  align-content: start;
   justify-items: start;
 }
 
@@ -716,6 +717,7 @@ h1 {
 .site-footer-contact {
   display: grid;
   gap: var(--space-sm);
+  align-content: start;
 }
 
 .site-footer .site-footer-legal {
