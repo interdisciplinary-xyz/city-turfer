@@ -6,6 +6,7 @@ import Constants from 'expo-constants';
 import * as Crypto from 'expo-crypto';
 import * as Location from 'expo-location';
 import * as SecureStore from 'expo-secure-store';
+import * as Updates from 'expo-updates';
 import { AppState, Platform } from 'react-native';
 
 import { API_BASE_URL, API_TIMEOUT_MS, API_UPLOAD_TIMEOUT_MS } from '@/constants/api';
@@ -32,13 +33,46 @@ import { OsrmStreetRouter } from '@/contexts/route-planning/infrastructure/osrm-
 import { SecureStoreRoutingConsent } from '@/contexts/route-planning/infrastructure/secure-store-routing-consent';
 import { SecureStoreSharePromptFlag } from '@/contexts/share-photo/infrastructure/secure-store-share-prompt-flag';
 import { turfOverlayPreference } from '@/contexts/territory/infrastructure/turf-overlay-preference';
+import { CrashReporting } from '@/platform/crash-reporting';
 import { deleteExpoDatabase, openExpoDatabase } from '@/platform/expo-database';
 import { runWhenForeground } from '@/platform/foreground';
 import { migrate } from '@/platform/migrations';
 import { OsmRouterGate } from '@/platform/osm-router-gate';
 import { ProfileDeletions } from '@/platform/profile-deletions';
+import { SecureStoreCrashReportSetting } from '@/platform/secure-store-crash-report-setting';
+import { startSentryReporter, stopSentry } from '@/platform/sentry-error-reporter';
 
 import { type Container, wire } from './wiring';
+
+// --- Crash reporting (app-wide) ---------------------------------------------------
+
+// Read directly so Expo inlines it at bundle time. Unset (local builds, forks): reporting never runs.
+const SENTRY_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN || '';
+const APP_VERSION = Constants.expoConfig?.version ?? 'dev';
+
+/**
+ * Scrubbed crash reports (EU), on unless the Turfer turned "Send crash reports" off. Never in
+ * development builds, in tests or without a DSN. Started lazily by getContainer(), never before
+ * the background task is defined (index.ts imports that first).
+ */
+export const crashReporting = new CrashReporting({
+  setting: new SecureStoreCrashReportSetting(),
+  start:
+    SENTRY_DSN && !__DEV__ && !globalThis.process?.env?.JEST_WORKER_ID
+      ? () =>
+          startSentryReporter({
+            dsn: SENTRY_DSN,
+            environment: Updates.channel || process.env.EXPO_PUBLIC_APP_ENV || 'unknown',
+            release: `cityturfer-mobile@${APP_VERSION}+${Updates.runtimeVersion ?? 'unknown'}`,
+            tags: {
+              'ota.embedded': String(Updates.isEmbeddedLaunch),
+              ...(Updates.updateId ? { 'ota.update_id': Updates.updateId } : {}),
+              ...(process.env.EXPO_PUBLIC_APP_ENV ? { 'app.env': process.env.EXPO_PUBLIC_APP_ENV } : {}),
+            },
+          })
+      : undefined,
+  stop: stopSentry,
+});
 
 // --- Identity (app-wide, no user database needed) ------------------------------
 
@@ -214,6 +248,8 @@ const adapters = {
   timeZone: deviceTimeZone,
   // Read at creation, in the language active then (the saved setting is loaded first: headless too).
   defaultNameWords: currentDefaultNameWords,
+  errorReporter: crashReporting.reporter,
+  crashReports: crashReporting,
 };
 
 /** The device's IANA zone, kept with each new Activity (older ones get the current zone once). */
@@ -238,6 +274,8 @@ let current: {
  * NOT "nobody is signed in", callers must not stop a recording because of it.
  */
 export async function getContainer(): Promise<Container | null> {
+  // Lazy start (first container request, foreground or headless); idempotent, never throws.
+  void crashReporting.ensureStarted();
   const uid = await sessionStore.read();
   if (!uid) {
     return null;

@@ -49,8 +49,15 @@ TaskManager.defineTask<{ locations: Location.LocationObject[] }>(LOCATION_TASK, 
     if (__DEV__) {
       console.warn('[location-task]', error.message);
     }
+    // Logged and forwarded to crash reporting (area 'recording'; the message is scrubbed there).
     void getContainer()
-      .then((c) => c?.diagnostics.log('task-error', { code: error.code, message: error.message }))
+      .then((c) =>
+        c?.diagnostics.log(
+          'task-error',
+          { code: error.code, message: error.message },
+          { area: 'recording', tags: { source: 'task' } }
+        )
+      )
       .catch(() => undefined);
     return;
   }

@@ -11,7 +11,10 @@ export type BatchSource = 'task' | 'live';
 /** The slice of the per-user container the handler needs. */
 export interface BatchContainer {
   recording: { ingestFixes: { execute(fixes: readonly Fix[]): Promise<IngestResult> } };
-  diagnostics: { log(kind: 'batch' | 'task-error', data: Record<string, unknown>): void };
+  /** A `task-error` is also forwarded to crash reporting unless `forward` is false. */
+  diagnostics: { log(kind: 'batch' | 'task-error', data: Record<string, unknown>, forward?: false): void };
+  /** Crash reporting: an unexpected ingest failure is reported with its stack (coordinate-free context). */
+  errorReporter?: { report(error: unknown, ctx: { area: string; code?: string }): void };
 }
 
 export interface BatchHandlerDeps<L> {
@@ -59,8 +62,13 @@ export function createLocationBatchHandler<L>(deps: BatchHandlerDeps<L>) {
   /** Errors seen while no container was available to log them; written with the next batch. */
   const deferred: Record<string, unknown>[] = [];
 
-  function note(container: BatchContainer | null, data: Record<string, unknown>) {
-    if (container) {
+  function note(container: BatchContainer | null, data: Record<string, unknown>, error?: unknown) {
+    if (container?.errorReporter && error instanceof Error) {
+      // The original error, with its stack (its message is scrubbed by the reporter), instead of
+      // the diagnostics' code-only forward.
+      container.errorReporter.report(error, { area: 'recording', code: String(data.code) });
+      container.diagnostics.log('task-error', data, false);
+    } else if (container) {
       container.diagnostics.log('task-error', data);
     } else if (deferred.length < MAX_DEFERRED) {
       deferred.push({ ...data, at: Date.now() });
@@ -137,7 +145,7 @@ export function createLocationBatchHandler<L>(deps: BatchHandlerDeps<L>) {
     } catch (e) {
       deps.warn('[location-task] ingest failed', e);
       try {
-        note(container, { code: `ingest-${source}`, message: String(e) });
+        note(container, { code: `ingest-${source}`, message: String(e) }, e);
       } catch {
         // never throw from the task
       }

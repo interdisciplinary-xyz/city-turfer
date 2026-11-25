@@ -5,6 +5,9 @@ owner: founder
 scope:
   [
     apps/mobile/src/platform/diagnostics.ts,
+    apps/mobile/src/platform/error-reporter.ts,
+    apps/mobile/src/platform/sentry-error-reporter.ts,
+    packages/core/src/error-scrub,
     apps/mobile/src/wiring.ts,
     apps/mobile/src/contexts/recording/infrastructure,
     apps/api/src/middleware.ts,
@@ -20,9 +23,10 @@ summary:
 
 CityTurfer records where people walk, run and ride. `CLAUDE.md` is explicit: location data is
 personal data, so there is **no analytics on coordinates and no raw coordinates in logs in
-production builds**. There is no remote telemetry from the app: no Sentry, no analytics SDK. The
-app's observability is on-device, in the user's own SQLite database; the API (only for people who
-turn on Cloud backup) writes one log line per request on Vercel (§5).
+production builds**. There is no analytics SDK. The app's observability is on-device, in the user's
+own SQLite database, plus scrubbed crash reports to Sentry (EU) unless the Turfer turns "Send crash
+reports" off (§1a); the API (only for people who turn on Cloud backup) writes one log line per
+request on Vercel (§5).
 
 Adapted from the idea behind empatalk's `docs/operations/OBSERVABILITY.md` (a fixed tag taxonomy
 that keeps dashboards trustworthy), applied to privacy instead of dashboards.
@@ -59,6 +63,35 @@ owner before copying app data off their device.
 - `task-error.message` is `String(error)`: native errors normally contain no positions, but treat
   them as untrusted text. If an error type ever embeds a Fix, sanitise it before logging.
 - The `batch` payload spreads the Fix Filter report. Only counts belong in that report.
+
+## 1a. Crash reports (Sentry, EU region)
+
+Unexpected errors only, scrubbed, no user identifier. On by default with a per-device opt-out ("Send
+crash reports", `SecureStoreCrashReportSetting`, read before the SDK starts); off in development
+builds, in Jest and whenever `EXPO_PUBLIC_SENTRY_DSN` is unset.
+
+- Port `ErrorReporter` (`apps/mobile/src/platform/error-reporter.ts`); the only Sentry import is
+  `apps/mobile/src/platform/sentry-error-reporter.ts` (dependency-cruiser rule
+  `sentry-only-in-its-adapter`; domain and application never report). `CrashReporting`
+  (`crash-reporting.ts`) starts it lazily from `getContainer()`, never before the background task is
+  defined, and stops it (`Sentry.close()`) on opt-out.
+- Every event goes through `scrubEvent` and every breadcrumb through `scrubBreadcrumb` from
+  `@cityturfer/core/error-scrub` (shared with the API): no request, user, extra or server name;
+  allow-listed contexts only; URLs without query, router and tile URLs reduced to their host;
+  coordinate-looking numbers redacted; `area: 'health-sync'` reports keep only the error name and
+  code; console, fetch, XHR and HTTP breadcrumbs dropped.
+- Every `task-error` above is forwarded (its code; its message only through the scrubber); an
+  unexpected ingest failure in the batch handler is reported with its stack.
+- Native crash reports are sent by the native SDKs and never pass through JS `beforeSend`: they
+  carry native stacks, allow-listed device facts, the synced (already scrubbed) JS breadcrumbs and,
+  on iOS, the SDK's random installation id. Native network breadcrumbs are off
+  (`enableNetworkBreadcrumbs: false`).
+
+Build environment (EAS environment variables, never in git): `EXPO_PUBLIC_SENTRY_DSN` (the DSN; not
+secret, but kept out of the repo so forks report nothing), `SENTRY_AUTH_TOKEN` (secret, source maps
+and dSYM upload), `SENTRY_ORG` and `SENTRY_PROJECT` (the config plugin in `app.json` sets only the
+EU `url`). `eas.json` sets `SENTRY_ALLOW_FAILURE=true` so a build without the token still succeeds
+(no symbols uploaded).
 
 ## 2. Console output
 
