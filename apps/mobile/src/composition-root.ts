@@ -35,6 +35,7 @@ import { turfOverlayPreference } from '@/contexts/territory/infrastructure/turf-
 import { deleteExpoDatabase, openExpoDatabase } from '@/platform/expo-database';
 import { runWhenForeground } from '@/platform/foreground';
 import { migrate } from '@/platform/migrations';
+import { OsmRouterGate } from '@/platform/osm-router-gate';
 import { ProfileDeletions } from '@/platform/profile-deletions';
 
 import { type Container, wire } from './wiring';
@@ -168,12 +169,15 @@ async function isRecording(): Promise<boolean> {
 
 // --- Per-user container ----------------------------------------------------------
 
+/** One gate for the whole process in front of the shared OSM router (gap estimates + street snapping). */
+const osmRouterGate = new OsmRouterGate();
+
 const adapters = {
   tracker,
   permissions: new ExpoPermissionGateway(),
   notifier: liveSessionStore,
   ids: { next: () => Crypto.randomUUID() },
-  router: new OsmRouteEstimator({ appVersion: Constants.expoConfig?.version ?? 'dev' }),
+  router: new OsmRouteEstimator({ appVersion: Constants.expoConfig?.version ?? 'dev', gate: osmRouterGate }),
   gapRouting: {
     setting: new SecureStoreGapEstimationSetting(),
     // Street estimates only while the user has the app open: never on a headless launch.
@@ -182,7 +186,7 @@ const adapters = {
   },
   routePlanning: {
     // Called only after the Turfer's consent, from the planner (foreground).
-    router: new OsrmStreetRouter({ appVersion: Constants.expoConfig?.version ?? 'dev' }),
+    router: new OsrmStreetRouter({ appVersion: Constants.expoConfig?.version ?? 'dev', gate: osmRouterGate }),
     consent: (userId: string) => new SecureStoreRoutingConsent(userId),
   },
   health: new HealthKitHealthStore(),

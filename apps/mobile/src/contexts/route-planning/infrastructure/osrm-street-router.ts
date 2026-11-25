@@ -5,6 +5,7 @@ import {
   OSM_ROUTING_TIMEOUT_MS,
   osmRoutingHeaders,
 } from '@/constants/routing';
+import { OsmRouterGate, retryAfterMs } from '@/platform/osm-router-gate';
 import type { ActivityType, GeoPoint } from '@/shared-kernel';
 
 import type { StreetRouter, StreetRouting } from '../application/ports';
@@ -22,14 +23,18 @@ export interface OsrmStreetRouterOptions {
   fetch?: typeof fetch;
   timeoutMs?: number;
   now?: () => number;
+  /** The app-wide gate to the OSM router, shared with Activity Log's gap estimates. */
+  gate?: OsmRouterGate;
+  /** Only for the gate made when none is given (tests). */
   wait?: (ms: number) => Promise<void>;
 }
 
 /**
  * Snaps a Planned Route's Waypoints to streets with the FOSSGIS OSRM server (constants/routing.ts),
  * one request through all the Waypoints it is given. Only the Waypoints leave the phone, rounded to 4
- * decimals; the app identifies itself as the usage policy asks; paced by a StreetRouterBudget. Never
- * throws: 400 or no route → 'no-route'; 429, offline, timeout, budget or a bad answer → 'unavailable'.
+ * decimals; the app identifies itself as the usage policy asks; paced by the app-wide OsmRouterGate
+ * and capped by a StreetRouterBudget. Never throws: 400 or no route → 'no-route'; 429, offline,
+ * timeout, budget (or the gate paused) or a bad answer → 'unavailable'.
  * The application calls it only with the Turfer's consent.
  */
 export class OsrmStreetRouter implements StreetRouter {
@@ -38,16 +43,15 @@ export class OsrmStreetRouter implements StreetRouter {
   private readonly now: () => number;
   private readonly headers: Record<string, string>;
   private readonly budget: StreetRouterBudget;
+  private readonly gate: OsmRouterGate;
 
   constructor(o: OsrmStreetRouterOptions) {
     this.fetch = o.fetch ?? ((input, init) => fetch(input, init));
     this.timeoutMs = o.timeoutMs ?? OSM_ROUTING_TIMEOUT_MS;
     this.now = o.now ?? Date.now;
     this.headers = osmRoutingHeaders(o.appVersion);
-    this.budget = new StreetRouterBudget(
-      this.now,
-      o.wait ?? ((ms) => new Promise<void>((resolve) => setTimeout(resolve, ms)))
-    );
+    this.budget = new StreetRouterBudget(this.now);
+    this.gate = o.gate ?? new OsmRouterGate(this.now, o.wait);
   }
 
   /** Steps carry each leg's geometry (the overview would be one line for the whole route). */
@@ -60,9 +64,10 @@ export class OsrmStreetRouter implements StreetRouter {
     if (waypoints.length < 2) {
       return { kind: 'no-route' };
     }
-    if (!(await this.budget.take())) {
-      return { kind: 'unavailable', reason: 'budget' };
+    if (!this.budget.hasRoom() || !(await this.gate.acquire()).go) {
+      return { kind: 'unavailable', reason: 'budget' }; // window spent, or the router paused for the app
     }
+    this.budget.record();
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), this.timeoutMs);
     try {
@@ -76,14 +81,14 @@ export class OsrmStreetRouter implements StreetRouter {
         if (ctrl.signal.aborted) {
           return { kind: 'unavailable', reason: 'timeout' };
         }
-        this.budget.offline();
+        this.gate.offline();
         return { kind: 'unavailable', reason: 'offline' };
       }
       if (res.status === 400) {
         return { kind: 'no-route' }; // e.g. a Waypoint no street reaches
       }
       if (res.status === 429) {
-        this.budget.rateLimited(this.retryAfterMs(res.headers.get('Retry-After')));
+        this.gate.rateLimited(retryAfterMs(res.headers.get('Retry-After'), this.now()));
         return { kind: 'unavailable', reason: 'rate-limited' };
       }
       if (!res.ok) {
@@ -103,19 +108,6 @@ export class OsrmStreetRouter implements StreetRouter {
     } finally {
       clearTimeout(timer);
     }
-  }
-
-  /** Retry-After is either delay-seconds or an HTTP date. */
-  private retryAfterMs(header: string | null): number | null {
-    if (!header) {
-      return null;
-    }
-    const s = Number(header);
-    if (Number.isFinite(s)) {
-      return Math.max(0, s * 1000);
-    }
-    const at = Date.parse(header);
-    return Number.isNaN(at) ? null : Math.max(0, at - this.now());
   }
 }
 

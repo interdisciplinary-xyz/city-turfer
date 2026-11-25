@@ -17,7 +17,10 @@ function estimator(respond: (url: string, init?: RequestInit) => Promise<Respons
     calls.push({ url, init });
     return respond(url, init);
   }) as typeof fetch;
-  return { calls, r: new OsmRouteEstimator({ appVersion: '0.2.0', fetch: fetchStub, timeoutMs, now: () => 0 }) };
+  return {
+    calls,
+    r: new OsmRouteEstimator({ appVersion: '0.2.0', fetch: fetchStub, timeoutMs, now: () => 0, wait: async () => {} }),
+  };
 }
 
 const OK = {

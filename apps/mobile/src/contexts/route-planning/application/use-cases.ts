@@ -67,28 +67,58 @@ export class PlannedRouteEditor {
 
   /**
    * Asks the router for the given legs, one request per run of consecutive legs, never without the
-   * Turfer's consent. What it can't route stays straight. Returns whether a leg changed.
+   * Turfer's consent. A run the router can't route as a whole (one Waypoint no street reaches) is asked
+   * again leg by leg, so only the legs that truly have no way stay straight. Stops at 'unavailable'.
+   * Returns whether a leg changed.
    */
   private async snap(route: PlannedRoute, legs: readonly number[]): Promise<boolean> {
     if ((await this.d.consent.state().catch(() => 'unasked')) !== 'granted') {
       return false;
     }
     let changed = false;
-    for (const [first, last] of runsOf(legs)) {
-      const waypoints = route.waypoints.slice(first, last + 2);
-      const result = await this.d.router.route(waypoints, route.type).catch(() => null);
-      if (result?.kind === 'unavailable') {
-        break; // offline, rate limited or out of budget: the next run would fare no better
+    runs: for (const [first, last] of runsOf(legs)) {
+      const whole = await this.snapRun(route, first, last);
+      changed = whole.changed || changed;
+      if (whole.outcome === 'stop') {
+        break;
       }
-      if (result?.kind !== 'routed' || result.legs.length !== waypoints.length - 1) {
+      if (whole.outcome !== 'no-route' || first === last) {
         continue;
       }
-      result.legs.forEach((path, i) => {
-        const [from, to] = route.endsOf(first + i);
-        changed = route.snapLeg(first + i, from, to, path, this.d.clock.now()) || changed;
-      });
+      for (let leg = first; leg <= last; leg++) {
+        const single = await this.snapRun(route, leg, leg);
+        changed = single.changed || changed;
+        if (single.outcome === 'stop') {
+          break runs;
+        }
+      }
     }
     return changed;
+  }
+
+  /** One request for legs first..last; 'stop' when the router is unavailable (offline, rate limited, budget). */
+  private async snapRun(
+    route: PlannedRoute,
+    first: number,
+    last: number
+  ): Promise<{ outcome: 'done' | 'no-route' | 'stop'; changed: boolean }> {
+    const waypoints = route.waypoints.slice(first, last + 2);
+    const result = await this.d.router.route(waypoints, route.type).catch(() => null);
+    if (result?.kind === 'unavailable') {
+      return { outcome: 'stop', changed: false }; // the next request would fare no better
+    }
+    if (result?.kind === 'no-route') {
+      return { outcome: 'no-route', changed: false };
+    }
+    if (result?.kind !== 'routed' || result.legs.length !== waypoints.length - 1) {
+      return { outcome: 'done', changed: false };
+    }
+    let changed = false;
+    result.legs.forEach((path, i) => {
+      const [from, to] = route.endsOf(first + i);
+      changed = route.snapLeg(first + i, from, to, path, this.d.clock.now()) || changed;
+    });
+    return { outcome: 'done', changed };
   }
 }
 

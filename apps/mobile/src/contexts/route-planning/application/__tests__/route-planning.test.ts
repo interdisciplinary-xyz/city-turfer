@@ -140,6 +140,58 @@ describe('Route Planning use cases', () => {
     expect(t.calls).toHaveLength(1);
   });
 
+  /** Three straight legs A→B→C→D, then consent: the snap asks for all three in one request. */
+  async function threeStraightLegs(answer: (w: readonly GeoPoint[]) => StreetRouting) {
+    const t = setup({ consent: 'unasked', answer });
+    for (const p of [A, B, C, D]) {
+      await t.api.addWaypoint.execute(p);
+    }
+    await t.api.setRoutingConsent.execute(true);
+    return t;
+  }
+  const routed = (w: readonly GeoPoint[]): StreetRouting => ({
+    kind: 'routed',
+    legs: w.slice(1).map((to, i) => via(w[i], to)),
+  });
+  const same = (p: GeoPoint, q: GeoPoint) => p.lat === q.lat && p.lon === q.lon;
+
+  it('a run with no route as a whole is asked again leg by leg: only the unroutable leg stays straight', async () => {
+    // B→C has no way (B on an isolated footway, say), so the 3-leg request is a NoRoute too.
+    const t = await threeStraightLegs((w) =>
+      w.length > 2 || (same(w[0], B) && same(w[1], C)) ? { kind: 'no-route' } : routed(w)
+    );
+    const v = await t.api.snap.execute();
+    expect(t.calls.map((c) => c.waypoints)).toEqual([
+      [A, B, C, D],
+      [A, B],
+      [B, C],
+      [C, D],
+    ]);
+    expect(v.legs.map((l) => l.snapped)).toEqual([true, false, true]);
+    expect(v.legs[0].coordinates).toEqual(via(A, B).map((p) => [p.lon, p.lat]));
+    expect(v.legs[2].coordinates).toEqual(via(C, D).map((p) => [p.lon, p.lat]));
+    expect(t.stored()?.legs.map((l) => l.snapped)).toEqual([true, false, true]);
+  });
+
+  it('leg-by-leg retries stop the whole snap at the first unavailable answer', async () => {
+    const t = await threeStraightLegs((w) =>
+      w.length > 2 ? { kind: 'no-route' } : { kind: 'unavailable', reason: 'rate-limited' }
+    );
+    const v = await t.api.snap.execute();
+    expect(t.calls.map((c) => c.waypoints)).toEqual([
+      [A, B, C, D],
+      [A, B],
+    ]);
+    expect(v.legs.map((l) => l.snapped)).toEqual([false, false, false]);
+  });
+
+  it('a single leg with no route is not asked again', async () => {
+    const t = setup({ answer: () => ({ kind: 'no-route' }) });
+    await t.api.addWaypoint.execute(A);
+    await t.api.addWaypoint.execute(B);
+    expect(t.calls).toHaveLength(1);
+  });
+
   it('keeps a leg straight when the router has no route or is unavailable, and saves the tap anyway', async () => {
     const answers: StreetRouting[] = [
       { kind: 'no-route' },

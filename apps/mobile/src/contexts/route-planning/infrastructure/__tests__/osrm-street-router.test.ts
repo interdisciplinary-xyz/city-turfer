@@ -1,7 +1,8 @@
 import { OSM_ROUTING_PROJECT_URL } from '@/constants/routing';
+import { OSM_ROUTER_OFFLINE_PAUSE_MS as OFFLINE_PAUSE_MS } from '@/platform/osm-router-gate';
 
 import { OsrmStreetRouter } from '../osrm-street-router';
-import { BUDGET_WINDOW_MS, MAX_REQUESTS_PER_WINDOW, OFFLINE_PAUSE_MS } from '../street-router-budget';
+import { BUDGET_WINDOW_MS, MAX_REQUESTS_PER_WINDOW } from '../street-router-budget';
 
 // Synthetic Waypoints in Gdańsk with more decimals than may leave the phone.
 const W = [
