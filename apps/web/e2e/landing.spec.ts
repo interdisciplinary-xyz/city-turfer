@@ -126,8 +126,14 @@ for (const [path, from, testing, banned] of [
 for (const path of ['/en', '/pl']) {
   test(`landing ${path}: no claim the app can't back`, async ({ page }) => {
     await page.goto(path);
-    const text = await page.locator('main').innerText();
-    expect(text).not.toMatch(/no streaks?|bez serii|no account needed|screen off|wygaszon/i);
+    // textContent, not innerText: the FAQ answers sit in closed <details> and innerText skips them.
+    // The "Not yet" column may name the missing feature ("Using the app without an account"): that is the honest side.
+    const text = await page.locator('main').evaluate((main) => {
+      const clone = main.cloneNode(true) as HTMLElement;
+      clone.querySelectorAll('.home-status-notYet').forEach((node) => node.remove());
+      return clone.textContent ?? '';
+    });
+    expect(text).not.toMatch(/no streaks?|bez serii|no account(?! is)|bez konta(?! jest)|screen off|wygaszon/i);
   });
 }
 
@@ -297,8 +303,8 @@ for (const width of [768, 1440]) {
 // Scroll-in (reveal-motion): nothing may stay hidden. With reduced motion everything shows at once; with the
 // scripts blocked, the boot script's fallback shows everything after 2.5 s; with motion on, scrolling
 // through the page reveals every element.
-const allRevealed = (page: Page) =>
-  page.locator('[data-reveal]').evaluateAll(
+const allRevealed = (page: Page, selector = '[data-reveal]') =>
+  page.locator(selector).evaluateAll(
     (nodes) =>
       nodes.filter((node) => {
         const style = getComputedStyle(node);
@@ -311,7 +317,9 @@ for (const path of ['/en', '/pl']) {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(path);
     expect(await page.locator('[data-reveal]').count()).toBeGreaterThan(10);
-    expect(await allRevealed(page)).toBe(0);
+    expect(await page.locator('[data-anim]').count()).toBeGreaterThan(0);
+    // The hero phones and map (data-anim) too: reduced motion shows them at once.
+    expect(await allRevealed(page, '[data-reveal], [data-anim]')).toBe(0);
   });
 
   test(`landing ${path}: every reveal element is visible when the scripts never run`, async ({ page }) => {

@@ -140,9 +140,10 @@ landing page, the signed-in portal against an in-memory API).
 `NEXT_PUBLIC_CONTACT_EMAIL`: the landing tests need the waitlist form in Join, which a build without
 those variables leaves out (`site-server.mjs` refuses such an export). The form is never submitted.
 `test:e2e:run` runs the suite against the `out/` that exists. `test:e2e:closed` builds without the
-waitlist variables and runs `landing-closed.spec.ts` (seven sections, the closed line, no form).
-Playwright needs free ports (`E2E_SITE_PORT`, `E2E_API_PORT`) when the defaults are taken. CI
-(`ci:quality`) does not run this suite.
+waitlist variables and runs `landing-closed.spec.ts` (seven sections, the closed line, no form);
+`test:e2e` chains it after the main run, so one command covers both builds (the closed build is what
+production gets until the Brevo values are set). Playwright needs free ports (`E2E_SITE_PORT`,
+`E2E_API_PORT`) when the defaults are taken. CI (`ci:quality`) does not run this suite.
 
 **Landing spec:** #238 brought the homepage sections back and updated `landing.spec.ts` and the new
 `landing-closed.spec.ts` to match; the suite last passed on `2959558` (52/52, 2026-11-12), and has
