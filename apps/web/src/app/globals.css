@@ -31,7 +31,7 @@ main:focus {
   outline: none;
 }
 
-/* In-page links (header "Join the waitlist" → #waitlist) glide instead of jumping; off for reduced motion. */
+/* In-page links (header and hero links → #join, #how and the other sections) glide instead of jumping; off for reduced motion. */
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
@@ -696,6 +696,7 @@ h1 {
 .site-footer-brand {
   display: grid;
   gap: var(--space-sm);
+  align-content: start;
   justify-items: start;
 }
 
@@ -716,6 +717,7 @@ h1 {
 .site-footer-contact {
   display: grid;
   gap: var(--space-sm);
+  align-content: start;
 }
 
 .site-footer .site-footer-legal {

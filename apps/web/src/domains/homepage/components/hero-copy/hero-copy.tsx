@@ -24,11 +24,10 @@ export function HeroCopy({ waitlist }: { waitlist: boolean }) {
         {t('lede')}
       </p>
       <div className='hero-actions' data-enter='copy'>
-        {waitlist ? (
-          <a className='btn btn-primary' href={`#${SECTION_ANCHORS.waitlist}`}>
-            {t('join')}
-          </a>
-        ) : null}
+        {/* Both buttons land on sections that always exist; the label never promises a form that isn't there. */}
+        <a className='btn btn-primary' href={`#${SECTION_ANCHORS.join}`}>
+          {waitlist ? t('join') : t('getIt')}
+        </a>
         <a className='btn btn-secondary' href={`#${SECTION_ANCHORS.how}`}>
           {t('seeGlow')}
         </a>

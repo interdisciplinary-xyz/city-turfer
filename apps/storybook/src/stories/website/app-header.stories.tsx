@@ -13,14 +13,14 @@ const withScroll: Decorator = (Story) => (
 const meta = {
   title: 'Website/AppHeader',
   component: AppHeader,
-  args: { locale: 'en', nav: true, waitlistSection: true },
+  args: { locale: 'en', nav: true },
   argTypes: { locale: { control: 'inline-radio', options: ['en', 'pl'] } },
   decorators: [withScroll],
   parameters: {
     docs: {
       description: {
         component:
-          'Sticky top bar across the full window width (48 px side padding from 600 px): the logo on the left; on the right the section links (the landing page only, from 1024 px) and the language switcher. Solid from the start, on every page. The portal (sign in, create account) is reached by its own URLs, not from here.',
+          'Sticky top bar across the full window width (48 px side padding from 600 px): the logo on the left; on the right the six section links (the landing page only, from 1024 px) and the language switcher. Solid from the start, on every page. The portal (sign in, create account) is reached by its own URLs, not from here.',
       },
     },
   },

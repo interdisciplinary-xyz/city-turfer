@@ -45,9 +45,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   — evidence log, assumption map, opportunity tree and the interview queue; every product claim
   cites an id from here
 - 🚧 [`product/feature-scope.md`](product/feature-scope.md): Product feature scope — the one job for
-  the first Turfers, every feature by area with its status (Built, v0.16.0, Now, Next, Later, Out)
-  and the assumption behind it, the next release's scope line, non-goals and the founder decisions
-  it needs
+  the first Turfers, every feature by area with its status (Built on v0.16.0, In v0.17.0, Now, Next,
+  Later, Out), the evidence behind it and the assumption it rests on; the v0.17.0 "first strangers"
+  scope with progress on the scope head, non-goals and the founder decisions it needs
 - 🚧 [`product/icp.md`](product/icp.md): Ideal customer profile (hypothesis) — the primary Turfer to
   win first, two segments to test, who it isn't for yet, fit signals and the assumptions that would
   prove or kill it
@@ -315,6 +315,11 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   of the landing page (bugs and one heading system, then fewer sections and one button/card grammar,
   then polish), approved by the founder on 2026-11-01; built in PR 213, the founder follow-ups in PR
   215 (v0.15.0)
+- 🚧 [`plans/homepage-value-2026-11-19.md`](plans/homepage-value-2026-11-19.md): Homepage that
+  explains the value in detail — value promise, a value map (value → feature → status → evidence →
+  honest phrasing), honesty rules, the page section by section with anchors and calls to action,
+  code changes, acceptance criteria and the copy deck for brand-designer. Built from the 2026-11-19
+  feature scope; supersedes the header-and-hero-only page (#229)
 - ✅ [`plans/share-photo-2026-11-11.md`](plans/share-photo-2026-11-11.md): Share photo after an
   activity: the Turfer takes or picks a photo, the app lays the activity's stats over it
   (Garmin-style story card) and hands the image to the system share sheet. No map, no coordinates.

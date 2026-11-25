@@ -6,7 +6,7 @@ import type { SectionHeadProps, SectionProps } from './home-sections.constants';
 export function Section({ name, className, band, wrapClassName, children }: SectionProps) {
   return (
     <section
-      id={name === 'cta' ? undefined : name}
+      id={name}
       aria-labelledby={`${name}-title`}
       className={['home-section', band ? 'home-section-band' : '', className ?? ''].filter(Boolean).join(' ')}
     >

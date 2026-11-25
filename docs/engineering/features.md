@@ -249,12 +249,12 @@ renders Profile.)
   backed-up activities with all-time totals, a type filter and a list by month; one activity's
   stats, splits and route as an inline SVG (gap estimates dashed), no basemap or tile requests.
   Read-only. Plan: `docs/plans/web-portal-history-2026-10-23.md`.
-- **Website** (`apps/web`, static export, en and pl): since v0.16.0 (#229, founder call) the
-  homepage is the header and a full-screen hero only (`apps/web/src/app/[locale]/page.tsx`): the
-  waitlist strip, the content sections, the closing call to action, the footer and the scroll-in are
-  off the page, their components kept. The hero's buttons still point at the removed `#waitlist` and
-  `#how` (open, `docs/sessions/v0.17.0.md`). The hero headline shows at first paint (#226), black
-  primary buttons, the OpenStreetMap credit on the hero map. Components in
+- **Website** (`apps/web`, static export, en and pl): the homepage explains the value (#238,
+  `apps/web/src/app/[locale]/page.tsx`): hero, How it works, Highlights, Who it's for, Local first,
+  FAQ and Join, with header and footer links to every section and the scroll-in. The waitlist form
+  sits in Join when its env vars are set, otherwise a closed line; the hero's buttons go to `#join`
+  and `#how`. The hero headline shows at first paint (#226), black primary buttons, the
+  OpenStreetMap credit on the hero map and in the footer. Components in
   `apps/web/src/domains/{ui,waitlist,homepage,layout}`.
 - **Not built yet:** the Turf Map on the web (cells, tiles), the phone pulling changes from the
   server, a web delete removing the activity everywhere, the staff admin portal's data views
