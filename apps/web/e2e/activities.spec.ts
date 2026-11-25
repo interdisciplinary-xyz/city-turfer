@@ -165,7 +165,7 @@ test('history: totals, list by month, show more, filter, detail with splits and 
   const stats = page.locator('.portal-stats');
   await expect(stats).toContainText(`Distance≈ about ${shown(formatDistance(withGap.distanceM, 'en'))}`);
   await expect(stats).toContainText(`Moving time${formatDuration(withGap.movingS)}`);
-  await expect(stats).toContainText(`Elapsed time${formatDuration(withGap.elapsedS)}`);
+  await expect(stats).not.toContainText('Elapsed');
   await expect(page.getByText('Includes 180 m estimated along streets where GPS was lost')).toBeVisible();
   const route = page.getByRole('img', { name: /Dashed lines join the recorded parts/ });
   await expect(route).toBeVisible();

@@ -105,7 +105,8 @@ opens on Dashboard after sign-in.
 - The "⬡ Turf" chip (`record-turf`, top right; Recenter sits under it) shows or hides the Turfer's
   turf under the live track, before and during a recording. On by default and remembered per user
   (`territory/ui/hooks.ts` `useTurfOverlay`, composed in by the screen).
-- Live stats: time, distance, current and average pace (walk, run) or speed (ride).
+- Live stats: moving time (stops when you stop or pause; `recording/domain/live-moving-time.ts`),
+  distance, current and average pace (walk, run) or speed (ride).
 - Pause / resume; auto-pause from the `TrackingProfile`; **hold to finish**.
 - A too-short recording can't be saved: "Too short to save" offers keep recording or discard.
 - Background recording with the screen locked (iOS: native background session + expo-location),
@@ -131,11 +132,11 @@ renders Profile.)
   Stats.
 - **Activity detail** (`apps/mobile/src/app/activity/[id].tsx` →
   `activity-log/ui/activity-detail-view.tsx`): route map with gap estimates dashed, distance (marked
-  "≈" when it includes estimated gaps), moving and elapsed time, average pace or speed, elevation
-  "≈", km splits, turf gained (`territory/ui/turf-gained-card.tsx`), rename (`rename-activity`; an
-  empty name is refused; `activity-log/ui/rename-activity-dialog.tsx`), delete with confirmation
-  (releases its turf). Shows "Saving your activity…" until the outbox has delivered
-  `SessionFinished`. Imported workouts say "From Apple Health". A **Share photo** button
+  "≈" when it includes estimated gaps), moving time (no elapsed time), average pace or speed,
+  elevation "≈", km splits, turf gained (`territory/ui/turf-gained-card.tsx`), rename
+  (`rename-activity`; an empty name is refused; `activity-log/ui/rename-activity-dialog.tsx`),
+  delete with confirmation (releases its turf). Shows "Saving your activity…" until the outbox has
+  delivered `SessionFinished`. Imported workouts say "From Apple Health". A **Share photo** button
   (`share-photo/ui/share-photo-button.tsx`, `share-photo`) and, when opened straight from Finish, a
   "Share a photo?" card (`share-prompt-card.tsx`, `share-prompt`: camera, library, Not now, Don't
   ask again; never from History).
