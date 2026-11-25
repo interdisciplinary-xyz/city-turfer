@@ -4,7 +4,7 @@
 import { REDACTED_PAIR } from '@cityturfer/core/error-scrub';
 
 import { ReportedFailure } from '@/platform/error-reporter';
-import { startSentryReporter, stopSentry } from '@/platform/sentry-error-reporter';
+import { isEuDsn, startSentryReporter, stopSentry } from '@/platform/sentry-error-reporter';
 
 const mockSdk = {
   init: jest.fn(),
@@ -66,4 +66,19 @@ it('never throws: a failing init means no reporter, a failing capture or close i
   expect(() => reporter.report(new Error('x'), { area: 'app' })).not.toThrow();
   mockSdk.close.mockRejectedValueOnce(new Error('closed'));
   await expect(stopSentry()).resolves.toBeUndefined();
+});
+
+describe('isEuDsn', () => {
+  it('accepts only DSNs of the EU ingest region', () => {
+    expect(isEuDsn('https://key@o123.ingest.de.sentry.io/456')).toBe(true);
+    expect(isEuDsn(' https://key@o1.ingest.de.sentry.io/2 ')).toBe(true);
+    expect(isEuDsn('https://key@o123.ingest.us.sentry.io/456')).toBe(false);
+    expect(isEuDsn('https://key@o123.ingest.sentry.io/456')).toBe(false);
+    expect(isEuDsn('https://key@o1.ingest.de.sentry.io.evil.com/2')).toBe(false);
+    expect(isEuDsn('not a dsn')).toBe(false);
+  });
+
+  it('never starts reporting with a DSN outside the EU', () => {
+    expect(startSentryReporter({ ...config, dsn: 'https://key@o0.ingest.us.sentry.io/0' })).toBeNull();
+  });
 });

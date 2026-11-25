@@ -23,6 +23,15 @@ export interface SentryReporterConfig {
 
 let sdk: SentrySdk | null = null;
 
+/** Sentry's EU data region (`o<org>.ingest.de.sentry.io`), as the API and the portal require. */
+const EU_INGEST_HOST = /^o\d+\.ingest\.de\.sentry\.io$/;
+
+/** True for a DSN that parses and points at Sentry's EU region. */
+export function isEuDsn(dsn: string): boolean {
+  const match = /^https:\/\/[^@/]+@([^/:]+)\//.exec(dsn.trim());
+  return match !== null && EU_INGEST_HOST.test(match[1]!);
+}
+
 function load(): SentrySdk {
   // Lazy: the background task imports the composition root at launch; Sentry loads only when used.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -32,6 +41,10 @@ function load(): SentrySdk {
 
 /** Starts Sentry and returns a reporter on it; null when it could not start (reporting stays off). */
 export function startSentryReporter(config: SentryReporterConfig): ErrorReporter | null {
+  if (!isEuDsn(config.dsn)) {
+    // Personal-data hosting stays in the EU: a DSN of any other region never starts reporting.
+    return null;
+  }
   try {
     const Sentry = load();
     // enableNetworkBreadcrumbs is read by the native iOS SDK (options pass through as-is): its
