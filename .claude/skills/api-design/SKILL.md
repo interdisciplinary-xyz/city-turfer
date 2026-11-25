@@ -195,8 +195,11 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   or without the others: `checkProductionEnv` in `apps/api/src/wiring.ts`). Production also needs
   `DATABASE_URL` and `CRON_SECRET` (daily Vercel Cron `GET /internal/cron/retention`, outside `/v1`
   and the spec, purges expired exports, codes, sessions and rate-limit rows). Unexpected errors log
-  one sanitised `request.error` line (`describeError`, never the message). Runbook:
-  `docs/operations/api-deploy.md`.
+  one sanitised `request.error` line (`describeError`, never the message) and, in production with an
+  EU `SENTRY_DSN`, send one scrubbed Sentry report (`deps.reportError`, `apps/api/src/sentry.ts`:
+  class, frames, cause chain, request id, method, route pattern; never the message, path, query,
+  body, cookies or headers). Only that `onError` branch reports: AppError, DomainError, 400, 404 and
+  413 are answers, not errors; no per-route try/catch. Runbook: `docs/operations/api-deploy.md`.
 - **Server turf rollout** (`docs/operations/api-deploy.md`, "Server turf"): migrate `0005_turf` and
   `0006_turf_claim_track_hash` **before** the merge that deploys 0.6.0 (it reads
   `users.turf_version`: else `/v1/me`, uploads and turf 500), deploy, then the founder runs
