@@ -222,22 +222,23 @@ not run in a flow.
 
 ### Website (`apps/web`)
 
-| Feature                                                                                                                                                                                                          | Status                                                 | User value                   | Why (assumption) |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ---------------------------- | ---------------- |
-| Homepage trimmed to header and hero, no footer (#229); faster first paint (#226) and accessibility fixes (#223)                                                                                                  | Built (v0.16.0)                                        | —                            | founder call     |
-| Hero buttons "See your turf glow" (always shown) and "Join the waitlist" (only when the waitlist env vars are set) link to removed sections (`apps/web/src/domains/homepage/components/hero-copy/hero-copy.tsx`) | **Bug**, live; #227 must-fix (decision 6)              | —                            | —                |
-| Home sections, FAQ, footer and header section links                                                                                                                                                              | Built, hidden                                          | —                            | —                |
-| OpenStreetMap credit for the hero street map (it lived in the hidden footer)                                                                                                                                     | **Check** (licence duty)                               | —                            | —                |
-| Waitlist with Brevo double opt-in (`apps/web/src/domains/waitlist/waitlist-config.ts`)                                                                                                                           | Built, hidden (form not mounted)                       | Our only recruiting channel  | A6 needs it      |
-| English and Polish site; sitemap for `/en` and `/pl`; share image                                                                                                                                                | Built                                                  | —                            | —                |
-| 404 page                                                                                                                                                                                                         | Not built: Next's default, unbranded, English on `/pl` | —                            | —                |
-| Privacy policy and terms, PL and EN                                                                                                                                                                              | **Now**; not started (no route)                        | Trust before giving location | A5               |
-| Headline variants (privacy vs glow)                                                                                                                                                                              | Next                                                   | Learn which promise pulls    | A5               |
-| Disclosed fake doors: "Back up your turf", "Founding Turfer"                                                                                                                                                     | Later                                                  | Test demand before building  | A10, A7          |
+| Feature                                                                                                                                                                                                       | Status                                                                             | User value                   | Why (assumption) |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------- | ---------------- |
+| Homepage that explains the value: hero, How it works, Highlights, Who it’s for, Local first, FAQ, Join; header and footer link every section (#238); faster first paint (#226) and accessibility fixes (#223) | Built (v0.17.0)                                                                    | —                            | founder call     |
+| Hero buttons go to `#join` ("Join the waitlist", or "How to get it" without the waitlist) and `#how` (`apps/web/src/domains/homepage/components/hero-copy/hero-copy.tsx`)                                     | Built (v0.17.0); fixes #227 must-fix (decision 6)                                  | —                            | —                |
+| Home sections, FAQ, footer and header section links                                                                                                                                                           | Built, shown                                                                       | —                            | —                |
+| OpenStreetMap credit for the hero street map (map corner and footer)                                                                                                                                          | Built                                                                              | —                            | —                |
+| Waitlist with Brevo double opt-in (`apps/web/src/domains/waitlist/waitlist-config.ts`)                                                                                                                        | Built; form in `#join` when the waitlist env vars are set, a closed line otherwise | Our only recruiting channel  | A6 needs it      |
+| English and Polish site; sitemap for `/en` and `/pl`; share image                                                                                                                                             | Built                                                                              | —                            | —                |
+| 404 page                                                                                                                                                                                                      | Not built: Next's default, unbranded, English on `/pl`                             | —                            | —                |
+| Privacy policy and terms, PL and EN                                                                                                                                                                           | **Now**; not started (no route)                                                    | Trust before giving location | A5               |
+| Headline variants (privacy vs glow)                                                                                                                                                                           | Next                                                                               | Learn which promise pulls    | A5               |
+| Disclosed fake doors: "Back up your turf", "Founding Turfer"                                                                                                                                                  | Later                                                                              | Test demand before building  | A10, A7          |
 
-Evidence: read in code by `web-engineer` on 2026-11-19, not rendered in a browser. Whether Vercel
-sets the waitlist env vars is not checked (founder). The Playwright landing spec still expects the
-old homepage (`docs/sessions/v0.17.0.md`).
+Evidence: #238 code review on 2026-11-25 (web tsc, lint, depcruise, unit tests, `audit:i18n`); the
+landing specs (`test:e2e`, and `test:e2e:closed` without the waitlist) match the new page but were
+not run in that review, and it was not rendered in a browser. Whether Vercel sets the waitlist env
+vars is not checked (founder).
 
 ### Web portal (`/[locale]/account`)
 
@@ -300,17 +301,17 @@ tester):
 | Hide the mock `admin@` / `demo@` profiles in release builds | Not started       | `apps/mobile/src/composition-root.ts` has no build check; `eas.json` sets `EXPO_PUBLIC_APP_ENV=production` but nothing reads it |
 | Hide developer tools in release builds                      | Not started       | `apps/mobile/src/app/info.tsx` (decision 10)                                                                                    |
 | Retire device tokens on the API                             | Not started       | `apps/api/src/wiring.ts`                                                                                                        |
-| OpenStreetMap credit on the homepage                        | Not checked       | Hidden footer held it (web report)                                                                                              |
+| OpenStreetMap credit on the homepage                        | Done              | Map corner and footer (#238)                                                                                                    |
 | #227 must-fix items                                         | Open              | `docs/sessions/v0.17.0.md` "Carried over"; decision 4                                                                           |
 
 So far 1 of 8 outcomes is built (Polish iOS prompts) and 3 are partly done; the core of the release,
 the no-account start, has not started.
 
-**Carried over from the v0.16.0 global review (#227), still open:** (1) hero buttons do nothing; (2)
-five Storybook stories crash; (3) app content scrolls under the status bar on Daily goal and the
-Dashboard, and the wordmark sits over the clock on the code sign-in step; (4) Android does not load
-the brand fonts (dev build); (5) a possible Android freeze (ANR) during a recording replay on an
-overloaded emulator. Fix in v0.17.0 or accept: decision 4.
+**Carried over from the v0.16.0 global review (#227), still open:** (1) hero buttons do nothing
+(fixed by #238); (2) five Storybook stories crash; (3) app content scrolls under the status bar on
+Daily goal and the Dashboard, and the wordmark sits over the clock on the code sign-in step; (4)
+Android does not load the brand fonts (dev build); (5) a possible Android freeze (ANR) during a
+recording replay on an overloaded emulator. Fix in v0.17.0 or accept: decision 4.
 
 **What we learn (pre-register on the discovery board before the cohort starts):** the board's
 outcome (≥3 activities in weeks 2–4, unnudged); A2 by 5 hallway tests (≥4/5 find "your streets and
