@@ -47,9 +47,9 @@ Ask the founder before copying the phone's data. Then, with the iPhone connected
 
 ```bash
 xcrun devicectl list devices                  # find the iPhone's identifier
-apps/mobile/tools/device-diagnose.sh <device-udid>        # copies Documents/SQLite to ~/ct-phone, prints the timeline
+apps/mobile/tools/device-diagnose.sh <device-udid>        # copies Documents/SQLite to ~/ct-phone/<bundle id>, prints the timeline
 # Another session than the latest:
-node apps/mobile/tools/diagnose-recording.mjs ~/ct-phone/turftrack-admin.db --session <id>
+node apps/mobile/tools/diagnose-recording.mjs ~/ct-phone/com.cityturfer.app/turftrack-admin.db --session <id>
 ```
 
 One database per profile: `turftrack-<profileId>.db` (`admin`, `demo`, or the profile an account
@@ -103,8 +103,8 @@ with code `outbox.dead-letter`; single failures are only `console.warn`ed in dev
 ```bash
 # Simulator: the database lives in the app's data container
 DB="$(xcrun simctl get_app_container booted com.cityturfer.app data)/Documents/SQLite/turftrack-admin.db"
-# iPhone (ask first): apps/mobile/tools/device-diagnose.sh <udid>, then DB=~/ct-phone/turftrack-admin.db
-# (an install from v0.16.0 or older: BUNDLE=com.turftrack.poc apps/mobile/tools/device-diagnose.sh <udid>)
+# iPhone (ask first): apps/mobile/tools/device-diagnose.sh <udid>, then DB=~/ct-phone/com.cityturfer.app/turftrack-admin.db
+# (an install from v0.16.0 or older: BUNDLE=com.turftrack.poc …, then DB=~/ct-phone/com.turftrack.poc/turftrack-admin.db)
 sqlite3 "$DB" "SELECT id, type, attempts, dead_lettered_at, datetime(created_at/1000,'unixepoch','localtime')
                FROM sys_outbox WHERE processed_at IS NULL ORDER BY id;"
 sqlite3 "$DB" "SELECT datetime(at/1000,'unixepoch','localtime'), kind, data FROM sys_diagnostics
@@ -260,9 +260,12 @@ ls -t apps/mobile/e2e-results | head -1              # newest run: junit report 
 signed with a free Apple ID expire after 7 days. Per PR #217, the last recorded install is a Release
 build of `feat/goals` on top of `fix/health-sync` plus uncommitted work, installed before #217
 opened on 2026-11-10 (date, head and fingerprint not recorded): it expires 7 days after its install
-and predates Share photo's permissions (PR #233). **Since #236 the scope head is a different iOS
-app** (`com.cityturfer.app`): installing it gives a second, empty, signed-out CityTurfer and leaves
-the old app's data where it is. To get the old app back, re-sign it from tag `v0.16.0` (still
+and predates Share photo's permissions (PR #233). **Done on 2026-11-25:** the founder's history now
+lives in `com.cityturfer.app` (moved by copying the database between the two development builds,
+TestFlight plan Phase 2), and `com.turftrack.poc` was removed from the iPhone. The steps below are
+for any other device still on the old id. **Since #236 the scope head is a different iOS app**
+(`com.cityturfer.app`): installing it gives a second, empty, signed-out CityTurfer and leaves the
+old app's data where it is. To get the old app back, re-sign it from tag `v0.16.0` (still
 `com.turftrack.poc`, so iOS keeps its data container). `apps/mobile/ios/` is gitignored and
 `expo run:ios` only prebuilds when it is missing, so a plain checkout builds into whichever id the
 last prebuild left:
