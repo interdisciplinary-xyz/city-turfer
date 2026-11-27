@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
 # Copies CityTurfer's database from a connected iPhone and prints the
 # coordinate-free timeline of the latest recording (tools/diagnose-recording.mjs).
-# The copy stays on this Mac in ~/ct-phone. Usage: tools/device-diagnose.sh [device-udid]
+# The copy stays on this Mac in ~/ct-phone/<bundle id>, one folder per app, cleared before each copy
+# so another app's or an older run's files are never read. Usage: tools/device-diagnose.sh [device-udid]
 # BUNDLE picks the app: com.cityturfer.app (default) or com.turftrack.poc for installs from before
 # the TestFlight bundle id (v0.16.0 and older).
 set -euo pipefail
 DEVICE="${1:-00008120-0001591C3493C01E}"
 BUNDLE="${BUNDLE:-com.cityturfer.app}"
-DEST="$HOME/ct-phone"
+DEST="$HOME/ct-phone/$BUNDLE"
 mkdir -p "$DEST"
+rm -f "$DEST"/turftrack-*.db "$DEST"/turftrack-*.db-wal "$DEST"/turftrack-*.db-shm
 if ! out=$(xcrun devicectl device copy from --device "$DEVICE" --domain-type appDataContainer \
   --domain-identifier "$BUNDLE" --source Documents/SQLite --destination "$DEST" 2>&1); then
   echo "Copy failed for $BUNDLE on $DEVICE (wrong id, locked phone, or not a development build?" >&2

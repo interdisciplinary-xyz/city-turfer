@@ -139,9 +139,15 @@ or the no-account start once #2 ships; not the Gdańsk demo profile, which shows
 ### Phase 2 — Ring 0 (scope/v0.17.0 builds, 2–3 weeks)
 
 - [ ] Release gate (§7) on the TestFlight binary; fix blockers; new build per fix.
-- [ ] Founder moves own recordings to the new bundle id. Keep the old `com.turftrack.poc` app
-      (re-sign it from tag `v0.16.0` if its 7-day signature expired; same id, so its data stays) and
-      never delete it before the last step passes:
+- [x] Founder moves own recordings to the new bundle id. Done 2026-11-25 by a direct copy (both apps
+      were development builds, so `devicectl` can read and write their data containers): with the
+      founder's OK, both apps closed, the old app's `Documents/SQLite` was copied to the Mac,
+      checked (`PRAGMA integrity_check`, counts per table) and copied into the empty new app; after
+      the founder signed in, the new app's copy matched table by table (49 activities), and only
+      then was `com.turftrack.poc` uninstalled. Copies: `~/ct-phone/migration-2026-11-25/`. For
+      anyone else still on the old id, the cloud route below works on any build. Keep the old
+      `com.turftrack.poc` app (re-sign it from tag `v0.16.0` if its 7-day signature expired; same
+      id, so its data stays) and never delete it before the last step passes:
   1. In the old app, turn on Cloud backup **and "Include Apple Health workouts"**. Without the
      toggle, Health-imported activities (`hk-` ids) never reach the backup, and the new app can't
      import them again (it only takes workouts that end after its own connection).
@@ -150,10 +156,12 @@ or the no-account start once #2 ships; not the Gdańsk demo profile, which shows
      up" line and no error. The card shows no queue; that line is the signal. If any activity is
      refused (too long or unreadable), it can't move: keep the old app.
   3. Sign in on the new app with the same account and restore in one go (no interruption).
-  4. Compare that N with the new app's "Restored N activities." and look at the turf. The UI shows
-     no `hk-` ids (and the new app's backup card leaves them out while its Health switch is off);
-     the only way to check them is `apps/mobile/tools/device-diagnose.sh`, which copies data off the
-     phone, so only with the founder's OK.
+  4. Compare that N with the new app's "Restored N activities." and look at the turf. The two Ns
+     already cover Health imports: with the switch on, "Backed up N of N" counts the `hk-`
+     activities, and "Restored N" counts everything in the backup. For a count of `hk-` ids only
+     (copies data off the phone, so only with the founder's OK):
+     `apps/mobile/tools/device-diagnose.sh` cannot show it; copy the database, then
+     `sqlite3 ~/ct-phone/<bundle id>/turftrack-admin.db "SELECT count(*) FROM log_activities WHERE id LIKE 'hk-%'"`.
 - [ ] Ring-0 testers get the "What to Test" text (§8) and the tester brief.
 
 ### Phase 3 — Before strangers (v0.17.0)
