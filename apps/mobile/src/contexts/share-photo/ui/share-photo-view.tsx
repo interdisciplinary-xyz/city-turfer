@@ -1,23 +1,15 @@
 import { FONT_SIZE, FONT_WEIGHT, RADIUS, SPACE } from '@cityturfer/brand';
 import { ShareOverlay } from '@cityturfer/ui';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Alert,
-  PixelRatio,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { PixelRatio, Pressable, ScrollView, StyleSheet, Switch, Text, useWindowDimensions, View } from 'react-native';
 
 import { ACCENT } from '@/constants/colors';
 import { useLocale, useT } from '@/i18n';
+import { ExpectedFailure } from '@/ui-kit/classify-error';
 import { Button } from '@/ui-kit/components';
 import { ActivitySymbol } from '@/ui-kit/symbol';
 import { usePalette } from '@/ui-kit/theme';
+import { useAsyncAction } from '@/ui-kit/use-async-action';
 
 import {
   hasNewTurf,
@@ -38,6 +30,8 @@ import {
   OFFSCREEN_X,
   PLACE_KEY,
   PLACE_TEST_ID,
+  SHARE_ERROR_KEY,
+  type ShareFailure,
   type SharePhotoViewProps,
   STORY_ASPECT,
   WORDMARK,
@@ -60,25 +54,27 @@ export function SharePhotoView({ activity, newCells, place, photo: initial }: Sh
   const [layout, setLayout] = useState<ShareLayout>('top');
   const [showTurf, setShowTurf] = useState(true);
   const [placeChoice, setPlaceChoice] = useState<PlaceChoice>('off');
-  const [busy, setBusy] = useState(false);
   const card = useRef<View>(null);
   // The hidden copy's photo has loaded (per uri): Share waits for it, so the capture is never blank.
   const [loadedUri, setLoadedUri] = useState<string | null>(null);
 
-  // Share runs once at a time: a ref, set before the first await, so a second fast tap (before
-  // `busy` re-renders) never starts another capture. `mounted` skips setState after leaving.
-  const inFlight = useRef(false);
-  const mounted = useRef(true);
+  // Share runs once at a time (the shared standard: a second fast tap never starts another
+  // capture), is safe after leaving, and reports a capture or share sheet that threw. A failure
+  // shows as a toast worded for what failed; a phone without a share sheet is expected.
+  const failed = useRef<ShareFailure>('share');
+  const { run, isLoading: busy } = useAsyncAction<void>({
+    area: 'share-photo',
+    code: 'share',
+    errorKey: (_error, kind) => (kind.expected && kind.message ? undefined : SHARE_ERROR_KEY[failed.current]),
+  });
 
   // The photo file is ours (the picker's cache copy): delete it when replaced or when leaving.
   // Opening the screen sweeps cards kept from earlier shares (Android); never on leaving, where a
   // target may still be reading the card in the background.
   const current = useRef(photo?.uri ?? null);
   useEffect(() => {
-    mounted.current = true;
     void sharePhoto.sweepCards.execute();
     return () => {
-      mounted.current = false;
       if (current.current) {
         void sharePhoto.discardPhoto.execute(current.current);
       }
@@ -112,25 +108,20 @@ export function SharePhotoView({ activity, newCells, place, photo: initial }: Sh
   );
 
   const share = async () => {
-    if (inFlight.current || !ready || !card.current) {
+    if (!ready || !card.current) {
       return;
     }
-    inFlight.current = true;
-    setBusy(true);
-    const r = await sharePhoto.share.execute(card).finally(() => {
-      inFlight.current = false;
-      if (mounted.current) {
-        setBusy(false);
+    await run(async () => {
+      const r = await sharePhoto.share.execute(card);
+      if (r.kind === 'render-failed') {
+        failed.current = 'render';
+        throw r.cause;
+      }
+      if (r.kind === 'share-failed') {
+        failed.current = 'share';
+        throw r.cause ?? new ExpectedFailure(SHARE_ERROR_KEY.share, 'share-unavailable');
       }
     });
-    if (!mounted.current) {
-      return;
-    }
-    if (r.kind === 'render-failed') {
-      Alert.alert(t('screen.title'), t('error.render'));
-    } else if (r.kind === 'share-failed') {
-      Alert.alert(t('screen.title'), t('error.share'));
-    }
   };
 
   const layoutLabel = t(LAYOUT_KEY[layout]);

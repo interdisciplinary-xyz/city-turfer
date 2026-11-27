@@ -1,7 +1,13 @@
 import { translator } from '@/i18n/translator';
 
 import type { BackupLinkOffer } from '../cloud-backup-card.constants';
-import { cloudBackupCardMode, offPendingNotice, shownLastError } from '../cloud-backup-card-state';
+import {
+  backedUpMessage,
+  backupActionError,
+  cloudBackupCardMode,
+  offPendingNotice,
+  shownLastError,
+} from '../cloud-backup-card-state';
 
 const offer = (email: string): BackupLinkOffer => ({ email, onRequestCode: () => undefined });
 const NORMAL = { offerLink: false, signInFirst: false, showSwitch: true };
@@ -156,5 +162,34 @@ describe('Cloud backup card: the last run’s error', () => {
   it('backup off: no run error', () => {
     const s = withError(true, false, 'offline');
     expect(shownLastError(s, cloudBackupCardMode(s, null))).toBeNull();
+  });
+});
+
+describe('Cloud backup card: toasts', () => {
+  const report = (over: Partial<{ failed: number; error: 'offline' | null }> = {}) => ({
+    uploaded: 3,
+    deleted: 0,
+    failed: 0,
+    refused: 0,
+    error: null,
+    ...over,
+  });
+
+  it('"Back up now" says so only when the run went through', () => {
+    expect(backedUpMessage({ kind: 'done', report: report() })).toBe('backup.toast.backedUp');
+    expect(backedUpMessage({ kind: 'done', report: report({ error: 'offline' }) })).toBeNull();
+    expect(backedUpMessage({ kind: 'done', report: report({ failed: 1 }) })).toBeNull();
+    expect(backedUpMessage({ kind: 'skipped', reason: 'busy' })).toBeNull();
+    expect(backedUpMessage(null)).toBeNull();
+  });
+
+  it('a refusal of a card action in its own words; anything else falls back to the default', () => {
+    expect(backupActionError(null, { expected: true, reason: 'domain', code: 'backup.on' })).toBe(
+      'errors.backupAction.on'
+    );
+    expect(backupActionError(null, { expected: true, reason: 'domain', code: 'backup.unknown' })).toBeUndefined();
+    expect(backupActionError(null, { expected: true, reason: 'offline' })).toBeUndefined();
+    expect(backupActionError(null, { expected: false })).toBeUndefined();
+    expect(translator('errors', 'pl')('backupAction.on')).not.toBe('backupAction.on');
   });
 });

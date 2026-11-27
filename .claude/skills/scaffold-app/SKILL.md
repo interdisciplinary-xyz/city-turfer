@@ -18,9 +18,10 @@ description: >-
 
 ## Where the setup lives now
 
-- App config: `apps/mobile/app.json` (no `app.config.ts`); bundle id and Android package
-  `com.turftrack.poc`; plugins (`expo-router`, `expo-sqlite`, MapLibre, `expo-location` with
-  background location and foreground service, local plugins in `apps/mobile/plugins/`).
+- App config: `apps/mobile/app.json` (no `app.config.ts`); iOS bundle id `com.cityturfer.app`,
+  Android package `com.turftrack.poc`; plugins (`expo-router`, `expo-sqlite`, MapLibre,
+  `expo-location` with background location and foreground service, local plugins in
+  `apps/mobile/plugins/`).
 - Autolinking exclusions: `apps/mobile/react-native.config.js` (HealthKit stays out of Android).
 - Scripts: `apps/mobile/package.json` (`start`, `ios`, `android`, `typecheck`, `arch`, `test`,
   `test:e2e`…); repo-wide ones in the root `package.json` and `turbo.json`.

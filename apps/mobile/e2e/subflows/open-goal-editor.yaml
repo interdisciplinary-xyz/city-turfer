@@ -2,7 +2,7 @@
 # Start tab shows neither (offer hidden, or the goal turned off), from Me > Daily goal.
 # After each tap that opens the editor we wait for the modal (goal-save, optional) so the next
 # `when: notVisible goal-save` does not fall through to the Me menu behind the modal.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 ---
 - tapOn: { id: 'tab-dashboard' }
 - waitForAnimationToEnd

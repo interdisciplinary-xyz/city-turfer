@@ -3,7 +3,7 @@
 # `turf-gained` off screen: wait for its Not now and tap it, so callers can wait for `turf-gained`.
 # Optional: with Don't ask again on (after 21-share-prompt) no prompt shows. A recording too short
 # to save uses finish-too-short.yaml.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 ---
 - longPressOn: { id: 'record-stop' }
 - extendedWaitUntil: { visible: { id: 'share-prompt-dismiss' }, timeout: 30000, optional: true }

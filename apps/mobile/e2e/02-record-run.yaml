@@ -1,5 +1,5 @@
 # Record a run: live distance grows, pause/resume, hold-to-finish → activity with turf gained.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 tags: [recording]
 ---
 - runFlow: subflows/launch.yaml

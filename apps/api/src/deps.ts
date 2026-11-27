@@ -70,6 +70,14 @@ export interface ApiLog {
   event?(entry: { msg: string } & Record<string, string | number | boolean>): void;
 }
 
+/** What a 500's report may say about its request: no path ids, input, cookies or headers. */
+export interface ErrorReportContext {
+  requestId: string;
+  method: string;
+  /** The route pattern (`c.req.routePath`), never the concrete path. */
+  route: string;
+}
+
 export interface ApiDeps {
   auth: AuthVerifier;
   clock: { now(): number };
@@ -99,6 +107,12 @@ export interface ApiDeps {
    * Null → that header is never trusted (direct callers, local runs).
    */
   webEdgeSecret: string | null;
+  /**
+   * Reports an unexpected error (one that answers `500 internal`) to the error tracker (src/sentry.ts,
+   * Sentry EU, production only). Absent → nothing is reported. Resolves once the report left (or
+   * gave up); never rejects.
+   */
+  reportError?(err: unknown, ctx: ErrorReportContext): Promise<void>;
 }
 
 /** The local website (`pnpm run web:dev`): WEB_ORIGIN off Vercel when it is not set. */

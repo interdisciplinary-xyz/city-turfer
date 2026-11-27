@@ -42,5 +42,7 @@
     "hint": "Otwiera dzielnice",
     "noCity": "Wybierz swoje miasto, aby zobaczyć, ile z niego jest Twoje.",
     "noData": "Dzielnice miasta {city} nie są jeszcze dostępne."
-  }
+  },
+  "planRoute": "Zaplanuj",
+  "planRouteLabel": "Zaplanuj trasę na mapie terytorium"
 }

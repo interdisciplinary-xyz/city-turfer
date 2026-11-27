@@ -42,7 +42,10 @@ describe('ShareCard', () => {
   it('a failed render shares nothing and leaves no file', async () => {
     const f = fakeSharePhotoDeps();
     f.state.renderFails = true;
-    expect(await createSharePhotoApi(f.deps).share.execute({})).toEqual({ kind: 'render-failed' });
+    expect(await createSharePhotoApi(f.deps).share.execute({})).toEqual({
+      kind: 'render-failed',
+      cause: expect.any(Error),
+    });
     expect(f.log).toEqual(['sweep']);
   });
 
@@ -51,7 +54,10 @@ describe('ShareCard', () => {
     async (keepShared) => {
       const f = fakeSharePhotoDeps({ keepShared });
       f.state.shareFails = true;
-      expect(await createSharePhotoApi(f.deps).share.execute({})).toEqual({ kind: 'share-failed' });
+      expect(await createSharePhotoApi(f.deps).share.execute({})).toEqual({
+        kind: 'share-failed',
+        cause: expect.any(Error),
+      });
       expect(f.log).toEqual(['sweep', 'render', 'delete file:///tmp/card.jpg']);
 
       const g = fakeSharePhotoDeps({ keepShared });

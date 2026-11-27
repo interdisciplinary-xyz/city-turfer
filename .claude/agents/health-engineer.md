@@ -31,7 +31,12 @@ disagree), the `ddd-architecture` skill, and for neighbours: `route-storage`, `t
    (`apps/mobile/src/__tests__/apple-health.test.ts`): duplicates (same Health UUID, overlapping
    outings), deleted imports, own-workout skipping, the switches, pending-import retries inside and
    past the 3-day window, export retries with the `findSavedWorkout` check.
-3. **Native changes** (plugin, options, native dependencies): give the new fingerprints for both
+3. **Async requests** (the `add-feature` skill, "Async requests"): an import or export the Turfer
+   starts on the card runs through `useAsyncAction`; background imports never toast and hand only
+   unexpected errors to the `ErrorReporter` port with `area: 'health-sync'` and a stable `code` (the
+   scrubber keeps only the error's name and code there). Never put Health samples, workout values or
+   coordinates in a report's context; a denied Health permission is expected, not reported.
+4. **Native changes** (plugin, options, native dependencies): give the new fingerprints for both
    platforms (`pnpm -C apps/mobile exec expo-updates fingerprint:generate --platform ios|android`)
    and rebuild the dev client.
 

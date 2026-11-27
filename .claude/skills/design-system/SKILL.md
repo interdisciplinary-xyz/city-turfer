@@ -49,6 +49,11 @@ logo) stay in the `brand-system` skill; this skill is about the code that carrie
    `globals.css`.
 7. Repo lint rules apply: props types and SCREAMING constants in `<name>.constants.ts`, one import
    per module, `curly: all`.
+8. **`Toast` is never rendered by a screen.** `packages/ui/src/toast/toast.tsx` is presentational
+   (success or error, a mark beside the text so the variant never rests on colour). The app's host
+   (`apps/mobile/src/ui-kit/toast-provider.tsx`, in the root layout) queues, words and closes it;
+   actions reach it through `useAsyncAction` (the `add-feature` skill, "Async requests"), so a
+   success toast appears only for a result the screen doesn't show by itself.
 
 ## Adding a component
 

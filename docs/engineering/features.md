@@ -20,11 +20,11 @@ summary:
 Every feature in the app, derived on `scope/v0.11.0` (the v0.10.0 release) and kept up to date
 since; v0.12.0 changed the app only in its sign-in wordmark, v0.13.0 the turf week (under
 Dashboard), v0.14.0 the Districts screen (under Turf), the sign-in wordmark (Anton, one colour) and
-a lighter secondary text colour, v0.15.0 so far the Current city card and the Daily goal (under
-Dashboard; the goal editor under pushed screens), a share bar on each Districts row and the Apple
-Health import from the moment of connecting. Grouped by where a person meets it: the five tabs, the
-Me drawer, and the screens pushed from them; then what the server and the web portal add. Format
-adapted from empatalk's `FEATURES.md`.
+a lighter secondary text colour, v0.15.0 the Current city card and the Daily goal (under Dashboard;
+the goal editor under pushed screens), a share bar on each Districts row and the Apple Health import
+from the moment of connecting, v0.16.0 Share photo (under pushed screens). Grouped by where a person
+meets it: the five tabs, the Me drawer, and the screens pushed from them; then what the server and
+the web portal add. Format adapted from empatalk's `FEATURES.md`.
 
 > **Derived from code on 2026-10-23.** Where this doc and the code disagree, the code wins. Don't
 > hand-edit counts; re-derive them:
@@ -43,7 +43,7 @@ adapted from empatalk's `FEATURES.md`.
 
 Today: <!-- probe:achievements -->20<!-- /probe --> achievements,
 <!-- probe:e2e-flows -->21<!-- /probe --> Maestro flows,
-<!-- probe:migrations -->15<!-- /probe --> migrations.
+<!-- probe:migrations -->16<!-- /probe --> migrations.
 
 ## 1. Tabs
 
@@ -105,7 +105,8 @@ opens on Dashboard after sign-in.
 - The "⬡ Turf" chip (`record-turf`, top right; Recenter sits under it) shows or hides the Turfer's
   turf under the live track, before and during a recording. On by default and remembered per user
   (`territory/ui/hooks.ts` `useTurfOverlay`, composed in by the screen).
-- Live stats: time, distance, current and average pace (walk, run) or speed (ride).
+- Live stats: moving time (stops when you stop or pause; `recording/domain/live-moving-time.ts`),
+  distance, current and average pace (walk, run) or speed (ride).
 - Pause / resume; auto-pause from the `TrackingProfile`; **hold to finish**.
 - A too-short recording can't be saved: "Too short to save" offers keep recording or discard.
 - Background recording with the screen locked (iOS: native background session + expo-location),
@@ -131,11 +132,22 @@ renders Profile.)
   Stats.
 - **Activity detail** (`apps/mobile/src/app/activity/[id].tsx` →
   `activity-log/ui/activity-detail-view.tsx`): route map with gap estimates dashed, distance (marked
-  "≈" when it includes estimated gaps), moving and elapsed time, average pace or speed, elevation
-  "≈", km splits, turf gained (`territory/ui/turf-gained-card.tsx`), rename (`rename-activity`; an
-  empty name is refused; `activity-log/ui/rename-activity-dialog.tsx`), delete with confirmation
-  (releases its turf). Shows "Saving your activity…" until the outbox has delivered
-  `SessionFinished`. Imported workouts say "From Apple Health".
+  "≈" when it includes estimated gaps), moving time (no elapsed time), average pace or speed,
+  elevation "≈", km splits, turf gained (`territory/ui/turf-gained-card.tsx`), rename
+  (`rename-activity`; an empty name is refused; `activity-log/ui/rename-activity-dialog.tsx`),
+  delete with confirmation (releases its turf). Shows "Saving your activity…" until the outbox has
+  delivered `SessionFinished`. Imported workouts say "From Apple Health". A **Share photo** button
+  (`share-photo/ui/share-photo-button.tsx`, `share-photo`) and, when opened straight from Finish, a
+  "Share a photo?" card (`share-prompt-card.tsx`, `share-prompt`: camera, library, Not now, Don't
+  ask again; never from History).
+- **Share photo** (v0.16.0, #225, #231; `apps/mobile/src/app/share-photo/[id].tsx` →
+  `share-photo/ui/share-photo-view.tsx`; plan `docs/plans/share-photo-2026-11-11.md`): the picked or
+  taken photo fills a 9:16 card with distance, moving time, pace or speed, optionally "+N new turf
+  cells" and a place (off by default; city or "district, city", from Territory's
+  `GetActivityPlace`), drawn by `ShareOverlay` in `@cityturfer/ui`. Share opens the system share
+  sheet with a fresh 1080×1920 JPEG; no map, route or coordinates, and the photo's EXIF never
+  reaches it. Nothing is stored in SQLite, the backup queue or the API; Android share cards in the
+  cache are swept after an hour (`use-card-sweep.ts`).
 - **Daily goal** (`apps/mobile/src/app/goal.tsx`, modal): the goal editor, from the Dashboard card
   or Me › Daily goal. A stepper of 10–180 min in 5-minute steps (30 suggested), Save, and Turn off.
   A change applies from today; past days keep the goal in force then.
@@ -237,11 +249,13 @@ renders Profile.)
   backed-up activities with all-time totals, a type filter and a list by month; one activity's
   stats, splits and route as an inline SVG (gap estimates dashed), no basemap or tile requests.
   Read-only. Plan: `docs/plans/web-portal-history-2026-10-23.md`.
-- **Website** (`apps/web`, static export, en and pl): since v0.15.0 (#213, #215) the homepage has
-  eight blocks (hero, waitlist strip, How it works with the street-glow demo, Who it's for, The app,
-  Privacy, FAQ, final call), section links in the header from 1024 px, scroll-in for section heads
-  and cards (none with reduced motion), black primary buttons and the OpenStreetMap credit on the
-  hero map and in the footer. Components in `apps/web/src/domains/{ui,waitlist,homepage,layout}`.
+- **Website** (`apps/web`, static export, en and pl): the homepage explains the value (#238,
+  `apps/web/src/app/[locale]/page.tsx`): hero, How it works, Highlights, Who it's for, Local first,
+  FAQ and Join, with header and footer links to every section and the scroll-in. The waitlist form
+  sits in Join when its env vars are set, otherwise a closed line; the hero's buttons go to `#join`
+  and `#how`. The hero headline shows at first paint (#226), black primary buttons, the
+  OpenStreetMap credit on the hero map and in the footer. Components in
+  `apps/web/src/domains/{ui,waitlist,homepage,layout}`.
 - **Not built yet:** the Turf Map on the web (cells, tiles), the phone pulling changes from the
   server, a web delete removing the activity everywhere, the staff admin portal's data views
   (`apps/admin` is a scaffold with staff sign-in only; no `/internal/admin` routes). Planned in
@@ -255,8 +269,12 @@ renders Profile.)
   ran on an emulator (2026-10-18, part of the Maestro suite; `docs/operations/android-release.md`);
   the native background session is iOS-only and `apps/mobile/e2e/run.sh` drives the iOS Simulator
   only.
-- **GPX export doesn't exist.** `expo-file-system` and `expo-sharing` are not installed. GPX is read
-  only by tests (`apps/mobile/src/test-support/fixtures.ts`).
+- **GPX export doesn't exist in the app.** `expo-file-system` and `expo-sharing` are installed since
+  v0.16.0 (Share photo), but nothing writes GPX on the phone; GPX is read only by tests
+  (`apps/mobile/src/test-support/fixtures.ts`). The API's account export writes GPX
+  (`apps/api/src/privacy/gpx.ts`).
+- **Share photo is tested on the Simulator only** (library path, flows 20 and 21). The camera path,
+  the shared JPEG's size and EXIF, Instagram, WhatsApp and Android share targets need a device.
 - **Totals stop at 500 activities.** Dashboard, Stats, Profile, Achievements and the Turf map's
   tracks all read `useActivities()` with its default `limit = 500` (`activity-log/ui/hooks.ts`) and
   aggregate in memory. "All time" undercounts past that.

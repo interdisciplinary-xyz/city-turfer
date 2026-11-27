@@ -1,6 +1,8 @@
 import { RouterRateLimited, RouterUnreachable } from '@cityturfer/core/activity-log';
 
-import { OsmRouteEstimator, PROJECT_URL } from '../osm-route-estimator';
+import { OSM_ROUTING_PROJECT_URL as PROJECT_URL } from '@/constants/routing';
+
+import { OsmRouteEstimator } from '../osm-route-estimator';
 
 const FROM = { lat: 52.2297123456, lon: 21.0122287654 };
 const TO = { lat: 52.23519, lon: 21.00848 };
@@ -15,7 +17,10 @@ function estimator(respond: (url: string, init?: RequestInit) => Promise<Respons
     calls.push({ url, init });
     return respond(url, init);
   }) as typeof fetch;
-  return { calls, r: new OsmRouteEstimator({ appVersion: '0.2.0', fetch: fetchStub, timeoutMs, now: () => 0 }) };
+  return {
+    calls,
+    r: new OsmRouteEstimator({ appVersion: '0.2.0', fetch: fetchStub, timeoutMs, now: () => 0, wait: async () => {} }),
+  };
 }
 
 const OK = {

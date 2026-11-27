@@ -1,6 +1,7 @@
 import './home-sections.css';
 
 import { useFormatter, useTranslations } from 'next-intl';
+import type { ReactNode } from 'react';
 
 import { Icon, ICON_FOR_TYPE } from '@/domains/homepage/components/icons';
 import { TurfDemo } from '@/domains/homepage/components/turf-demo';
@@ -11,11 +12,11 @@ import {
   HOME_TIERS,
   HOME_TYPES,
   LOCAL_POINTS,
-  SECTION_ANCHORS,
   TRUST_POINTS,
   TYPE_CLASS,
 } from './home-sections.constants';
 import { Section, SectionHead } from './section';
+import { WhereItStands } from './where-it-stands';
 
 /**
  * The homepage below the hero, drawn in the app's own pieces (the @cityturfer/ui specs as CSS):
@@ -115,18 +116,22 @@ export function LocalFirst() {
   );
 }
 
-/** Closing call to action: back up to the waitlist form under the hero (only when it is set up). */
-export function FinalCta() {
-  const t = useTranslations('home.cta');
+/**
+ * The last section and the call to action: where it stands (an early test), then the waitlist form
+ * the page passes in (`form`, only when the waitlist is set up; the homepage domain does not import
+ * the waitlist domain), or one honest line that it opens soon. The trust row drops the "emails stored
+ * in the EU" point without the form. Reached by the hero's primary button and the header's "Join".
+ */
+export function Join({ form }: { form?: ReactNode }) {
+  const t = useTranslations('home.join');
   return (
-    <Section name='cta' band className='home-cta'>
-      <SectionHead name='cta' eyebrow={t('eyebrow')} title={t('title')} lede={t('body')} />
-      <a className='btn btn-primary' href={`#${SECTION_ANCHORS.waitlist}`}>
-        {t('join')}
-      </a>
+    <Section name='join' band className='home-join'>
+      <SectionHead name='join' eyebrow={t('eyebrow')} title={t('title')} lede={form ? t('body') : undefined} />
+      <WhereItStands />
+      {form ?? <p className='home-join-closed'>{t('closed')}</p>}
       {/* One quiet line of things that are true today: no counts, ratings or testimonials. */}
       <ul className='trust-row' aria-label={t('trust.label')}>
-        {TRUST_POINTS.map((key) => (
+        {TRUST_POINTS.filter((key) => key !== 'eu' || form).map((key) => (
           <li key={key}>{t(`trust.${key}`)}</li>
         ))}
       </ul>

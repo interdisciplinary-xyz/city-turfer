@@ -5,6 +5,7 @@ import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-nativ
 import { ACCENT } from '@/constants/colors';
 import { Button, Card } from '@/ui-kit/components';
 import { usePalette } from '@/ui-kit/theme';
+import { useAsyncAction } from '@/ui-kit/use-async-action';
 
 import {
   ACTION_ERRORS,
@@ -19,6 +20,7 @@ import {
 } from './cloud-backup-card.constants';
 import { useCloudBackup } from './hooks';
 
+/** A refusal (domain code) in plain words; anything else, the generic text (founder-facing, English). */
 const showError = (e: unknown) => {
   const code = (e as { code?: string })?.code;
   Alert.alert(ERROR_TITLE, (code && ACTION_ERRORS[code]) || ACTION_FAILED);
@@ -31,7 +33,13 @@ const showError = (e: unknown) => {
 export function BackupDeveloperCard() {
   const p = usePalette();
   const { status, saveToken, removeToken, saveServerUrl } = useCloudBackup();
-  const [busy, setBusy] = useState(false);
+  // Loading and crash reports from the shared standard. Developer tools stay English: the refusal
+  // shows in an alert with its plain words instead of a catalogue toast.
+  const { run: start, isLoading: busy } = useAsyncAction<unknown>({
+    area: 'cloud-backup',
+    code: 'developer-tools',
+    errorKey: null,
+  });
   const [tokenDraft, setTokenDraft] = useState('');
   const [editingToken, setEditingToken] = useState(false);
   const [serverOpen, setServerOpen] = useState(false);
@@ -41,11 +49,11 @@ export function BackupDeveloperCard() {
     return null;
   }
 
-  const run = (work: () => Promise<unknown>) => {
-    setBusy(true);
-    work()
-      .catch(showError)
-      .finally(() => setBusy(false));
+  const run = async (work: () => Promise<unknown>) => {
+    const r = await start(work);
+    if (r.status === 'failed') {
+      showError(r.error);
+    }
   };
   const inputStyle = [s.input, { color: p.text, backgroundColor: p.bg, borderColor: p.border }];
   const showTokenInput = !status.hasDeviceToken || editingToken;

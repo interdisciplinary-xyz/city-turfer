@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 // PostToolUse (Edit|Write|MultiEdit): fast checks on the file Claude just changed.
-//   block  (fed back to Claude to fix): unguarded console / coordinates in diagnostics (audit:logs),
-//          newly hard-coded brand colours
+//   block  (fed back to Claude to fix): unguarded console / coordinates in diagnostics or error
+//          reports (audit:logs), newly hard-coded brand colours
 //   context (once per session per topic): parity and fingerprint reminders
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { auditSource } from '../../tools/audit-logs.mjs';
+import { auditSource, TREES } from '../../tools/audit-logs.mjs';
 import { checkoutOf } from '../../tools/harness/git-context.mjs';
 import { brandHexFindings, remindersFor } from '../../tools/harness/hook-rules.mjs';
 
@@ -27,9 +27,10 @@ const { root, rel } = where;
 const isSource = /\.(ts|tsx)$/.test(rel) && !/(__tests__|test-support)\/|\.test\.tsx?$/.test(rel);
 const problems = [];
 
-// 1. Privacy: same rules as `pnpm run audit:logs`, on the edited file only.
-if (isSource && rel.startsWith('apps/mobile/src/')) {
-  for (const f of auditSource(readFileSync(file, 'utf8'))) {
+// 1. Privacy: same rules as `pnpm run audit:logs` (per tree), on the edited file only.
+const tree = isSource ? TREES.find(({ dir }) => rel.startsWith(`${dir}/`)) : undefined;
+if (tree) {
+  for (const f of auditSource(readFileSync(file, 'utf8'), { rules: tree.rules })) {
     problems.push(`${rel}:${f.line} [audit:logs/${f.rule}] ${f.message}`);
   }
 }

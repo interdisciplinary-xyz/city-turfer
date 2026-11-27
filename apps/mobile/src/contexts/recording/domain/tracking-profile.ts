@@ -15,6 +15,14 @@ export interface TrackingProfile {
   readonly movingSpeedMps: number;
   readonly autoPauseAfterS: number;
   readonly elevHysteresisM: number;
+  /**
+   * Record screen only (never saved, not in the oracle): how long the live moving-time clock may
+   * run on, on the phone's clock, after a moving fix arrives. It must cover one accepted-fix
+   * interval at the slowest pace that still counts as moving, minStepM / movingSpeedMps, or the
+   * clock holds and then jumps between fixes. Longer only costs overshoot at a stop, which the
+   * shown value absorbs by holding still until moving time catches up.
+   */
+  readonly liveRunOnS: number;
 }
 
 const shared = (type: ActivityType) => ({
@@ -32,6 +40,9 @@ const PROFILES: Record<ActivityType, TrackingProfile> = {
     maxSpeedMps: 4,
     minStepM: 3,
     autoPauseAfterS: 15,
+    // 3 m / 0.5 m/s. Also covers Android's fused cadence (2 s and 3 m: ~4 s at 1.4 m/s, ~6 s
+    // below 0.75 m/s) and iOS, which ignores timeIntervalMs and accepts every minStepM.
+    liveRunOnS: 6,
   },
   run: {
     ...shared('run'),
@@ -41,6 +52,7 @@ const PROFILES: Record<ActivityType, TrackingProfile> = {
     maxSpeedMps: 8,
     minStepM: 4,
     autoPauseAfterS: 10,
+    liveRunOnS: 4, // 4 m / 1.0 m/s
   },
   cycle: {
     ...shared('cycle'),
@@ -50,6 +62,7 @@ const PROFILES: Record<ActivityType, TrackingProfile> = {
     maxSpeedMps: 25,
     minStepM: 6,
     autoPauseAfterS: 8,
+    liveRunOnS: 4, // 6 m / 1.5 m/s
   },
 };
 

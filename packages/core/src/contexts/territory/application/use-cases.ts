@@ -5,13 +5,22 @@ import {
   type BoundingBox,
   type Clock,
   DomainError,
+  type GeoPoint,
   trackFromPoints,
   type TrackPoint,
   weekStartOf,
 } from '../../../shared-kernel';
-import type { ClaimView, TurfCellCounts, TurfCellPage, TurfCellView, TurfSummaryView } from '../contract';
+import type {
+  ClaimView,
+  TurfCellCounts,
+  TurfCellPage,
+  TurfCellView,
+  TurfGainEstimate,
+  TurfSummaryView,
+} from '../contract';
 import type { CellGrid, CellId } from '../domain/cell-grid';
 import { Claim } from '../domain/claim';
+import { cellsAlong } from '../domain/corridor';
 import { isStrong, strengthOf, tierOf } from '../domain/strength';
 import type { CellRow, TerritoryRepository } from '../domain/territory-repository';
 
@@ -214,5 +223,32 @@ export class ListTurfCells {
     const cells = rows.map((r): TurfCellCounts => [r.cell, r.walk, r.run, r.cycle]);
     const end = offset + cells.length;
     return { cells, total, nextOffset: end < total ? end : null };
+  }
+}
+
+/**
+ * The turf a line would claim if the Turfer moved along it (a Planned Route): its corridor of cells
+ * by the same rule as a Claim, and which of them the Turfer does not hold yet. Read only: nothing is
+ * claimed or stored; claimed cells never leave the phone for this. An empty line claims nothing.
+ */
+export class EstimateTurfGain {
+  constructor(private readonly d: Pick<TerritoryDeps, 'repo' | 'grid'>) {}
+  async execute(line: readonly GeoPoint[]): Promise<TurfGainEstimate> {
+    const cells = cellsAlong(line, this.d.grid);
+    if (cells.size === 0) {
+      return { cells: [], newCells: [], newAreaM2: 0 };
+    }
+    const existing = await this.d.repo.existingCells(cells);
+    const ids = [...cells];
+    const fresh = ids.filter((c) => !existing.has(c));
+    let area = 0;
+    for (const c of fresh) {
+      area += this.d.grid.areaM2(c);
+    }
+    return {
+      cells: ids,
+      newCells: fresh.map((id) => ({ id, ring: ring(this.d.grid, id) })),
+      newAreaM2: area,
+    };
   }
 }

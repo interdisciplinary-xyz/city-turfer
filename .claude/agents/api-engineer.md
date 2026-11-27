@@ -52,6 +52,10 @@ API's Swagger page (`/swagger`) changes. Data: `apps/mobile/src/platform/migrati
   bodies or spec examples (use public landmarks); EU regions; export and erasure cover every table.
 - **Operations:** health checks, structured logs without personal data, request ids, cost and cold
   starts in view.
+- **Errors** (the founder's async rule; the `api-design` skill, "Server side of the async rule"):
+  handlers do the work and throw; `app.onError` in `apps/api/src/app.ts` is the only catch. Expected
+  refusals are problem+json and never reported; only a `500 internal` reaches `deps.reportError`
+  (Sentry, EU, production only, scrubbed). No per-route try/catch or `captureException`.
 
 ## Libraries change — don't trust your training data
 

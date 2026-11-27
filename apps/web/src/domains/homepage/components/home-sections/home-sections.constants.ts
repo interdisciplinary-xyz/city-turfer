@@ -55,14 +55,20 @@ export const EXAMPLE_ACHIEVEMENTS = { unlocked: 9, total: 20 } as const;
 /** Turf gained on the example card (activity detail in the app). */
 export const EXAMPLE_GAIN = { areaKm2: 0.12, added: 56, reinforced: 340 } as const;
 
-/** Highlights tiles, in "wow" order; `iphone` marks a feature that only runs on iPhone today. */
-export type HighlightKey = 'gain' | 'record' | 'health' | 'achievements' | 'city';
-export const HIGHLIGHTS: readonly { key: HighlightKey; icon: IconName; iphone: boolean }[] = [
-  { key: 'gain', icon: ICON_FOR_HIGHLIGHT.gain, iphone: false },
-  { key: 'record', icon: ICON_FOR_HIGHLIGHT.record, iphone: true },
-  { key: 'health', icon: ICON_FOR_HIGHLIGHT.health, iphone: true },
-  { key: 'achievements', icon: ICON_FOR_HIGHLIGHT.achievements, iphone: false },
-  { key: 'city', icon: ICON_FOR_HIGHLIGHT.city, iphone: false },
+/**
+ * Highlights tiles, in the plan's order (docs/plans/homepage-value-2026-11-19.md §3). `tag` is a
+ * label under the tile: `iphone` for a feature that only runs on iPhone, `new` for one without a
+ * device run yet (copy under home.highlights.<tag>). Update with the release (docs-engineer checks it).
+ */
+export type HighlightKey = 'gain' | 'districts' | 'goal' | 'achievements' | 'share' | 'health';
+export type HighlightTag = 'iphone' | 'new';
+export const HIGHLIGHTS: readonly { key: HighlightKey; icon: IconName; tag: HighlightTag | null }[] = [
+  { key: 'gain', icon: ICON_FOR_HIGHLIGHT.gain, tag: null },
+  { key: 'districts', icon: ICON_FOR_HIGHLIGHT.districts, tag: null },
+  { key: 'goal', icon: ICON_FOR_HIGHLIGHT.goal, tag: null },
+  { key: 'achievements', icon: ICON_FOR_HIGHLIGHT.achievements, tag: null },
+  { key: 'share', icon: ICON_FOR_HIGHLIGHT.share, tag: 'new' },
+  { key: 'health', icon: ICON_FOR_HIGHLIGHT.health, tag: 'iphone' },
 ];
 
 /** The Privacy points, in order (keys under home.local). */
@@ -74,17 +80,29 @@ export const DIFFERS = ['repeats', 'fades'] as const;
 /**
  * Where it stands, as a strip under the highlights: what is being tested and what is not there yet
  * (what works is the highlights above). One list to update per release (docs-engineer checks it on
- * "update all docs"). Keys under home.status.<column>.<item>. Apple Health: import ran on an iPhone
- * (the health tile says so), saving to it has not been checked on a device (testing), see
- * docs/product/product-brief.md.
+ * "update all docs"). Keys under home.status.<column>.<item>. Apple Health: neither direction has a device
+ * run of the current rules (import counts forward only since 2026-11-05, ran on the Simulator only;
+ * saving has not been checked on a device), so both sit under testing, see docs/product/product-brief.md.
  */
 export const STATUS_COLUMNS = [
-  { key: 'testing', items: ['health', 'battery', 'backup'] },
-  { key: 'notYet', items: ['android', 'store', 'gpx', 'sharing'] },
+  { key: 'testing', items: ['locked', 'healthImport', 'health', 'share', 'battery', 'backup'] },
+  { key: 'notYet', items: ['account', 'store', 'android', 'gpx'] },
 ] as const;
 
 /** FAQ questions in page order; the FAQPage JSON-LD is built from the same keys. */
-export const FAQ_KEYS = ['when', 'free', 'battery', 'account', 'data', 'android', 'watch', 'cities'] as const;
+export const FAQ_KEYS = [
+  'when',
+  'free',
+  'battery',
+  'account',
+  'data',
+  'android',
+  'watch',
+  'cities',
+  'share',
+  'goal',
+  'language',
+] as const;
 
 /**
  * Anchor ids of the homepage sections, one per `Section` (`#how` etc.). Each section's heading id is
@@ -92,18 +110,17 @@ export const FAQ_KEYS = ['when', 'free', 'battery', 'account', 'data', 'android'
  * shared links.
  */
 export const SECTION_ANCHORS = {
-  waitlist: 'waitlist',
   how: 'how',
-  who: 'who',
   app: 'app',
+  who: 'who',
   privacy: 'privacy',
   faq: 'faq',
+  join: 'join',
 } as const;
 
 export type SectionAnchor = (typeof SECTION_ANCHORS)[keyof typeof SECTION_ANCHORS];
 
-/** The closing call to action has a heading id but is not a link target. */
-export type SectionName = SectionAnchor | 'cta';
+export type SectionName = SectionAnchor;
 
 export type SectionProps = {
   name: SectionName;
@@ -134,5 +151,8 @@ type SectionHeadBase = {
 export type SectionHeadProps = SectionHeadBase &
   ({ name: SectionName; titleId?: undefined } | { name?: undefined; titleId: string });
 
-/** The closing call to action's trust row, in order (keys under home.cta.trust): all true today. */
+/**
+ * Join's trust row, in order (keys under home.join.trust): all true today. `eu` is about the waitlist
+ * emails, so it shows only when the form does.
+ */
 export const TRUST_POINTS = ['cookies', 'eu', 'phone', 'backup'] as const;

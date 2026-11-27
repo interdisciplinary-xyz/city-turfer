@@ -2,7 +2,7 @@
 # permission prompt) > the 9:16 card preview, both layouts, the turf and place controls > Share
 # opens the system share sheet > Close returns to the activity. Needs one photo in the simulator's
 # library: run.sh adds e2e/fixtures/share-photo.png (simctl addmedia) before every run. The camera path needs a device (no camera here).
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 tags: [share, history]
 ---
 - runFlow: subflows/launch.yaml

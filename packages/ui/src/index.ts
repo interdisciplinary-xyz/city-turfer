@@ -21,5 +21,7 @@ export { Stat } from './stat/stat';
 export type { StatProps } from './stat/stat.constants';
 export { ThemeProvider, usePalette, useScheme } from './theme/theme';
 export type { ThemeProviderProps } from './theme/theme.constants';
+export { Toast } from './toast/toast';
+export type { ToastProps, ToastVariant } from './toast/toast.constants';
 export { TurfLegend } from './turf-legend/turf-legend';
 export type { TurfLegendProps } from './turf-legend/turf-legend.constants';

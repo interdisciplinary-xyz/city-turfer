@@ -5,7 +5,7 @@ const notTests = '(__tests__|test-support)/';
 const coreSrc = '(^|/)packages/core/src/';
 const coreEntry =
   coreSrc +
-  '(constants/index|shared-kernel/index|h3/index|districts/index|demo/index|contexts/[^/]+/(index|ports))\\.ts$';
+  '(constants/index|shared-kernel/index|h3/index|districts/index|demo/index|error-scrub/index|contexts/[^/]+/(index|ports))\\.ts$';
 module.exports = {
   forbidden: [
     {
@@ -105,6 +105,28 @@ module.exports = {
       to: {
         path: '(^|/)node_modules/(expo-image-picker|react-native-view-shot|expo-sharing|expo-file-system)/',
         reachable: true,
+      },
+    },
+    {
+      name: 'sentry-only-in-its-adapter',
+      severity: 'error',
+      comment:
+        'Only src/platform/sentry-error-reporter.ts loads the Sentry SDK; everything else reports through the ErrorReporter port (src/platform/error-reporter.ts).',
+      from: { path: '^src/', pathNot: ['^src/platform/sentry-error-reporter\\.ts$', notTests] },
+      to: { path: '(^|/)node_modules/@sentry/' },
+    },
+    {
+      name: 'no-error-reporting-in-domain-or-application',
+      severity: 'error',
+      comment:
+        'Domain and application layers throw; the adapters and driving code that catch an error decide whether it is reported. They never import the reporter or its SDK.',
+      from: { path: '^src/(shared-kernel|contexts/[^/]+/(domain|application))/', pathNot: notTests },
+      to: {
+        path: [
+          '^src/platform/(error-reporter|sentry-error-reporter|crash-reporting|secure-store-crash-report-setting)\\.ts$',
+          '(^|/)node_modules/@sentry/',
+          '(^|/)packages/core/src/error-scrub/',
+        ],
       },
     },
     { name: 'no-circular', severity: 'error', from: {}, to: { circular: true } },

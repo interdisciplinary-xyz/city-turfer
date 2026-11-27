@@ -3,7 +3,7 @@
 # button stays). It never shows when an activity is opened from History.
 # Leaves the profile on Don't ask again (a Keychain flag): the next full run.sh resets the keychain;
 # to rerun this flow alone, run `xcrun simctl keychain booted reset` first.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 tags: [share, recording]
 ---
 - runFlow: subflows/launch.yaml

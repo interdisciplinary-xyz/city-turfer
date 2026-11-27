@@ -13,7 +13,25 @@
       },
       "env": {
         "EXPO_PUBLIC_APP_ENV": "poc",
+        "SENTRY_ALLOW_FAILURE": "true",
         "ORG_GRADLE_PROJECT_reactNativeArchitectures": "arm64-v8a"
+      }
+    },
+    "ios-store": {
+      "channel": "production",
+      "distribution": "store",
+      "environment": "production",
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "production",
+        "SENTRY_ALLOW_FAILURE": "true"
+      }
+    }
+  },
+  "submit": {
+    "ios-store": {
+      "ios": {
+        "appleTeamId": "KD9S2F8UCY"
       }
     }
   }

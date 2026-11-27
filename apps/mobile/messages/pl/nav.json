@@ -19,6 +19,7 @@
     "city": "Twoje miasto",
     "linkBackup": "Kopia w chmurze",
     "districts": "Dzielnice",
-    "goal": "Cel dnia"
+    "goal": "Cel dnia",
+    "planRoute": "Zaplanuj trasę"
   }
 }

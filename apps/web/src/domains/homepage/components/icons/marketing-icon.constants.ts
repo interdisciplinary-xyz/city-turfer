@@ -130,10 +130,11 @@ export const ICON_FOR_TYPE = { walk: 'walk', run: 'run', cycle: 'ride' } as cons
 /** Highlights tiles (home.highlights.<key>) → icon. */
 export const ICON_FOR_HIGHLIGHT = {
   gain: 'cell',
-  record: 'record',
-  health: 'health',
+  districts: 'pin',
+  goal: 'record',
   achievements: 'badge',
-  city: 'pin',
+  share: 'phone',
+  health: 'health',
 } as const satisfies Record<string, IconName>;
 
 /** Disc tints: the caller's colour token, mixed this much into the surface behind it. */

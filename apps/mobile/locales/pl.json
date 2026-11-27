@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "CityTurfer",
+    "NSLocationWhenInUseUsageDescription": "CityTurfer pokazuje, gdzie jesteś, i zapisuje trasę podczas spaceru, biegu lub przejażdżki, by każda pokonana ulica stała się Twoim terytorium.",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "CityTurfer zapisuje trasę podczas spaceru, biegu lub przejażdżki, także przy wygaszonym ekranie, by każda pokonana ulica stała się Twoim terytorium.",
+    "NSLocationAlwaysUsageDescription": "CityTurfer zapisuje trasę podczas spaceru, biegu lub przejażdżki, także przy wygaszonym ekranie, by każda pokonana ulica stała się Twoim terytorium.",
+    "NSHealthShareUsageDescription": "CityTurfer importuje Twoje spacery, biegi, wędrówki i przejażdżki z trasami, by liczyły się do Twojego terytorium.",
+    "NSHealthUpdateUsageDescription": "CityTurfer zapisuje nagrane spacery, biegi i przejażdżki w Apple Health jako treningi z trasami.",
+    "NSCameraUsageDescription": "CityTurfer używa aparatu, by zrobić zdjęcie na kartę aktywności. Zdjęcie zostaje na telefonie, dopóki go nie udostępnisz.",
+    "NSPhotoLibraryAddUsageDescription": "CityTurfer zapisuje kartę aktywności w Zdjęciach, gdy wybierzesz Zachowaj obraz."
+  }
+}

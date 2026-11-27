@@ -36,7 +36,7 @@ Activity Log, Achievements and Identity (domain + application) lives in
 | `contexts/recording/{domain,application,infrastructure}`, `apps/mobile/modules/background-session/`                                                                                         | `location-engineer`    | ddd-architecture, gps-tracking   |
 | `contexts/activity-log/{domain,application,infrastructure}`, `platform/`, `wiring.ts`, `composition-root.ts`                                                                                | `location-engineer`    | ddd-architecture, route-storage  |
 | `contexts/territory/{domain,application,infrastructure}`, `apps/mobile/tools/lib/`, `turf-preview.mjs`                                                                                      | `location-engineer`    | ddd-architecture, turf-territory |
-| `contexts/{achievements,goals,identity}/` (non-ui), `apps/mobile/src/constants/` (not `colors.ts`), `apps/mobile/src/dev/`                                                                  | `location-engineer`    | ddd-architecture                 |
+| `contexts/{achievements,goals,identity,route-planning}/` (non-ui), `apps/mobile/src/constants/` (not `colors.ts`), `apps/mobile/src/dev/`                                                   | `location-engineer`    | ddd-architecture                 |
 | `apps/mobile/app.json` and `apps/mobile/plugins/`, except the entries named below (HealthKit, image picker, sharing, icons, splash, MapLibre)                                               | `location-engineer`    | gps-tracking                     |
 | `contexts/health-sync/` (all layers, incl. its card), the HealthKit plugin entry, `react-native.config.js`                                                                                  | `health-engineer`      | apple-health                     |
 | `contexts/share-photo/` (all layers), the `expo-image-picker` and `expo-sharing` plugin entries in `app.json`                                                                               | `mobile-ui-engineer`   | ddd-architecture, design-system  |
@@ -65,6 +65,48 @@ session.
 Inside-out: shared kernel → domain → application → infrastructure → UI. Independent pieces (for
 example, a metrics function and a UI component built against its typed signature) can run as
 parallel agents.
+
+### Async requests (every surface)
+
+The founder's rule (2026-11-25, `docs/decisions/error-tracking-2026-11-25.md`): **try** loading on,
+do the work, success message; **catch** report an _unexpected_ error, show an error message;
+**finally** loading off. Narrowed: a success toast only for a mutation the user started whose result
+the screen doesn't show by itself (none for reads, map loads, planner taps or background work).
+Offline, API 4xx, `DomainError`, a denied permission and `ExpectedFailure` are expected: worded,
+never reported. Reports carry no coordinates, Health data or e-mail (`audit:logs` flags coordinate
+words in a report call; `packages/core/src/error-scrub` scrubs every event again).
+
+- **App:** every action the Turfer starts runs through `useAsyncAction`
+  (`apps/mobile/src/ui-kit/use-async-action.ts`), never a hand-rolled try/catch/finally or
+  `isLoading` state. `run` never throws, runs once at a time (`busy`) and is safe after unmount:
+
+  ```tsx
+  // apps/mobile/src/app/activity/[id].tsx: deleting leaves the screen, so a toast confirms it
+  const deletion = useAsyncAction<void>({
+    area: 'activity-log',
+    code: 'delete-activity',
+    successKey: 'activity.toast.deleted',
+  });
+  if ((await deletion.run(remove)).status === 'done') {
+    router.back();
+  }
+  // a button: <Button busy={deletion.isLoading} … />
+  ```
+
+  Options (`use-async-action.constants.ts`): `errorKey` replaces the generic message (`null` when a
+  form shows its error inline), `isExpected` adds errors this action expects; what counts as
+  expected is `classify-error.ts`. Background work (task, outbox, Health import) never toasts: it
+  hands unexpected errors to the `ErrorReporter` port
+  (`apps/mobile/src/platform/error-reporter.ts`).
+
+- **API:** a route does the work and throws; no per-route try/catch. `app.onError`
+  (`apps/api/src/app.ts`) answers `AppError`/`DomainError` with their problem+json; only the rest
+  becomes `500 internal` plus one scrubbed report (`apps/api/src/sentry.ts`): the `api-design`
+  skill.
+- **Portal:** pending and error state come from the TanStack hooks
+  (`apps/web/src/lib/api/hooks.ts`), errors worded inline; the query client hands every failure to
+  `portalErrorReporter` (`apps/web/src/lib/api/query-client.ts`; `error-reports.ts` keeps only the
+  unexpected): the `web-portal` skill. Public website pages load no Sentry.
 
 ## 3. Verify
 

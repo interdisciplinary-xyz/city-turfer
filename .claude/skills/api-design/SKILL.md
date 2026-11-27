@@ -100,6 +100,12 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
 - **Errors:** `application/problem+json` (RFC 9457): `type`, `title`, `status`, `detail`, our `code`
   from the catalogue in `apps/api/src/errors.ts` (domain codes like `home-city.unknown` included),
   and for 400 an `errors[]` of JSON pointers (at most 20) — never input values.
+- **Server side of the async rule** (the `add-feature` skill, "Async requests"): try = the handler
+  does the work and throws; catch = `app.onError` in `apps/api/src/app.ts` only. An expected refusal
+  (`AppError`, `DomainError` with a catalogue code, invalid JSON) is its problem+json and is never
+  reported; anything else is `500 internal`, one sanitised log line and one scrubbed report
+  (`deps.reportError`, `apps/api/src/sentry.ts`, EU, production only). No per-route try/catch, no
+  `captureException` in a route, nothing coordinate-like in the report context.
 - **Headers:** `X-Request-Id` on every answer; `Cache-Control: private, no-store` and
   `Vary: Cookie, Authorization` by default on `/v1` (`personalCaching`; no route relaxes it: tracks,
   activity detail and turf cells set `no-store` too and keep an ETag); `CityTurfer-Client` (426
@@ -195,8 +201,11 @@ D1–D13); stack and phases: `docs/decisions/api-2026-10-20.md`. Architecture ru
   or without the others: `checkProductionEnv` in `apps/api/src/wiring.ts`). Production also needs
   `DATABASE_URL` and `CRON_SECRET` (daily Vercel Cron `GET /internal/cron/retention`, outside `/v1`
   and the spec, purges expired exports, codes, sessions and rate-limit rows). Unexpected errors log
-  one sanitised `request.error` line (`describeError`, never the message). Runbook:
-  `docs/operations/api-deploy.md`.
+  one sanitised `request.error` line (`describeError`, never the message) and, in production with an
+  EU `SENTRY_DSN`, send one scrubbed Sentry report (`deps.reportError`, `apps/api/src/sentry.ts`:
+  class, frames, cause chain, request id, method, route pattern; never the message, path, query,
+  body, cookies or headers). Only that `onError` branch reports: AppError, DomainError, 400, 404 and
+  413 are answers, not errors; no per-route try/catch. Runbook: `docs/operations/api-deploy.md`.
 - **Server turf rollout** (`docs/operations/api-deploy.md`, "Server turf"): migrate `0005_turf` and
   `0006_turf_claim_track_hash` **before** the merge that deploys 0.6.0 (it reads
   `users.turf_version`: else `/v1/me`, uploads and turf 500), deploy, then the founder runs

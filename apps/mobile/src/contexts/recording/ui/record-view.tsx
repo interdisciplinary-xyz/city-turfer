@@ -42,12 +42,13 @@ export function RecordView({
   mapOverlay,
   onViewChange,
   turf,
+  mapChips,
 }: RecordViewProps) {
   const p = usePalette();
   const t = useT('record');
   const tc = useT('common');
   const insets = useSafeAreaInsets();
-  const { snapshot, track, activeS, prepare, start, pause, resume, finish, discard } = useRecording();
+  const { snapshot, track, movingS, prepare, start, pause, resume, finish, discard } = useRecording();
   const [type, setType] = useState<ActivityType>('walk');
   const [busy, setBusy] = useState(false);
   const [following, setFollowing] = useState(true);
@@ -242,6 +243,7 @@ export function RecordView({
             <Text style={{ color: turf.shown ? ON_TIER.glowing : p.text, fontWeight: '700' }}>{t('turfChip')}</Text>
           </Pressable>
         )}
+        {mapChips}
         {!following && (
           <Pressable
             testID='recenter'
@@ -268,7 +270,7 @@ export function RecordView({
           <>
             <Stat label={t('stat.distance')} value={dist.value} unit={dist.unit} big testID='stat-distance' />
             <View style={s.row}>
-              <Stat label={t('stat.time')} value={formatDuration(activeS)} testID='stat-time' />
+              <Stat label={t('stat.time')} value={formatDuration(movingS)} testID='stat-time' />
               <Stat label={t('stat.now', { type: activeType })} value={now.value} unit={now.unit} />
               <Stat label={t('stat.average', { type: activeType })} value={avg.value} unit={avg.unit} />
             </View>
