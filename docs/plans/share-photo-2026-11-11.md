@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: canonical
 verified: 2026-11-11
 owner: founder
 scope:
@@ -14,10 +14,14 @@ scope:
 summary: >-
   Share photo after an activity: the Turfer takes or picks a photo, the app lays the activity's
   stats over it (Garmin-style story card) and hands the image to the system share sheet. No map, no
-  coordinates.
+  coordinates. Built in v0.16.0 (#225, review fixes #231); device checks still open.
 ---
 
 # Share photo (activity share card)
+
+> **Built in v0.16.0** (#225, fixes in #231; released 2026-11-13, `docs/sessions/v0.16.0.md`). The
+> device checks in the acceptance criteria (camera, EXIF, Instagram, WhatsApp, Android targets) have
+> not run yet (`docs/sessions/v0.17.0.md`).
 
 Founder request (2026-11-11): after each activity, take a photo with the camera or pick one from the
 library, overlay the activity details and share the image to social media. Reference: a Garmin

@@ -16,7 +16,6 @@ export type ActivityFigures = {
   distanceM: number;
   estimatedDistanceM: number;
   movingS: number;
-  elapsedS: number;
   elevationGainM: number | null;
 };
 
@@ -26,7 +25,6 @@ export type ActivityNumbers = {
   estimated: boolean;
   estimatedText: string;
   moving: string;
-  elapsed: string;
   pace: FormattedQuantity;
   /** "+24" (unit m), or null when the track had no altitude. */
   elevation: string | null;
@@ -38,7 +36,6 @@ export function activityNumbers(a: ActivityFigures, locale: string): ActivityNum
     estimated: a.estimatedDistanceM > 0,
     estimatedText: distanceText(a.estimatedDistanceM, locale),
     moving: formatDuration(a.movingS),
-    elapsed: formatDuration(a.elapsedS),
     pace: formatPaceOrSpeed(a.type, a.distanceM, a.movingS, locale),
     elevation: a.elevationGainM !== null ? `+${a.elevationGainM}` : null,
   };

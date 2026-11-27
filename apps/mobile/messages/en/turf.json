@@ -42,5 +42,7 @@
     "hint": "Opens the districts",
     "noCity": "Choose your city to see how much of it is yours.",
     "noData": "Districts for {city} aren’t available yet."
-  }
+  },
+  "planRoute": "Plan route",
+  "planRouteLabel": "Plan a route on your turf map"
 }

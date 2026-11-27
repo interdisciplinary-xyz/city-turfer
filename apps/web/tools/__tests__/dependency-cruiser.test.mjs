@@ -31,6 +31,12 @@ const FILES = {
   'src/app/[locale]/account/page.tsx':
     "import '@tanstack/react-query';\nimport '@cityturfer/core/h3';\nimport '@cityturfer/core/shared-kernel';\nimport 'gsap';\nexport default 1;\n",
   'src/lib/api/client.ts': "import '../../app/[locale]/page';\n", // lib-is-infrastructure
+  // Sentry: a landing module loading it fails twice (portal-libraries-only-in-portal and
+  // sentry-only-in-its-adapter); portal code other than the adapter fails sentry-only-in-its-adapter;
+  // the adapter itself, with core's scrubber, raises nothing.
+  'src/app/[locale]/crash.tsx': "import '@sentry/react';\n",
+  'src/domains/account/report.ts': "import '@sentry/react';\n",
+  'src/lib/api/sentry-reporter.ts': "import '@sentry/react';\nimport '@cityturfer/core/error-scrub';\n",
   'src/lib/site-url.ts': "import '../domains/ui/icon';\n", // lib-is-infrastructure (the domains half)
   // A portal domain is portal code: TanStack and the shared kernel are fine (no finding), a core
   // context is not (portal-core-shared-kernel-only).
@@ -74,6 +80,7 @@ const LINKS = {
   '@cityturfer/brand': path.join(repo, 'packages/brand'),
   '@tanstack/react-query': path.join(repo, 'node_modules/@tanstack/react-query'),
   gsap: path.join(repo, 'node_modules/gsap'),
+  '@sentry/react': path.join(web, 'node_modules/@sentry/react'),
 };
 
 let dir;
@@ -177,6 +184,12 @@ test('a portal domain is portal code: its libraries are allowed, a core context 
   assert.deepEqual(others, []);
 });
 
+test('Sentry outside its adapter fails sentry-only-in-its-adapter; on a landing page also portal-libraries-only-in-portal', () => {
+  expectViolation('sentry-only-in-its-adapter', 'src/app/[locale]/crash.tsx');
+  expectViolation('portal-libraries-only-in-portal', 'src/app/[locale]/crash.tsx');
+  expectViolation('sentry-only-in-its-adapter', 'src/domains/account/report.ts');
+});
+
 test('ui loading GSAP fails ui-no-gsap', () => {
   expectViolation('ui-no-gsap', 'src/domains/ui/motion.ts');
 });
@@ -213,8 +226,9 @@ test('allowed imports raise nothing: workspace packages resolve, the portal may 
     (v) =>
       from(v) === 'src/app/[locale]/branding.ts' ||
       from(v) === 'src/domains/layout/header.ts' ||
+      from(v) === 'src/lib/api/sentry-reporter.ts' ||
       (from(v) === 'src/app/[locale]/account/page.tsx' && !v.startsWith('portal-no-gsap '))
   );
   assert.deepEqual(allowed, []);
-  assert.equal(violations.length, 24, violations.join('\n'));
+  assert.equal(violations.length, 27, violations.join('\n'));
 });

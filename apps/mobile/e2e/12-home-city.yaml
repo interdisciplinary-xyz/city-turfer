@@ -1,7 +1,7 @@
 # Home City: Me → City, search without Polish letters, pick Kraków; the Turf Map and the Record tab
 # show it. Then change it from the Record tab's chip (Gdańsk) and clear it, so later flows start
 # without a Home City.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 tags: [turf]
 ---
 - runFlow: subflows/launch.yaml

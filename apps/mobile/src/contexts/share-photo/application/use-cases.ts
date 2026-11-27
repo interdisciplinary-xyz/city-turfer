@@ -32,7 +32,12 @@ export class PickPhoto {
   }
 }
 
-export type ShareCardResult = { kind: 'shared' } | { kind: 'render-failed' } | { kind: 'share-failed' };
+/**
+ * `cause`: what the renderer or share sheet threw, for the UI to report (this layer never reports);
+ * none when the phone simply has no share sheet.
+ */
+export type ShareCardResult =
+  { kind: 'shared' } | { kind: 'render-failed'; cause: unknown } | { kind: 'share-failed'; cause?: unknown };
 
 /**
  * Share: sweep old cards, render the card to a JPEG and hand it to the share sheet. The card is
@@ -47,8 +52,8 @@ export class ShareCard {
     let uri: string;
     try {
       uri = await this.d.renderer.render(target);
-    } catch {
-      return { kind: 'render-failed' };
+    } catch (cause) {
+      return { kind: 'render-failed', cause };
     }
     let shared = false;
     try {
@@ -58,8 +63,8 @@ export class ShareCard {
       await this.d.share.share(uri);
       shared = true;
       return { kind: 'shared' };
-    } catch {
-      return { kind: 'share-failed' };
+    } catch (cause) {
+      return { kind: 'share-failed', cause };
     } finally {
       if (!shared || this.d.cards.deleteAfterShare) {
         await this.d.files.delete(uri);

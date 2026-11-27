@@ -1,5 +1,14 @@
+import type { MessageKey } from '@/ui-kit/toast-provider.constants';
+import type { ErrorClass } from '@/ui-kit/use-async-action.constants';
+
+import type { BackupRunResult } from '../application/run-backup';
 import type { BackupStatus } from '../contract';
-import type { BackupErrorKey, CloudBackupCardMode, CloudBackupCardProps } from './cloud-backup-card.constants';
+import {
+  ACTION_ERROR_KEY,
+  type BackupErrorKey,
+  type CloudBackupCardMode,
+  type CloudBackupCardProps,
+} from './cloud-backup-card.constants';
 
 type ModeStatus = Pick<BackupStatus, 'hasToken' | 'enabled' | 'withdrawalPending'>;
 
@@ -60,4 +69,18 @@ export function shownLastError(
     return null;
   }
   return status.lastError;
+}
+
+/**
+ * "Back up now" toast: only for a run that went through. A skipped or stopped run says why on the
+ * card itself (its status or error line).
+ */
+export function backedUpMessage(r: BackupRunResult | null): MessageKey | null {
+  return r?.kind === 'done' && !r.report.error && r.report.failed === 0 ? 'backup.toast.backedUp' : null;
+}
+
+/** A card action's refusal (a `DomainError` code) in its own words; anything else: the default toast. */
+export function backupActionError(_error: unknown, kind: ErrorClass): MessageKey | undefined {
+  const key = kind.expected && kind.reason === 'domain' && kind.code ? ACTION_ERROR_KEY[kind.code] : undefined;
+  return key ? (`errors.${key}` as MessageKey) : undefined;
 }

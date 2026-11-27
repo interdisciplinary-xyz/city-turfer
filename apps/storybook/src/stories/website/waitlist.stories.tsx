@@ -9,14 +9,14 @@ function Waitlist() {
   const locale = useLocale();
   const t = useTranslations('waitlist');
   return (
-    <Section name='waitlist' band className='waitlist-section'>
-      <SectionHead name='waitlist' eyebrow={t('eyebrow')} title={t('title')} />
+    <Section name='join' band className='waitlist-section'>
+      <SectionHead name='join' eyebrow={t('eyebrow')} title={t('title')} />
       <WaitlistForm
         action='https://example.invalid/brevo'
         controller='CityTurfer (example)'
         contactEmail='privacy@example.invalid'
         locale={locale}
-        headingId='waitlist-title'
+        headingId='join-title'
       />
     </Section>
   );

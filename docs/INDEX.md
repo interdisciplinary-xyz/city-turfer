@@ -45,9 +45,9 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   — evidence log, assumption map, opportunity tree and the interview queue; every product claim
   cites an id from here
 - 🚧 [`product/feature-scope.md`](product/feature-scope.md): Product feature scope — the one job for
-  the first Turfers, every feature by area with its status (Built, v0.16.0, Now, Next, Later, Out)
-  and the assumption behind it, the next release's scope line, non-goals and the founder decisions
-  it needs
+  the first Turfers, every feature by area with its status (Built on v0.16.0, In v0.17.0, Now, Next,
+  Later, Out), the evidence behind it and the assumption it rests on; the v0.17.0 "first strangers"
+  scope with progress on the scope head, non-goals and the founder decisions it needs
 - 🚧 [`product/icp.md`](product/icp.md): Ideal customer profile (hypothesis) — the primary Turfer to
   win first, two segments to test, who it isn't for yet, fit signals and the assumptions that would
   prove or kill it
@@ -75,7 +75,7 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   cron), migrations before the merge, the server turf rollout (migrate 0005 and 0006 before the
   merge, deploy, turf:backfill, then the web map; turf:rebuild straight after redeploying from a
   rollback), the daily retention cron with its turf catch-up, adopting the admin data, device
-  tokens, support requests (find, delete), checking health
+  tokens, support requests (find, delete), error reports (Sentry EU), checking health
 - ✅ [`operations/apple-health.md`](operations/apple-health.md): Install the Apple Health build on
   the iPhone and check import and export with real data
 - ✅ [`operations/observability.md`](operations/observability.md): What the app and the API record
@@ -139,10 +139,18 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   street-glow demo, a street map of the visitor's city behind the hero, staff admin under /admin,
   small changes straight to scope, the release review's fixes; JS only (iOS c9cca32d before the
   release commit's app.json bump), no OTA published
-- ✅ [`sessions/v0.15.0.md`](sessions/v0.15.0.md): Session log v0.15.0 (in progress, scope PR 208) —
-  Current city card and district share bars, a Daily goal with a streak, Apple Health import only
-  from the moment of connecting, the homepage tidy-up and founder follow-ups, apps/web split into
-  domains, reviews without nits; app JS only by diff (fingerprint not re-measured on the head)
+- 🕰️ [`sessions/v0.15.0.md`](sessions/v0.15.0.md): Session log v0.15.0 (released 2026-11-10, tag
+  v0.15.0, PRs 208 and 221) — Current city card and district share bars, a Daily goal with a streak,
+  Apple Health import only from the moment of connecting, the homepage tidy-up and founder
+  follow-ups, apps/web split into domains, reviews without nits; app JS only by diff (fingerprint
+  not re-measured on the head)
+- 🕰️ [`sessions/v0.16.0.md`](sessions/v0.16.0.md): Session log v0.16.0 (released 2026-11-13, tag
+  v0.16.0, PRs 227 and 233) — Share photo (native, new fingerprint), homepage trimmed to header and
+  hero, LCP 4.94 s to 1.23 s, accessibility fixes, art-director agent, product feature scope; global
+  review must-fix items carried into v0.17.0
+- ✅ [`sessions/v0.17.0.md`](sessions/v0.17.0.md): Session log v0.17.0 (in progress, cut 2026-11-13)
+  — scope cut from the v0.16.0 release commit; must-fix items carried from the v0.16.0 global
+  review, open founder decisions, proposed "first strangers" line
 - 🕰️ [`sessions/v0.2.0.md`](sessions/v0.2.0.md): Session log v0.2.0 through the Me menu and
   achievements; predates the Dashboard, Me drawer and login rename (PRs 23–25) and still says
   app.json is unpinned (pinned in f04bcf3)
@@ -247,6 +255,10 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
 - ✅ [`decisions/design-system-2026-10-19.md`](decisions/design-system-2026-10-19.md): v0.5.0 design
   system — tokens in @cityturfer/brand (TS + CSS variables), React Native components in
   @cityturfer/ui, one Storybook (react-native-web) for the app and the website, shipped OTA
+- 🚧 [`decisions/error-tracking-2026-11-25.md`](decisions/error-tracking-2026-11-25.md): Error
+  tracking and the async request rule — every user action shows loading, a success or error message,
+  and reports only unexpected errors to Sentry (EU, scrubbed, opt-out in the app); the API catches
+  once in onError; public website pages load no Sentry
 - ✅ [`decisions/home-city-2026-10-19.md`](decisions/home-city-2026-10-19.md): v0.7.0 Home City —
   the Turfer picks a city from a bundled catalogue and the Turf Map (and the Record map before the
   first fix) opens on it; stored per user as a catalogue id, sent to the API only with cloud backup
@@ -307,13 +319,27 @@ Status: ✅ canonical · ⚠️ superseded · 🕰️ historical · 🚧 propose
   of the landing page (bugs and one heading system, then fewer sections and one button/card grammar,
   then polish), approved by the founder on 2026-11-01; built in PR 213, the founder follow-ups in PR
   215 (v0.15.0)
-- 🚧 [`plans/share-photo-2026-11-11.md`](plans/share-photo-2026-11-11.md): Share photo after an
+- 🚧 [`plans/homepage-value-2026-11-19.md`](plans/homepage-value-2026-11-19.md): Homepage that
+  explains the value in detail — value promise, a value map (value → feature → status → evidence →
+  honest phrasing), honesty rules, the page section by section with anchors and calls to action,
+  code changes, acceptance criteria and the copy deck for brand-designer. Built from the 2026-11-19
+  feature scope; supersedes the header-and-hero-only page (#229)
+- 🚧 [`plans/route-planner-2026-11-24.md`](plans/route-planner-2026-11-24.md): Route planner, slice
+  1: the Turfer taps waypoints on their turf map, the route snaps to streets (opt-in, public OSRM),
+  shows distance and the new turf it would claim, and becomes a guide line on the Record map. One
+  active plan on the phone; auto loops and unclaimed-street hints later.
+- ✅ [`plans/share-photo-2026-11-11.md`](plans/share-photo-2026-11-11.md): Share photo after an
   activity: the Turfer takes or picks a photo, the app lays the activity's stats over it
   (Garmin-style story card) and hands the image to the system share sheet. No map, no coordinates.
+  Built in v0.16.0 (#225, review fixes #231); device checks still open.
 - ✅ [`plans/sync-chain-testing-2026-10-22.md`](plans/sync-chain-testing-2026-10-22.md): How to test
   that the four apps stay one system — every scenario starts on the phone (the source of truth) or
   reaches it, and is checked in the API, the web portal and the admin portal as each is built today;
   scenarios report pending until the routes they need exist
+- 🚧 [`plans/testflight-2026-11-12.md`](plans/testflight-2026-11-12.md): First iOS release through
+  TestFlight: Apple account and app record, the EAS store build, a release gate on a real iPhone, an
+  internal ring from scope/v0.17.0, strangers only on the v0.17.0 release after the privacy policy,
+  no-account start and hidden mock profiles.
 - ✅ [`plans/web-portal-history-2026-10-23.md`](plans/web-portal-history-2026-10-23.md): Plan for
   the web portal's activity history (v0.11.0) — a list of the backed-up walks, runs and rides with
   totals and a type filter, and a detail page with stats, splits and the route shape; read-only, no

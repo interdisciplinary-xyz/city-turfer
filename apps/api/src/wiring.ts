@@ -18,6 +18,7 @@ import { BrevoMailer, type Mailer, nullMailer, parseMailFrom } from './identity/
 import { compositeVerifier, IdentityService } from './identity/use-cases';
 import { RetentionService } from './privacy/retention';
 import { ExportService } from './privacy/use-cases';
+import { createErrorReporter, reporterState } from './sentry';
 import { LOCAL_API_PORT } from './spec';
 
 /**
@@ -41,6 +42,10 @@ import { LOCAL_API_PORT } from './spec';
  *   `/api/v1/*` route sends it in the `cityturfer-edge` header; only then is the visitor's
  *   `x-vercel-forwarded-for` trusted for the per-IP sign-in limits (src/client-ip.ts). Required in
  *   production when WEB_ORIGIN is set.
+ * - `SENTRY_DSN`: the Sentry project's DSN, EU region (`https://…@o….ingest.de.sentry.io/…`). Only
+ *   on Vercel production does a 500 send a scrubbed report (src/sentry.ts); a DSN of another region
+ *   or an invalid one turns reports off (logged as `errorReports`), never fails the boot. Release =
+ *   `VERCEL_GIT_COMMIT_SHA`, environment = `VERCEL_ENV` (both set by Vercel).
  * The breached-password check calls the keyless HIBP range API on every deployment (no variable).
  * Production = `VERCEL_ENV=production`: missing secrets fail the boot instead of degrading.
  * Nothing secret is logged: only whether each is configured.
@@ -256,6 +261,7 @@ export function productionDeps(env: NodeJS.ProcessEnv, overrides: WiringOverride
       cron: !!cronSecretOf(env),
       webOrigin: !!webOrigin,
       webEdge: !!webEdgeSecretOf(env),
+      errorReports: reporterState(env),
       apiTokens: tokens.entries.length,
       apiTokensSkipped: tokens.skipped,
     })}\n`
@@ -263,6 +269,7 @@ export function productionDeps(env: NodeJS.ProcessEnv, overrides: WiringOverride
   const devices = deviceTokenAuth(tokens.entries);
   const grid = new H3CellGrid();
   const store = db ? new DrizzleBackupStore(db, grid) : null;
+  const reportError = createErrorReporter(env);
   return {
     ...base,
     grid,
@@ -287,5 +294,6 @@ export function productionDeps(env: NodeJS.ProcessEnv, overrides: WiringOverride
     cronSecret: cronSecretOf(env),
     webOrigin,
     webEdgeSecret: webEdgeSecretOf(env),
+    ...(reportError ? { reportError } : {}),
   };
 }

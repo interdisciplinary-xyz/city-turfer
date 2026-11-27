@@ -1,6 +1,6 @@
 # Sign out returns to the sign-in screen. Runs last, and on its own too: signed out already (run
 # alone, or after a flow that ended signed out), it signs in to the admin profile first.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 tags: [auth]
 ---
 - runFlow: subflows/launch.yaml

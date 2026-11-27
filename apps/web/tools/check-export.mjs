@@ -6,6 +6,9 @@
 //   the RSC payloads the language switcher fetches: <locale>.txt, <locale>/__next.*.txt);
 //   @cityturfer/core on public pages is caught at the source by dependency-cruiser
 //   (`marketing-not-core`), as no minified string of its formatters is a reliable marker;
+// - the landing pages carry no trace of Sentry (no SDK, loader, DSN or ingest host in the HTML, a
+//   chunk or a payload): error reports exist on portal pages only, and a portal page does load the
+//   reporter (a positive control, so a renamed marker can't pass silently);
 // - every portal page is noindex, nofollow and loads no GSAP chunk;
 // - the sitemap lists no portal page;
 // - every portal link on a landing page (the header's Sign in / Create account) has a page.
@@ -24,6 +27,12 @@ export const PORTAL_MARKERS = [
 
 /** A portal message key: portal copy must not ride along in the landing page's payload. */
 export const PORTAL_COPY_MARKER = 'sharedComputerHint';
+
+/**
+ * Sentry, in any form: the SDK (`__SENTRY__`), the portal's reporter (its EU ingest host check), a
+ * DSN. Public pages load no third-party script and make no third-party request.
+ */
+export const SENTRY_MARKER = /sentry/i;
 
 /** GSAP's own banner and warnings. */
 export const GSAP_MARKERS = ['GreenSock', 'gsap.registerPlugin'];
@@ -119,6 +128,9 @@ export function checkExport(outDir, { locales = ['en', 'pl'], nextDir = path.joi
     if (html.includes('/api/v1')) {
       findings.push(`${locale}.html mentions /api/v1`);
     }
+    if (SENTRY_MARKER.test(html)) {
+      findings.push(`${locale}.html mentions Sentry`);
+    }
     for (const href of portalLinksOf(html, locales)) {
       if (!existsSync(path.join(outDir, `${href}.html`))) {
         findings.push(`${locale}.html links to ${href}, which is not in the export`);
@@ -131,6 +143,9 @@ export function checkExport(outDir, { locales = ['en', 'pl'], nextDir = path.joi
       }
       if (text.includes('/api/v1')) {
         findings.push(`${rel(payload)} mentions /api/v1`);
+      }
+      if (SENTRY_MARKER.test(text)) {
+        findings.push(`${rel(payload)} mentions Sentry`);
       }
     }
     if (chunksOf(html).length === 0) {
@@ -146,6 +161,9 @@ export function checkExport(outDir, { locales = ['en', 'pl'], nextDir = path.joi
       if (body.includes('/api/v1')) {
         findings.push(`${locale}.html loads ${ref}, which mentions /api/v1`);
       }
+      if (SENTRY_MARKER.test(body)) {
+        findings.push(`${locale}.html loads ${ref}, which mentions Sentry`);
+      }
     }
   }
 
@@ -154,6 +172,7 @@ export function checkExport(outDir, { locales = ['en', 'pl'], nextDir = path.joi
     findings.push('no portal pages found under out/<locale>/account');
   }
   let markerSeen = false;
+  let reporterSeen = false;
   for (const file of pages) {
     const html = read(file);
     if (!/<meta name="robots" content="noindex, nofollow"\s*\/?>/.test(html)) {
@@ -166,6 +185,9 @@ export function checkExport(outDir, { locales = ['en', 'pl'], nextDir = path.joi
       const body = chunk(ref);
       if (body.includes(PORTAL_MARKERS[0])) {
         markerSeen = true;
+      }
+      if (SENTRY_MARKER.test(body)) {
+        reporterSeen = true;
       }
       for (const marker of GSAP_MARKERS) {
         if (body.includes(marker)) {
@@ -204,6 +226,12 @@ export function checkExport(outDir, { locales = ['en', 'pl'], nextDir = path.joi
     );
   }
 
+  if (pages.length > 0 && !reporterSeen) {
+    findings.push(
+      `no portal page loads the error reporter (${SENTRY_MARKER}): the landing check for Sentry would see nothing`
+    );
+  }
+
   const sitemap = path.join(outDir, 'sitemap.xml');
   if (existsSync(sitemap) && read(sitemap).includes('/account')) {
     findings.push('sitemap.xml lists a portal page');
@@ -225,5 +253,5 @@ if (isMain()) {
     console.error(`Public/portal boundary broken in ${outDir}:\n- ${findings.join('\n- ')}`);
     process.exit(1);
   }
-  console.log('Export check: landing pages load no portal code; portal pages are noindex and GSAP-free.');
+  console.log('Export check: landing pages load no portal code and no Sentry; portal pages are noindex and GSAP-free.');
 }

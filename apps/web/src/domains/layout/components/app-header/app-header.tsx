@@ -13,18 +13,10 @@ import { AppHeaderView } from './app-header-view';
 import { HeaderNavSync } from './header-nav-sync';
 
 /** Sticky top bar, solid from the start: the logo on the left; on the right (on the landing page) the section links, then the language switcher. */
-export function AppHeader({ locale, nav = false, waitlistSection = false }: AppHeaderProps) {
+export function AppHeader({ locale, nav = false }: AppHeaderProps) {
   const t = useTranslations('header');
-  // Every linkable home section, in page order. Not linked: the hero (the logo goes to the top) and
-  // the closing call to action (no anchor; it points at the waitlist).
-  const anchors = [
-    ...(waitlistSection ? ([['waitlist', SECTION_ANCHORS.waitlist]] as const) : []),
-    ['how', SECTION_ANCHORS.how],
-    ['who', SECTION_ANCHORS.who],
-    ['app', SECTION_ANCHORS.app],
-    ['privacy', SECTION_ANCHORS.privacy],
-    ['faq', SECTION_ANCHORS.faq],
-  ] as const;
+  // Every home section, in page order (SECTION_ANCHORS); the hero is not linked (the logo goes to the top).
+  const keys = Object.keys(SECTION_ANCHORS) as (keyof typeof SECTION_ANCHORS)[];
   return (
     <>
       <AppHeaderView
@@ -41,7 +33,7 @@ export function AppHeader({ locale, nav = false, waitlistSection = false }: AppH
           nav
             ? {
                 label: t('nav.label'),
-                items: anchors.map(([key, anchor]) => ({ href: `#${anchor}`, label: t(`nav.${key}`) })),
+                items: keys.map((key) => ({ href: `#${SECTION_ANCHORS[key]}`, label: t(`nav.${key}`) })),
               }
             : null
         }

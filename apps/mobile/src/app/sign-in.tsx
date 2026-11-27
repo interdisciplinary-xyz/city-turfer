@@ -26,6 +26,7 @@ import { useAnnounce } from '@/contexts/identity/ui/use-announce';
 import { translator, useT } from '@/i18n';
 import { useApp } from '@/ui-kit/app-context';
 import { Button } from '@/ui-kit/components';
+import { useAsyncAction } from '@/ui-kit/use-async-action';
 import { useLightStatusBar } from '@/ui-kit/use-light-status-bar';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports -- Metro asset; the app has no *.png type declarations.
@@ -58,29 +59,22 @@ export default function SignIn() {
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
   const [errorMessage, setError] = useState<ErrorMessage | null>(null);
-  const [busy, setBusy] = useState(false);
+  // Loading and crash reports from the shared standard; the error stays inline under the fields.
+  const { run, isLoading: busy } = useAsyncAction<void>({ area: 'identity', code: 'sign-in', errorKey: null });
   const error = errorMessage ? te(errorMessage.key, errorMessage.values) : null;
   // VoiceOver hears the error (TalkBack reads its live region).
   useAnnounce(error);
   const emailRef = useRef<TextInput>(null);
   const secondRef = useRef<TextInput>(null);
-  // A ref, not the state: a second keyboard submit in the same frame must see the first one.
-  const inFlight = useRef(false);
 
+  /** One request at a time (a double tap on Go sends or checks the code once). */
   const busyWhile = async (work: () => Promise<void>) => {
-    if (inFlight.current) {
-      return; // a double tap on Go: the code is sent (or checked) once
-    }
-    inFlight.current = true;
-    setBusy(true);
-    setError(null);
-    try {
+    const r = await run(async () => {
+      setError(null);
       await work();
-    } catch {
-      setError({ key: 'generic' });
-    } finally {
-      inFlight.current = false;
-      setBusy(false);
+    });
+    if (r.status === 'failed') {
+      setError({ key: r.kind.expected && r.kind.reason === 'offline' ? 'signInOffline' : 'generic' });
     }
   };
 

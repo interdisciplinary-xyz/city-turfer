@@ -62,5 +62,11 @@
     "stayedOff": "Kopia pozostaje wyłączona, a ta na serwerze została usunięta. Wszystko zostaje na tym telefonie.",
     "stayedOffPending": "Kopia pozostaje wyłączona. Kopia na serwerze zniknie, gdy telefon znów będzie online. Wszystko zostaje na tym telefonie.",
     "newAccount": "Ten adres ma teraz nowe konto CityTurfer, a kopia dla niego jest wyłączona. Stuknij Włącz kopię, aby zacząć."
+  },
+  "toast": {
+    "backedUp": "Kopia gotowa. Twoje aktywności są bezpieczne w chmurze.",
+    "restored": "Przywracanie zakończone.",
+    "linked": "Kopia zapasowa jest włączona na tym telefonie.",
+    "turnedOn": "Kopia zapasowa jest włączona."
   }
 }

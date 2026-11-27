@@ -21,8 +21,11 @@
     "beforeStart": "{count, plural, one {# sprzed połączenia został w Apple Health} few {# sprzed połączenia zostały w Apple Health} many {# sprzed połączenia zostało w Apple Health} other {# sprzed połączenia zostało w Apple Health}}"
   },
   "errors": {
-    "title": "Apple Health",
     "unavailable": "Na tym urządzeniu nie ma Apple Health.",
     "generic": "Apple Health nie odpowiada. Spróbuj ponownie za chwilę."
+  },
+  "toast": {
+    "imported": "{count, plural, one {Import zakończony: dodano # trening} few {Import zakończony: dodano # treningi} many {Import zakończony: dodano # treningów} other {Import zakończony: dodano # treningu}}",
+    "disconnected": "Odłączono Apple Health. Zaimportowane aktywności zostają w CityTurfer."
   }
 }

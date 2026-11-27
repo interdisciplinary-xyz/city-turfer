@@ -18,6 +18,8 @@ export interface TurfMapViewProps {
   onPickCity?: () => void;
   /** Opens the Districts modal (the screen owns navigation); offered when the Home City has districts. */
   onOpenDistricts?: () => void;
+  /** Opens the route planner (the screen owns navigation). */
+  onPlanRoute?: () => void;
 }
 
 /** Room for the summary card at the top when fitting tracks or a city. */

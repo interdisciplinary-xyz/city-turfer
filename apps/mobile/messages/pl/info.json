@@ -8,9 +8,13 @@
   "updateFailedTitle": "Aktualizacja nie powiodła się",
   "updateFailedBody": "Nie udało się pobrać aktualizacji. Sprawdź połączenie i spróbuj ponownie.",
   "yourData": "Twoje dane",
-  "yourDataBody": "Aktywności i terytorium są zapisane na tym telefonie. Na nasz serwer trafiają tylko wtedy, gdy włączysz niżej kopię w chmurze. Gdy GPS zgubi sygnał, wysyłamy do usługi tras OpenStreetMap tylko dwa końce luki, żeby odtworzyć drogę ulicami — nigdy całego śladu.",
+  "yourDataBody": "Aktywności i terytorium są zapisane na tym telefonie. Na nasz serwer trafiają tylko wtedy, gdy włączysz niżej kopię w chmurze. Gdy GPS zgubi sygnał, wysyłamy do usługi tras OpenStreetMap tylko dwa końce luki, żeby odtworzyć drogę ulicami — nigdy całego śladu. Jeśli pozwolisz planerowi tras prowadzić ulicami, trafiają tam też punkty, które zaznaczysz.",
   "estimateGaps": "Uzupełniaj luki GPS wzdłuż ulic",
   "estimateGapsOff": "Wyłączone: żadne zapytania nie wychodzą z telefonu, a luki zostają prostymi liniami przerywanymi.",
+  "planAlongStreets": "Planuj trasy wzdłuż ulic",
+  "planAlongStreetsOff": "Wyłączone: zaplanowane trasy zostają liniami prostymi, a ich punkty nie opuszczają telefonu.",
   "settingNotSaved": "Ustawienie się nie zmieniło. Spróbuj ponownie.",
-  "footer": "{name} · Surfuj po mieście. Ulice są Twoje."
+  "footer": "{name} · Surfuj po mieście. Ulice są Twoje.",
+  "crashReports": "Wysyłaj raporty o błędach",
+  "crashReportsBody": "Gdy coś się zepsuje, aplikacja wysyła szczegóły błędu do naszego narzędzia do śledzenia błędów w UE. Nigdy Twojej lokalizacji, danych z Apple Health ani adresu e-mail."
 }

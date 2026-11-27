@@ -109,9 +109,9 @@ always runs last. Shared steps live in `apps/mobile/e2e/subflows/` (`launch`, `s
 - A full run wipes the app's SQLite and the simulator keychain first; a single flow keeps the state.
 - With Metro on 8081, flows open the dev-client link, so the JS comes from **whatever checkout Metro
   serves**. Check with `lsof -nP -iTCP:8081 -sTCP:LISTEN` and that process's `cwd`.
-- **Android emulator:**
-  `maestro --device emulator-5554 test apps/mobile/e2e --config apps/mobile/e2e/config.yaml -e DEV_URL="exp+turftrack://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081"`,
-  after `adb reverse tcp:8081 tcp:8081` and granting location and notification permissions
+- **Android emulator: no Maestro run today.** The flows' `appId` is the iOS bundle id
+  (`com.cityturfer.app`) and Android keeps `com.turftrack.poc`, so every flow would fail at launch
+  (`docs/quality/e2e.md`). Test Android by hand on the emulator or a device
   (`docs/operations/android-release.md`).
 
 **Write:**
@@ -144,7 +144,7 @@ Example (shape of a flow):
 
 ```yaml
 # What the flow proves, and the state it leaves behind.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 tags: [recording]
 ---
 - runFlow: subflows/launch.yaml

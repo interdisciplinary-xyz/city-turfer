@@ -2,6 +2,7 @@ import { useFocusEffect, useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 
 import { useApp, useContainer } from '@/ui-kit/app-context';
+import { useAsyncAction } from '@/ui-kit/use-async-action';
 
 import type { AfterCredentialsResult } from '../application/after-credentials';
 import type { RestoreOffer, RestoreProgress, RestoreResult } from '../application/restore';
@@ -147,7 +148,16 @@ export function useRestore({ ask = true }: { ask?: boolean } = {}) {
   const [offer, setOffer] = useState<RestoreOffer | null>(null);
   const [progress, setProgress] = useState<RestoreProgress | null>(null);
   const [result, setResult] = useState<RestoreResult | null>(null);
-  const [running, setRunning] = useState(false);
+  // Loading, crash reports and the "Restore finished" toast from the shared standard. A failure
+  // shows as the paused result on the card itself, so no error toast.
+  const action = useAsyncAction<RestoreResult>({
+    area: 'cloud-backup',
+    code: 'restore',
+    successKey: (r) => (r.kind === 'done' ? 'backup.toast.restored' : null),
+    errorKey: null,
+  });
+  const run = action.run;
+  const running = action.isLoading;
 
   useEffect(() => {
     if (!ask) {
@@ -163,29 +173,28 @@ export function useRestore({ ask = true }: { ask?: boolean } = {}) {
     };
   }, [c, ask]);
 
-  const start = useCallback(async () => {
-    setRunning(true);
-    setResult(null);
-    try {
+  const start = useCallback(async (): Promise<RestoreResult> => {
+    const outcome = await run(async () => {
+      setResult(null);
       const r = await c.cloudBackup.restore.execute(setProgress);
       await c.dispatcher.dispatchPending(); // claims turf for what arrived
-      setResult(r);
-      if (r.kind === 'done') {
-        setOffer({ kind: 'none' });
-        void c.syncHealth(); // Apple Health import waited for the restore
-      }
-      // Backup runs waited while the restore ran (finished or paused): send what is queued now. It
-      // compares with the server first, so nothing is sent for what just arrived; off: skipped.
-      void c.backUp();
       return r;
-    } catch {
-      const failed: RestoreResult = { kind: 'paused', reason: 'server', done: 0, total: 0 };
-      setResult(failed);
-      return failed;
-    } finally {
-      setRunning(false);
+    });
+    const failed: RestoreResult = { kind: 'paused', reason: 'server', done: 0, total: 0 };
+    if (outcome.status === 'busy') {
+      return failed; // a restore is already running: it reports its own result
     }
-  }, [c]);
+    const r = outcome.status === 'done' ? outcome.value : failed;
+    setResult(r);
+    if (r.kind === 'done') {
+      setOffer({ kind: 'none' });
+      void c.syncHealth(); // Apple Health import waited for the restore
+    }
+    // Backup runs waited while the restore ran (finished or paused): send what is queued now. It
+    // compares with the server first, so nothing is sent for what just arrived; off: skipped.
+    void c.backUp();
+    return r;
+  }, [c, run]);
 
   /** After a restore that left backup off (the server's consents couldn't be read): turn it on. */
   const turnOnBackup = useCallback(async (): Promise<BackupCommandResult> => {

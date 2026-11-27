@@ -10,7 +10,6 @@
     "distance": "Distance",
     "movingTime": "Moving time",
     "average": "{type, select, cycle {Avg speed} other {Avg pace}}",
-    "elapsed": "Elapsed",
     "elevation": "Elevation ≈"
   },
   "estimatedNote": "Includes {distance} estimated along streets where GPS was lost (dashed). Estimated parts don't claim turf.",
@@ -26,5 +25,8 @@
     "failed": "Couldn't save the new name. Try again.",
     "empty": "Give it a name.",
     "tooLong": "{max, plural, one {Keep it to # character.} other {Keep it to # characters.}}"
+  },
+  "toast": {
+    "deleted": "Activity deleted."
   }
 }

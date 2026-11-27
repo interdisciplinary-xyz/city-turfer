@@ -1,7 +1,7 @@
 import { translator } from '@/i18n/translator';
 import { DomainError } from '@/shared-kernel';
 
-import { describeImport, healthErrorKey } from '../ui/apple-health-card.constants';
+import { describeImport, healthActionError, healthErrorKey, importedToast } from '../ui/apple-health-card.constants';
 
 const report = (imported: number, duplicates = 0, withoutRoute = 0, beforeStart?: number) => ({
   at: 0,
@@ -55,5 +55,26 @@ describe('Apple Health card copy', () => {
     expect(translator('health', 'pl')('errors.generic')).toBe(
       'Apple Health nie odpowiada. Spróbuj ponownie za chwilę.'
     );
+  });
+
+  it('words the action toasts: always a health message, the import count with full Polish plurals', () => {
+    expect(healthActionError(new DomainError('health.unavailable'))).toBe('health.errors.unavailable');
+    expect(healthActionError(new Error('HKErrorDomain: workout 1A2B'))).toBe('health.errors.generic');
+    expect(importedToast(null)).toBeNull();
+    expect(importedToast(report(4))).toEqual({ key: 'health.toast.imported', values: { count: 4 } });
+    const en = translator('health', 'en');
+    expect([1, 3].map((count) => en('toast.imported', { count }))).toEqual([
+      'Import finished: 1 workout added',
+      'Import finished: 3 workouts added',
+    ]);
+    const pl = translator('health', 'pl');
+    expect([1, 2, 5, 22, 1.5].map((count) => pl('toast.imported', { count }))).toEqual([
+      'Import zakończony: dodano 1 trening',
+      'Import zakończony: dodano 2 treningi',
+      'Import zakończony: dodano 5 treningów',
+      'Import zakończony: dodano 22 treningi',
+      'Import zakończony: dodano 1,5 treningu',
+    ]);
+    expect(pl('toast.disconnected')).toBe('Odłączono Apple Health. Zaimportowane aktywności zostają w CityTurfer.');
   });
 });

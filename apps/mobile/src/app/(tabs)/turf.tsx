@@ -36,6 +36,7 @@ export default function TurfScreen() {
       focused={focused}
       onPickCity={() => router.push('/city')}
       onOpenDistricts={() => router.push('/districts')}
+      onPlanRoute={() => router.push('/plan-route')}
     />
   );
 }

@@ -40,8 +40,9 @@ Pillars: **Your streets** (ownership is permanent) · **The glow** (repetition i
 - Use the ubiquitous language from `docs/poc-plan.md` §2 in UI copy (Walk / Run / Ride, Turf, Cell,
   Strength tiers). The UI says **Ride**; code, tokens and data say `cycle` (`TYPE_COLOR.cycle`, CSS
   `--ride`). Change the label, never the identifier.
-- Internal identifiers stay as they are: bundle id `com.turftrack.poc`, Expo slug `turftrack`
-  (changing them breaks installs, data and OTA updates).
+- Internal identifiers stay as they are: Android package `com.turftrack.poc`, Expo slug `turftrack`
+  (changing them breaks installs, data and OTA updates). The iOS bundle id became
+  `com.cityturfer.app` for TestFlight (`docs/plans/testflight-2026-11-12.md`).
 
 ## Voice & tone
 

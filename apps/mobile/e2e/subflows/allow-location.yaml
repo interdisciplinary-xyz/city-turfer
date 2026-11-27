@@ -1,4 +1,4 @@
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 ---
 - runFlow:
     when: { visible: 'Allow While Using App' }

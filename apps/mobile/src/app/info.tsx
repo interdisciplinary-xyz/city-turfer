@@ -10,12 +10,14 @@ import { BackupDeveloperCard } from '@/contexts/cloud-backup/ui/backup-developer
 import { CloudBackupCard } from '@/contexts/cloud-backup/ui/cloud-backup-card';
 import { AppleHealthCard } from '@/contexts/health-sync/ui/apple-health-card';
 import { useBackupLinkTarget } from '@/contexts/identity/ui/hooks';
+import { useRoutingConsent } from '@/contexts/route-planning/ui/hooks';
 import { announceDeveloperTools, DeveloperToolsCard } from '@/dev/developer-tools';
 import { LANGUAGE_SETTINGS, type LanguageSetting, type Locale, useLanguageSetting, useT } from '@/i18n';
 import { Button, Card, tint } from '@/ui-kit/components';
 import { formatDateTime } from '@/ui-kit/format';
 import { AppSymbol } from '@/ui-kit/symbol';
 import { usePalette } from '@/ui-kit/theme';
+import { useCrashReports } from '@/ui-kit/use-crash-reports';
 
 /** Long-presses on the version text needed to reveal developer tools in release builds. */
 const DEV_TAPS = 5;
@@ -86,6 +88,9 @@ export default function InfoScreen() {
   const showDevTools = __DEV__ || devUnlocked;
   const [check, setCheck] = useState<UpdateCheck>('idle');
   const [estimateGaps, setEstimateGaps] = useGapEstimationSetting();
+  const [routingConsent, setRoutingConsent] = useRoutingConsent();
+  const planAlongStreets = routingConsent === 'granted';
+  const crashReports = useCrashReports();
   // A local profile (mock admin, demo) backs up after a code to its own address (Identity knows it).
   const linkTarget = useBackupLinkTarget();
   // One push per tap: a double tap would open the code screen twice (and send two codes). Ready
@@ -176,6 +181,40 @@ export default function InfoScreen() {
           />
         </View>
         <Text style={{ color: p.muted, fontSize: 13 }}>{t('estimateGapsOff')}</Text>
+        <View style={s.row}>
+          <Text style={[s.label, { color: p.text }]}>{t('planAlongStreets')}</Text>
+          <Switch
+            testID='plan-along-streets-switch'
+            accessibilityRole='switch'
+            accessibilityLabel={t('planAlongStreets')}
+            accessibilityState={{ checked: planAlongStreets, disabled: routingConsent == null }}
+            value={planAlongStreets}
+            disabled={routingConsent == null}
+            onValueChange={(on) =>
+              setRoutingConsent(on).catch(() => Alert.alert(tc('couldNotSave'), t('settingNotSaved')))
+            }
+            trackColor={{ true: ACCENT, false: p.border }}
+          />
+        </View>
+        <Text style={{ color: p.muted, fontSize: 13 }}>{t('planAlongStreetsOff')}</Text>
+        <View style={s.row}>
+          <Text style={[s.label, { color: p.text }]}>{t('crashReports')}</Text>
+          <Switch
+            testID='crash-reports-switch'
+            accessibilityRole='switch'
+            accessibilityLabel={t('crashReports')}
+            accessibilityHint={t('crashReportsBody')}
+            accessibilityState={{
+              checked: crashReports.enabled ?? false,
+              disabled: crashReports.enabled == null || crashReports.saving,
+            }}
+            value={crashReports.enabled ?? false}
+            disabled={crashReports.enabled == null || crashReports.saving}
+            onValueChange={(on) => void crashReports.setEnabled(on)}
+            trackColor={{ true: ACCENT, false: p.border }}
+          />
+        </View>
+        <Text style={{ color: p.muted, fontSize: 13 }}>{t('crashReportsBody')}</Text>
       </Card>
       <AppleHealthCard />
       <CloudBackupCard link={backupLink} />

@@ -2,7 +2,7 @@
   "title": "Statystyki",
   "thisWeek": "W tym tygodniu",
   "distance": "Dystans",
-  "time": "Czas",
+  "time": "Czas w ruchu",
   "activities": "Aktywności",
   "weeksChartLabel": "{weeks, plural, one {Dystans tygodniowo, ostatni tydzień} few {Dystans tygodniowo, ostatnie # tygodnie} many {Dystans tygodniowo, ostatnie # tygodni} other {Dystans tygodniowo, ostatnie # tygodnia}}",
   "turf": "Terytorium",

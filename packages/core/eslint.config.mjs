@@ -25,6 +25,7 @@ export default [
           'better-sqlite3',
           '@cityturfer/ui',
           '@cityturfer/brand',
+          '@sentry/*',
         ],
         message:
           '@cityturfer/core is platform-free: frameworks, native modules and UI stay in the apps (ddd-architecture skill).',

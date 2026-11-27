@@ -21,8 +21,11 @@
     "beforeStart": "{count, plural, one {# from before you connected, left in Apple Health} other {# from before you connected, left in Apple Health}}"
   },
   "errors": {
-    "title": "Apple Health",
     "unavailable": "Apple Health is not available",
     "generic": "Apple Health didn't respond. Try again in a moment."
+  },
+  "toast": {
+    "imported": "{count, plural, one {Import finished: # workout added} other {Import finished: # workouts added}}",
+    "disconnected": "Apple Health disconnected. Your imported activities stay in CityTurfer."
   }
 }

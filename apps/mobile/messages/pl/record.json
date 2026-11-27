@@ -29,7 +29,7 @@
   },
   "stat": {
     "distance": "Dystans",
-    "time": "Czas",
+    "time": "Czas w ruchu",
     "now": "{type, select, cycle {Prędkość} other {Tempo}}",
     "average": "{type, select, cycle {Śr. prędkość} other {Śr. tempo}}"
   },

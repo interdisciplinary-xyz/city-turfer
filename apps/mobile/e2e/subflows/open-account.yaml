@@ -1,5 +1,5 @@
 # Open Me › Account from wherever a flow is (tab bar visible, or one screen deeper).
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 ---
 - runFlow:
     when: { notVisible: { id: 'tab-me' } }

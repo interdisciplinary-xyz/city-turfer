@@ -1,4 +1,4 @@
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 ---
 - tapOn: { id: 'sign-in-email' }
 - eraseText: 60

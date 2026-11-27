@@ -77,6 +77,11 @@ tracks and turf. Also: reliable background GPS recording, stats, activity histor
 - **Export**: GPX 1.1 export is planned (M7 stretch), not built; `expo-file-system` and
   `expo-sharing` are installed (Share photo: `apps/mobile/src/contexts/share-photo`, with
   `expo-image-picker` + `react-native-view-shot`; `docs/plans/share-photo-2026-11-11.md`)
+- **Error tracking**: Sentry, EU region, unexpected errors only; no tracing, replay or user id;
+  every event scrubbed by `@cityturfer/core/error-scrub` (no coordinates, Health data, e-mail). App:
+  release builds, on by default with an opt-out (Info › Your data › Send crash reports); API and
+  portal: Vercel production only; public website pages load none. Design:
+  `docs/decisions/error-tracking-2026-11-25.md`
 - **Tests**: Jest (`babel-preset-expo`, node environment, real SQL through `better-sqlite3` in
   `apps/mobile/src/test-support/node-database.ts`); Maestro for E2E
 
@@ -113,6 +118,8 @@ apps/mobile/                         the Expo app (package @cityturfer/mobile); 
     domain/ application/ infrastructure/ ui/ index.ts contract.ts
   src/contexts/share-photo/          Share photo: camera/library photo + activity stats card → system share sheet (no map)
     domain/ application/ infrastructure/ ui/ index.ts
+  src/contexts/route-planning/       Route planner: Planned Route (tap Waypoints, opt-in OSRM snapping, turf estimate; migration v16)
+    domain/ application/ infrastructure/ ui/ index.ts contract.ts
   src/platform/                      SQLite, migrations, outbox + EventDispatcher, one-off jobs, diagnostics (no coordinates)
   src/composition-root.ts            lazy, React-free wiring (used by UI and headless task)
   modules/background-session/        native iOS module (CLBackgroundActivitySession + liveUpdates)
@@ -170,6 +177,12 @@ docs/  .github/  .husky/  .claude/   at the repo root
   production builds. Apple Health data likewise: never logged or analysed; it reaches our API only
   as imported Activities, and only when the user turns on "Include Apple Health workouts" in cloud
   backup. HealthKit only in the foreground.
+- Async requests (the `add-feature` skill, "Async requests"): in the app every action the user
+  starts runs through `useAsyncAction` (`apps/mobile/src/ui-kit/use-async-action.ts`), never a
+  hand-rolled try/catch/finally; success toast only for a result the screen doesn't show; expected
+  errors (offline, 4xx, `DomainError`, permission) are worded, never reported. The API catches only
+  in `app.onError` (problem+json, a report only for a 500); the portal reports through its query
+  client. No coordinates or Health data in a report (`audit:logs`).
 - Never claim background tracking works because tests pass. It needs a dev build on a device or
   simulator with simulated movement (see the `mobile-testing` skill).
 

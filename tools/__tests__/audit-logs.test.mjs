@@ -3,7 +3,7 @@ import { dirname, join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { auditSource, auditTree } from '../audit-logs.mjs';
+import { auditSource, auditTree, TREES } from '../audit-logs.mjs';
 
 const rules = (src) => auditSource(src).map((f) => f.rule);
 
@@ -68,7 +68,39 @@ test('diagnostics.log allow-list works', () => {
   );
 });
 
-test('the real apps/mobile/src/ tree is clean', () => {
+test('error reports whose arguments name coordinates fail', () => {
+  assert.deepEqual(rules("reporter.report(error, { area: 'territory', lat: p.lat });"), ['report-coords']);
+  assert.deepEqual(rules("c.errorReporter.report(e, {\n  area: 'planner',\n  firstLng: w.lng,\n});"), [
+    'report-coords',
+  ]);
+  assert.deepEqual(rules('await c.var.deps.reportError?.(err, { requestId, waypoints });'), ['report-coords']);
+  assert.deepEqual(rules('Sentry.captureException(error, { extra: { coords } });'), ['report-coords']);
+  assert.deepEqual(rules('client.captureMessage(`failed at ${fix.latitude}`);'), ['report-coords']);
+});
+
+test('error reports with labels, codes and other words pass', () => {
+  assert.deepEqual(auditSource('toast.reporter.report(error, { area: o.area, code: o.code });'), []);
+  assert.deepEqual(auditSource("reporter.report(error, { area: 'territory', code: 'coords-load' });"), []);
+  assert.deepEqual(auditSource("Sentry.captureException(error, { tags: { latency: '2', planet: 'x' } });"), []);
+  assert.deepEqual(auditSource('// reporter.report(e, { lat })\nresult.report.count;'), []);
+  assert.deepEqual(
+    auditSource("// audit-logs-allow: lat is a test fixture name\nreporter.report(e, { area: 'x', lat });"),
+    []
+  );
+});
+
+test('a tree can run a subset of the rules (the API and web run only report-coords)', () => {
+  assert.deepEqual(auditSource("console.log('x');", { rules: ['report-coords'] }), []);
+  assert.deepEqual(auditSource("diagnostics.log('x', { lat: 1 });", { rules: ['report-coords'] }), []);
+  assert.deepEqual(
+    auditSource('reporter.report(e, { lat });', { rules: ['report-coords'] }).map((f) => f.rule),
+    ['report-coords']
+  );
+});
+
+test('the real trees are clean', () => {
   const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-  assert.deepEqual(auditTree(join(root, 'apps/mobile/src')), []);
+  for (const { dir, rules: treeRules } of TREES) {
+    assert.deepEqual(auditTree(join(root, dir), { rules: treeRules }), [], dir);
+  }
 });

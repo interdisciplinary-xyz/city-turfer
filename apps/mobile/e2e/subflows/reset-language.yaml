@@ -1,7 +1,7 @@
 # Put the Language setting back on System, from wherever the app is (tab bar, Me drawer or Info),
 # and leave the app on Me > Info.
 # The setting lives in the Keychain, so it survives reinstalls and would break every English flow.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 ---
 - runFlow:
     when:

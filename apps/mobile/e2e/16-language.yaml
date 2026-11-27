@@ -1,7 +1,7 @@
 # Language setting: Polish on Info, Dashboard, Stats and Record, then back to System (English).
 # Leaves the app on Language = System, even when an assertion fails (onFlowComplete), and starts by
 # resetting it so a rerun after a crash recovers.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 tags: [me]
 onFlowComplete:
   - runFlow: subflows/reset-language.yaml

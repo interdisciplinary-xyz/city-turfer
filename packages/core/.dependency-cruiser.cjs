@@ -31,6 +31,14 @@ module.exports = {
       to: { path: '^src/districts/' },
     },
     {
+      name: 'error-scrub-is-leaf',
+      severity: 'error',
+      comment:
+        'The error scrubber (@cityturfer/core/error-scrub) is pure string work both apps load before their error tracker starts: it imports nothing outside itself (and no SDK: events are typed structurally).',
+      from: { path: '^src/error-scrub/', pathNot: notTests },
+      to: { pathNot: '^src/error-scrub/' },
+    },
+    {
       name: 'domain-is-pure',
       severity: 'error',
       comment: 'Domain and shared kernel: no frameworks, no adapters (src/h3, src/districts), no outer layers.',

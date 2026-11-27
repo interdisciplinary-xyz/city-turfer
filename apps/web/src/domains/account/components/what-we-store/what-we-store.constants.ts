@@ -7,5 +7,6 @@ export const STORED_ITEMS = [
   'devices',
   'deletions',
   'rateLimits',
+  'crashReports',
   'nothingElse',
 ] as const;

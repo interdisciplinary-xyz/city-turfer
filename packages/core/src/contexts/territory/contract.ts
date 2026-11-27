@@ -68,6 +68,22 @@ export interface TurfCellPage {
   nextOffset: number | null;
 }
 
+/** A Turf Cell a line would add to the Turfer's turf, with its outline. */
+export interface TurfGainCell {
+  id: string;
+  ring: [number, number][]; // closed polygon ring [lon, lat]
+}
+
+/** The turf a line would claim (`EstimateTurfGain`): an estimate, never a Claim. */
+export interface TurfGainEstimate {
+  /** Every cell of the line's corridor, in the order the line reaches them. */
+  cells: string[];
+  /** The cells of `cells` the Turfer does not hold yet. */
+  newCells: TurfGainCell[];
+  /** Area of `newCells`, in square metres. */
+  newAreaM2: number;
+}
+
 export interface ClaimView {
   activityId: string;
   cellCount: number;

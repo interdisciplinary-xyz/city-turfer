@@ -827,6 +827,52 @@ test('device data: copies ask, device listings do not', () => {
   assert.deepEqual(bashFindings('ideviceinfo -k DeviceName', CTX), []);
 });
 
+test('device data: running device-diagnose.sh asks, reading or editing it does not', () => {
+  // the script runs `xcrun devicectl device copy from` itself, so the direct rule never sees it
+  for (const cmd of [
+    'apps/mobile/tools/device-diagnose.sh',
+    'apps/mobile/tools/device-diagnose.sh 00008120-0001591C3493C01E',
+    './tools/device-diagnose.sh',
+    '/Users/x/Code/turf-track/apps/mobile/tools/device-diagnose.sh',
+    'bash apps/mobile/tools/device-diagnose.sh',
+    'bash -x apps/mobile/tools/device-diagnose.sh',
+    'bash -o pipefail apps/mobile/tools/device-diagnose.sh',
+    'sh ./tools/device-diagnose.sh',
+    '/bin/zsh apps/mobile/tools/device-diagnose.sh',
+    'source apps/mobile/tools/device-diagnose.sh',
+    'BUNDLE=com.turftrack.poc apps/mobile/tools/device-diagnose.sh 00008120-0001591C3493C01E',
+    'BUNDLE=com.turftrack.poc bash apps/mobile/tools/device-diagnose.sh',
+    'env BUNDLE=com.turftrack.poc apps/mobile/tools/device-diagnose.sh',
+    'cd apps/mobile && ./tools/device-diagnose.sh',
+    'cd apps/mobile && BUNDLE=com.turftrack.poc tools/device-diagnose.sh X 2>&1 | tail -40',
+    'timeout 120 apps/mobile/tools/device-diagnose.sh',
+    "bash -c 'apps/mobile/tools/device-diagnose.sh'",
+  ]) {
+    assert.deepEqual(rules(bashFindings(cmd, CTX)), ['device-data'], cmd);
+    assert.equal(bashFindings(cmd, CTX)[0].decision, 'ask', cmd);
+  }
+  // false positives: reading, searching, linting or listing the script copies nothing
+  for (const cmd of [
+    'cat apps/mobile/tools/device-diagnose.sh',
+    'grep -n devicectl apps/mobile/tools/device-diagnose.sh',
+    "sed -n '1,20p' apps/mobile/tools/device-diagnose.sh",
+    'head -20 apps/mobile/tools/device-diagnose.sh',
+    'ls -l apps/mobile/tools/device-diagnose.sh',
+    'git diff apps/mobile/tools/device-diagnose.sh',
+    'shellcheck apps/mobile/tools/device-diagnose.sh',
+    'bash -n apps/mobile/tools/device-diagnose.sh',
+    'bash -xn apps/mobile/tools/device-diagnose.sh',
+    'bash -o noexec apps/mobile/tools/device-diagnose.sh',
+    'git show HEAD:apps/mobile/tools/device-diagnose.sh',
+    'git add apps/mobile/tools/device-diagnose.sh',
+    'chmod +x apps/mobile/tools/device-diagnose.sh',
+    'echo device-diagnose.sh',
+    'node apps/mobile/tools/diagnose-recording.mjs /tmp/x.db',
+  ]) {
+    assert.deepEqual(bashFindings(cmd, CTX), [], cmd);
+  }
+});
+
 // --- the hook scripts end to end ------------------------------------------
 
 function runHook(script, payload) {
@@ -865,6 +911,14 @@ test('pre-bash hook denies pushing to main and ignores unrelated commands', () =
   const release = runHook('pre-bash.mjs', { tool_name: 'Bash', tool_input: { command: 'pnpm run release' } });
   assert.equal(release.hookSpecificOutput.permissionDecision, 'deny');
   assert.match(release.hookSpecificOutput.permissionDecisionReason, /\[release\]/);
+});
+
+test('pre-bash hook asks before device-diagnose.sh: its prefilter lets the script through', () => {
+  const run = (command) => runHook('pre-bash.mjs', { tool_name: 'Bash', tool_input: { command } });
+  const out = run('BUNDLE=com.turftrack.poc apps/mobile/tools/device-diagnose.sh 00008120-0001591C3493C01E');
+  assert.equal(out.hookSpecificOutput.permissionDecision, 'ask');
+  assert.match(out.hookSpecificOutput.permissionDecisionReason, /\[device-data\]/);
+  assert.equal(run('cat apps/mobile/tools/device-diagnose.sh'), null);
 });
 
 /** A throwaway repo on `scope/v0.12.0` with a worktree on `wtBranch`; removed by the caller. */

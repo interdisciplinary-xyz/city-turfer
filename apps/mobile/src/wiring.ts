@@ -39,11 +39,14 @@ import { MockAuthGateway } from '@/contexts/identity/infrastructure/mock-auth-ga
 import { createRecordingApi, SerialCommandExecutor, type SessionFinished } from '@/contexts/recording';
 import type { LiveSessionNotifier, LocationTracker, PermissionGateway } from '@/contexts/recording/application/ports';
 import { SqliteRecordingSessionRepository } from '@/contexts/recording/infrastructure/sqlite-recording-session-repository';
+import { createRoutePlanningApi, type RoutingConsent, type StreetRouter } from '@/contexts/route-planning';
+import { SqlitePlannedRouteRepository } from '@/contexts/route-planning/infrastructure/sqlite-planned-route-repository';
 import { createTerritoryApi, type HomeCityChosen } from '@/contexts/territory';
 import { SqliteHomeCityRepository } from '@/contexts/territory/infrastructure/sqlite-home-city-repository';
 import { SqliteTerritoryRepository } from '@/contexts/territory/infrastructure/sqlite-territory-repository';
 import type { Database } from '@/platform/database';
 import { Diagnostics } from '@/platform/diagnostics';
+import { type CrashReportSetting, type ErrorReporter, noopReporter } from '@/platform/error-reporter';
 import { runOnce } from '@/platform/jobs';
 import { EventDispatcher, pruneOutbox } from '@/platform/outbox';
 import { type Clock, type DomainEvent, type IdGenerator, systemClock } from '@/shared-kernel';
@@ -71,8 +74,25 @@ export interface DeviceAdapters {
   defaultNameWords?: () => DefaultNameWords | Promise<DefaultNameWords>;
   /** The local calendar the Daily goal counts days in. Omitted: the device's (Date, current zone). */
   calendar?: LocalCalendar;
+  /** Route Planning's street router and a profile's consent to it. Omitted: never asked, never sent. */
+  routePlanning?: RoutePlanningAdapters;
+  /** Crash reporting (process-wide, switched by the setting). Omitted: nothing is reported (tests). */
+  errorReporter?: ErrorReporter;
+  /** The device's "Send crash reports" switch, applied live. Omitted: off and fixed (tests). */
+  crashReports?: CrashReportSetting;
   clock?: Clock;
 }
+
+export interface RoutePlanningAdapters {
+  router: StreetRouter;
+  consent: (userId: string) => RoutingConsent;
+}
+
+/** No router given (most tests): consent stays unasked and nothing is ever routed (legs stay straight). */
+const NO_STREET_ROUTING: RoutePlanningAdapters = {
+  router: { route: async () => ({ kind: 'unavailable', reason: 'failed' }) },
+  consent: () => ({ state: async () => 'unasked', set: async () => undefined }),
+};
 
 export interface CloudBackupAdapters {
   api: ApiClientFactory;
@@ -129,6 +149,9 @@ const NO_CLOUD_BACKUP: CloudBackupAdapters = {
   sha256: async () => '',
 };
 
+/** No crash reporting given (tests): off, and turning it on does nothing. */
+const CRASH_REPORTS_OFF: CrashReportSetting = { isEnabled: async () => false, setEnabled: async () => undefined };
+
 /** No setting given (e.g. tests that don't exercise gaps): never call the router. */
 const GAP_ROUTING_OFF: GapRoutingEnvironment = {
   setting: { isEnabled: async () => false, setEnabled: async () => undefined },
@@ -138,11 +161,18 @@ const GAP_ROUTING_OFF: GapRoutingEnvironment = {
 
 export function wire(userId: string, db: Database, a: DeviceAdapters) {
   const clock = a.clock ?? systemClock;
-  const diagnostics = new Diagnostics(db);
+  const errorReporter = a.errorReporter ?? noopReporter;
+  // Its task-errors are also forwarded to crash reporting (coordinate-free codes; messages scrubbed).
+  const diagnostics = new Diagnostics(db, errorReporter);
   const dispatcher = new EventDispatcher(db, {
     now: () => clock.now(),
     // No payload or error message: they may carry coordinates.
-    onDeadLetter: (d) => diagnostics.log('task-error', { code: 'outbox.dead-letter', ...d }),
+    onDeadLetter: (d) =>
+      diagnostics.log(
+        'task-error',
+        { code: 'outbox.dead-letter', ...d },
+        { area: 'outbox', tags: { eventType: d.type, errorCode: d.errorCode } }
+      ),
   });
   const afterCommit = () => void dispatcher.dispatchPending();
   /** Is a restore from the cloud backup running? (Cloud Backup is wired below.) */
@@ -193,6 +223,16 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     // DailyGoalSet / DailyGoalOfferHidden have no handler: dispatching them still fires
     // dispatcher.onChange, which bumps the UI's dataVersion.
     afterCommit,
+  });
+
+  // Territory → Route Planning (query only): the turf a Planned Route would claim, on the phone.
+  const routing = a.routePlanning ?? NO_STREET_ROUTING;
+  const routePlanning = createRoutePlanningApi({
+    routes: new SqlitePlannedRouteRepository(db),
+    router: routing.router,
+    consent: routing.consent(userId),
+    turf: { estimate: (line) => territory.estimateGain.execute(line) },
+    clock,
   });
 
   const healthSync = createHealthSyncApi({
@@ -342,6 +382,10 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     db,
     dispatcher,
     diagnostics,
+    /** Hands unexpected errors to crash reporting (the UI's useAsyncAction); a no-op when it is off. */
+    errorReporter,
+    /** "Send crash reports" on this device (read, and change applied at once). */
+    crashReports: a.crashReports ?? CRASH_REPORTS_OFF,
     runMaintenance,
     runLaunchMaintenance,
     estimateGaps,
@@ -352,6 +396,7 @@ export function wire(userId: string, db: Database, a: DeviceAdapters) {
     activityLog,
     territory,
     goals,
+    routePlanning,
     healthSync,
     cloudBackup,
   };

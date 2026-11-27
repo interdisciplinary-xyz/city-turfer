@@ -121,7 +121,7 @@ description: >-
 - Simulator: dev tools on the Info screen → "Add sample workouts to Apple Health" writes three
   workouts (walk, run, ride) with routes around the current simulated location. Maestro:
   `apps/mobile/e2e/11-apple-health.yaml` (iOS only). Check the database:
-  `sqlite3 -readonly "$(xcrun simctl get_app_container booted com.turftrack.poc data)"/Documents/SQLite/turftrack-<uid>.db 'SELECT * FROM hs_links'`.
+  `sqlite3 -readonly "$(xcrun simctl get_app_container booted com.cityturfer.app data)"/Documents/SQLite/turftrack-<uid>.db 'SELECT * FROM hs_links'`.
 - Real iPhone (founder): Apple Watch workouts, late-syncing routes and real permission history
   cannot be simulated. Before claiming anything about Watch imports, test on the device
   (`docs/operations/apple-health.md`).

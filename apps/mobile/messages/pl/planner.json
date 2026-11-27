@@ -1,0 +1,49 @@
+{
+  "emptyHint": "Dotknij mapy, żeby dodać start",
+  "nextHint": "Dotknij jeszcze raz, żeby dodać kolejny punkt",
+  "stat": {
+    "distance": "Dystans",
+    "time": "Szac. czas",
+    "newCells": "Nowe komórki"
+  },
+  "time": "{long, select, yes {{hours} h {minutes} min} other {{minutes} min}}",
+  "newCells": "≈ {cells}",
+  "newArea": "≈ {area} nowego terytorium, jeśli wybierzesz tę trasę",
+  "summaryLabel": "Zaplanowana trasa: {km, plural, one {{kmText} kilometra} few {{kmText} kilometra} many {{kmText} kilometra} other {{kmText} kilometra}}, około {minutes, plural, one {# minuta} few {# minuty} many {# minut} other {# minuty}}, około {count, plural, one {# nowa komórka} few {# nowe komórki} many {# nowych komórek} other {# nowej komórki}}",
+  "straight": "Nie wzdłuż ulic",
+  "straightHint": "Linie przerywane to odcinki w linii prostej.",
+  "followStreets": "Wzdłuż ulic",
+  "followStreetsLabel": "Wzdłuż ulic: zapytaj o wysyłanie punktów do usługi tras",
+  "retry": "Spróbuj ponownie",
+  "retryLabel": "Spróbuj ponownie poprowadzić trasę ulicami",
+  "routing": "Prowadzę trasę ulicami…",
+  "undo": "Cofnij",
+  "undoLabel": "Usuń ostatni punkt",
+  "clear": "Wyczyść",
+  "clearLabel": "Usuń wszystkie punkty",
+  "closeLoop": "Zamknij pętlę",
+  "closeLoopLabel": "Zamknij pętlę z powrotem do startu",
+  "useOnRecord": "Pokaż przy nagrywaniu",
+  "shownOnRecord": "Widoczna przy nagrywaniu",
+  "useOnRecordLabel": "Pokaż tę trasę na mapie nagrywania",
+  "attribution": "Mapa i trasy © współtwórcy OpenStreetMap",
+  "hideRoute": "Ukryj trasę",
+  "hideRouteLabel": "Ukryj zaplanowaną trasę na mapie nagrywania",
+  "errors": {
+    "tooLong": "Trasa może mieć najwyżej 50 km. Cofnij punkt albo wybierz bliższy.",
+    "tooManyWaypoints": "Trasa może mieć najwyżej {max} punktów. Cofnij jeden, żeby zmienić koniec.",
+    "loopTooShort": "Dodaj co najmniej dwa punkty, zanim zamkniesz pętlę.",
+    "tooShort": "Dodaj co najmniej dwa punkty, żeby pokazać trasę przy nagrywaniu.",
+    "generic": "Nie udało się. Spróbuj ponownie."
+  },
+  "consent": {
+    "title": "Prowadzić trasę ulicami?",
+    "body": "Żeby poprowadzić trasę wzdłuż ulic, Twoje punkty trafiają do usługi tras OpenStreetMap:",
+    "privacy": "Zaokrąglamy je do ok. 10 m i wysyłamy bez danych Twojego konta. Jak każda strona internetowa, ta usługa widzi też adres IP telefonu i może zapisać jedno i drugie w swoich logach. Nic nie jest wysyłane bez Twojej zgody. Możesz to zmienić na ekranie Informacje.",
+    "follow": "Wzdłuż ulic",
+    "straight": "Linie proste",
+    "straightHint": "Linie proste: nic nie jest wysyłane, a trasa i tak jest mierzona.",
+    "host": "routing.openstreetmap.de"
+  },
+  "typeLabel": "{type, select, walk {Planuj spacer} run {Planuj bieg} cycle {Planuj przejażdżkę} other {Planuj spacer}}"
+}

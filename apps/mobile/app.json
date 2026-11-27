@@ -9,12 +9,13 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "ios": {
-      "bundleIdentifier": "com.turftrack.poc",
+      "bundleIdentifier": "com.cityturfer.app",
       "supportsTablet": false,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleDisplayName": "CityTurfer",
-        "NSPhotoLibraryAddUsageDescription": "CityTurfer saves your activity's share card to Photos when you choose Save Image."
+        "NSPhotoLibraryAddUsageDescription": "CityTurfer saves your activity's share card to Photos when you choose Save Image.",
+        "CFBundleAllowMixedLocalizations": true
       },
       "appleTeamId": "KD9S2F8UCY"
     },
@@ -40,7 +41,12 @@
     "plugins": [
       "expo-router",
       "expo-sqlite",
-      "expo-secure-store",
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
+        }
+      ],
       [
         "expo-font",
         {
@@ -55,7 +61,9 @@
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "CityTurfer records your route while you walk, run or ride — including when the screen is off — so every street you cover becomes your turf.",
-          "locationWhenInUsePermission": "CityTurfer shows where you are and records your route.",
+          "locationWhenInUsePermission": "CityTurfer shows where you are and records your route while you walk, run or ride, so every street you cover becomes your turf.",
+          "locationAlwaysPermission": "CityTurfer records your route while you walk, run or ride — including when the screen is off — so every street you cover becomes your turf.",
+          "motionUsagePermission": false,
           "isIosBackgroundLocationEnabled": true,
           "isAndroidBackgroundLocationEnabled": true,
           "isAndroidForegroundServiceEnabled": true
@@ -88,7 +96,13 @@
           "microphonePermission": false
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://de.sentry.io/"
+        }
+      ]
     ],
     "runtimeVersion": {
       "policy": "fingerprint"
@@ -107,6 +121,9 @@
         "projectId": "61b71526-4472-400c-a271-19a538294255"
       }
     },
-    "owner": "mdopito"
+    "owner": "mdopito",
+    "locales": {
+      "pl": "./locales/pl.json"
+    }
   }
 }

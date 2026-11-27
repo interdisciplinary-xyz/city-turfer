@@ -1,5 +1,5 @@
 # The Me tab slides in a drawer: header (→ Profile), Profile, Account, City, Info; tap outside closes it.
-appId: com.turftrack.poc
+appId: com.cityturfer.app
 tags: [me]
 ---
 - runFlow: subflows/launch.yaml

@@ -11,7 +11,8 @@ import { bashFindings } from '../../tools/harness/hook-rules.mjs';
 const payload = JSON.parse(readFileSync(0, 'utf8') || '{}');
 const command = payload.tool_input?.command ?? '';
 // Cheap prefilter: only commands that can mention a guarded tool pay for git and parsing.
-if (!/\b(git|gh|xcrun|idevice\w*|commit-and-tag-version|release)\b/.test(command)) {
+// Keep in step with bashFindings: a repo script that copies device data (DEVICE_COPY_SCRIPTS) too.
+if (!/\b(git|gh|xcrun|idevice\w*|commit-and-tag-version|release|device-diagnose\.sh)\b/.test(command)) {
   process.exit(0);
 }
 

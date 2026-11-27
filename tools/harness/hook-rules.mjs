@@ -1243,11 +1243,13 @@ export function bashFindings(line, ctx = {}) {
     }
 
     // Device data: copying off a physical iPhone. Listing devices or reading their name is fine.
+    // A repo script that wraps the copy counts too when it runs; reading it (`cat`, `grep`) does not.
     const isDeviceCopy =
       (words[0] === 'xcrun' &&
         words[1] === 'devicectl' &&
         words.some((w, k) => w === 'copy' && words[k + 1] === 'from')) ||
-      (/^idevice\w*$/.test(words[0] ?? '') && !['idevice_id', 'ideviceinfo', 'idevicename'].includes(words[0]));
+      (/^idevice\w*$/.test(words[0] ?? '') && !['idevice_id', 'ideviceinfo', 'idevicename'].includes(words[0])) ||
+      runsDeviceCopyScript(words);
     if (isDeviceCopy) {
       ask(
         'device-data',
@@ -1256,6 +1258,43 @@ export function bashFindings(line, ctx = {}) {
     }
   }
   return out;
+}
+
+/** Repo scripts that copy app data off a physical iPhone (`xcrun devicectl device copy from` inside). */
+const DEVICE_COPY_SCRIPTS = new Set(['device-diagnose.sh']);
+/** Commands that run their first operand as a shell script. */
+const SCRIPT_RUNNERS = new Set(['bash', 'sh', 'zsh', 'dash', 'ksh', 'source', '.']);
+
+/**
+ * True when the command runs one of DEVICE_COPY_SCRIPTS: as the command itself
+ * (`apps/mobile/tools/device-diagnose.sh`, `./tools/device-diagnose.sh`) or as the script a shell
+ * runs (`bash -x …/device-diagnose.sh`, `source …`). Env prefixes, wrappers (`env`, `timeout`) and
+ * `bash -c '…'` are already unwrapped by parseShell.
+ */
+function runsDeviceCopyScript(words) {
+  const base = (w) => (w ?? '').split('/').pop();
+  if (DEVICE_COPY_SCRIPTS.has(base(words[0]))) {
+    return true;
+  }
+  if (!SCRIPT_RUNNERS.has(base(words[0]))) {
+    return false;
+  }
+  // the first operand past the shell's options; -o/-O (and +o/+O) take a value. `bash -n` (noexec)
+  // only checks the syntax and runs nothing.
+  for (let k = 1; k < words.length; k++) {
+    const w = words[k];
+    if (/^-[a-zA-Z]*n/.test(w) || (/^-o$/.test(w) && words[k + 1] === 'noexec')) {
+      return false;
+    }
+    if (/^[-+][oO]$/.test(w)) {
+      k++;
+    } else if (w === '--') {
+      return DEVICE_COPY_SCRIPTS.has(base(words[k + 1]));
+    } else if (!/^[-+]/.test(w)) {
+      return DEVICE_COPY_SCRIPTS.has(base(w));
+    }
+  }
+  return false;
 }
 
 // ---------------------------------------------------------------------------

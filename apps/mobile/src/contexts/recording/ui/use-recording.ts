@@ -4,6 +4,7 @@ import { liveSessionStore } from '@/composition-root';
 import type { ActivityType, TrackPoint } from '@/shared-kernel';
 import { useContainer } from '@/ui-kit/app-context';
 
+import { advanceLiveClock, type LiveClock } from '../domain/live-moving-time';
 import type { LiveSnapshot } from '../domain/recording-session';
 
 const subscribe = (l: () => void) => liveSessionStore.subscribe(l);
@@ -22,14 +23,16 @@ export function useRecording() {
     c.recording.liveSnapshot.execute().then((s) => s && liveSessionStore.publish(s));
   }, [c]);
 
-  // 1 Hz clock for the running timer.
+  // 1 Hz clock for the running timer. Keyed on having a session, not on each snapshot, so fixes
+  // arriving about once a second cannot keep resetting the interval before it fires.
+  const hasSession = snapshot !== null;
   useEffect(() => {
-    if (!snapshot) {
+    if (!hasSession) {
       return;
     }
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
-  }, [snapshot]);
+  }, [hasSession]);
 
   // Refresh the live track when new points arrive (throttled).
   const pointCount = snapshot?.pointCount ?? 0;
@@ -45,16 +48,18 @@ export function useRecording() {
     return () => clearTimeout(id);
   }, [c, pointCount, snapshot?.sessionId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Timer keeps ticking between location batches while recording.
-  const activeS = snapshot
-    ? snapshot.activeS +
-      (snapshot.status === 'recording' ? Math.max(0, Math.floor((now - snapshot.computedAt) / 1000)) : 0)
-    : 0;
+  // Moving time only: ticks between fixes while moving, stops when you stop, never goes backwards.
+  // The run-on is timed on the phone's clock from each moving fix's arrival (advanceLiveClock).
+  const clock = useRef<LiveClock | null>(null);
+  if (snapshot) {
+    clock.current = advanceLiveClock(clock.current, snapshot, now);
+  }
+  const movingS = snapshot ? (clock.current?.shownS ?? 0) : 0;
 
   return {
     snapshot,
     track,
-    activeS,
+    movingS,
     prepare: useCallback(() => c.recording.prepare.execute(), [c]),
     start: useCallback((type: ActivityType) => c.recording.start.execute(type), [c]),
     pause: useCallback(() => c.recording.pause.execute(), [c]),

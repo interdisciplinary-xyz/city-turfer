@@ -1,6 +1,6 @@
 {
   "name": "@cityturfer/api",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "private": true,
   "type": "module",
   "description": "CityTurfer HTTP API: Hono on Vercel (fra1), routes declared with zod + @hono/zod-openapi into a generated OpenAPI 3.1 spec, Swagger UI at /swagger and cityturfer.local/swagger.",
@@ -26,6 +26,7 @@
     "@hono/swagger-ui": "^0.6.1",
     "@hono/zod-openapi": "^1.6.3",
     "@neondatabase/serverless": "^1.2.0",
+    "@sentry/core": "11.17.0",
     "better-auth": "1.7.7",
     "drizzle-orm": "^0.45.4",
     "fflate": "0.8.3",

@@ -9,7 +9,7 @@ cd "$(dirname "$0")/.."
 MAESTRO="${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/maestro/bin/maestro")}"
 DEVICE="${DEVICE:-$(xcrun simctl list devices booted | grep -Eo '[0-9A-F-]{36}' | head -1)}"
 [[ -n "$DEVICE" ]] || { echo "Boot an iOS simulator first (xcrun simctl boot <udid>)." >&2; exit 1; }
-BUNDLE=com.turftrack.poc
+BUNDLE=com.cityturfer.app
 
 if [[ -z "${DEV_URL+x}" ]]; then
   if curl -fs http://127.0.0.1:8081/status >/dev/null 2>&1; then

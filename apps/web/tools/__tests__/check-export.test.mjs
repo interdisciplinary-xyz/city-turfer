@@ -20,7 +20,7 @@ function writeFakeExport(
     chunkDir = '_next/static/chunks',
     landingChunk = 'console.log(1)',
     landingHtml = '',
-    portalChunk = 'h.set("CityTurfer-Client")',
+    portalChunk = 'h.set("CityTurfer-Client");/^o\\d+\\.ingest\\.de\\.sentry\\.io$/',
     portalHead = NOINDEX,
     sitemap = '<loc>/en</loc>',
   } = {}
@@ -96,6 +96,18 @@ for (const chunkDir of CHUNK_DIRS) {
       });
     });
 
+    test('Sentry in a landing chunk fails', () => {
+      withExport({ chunkDir, landingChunk: 'globalThis.__SENTRY__={}' }, (dir) => {
+        assert.match(checkExport(dir).join('\n'), /en\.html loads .*mentions Sentry/);
+      });
+    });
+
+    test('the positive control: no error reporter on any portal page fails', () => {
+      withExport({ chunkDir, portalChunk: 'h.set("CityTurfer-Client")' }, (dir) => {
+        assert.match(checkExport(dir).join('\n'), /no portal page loads the error reporter/);
+      });
+    });
+
     test('the positive control: no API client marker anywhere fails', () => {
       withExport({ chunkDir, portalChunk: 'nothing here' }, (dir) => {
         assert.match(checkExport(dir).join('\n'), /the check would see nothing/);
@@ -125,6 +137,12 @@ test('portal copy in the landing HTML fails', () => {
 test('/api/v1 in the landing HTML fails', () => {
   withExport({ landingHtml: '<link rel="preconnect" href="/api/v1/me"/>' }, (dir) => {
     assert.match(checkExport(dir).join('\n'), /en\.html mentions \/api\/v1/);
+  });
+});
+
+test('a Sentry DSN in the landing HTML fails', () => {
+  withExport({ landingHtml: '<script>var d="https://k@o1.ingest.de.sentry.io/2"</script>' }, (dir) => {
+    assert.match(checkExport(dir).join('\n'), /en\.html mentions Sentry/);
   });
 });
 

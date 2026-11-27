@@ -4,16 +4,14 @@ import { useLocale, useTranslations } from 'next-intl';
 import {
   Audience,
   Faq,
-  FinalCta,
   HeroCity,
   HeroCopy,
   HeroMotion,
   HeroScreens,
   Highlights,
   HowItWorks,
+  Join,
   LocalFirst,
-  Section,
-  SectionHead,
 } from '@/domains/homepage';
 import { AppHeader, SiteFooter } from '@/domains/layout';
 import { WaitlistForm } from '@/domains/waitlist';
@@ -33,7 +31,7 @@ function Page({ waitlist }: PageProps) {
       <a className='skip' href='#main'>
         {t('hero.skip')}
       </a>
-      <AppHeader locale={locale} nav waitlistSection={waitlist} />
+      <AppHeader locale={locale} nav />
       <main id='main' tabIndex={-1}>
         <section id='top' aria-labelledby='hero-title'>
           <HeroMotion className='hero'>
@@ -44,24 +42,24 @@ function Page({ waitlist }: PageProps) {
             </div>
           </HeroMotion>
         </section>
-        {waitlist ? (
-          <Section name='waitlist' band className='waitlist-section'>
-            <SectionHead name='waitlist' eyebrow={t('waitlist.eyebrow')} title={t('waitlist.title')} />
-            <WaitlistForm
-              action='https://example.invalid/brevo'
-              controller='CityTurfer (example)'
-              contactEmail='privacy@example.invalid'
-              locale={locale}
-              headingId='waitlist-title'
-            />
-          </Section>
-        ) : null}
         <HowItWorks />
-        <Audience />
         <Highlights />
+        <Audience />
         <LocalFirst />
         <Faq />
-        {waitlist ? <FinalCta /> : null}
+        <Join
+          form={
+            waitlist ? (
+              <WaitlistForm
+                action='https://example.invalid/brevo'
+                controller='CityTurfer (example)'
+                contactEmail='privacy@example.invalid'
+                locale={locale}
+                headingId='join-title'
+              />
+            ) : undefined
+          }
+        />
       </main>
       <SiteFooter contactEmail={waitlist ? 'privacy@example.invalid' : undefined} />
     </>
@@ -76,7 +74,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'The full landing page: hero (with its entrance animation), the waitlist section, the street-glow demo, how it works, who it is for, highlights, your week, how it differs, local-first, where it stands, the FAQ, the closing call to action (shown only with the waitlist) and the footer. `waitlist` mirrors the NEXT_PUBLIC_WAITLIST_* variables being set. The APK download buttons are hidden for now.',
+          'The full landing page: hero (with its entrance animation), how it works with the street-glow demo, what you get, who it is for, privacy, the FAQ, Join (where it stands, then the form with the waitlist or a closed line without) and the footer. `waitlist` mirrors the NEXT_PUBLIC_WAITLIST_* variables being set. The APK download buttons are hidden for now.',
       },
     },
   },

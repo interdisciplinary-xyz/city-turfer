@@ -10,6 +10,7 @@ scope:
     apps/api/src/wiring.ts,
     apps/api/src/routes/internal.ts,
     apps/api/src/client-ip.ts,
+    apps/api/src/sentry.ts,
     apps/api/src/db/support.ts,
     apps/api/src/territory/backfill.ts,
     apps/api/src/territory/rebuild.ts,
@@ -19,7 +20,8 @@ summary:
   env vars (Neon, Better Auth, Brevo, cron), migrations before the merge, the server turf rollout
   (migrate 0005 and 0006 before the merge, deploy, turf:backfill, then the web map; turf:rebuild
   straight after redeploying from a rollback), the daily retention cron with its turf catch-up,
-  adopting the admin data, device tokens, support requests (find, delete), checking health
+  adopting the admin data, device tokens, support requests (find, delete), error reports (Sentry
+  EU), checking health
 ---
 
 # API deploy runbook
@@ -67,6 +69,7 @@ Vercel projects, `WEB_ORIGIN`, the turf backfill) is not recorded anywhere in th
 | `API_TOKENS`            | Production           | JSON object `{"<sha256 hex>": "<userId>"}` (or `{"userId", "email", "displayName"}`); device tokens, one more release.                                                                                                                                                                                                                                                                               |
 | `WEB_ORIGIN`            | Production, Preview  | The website's origin, `https://…` without a path (production: the site's domain; a preview pair: the web preview's **branch URL**, see below). Browser sign-in and cookie writes must come from it. Unset on Vercel, or set without a valid `WEB_EDGE_SECRET` on a preview → browser sessions off (phones unaffected); malformed → boot fails. Off Vercel it defaults to `https://cityturfer.local`. |
 | `WEB_EDGE_SECRET`       | Production, Preview  | ≥ 32 random characters (`openssl rand -hex 32`), **the same value on the website's Vercel project**, different per environment. The website's `/api/v1/*` route sends it as `cityturfer-edge`; only then does the API trust `x-vercel-forwarded-for` for the per-IP sign-in limits (`apps/api/src/client-ip.ts`). Required in prod when `WEB_ORIGIN` is set.                                         |
+| `SENTRY_DSN`            | Production           | The DSN of the Sentry project, **EU region** (`https://<key>@o<org>.ingest.de.sentry.io/<project>`). Only production reports, and only the 500s; a DSN of another region or a malformed one turns reports off (the boot's `config` line says `errorReports: "not-eu"` / `"invalid-dsn"`), never fails the boot. Unset → no reports. See "Error reports" below.                                       |
 
 `VERCEL_ENV=production` (set by Vercel) is what "production" means for the boot guard: a missing
 `DATABASE_URL`, `CRON_SECRET`, `BETTER_AUTH_SECRET`, `BREVO_API_KEY`, `MAIL_FROM` or
@@ -329,6 +332,35 @@ script above, not the cron. The route is internal: outside `/v1` and the OpenAPI
 it by hand (Vercel → Settings → Cron Jobs → Run, or
 `curl -H "Authorization: Bearer $CRON_SECRET" https://city-turfer-api.vercel.app/internal/cron/retention`);
 it is idempotent and answers the counts.
+
+## Error reports (Sentry)
+
+Every unexpected error, the one that answers `500 internal` (Hono's `onError` in
+`apps/api/src/app.ts`), sends one report to Sentry before the response leaves (flushed, at most 2 s:
+a Vercel function may freeze once it has answered). Expected answers never do: a use case's refusal
+(`AppError`), a broken domain rule (`DomainError`), invalid input or JSON (400), 404, 413. The
+client (`apps/api/src/sentry.ts`) is `@sentry/core`'s server client, no tracing
+(`tracesSampleRate: 0`), no auto-instrumentation, no request data, `sendDefaultPii: false`;
+environment = `VERCEL_ENV`, release = `VERCEL_GIT_COMMIT_SHA`.
+
+A report holds the error's class, its stack frames and its `cause` chain, the request id, the method
+and the route **pattern** (`/v1/activities/:activityId`). Never the error message (database errors
+quote their parameters: e-mails, coordinates), the path, query, body, cookies, headers or the IP;
+`scrubEvent` / `scrubBreadcrumb` from `@cityturfer/core/error-scrub` run on every event and
+breadcrumb, then the API drops every message and any request, user or extra data.
+
+Setup (founder, once; needs a Sentry account and its DPA):
+
+1. Create the organisation in Sentry's **EU (Frankfurt) data region** (chosen at sign-up, cannot be
+   moved later) and a Node project `city-turfer-api`.
+2. Project → Settings → **Security & Privacy**: turn on **Prevent Storing of IP Addresses**, and
+   (organisation and project) **Data Scrubber** + **Use Default Scrubbers**. The SDK sends no IP,
+   these make sure Sentry never stores one either.
+3. Copy the DSN (Project → Settings → Client Keys); its host must end in `.ingest.de.sentry.io`. Set
+   it as `SENTRY_DSN` on the Vercel project `city-turfer-api`, **Production** only, and redeploy.
+4. Check: the boot's `config` log line shows `errorReports: "on"`.
+
+Previews, local runs and tests never report (`reporterState` in `apps/api/src/sentry.ts`).
 
 ## Device tokens
 
